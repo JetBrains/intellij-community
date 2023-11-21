@@ -162,13 +162,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
     envs.put("TERM_SESSION_ID", UUID.randomUUID().toString());
 
-    if (isBlockTerminalEnabled()) {
-      envs.put("INTELLIJ_TERMINAL_COMMAND_BLOCKS", "1");
-      // Pretend to be Fig.io terminal to avoid it breaking IntelliJ shell integration:
-      // at startup it runs a sub-shell without IntelliJ shell integration
-      envs.put("FIG_TERM", "1");
-    }
-
     TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
 
     if (TrustedProjects.isTrusted(myProject)) {
@@ -480,6 +473,13 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         shellType = ShellType.POWERSHELL;
         withCommandBlocks = Registry.is(BLOCK_TERMINAL_POWERSHELL_REGISTRY, false);
       }
+    }
+
+    if (isBlockTerminalEnabled() && withCommandBlocks) {
+      envs.put("INTELLIJ_TERMINAL_COMMAND_BLOCKS", "1");
+      // Pretend to be Fig.io terminal to avoid it breaking IntelliJ shell integration:
+      // at startup it runs a sub-shell without IntelliJ shell integration
+      envs.put("FIG_TERM", "1");
     }
 
     resultCommand.addAll(arguments);
