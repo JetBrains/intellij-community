@@ -81,10 +81,35 @@ public class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     externalProject.setBuildFile(project.getBuildFile());
     externalProject.setGroup(wrap(project.getGroup()));
     externalProject.setProjectDir(project.getProjectDir());
-    externalProject.setTasks(getTasks(project, context));
+    // Android Studio (b/243767844, b/235320590): only register test tasks when fetching Gradle task information.
+    // This is tested by GradleTaskListIntegrationTest.testSyncWithGradleTaskListSkipped().
+    boolean skipTasks;
+    try {
+      skipTasks = Boolean.parseBoolean(String.valueOf(project.getProperties().get("idea.gradle.do.not.build.tasks")).trim());
+    }
+    catch (Throwable ignored) {
+      skipTasks = false;
+    }
+    externalProject.setTasks(skipTasks ? getTestTasks(project) : getTasks(project, context));
     externalProject.setSourceSetModel(getSourceSetModel(project, context));
 
     return externalProject;
+  }
+
+  private static @NotNull Map<String, DefaultExternalTask> getTestTasks(@NotNull Project project) {
+    Map<String, DefaultExternalTask> result = new HashMap<>();
+    project.getTasks().withType(AbstractTestTask.class).getNames().forEach(name -> {
+      DefaultExternalTask externalTask = new DefaultExternalTask();
+      externalTask.setName(name);
+      externalTask.setTest(true);
+
+      String projectPath = project.getPath();
+      String projectTaskPath = ":".equals(projectPath) ? ":" + name : projectPath + ":" + name;
+      externalTask.setQName(projectTaskPath);
+
+      result.put(name, externalTask);
+    });
+    return result;
   }
 
   private static @NotNull Map<String, DefaultExternalTask> getTasks(
