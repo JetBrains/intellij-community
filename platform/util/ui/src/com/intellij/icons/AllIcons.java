@@ -250,6 +250,8 @@ public class AllIcons {
     /** 12x16 */ public static final @NotNull Icon CwmAccessDotOn = load("codeWithMe/cwmAccessDotOn.svg", -1553449755, 2);
     /** 16x16 */ public static final @NotNull Icon CwmAccessOff = load("codeWithMe/cwmAccessOff.svg", 1653401446, 2);
     /** 16x16 */ public static final @NotNull Icon CwmAccessOn = load("codeWithMe/cwmAccessOn.svg", 1998726206, 2);
+    /** 11x11 */ public static final @NotNull Icon CwmCamAvatarOff = load("codeWithMe/cwmCamAvatarOff.svg", -1026282674, 2);
+    /** 11x11 */ public static final @NotNull Icon CwmCamAvatarOn = load("codeWithMe/cwmCamAvatarOn.svg", -1040341363, 2);
     /** 16x16 */ public static final @NotNull Icon CwmCamOff = load("codeWithMe/cwmCamOff.svg", -539405379, 2);
     /** 16x16 */ public static final @NotNull Icon CwmCamOn = load("codeWithMe/cwmCamOn.svg", 1600186319, 2);
     /** 16x16 */ public static final @NotNull Icon CwmDisableCall = load("codeWithMe/cwmDisableCall.svg", -1089173198, 2);
@@ -266,15 +268,20 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CwmKick = load("codeWithMe/cwmKick.svg", -671665416, 2);
     /** 16x16 */ public static final @NotNull Icon CwmLeaveCall = load("codeWithMe/cwmLeaveCall.svg", -1767616763, 2);
     /** 16x16 */ public static final @NotNull Icon CwmLogoToolbar = load("codeWithMe/cwmLogoToolbar.svg", -1155465128, 0);
+    /** 11x11 */ public static final @NotNull Icon CwmMicAvatarOff = load("codeWithMe/cwmMicAvatarOff.svg", -1210484612, 2);
+    /** 11x11 */ public static final @NotNull Icon CwmMicAvatarOn = load("codeWithMe/cwmMicAvatarOn.svg", 1985059266, 2);
     /** 16x16 */ public static final @NotNull Icon CwmMicOff = load("codeWithMe/cwmMicOff.svg", 1631410875, 2);
     /** 16x16 */ public static final @NotNull Icon CwmMicOn = load("codeWithMe/cwmMicOn.svg", 467840411, 2);
     /** 16x16 */ public static final @NotNull Icon CwmPermissionEdit = load("codeWithMe/cwmPermissionEdit.svg", 1394955003, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmPermissionFull = load("codeWithMe/cwmPermissionFull.svg", -507224064, 2);
     /** 16x16 */ public static final @NotNull Icon CwmPermissions = load("codeWithMe/cwmPermissions.svg", -739028255, 2);
+    /** 16x16 */ public static final @NotNull Icon CwmPermissionsGranted = load("codeWithMe/cwmPermissionsGranted.svg", -1998019537, 2);
     /** 16x16 */ public static final @NotNull Icon CwmPermissionView = load("codeWithMe/cwmPermissionView.svg", 355418495, 2);
     /** 16x16 */ public static final @NotNull Icon CwmScreenOff = load("codeWithMe/cwmScreenOff.svg", 1148974817, 2);
     /** 16x16 */ public static final @NotNull Icon CwmScreenOn = load("codeWithMe/cwmScreenOn.svg", 700059865, 2);
     /** 16x16 */ public static final @NotNull Icon CwmShared = load("codeWithMe/cwmShared.svg", -2035204589, 2);
     /** 16x16 */ public static final @NotNull Icon CwmTerminate = load("codeWithMe/cwmTerminate.svg", -1812972690, 2);
+    /** 14x14 */ public static final @NotNull Icon CwmVerified = load("codeWithMe/cwmVerified.svg", 1403626713, 2);
     /** 16x16 */ public static final @NotNull Icon Users = load("codeWithMe/users.svg", 479861302, 2);
   }
 
