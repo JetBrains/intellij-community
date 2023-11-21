@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,12 +6,15 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.SyncDateFormat;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.text.DateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Date;
 import java.util.List;
 
@@ -21,7 +24,9 @@ public class ChangeBrowserSettings {
   }
 
   public static final String HEAD = "HEAD";
-  public static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG));
+
+  @VisibleForTesting
+  public static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG);
 
   private static final Logger LOG = Logger.getInstance(ChangeBrowserSettings.class);
 
@@ -45,7 +50,7 @@ public class ChangeBrowserSettings {
   @Nullable
   private static Date parseDate(@Nullable String dateValue) {
     try {
-      return !Strings.isEmpty(dateValue) ? DATE_FORMAT.parse(dateValue) : null;
+      return !Strings.isEmpty(dateValue) ? Date.from(Instant.from(DATE_FORMAT.parse(dateValue))) : null;
     }
     catch (Exception e) {
       LOG.warn(e);
@@ -71,7 +76,7 @@ public class ChangeBrowserSettings {
   }
 
   public void setDateBefore(@Nullable Date value) {
-    DATE_BEFORE = value == null ? null : DATE_FORMAT.format(value);
+    DATE_BEFORE = value == null ? null : DATE_FORMAT.format(value.toInstant().atZone(ZoneId.systemDefault()));
   }
 
   @Nullable
@@ -81,7 +86,7 @@ public class ChangeBrowserSettings {
   }
 
   public void setDateAfter(@Nullable Date value) {
-    DATE_AFTER = value == null ? null : DATE_FORMAT.format(value);
+    DATE_AFTER = value == null ? null : DATE_FORMAT.format(value.toInstant().atZone(ZoneId.systemDefault()));
   }
 
   @Nullable
