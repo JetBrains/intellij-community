@@ -45,7 +45,7 @@ try:
     if old_getfilesystemencoding:
         sys.getfilesystemencoding = old_getfilesystemencoding
     matplotlib.use('module://backend_interagg')
-    debug("Custom matplotlib backend was set for SciView")
+    debug("Custom matplotlib backend was set for Plots tool window")
 
 
 except:
