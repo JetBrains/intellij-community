@@ -1351,18 +1351,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myUpdater.updateActions(true, false, includeInvisible);
   }
 
-  private boolean myHideDisabled = false;
-
-  public void setHideDisabled(boolean hideDisabled) {
-    myHideDisabled = hideDisabled;
-    updateActionsImmediately();
-  }
-
   private void updateActionsImpl(boolean forced) {
     if (forced) myForcedUpdateRequested = true;
     boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
-    ActionGroup adjustedGroup = myHideDisabled ? ActionGroupUtil.forceHideDisabledChildren(myActionGroup) : myActionGroup;
     DataContext dataContext = Utils.createAsyncDataContext(getDataContext());
 
     cancelCurrentUpdate();
@@ -1374,7 +1366,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       putClientProperty(SUPPRESS_FAST_TRACK, true);
     }
     CancellablePromise<List<AnAction>> promise = myLastUpdate = Utils.expandActionGroupAsync(
-      adjustedGroup, myPresentationFactory, dataContext, myPlace, true, firstTimeFastTrack || isUnitTestMode);
+      myActionGroup, myPresentationFactory, dataContext, myPlace, true, firstTimeFastTrack || isUnitTestMode);
     if (promise.isSucceeded()) {
       myLastUpdate = null;
       List<AnAction> fastActions;
