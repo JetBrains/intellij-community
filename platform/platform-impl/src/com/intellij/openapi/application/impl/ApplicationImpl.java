@@ -1086,6 +1086,13 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   private void startWrite(@NotNull Class<?> clazz) {
     assertNotInsideListener();
+    ReadMostlyRWLock lock = myLock;
+    // We should not set "pending write action" if write action can not be run at all - for example, if thread is wrong
+    // See IDEA-338808
+    // This change will modify behavior of all Application listeners: erroneous write actions will not fire pre-run
+    // callback (beforeWriteActionStart) anymore, but it should be Ok and lead to less cancelled read actions.
+    lock.checkForPossibilityOfWriteLock();
+
     myWriteActionPending = true;
     try {
       ActivityTracker.getInstance().inc();
@@ -1095,7 +1102,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       // - allow it,
       // - fire listeners for it (somebody can rely on having listeners fired for each write action)
       // - but do not re-acquire any locks because it could be deadlock-level dangerous
-      ReadMostlyRWLock lock = myLock;
       if (!lock.isWriteAcquired()) {
         int delay = Holder.ourDumpThreadsOnLongWriteActionWaiting;
         Future<?> reportSlowWrite = delay <= 0 ? null :
