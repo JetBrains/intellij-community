@@ -29,6 +29,9 @@ import static java.util.Objects.requireNonNullElse;
 /**
  * Formats date/time according to a system (OS) format or to the IDE settings.
  * Values to format are expected to be in UTC; they are converted to the local timezone on formatting.
+ * <p/>
+ * Please note that formatted strings may include special characters (e.g., Narrow No-Break Space),
+ * so take care on inserting them into documents.
  */
 public final class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance(DateFormatUtil.class);
@@ -50,10 +53,10 @@ public final class DateFormatUtil {
   /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
   @Deprecated(forRemoval = true) public static final long DAY_FACTOR = DAY;
 
-  public static final String TIME_SHORT_12H = "h:mm a";
+  public static final String TIME_SHORT_12H = "h:mm\u202Fa";
   public static final String TIME_SHORT_24H = "HH:mm";
 
-  private static final String TIME_MEDIUM_12H = "h:mm:ss a";
+  private static final String TIME_MEDIUM_12H = "h:mm:ss\u202Fa";
   private static final String TIME_MEDIUM_24H = "HH:mm:ss";
 
   private static final long[] DENOMINATORS = {YEAR, MONTH, WEEK, DAY, HOUR, MINUTE};
