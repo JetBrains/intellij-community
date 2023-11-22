@@ -247,9 +247,13 @@ final class ReadMostlyRWLock {
     LockSupport.unpark(writeThread);
   }
 
-  void writeLock() {
+  void checkForPossibilityOfWriteLock() {
     checkWriteThreadAccess();
     checkReadIsNotHeld("Write");
+  }
+
+  void writeLock() {
+    checkForPossibilityOfWriteLock();
     assertInitialWriteState();
 
     writeState = WRITE_REQUESTED;

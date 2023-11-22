@@ -484,6 +484,12 @@ object RwLockHolder: ThreadingSupport {
   private fun startWrite(clazz: Class<*>) {
     assertNotInsideListener()
     val l = lock ?: notReady()
+    // We should not set "pending write action" if write action can not be run at all - for example, if thread is wrong
+    // See IDEA-338808
+    // This change will modify behavior of all Application listeners: erroneous write actions will not fire pre-run
+    // callback (beforeWriteActionStart) anymore, but it should be Ok and lead to less cancelled read actions.
+    l.checkForPossibilityOfWriteLock()
+
     myWriteActionPending = true
     try {
       fireBeforeWriteActionStart(clazz)
