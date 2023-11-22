@@ -1320,6 +1320,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             runTest("testData/stepping/custom/fwPropertyInInterface.kt");
         }
 
+        @TestMetadata("idea300605.kt")
+        public void testIdea300605() throws Exception {
+            runTest("testData/stepping/custom/idea300605.kt");
+        }
+
         @TestMetadata("idea334404.kt")
         public void testIdea334404() throws Exception {
             runTest("testData/stepping/custom/idea334404.kt");
