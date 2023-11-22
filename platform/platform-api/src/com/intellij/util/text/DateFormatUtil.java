@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
+import com.intellij.DynamicBundle;
 import com.intellij.UtilBundle;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,10 +22,9 @@ import java.text.SimpleDateFormat;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.*;
+
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * Formats date/time according to a system (OS) format or to the IDE settings.
@@ -276,21 +276,25 @@ public final class DateFormatUtil {
     var date = settings.getDateFormatPattern();
     var timeShort = settings.isUse24HourTime() ? TIME_SHORT_24H : TIME_SHORT_12H;
     var timeMedium = settings.isUse24HourTime() ? TIME_MEDIUM_24H : TIME_MEDIUM_12H;
-    var locale = Locale.getDefault(Locale.Category.FORMAT);
+    var locale = requireNonNullElse(getDynamicLocale(), Locale.getDefault(Locale.Category.FORMAT));
     return makeFormats(date, timeShort, timeMedium, locale);
   }
 
   static @NotNull Formats getSystemFormats() {
-    try {
-      if (SystemInfo.isMac && JnaLoader.isLoaded()) return getMacFormats();
-      if (SystemInfo.isWindows && JnaLoader.isLoaded()) return getWindowsFormats();
-    }
-    catch (Throwable t) {
-      LOG.error(t);
+    var locale = getDynamicLocale();
+
+    if (locale == null) {
+      try {
+        if (SystemInfo.isMac && JnaLoader.isLoaded()) return getMacFormats();
+        if (SystemInfo.isWindows && JnaLoader.isLoaded()) return getWindowsFormats();
+      }
+      catch (Throwable t) {
+        LOG.error(t);
+      }
+
+      locale = requireNonNullElse(getUnixLocale(), Locale.getDefault(Locale.Category.FORMAT));
     }
 
-    var locale = getUnixLocale();
-    if (locale == null) locale = Locale.getDefault(Locale.Category.FORMAT);
     return new Formats(
       DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(locale),
       DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale),
@@ -298,6 +302,12 @@ public final class DateFormatUtil {
       DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT).withLocale(locale),
       DateFormat.getDateInstance(DateFormat.SHORT, locale),
       DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale));
+  }
+
+  private static @Nullable Locale getDynamicLocale() {
+    var locale = DynamicBundle.getLocale();
+    if (LOG.isTraceEnabled()) LOG.trace("dyn.locale=" + locale);
+    return locale.equals(Locale.ENGLISH) ? null : locale;
   }
 
   private interface CF extends Library {
