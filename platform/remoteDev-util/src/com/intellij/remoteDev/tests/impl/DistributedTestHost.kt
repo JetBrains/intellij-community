@@ -144,13 +144,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
             val action = queue.remove()
             val actionTitle = action.title
             val timeout = action.timeout
+            val syncBeforeStart = action.syncBeforeStart
             try {
               assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local when test method starts" }
 
               LOG.info("'$actionTitle': received action execution request")
 
               return@setSuspendPreserveClientId withContext(action.coroutineContext) {
-                if (isCurrentThreadEdt()) {
+                if (syncBeforeStart) {
                   // Sync state across all IDE agents to maintain proper order in protocol events
                   // we don't wat to sync state in case of bg task, as it may be launched with blocked UI thread
                   runLogged("'$actionTitle': Sync protocol events before execution") {
@@ -158,10 +159,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
                       DistributedTestBridge.getInstance().syncProtocolEvents()
                     }
                   }
+                }
 
-                  if (!app.isHeadlessEnvironment && isNotRdHost) {
-                    requestFocus(actionTitle)
-                  }
+                if (isCurrentThreadEdt() && !app.isHeadlessEnvironment && isNotRdHost) {
+                  requestFocus(actionTitle)
                 }
 
                 showNotification("${session.agentInfo.id}: $actionTitle")
