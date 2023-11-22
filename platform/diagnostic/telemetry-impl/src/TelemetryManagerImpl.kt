@@ -23,16 +23,12 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -146,12 +142,12 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
     log.info("Forcing flushing OpenTelemetry metrics ...")
 
     withTimeout(10.seconds) {
-      suspendCoroutine {
+      suspendCancellableCoroutine {
         sdk.sdkMeterProvider.forceFlush().whenComplete { it.resume(Unit) }
       }
     }
     withTimeout(10.seconds) {
-      suspendCoroutine {
+      suspendCancellableCoroutine {
         aggregatedMetricExporter.flush().whenComplete { it.resume(Unit) }
       }
     }
