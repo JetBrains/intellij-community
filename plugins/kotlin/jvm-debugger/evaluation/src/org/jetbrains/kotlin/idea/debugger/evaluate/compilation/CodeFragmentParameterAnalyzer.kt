@@ -97,9 +97,10 @@ class CodeFragmentParameterAnalyzer(
                     return
                 }
 
+                val descriptor = resolvedCall.resultingDescriptor
+
                 // Capture dispatch receiver for the extension callable
                 run {
-                    val descriptor = resolvedCall.resultingDescriptor
                     val containingClass = descriptor?.containingDeclaration as? ClassDescriptor
                     val extensionParameter = descriptor?.extensionReceiverParameter
                     if (descriptor != null && descriptor !is DebuggerFieldPropertyDescriptor
@@ -113,14 +114,13 @@ class CodeFragmentParameterAnalyzer(
                 }
 
                 if (runReadAction { expression.isDotSelector() }) {
-                    val descriptor = resolvedCall.resultingDescriptor
                     val parameter = processCoroutineContextCall(resolvedCall.resultingDescriptor)
                     if (parameter != null) {
                         checkBounds(descriptor, expression, parameter)
                     }
                 }
 
-                if (isCodeFragmentDeclaration(resolvedCall.resultingDescriptor)) {
+                if (isCodeFragmentDeclaration(descriptor)) {
                     // The reference is from the code fragment we analyze, no need to capture
                     return
                 }
@@ -143,8 +143,7 @@ class CodeFragmentParameterAnalyzer(
                     contextReceivers.forEach(::processImplicitReceiver)
                 }
 
-                if (!processed && resolvedCall.resultingDescriptor is SyntheticFieldDescriptor) {
-                    val descriptor = resolvedCall.resultingDescriptor as SyntheticFieldDescriptor
+                if (!processed && descriptor is SyntheticFieldDescriptor) {
                     val parameter = processSyntheticFieldVariable(descriptor)
                     checkBounds(descriptor, expression, parameter)
                     processed = true
@@ -152,7 +151,6 @@ class CodeFragmentParameterAnalyzer(
 
                 // If a reference has receivers, we can calculate its value using them, no need to capture
                 if (!processed) {
-                    val descriptor = resolvedCall.resultingDescriptor
                     val parameter = processDescriptor(descriptor, expression)
                     checkBounds(descriptor, expression, parameter)
                 }
