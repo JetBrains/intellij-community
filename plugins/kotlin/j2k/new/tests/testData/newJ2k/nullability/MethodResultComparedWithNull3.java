@@ -7,7 +7,7 @@ class C {
     void foo(I i) {
         String result = i.getString();
         if (result != null) {
-            print(result);
+            System.out.println(result);
         }
     }
 }
