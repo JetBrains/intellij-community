@@ -62,7 +62,9 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
     val serviceName = StringUtil.getShortName(qualifiedName)
     val message = DevKitBundle.message("inspection.simplifiable.service.retrieving.can.be.replaced.with", serviceName,
                                        replacementMethod.name)
-    val fix = ReplaceWithGetInstanceCallFix(serviceName, replacementMethod.name, howServiceRetrieved)
+    val methodNameProvider = MethodNameProviders.forLanguage(retrievingExpression.lang)
+    val methodName = methodNameProvider?.getName(replacementMethod) ?: replacementMethod.name
+    val fix = ReplaceWithGetInstanceCallFix(serviceName, methodName, howServiceRetrieved)
     when (retrievingExpression) {
       is UQualifiedReferenceExpression -> holder.registerUProblem(retrievingExpression, message, fixes = arrayOf(fix))
       is UCallExpression -> holder.registerUProblem(retrievingExpression, message, fixes = arrayOf(fix))
