@@ -9,10 +9,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.platform.ae.database.IdService
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ae.database.activities.DatabaseBackedCounterUserActivity
-import com.intellij.platform.ae.database.dbs.IUserActivityDatabaseLayer
-import com.intellij.platform.ae.database.dbs.SqliteDatabaseMetadata
-import com.intellij.platform.ae.database.dbs.ISqliteExecutor
-import com.intellij.platform.ae.database.dbs.SqliteLazyInitializedDatabase
+import com.intellij.platform.ae.database.dbs.*
 import com.intellij.platform.ae.database.utils.InstantUtils
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.sqlite.ObjectBinderFactory
@@ -29,7 +26,7 @@ class CounterUserActivityDatabase(cs: CoroutineScope) : ICounterUserActivityData
                                                         IUserActivityDatabaseLayer,
                                                         IReadOnlyCounterUserActivityDatabase,
                                                         IInternalCounterUserActivityDatabase,
-                                                        ISqliteExecutor {
+                                                        ISqliteExecutor, ISqliteBackedDatabaseLayer {
   companion object {
     internal suspend fun getInstanceAsync() = serviceAsync<CounterUserActivityDatabase>()
   }
@@ -91,4 +88,6 @@ class CounterUserActivityDatabase(cs: CoroutineScope) : ICounterUserActivityData
   private suspend fun <T> execute(action: suspend (initDb: SqliteConnection, metadata: SqliteDatabaseMetadata) -> T): T? {
     return SqliteLazyInitializedDatabase.getInstanceAsync().execute(action)
   }
+
+  override val tableName: String = "counterUserActivity"
 }

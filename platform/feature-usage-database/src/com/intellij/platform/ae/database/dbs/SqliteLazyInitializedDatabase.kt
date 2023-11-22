@@ -39,13 +39,7 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
   private val connectionMutex = Mutex()
   private var connectionAttempts = 0
   private var connection: SqliteConnection? = null
-  private var mutableMetadata: SqliteDatabaseMetadata? = null
-  val metadata: SqliteDatabaseMetadata get() {
-    val md = mutableMetadata
-    assert(md != null) { "Database is not yet initialized" }
-
-    return md!!
-  }
+  private var metadata: SqliteDatabaseMetadata? = null
 
   private var retryMessageLogged = false
 
@@ -53,6 +47,7 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
 
   init {
     cs.launch {
+      if (ApplicationManager.getApplication().isUnitTestMode) return@launch
       cs.awaitCancellationAndInvoke {
         logger.info("Database disposal started, ${actionsBeforeDatabaseDisposal.size} actions to perform")
         logger.runAndLogException {
@@ -79,11 +74,16 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     actionsBeforeDatabaseDisposal.add(action)
   }
 
-  @TestOnly
-  suspend fun doExecuteBeforeConnectionClosed() {
+  private suspend fun doExecuteBeforeConnectionClosed() {
     for (action in actionsBeforeDatabaseDisposal) {
       action()
     }
+  }
+
+  @TestOnly
+  suspend fun closeDatabase() {
+    doExecuteBeforeConnectionClosed()
+    connectionMutex.withLock { connection }?.close()
   }
 
   /**
@@ -96,7 +96,7 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
       retryMessageLogged = true
       return null
     }
-    val myConnection = connectionMutex.withLock {
+    val myPair = connectionMutex.withLock {
       try {
         getOrInitConnection()
       }
@@ -106,12 +106,14 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
       }
     }
 
-    if (myConnection == null) return null
+    if (myPair == null) return null
+
+    val (myConnection, myMetadata) = myPair
 
     check(myConnection.isOpen()) { "Database is not open" }
 
     return withContext(Dispatchers.IO) {
-      action(myConnection, metadata)
+      action(myConnection, myMetadata)
     }
   }
 
@@ -121,10 +123,14 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
     }
   }
 
-  private fun getOrInitConnection(): SqliteConnection {
+  private fun getOrInitConnection(): Pair<SqliteConnection, SqliteDatabaseMetadata> {
     val currentConnection = connection
-    return if (currentConnection != null) {
-      currentConnection
+    val currentMetadata = metadata
+    if (currentConnection != null && currentMetadata == null) {
+      logger.error("Metadata is null while connection is not")
+    }
+    return if (currentConnection != null && currentMetadata != null) {
+      currentConnection to currentMetadata
     }
     else {
       logger.info("Initializing database connection")
@@ -136,16 +142,20 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
       val newMetadata = SqliteDatabaseMetadata(newConnection, isNewFile)
 
       connection = newConnection
-      mutableMetadata = newMetadata
+      metadata = newMetadata
 
-      return newConnection
+      return newConnection to newMetadata
     }
   }
 
   private fun SqliteConnection.isOpen() = !isClosed
 
   private fun getDatabasePath(): Path? {
-    if (ApplicationManager.getApplication().isUnitTestMode) return null // in-memory database
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      val tempPath = System.getProperty("ae.database.path")
+      assert(tempPath != null) { "No path set to temp database" }
+      return Path.of(tempPath)
+    }
 
     val folder = PathManager.getCommonDataPath().resolve("IntelliJ")
     folder.createDirectories()

@@ -203,7 +203,11 @@ class AddStatisticsEventLogListenerTemporary : Disposable {
   private val myListener = Listener()
 
   init {
-    ApplicationManager.getApplication().service<EventLogListenersManager>().subscribe(myListener, "FUS")
+    ApplicationManager.getApplication().let { application ->
+      if (!application.isUnitTestMode) {
+        application.service<EventLogListenersManager>().subscribe(myListener, "FUS")
+      }
+    }
   }
 
   override fun dispose() {
