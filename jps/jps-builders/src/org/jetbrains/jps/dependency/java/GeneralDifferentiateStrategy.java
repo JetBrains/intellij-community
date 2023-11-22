@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.java;
 
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.jps.dependency.DifferentiateContext;
 import org.jetbrains.jps.dependency.DifferentiateStrategy;
 import org.jetbrains.jps.dependency.Graph;
@@ -13,7 +14,8 @@ import org.jetbrains.jps.javac.Iterators;
  * @noinspection unused
  */
 public abstract class GeneralDifferentiateStrategy implements DifferentiateStrategy {
-
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.dependency.java.GeneralDifferentiateStrategy");
+  
   @Override
   public final boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter) {
     Utils future = new Utils(context.getGraph(), context.getDelta());
@@ -337,7 +339,9 @@ public abstract class GeneralDifferentiateStrategy implements DifferentiateStrat
     return true;
   }
 
-  protected abstract boolean isDebugEnabled();
+  protected boolean isDebugEnabled() {
+    return LOG.isDebugEnabled();
+  }
 
   protected void debug(String message, Object... details) {
     if (isDebugEnabled()) {
@@ -349,5 +353,7 @@ public abstract class GeneralDifferentiateStrategy implements DifferentiateStrat
     }
   }
 
-  protected abstract void debug(String message);
+  protected void debug(String message) {
+    LOG.debug(message);
+  }
 }

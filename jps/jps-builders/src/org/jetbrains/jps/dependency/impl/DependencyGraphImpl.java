@@ -6,8 +6,8 @@ import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.ClassShortNameIndex;
-import org.jetbrains.jps.dependency.java.JavaDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
+import org.jetbrains.jps.dependency.kotlin.KotlinAwareJavaDifferentiateStrategy;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
@@ -16,8 +16,9 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 public final class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
+  // todo: some API to configure the set of strategies suitable for the particular environment. E.g. if some languages are not present in a project, there is no need to run rules specific to these languages
   private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(
-    new JavaDifferentiateStrategy()
+    new KotlinAwareJavaDifferentiateStrategy()
   );
   private final Set<String> myRegisteredIndices;
 
