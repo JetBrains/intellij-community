@@ -1047,6 +1047,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/constructor.kt");
         }
 
+        @TestMetadata("constructorParameter.kt")
+        public void testConstructorParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/constructorParameter.kt");
+        }
+
         @TestMetadata("definitelyNonNullType.kt")
         public void testDefinitelyNonNullType() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/definitelyNonNullType.kt");
@@ -1095,6 +1100,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("forAsExpression.kt")
         public void testForAsExpression() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/forAsExpression.kt");
+        }
+
+        @TestMetadata("functionParameter.kt")
+        public void testFunctionParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/functionParameter.kt");
         }
 
         @TestMetadata("functionType.kt")
@@ -1240,6 +1250,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("unitType.kt")
         public void testUnitType() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/unitType.kt");
+        }
+
+        @TestMetadata("variableWithoutInitializer.kt")
+        public void testVariableWithoutInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/variableWithoutInitializer.kt");
         }
     }
 

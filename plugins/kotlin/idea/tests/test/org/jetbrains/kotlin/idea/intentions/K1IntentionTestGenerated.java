@@ -17446,6 +17446,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/specifyTypeExplicitly/constructor.kt");
         }
 
+        @TestMetadata("constructorParameter.kt")
+        public void testConstructorParameter() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/constructorParameter.kt");
+        }
+
         @TestMetadata("definitelyNonNullType.kt")
         public void testDefinitelyNonNullType() throws Exception {
             runTest("testData/intentions/specifyTypeExplicitly/definitelyNonNullType.kt");
@@ -17494,6 +17499,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("forAsExpression.kt")
         public void testForAsExpression() throws Exception {
             runTest("testData/intentions/specifyTypeExplicitly/forAsExpression.kt");
+        }
+
+        @TestMetadata("functionParameter.kt")
+        public void testFunctionParameter() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/functionParameter.kt");
         }
 
         @TestMetadata("functionType.kt")
@@ -17639,6 +17649,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
         @TestMetadata("unitType.kt")
         public void testUnitType() throws Exception {
             runTest("testData/intentions/specifyTypeExplicitly/unitType.kt");
+        }
+
+        @TestMetadata("variableWithoutInitializer.kt")
+        public void testVariableWithoutInitializer() throws Exception {
+            runTest("testData/intentions/specifyTypeExplicitly/variableWithoutInitializer.kt");
         }
     }
 
