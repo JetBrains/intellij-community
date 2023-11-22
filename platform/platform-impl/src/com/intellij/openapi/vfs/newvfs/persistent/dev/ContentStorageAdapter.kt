@@ -7,6 +7,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSContentAccessor
 import com.intellij.util.hash.ContentHashEnumerator
+import com.intellij.util.io.storage.IStorage
 import com.intellij.util.io.storage.RecordIdIterator
 import com.intellij.util.io.storage.RefCountingContentStorage
 import com.intellij.util.io.storage.VFSContentStorage
@@ -23,9 +24,10 @@ private val LOG = Logger.getInstance(ContentStorageAdapter::class.java)
 /**
  * Adapter (RefCountingContentStorage + ContentHashEnumerator) -> VFSContentStorage
  */
-class ContentStorageAdapter(private val contentStorage: RefCountingContentStorage,
+class ContentStorageAdapter(contentStorage: RefCountingContentStorage,
                             hashesEnumeratorSupplier: ThrowableComputable<ContentHashEnumerator, IOException>) : VFSContentStorage {
 
+  private val contentStorage = contentStorage
   private val hashesEnumerator: ContentHashEnumerator
 
   private val lock: ReadWriteLock = ReentrantReadWriteLock()
@@ -45,7 +47,7 @@ class ContentStorageAdapter(private val contentStorage: RefCountingContentStorag
     val hashesEnumerator = hashesEnumeratorSupplier.compute()
 
     val hashRecordsCount = hashesEnumerator.recordsCount()
-    val recordsCount = contentStorage.getRecordsCount()
+    val recordsCount = contentStorage.recordsCount
     if (hashRecordsCount != recordsCount) {
       LOG.warn("Content storage is not match content hash enumerator: " +
                "contents.records(=$recordsCount) != contentHashes.records(=$hashRecordsCount) -> trying rebuild hashesEnumerator from content storage")
@@ -73,7 +75,7 @@ class ContentStorageAdapter(private val contentStorage: RefCountingContentStorag
   }
 
   @Throws(IOException::class)
-  private fun fillHashesEnumeratorByContentStorage(contentStorage: RefCountingContentStorage,
+  private fun fillHashesEnumeratorByContentStorage(contentStorage: IStorage,
                                                    hashesEnumeratorToFill: ContentHashEnumerator) {
     //Try to fill hashesEnumerator from contentStorage records (and check contentIds match)
     // (along the way we also checks contentStorage is OK -- i.e. all the records could be read)
@@ -100,7 +102,14 @@ class ContentStorageAdapter(private val contentStorage: RefCountingContentStorag
   }
 
   @Throws(IOException::class)
+  override fun isEmpty(): Boolean {
+    return contentStorage.recordsCount == 0
+  }
+
+  @Throws(IOException::class)
   override fun getRecordsCount(): Int = lock.readLock().withLock {
+    //.liveRecordsCount should be == .recordsCount, since we never remove the records -- but abstractly
+    //.recordsCount is that we want here: monotonically increasing number
     contentStorage.recordsCount
   }
 

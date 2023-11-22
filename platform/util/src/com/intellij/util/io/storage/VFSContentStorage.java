@@ -41,6 +41,8 @@ public interface VFSContentStorage extends CleanableStorage, Closeable, Forceabl
   //MAYBE RC: replace it with .forEach()-style iteration method
   RecordIdIterator createRecordIdIterator() throws IOException;
 
+  boolean isEmpty() throws IOException;
+
   int getRecordsCount() throws IOException;
 
 

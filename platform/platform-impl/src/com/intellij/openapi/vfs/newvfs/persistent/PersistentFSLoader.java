@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.ContentHashEnumeratorOverDurableEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.ContentStorageAdapter;
@@ -307,7 +306,7 @@ public final class PersistentFSLoader {
       //   => storages were just created
       //   => we should stamp them with current implVersion and go ahead.
       boolean storagesAreEmpty = recordsStorage.recordsCount() == 0
-                                 && contentsStorage.getRecordsCount() == 0
+                                 && contentsStorage.isEmpty()
                                  && attributesStorage.isEmpty();
       if (commonVersion == 0 && storagesAreEmpty) {
         //all storages are fresh new => assign their versions to the current one:
@@ -578,7 +577,7 @@ public final class PersistentFSLoader {
   public boolean isJustCreated() throws IOException {
     return recordsStorage.recordsCount() == 0
            && attributesStorage.isEmpty()
-           && contentsStorage.getRecordsCount() == 0;
+           && contentsStorage.isEmpty();
   }
 
 
