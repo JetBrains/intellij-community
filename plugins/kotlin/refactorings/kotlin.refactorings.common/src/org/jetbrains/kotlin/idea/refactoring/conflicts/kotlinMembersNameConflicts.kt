@@ -50,10 +50,22 @@ fun KtScope.findSiblingsByName(
     newName: Name,
     containingSymbol: KtDeclarationSymbol? = symbol.getContainingSymbol()
 ): Sequence<KtDeclarationSymbol> {
-    return getClassifierSymbols(newName) +
-            getCallableSymbols(newName).filter { callable ->
-                symbol != callable &&
+    val callables = getCallableSymbols(newName).filter { callable ->
+        symbol != callable &&
                 ((callable as? KtSymbolWithVisibility)?.visibility != Visibilities.Private || callable.getContainingSymbol() == containingSymbol)
+    }
+
+    val classifierSymbols = getClassifierSymbols(newName)
+    if (symbol is KtFunctionLikeSymbol) {
+        return classifierSymbols.flatMap { (it as? KtClassOrObjectSymbol)?.getDeclaredMemberScope()?.getConstructors() ?: emptySequence() } + callables
+    }
+
+    return classifierSymbols + callables.filter { callable ->
+        if (callable is KtFunctionLikeSymbol && symbol is KtClassOrObjectSymbol) {
+            symbol.getDeclaredMemberScope().getConstructors().any { areSameSignatures(it, callable) }
+        } else {
+            true
+        }
     }
 }
 

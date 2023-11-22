@@ -38,6 +38,46 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/BacktickedWithAccessors.kt");
     }
 
+    @TestMetadata("conflicts/classes/ClassWithFunction.kt")
+    public void testConflicts_classes_ClassWithFunction() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/classes/ClassWithFunction.kt");
+    }
+
+    @TestMetadata("conflicts/classes/ClassWithFunctionSameSignature.kt")
+    public void testConflicts_classes_ClassWithFunctionSameSignature() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/classes/ClassWithFunctionSameSignature.kt");
+    }
+
+    @TestMetadata("conflicts/classes/ClassWithFunctionTypeParameters.kt")
+    public void testConflicts_classes_ClassWithFunctionTypeParameters() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/classes/ClassWithFunctionTypeParameters.kt");
+    }
+
+    @TestMetadata("conflicts/classes/ClassWithProperty.kt")
+    public void testConflicts_classes_ClassWithProperty() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/classes/ClassWithProperty.kt");
+    }
+
+    @TestMetadata("conflicts/classes/ClassWithSecondaryConstructorFunction.kt")
+    public void testConflicts_classes_ClassWithSecondaryConstructorFunction() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/classes/ClassWithSecondaryConstructorFunction.kt");
+    }
+
+    @TestMetadata("conflicts/classes/FunctionWithClass.kt")
+    public void testConflicts_classes_FunctionWithClass() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/classes/FunctionWithClass.kt");
+    }
+
+    @TestMetadata("conflicts/classes/FunctionWithClassSameSignature.kt")
+    public void testConflicts_classes_FunctionWithClassSameSignature() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/classes/FunctionWithClassSameSignature.kt");
+    }
+
+    @TestMetadata("conflicts/classes/FunctionWithClassTypeParameters.kt")
+    public void testConflicts_classes_FunctionWithClassTypeParameters() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/classes/FunctionWithClassTypeParameters.kt");
+    }
+
     @TestMetadata("EnumEntries.kt")
     public void testEnumEntries() throws Exception {
         runTest("testData/refactoring/rename/inplace/EnumEntries.kt");
