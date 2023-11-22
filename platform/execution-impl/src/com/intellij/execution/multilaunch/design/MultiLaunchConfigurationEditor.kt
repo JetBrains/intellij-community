@@ -64,7 +64,10 @@ class MultiLaunchConfigurationEditor(private val project: Project, private val c
 
   override fun createEditor(lifetime: Lifetime): JComponent {
     return JPanel(MigLayout("fill")).apply {
-      add(JLabel(ExecutionBundle.message("run.configurations.multilaunch.tasks.to.launch")), "wrap")
+      val comment = JLabel(ExecutionBundle.message("run.configurations.multilaunch.tasks.to.launch")).apply {
+        foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+      }
+      add(comment, "wrap")
       val table = createTable(lifetime)
       val pane = wrapWithScrollPane(table)
       add(pane, "grow, wrap")
