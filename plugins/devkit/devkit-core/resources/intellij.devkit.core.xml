@@ -648,6 +648,12 @@
       <with attribute="implementationClass"
             implements="org.jetbrains.idea.devkit.inspections.StaticInitializationInExtensionsVisitorProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.methodNameProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass"
+            implements="org.jetbrains.idea.devkit.inspections.MethodNameProvider"/>
+    </extensionPoint>
   </extensionPoints>
 
   <actions>
