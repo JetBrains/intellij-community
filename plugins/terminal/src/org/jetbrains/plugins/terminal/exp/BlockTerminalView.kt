@@ -59,7 +59,6 @@ class BlockTerminalView(
 
     promptView.controller.addListener(object : PromptStateListener {
       override fun promptVisibilityChanged(visible: Boolean) {
-        promptView.component.isVisible = visible
         component.revalidate()
         invokeLater {
           // do not focus the terminal if something outside the terminal is focused now

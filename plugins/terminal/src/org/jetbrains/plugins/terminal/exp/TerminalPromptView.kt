@@ -72,6 +72,10 @@ class TerminalPromptView(
     })
   }
 
+  override fun promptVisibilityChanged(visible: Boolean) {
+    component.isVisible = visible
+  }
+
   override fun promptLabelChanged(newText: @NlsSafe String) {
     runInEdt { promptLabel.text = newText }
   }
