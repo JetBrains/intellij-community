@@ -47,9 +47,9 @@ private val LOG = logger<FUStateUsagesLogger>()
  */
 @Service(Service.Level.APP)
 @Internal
-class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : UsagesCollectorConsumer {
+class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : UsagesCollectorConsumer {
   init {
-    cs.launch {
+    coroutineScope.launch {
       logApplicationStateRegularly()
     }
   }
@@ -157,10 +157,8 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
     }
   }
 
-  fun scheduleLogApplicationStatesOnStartup() {
-    cs.launch {
-      logApplicationStates(onStartup = true)
-    }
+  suspend fun logApplicationStatesOnStartup() {
+    logApplicationStates(onStartup = true)
   }
 
   internal suspend fun logApplicationStates(onStartup: Boolean) {

@@ -7,16 +7,15 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.internal.statistic.service.fus.collectors.ProjectFUStateUsagesLogger
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.minutes
 
@@ -25,16 +24,15 @@ private val LOG_APPLICATION_STATE_SMART_MODE_DELAY = 1.minutes
 // avoid overlapping logging from periodic scheduler and OneTimeLogger (long indexing case)
 internal val allowExecution = AtomicBoolean(true) // TODO get rid of this
 
-internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListener {
-
-  override suspend fun execute(asyncScope: CoroutineScope) : Unit = blockingContext {
-    ApplicationManager.getApplication().service<FUStateUsagesLogger>() // init service
+private class StatisticsStateCollectorsScheduler : ApplicationInitializedListener {
+  override suspend fun execute(asyncScope: CoroutineScope) {
+    // init service
+    serviceAsync<FUStateUsagesLogger>()
   }
 
-  internal class MyStartupActivity : ProjectActivity {
+  class MyStartupActivity : ProjectActivity {
     init {
-      val app = ApplicationManager.getApplication()
-      if (app.isUnitTestMode) {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
         throw ExtensionNotApplicableException.create()
       }
     }
@@ -45,27 +43,26 @@ internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListen
         return
       }
 
-      FUCounterUsageLogger.getInstance() // init service
-      project.service<ProjectFUStateUsagesLogger>() // init service
+      // init service
+      serviceAsync<FUCounterUsageLogger>()
+      // init service
+      project.serviceAsync<ProjectFUStateUsagesLogger>()
 
-      if (allowExecution.get()) {
-        DumbService.getInstance(project).runWhenSmart {
-          // wait until all projects will exit dumb mode
-          if (ProjectManager.getInstance().openProjects.any { p -> !p.isDisposed && p.isInitialized && DumbService.getInstance(p).isDumb }) {
-            return@runWhenSmart
-          }
-          scheduleLogging(project)
-        }
+      if (!allowExecution.get()) {
+        return
       }
-    }
 
-    // check and execute only once because several projects can exit dumb mode at the same time
-    private fun scheduleLogging(project: Project) {
+      project.waitForSmartMode()
+
+      // wait until all projects exit dumb mode
+      if (serviceAsync<ProjectManager>().openProjects.any { p -> !p.isDisposed && p.isInitialized && DumbService.getInstance(p).isDumb }) {
+        return
+      }
+
+      // check and execute only once because several projects can exit dumb mode at the same time
       if (allowExecution.getAndSet(false)) {
-        project.coroutineScope.launch {
-          delay(LOG_APPLICATION_STATE_SMART_MODE_DELAY)
-          FUStateUsagesLogger.getInstance().scheduleLogApplicationStatesOnStartup()
-        }
+        delay(LOG_APPLICATION_STATE_SMART_MODE_DELAY)
+        serviceAsync<FUStateUsagesLogger>().logApplicationStatesOnStartup()
       }
     }
   }

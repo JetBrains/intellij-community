@@ -32,7 +32,7 @@ private class StatisticsStateCollectorsTrigger : AppLifecycleListener {
       // only proceed if the IDE opens with a welcome screen and stays idle on it for some time
       val welcomeFrame = WelcomeFrame.getInstance()
       if (welcomeFrame != null && welcomeFrame == ref.get()) {
-        serviceAsync<FUStateUsagesLogger>().scheduleLogApplicationStatesOnStartup()
+        serviceAsync<FUStateUsagesLogger>().logApplicationStatesOnStartup()
       }
     }
   }
