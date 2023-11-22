@@ -41,10 +41,8 @@ internal class CounterUserActivityDatabaseThrottler(private val cs: CoroutineSco
       }
     }
 
-    cs.launch {
-      cs.awaitCancellationAndInvoke {
-        commitChanges()
-      }
+    database.executeBeforeConnectionClosed {
+      commitChanges()
     }
   }
 

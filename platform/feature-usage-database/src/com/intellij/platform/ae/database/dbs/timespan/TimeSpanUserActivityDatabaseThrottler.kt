@@ -33,11 +33,9 @@ internal class TimeSpanUserActivityDatabaseThrottler(cs: CoroutineScope,
       }
     }
 
-    cs.launch {
-      cs.awaitCancellationAndInvoke {
-        commitChanges(true)
-        commitStaleEvents()
-      }
+    database.executeBeforeConnectionClosed {
+      commitChanges(true)
+      commitStaleEvents()
     }
   }
 

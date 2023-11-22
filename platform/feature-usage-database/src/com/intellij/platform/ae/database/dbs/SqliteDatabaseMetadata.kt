@@ -22,7 +22,7 @@ private val logger = logger<SqliteDatabaseMetadata>()
  *
  * This class must be initialized on background thread
  */
-class SqliteDatabaseMetadata internal constructor(private val connection: SqliteConnection, shouldRunMigrations: Boolean) {
+class SqliteDatabaseMetadata internal constructor(private val connection: SqliteConnection, isNewFile: Boolean) {
   /**
    * ID from database that represents a pair of IDE ID [IdService.id]
    * and machine ID [IdService.machineId] and IDE family [BuildNumber.currentVersion.productCode]
@@ -31,7 +31,7 @@ class SqliteDatabaseMetadata internal constructor(private val connection: Sqlite
 
   init {
     ThreadingAssertions.assertBackgroundThread()
-    if (!shouldRunMigrations) {
+    if (isNewFile) {
       logger.info("New database, executing migration")
       executeMigrations(0)
     }
@@ -56,6 +56,10 @@ class SqliteDatabaseMetadata internal constructor(private val connection: Sqlite
 
   private fun executeMigrations(fromVersion: Int) {
     val migrations = MIGRATIONS.subList(maxOf(fromVersion, 0), LAST_DB_VERSION)
+    if (migrations.isEmpty()) {
+      return
+    }
+
     for (migration in migrations) {
       connection.execute(migration)
     }
@@ -71,13 +75,13 @@ class SqliteDatabaseMetadata internal constructor(private val connection: Sqlite
   }
 
   private fun initIdeId(): Int {
-    val potentialResult = connection.prepareStatement("SELECT id FROM ide WHERE ide_id = (?) AND machine_id = (?) LIMIT 1", ObjectBinder(2)).use { statement ->
+    val potentialResult = connection.prepareStatement("SELECT id FROM ide WHERE ide_id = (?) AND machine_id = (?) LIMIT 1", ObjectBinderFactory.create2<String, String>()).use { statement ->
       statement.binder.bind(IdService.getInstance().id, IdService.getInstance().machineId)
       statement.selectInt()
     }
     if (potentialResult != null) return potentialResult
 
-    return connection.prepareStatement("insert into ide(ide_id, machine_id, family) values (?, ?, ?) RETURNING id;", ObjectBinder(3)).use { statement ->
+    return connection.prepareStatement("insert into ide(ide_id, machine_id, family) values (?, ?, ?) RETURNING id;", ObjectBinderFactory.create3<String, String, String>()).use { statement ->
       statement.binder.bind(IdService.getInstance().id, IdService.getInstance().machineId, IdService.getInstance().ideCode)
       statement.selectInt() ?: error("Null was returned when not expected")
     }

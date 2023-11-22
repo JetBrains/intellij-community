@@ -22,9 +22,8 @@ fun <T : IUserActivityDatabaseLayer> runDatabaseLayerTest(
 private fun runInitializedDatabaseTestInternal(action: suspend (CoroutineScope, SqliteLazyInitializedDatabase) -> Unit) {
   timeoutRunBlocking {
     withContext(Dispatchers.IO) {
-      val db = SqliteLazyInitializedDatabase(this, null)
+      val db = SqliteLazyInitializedDatabase.getInstanceAsync()
       action(this, db)
-      db.onCoroutineScopeDeath()
       cancel()
     }
   }

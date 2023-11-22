@@ -6,29 +6,34 @@ package com.intellij.platform.ae.database.dbs
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.platform.ae.database.IdService
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.io.createDirectories
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import org.jetbrains.sqlite.*
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = logger<SqliteLazyInitializedDatabase>()
 
-private val MAX_CONNECTION_RETRIES_ALLOWED = 4
+private const val MAX_CONNECTION_RETRIES_ALLOWED = 4
 
 /**
  * This service provides access to an instance of [SqliteConnection]
  */
 @Service
-class SqliteLazyInitializedDatabase : ISqliteExecutor, ISqliteInternalExecutor {
+class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExecutor, ISqliteInternalExecutor {
   companion object {
     internal suspend fun getInstanceAsync() = serviceAsync<SqliteLazyInitializedDatabase>()
+    internal fun getInstance() = ApplicationManager.getApplication().service<SqliteLazyInitializedDatabase>()
   }
   private val connectionMutex = Mutex()
   private var connectionAttempts = 0
@@ -41,12 +46,47 @@ class SqliteLazyInitializedDatabase : ISqliteExecutor, ISqliteInternalExecutor {
     return md!!
   }
 
+  private var retryMessageLogged = false
+
+  private val actionsBeforeDatabaseDisposal = mutableListOf<suspend () -> Unit>()
+
+  init {
+    cs.launch {
+      cs.awaitCancellationAndInvoke {
+        logger.info("Database disposal started, ${actionsBeforeDatabaseDisposal.size} actions to perform")
+        logger.runAndLogException {
+          withTimeout(4.seconds) {
+            for (action in actionsBeforeDatabaseDisposal) {
+              action()
+            }
+          }
+        }
+        logger.runAndLogException {
+          val myConnection = connectionMutex.withLock { connection }
+          if (myConnection != null) {
+            myConnection.close()
+          }
+          else {
+            logger.info("Connection was null, so didn't close it")
+          }
+        }
+        logger.info("Database disposal finished")
+      }
+    }
+  }
+
+  fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
+    actionsBeforeDatabaseDisposal.add(action)
+  }
+
   /**
    * Allows executing code with [SqliteConnection]
    */
   override suspend fun <T> execute(action: suspend (initDb: SqliteConnection, metadata: SqliteDatabaseMetadata) -> T): T? {
     val myConnectionAttempts = connectionMutex.withLock { connectionAttempts }
-    if (myConnectionAttempts >= MAX_CONNECTION_RETRIES_ALLOWED) {
+    if (myConnectionAttempts >= MAX_CONNECTION_RETRIES_ALLOWED && !retryMessageLogged) {
+      logger.error("Max retries reached to init db")
+      retryMessageLogged = true
       return null
     }
     val myConnection = connectionMutex.withLock {
@@ -84,8 +124,9 @@ class SqliteLazyInitializedDatabase : ISqliteExecutor, ISqliteInternalExecutor {
       logger.trace(ExceptionUtil.currentStackTrace())
       ++connectionAttempts
       val path = getDatabasePath()
+      val isNewFile = path == null || !path.exists()
       val newConnection = SqliteConnection(path, false)
-      val newMetadata = SqliteDatabaseMetadata(newConnection, path?.exists() ?: true)
+      val newMetadata = SqliteDatabaseMetadata(newConnection, isNewFile)
 
       connection = newConnection
       mutableMetadata = newMetadata
@@ -102,6 +143,6 @@ class SqliteLazyInitializedDatabase : ISqliteExecutor, ISqliteInternalExecutor {
     val folder = PathManager.getCommonDataPath().resolve("IntelliJ")
     folder.createDirectories()
 
-    return folder.resolve("ae.db")
+    return folder.resolve("ae_${IdService.getInstance().id}.db")
   }
 }

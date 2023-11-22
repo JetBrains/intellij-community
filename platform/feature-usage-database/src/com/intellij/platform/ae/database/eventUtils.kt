@@ -4,10 +4,7 @@ package com.intellij.platform.ae.database
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ae.database.activities.UserActivity
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.sqlite.SqliteResultSet
 
 object AEEventUtils
@@ -19,11 +16,9 @@ object AEEventUtils
  * @param activity user activity that will be updated
  * @param action code that updates activity, is a suspend lambda. [activity] is passed into lambda
  */
-inline fun <T : UserActivity> runUpdateEvent(activity: T, crossinline action: suspend (T) -> Unit) {
+inline fun <T : UserActivity> CoroutineScope.runUpdateEvent(activity: T, crossinline action: suspend (T) -> Unit) {
   if (ApplicationManager.getApplication().isUnitTestMode) return
-  /*
-  Temporary disable writing to database
-  AEDatabaseLifetime.getScope().launch {
+  launch {
     withContext(Dispatchers.Default) {
       try {
         action(activity)
@@ -35,7 +30,7 @@ inline fun <T : UserActivity> runUpdateEvent(activity: T, crossinline action: su
         logger<AEEventUtils>().error(t)
       }
     }
-  }*/
+  }
 }
 
 internal fun formatString(params: Map<String, String>): String {

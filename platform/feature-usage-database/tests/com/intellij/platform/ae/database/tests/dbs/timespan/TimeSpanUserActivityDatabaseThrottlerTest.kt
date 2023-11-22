@@ -52,13 +52,6 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
         asserts(activity, startedAt, endedAt, isFinished, lock)
         return 0
       }
-
-      override fun invokeOnDatabaseDeath(action: suspend () -> Unit) {
-        onDatabaseDeath.add(action)
-      }
-      override suspend fun <T> execute(action: suspend () -> T) = withContext(Dispatchers.IO) {
-        action()
-      }
     }
 
     timeoutRunBlocking {
@@ -180,14 +173,6 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
           endedEvents.add(activity.id)
           return 0
         }
-
-        override fun invokeOnDatabaseDeath(action: suspend () -> Unit) {
-          onDatabaseDeath.add(action)
-        }
-
-        override suspend fun <T> execute(action: suspend () -> T) = withContext(Dispatchers.IO) {
-          action()
-        }
       }
 
       val submissionLock = Mutex(true)
@@ -251,14 +236,6 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
             savedEvents[activity.id] = itemId
           }
           return itemId
-        }
-
-        override fun invokeOnDatabaseDeath(action: suspend () -> Unit) {
-          onDatabaseDeath.add(action)
-        }
-
-        override suspend fun <T> execute(action: suspend () -> T) = withContext(Dispatchers.IO) {
-          action()
         }
       }
 
