@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.*
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.Topic
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -66,7 +67,10 @@ abstract class DumbService {
    * Pause the current thread until dumb mode ends and then continue execution.
    * NOTE: there are no guarantees that a new dumb mode won't begin before the next statement.
    * Hence: use with care. Consider using [runWhenSmart] or [runReadActionInSmartMode] instead
+   *
+   * See [Project.waitForSmartMode] for using in a suspend context.
    */
+  @RequiresBlockingContext
   abstract fun waitForSmartMode()
 
   /**
