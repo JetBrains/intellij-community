@@ -23,6 +23,7 @@ import java.util.function.Consumer;
  * @param <V> the type of mapped values
  * Use {@link ConcurrentCollectionFactory#createConcurrentIntObjectMap()} to create this map
  */
+@SuppressWarnings("ALL")
 final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
   /*
