@@ -1,22 +1,30 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("SSBasedInspection")
+
 package com.intellij.platform.testFramework.diagnostic
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import kotlinx.coroutines.runBlocking
 import java.util.*
 
 interface MetricsPublisher {
-  fun publish(fullQualifiedTestMethodName: String, metricName: String): Unit
+  suspend fun publish(fullQualifiedTestMethodName: String, metricName: String)
+
+  fun publishSync(fullQualifiedTestMethodName: String, metricName: String) {
+    runBlocking {
+      publish(fullQualifiedTestMethodName, metricName)
+    }
+  }
 
   companion object {
-    @JvmStatic
     fun getInstance(): MetricsPublisher = instance.value
   }
 }
 
 /** Dummy that always "works successfully" */
 class NoopMetricsPublisher : MetricsPublisher {
-  override fun publish(fullQualifiedTestMethodName: String, metricName: String) {}
+  override suspend fun publish(fullQualifiedTestMethodName: String, metricName: String) {}
 }
 
 private val instance: SynchronizedClearableLazy<MetricsPublisher> = SynchronizedClearableLazy {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -15,7 +15,10 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.io.StorageLockContext;
 import kotlin.reflect.KFunction;
-import kotlinx.coroutines.*;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
+import kotlinx.coroutines.Dispatchers;
+import kotlinx.coroutines.SupervisorKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +33,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.*;
-
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpanAttribute;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpanAttributes;
 
 public class PerformanceTestInfo {
   private record IterationStatus(@NotNull IterationResult iterationResult,
@@ -370,7 +373,7 @@ public class PerformanceTestInfo {
       try {
         // publish warmup and clean measurements at once at the end of the runs
         if (iterationType.equals(IterationMode.MEASURE)) {
-          MetricsPublisher.getInstance().publish(fullQualifiedTestMethodName, launchName);
+          MetricsPublisher.Companion.getInstance().publishSync(fullQualifiedTestMethodName, launchName);
         }
       }
       catch (Throwable t) {

@@ -4,17 +4,17 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.tools.ide.util.common.PrintFailuresMode
 import com.intellij.tools.ide.util.common.withRetry
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.time.Duration.Companion.milliseconds
 
 open class OpentelemetryJsonParser(private val spanFilter: SpanFilter) {
-
-  private fun getSpans(file: File): JsonNode {
+  private fun getSpans(file: Path): JsonNode {
     val spanData: JsonNode? = withRetry(messageOnFailure = "Failure during spans extraction from OpenTelemetry json file",
                                         retries = 5,
                                         printFailuresMode = PrintFailuresMode.ONLY_LAST_FAILURE,
                                         delay = 300.milliseconds) {
-      val json = file.readText()
+      val json = Files.readString(file)
 
       val root = jacksonObjectMapper().readTree(json)
       val data = root.get("data")
@@ -34,7 +34,7 @@ open class OpentelemetryJsonParser(private val spanFilter: SpanFilter) {
     return allSpans
   }
 
-  private fun getParentToSpansMap(file: File): Map<String, Set<SpanElement>> {
+  private fun getParentToSpanMap(file: Path): Map<String, Set<SpanElement>> {
     val indexParentToChild = mutableMapOf<String, MutableSet<SpanElement>>()
     val spans = getSpans(file)
     for (span in spans) {
@@ -46,9 +46,9 @@ open class OpentelemetryJsonParser(private val spanFilter: SpanFilter) {
     return indexParentToChild
   }
 
-  fun getSpanElements(file: File): Sequence<SpanElement> {
+  fun getSpanElements(file: Path): Sequence<SpanElement> {
     val spans = getSpanElements(getSpans(file))
-    val index = getParentToSpansMap(file)
+    val index = getParentToSpanMap(file)
     val filter = spans.filter { spanElement -> spanFilter.filter(spanElement) }
     val result = mutableSetOf<SpanElement>()
     filter.forEach {

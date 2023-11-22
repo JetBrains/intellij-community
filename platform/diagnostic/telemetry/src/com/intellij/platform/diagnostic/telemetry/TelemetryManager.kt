@@ -79,7 +79,7 @@ interface TelemetryManager {
    * [Do not use this method in production code. Since it may be blocking.](https://opentelemetry.io/docs/specs/otel/performance/#shutdown-and-explicit-flushing-could-block)
    **/
   @TestOnly
-  fun forceFlushMetrics()
+  suspend fun forceFlushMetrics()
 }
 
 private val instance = SynchronizedClearableLazy {
@@ -122,7 +122,7 @@ class NoopTelemetryManager : TelemetryManager {
     logger<NoopTelemetryManager>().info("Noop telemetry manager is in use. No metrics exporters are defined.")
   }
 
-  override fun forceFlushMetrics() {
+  override suspend fun forceFlushMetrics() {
     logger<NoopTelemetryManager>().info("Cannot force flushing metrics for Noop telemetry manager")
   }
 }

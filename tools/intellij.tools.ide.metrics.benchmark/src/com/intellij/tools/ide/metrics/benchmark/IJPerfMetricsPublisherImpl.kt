@@ -11,6 +11,8 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZonedDateTime
@@ -48,7 +50,7 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
       else setBuildParams()
     )
 
-    private fun prepareMetricsForPublishing(fullQualifiedTestMethodName: String, spanName: String): PerformanceMetricsDto {
+    private suspend fun prepareMetricsForPublishing(fullQualifiedTestMethodName: String, spanName: String): PerformanceMetricsDto {
       val metrics: List<PerformanceMetrics.Metric> = MetricsExtractor().waitTillMetricsExported(spanName)
 
       teamCityClient.publishTeamCityArtifacts(source = PathManager.getLogDir(), artifactPath = fullQualifiedTestMethodName)
@@ -78,15 +80,17 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
     }
   }
 
-  override fun publish(fullQualifiedTestMethodName: String, metricName: String) {
+  override suspend fun publish(fullQualifiedTestMethodName: String, metricName: String) {
     val metricsDto = prepareMetricsForPublishing(fullQualifiedTestMethodName, metricName)
 
-    val artifactName = "metrics.performance.json"
-    val reportFile = Files.createTempFile("unit-perf-metric", artifactName)
-    jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValue(reportFile.toFile(), metricsDto)
-    teamCityClient.publishTeamCityArtifacts(source = reportFile,
-                                            artifactPath = fullQualifiedTestMethodName,
-                                            artifactName = "metrics.performance.json",
-                                            zipContent = false)
+    withContext(Dispatchers.IO) {
+      val artifactName = "metrics.performance.json"
+      val reportFile = Files.createTempFile("unit-perf-metric", artifactName)
+      jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValue(reportFile.toFile(), metricsDto)
+      teamCityClient.publishTeamCityArtifacts(source = reportFile,
+                                              artifactPath = fullQualifiedTestMethodName,
+                                              artifactName = "metrics.performance.json",
+                                              zipContent = false)
+    }
   }
 }

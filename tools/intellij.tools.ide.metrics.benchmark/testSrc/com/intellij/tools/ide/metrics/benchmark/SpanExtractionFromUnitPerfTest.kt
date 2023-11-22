@@ -23,16 +23,15 @@ import kotlin.time.Duration.Companion.milliseconds
 /** Class intentionally named *Perf* test.
  * That way it will not be ignored during Aggregator run */
 class SpanExtractionFromUnitPerfTest {
-
   private val openTelemetryReports by lazy {
     Paths.get(this::class.java.classLoader.getResource("opentelemetry")!!.toURI())
   }
 
   @Test
-  fun unitPerfTestsMetricsExtraction(testInfo: TestInfo) {
+  fun unitPerfTestsMetricsExtraction(testInfo: TestInfo) = runBlocking {
     val mainMetricName = "simple perf test"
 
-    val extractedMetrics = MetricsExtractor((openTelemetryReports / "open-telemetry-unit-perf-test.json").toFile())
+    val extractedMetrics = MetricsExtractor((openTelemetryReports / "open-telemetry-unit-perf-test.json"))
       .waitTillMetricsExported(spanName = mainMetricName)
 
     // warmup metrics
@@ -81,7 +80,9 @@ class SpanExtractionFromUnitPerfTest {
   }
 
   private fun checkMetricsAreFlushedToTelemetryFile(spanName: String, withWarmup: Boolean = true) {
-    val extractedMetrics = MetricsExtractor().waitTillMetricsExported(spanName = spanName)
+    val extractedMetrics = runBlocking {
+      MetricsExtractor().waitTillMetricsExported(spanName = spanName)
+    }
 
     if (withWarmup) {
       // warmup metrics

@@ -6,7 +6,7 @@ import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metri
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Duration
 import com.intellij.tools.ide.metrics.collector.metrics.standardDeviation
 import com.intellij.util.alsoIfNull
-import java.io.File
+import java.nio.file.Path
 
 const val TOTAL_TEST_TIMER_NAME: String = "test"
 const val DEFAULT_SPAN_NAME: String = "performance_test"
@@ -25,12 +25,11 @@ private val logger = logger<OpentelemetryJsonParser>()
  * 2a. If attribute ends with `#max`, in sum the max of max will be recorded
  * 3a. If attribute ends with `#mean_value`, the mean value of mean values will be recorded
  */
-fun getMetricsFromSpanAndChildren(file: File,
+fun getMetricsFromSpanAndChildren(file: Path,
                                   filter: SpanFilter,
                                   metricSpanProcessor: MetricSpanProcessor = MetricSpanProcessor()): List<Metric> {
   val spanElements = OpentelemetryJsonParser(filter).getSpanElements(file).toList()
-  val spanToMetricMap = spanElements.map { metricSpanProcessor.process(it) }
-    .filterNotNull()
+  val spanToMetricMap = spanElements.mapNotNull { metricSpanProcessor.process(it) }
     .groupBy { it.metric.id.name }
   return combineMetrics(spanToMetricMap)
 }
@@ -46,7 +45,7 @@ fun getMetricsFromSpanAndChildren(file: File,
  * @throws IllegalStateException if the fromSpan or toSpan is null.
  * @throws IllegalArgumentException if the size of the toSpans is not greater than or equal to the size of the fromSpans.
  */
-fun getMetricsBasedOnDiffBetweenSpans(name: String, file: File, fromSpanName: String, toSpanName: String) : List<Metric> {
+fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: String, toSpanName: String) : List<Metric> {
   val betweenSpanProcessor = SpanInfoProcessor()
   val spanElements = OpentelemetryJsonParser(SpanFilter.containsNameIn(listOf(fromSpanName, toSpanName))).getSpanElements(file)
   val spanToMetricMap = spanElements
@@ -76,8 +75,7 @@ fun getMetricsBasedOnDiffBetweenSpans(name: String, file: File, fromSpanName: St
   return combineMetrics(mapOf(name to metrics))
 }
 
-fun getSpansMetricsMap(file: File,
-                       spanFilter: SpanFilter = SpanFilter { true }): Map<String, List<MetricWithAttributes>> {
+fun getSpansMetricsMap(file: Path, spanFilter: SpanFilter = SpanFilter { true }): Map<String, List<MetricWithAttributes>> {
   val spanElements = OpentelemetryJsonParser(spanFilter).getSpanElements(file)
   val metricSpanProcessor = MetricSpanProcessor()
   val spanToMetricMap = spanElements.map { metricSpanProcessor.process(it) }
@@ -86,7 +84,7 @@ fun getSpansMetricsMap(file: File,
   return spanToMetricMap
 }
 
-fun getMetricsForStartup(file: File): List<Metric> {
+fun getMetricsForStartup(file: Path): List<Metric> {
   val spansToPublish = listOf("bootstrap", "startApplication", "ProjectImpl container")
   val spansSuffixesToIgnore = listOf(": scheduled", ": completing")
   val filter = SpanFilter.containsNameIn(spansToPublish)

@@ -30,12 +30,25 @@ class BatchSpanProcessor(
   private val exporterTimeout: Duration = 30.seconds,
 ) : SpanProcessor {
   private val queue = Channel<ReadableSpan>(capacity = Channel.UNLIMITED)
+  private val flushRequested = Channel<CompletableDeferred<Unit>>(capacity = Channel.UNLIMITED)
+
   init {
     coroutineScope.launch {
       val batch = ArrayList<SpanData>(maxExportBatchSize)
       try {
         while (true) {
           select {
+            flushRequested.onReceive { result ->
+              try {
+                exportCurrentBatch(batch)
+                for (spanExporter in spanExporters) {
+                  spanExporter.flush()
+                }
+              }
+              finally {
+                result.complete(Unit)
+              }
+            }
             queue.onReceive { span ->
               batch.add(span.toSpanData())
 
@@ -88,6 +101,13 @@ class BatchSpanProcessor(
   override fun shutdown(): CompletableResultCode {
     // shutdown must be performed using scope - explicit shutdown is not required
     return CompletableResultCode.ofSuccess()
+  }
+
+  suspend fun flush() {
+    val completableDeferred = CompletableDeferred<Unit>()
+    if (!flushRequested.trySend(completableDeferred).isClosed) {
+      completableDeferred.join()
+    }
   }
 
   override fun forceFlush(): CompletableResultCode {

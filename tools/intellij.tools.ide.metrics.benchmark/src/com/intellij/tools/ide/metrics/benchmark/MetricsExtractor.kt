@@ -3,26 +3,25 @@ package com.intellij.tools.ide.metrics.benchmark
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.tool.withRetry
+import com.intellij.tool.withRetryAsync
 import com.intellij.tools.ide.metrics.collector.metrics.*
 import com.intellij.tools.ide.metrics.collector.telemetry.MetricSpanProcessor
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
 import com.intellij.tools.ide.metrics.collector.telemetry.getMetricsFromSpanAndChildren
-import java.io.File
+import java.nio.file.Path
 import kotlin.time.Duration.Companion.milliseconds
 
-
-class MetricsExtractor(val telemetryJsonFile: File = getDefaultPathToTelemetrySpanJson()) {
+class MetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathToTelemetrySpanJson()) {
   companion object {
-    fun getDefaultPathToTelemetrySpanJson(): File {
-      val pathStr: String = System.getProperty("idea.diagnostic.opentelemetry.file",
-                                               PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString())
-      return File(pathStr)
+    fun getDefaultPathToTelemetrySpanJson(): Path {
+      return Path.of(System.getProperty("idea.diagnostic.opentelemetry.file",
+                                        PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString()))
     }
   }
 
-  fun waitTillMetricsExported(spanName: String): List<PerformanceMetrics.Metric> {
-    val originalMetrics: List<PerformanceMetrics.Metric>? = withRetry(retries = 3, delayBetweenRetries = 300.milliseconds) {
+  @Suppress("TestOnlyProblems")
+  suspend fun waitTillMetricsExported(spanName: String): List<PerformanceMetrics.Metric> {
+    val originalMetrics: List<PerformanceMetrics.Metric>? = withRetryAsync(retries = 3, delayBetweenRetries = 300.milliseconds) {
       TelemetryManager.getInstance().forceFlushMetrics()
       extractOpenTelemetrySpanMetrics(spanName, forWarmup = true).plus(extractOpenTelemetrySpanMetrics(spanName, forWarmup = false))
     }

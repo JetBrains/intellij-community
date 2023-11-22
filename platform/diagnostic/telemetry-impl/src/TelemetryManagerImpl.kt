@@ -26,11 +26,14 @@ import io.opentelemetry.sdk.trace.data.SpanData
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
@@ -52,6 +55,7 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
   private val hasSpanExporters: Boolean
 
   private val otlpService: OtlpService
+  private val batchSpanProcessor: BatchSpanProcessor?
 
   init {
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
@@ -70,7 +74,7 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
     val spanExporters = createSpanExporters(configurator.resource, isUnitTestMode = isUnitTestMode)
     hasSpanExporters = !spanExporters.isEmpty()
     var otlpServiceCoroutineScope = coroutineScope
-    val batchSpanProcessor = if (hasSpanExporters) {
+    batchSpanProcessor = if (hasSpanExporters) {
       spanExporters.add(object : AsyncSpanExporter {
         override suspend fun export(spans: Collection<SpanData>) {
         }
@@ -84,8 +88,7 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
         }
       })
 
-      val batchSpanProcessor = BatchSpanProcessor(coroutineScope = coroutineScope,
-                                                  spanExporters = java.util.List.copyOf(spanExporters))
+      val batchSpanProcessor = BatchSpanProcessor(coroutineScope = coroutineScope, spanExporters = java.util.List.copyOf(spanExporters))
       // make sure that otlpService job is canceled before BatchSpanProcessor job
       otlpServiceCoroutineScope = coroutineScope.childScope(supervisor = false)
       val tracerProvider = SdkTracerProvider.builder()
@@ -138,17 +141,28 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
     return if (hasSpanExporters) IntelliJTracerImpl(scope = scope, otlpService = otlpService) else NoopIntelliJTracer
   }
 
-  override fun forceFlushMetrics() {
-    logger<TelemetryManagerImpl>().info("Forcing flushing OpenTelemetry metrics ...")
+  override suspend fun forceFlushMetrics() {
+    val log = logger<TelemetryManagerImpl>()
+    log.info("Forcing flushing OpenTelemetry metrics ...")
 
-    listOf(
-      sdk.sdkMeterProvider.forceFlush(),
-      sdk.sdkTracerProvider.forceFlush()
-    ).forEach { it.join(10, TimeUnit.SECONDS) }
+    withTimeout(10.seconds) {
+      suspendCoroutine {
+        sdk.sdkMeterProvider.forceFlush().whenComplete { it.resume(Unit) }
+      }
+    }
+    withTimeout(10.seconds) {
+      suspendCoroutine {
+        aggregatedMetricExporter.flush().whenComplete { it.resume(Unit) }
+      }
+    }
 
-    aggregatedMetricExporter.flush().join(10, TimeUnit.SECONDS)
+    batchSpanProcessor?.let {
+      withTimeout(10.seconds) {
+        it.flush()
+      }
+    }
 
-    logger<TelemetryManagerImpl>().info("OpenTelemetry metrics were flushed")
+    log.info("OpenTelemetry metrics were flushed")
   }
 }
 
