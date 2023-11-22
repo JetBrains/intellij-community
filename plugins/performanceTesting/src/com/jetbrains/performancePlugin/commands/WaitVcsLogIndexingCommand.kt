@@ -8,10 +8,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.vcs.log.data.index.*
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.waitForRefresh
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getInstance
+import com.intellij.vcs.log.util.PersistentUtil
 import com.jetbrains.performancePlugin.utils.TimeArgumentParserUtil
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.nio.file.Files
 
 /**
  * Command waits for finishing of git log indexing process
@@ -79,6 +81,11 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
       }
     }
     vcsIndex.indexingRoots.forEach { LOG.info("Status of git root ${it.name}, indexed = ${vcsIndex.isIndexed(it)}") }
+
+    withContext(Dispatchers.IO) {
+      LOG.info("Log cache dir is ${PersistentUtil.LOG_CACHE} with size ${Files.size(PersistentUtil.LOG_CACHE)} bytes")
+    }
+
   }
 
   private fun logIndexingCompleted(reason: String) = LOG.info("$NAME command was completed because $reason")
