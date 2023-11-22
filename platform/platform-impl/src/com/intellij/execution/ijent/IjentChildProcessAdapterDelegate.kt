@@ -15,11 +15,11 @@ internal class IjentChildProcessAdapterDelegate(
   val coroutineScope: CoroutineScope,
   val ijentChildProcess: IjentChildProcess,
 ) {
-  val inputStream: InputStream = ChannelInputStream(ijentChildProcess.stdout)
+  val inputStream: InputStream = ChannelInputStream(coroutineScope, ijentChildProcess.stdout)
 
   val outputStream: OutputStream = IjentStdinOutputStream(coroutineScope.coroutineContext, ijentChildProcess)
 
-  val errorStream: InputStream = ChannelInputStream(ijentChildProcess.stderr)
+  val errorStream: InputStream = ChannelInputStream(coroutineScope, ijentChildProcess.stderr)
 
   @Throws(InterruptedException::class)
   fun waitFor(): Int =

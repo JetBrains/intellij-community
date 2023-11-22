@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.coroutines.channel
 
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -14,15 +15,17 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.LinkedBlockingDeque
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 
 /*
   Solution from fleet.api.exec.ExecApiProcess.kt. Maybe it should be merged somehow
  */
 @ApiStatus.Experimental
-class ChannelInputStream(channel: ReceiveChannel<ByteArray>) : InputStream() {
-  private val myScope = CoroutineScope(EmptyCoroutineContext)
+class ChannelInputStream(
+  parentCoroutineScope: CoroutineScope,
+  channel: ReceiveChannel<ByteArray>,
+) : InputStream() {
+  private val myScope = parentCoroutineScope.childScope(supervisor = false)
 
   private sealed class Content {
     class Data(val stream: ByteArrayInputStream) : Content()
