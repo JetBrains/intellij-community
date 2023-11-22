@@ -10,9 +10,12 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
- *
+ * VFS storage for file content.
+ * Provides content deduplication: same content (bytes) stored >1 times actually stored only once, and id of already
+ * existing record returned
  */
 public interface VFSContentStorage extends CleanableStorage, Closeable, Forceable {
 
@@ -29,7 +32,7 @@ public interface VFSContentStorage extends CleanableStorage, Closeable, Forceabl
 
   void checkRecord(int recordId, boolean fastCheck) throws IOException;
 
-  DataInputStream readStream(int recordId) throws IOException;
+  InputStream readStream(int recordId) throws IOException;
 
   /**
    * This method is only to support legacy usage.

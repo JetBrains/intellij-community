@@ -1224,7 +1224,7 @@ public final class FSRecordsImpl implements Closeable {
   //========== file content accessors: ========================================
 
   @Nullable
-  DataInputStream readContent(int fileId) {
+  InputStream readContent(int fileId) {
     try {
       return contentAccessor.readContent(fileId);
     }
@@ -1251,7 +1251,7 @@ public final class FSRecordsImpl implements Closeable {
   }
 
   @NotNull
-  DataInputStream readContentById(int contentId) {
+  InputStream readContentById(int contentId) {
     try {
       return contentAccessor.readContentByContentId(contentId);
     }

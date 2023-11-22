@@ -431,15 +431,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return vfsPeer.writeAttribute(getFileId(file), att);
   }
 
-  private @Nullable DataInputStream readContent(@NotNull VirtualFile file) {
+  private @Nullable InputStream readContent(@NotNull VirtualFile file) {
     return vfsPeer.readContent(getFileId(file));
   }
 
-  private @NotNull DataInputStream readContentById(int contentId) {
+  private @NotNull InputStream readContentById(int contentId) {
     return vfsPeer.readContentById(contentId);
   }
 
-  private @NotNull DataOutputStream writeContent(@NotNull VirtualFile file, boolean contentOfFixedSize) {
+  private @NotNull OutputStream writeContent(@NotNull VirtualFile file, boolean contentOfFixedSize) {
     return vfsPeer.writeContent(getFileId(file), contentOfFixedSize);
   }
 

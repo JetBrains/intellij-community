@@ -27,7 +27,7 @@ private val LOG = Logger.getInstance(ContentStorageAdapter::class.java)
 class ContentStorageAdapter(contentStorage: RefCountingContentStorage,
                             hashesEnumeratorSupplier: ThrowableComputable<ContentHashEnumerator, IOException>) : VFSContentStorage {
 
-  private val contentStorage = contentStorage
+  private val contentStorage: RefCountingContentStorage = contentStorage
   private val hashesEnumerator: ContentHashEnumerator
 
   private val lock: ReadWriteLock = ReentrantReadWriteLock()

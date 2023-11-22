@@ -9,8 +9,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 
 import static com.intellij.util.io.blobstorage.StreamlinedBlobStorage.NULL_ID;
@@ -25,7 +25,7 @@ public final class PersistentFSContentAccessor {
   }
 
   @Nullable
-  DataInputStream readContent(int fileId) throws IOException {
+  InputStream readContent(int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     int contentId = connection.getRecords().getContentRecordId(fileId);
     if (contentId == 0) return null;
@@ -33,7 +33,7 @@ public final class PersistentFSContentAccessor {
   }
 
   @NotNull
-  DataInputStream readContentByContentId(int contentId) throws IOException {
+  InputStream readContentByContentId(int contentId) throws IOException {
     return connection.getContents().readStream(contentId);
   }
 

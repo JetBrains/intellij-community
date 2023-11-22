@@ -96,7 +96,7 @@ public class FSRecordsImplTest {
     for (int i = 0; i < contentsToInsert; i++) {
       int fileId = fileIds[i];
       String expectedContent = "testContent_" + (i % uniqueContentsCount);
-      try (DataInputStream stream = vfs.readContent(fileId)) {
+      try (DataInputStream stream = new DataInputStream(vfs.readContent(fileId))){
         String actualContent = stream.readUTF();
         assertEquals(
           expectedContent,
