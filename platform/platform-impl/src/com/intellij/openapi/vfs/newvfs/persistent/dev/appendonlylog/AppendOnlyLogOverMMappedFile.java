@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.io.IOUtil.magicWordToASCII;
@@ -358,6 +359,22 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
   public void setDataVersion(int version) {
     setIntHeaderField(HeaderLayout.EXTERNAL_VERSION_OFFSET, version);
+  }
+
+  /** @return arbitrary (user-defined) value from the Log's header, previously set by {@link #setUserDefinedHeaderField(int, int)} */
+  public int getUserDefinedHeaderField(int fieldNo) {
+    int headerOffset = HeaderLayout.FIRST_UNUSED_OFFSET + fieldNo * Integer.BYTES;
+    return getIntHeaderField(headerOffset);
+  }
+
+  /**
+   * Sets arbitrary (user-defined) value in a Log's header.
+   * There are 5 slots fieldNo=[0..5] available so far
+   */
+  public void setUserDefinedHeaderField(int fieldNo,
+                                        int headerFieldValue) {
+    int headerOffset = HeaderLayout.FIRST_UNUSED_OFFSET + fieldNo * Integer.BYTES;
+    setIntHeaderField(headerOffset, headerFieldValue);
   }
 
   /** @return true if the log wasn't properly closed and did some compensating recovery measured on open */
@@ -873,20 +890,24 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
 
   private int getIntHeaderField(int headerRelativeOffsetBytes) {
+    Objects.checkIndex(headerRelativeOffsetBytes, HeaderLayout.HEADER_SIZE - Integer.BYTES + 1);
     return (int)INT32_OVER_BYTE_BUFFER.getVolatile(headerPage.rawPageBuffer(), headerRelativeOffsetBytes);
   }
 
   private long getLongHeaderField(int headerRelativeOffsetBytes) {
+    Objects.checkIndex(headerRelativeOffsetBytes, HeaderLayout.HEADER_SIZE - Long.BYTES + 1);
     return (long)INT64_OVER_BYTE_BUFFER.getVolatile(headerPage.rawPageBuffer(), headerRelativeOffsetBytes);
   }
 
   private void setIntHeaderField(int headerRelativeOffsetBytes,
                                  int headerFieldValue) {
+    Objects.checkIndex(headerRelativeOffsetBytes, HeaderLayout.HEADER_SIZE - Integer.BYTES + 1);
     INT32_OVER_BYTE_BUFFER.setVolatile(headerPage.rawPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
   }
 
   private void setLongHeaderField(int headerRelativeOffsetBytes,
                                   long headerFieldValue) {
+    Objects.checkIndex(headerRelativeOffsetBytes, HeaderLayout.HEADER_SIZE - Long.BYTES + 1);
     INT64_OVER_BYTE_BUFFER.setVolatile(headerPage.rawPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
   }
 
