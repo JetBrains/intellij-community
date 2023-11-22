@@ -1971,4 +1971,14 @@ def foo(param: str | int) -> TypeGuard[str]:
   public void testCallableArity() {
     doTest();
   }
+
+  // PY-64124
+  public void testExpectedPositionalOnlyParameterMatchedWithRegularParameter() {
+    doTest();
+  }
+
+  // PY-64124
+  public void testExpectedKeywordOnlyParameterMatchedWithRegularParameter() {
+    doTest();
+  }
 }
