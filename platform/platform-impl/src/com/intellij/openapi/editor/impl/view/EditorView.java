@@ -290,8 +290,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   public @NotNull Dimension getPreferredSize() {
     assertIsDispatchThread();
     assert !myEditor.isPurePaintingMode();
-    myEditor.getSoftWrapModel().prepareToMapping();
-    return mySizeManager.getPreferredSize();
+    return ReadAction.compute(() -> {
+      myEditor.getSoftWrapModel().prepareToMapping();
+      return mySizeManager.getPreferredSize();
+    });
   }
 
   /**
@@ -306,15 +308,19 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   public int getPreferredWidth(int beginLine, int endLine) {
     assertIsDispatchThread();
     assert !myEditor.isPurePaintingMode();
-    myEditor.getSoftWrapModel().prepareToMapping();
-    return mySizeManager.getPreferredWidth(beginLine, endLine);
+    return ReadAction.compute(() -> {
+      myEditor.getSoftWrapModel().prepareToMapping();
+      return mySizeManager.getPreferredWidth(beginLine, endLine);
+    });
   }
 
   public int getPreferredHeight() {
     assertIsDispatchThread();
     assert !myEditor.isPurePaintingMode();
-    myEditor.getSoftWrapModel().prepareToMapping();
-    return mySizeManager.getPreferredHeight();
+    return ReadAction.compute(() -> {
+      myEditor.getSoftWrapModel().prepareToMapping();
+      return mySizeManager.getPreferredHeight();
+    });
   }
 
   public int getMaxWidthInRange(int startOffset, int endOffset) {
