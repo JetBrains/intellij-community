@@ -61,7 +61,7 @@ public class UIThemeLookAndFeelInfoImpl extends UIManager.LookAndFeelInfo implem
   }
 
   @Override
-  public final @Nullable String getEditorSchemeId() {
+  public @Nullable String getEditorSchemeId() {
     return IdeUICustomization.getInstance()
       .getUiThemeEditorSchemeId(/* themeId = */ theme.getId(), /* editorSchemeId = */ theme.getEditorSchemeId());
   }
