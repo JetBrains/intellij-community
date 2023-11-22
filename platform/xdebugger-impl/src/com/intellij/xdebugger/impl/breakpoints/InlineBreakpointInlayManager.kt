@@ -6,9 +6,11 @@ import com.intellij.openapi.application.readAndWriteAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diff.impl.DiffUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
@@ -52,7 +54,6 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
   private fun shouldAlwaysShowAllInlays() = Registry.`is`(SHOW_EVEN_TRIVIAL_KEY)
 
   init {
-
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorCreated(event: EditorFactoryEvent) {
         initializeInNewEditor(event.editor)
@@ -110,6 +111,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
    */
   private fun initializeInNewEditor(editor: Editor) {
     if (!areInlineBreakpointsEnabled()) return
+    if (!isSuitableEditor(editor)) return
     scope.launch {
       val document = editor.document
       if (allBreakpointsIn(document).isEmpty()) {
@@ -129,6 +131,8 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
   private fun reinitializeAll() {
     val enabled = areInlineBreakpointsEnabled()
     for (editor in EditorFactory.getInstance().allEditors) {
+      if (!isSuitableEditor(editor)) continue
+
       val document = editor.document
       if (enabled) {
         // We might be able to iterate all editors inside redraw,
@@ -201,6 +205,9 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
       }
     }
   }
+
+  private fun isSuitableEditor(editor: Editor) =
+    !DiffUtil.isDiffEditor(editor)
 
   private fun allBreakpointsIn(document: Document): Collection<XLineBreakpointImpl<*>> {
     val lineBreakpointManager = (XDebuggerManager.getInstance(project).breakpointManager as XBreakpointManagerImpl).lineBreakpointManager
@@ -300,23 +307,34 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
                            onlyEditor: Editor?,
                            onlyLine: Int?,
                            inlays: List<SingleInlayDatum>) {
-    val editors = onlyEditor?.let { arrayOf(it) } ?: EditorFactory.getInstance().getEditors(document, project)
-    for (editor in editors) {
-      val inlayModel = editor.inlayModel
-
-      // remove previous inlays
-      val startOffset = onlyLine?.let { document.getLineStartOffset(it) } ?: Int.MIN_VALUE
-      val endOffset = onlyLine?.let { document.getLineEndOffset(it) } ?: Int.MAX_VALUE
-      for (oldInlay in inlayModel.getInlineElementsInRange(startOffset, endOffset, InlineBreakpointInlayRenderer::class.java)) {
-        Disposer.dispose(oldInlay)
+    if (onlyEditor != null) {
+      insertInlays(document, onlyEditor.inlayModel, onlyLine, inlays)
+    }
+    else {
+      for (editor in EditorFactory.getInstance().getEditors(document, project)) {
+        if (!isSuitableEditor(editor)) continue
+        insertInlays(document, editor.inlayModel, onlyLine, inlays)
       }
+    }
+  }
 
-      // draw new ones
-      for ((breakpoint, variant, offset) in inlays) {
-        val renderer = InlineBreakpointInlayRenderer(breakpoint, variant)
-        val inlay = inlayModel.addInlineElement(offset, renderer)
-        inlay?.let { renderer.inlay = it }
-      }
+  @RequiresWriteLock
+  private fun insertInlays(document: Document,
+                           inlayModel: InlayModel,
+                           onlyLine: Int?,
+                           inlays: List<SingleInlayDatum>) {
+    // remove previous inlays
+    val startOffset = onlyLine?.let { document.getLineStartOffset(it) } ?: Int.MIN_VALUE
+    val endOffset = onlyLine?.let { document.getLineEndOffset(it) } ?: Int.MAX_VALUE
+    for (oldInlay in inlayModel.getInlineElementsInRange(startOffset, endOffset, InlineBreakpointInlayRenderer::class.java)) {
+      Disposer.dispose(oldInlay)
+    }
+
+    // draw new ones
+    for ((breakpoint, variant, offset) in inlays) {
+      val renderer = InlineBreakpointInlayRenderer(breakpoint, variant)
+      val inlay = inlayModel.addInlineElement(offset, renderer)
+      inlay?.let { renderer.inlay = it }
     }
   }
 
