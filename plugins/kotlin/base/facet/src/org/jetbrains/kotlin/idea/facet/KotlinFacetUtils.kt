@@ -223,8 +223,8 @@ fun applyCompilerArgumentsToFacetSettings(
             K2NativeCompilerArguments::noendorsedlibs.name,
 
             // These fields can be removed after they will be removed in Kotlin master
-            "metaInfo",
-            "outputFile",
+            K2JSCompilerArguments::metaInfo.name,
+            K2JSCompilerArguments::outputFile.name,
             K2JSCompilerArguments::outputDir.name,
             K2JSCompilerArguments::moduleName.name,
         )
