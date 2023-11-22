@@ -64,6 +64,9 @@
 
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
 
+    <applicationService serviceInterface="com.intellij.ide.actions.ReportFeedbackService"
+                        serviceImplementation="com.intellij.ide.actions.DefaultReportFeedbackService"/>
+
     <applicationService serviceInterface="com.intellij.util.net.ssl.InitialUntrustedCertificateStrategyProvider"
                         serviceImplementation="com.intellij.util.net.ssl.DefaultInitialUntrustedCertificateStrategyProvider"/>
 
