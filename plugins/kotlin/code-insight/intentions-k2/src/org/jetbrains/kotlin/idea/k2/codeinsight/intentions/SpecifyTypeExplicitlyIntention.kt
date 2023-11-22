@@ -45,7 +45,7 @@ internal class SpecifyTypeExplicitlyIntention:
                         || diagnostic is KtFirDiagnostic.MustBeInitialized
         }) return null
 
-        return invokeContext(element)
+        return invokeContext(element).takeUnless { it.defaultType.isError }
     }
 
     context(KtAnalysisSession)
