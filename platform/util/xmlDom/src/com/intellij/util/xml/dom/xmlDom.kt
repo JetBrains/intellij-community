@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlDomReader")
 @file:Suppress("ReplacePutWithAssignment")
 
@@ -63,10 +63,9 @@ private fun readAndClose(reader: XMLStreamReader2): XmlElement {
 }
 
 @ApiStatus.Internal
-fun readXmlAsModel(reader: XMLStreamReader2,
-                   rootName: String?,
-                   interner: XmlInterner): XmlElement {
-  val fragment = XmlElementBuilder(name = if (rootName == null) "" else interner.name(rootName), attributes = readAttributes(reader = reader, interner = interner))
+fun readXmlAsModel(reader: XMLStreamReader2, rootName: String?, interner: XmlInterner): XmlElement {
+  val fragment = XmlElementBuilder(name = if (rootName == null) "" else interner.name(rootName),
+                                   attributes = readAttributes(reader = reader, interner = interner))
   var current = fragment
   val stack = ArrayDeque<XmlElementBuilder>()
   val elementPool = ArrayDeque<XmlElementBuilder>()
