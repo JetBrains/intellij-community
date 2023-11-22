@@ -24,6 +24,7 @@ import com.intellij.openapi.project.waitForSmartMode
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -119,8 +120,9 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
       }
     }
 
-    private fun addProject(project: Project?, recorder: String): FeatureUsageData? =
-      if (project == null) null else FeatureUsageData(recorder).addProject(project)
+    private fun addProject(project: Project?, recorder: String): FeatureUsageData? {
+      return if (project == null) null else FeatureUsageData(recorder).addProject(project)
+    }
 
     fun mergeWithEventData(groupData: FeatureUsageData?, data: FeatureUsageData?): FeatureUsageData? {
       if (data == null) {
@@ -161,11 +163,7 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
     }
   }
 
-  fun scheduleLogApplicationState(): Job = cs.launch {
-    logApplicationStates(onStartup = false)
-  }
-
-  private suspend fun logApplicationStates(onStartup: Boolean) {
+  internal suspend fun logApplicationStates(onStartup: Boolean) {
     coroutineScope {
       if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) {
         return@coroutineScope
@@ -197,11 +195,11 @@ class FUStateUsagesLogger private constructor(private val cs: CoroutineScope) : 
 @Service(Service.Level.PROJECT)
 class ProjectFUStateUsagesLogger(
   private val project: Project,
-  private val cs: CoroutineScope,
+  private val coroutineScope: CoroutineScope,
 ) : UsagesCollectorConsumer {
 
   init {
-    cs.launch {
+    coroutineScope.launch {
       project.waitForSmartMode()
       logProjectStateRegularly()
     }
@@ -240,15 +238,24 @@ class ProjectFUStateUsagesLogger(
     }
   }
 
-  fun scheduleLogApplicationAndProjectState(): Deferred<Unit> = cs.async {
-    launch {
-      FUStateUsagesLogger.getInstance().scheduleLogApplicationState().join()
-      logProjectState()
+  @Obsolete
+  fun scheduleLogApplicationAndProjectState(): Job {
+    return coroutineScope.launch {
+      logApplicationAndProjectState()
     }
+  }
 
-    for (extension in FeatureUsageStateEventTracker.EP_NAME.extensionList) {
+  suspend fun logApplicationAndProjectState() {
+    coroutineScope {
       launch {
-        extension.reportNow()
+        FUStateUsagesLogger.getInstance().logApplicationStates(onStartup = false)
+        logProjectState()
+      }
+
+      for (extension in FeatureUsageStateEventTracker.EP_NAME.extensionList) {
+        launch {
+          extension.reportNow()
+        }
       }
     }
   }
