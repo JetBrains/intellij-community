@@ -653,13 +653,16 @@ public final class PyTypeChecker {
     boolean canAcceptArbitraryKeywordArgs = ContainerUtil.exists(actualParameters, PyCallableParameter::isKeywordContainer);
     if (shouldAcceptArbitraryKeywordArgs && !canAcceptArbitraryKeywordArgs) return false;
 
-    List<PyType> expectedElementTypes = ContainerUtil.map(expectedParameters, cp -> {
-      PyType argType = cp.getArgumentType(context);
-      if (cp.isPositionalContainer() && !(argType instanceof PyVariadicType)) {
-        return PyUnpackedTupleTypeImpl.createUnbound(argType);
-      }
-      return argType;
-    });
+    List<PyType> expectedElementTypes = StreamEx.of(expectedParameters)
+      .filter(cp -> !(cp.getParameter() instanceof PySlashParameter || cp.getParameter() instanceof PySingleStarParameter))
+      .map(cp -> {
+        PyType argType = cp.getArgumentType(context);
+        if (cp.isPositionalContainer() && !(argType instanceof PyVariadicType)) {
+          return PyUnpackedTupleTypeImpl.createUnbound(argType);
+        }
+        return argType;
+      })
+      .toList();
     PyTypeParameterMapping mapping = PyTypeParameterMapping.mapWithParameterList(ContainerUtil.subList(expectedElementTypes, startIndex),
                                                                                  ContainerUtil.subList(actualParameters, startIndex),
                                                                                  context);
