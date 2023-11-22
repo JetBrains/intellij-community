@@ -17,15 +17,17 @@ internal abstract class ServiceRetrievingInspectionBase : DevKitUastInspectionBa
   protected data class ServiceRetrievingInfo(val howServiceRetrieved: Service.Level,
                                              val serviceClass: UClass)
 
-  protected abstract val additionalMethodNames: Array<String>
+  protected abstract val additionalComponentManagerMethodNames: Array<String>
+  protected abstract val additionalServiceKtFileMethodNames: Array<String>
 
   protected val serviceKtFileMethods = CallMatcher.staticCall(
-    "com.intellij.openapi.components.ServiceKt", "service", *additionalMethodNames
+    "com.intellij.openapi.components.ServiceKt", "service", *additionalServiceKtFileMethodNames
   ).parameterCount(0)
 
   protected val componentManagerGetServiceMethods = CallMatcher.anyOf(
-    CallMatcher.instanceCall(ComponentManager::class.java.canonicalName, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
-    CallMatcher.staticCall("com.intellij.openapi.components.ServicesKt", "service", *additionalMethodNames)
+    CallMatcher.instanceCall(ComponentManager::class.java.canonicalName, "getService", *additionalComponentManagerMethodNames)
+      .parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
+    CallMatcher.staticCall("com.intellij.openapi.components.ServicesKt", "service", *additionalServiceKtFileMethodNames)
       .parameterTypes(ComponentManager::class.java.canonicalName),
   )
 
