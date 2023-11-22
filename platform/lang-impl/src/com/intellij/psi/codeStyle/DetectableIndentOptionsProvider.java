@@ -219,6 +219,14 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
             DumbAwareAction.create(ApplicationBundle.message("code.style.indent.detector.reindent", projectOptionsTip),
                                    e -> {
                                      disableForFile(virtualFile, indentOptions);
+                                     final var document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+                                     if (document != null) {
+                                       // IDEA-332405 -- make sure that detected indent options are not used for the "reindent file" action
+                                       final var indentOptsWithoutDetected = CodeStyle
+                                         .getSettings(project, virtualFile)
+                                         .getIndentOptionsByFile(project, virtualFile, null, true, null);
+                                       indentOptsWithoutDetected.associateWithDocument(document);
+                                     }
                                      notifyIndentOptionsChanged(project, virtualFile);
                                      CommandProcessor.getInstance().runUndoTransparentAction(
                                        () -> ApplicationManager.getApplication().runWriteAction(
