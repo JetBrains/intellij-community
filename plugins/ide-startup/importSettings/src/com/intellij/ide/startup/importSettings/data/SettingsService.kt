@@ -48,7 +48,7 @@ interface SettingsService {
 
 class SettingsServiceImpl : SettingsService, Disposable.Default {
 
-  private val shouldUseMockData = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", true)
+  private val shouldUseMockData = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", false)
 
   override fun getSyncService() =
     if (shouldUseMockData) TestSyncService()
