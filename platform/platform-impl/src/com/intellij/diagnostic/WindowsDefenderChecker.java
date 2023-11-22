@@ -1,11 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -24,6 +22,9 @@ import com.sun.jna.platform.win32.Ole32;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
@@ -164,10 +165,10 @@ public class WindowsDefenderChecker {
       }
 
       var scriptlet = "(Get-AuthenticodeSignature '" + script + "').Status";
-      var command = new GeneralCommandLine(psh.getPath(), "-NoProfile", "-NonInteractive", "-Command", scriptlet);
-      var output = run(command);
+      var command = new ProcessBuilder(psh.getPath(), "-NoProfile", "-NonInteractive", "-Command", scriptlet);
+      var output = run(command, Charset.defaultCharset());
       if (output.getExitCode() != 0) {
-        LOG.info("validation failed:\n[" + output.getExitCode() + "] " + command + "\noutput: " + output.getStdout().trim());
+        LOG.info("validation failed:\n[" + output.getExitCode() + "] " + command.command() + "\noutput: " + output.getStdout().trim());
         return false;
       }
       var status = output.getStdout().trim();
@@ -179,16 +180,14 @@ public class WindowsDefenderChecker {
         return false;
       }
 
-      command = ExecUtil.sudoCommand(
-        new GeneralCommandLine(Stream.concat(
-          Stream.of(psh.getPath(), "-ExecutionPolicy", "Bypass", "-NoProfile", "-NonInteractive", "-File", script.toString()),
-          paths.stream().map(Path::toString)
-        ).toList()),
-        ""
-      ).withCharset(StandardCharsets.UTF_8);
-      output = run(command);
+      var launcher = PathManager.findBinFileWithException("launcher.exe");
+      command = new ProcessBuilder(Stream.concat(
+        Stream.of(launcher.toString(), psh.getPath(), "-ExecutionPolicy", "Bypass", "-NoProfile", "-NonInteractive", "-File", script.toString()),
+        paths.stream().map(Path::toString)
+      ).toList());
+      output = run(command, StandardCharsets.UTF_8);
       if (output.getExitCode() != 0) {
-        LOG.info("script failed:\n[" + output.getExitCode() + "] " + command + "\noutput: " + output.getStdout().trim());
+        LOG.info("script failed:\n[" + output.getExitCode() + "] " + command.command() + "\noutput: " + output.getStdout().trim());
         return false;
       }
       else {
@@ -203,10 +202,12 @@ public class WindowsDefenderChecker {
     }
   }
 
-  private static ProcessOutput run(GeneralCommandLine command) throws ExecutionException {
-    return ExecUtil.execAndGetOutput(
-      command.withEnvironment("PSModulePath", "").withRedirectErrorStream(true).withWorkDirectory(PathManager.getTempPath()),
-      POWERSHELL_COMMAND_TIMEOUT_MS);
+  private static ProcessOutput run(ProcessBuilder command, Charset charset) throws IOException {
+    command.environment().put("PSModulePath", "");
+    command.redirectErrorStream(true);
+    command.directory(new File(PathManager.getTempPath()));
+    return new CapturingProcessHandler(command.start(), charset, "PowerShell")
+      .runProcess(POWERSHELL_COMMAND_TIMEOUT_MS);
   }
 
   private static void logCaller(String prefix) {
