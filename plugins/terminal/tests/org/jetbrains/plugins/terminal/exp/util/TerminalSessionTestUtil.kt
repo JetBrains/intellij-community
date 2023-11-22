@@ -12,7 +12,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.execution.ParametersListUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
-import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
+import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalModel
@@ -29,10 +29,10 @@ object TerminalSessionTestUtil {
                                 shellPath: String,
                                 parentDisposable: Disposable,
                                 initialTermSize: TermSize = TermSize(200, 20)): TerminalSession {
-    Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, parentDisposable)
-    Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_FISH_REGISTRY).setValue(true, parentDisposable)
-    Registry.get(LocalTerminalDirectRunner.BLOCK_TERMINAL_POWERSHELL_REGISTRY).setValue(true, parentDisposable)
-    val runner = LocalTerminalDirectRunner.createTerminalRunner(project)
+    Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY).setValue(true, parentDisposable)
+    Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_FISH_REGISTRY).setValue(true, parentDisposable)
+    Registry.get(LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_REGISTRY).setValue(true, parentDisposable)
+    val runner = LocalBlockTerminalRunner(project)
     val baseOptions = ShellStartupOptions.Builder().shellCommand(listOf(shellPath, "-i")).initialTermSize(initialTermSize).build()
     val configuredOptions = runner.configureStartupOptions(baseOptions)
     assumeBlockShellIntegration(configuredOptions)

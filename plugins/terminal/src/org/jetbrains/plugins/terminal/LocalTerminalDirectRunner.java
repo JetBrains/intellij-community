@@ -6,7 +6,6 @@ import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.impl.TrustedProjects;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -22,7 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.terminal.ui.TerminalWidget;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -37,7 +35,6 @@ import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.exp.TerminalWidgetImpl;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.util.ShellIntegration;
 import org.jetbrains.plugins.terminal.util.ShellType;
@@ -55,6 +52,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_FISH_REGISTRY;
+import static org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.BLOCK_TERMINAL_POWERSHELL_REGISTRY;
+
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
   private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
@@ -69,9 +69,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final String SH_NAME = "sh";
   private static final String ZSH_NAME = "zsh";
   private static final String FISH_NAME = "fish";
-  public static final String BLOCK_TERMINAL_REGISTRY = "terminal.new.ui";
-  public static final String BLOCK_TERMINAL_FISH_REGISTRY = "terminal.new.ui.fish";
-  public static final String BLOCK_TERMINAL_POWERSHELL_REGISTRY = "terminal.new.ui.powershell";
 
   protected final Charset myDefaultCharset;
   private final ThreadLocal<ShellStartupOptions> myStartupOptionsThreadLocal = new ThreadLocal<>();
@@ -174,14 +171,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       }
     }
     return envs;
-  }
-
-  @Override
-  protected @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent, @NotNull ShellStartupOptions startupOptions) {
-    if (isBlockTerminalEnabled()) {
-      return new TerminalWidgetImpl(myProject, getSettingsProvider(), parent);
-    }
-    return super.createShellTerminalWidget(parent, startupOptions);
   }
 
   private static void setupWslEnv(@NotNull Map<String, String> userEnvs, @NotNull Map<String, String> resultEnvs) {
@@ -399,11 +388,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return shellCommand != null ? shellCommand : convertShellPathToCommand(getShellPath());
   }
 
+  @ApiStatus.Internal
   protected boolean isBlockTerminalEnabled() {
-    return (ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode())
-           && Registry.is(BLOCK_TERMINAL_REGISTRY, false)
-           // disable block terminal for inheritors by default
-           && Objects.equals(this.getClass().getName(), LocalTerminalDirectRunner.class.getName());
+    return false;
   }
 
   private @NotNull String getShellPath() {
@@ -430,6 +417,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return injectShellIntegration(options);
   }
 
+  // todo: it would be great to extract block terminal configuration from here
   private @NotNull ShellStartupOptions injectShellIntegration(@NotNull ShellStartupOptions options) {
     List<String> shellCommand = options.getShellCommand();
     String shellExe = ContainerUtil.getFirstItem(shellCommand);
