@@ -18,10 +18,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -469,11 +466,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           continue;
         }
       }
-      else if (action instanceof CustomComponentAction) {
-        add(CUSTOM_COMPONENT_CONSTRAINT, getCustomComponent(action));
-      }
       else {
-        add(ACTION_BUTTON_CONSTRAINT, createToolbarButton(action));
+        addActionButtonImpl(action, -1);
       }
       isLastElementSeparator = false;
     }
@@ -506,6 +500,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   protected boolean forceRightAlignment() {
     return false;
+  }
+
+  private void addActionButtonImpl(@NotNull AnAction action, int index) {
+    if (action instanceof CustomComponentAction) {
+      add(getCustomComponent(action), CUSTOM_COMPONENT_CONSTRAINT, index);
+    }
+    else {
+      add(createToolbarButton(action), ACTION_BUTTON_CONSTRAINT, index);
+    }
   }
 
   @Override
@@ -1430,37 +1433,66 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     updateMinimumButtonSize();
   }
 
-  protected boolean canUpdateActions(@NotNull List<? extends AnAction> newVisibleActions) {
-    return !newVisibleActions.equals(myVisibleActions) || myPresentationFactory.isNeedRebuild();
-  }
-
   protected void actionsUpdated(boolean forced, @NotNull List<? extends AnAction> newVisibleActions) {
     myListeners.getMulticaster().actionsUpdated();
-    if (forced || canUpdateActions(newVisibleActions)) {
-      myForcedUpdateRequested = false;
-      myCachedImage = null;
-      boolean fullReset = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
-      myVisibleActions = newVisibleActions;
-
-      boolean skipSizeAdjustments = mySkipWindowAdjustments;
-      Component compForSize = guessBestParentForSizeAdjustment();
-      Dimension oldSize = skipSizeAdjustments ? null : compForSize.getPreferredSize();
-
-      removeAll();
-      mySecondaryActions.removeAll();
-      mySecondaryActionsButton = null;
-      fillToolBar(myVisibleActions, getLayoutPolicy() == AUTO_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL);
-      myPresentationFactory.resetNeedRebuild();
-
-      if (!skipSizeAdjustments) {
-        Dimension availSize = compForSize.getSize();
-        Dimension newSize = compForSize.getPreferredSize();
-        adjustContainerWindowSize(fullReset, availSize, oldSize, newSize);
-      }
-
-      compForSize.revalidate();
-      compForSize.repaint();
+    if (!forced && !myPresentationFactory.isNeedRebuild()) {
+      if (newVisibleActions.equals(myVisibleActions)) return;
+      if (replaceButtonsForNewActionInstances(newVisibleActions)) return;
     }
+    myForcedUpdateRequested = false;
+    myCachedImage = null;
+    boolean fullReset = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
+    myVisibleActions = newVisibleActions;
+
+    boolean skipSizeAdjustments = mySkipWindowAdjustments;
+    Component compForSize = guessBestParentForSizeAdjustment();
+    Dimension oldSize = skipSizeAdjustments ? null : compForSize.getPreferredSize();
+
+    removeAll();
+    mySecondaryActions.removeAll();
+    mySecondaryActionsButton = null;
+    fillToolBar(myVisibleActions, getLayoutPolicy() == AUTO_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL);
+    myPresentationFactory.resetNeedRebuild();
+
+    if (!skipSizeAdjustments) {
+      Dimension availSize = compForSize.getSize();
+      Dimension newSize = compForSize.getPreferredSize();
+      adjustContainerWindowSize(fullReset, availSize, oldSize, newSize);
+    }
+
+    compForSize.revalidate();
+    compForSize.repaint();
+  }
+
+  private boolean replaceButtonsForNewActionInstances(@NotNull List<? extends AnAction> newVisibleActions) {
+    if (newVisibleActions.size() != myVisibleActions.size()) return false;
+    Component[] components = getComponents();
+    ArrayList<Pair<Integer, AnAction>> pairs = new ArrayList<>();
+    for (int count = 0, size = myVisibleActions.size(), buttonIndex = 0; count < size; count++) {
+      AnAction prev = myVisibleActions.get(count);
+      AnAction next = newVisibleActions.get(count);
+      if (next == prev) continue;
+      if (next.getClass() != prev.getClass()) return false;
+      Pair<Integer, AnAction> pair = null;
+      for (; buttonIndex < components.length && pair == null; buttonIndex++) {
+        Component component = components[buttonIndex];
+        AnAction action =
+          component instanceof ActionButton o ? o.getAction() :
+          prev instanceof CustomComponentAction ? ClientProperty.get(component, CustomComponentAction.ACTION_KEY) : null;
+        if (action == prev) {
+          pair = Pair.create(buttonIndex, next);
+        }
+      }
+      if (pair == null) return false;
+      pairs.add(pair);
+    }
+    if (pairs.size() == newVisibleActions.size()) return false;
+    myVisibleActions = newVisibleActions;
+    for (Pair<Integer, AnAction> pair : pairs) {
+      remove(components[pair.first]);
+      addActionButtonImpl(pair.second, pair.first);
+    }
+    return true;
   }
 
   private void adjustContainerWindowSize(boolean fullReset,
