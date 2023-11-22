@@ -98,10 +98,18 @@ interface IjentApi : AutoCloseable {
   suspend fun listenOnUnixSocket(path: CreateFilePath = CreateFilePath.MkTemp()): ListenOnUnixSocketResult
 
   /**
+   * On Unix-like OS, PID is int32. On Windows, PID is uint32. The type of Long covers both PID types, and a separate class doesn't allow
+   * to forget that fact and misuse types in APIs.
+   */
+  data class Pid(val value: Long) {
+    override fun toString(): String = value.toString()
+  }
+
+  /**
    * [remotePid] is a process ID of IJent running on the remote machine.
    */
   data class Info(
-    val remotePid: Long,
+    val remotePid: Pid,
   )
 
   data class ListenOnUnixSocketResult(

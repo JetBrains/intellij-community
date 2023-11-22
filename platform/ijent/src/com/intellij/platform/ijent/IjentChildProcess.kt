@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 interface IjentChildProcess {
-  val pid: Int
+  val pid: IjentApi.Pid
 
   /**
    * Although sending data through this channel may block due to buffer overflows, this method doesn't wait for actual delivery
