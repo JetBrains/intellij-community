@@ -381,7 +381,9 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     if (action is ActionStubBase) {
       return (action as ActionStubBase).id
     }
-    synchronized(lock) { return actionToId.get(action) }
+    synchronized(lock) {
+      return actionToId.get(action)
+    }
   }
 
   final override fun getActionIdList(idPrefix: String): List<String> {

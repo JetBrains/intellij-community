@@ -248,7 +248,7 @@ public class DefaultActionGroup extends ActionGroup {
     return true;
   }
 
-  private static int findIndex(String actionId, @NotNull List<? extends AnAction> actions, @NotNull ActionManager actionManager) {
+  private static int findIndex(@NotNull String actionId, @NotNull List<? extends AnAction> actions, @NotNull ActionManager actionManager) {
     for (int i = 0; i < actions.size(); i++) {
       AnAction action = actions.get(i);
       if (action instanceof ActionStub) {

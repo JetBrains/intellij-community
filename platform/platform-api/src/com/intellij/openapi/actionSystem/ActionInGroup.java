@@ -3,21 +3,21 @@ package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.NotNull;
 
-public class ActionInGroup {
-  private final DefaultActionGroup myGroup;
-  private final AnAction myAction;
+public final class ActionInGroup {
+  private final DefaultActionGroup group;
+  private final AnAction action;
 
   ActionInGroup(@NotNull DefaultActionGroup group, @NotNull AnAction action) {
-    myGroup = group;
-    myAction = action;
+    this.group = group;
+    this.action = action;
   }
 
   public @NotNull ActionInGroup setAsSecondary(boolean isSecondary) {
-    myGroup.setAsPrimary(myAction, !isSecondary);
+    group.setAsPrimary(action, !isSecondary);
     return this;
   }
 
   public @NotNull ActionGroup getGroup() {
-    return myGroup;
+    return group;
   }
 }
