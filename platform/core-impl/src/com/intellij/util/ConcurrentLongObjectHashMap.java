@@ -23,6 +23,7 @@ import java.util.function.Predicate;
  * @param <V> the type of mapped values
  * Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentLongObjectMap()} to create this map
  */
+@SuppressWarnings("ALL")
 final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
 
   /*
