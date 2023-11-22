@@ -26,8 +26,7 @@ class BatchSpanProcessor(
   coroutineScope: CoroutineScope,
   private val spanExporters: List<AsyncSpanExporter>,
   private val scheduleDelay: Duration = 1.minutes,
-  private val maxExportBatchSize: Int = 512,
-  private val exporterTimeout: Duration = 30.seconds,
+  private val maxExportBatchSize: Int = 512
 ) : SpanProcessor {
   private val queue = Channel<ReadableSpan>(capacity = Channel.UNLIMITED)
   private val flushRequested = Channel<CompletableDeferred<Unit>>(capacity = Channel.UNLIMITED)
@@ -121,7 +120,7 @@ class BatchSpanProcessor(
 
     try {
       for (spanExporter in spanExporters) {
-        withTimeoutOrNull(exporterTimeout) {
+        withTimeoutOrNull(30.seconds) {
           spanExporter.export(batch)
         }
       }
