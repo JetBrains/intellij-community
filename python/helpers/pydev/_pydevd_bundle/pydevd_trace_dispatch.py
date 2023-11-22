@@ -70,7 +70,15 @@ elif use_cython is None:
                 log_error_once("warning: Debugger speedups using cython not found. Run '\"%s\" \"%s\" build_ext --inplace' to build." % (
                     sys.executable, os.path.join(dirname, 'setup_cython.py')))
             else:
-                show_tracing_warning = True
+                # Check if `setuptools` are available. Without them, it is impossible
+                # to build the extensions anyway.
+                are_setuptools_available = False
+                try:
+                    import setuptools
+                    are_setuptools_available = True
+                except ImportError:
+                    pass
+                show_tracing_warning = are_setuptools_available
         except Exception as e:
             from _pydev_bundle.pydev_monkey import log_debug
             os.environ['PYDEVD_USE_CYTHON'] = 'NO'
