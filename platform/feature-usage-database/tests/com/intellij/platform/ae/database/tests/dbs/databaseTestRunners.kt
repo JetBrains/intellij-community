@@ -10,21 +10,27 @@ import kotlinx.coroutines.*
  * Runs a test for [IUserActivityDatabaseLayer]
  */
 fun <T : IUserActivityDatabaseLayer> runDatabaseLayerTest(
-  dbFactory: (CoroutineScope, SqliteLazyInitializedDatabase) -> T,
+  dbFactory: (CoroutineScope) -> T,
   action: suspend (T) -> Unit,
-) = runInitializedDatabaseTestInternal { cs, db -> action(dbFactory(cs, db)) }
+) = runInitializedDatabaseTestInternal { cs, db -> action(dbFactory(cs)) }
 
 fun <T : IUserActivityDatabaseLayer> runDatabaseLayerTest(
-  dbFactory: (CoroutineScope, SqliteLazyInitializedDatabase) -> T,
+  dbFactory: (CoroutineScope) -> T,
   action: suspend (T, SqliteLazyInitializedDatabase) -> Unit,
-) = runInitializedDatabaseTestInternal { cs, db -> action(dbFactory(cs, db), db) }
+) = runInitializedDatabaseTestInternal { cs, db -> action(dbFactory(cs), db) }
+
+fun <T : IUserActivityDatabaseLayer> runDatabaseLayerTest(
+  dbFactory: (CoroutineScope) -> T,
+  action: suspend (T, SqliteLazyInitializedDatabase, CoroutineScope) -> Unit,
+) = runInitializedDatabaseTestInternal { cs, db -> action(dbFactory(cs), db, cs) }
 
 private fun runInitializedDatabaseTestInternal(action: suspend (CoroutineScope, SqliteLazyInitializedDatabase) -> Unit) {
   timeoutRunBlocking {
     withContext(Dispatchers.IO) {
       val db = SqliteLazyInitializedDatabase.getInstanceAsync()
       action(this, db)
-      cancel()
+      db.doExecuteBeforeConnectionClosed()
+      //cancel()
     }
   }
 }

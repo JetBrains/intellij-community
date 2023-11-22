@@ -52,6 +52,10 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
         asserts(activity, startedAt, endedAt, isFinished, lock)
         return 0
       }
+
+      override fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
+        error("Called executeBeforeConnectionClosed which doesnt work in current test")
+      }
     }
 
     timeoutRunBlocking {
@@ -173,6 +177,10 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
           endedEvents.add(activity.id)
           return 0
         }
+
+        override fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
+          onDatabaseDeath.add(action)
+        }
       }
 
       val submissionLock = Mutex(true)
@@ -236,6 +244,10 @@ class TimeSpanUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
             savedEvents[activity.id] = itemId
           }
           return itemId
+        }
+
+        override fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
+          onDatabaseDeath.add(action)
         }
       }
 

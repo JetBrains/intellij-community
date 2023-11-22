@@ -17,6 +17,7 @@ import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.sqlite.*
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -56,9 +57,8 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
         logger.info("Database disposal started, ${actionsBeforeDatabaseDisposal.size} actions to perform")
         logger.runAndLogException {
           withTimeout(4.seconds) {
-            for (action in actionsBeforeDatabaseDisposal) {
-              action()
-            }
+            @Suppress("TestOnlyProblems")
+            doExecuteBeforeConnectionClosed()
           }
         }
         logger.runAndLogException {
@@ -77,6 +77,13 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
 
   fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
     actionsBeforeDatabaseDisposal.add(action)
+  }
+
+  @TestOnly
+  suspend fun doExecuteBeforeConnectionClosed() {
+    for (action in actionsBeforeDatabaseDisposal) {
+      action()
+    }
   }
 
   /**

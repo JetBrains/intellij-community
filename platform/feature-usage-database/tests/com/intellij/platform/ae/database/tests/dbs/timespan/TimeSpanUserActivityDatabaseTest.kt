@@ -8,17 +8,17 @@ import com.intellij.platform.ae.database.dbs.timespan.TimeSpanUserActivityDataba
 import com.intellij.platform.ae.database.utils.InstantUtils
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.jetbrains.sqlite.ObjectBinderFactory
+import org.jetbrains.sqlite.SqliteConnection
 import org.junit.jupiter.api.Assertions
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
+// TODO fix broken test
 class TimeSpanUserActivityDatabaseTest : BasePlatformTestCase() {
-  private val databaseFactory = { cs: CoroutineScope, initDb: SqliteLazyInitializedDatabase ->
-    TimeSpanUserActivityDatabase(cs, initDb)
-  }
-
-  fun testGetLongestActivity() = runDatabaseLayerTest(databaseFactory) { db ->
+  private val databaseFactory = { cs: CoroutineScope ->
+    TimeSpanUserActivityDatabase(cs)
   }
 
   private data class TestEvent(
@@ -30,16 +30,16 @@ class TimeSpanUserActivityDatabaseTest : BasePlatformTestCase() {
   )
 
   private suspend fun SqliteLazyInitializedDatabase.getActivityEvents(activityId: String): List<TestEvent> {
-    val stmt = connection.prepareStatement(
-      """ 
+    return execute { db ->
+      val stmt = db.prepareStatement(
+        """ 
       SELECT id, activity_id, started_at, ended_at, is_finished
       FROM "timespanUserActivity"
       WHERE activity_id = ?
       """.trimIndent(),
-      ObjectBinderFactory.create1<String>(),
-    )
+        ObjectBinderFactory.create1<String>(),
+      )
 
-    return execute {
       val result = mutableListOf<TestEvent>()
       stmt.binder.bind(activityId)
       stmt.executeQuery().let {
@@ -55,10 +55,10 @@ class TimeSpanUserActivityDatabaseTest : BasePlatformTestCase() {
       }
 
       result
-    }
+    } ?: error("Unexpected null in getActivityEvents")
   }
 
-  fun testEndEventInternal() = runDatabaseLayerTest(databaseFactory) { db, initDb ->
+  fun testEndEventInternal() = runDatabaseLayerTest(databaseFactory) { db, initDb, cs ->
     val testActivity = object : DatabaseBackedTimeSpanUserActivity() {
       override val id: String get() = "testActivity1"
     }
@@ -81,7 +81,7 @@ class TimeSpanUserActivityDatabaseTest : BasePlatformTestCase() {
     val updatedEnd = initialEnd + 10.seconds.toJavaDuration()
     val updatedId = db.endEventInternal(insertedId, testActivity, initialEnd, updatedEnd, isFinished = true)
 
-    // Assert id didn't change
+    // Assert id didn't changeb
     Assertions.assertEquals(insertedId, updatedId)
 
     // Assert event updated correctly on consequent calls

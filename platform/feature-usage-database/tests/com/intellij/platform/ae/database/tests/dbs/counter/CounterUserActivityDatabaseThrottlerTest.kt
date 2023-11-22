@@ -28,12 +28,8 @@ class CounterUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
         asserts(diff, instant, lock)
       }
 
-      override fun invokeOnDatabaseDeath(action: suspend () -> Unit) {
+      override fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
         onDatabaseDeath.add(action)
-      }
-
-      override suspend fun <T> execute(action: suspend () -> T) = withContext(Dispatchers.IO) {
-        action()
       }
     }
 
@@ -160,12 +156,8 @@ class CounterUserActivityDatabaseThrottlerTest : BasePlatformTestCase() {
           endedEvents[activity.id] = diff
         }
 
-        override fun invokeOnDatabaseDeath(action: suspend () -> Unit) {
+        override fun executeBeforeConnectionClosed(action: suspend () -> Unit) {
           onDatabaseDeath.add(action)
-        }
-
-        override suspend fun <T> execute(action: suspend () -> T) = withContext(Dispatchers.IO) {
-          action()
         }
       }
 

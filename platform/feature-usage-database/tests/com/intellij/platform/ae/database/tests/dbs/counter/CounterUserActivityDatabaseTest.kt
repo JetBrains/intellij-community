@@ -11,8 +11,8 @@ import kotlinx.coroutines.CoroutineScope
 import org.junit.Assert
 
 class CounterUserActivityDatabaseTest : BasePlatformTestCase() {
-  private val databaseFactory = { cs: CoroutineScope, initDb: SqliteLazyInitializedDatabase ->
-    CounterUserActivityDatabase(cs, initDb)
+  private val databaseFactory = { cs: CoroutineScope ->
+    CounterUserActivityDatabase(cs)
   }
 
   fun testGetActivitySum() = runDatabaseLayerTest(databaseFactory) { it ->
