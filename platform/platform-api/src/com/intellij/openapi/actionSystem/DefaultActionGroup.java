@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,13 +190,20 @@ public class DefaultActionGroup extends ActionGroup {
   public final synchronized @NotNull ActionInGroup addAction(@NotNull AnAction action,
                                                              @NotNull Constraints constraint,
                                                              @NotNull ActionManager actionManager) {
+    return addAction(action, constraint, actionManager::getId);
+  }
+
+  @ApiStatus.Internal
+  public final synchronized @NotNull ActionInGroup addAction(@NotNull AnAction action,
+                                                             @NotNull Constraints constraint,
+                                                             @NotNull Function<@NotNull AnAction, @Nullable String> actionToId) {
     if (action == this) {
       throw newThisGroupToItselfAddedException();
     }
 
     if (!(action instanceof Separator) && containsAction(action)) {
       LOG.error(newDuplicateActionAddedException(action));
-      remove(action, actionManager.getId(action));
+      remove(action, actionToId.apply(action));
     }
 
     constraint = (Constraints)constraint.clone();
@@ -210,7 +218,7 @@ public class DefaultActionGroup extends ActionGroup {
       myPendingActions.add(action);
     }
     myConstraints.put(action, constraint);
-    addAllToSortedList(actionManager);
+    addAllToSortedList(actionToId);
     incrementModificationStamp();
     return new ActionInGroup(this, action);
   }
@@ -219,13 +227,13 @@ public class DefaultActionGroup extends ActionGroup {
     return mySortedChildren.contains(action) || myPendingActions.contains(action);
   }
 
-  private void addAllToSortedList(@NotNull ActionManager actionManager) {
+  private void addAllToSortedList(@NotNull Function<@NotNull AnAction, @Nullable String> actionToId) {
     outer:
     while (!myPendingActions.isEmpty()) {
       for (int i = 0; i < myPendingActions.size(); i++) {
         AnAction pendingAction = myPendingActions.get(i);
         Constraints constraints = myConstraints.get(pendingAction);
-        if (constraints != null && addToSortedList(pendingAction, constraints, actionManager)) {
+        if (constraints != null && addToSortedList(pendingAction, constraints, actionToId)) {
           myPendingActions.remove(i);
           continue outer;
         }
@@ -234,11 +242,15 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  private boolean addToSortedList(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager) {
-    int index = findIndex(constraint.myRelativeToActionId, mySortedChildren, actionManager);
+  private boolean addToSortedList(@NotNull AnAction action,
+                                  @NotNull Constraints constraint,
+                                  @NotNull Function<@NotNull AnAction, @Nullable String> actionToId) {
+    String relativeToActionId = constraint.myRelativeToActionId;
+    int index = relativeToActionId == null ? -1 : findIndex(relativeToActionId, mySortedChildren, actionToId);
     if (index == -1) {
       return false;
     }
+
     if (constraint.myAnchor == Anchor.BEFORE) {
       mySortedChildren.add(index, action);
     }
@@ -248,7 +260,9 @@ public class DefaultActionGroup extends ActionGroup {
     return true;
   }
 
-  private static int findIndex(@NotNull String actionId, @NotNull List<? extends AnAction> actions, @NotNull ActionManager actionManager) {
+  private static int findIndex(@NotNull String actionId,
+                               @NotNull List<? extends AnAction> actions,
+                               @NotNull Function<@NotNull AnAction, @Nullable String> actionToId) {
     for (int i = 0; i < actions.size(); i++) {
       AnAction action = actions.get(i);
       if (action instanceof ActionStub) {
@@ -257,7 +271,7 @@ public class DefaultActionGroup extends ActionGroup {
         }
       }
       else {
-        String id = actionManager.getId(action);
+        String id = actionToId.apply(action);
         if (id != null && id.equals(actionId)) {
           return i;
         }

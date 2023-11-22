@@ -379,7 +379,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   override fun getId(action: AnAction): String? {
     if (action is ActionStubBase) {
-      return (action as ActionStubBase).id
+      return action.id
     }
     synchronized(lock) {
       return actionToId.get(action)
@@ -778,7 +778,9 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         return
       }
 
-      actionGroup.addAction(action, constraints, this).setAsSecondary(secondary)
+      actionGroup
+        .addAction(action, constraints) { if (it is ActionStub) it.id else actionToId.get(it) }
+        .setAsSecondary(secondary)
       if (actionId != null) {
         actionToId.get(group)?.let { groupId ->
           idToGroupId.computeIfAbsent(actionId) { mutableListOf() }.add(groupId)
