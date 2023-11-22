@@ -1,4 +1,4 @@
-package com.intellij.settingsSync
+package com.intellij.settingsSync.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields

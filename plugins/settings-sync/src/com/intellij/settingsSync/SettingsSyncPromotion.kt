@@ -10,7 +10,8 @@ import com.intellij.openapi.options.newEditor.SettingsTreeView
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.settingsSync.SettingsSyncEventsStatistics.PromotionInSettingsEvent
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics.PromotionInSettingsEvent
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.treeStructure.SimpleNode
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure

@@ -46,8 +46,8 @@
                               on Apply button click in the Settings dialog"/>
 
     <settingsEntryPointIconCustomizer implementation="com.intellij.settingsSync.config.SettingsSyncStatusAction$IconCustomizer"/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.settingsSync.SettingsSyncStateStatistics"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.settingsSync.SettingsSyncEventsStatistics"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.settingsSync.statistics.SettingsSyncStateStatistics"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics"/>
     <iconMapper mappingFile="SettingsSyncIconMappings.json"/>
     </extensions>
 
