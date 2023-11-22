@@ -9,7 +9,7 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import java.nio.file.Files
 import java.nio.file.Path
 
-class PyCharmCommunityProperties(communityHome: Path) : PyCharmPropertiesBase() {
+class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPropertiesBase() {
   override val customProductCode: String
     get() = "PC"
 
@@ -65,11 +65,11 @@ class PyCharmCommunityProperties(communityHome: Path) : PyCharmPropertiesBase() 
   override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "pycharmPC-$buildNumber"
 
   override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer {
-    return PyCharmCommunityWindowsDistributionCustomizer(Path.of(projectHome))
+    return PyCharmCommunityWindowsDistributionCustomizer(communityHome)
   }
 
   override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer {
-    return object : PyCharmCommunityLinuxDistributionCustomizer(Path.of(projectHome)) {
+    return object : PyCharmCommunityLinuxDistributionCustomizer(communityHome) {
       init {
         snapName = "pycharm-community"
         snapDescription = "Python IDE for professional developers. Save time while PyCharm takes care of the routine. " +
@@ -79,7 +79,7 @@ class PyCharmCommunityProperties(communityHome: Path) : PyCharmPropertiesBase() 
   }
 
   override fun createMacCustomizer(projectHome: String): MacDistributionCustomizer {
-    return PyCharmCommunityMacDistributionCustomizer(Path.of(projectHome))
+    return PyCharmCommunityMacDistributionCustomizer(communityHome)
   }
 
   override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties) = "pycharm-ce"
