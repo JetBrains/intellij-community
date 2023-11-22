@@ -1,18 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.kotlin;
 
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.DifferentiateContext;
-import org.jetbrains.jps.dependency.java.JavaDifferentiateStrategy;
-import org.jetbrains.jps.dependency.java.JvmClass;
-import org.jetbrains.jps.dependency.java.JvmMethod;
-import org.jetbrains.jps.dependency.java.Utils;
+import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.java.*;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Objects;
+import java.util.*;
 
-import static org.jetbrains.jps.javac.Iterators.filter;
-import static org.jetbrains.jps.javac.Iterators.isEmpty;
+import static org.jetbrains.jps.javac.Iterators.*;
 
 /**
  * This strategy augments Java strategy with some Kotlin-specific rules. Should be used in projects containing both Java and Kotlin code.
@@ -20,21 +18,86 @@ import static org.jetbrains.jps.javac.Iterators.isEmpty;
 public final class KotlinAwareJavaDifferentiateStrategy extends JavaDifferentiateStrategy {
 
   @Override
-  protected boolean processRemovedMethod(DifferentiateContext context, JvmClass changedClass, JvmMethod removedMethod, Utils future, Utils present) {
-    if (isGetter(removedMethod)) {
-      // KT-46743 Incremental compilation doesn't process usages of Java property in Kotlin code if getter is removed
-      // affect corresponding setter if exists
-      String name = removedMethod.getName();
-      String setterName = "set" + name.substring(name.startsWith("get")? 3 : 2);
-      for (JvmMethod setter : filter(changedClass.getMethods(), m -> isSetter(m) && setterName.equals(m.getName())) ) {
-        if (Objects.equals(setter.getArgTypes().iterator().next(), removedMethod.getType())) {
-          debug("Kotlin interop: a property getter ", removedMethod.getName(), " was removed => affecting usages of corresponding setter ", setter.getName());
-          affectMemberUsages(context, changedClass.getReferenceID(), setter, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), setter));
-          break;
+  protected boolean processChangedClass(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Utils future, Utils present) {
+    if (!super.processChangedClass(context, change, future, present)) {
+      return false;
+    }
+    JvmClass changedClass = change.getPast();
+    Iterable<JvmMethod> removedMethods = change.getDiff().methods().removed();
+    Iterable<JvmField> addedNonPrivateFields = filter(change.getDiff().fields().added(), f -> !f.isPrivate());
+    Iterable<JvmField> exposedFields = filter(map(change.getDiff().fields().changed(), ch -> ch.getDiff().accessExpanded()? ch.getPast() : null), Objects::nonNull);
+    if (!isEmpty(removedMethods) || !isEmpty(addedNonPrivateFields) || !isEmpty(exposedFields)) {
+      for (PropertyDescriptor property : findProperties(changedClass)) {
+
+        // KT-46743 Incremental compilation doesn't process usages of Java property in Kotlin code if getter is removed
+        for (JvmMethod removedMethod : removedMethods) {
+          if (removedMethod.isSame(property.getter) && property.setter != null) {
+            debug("Kotlin interop: a property getter ", removedMethod.getName(), " was removed => affecting usages of corresponding setter ", property.setter.getName());
+            affectMemberUsages(context, changedClass.getReferenceID(), property.setter, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), property.setter));
+            break;
+          }
         }
+
+        // KT-55393 JPS: Java synthetic properties incremental compilation is broken
+        for (JvmField field : flat(addedNonPrivateFields, exposedFields)) {
+          if (Objects.equals(field.getName(), property.getter.getName()) || property.name.equalsIgnoreCase(field.getName())) {
+            debug("Kotlin interop: a non-private field with name ", field.getName(), " was added, or the field became more accessible");
+            debug(" => affecting usages of corresponding property getter ", property.getter.getName());
+            affectMemberUsages(context, changedClass.getReferenceID(), property.getter, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), property.getter));
+            if (property.setter != null) {
+              debug(" => affecting usages of corresponding property setter ", property.setter.getName());
+              affectMemberUsages(context, changedClass.getReferenceID(), property.setter, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), property.setter));
+            }
+            break;
+          }
+        }
+
       }
     }
     return true;
+  }
+
+
+  private static class PropertyDescriptor{
+    @NotNull
+    final String name;
+    @NotNull
+    final JvmMethod getter;
+    @Nullable
+    final JvmMethod setter;
+
+    PropertyDescriptor(@NotNull String name, @NotNull JvmMethod getter, @Nullable JvmMethod setter) {
+      this.name = name;
+      this.getter = getter;
+      this.setter = setter;
+    }
+  }
+
+  private static Iterable<PropertyDescriptor> findProperties(JvmClass cls) {
+    Map<String, JvmMethod> getters = new HashMap<>();
+    Map<String, List<JvmMethod>> setters = new HashMap<>();
+    for (JvmMethod method : cls.getMethods()) {
+      String methodName = method.getName();
+      if (isGetter(method)) {
+        getters.put(methodName.substring(methodName.startsWith("is")? 2 : 3), method);
+      }
+      else if (isSetter(method)) {
+        String propName = methodName.substring(3);
+        List<JvmMethod> candidates = setters.get(propName);
+        if (candidates == null) {
+          setters.put(propName, candidates = new SmartList<>());
+        }
+        candidates.add(method);
+      }
+    }
+    return map(getters.entrySet(), e -> {
+      String propName = e.getKey();
+      JvmMethod getter = e.getValue();
+      for (JvmMethod setter : filter(setters.get(propName), s -> Objects.equals(s.getArgTypes().iterator().next(), getter.getType()))) {
+        return new PropertyDescriptor(propName, getter, setter);
+      }
+      return new PropertyDescriptor(propName, getter, null);
+    });
   }
 
   private static boolean isSetter(JvmMethod method) {
