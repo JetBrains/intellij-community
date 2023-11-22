@@ -19,6 +19,8 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.mutate
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -681,8 +683,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
   final override fun addExtensionPointListener(listener: ExtensionPointListener<T>,
                                                invokeForLoadedExtensions: Boolean,
                                                parentDisposable: Disposable?) {
-    val isAdded = addListener(listener)
-    if (!isAdded) {
+    if (!addListener(listener)) {
       return
     }
 
@@ -692,6 +693,22 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable) { removeExtensionPointListener(listener) }
+    }
+  }
+
+  internal fun addExtensionPointListener(coroutineScope: CoroutineScope,
+                                         invokeForLoadedExtensions: Boolean,
+                                         listener: ExtensionPointListener<T>) {
+    if (!addListener(listener)) {
+      return
+    }
+
+    if (invokeForLoadedExtensions) {
+      notifyListeners(isRemoved = false, adapters = sortedAdapters, listeners = listOf(listener))
+    }
+
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      removeExtensionPointListener(listener)
     }
   }
 
@@ -709,7 +726,21 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
     return true
   }
 
+  final override fun addChangeListener(coroutineScope: CoroutineScope, listener: Runnable) {
+    val listenerAdapter = doAddChangeListener(listener)
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      removeExtensionPointListener(listenerAdapter)
+    }
+  }
+
   final override fun addChangeListener(listener: Runnable, parentDisposable: Disposable?) {
+    val listenerAdapter = doAddChangeListener(listener)
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable) { removeExtensionPointListener(listenerAdapter) }
+    }
+  }
+
+  private fun doAddChangeListener(listener: Runnable): ExtensionPointAdapter<T> {
     val listenerAdapter = object : ExtensionPointAdapter<T>() {
       override fun extensionListChanged() {
         listener.run()
@@ -720,9 +751,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       @Suppress("UNCHECKED_CAST")
       (it as PersistentList<ExtensionPointListener<T>>).add(listenerAdapter)
     }
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable) { removeExtensionPointListener(listenerAdapter) }
-    }
+    return listenerAdapter
   }
 
   final override fun removeExtensionPointListener(listener: ExtensionPointListener<T>) {

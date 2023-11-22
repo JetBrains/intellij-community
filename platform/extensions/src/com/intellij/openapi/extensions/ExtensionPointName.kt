@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByGroup
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByKey
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.ThreeState
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -144,6 +145,12 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     getPointImpl(null).addExtensionPointListener(listener = listener,
                                                  invokeForLoadedExtensions = false,
                                                  parentDisposable = parentDisposable)
+  }
+
+  fun addExtensionPointListener(coroutineScope: CoroutineScope, listener: ExtensionPointListener<T>) {
+    getPointImpl(null).addExtensionPointListener(listener = listener,
+                                                 invokeForLoadedExtensions = false,
+                                                 coroutineScope = coroutineScope)
   }
 
   fun addExtensionPointListener(listener: ExtensionPointListener<T>) {

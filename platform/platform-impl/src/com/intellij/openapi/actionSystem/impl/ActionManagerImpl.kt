@@ -137,8 +137,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     EP.forEachExtensionSafe { it.customize(this) }
     DYNAMIC_EP_NAME.forEachExtensionSafe { it.registerActions(this) }
 
-    @Suppress("LeakingThis")
-    DYNAMIC_EP_NAME.addExtensionPointListener(object : ExtensionPointListener<DynamicActionConfigurationCustomizer> {
+    DYNAMIC_EP_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<DynamicActionConfigurationCustomizer> {
       override fun extensionAdded(extension: DynamicActionConfigurationCustomizer, pluginDescriptor: PluginDescriptor) {
         extension.registerActions(this@ActionManagerImpl)
       }
@@ -146,15 +145,13 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       override fun extensionRemoved(extension: DynamicActionConfigurationCustomizer, pluginDescriptor: PluginDescriptor) {
         extension.unregisterActions(this@ActionManagerImpl)
       }
-    }, this)
+    })
 
-    @Suppress("LeakingThis")
-    app.extensionArea.getExtensionPoint<Any>("com.intellij.editorActionHandler")
-      .addChangeListener({
-                           synchronized(lock) {
-                             actionToId.keys.forEach(::updateHandlers)
-                           }
-                         }, this)
+    app.extensionArea.getExtensionPoint<Any>("com.intellij.editorActionHandler").addChangeListener(coroutineScope) {
+      for (action in actionPostInitRegistrar.actions) {
+        updateHandlers(action)
+      }
+    }
   }
 
   internal fun registerActions(modules: Iterable<IdeaPluginDescriptorImpl>) {
@@ -482,8 +479,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       }
     }
 
-    val shortcutOfActionId = element.attributes.get(USE_SHORTCUT_OF_ATTR_NAME)
-    if (shortcutOfActionId != null) {
+    element.attributes.get(USE_SHORTCUT_OF_ATTR_NAME)?.let { shortcutOfActionId ->
       keymapManager.bindShortcuts(shortcutOfActionId, id)
     }
     registerOrReplaceActionInner(element = element, id = id, action = stub, plugin = module, actionRegistrar = actionRegistrar)
@@ -1012,10 +1008,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       pluginToId.computeIfAbsent(pluginId) { mutableListOf() }.add(actionId)
     }
 
-    //if (actionRegistrar.isPostInit) {
-      notifyCustomActionsSchema(actionId)
-      updateHandlers(action)
-    //}
+    notifyCustomActionsSchema(actionId)
+    updateHandlers(action)
   }
 
   override fun registerAction(actionId: String, action: AnAction) {
@@ -1907,6 +1901,9 @@ private class ActionPostInitRegistrar(@Volatile private var idToAction: Map<Stri
 
   override val isPostInit: Boolean
     get() = true
+
+  val actions: Collection<AnAction>
+    get() = idToAction.values
 
   override fun putAction(actionId: String, action: AnAction) {
     idToAction = idToAction.with(actionId, action)
