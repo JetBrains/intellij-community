@@ -38,6 +38,7 @@ public interface VFSContentStorage extends CleanableStorage, Closeable, Forceabl
   @ApiStatus.Obsolete
   byte[] contentHash(int recordId) throws IOException;
 
+  //MAYBE RC: replace it with .forEach()-style iteration method
   RecordIdIterator createRecordIdIterator() throws IOException;
 
   int getRecordsCount() throws IOException;
@@ -48,6 +49,7 @@ public interface VFSContentStorage extends CleanableStorage, Closeable, Forceabl
 
   @Override
   void force() throws IOException;
+
 
   @Override
   void close() throws IOException;

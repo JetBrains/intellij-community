@@ -254,7 +254,7 @@ public final class PersistentFSConnection {
     }
     attributesStorage.force();
     contentStorage.force();
-    resetDirty(/*markSafelyClosed: */ markSafelyClosed);
+    resetDirty(markSafelyClosed);
     records.force();
   }
 

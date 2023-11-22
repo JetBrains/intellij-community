@@ -709,8 +709,10 @@ public final class PersistentFSLoader {
       LOG.info("VFS uses content storage over regular FilePageCache");
       contentStorage = new RefCountingContentStorageImpl(contentsFile, FIVE_PERCENT_FOR_GROWTH, storingPool, useContentHashes);
     }
-    ThrowableComputable<ContentHashEnumerator, IOException> c = () -> openContentHashEnumeratorOrCreateEmpty(contentsHashesFile);
-    return new ContentStorageAdapter(contentStorage, c);
+    return new ContentStorageAdapter(
+      contentStorage,
+      () -> openContentHashEnumeratorOrCreateEmpty(contentsHashesFile)
+    );
   }
 
 

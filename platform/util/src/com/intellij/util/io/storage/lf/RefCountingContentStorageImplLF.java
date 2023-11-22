@@ -71,21 +71,20 @@ public final class RefCountingContentStorageImplLF extends AbstractStorageLF imp
   }
 
   private BufferExposingByteArrayOutputStream internalReadStream(int record) throws IOException {
+
     //TODO RC: why to wait for record to be written, if we can just return the not-yet-written bytes?
-
     //MAYBE RC: even better -- cache last 2-4-8 records uncompressed, in memory?
-
-    //TODO RC: Inflater could work with ByteBuffer as input! So there is no need to copy data from
-    //         page cache buffer into byte[], and then un-compress to another byte[] -- instead we
-    //         could un-compress straight from the page cache buffer, skipping 1 memcopy and 1 byte[]
-    //         allocation
-
     waitForPendingWriteForRecord(record);
     byte[] result = withReadLock(() -> super.readBytes(record));
 
     if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
       doRecordSanityCheck(record, result);
     }
+
+    //TODO RC: Inflater could work with ByteBuffer as input! So there is no need to copy data from
+    //         page cache buffer into byte[], and then un-compress to another byte[] -- instead we
+    //         could un-compress straight from the page cache buffer, skipping 1 memcopy and 1 byte[]
+    //         allocation
 
     //text files usually 3-4x compressible:
     int uncompressedSizeEstimation = Math.max(512, result.length * 3);
