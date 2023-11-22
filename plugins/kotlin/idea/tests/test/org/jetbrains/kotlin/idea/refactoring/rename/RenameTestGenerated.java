@@ -973,6 +973,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameKotlinPackage/renameKotlinPackage.test");
     }
 
+    @TestMetadata("renameKotlinParameterConflictingToJavaSetter/renameKotlinParameterConflictingToJavaSetter.test")
+    public void testRenameKotlinParameterConflictingToJavaSetter_RenameKotlinParameterConflictingToJavaSetter() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinParameterConflictingToJavaSetter/renameKotlinParameterConflictingToJavaSetter.test");
+    }
+
     @TestMetadata("renameKotlinParameterWithGetterJvmNameByGetterRef/renameKotlinParameterWithGetterJvmNameByGetterRef.test")
     public void testRenameKotlinParameterWithGetterJvmNameByGetterRef_RenameKotlinParameterWithGetterJvmNameByGetterRef() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinParameterWithGetterJvmNameByGetterRef/renameKotlinParameterWithGetterJvmNameByGetterRef.test");

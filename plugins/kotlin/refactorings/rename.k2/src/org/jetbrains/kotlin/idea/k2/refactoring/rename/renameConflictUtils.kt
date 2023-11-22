@@ -3,7 +3,10 @@ package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
@@ -22,6 +25,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -51,6 +55,7 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.utils.addIfNotNull
 import kotlin.collections.mutableSetOf
 
 fun checkClassNameShadowing(
@@ -132,9 +137,16 @@ fun checkCallableShadowing(
 
         if (referenceExpression != null) {
             analyze(codeFragment) {
-                val newDeclaration = referenceExpression.mainReference?.resolve()
-                if (newDeclaration != null) {
-                    externalDeclarations.add(newDeclaration)
+                val resolvedSymbol = referenceExpression.mainReference?.resolveToSymbol()
+                val newDeclaration = if (resolvedSymbol is KtSyntheticJavaPropertySymbol) {
+                    val getter = resolvedSymbol.javaGetterSymbol.psi
+                    externalDeclarations.addIfNotNull(getter)
+                    externalDeclarations.addIfNotNull(resolvedSymbol.javaSetterSymbol?.psi)
+                    getter
+                } else {
+                    val element = resolvedSymbol?.psi
+                    externalDeclarations.addIfNotNull(element)
+                    element
                 }
                 if (newDeclaration != null && (declaration !is KtParameter || declaration.hasValOrVar()) && !PsiTreeUtil.isAncestor(newDeclaration, declaration, true)) {
                     val expression = refElement.parent as? KtCallExpression ?: refElement
@@ -152,14 +164,20 @@ fun checkCallableShadowing(
     }
 
     fun retargetExternalDeclaration(externalDeclaration: PsiElement) {
-        ReferencesSearch.search(externalDeclaration, declaration.useScope).forEach { ref ->
-            val refElement = ref.element as? KtSimpleNameExpression ?: return@forEach
-            if (refElement.getStrictParentOfType<KtTypeReference>() != null) return@forEach
+        val processor: (PsiReference) -> Unit = processor@ { ref ->
+            val refElement = ref.element as? KtSimpleNameExpression ?: return@processor
+            if (refElement.getStrictParentOfType<KtTypeReference>() != null) return@processor
             val expression = refElement.parent as? KtCallExpression ?: refElement
             val qualifiedExpression = createQualifiedExpression(expression, newName)
             if (qualifiedExpression != null) {
                 newUsages.add(UsageInfoWithReplacement(expression, declaration, qualifiedExpression))
             }
+        }
+        if (externalDeclaration is PsiMethod) {
+            MethodReferencesSearch.search(externalDeclaration, declaration.useScope, true).forEach(processor)
+        }
+        else {
+            ReferencesSearch.search(externalDeclaration, declaration.useScope).forEach(processor)
         }
     }
 
