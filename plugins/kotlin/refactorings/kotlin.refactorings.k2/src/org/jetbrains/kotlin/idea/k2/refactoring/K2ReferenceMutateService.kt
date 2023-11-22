@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtJavaFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -181,7 +180,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 allowAnalysisOnEdt {
                     analyze(ktReference.element) {
                         val symbol = ktReference.resolveToSymbol()
-                        if (symbol is KtSyntheticJavaPropertySymbol || symbol is KtJavaFieldSymbol) {
+                        if (symbol is KtSyntheticJavaPropertySymbol) {
                             val newName = (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.getAdjustedNewName(newElementName)
                             if (newName == null) {
                                 return (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.renameToOrdinaryMethod(newElementName)
@@ -201,7 +200,4 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return newExpression.getPossiblyQualifiedCallExpression()?.canMoveLambdaOutsideParentheses() == true
     }
 
-    private fun operationNotSupportedInK2Error(): Nothing {
-        throw IncorrectOperationException("K2 plugin does not yet support this operation")
-    }
 }

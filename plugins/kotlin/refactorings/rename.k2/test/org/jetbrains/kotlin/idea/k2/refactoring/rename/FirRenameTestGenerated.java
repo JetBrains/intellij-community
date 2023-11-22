@@ -668,6 +668,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameJavaClass/renameJavaClass.test");
     }
 
+    @TestMetadata("renameJavaFieldWithoutGetter/renameJavaFieldWithoutGetter.test")
+    public void testRenameJavaFieldWithoutGetter_RenameJavaFieldWithoutGetter() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameJavaFieldWithoutGetter/renameJavaFieldWithoutGetter.test");
+    }
+
     @TestMetadata("renameJavaInterface/renameJavaInterface.test")
     public void testRenameJavaInterface_RenameJavaInterface() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameJavaInterface/renameJavaInterface.test");
