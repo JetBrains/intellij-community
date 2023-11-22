@@ -1697,6 +1697,8 @@
 
     <projectIndexingActivityHistoryListener implementation="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporterListener"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporter"/>
+    <applicationService serviceInterface="com.intellij.psi.stubs.StubInconsistencyReporter"
+                        serviceImplementation="com.intellij.util.indexing.diagnostic.StubInconsistencyReporterImpl"/>
 
     <advancedSetting id="ide.suppress.double.click.handler" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.remember.last.search.scope" default="false" groupKey="group.advanced.settings.find"/>

@@ -10,12 +10,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.stubs.StubInconsistencyReporter.InconsistencyType;
+import com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContentImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,17 +54,45 @@ public final class StubTextInconsistencyException extends RuntimeException imple
       new Attachment("stubsFromExistingPsi.txt", myStubsFromPsi)};
   }
 
-  public static void checkStubTextConsistency(@NotNull PsiFile file) throws StubTextInconsistencyException {
+  /**
+   * Recommended method for plugins
+   */
+  @SuppressWarnings("unused")
+  public static void checkStubTextConsistency(@NotNull PsiFile file) {
+    checkStubTextConsistency(file, SourceOfCheck.Other, null);
+  }
+
+  public static void checkStubTextConsistency(@NotNull PsiFile file, @NotNull StubInconsistencyReporter.SourceOfCheck reason) {
+    checkStubTextConsistency(file, reason, null);
+  }
+
+  /**
+   * Parameters reason and enforcedInconsistencyType are used for tracking statistic of the errors' sources.
+   * {@link  StubInconsistencyReporter.SourceOfCheck#Other} and {@code null} are recommended values for callers outside IntelliJ repository.
+   */
+  public static void checkStubTextConsistency(@NotNull PsiFile file,
+                                              @NotNull StubInconsistencyReporter.SourceOfCheck reason,
+                                              @Nullable StubInconsistencyReporter.EnforcedInconsistencyType enforcedInconsistencyType)
+    throws StubTextInconsistencyException {
     PsiUtilCore.ensureValid(file);
 
     FileViewProvider viewProvider = file.getViewProvider();
-    if (viewProvider instanceof FreeThreadedFileViewProvider || viewProvider.getVirtualFile() instanceof LightVirtualFile) return;
+    if (viewProvider instanceof FreeThreadedFileViewProvider || viewProvider.getVirtualFile() instanceof LightVirtualFile) {
+      reportInconsistency(file, reason, null, enforcedInconsistencyType);
+      return;
+    }
 
     PsiFile bindingRoot = viewProvider.getStubBindingRoot();
-    if (!(bindingRoot instanceof PsiFileImpl)) return;
+    if (!(bindingRoot instanceof PsiFileImpl)) {
+      reportInconsistency(file, reason, null, enforcedInconsistencyType);
+      return;
+    }
 
     IStubFileElementType fileElementType = ((PsiFileImpl)bindingRoot).getElementTypeForStubBuilder();
-    if (fileElementType == null || !fileElementType.shouldBuildStubFor(viewProvider.getVirtualFile())) return;
+    if (fileElementType == null || !fileElementType.shouldBuildStubFor(viewProvider.getVirtualFile())) {
+      reportInconsistency(file, reason, null, enforcedInconsistencyType);
+      return;
+    }
 
     List<PsiFileStub> fromText = restoreStubsFromText(viewProvider);
 
@@ -69,6 +100,7 @@ public final class StubTextInconsistencyException extends RuntimeException imple
       .map(StubTreeBuilder.getStubbedRoots(viewProvider), p -> ((PsiFileImpl)p.getSecond()).calcStubTree().getRoot());
 
     if (fromPsi.size() != fromText.size()) {
+      reportInconsistency(file, reason, InconsistencyType.DifferentNumberOfPsiTrees, enforcedInconsistencyType);
       throw new StubTextInconsistencyException("Inconsistent stub roots: " +
                                                "PSI says it's " + ContainerUtil.map(fromPsi, s -> s.getType()) +
                                                " but re-parsing the text gives " + ContainerUtil.map(fromText, s -> s.getType()),
@@ -78,10 +110,24 @@ public final class StubTextInconsistencyException extends RuntimeException imple
     for (int i = 0; i < fromPsi.size(); i++) {
       PsiFileStub psiStub = fromPsi.get(i);
       if (!DebugUtil.stubTreeToString(psiStub).equals(DebugUtil.stubTreeToString(fromText.get(i)))) {
+        reportInconsistency(file, reason, InconsistencyType.MismatchingPsiTree, enforcedInconsistencyType);
         throw new StubTextInconsistencyException("Stub is inconsistent with text in " + file.getLanguage(),
                                                  file, fromText, fromPsi);
       }
     }
+    reportInconsistency(file, reason, null, enforcedInconsistencyType);
+  }
+
+  private static void reportInconsistency(@NotNull PsiFile file, @NotNull StubInconsistencyReporter.SourceOfCheck reason,
+                                          @Nullable InconsistencyType inconsistencyType,
+                                          @Nullable StubInconsistencyReporter.EnforcedInconsistencyType enforcedInconsistencyType) {
+    if (inconsistencyType == null) {
+      if (enforcedInconsistencyType != null) {
+        StubInconsistencyReporter.getInstance().reportEnforcedStubInconsistency(file.getProject(), reason, enforcedInconsistencyType);
+      }
+      return;
+    }
+    StubInconsistencyReporter.getInstance().reportStubInconsistency(file.getProject(), reason, inconsistencyType, enforcedInconsistencyType);
   }
 
   private static @NotNull List<PsiFileStub> restoreStubsFromText(FileViewProvider viewProvider) {
@@ -90,7 +136,7 @@ public final class StubTextInconsistencyException extends RuntimeException imple
                                                                        viewProvider.getContents(),
                                                                        project);
     fc.setProject(project);
-    PsiFileStubImpl copyTree = (PsiFileStubImpl) StubTreeBuilder.buildStubTree(fc);
+    PsiFileStubImpl copyTree = (PsiFileStubImpl)StubTreeBuilder.buildStubTree(fc);
     return copyTree == null ? Collections.emptyList() : Arrays.asList(copyTree.getStubRoots());
   }
 }
