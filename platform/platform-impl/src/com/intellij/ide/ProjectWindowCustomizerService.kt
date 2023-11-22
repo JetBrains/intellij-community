@@ -362,7 +362,7 @@ class ProjectWindowCustomizerService : Disposable {
       SwingUtilities.convertPoint(it.parent, it.location, parent)
     }?.x ?: if (isToolbarInHeader()) 0 else return true
     val saturation = Registry.doubleValue("ide.colorful.toolbar.gradient.saturation", 0.85).coerceIn(0.0, 1.0)
-    val blendedColor = ColorUtil.blendColorsInRgb(parent.background, color, saturation)
+    val blendedColor = ColorUtil.blendColorsInRgb(parent.background, color, saturation).let { ColorUtil.toAlpha(it, color.alpha) }
     val leftBound = (offset - length).coerceAtLeast(mainToolbarXPosition.toFloat() / 2)
     g.paint = GradientPaint(leftBound, 0f, parent.background, offset, 0f, blendedColor)
     g.fillRect(0, 0, offset.toInt(), height)
