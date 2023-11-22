@@ -75,7 +75,7 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
           }
         }
         ENUM_CONSTANT -> {
-          // We rely that enum constants go after ENUM_KEYWORD
+          // We rely on enum constants going after ENUM_KEYWORD
           isFinal = isFinal && LightTreeUtil.firstChildOfType(tree, child, ENUM_CONSTANT_INITIALIZER) == null
         }
         EXTENDS_LIST -> {

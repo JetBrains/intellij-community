@@ -30,7 +30,7 @@ public final class StubTextInconsistencyException extends RuntimeException imple
   private final String myFileName;
   private final String myFileText;
 
-  private StubTextInconsistencyException(String message, PsiFile file, List<PsiFileStub> fromText, List<PsiFileStub> fromPsi) {
+  private StubTextInconsistencyException(String message, PsiFile file, List<PsiFileStub<?>> fromText, List<PsiFileStub<?>> fromPsi) {
     super(message);
     myStubsFromText = StringUtil.join(fromText, DebugUtil::stubTreeToString, "\n");
     myStubsFromPsi = StringUtil.join(fromPsi, DebugUtil::stubTreeToString, "\n");
@@ -88,16 +88,16 @@ public final class StubTextInconsistencyException extends RuntimeException imple
       return;
     }
 
-    IStubFileElementType fileElementType = ((PsiFileImpl)bindingRoot).getElementTypeForStubBuilder();
+    IStubFileElementType<?> fileElementType = ((PsiFileImpl)bindingRoot).getElementTypeForStubBuilder();
     if (fileElementType == null || !fileElementType.shouldBuildStubFor(viewProvider.getVirtualFile())) {
       reportInconsistency(file, reason, null, enforcedInconsistencyType);
       return;
     }
 
-    List<PsiFileStub> fromText = restoreStubsFromText(viewProvider);
+    List<PsiFileStub<?>> fromText = restoreStubsFromText(viewProvider);
 
-    List<PsiFileStub> fromPsi = ContainerUtil
-      .map(StubTreeBuilder.getStubbedRoots(viewProvider), p -> ((PsiFileImpl)p.getSecond()).calcStubTree().getRoot());
+    List<PsiFileStub<?>> fromPsi = ContainerUtil
+      .map(StubTreeBuilder.getStubbedRoots(viewProvider), p -> (PsiFileStub<?>)((PsiFileImpl)p.getSecond()).calcStubTree().getRoot());
 
     if (fromPsi.size() != fromText.size()) {
       reportInconsistency(file, reason, InconsistencyType.DifferentNumberOfPsiTrees, enforcedInconsistencyType);
@@ -108,7 +108,7 @@ public final class StubTextInconsistencyException extends RuntimeException imple
     }
 
     for (int i = 0; i < fromPsi.size(); i++) {
-      PsiFileStub psiStub = fromPsi.get(i);
+      PsiFileStub<?> psiStub = fromPsi.get(i);
       if (!DebugUtil.stubTreeToString(psiStub).equals(DebugUtil.stubTreeToString(fromText.get(i)))) {
         reportInconsistency(file, reason, InconsistencyType.MismatchingPsiTree, enforcedInconsistencyType);
         throw new StubTextInconsistencyException("Stub is inconsistent with text in " + file.getLanguage(),
@@ -130,13 +130,14 @@ public final class StubTextInconsistencyException extends RuntimeException imple
     StubInconsistencyReporter.getInstance().reportStubInconsistency(file.getProject(), reason, inconsistencyType, enforcedInconsistencyType);
   }
 
-  private static @NotNull List<PsiFileStub> restoreStubsFromText(FileViewProvider viewProvider) {
+  private static @NotNull List<PsiFileStub<?>> restoreStubsFromText(FileViewProvider viewProvider) {
     Project project = viewProvider.getManager().getProject();
     FileContentImpl fc = (FileContentImpl)FileContentImpl.createByText(viewProvider.getVirtualFile(),
                                                                        viewProvider.getContents(),
                                                                        project);
     fc.setProject(project);
-    PsiFileStubImpl copyTree = (PsiFileStubImpl)StubTreeBuilder.buildStubTree(fc);
+    PsiFileStubImpl<?> copyTree = (PsiFileStubImpl<?>)StubTreeBuilder.buildStubTree(fc);
+    //noinspection unchecked
     return copyTree == null ? Collections.emptyList() : Arrays.asList(copyTree.getStubRoots());
   }
 }

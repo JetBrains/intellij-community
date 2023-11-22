@@ -119,7 +119,7 @@ public abstract class StubProcessingHelperBase {
       return true;
     }
 
-    ObjectStubTree objectStubTree = StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), file);
+    ObjectStubTree<?> objectStubTree = StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), file);
     if (objectStubTree == null) {
       LOG.error("Stub index points to a file without indexed stubs: " + getFileTypeInfo(file, psiFile.getProject()));
       onInternalError(file);
@@ -143,7 +143,7 @@ public abstract class StubProcessingHelperBase {
     return processor.process((Psi)psiFile);
   }
 
-  private void inconsistencyDetected(@Nullable ObjectStubTree stubTree,
+  private void inconsistencyDetected(@Nullable ObjectStubTree<?> stubTree,
                                      @NotNull PsiFileWithStubSupport psiFile,
                                      @NotNull String extraMessage) {
     try {
