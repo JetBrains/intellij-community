@@ -75,10 +75,10 @@ public final class RefCountingContentStorageImplLF extends AbstractStorageLF imp
     //TODO RC: why to wait for record to be written, if we can just return the not-yet-written bytes?
     //MAYBE RC: even better -- cache last 2-4-8 records uncompressed, in memory?
     waitForPendingWriteForRecord(record);
-    byte[] result = withReadLock(() -> super.readBytes(record));
+    byte[] compressedBytes = super.readBytes(record);
 
     if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
-      doRecordSanityCheck(record, result);
+      doRecordSanityCheck(record, compressedBytes);
     }
 
     //TODO RC: Inflater could work with ByteBuffer as input! So there is no need to copy data from
@@ -87,8 +87,8 @@ public final class RefCountingContentStorageImplLF extends AbstractStorageLF imp
     //         allocation
 
     //text files usually 3-4x compressible:
-    int uncompressedSizeEstimation = Math.max(512, result.length * 3);
-    try (InflaterInputStream in = new CustomInflaterInputStream(result)) {
+    int uncompressedSizeEstimation = Math.max(512, compressedBytes.length * 3);
+    try (InflaterInputStream in = new CustomInflaterInputStream(compressedBytes)) {
       final BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream(uncompressedSizeEstimation);
       StreamUtil.copy(in, outputStream);
       return outputStream;

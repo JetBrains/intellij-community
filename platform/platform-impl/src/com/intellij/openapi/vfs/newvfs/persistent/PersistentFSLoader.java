@@ -702,6 +702,9 @@ public final class PersistentFSLoader {
     boolean useContentHashes = true;
     if (FSRecordsImpl.USE_CONTENT_STORAGE_OVER_NEW_FILE_PAGE_CACHE && PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
       LOG.info("VFS uses content storage over new FilePageCache");
+      //FiXME RC: now we create storage over new FilePageCache, but protected by the same global lock used by all storages
+      //          atop of old page-cache! Which is dummy, since content storage is independent, and could have at least
+      //          its own RWLock!
       contentStorage = new RefCountingContentStorageImplLF(contentsFile, FIVE_PERCENT_FOR_GROWTH, storingPool, useContentHashes);
     }
     else {

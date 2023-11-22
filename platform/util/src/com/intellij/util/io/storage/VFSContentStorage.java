@@ -8,7 +8,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -30,13 +29,19 @@ public interface VFSContentStorage extends CleanableStorage, Closeable, Forceabl
    */
   int storeRecord(@NotNull ByteArraySequence bytes) throws IOException;
 
+  /**
+   * Checks the record data is not corrupted.
+   * fastCheck involves only meta-data consistency, !fastCheck also reads record bytes, and check them (could be
+   * much slower if record is large)
+   */
   void checkRecord(int recordId, boolean fastCheck) throws IOException;
 
   InputStream readStream(int recordId) throws IOException;
 
   /**
+   * @return crypto-hash of the record identified by recordId
    * This method is only to support legacy usage.
-   * Shouldn't be any new usage: now content hashes is an implementation detail, hidden behind storage abstraction
+   * Shouldn't be any new usage: content hashes usage is an implementation detail, hidden behind storage abstraction
    */
   @ApiStatus.Obsolete
   byte[] contentHash(int recordId) throws IOException;

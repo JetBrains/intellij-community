@@ -7,9 +7,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.Closeable;
 import java.io.IOException;
 
-/**
- * FIXME type something meaningful here
- */
 public interface IRecordsTable extends Closeable, Forceable {
   int createNewRecord() throws IOException;
 
