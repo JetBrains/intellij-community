@@ -200,6 +200,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
     actionBlocks.mapIndexed { index, block ->
       block.panel.textData = textFragments[index]
+      SwingUtilities.getWindowAncestor(block.popup.content).toFront()
     }
 
     updatePopupsBounds(project)
