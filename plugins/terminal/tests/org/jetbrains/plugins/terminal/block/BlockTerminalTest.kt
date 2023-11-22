@@ -14,6 +14,7 @@ import org.jetbrains.plugins.terminal.exp.*
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
 import org.junit.Assert
 import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.io.File
@@ -42,7 +43,7 @@ class BlockTerminalTest(private val shellPath: String) {
   @JvmField
   val ruleChain: RuleChain = RuleChain(projectRule, disposableRule)
 
-  @org.junit.Test
+  @Test
   fun `test echo output is read`() {
     val session = startBlockTerminalSession(TermSize(20, 10))
     val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
@@ -50,7 +51,7 @@ class BlockTerminalTest(private val shellPath: String) {
     assertCommandResult(0, "qqq\n", outputFuture)
   }
 
-  @org.junit.Test
+  @Test
   fun `test read from history and screen buffers`() {
     val termSize = TermSize(20, 10)
     val session = startBlockTerminalSession(termSize)
@@ -61,7 +62,7 @@ class BlockTerminalTest(private val shellPath: String) {
     assertCommandResult(0, SimpleTextRepeater.Helper.getExpectedOutput(items), outputFuture)
   }
 
-  @org.junit.Test
+  @Test
   fun `test large output`() {
     val items = listOf(SimpleTextRepeater.Item(UUID.randomUUID().toString(), 10_000),
                        SimpleTextRepeater.Item("Done", 1))
