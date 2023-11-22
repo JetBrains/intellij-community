@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.openapi.actionSystem.impl
 
@@ -57,6 +57,7 @@ import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.with
@@ -64,8 +65,6 @@ import com.intellij.util.containers.without
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import kotlinx.collections.immutable.persistentHashSetOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -82,7 +81,6 @@ import java.awt.event.InputEvent
 import java.awt.event.WindowEvent
 import java.util.*
 import java.util.concurrent.CancellationException
-import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -97,16 +95,14 @@ private val DEFAULT_ACTION_GROUP_CLASS_NAME = DefaultActionGroup::class.java.nam
 open class ActionManagerImpl protected constructor(private val coroutineScope: CoroutineScope) : ActionManagerEx(), Disposable {
   private val lock = Any()
 
-  @Volatile
-  private var idToAction: Map<String, AnAction> = java.util.Map.of()
   private val pluginToId = HashMap<PluginId, MutableList<String>>()
-  private val idToIndex = Object2IntOpenHashMap<String>()
+  private val idToIndex = Object2IntOpenHashMap<String>().also { it.defaultReturnValue(-1) }
 
+  @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
   @Volatile
-  private var prohibitedActionIds = persistentHashSetOf<String>()
+  private var prohibitedActionIds = java.util.Set.of<String>()
 
-  @Suppress("SSBasedInspection")
-  private val actionToId = Object2ObjectOpenHashMap<Any, String>()
+  private val actionToId = HashMap<Any, String>(5_000, 0.5f)
   private val idToGroupId = HashMap<String, MutableList<String>>()
   private val notRegisteredInternalActionIds = ArrayList<String>()
   private val actionListeners = ContainerUtil.createLockFreeCopyOnWriteList<AnActionListener>()
@@ -123,15 +119,24 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   private val baseActions = HashMap<String, AnAction>()
   private var anonymousGroupIdCounter = 0
 
+  private val actionPostInitRegistrar: ActionPostInitRegistrar
+
   init {
     val app = ApplicationManager.getApplication()
     if (!app.isUnitTestMode && !app.isHeadlessEnvironment && !app.isCommandLine) {
       ThreadingAssertions.assertBackgroundThread()
     }
-    registerActions(PluginManagerCore.getPluginSet().getEnabledModules())
-    EP.forEachExtensionSafe { it.customize(this) }
 
+    val idToAction = HashMap<String, AnAction>(5_000, 0.5f)
+    val actionPreInitRegistrar = ActionPreInitRegistrar(idToAction)
+    doRegisterActions(PluginManagerCore.getPluginSet().getEnabledModules(), actionRegistrar = actionPreInitRegistrar)
+
+    // by intention, _after_ doRegisterActions
+    actionPostInitRegistrar = ActionPostInitRegistrar(idToAction)
+
+    EP.forEachExtensionSafe { it.customize(this) }
     DYNAMIC_EP_NAME.forEachExtensionSafe { it.registerActions(this) }
+
     @Suppress("LeakingThis")
     DYNAMIC_EP_NAME.addExtensionPointListener(object : ExtensionPointListener<DynamicActionConfigurationCustomizer> {
       override fun extensionAdded(extension: DynamicActionConfigurationCustomizer, pluginDescriptor: PluginDescriptor) {
@@ -144,32 +149,36 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }, this)
 
     @Suppress("LeakingThis")
-    app.extensionArea.getExtensionPoint<Any>("com.intellij.editorActionHandler").addChangeListener({
-                                                                                                     synchronized(lock) {
-                                                                                                       actionToId.keys.forEach(
-                                                                                                         Consumer(::updateHandlers))
-                                                                                                     }
-                                                                                                   }, this)
+    app.extensionArea.getExtensionPoint<Any>("com.intellij.editorActionHandler")
+      .addChangeListener({
+                           synchronized(lock) {
+                             actionToId.keys.forEach(::updateHandlers)
+                           }
+                         }, this)
   }
 
   internal fun registerActions(modules: Iterable<IdeaPluginDescriptorImpl>) {
+    doRegisterActions(modules = modules, actionRegistrar = actionPostInitRegistrar)
+  }
+
+  private fun doRegisterActions(modules: Iterable<IdeaPluginDescriptorImpl>, actionRegistrar: ActionRegistrar) {
     val keymapManager = KeymapManagerEx.getInstanceEx()!!
     for (module in modules) {
-      registerPluginActions(module, keymapManager)
+      registerPluginActions(module = module, keymapManager = keymapManager, actionRegistrar = actionRegistrar)
       executeRegisterTaskForOldContent(module) {
-        registerPluginActions(it, keymapManager)
+        registerPluginActions(module = it, keymapManager = keymapManager, actionRegistrar = actionRegistrar)
       }
     }
   }
 
-  override fun dispose() {
+  final override fun dispose() {
     timer?.let {
       it.stop()
       timer = null
     }
   }
 
-  override fun addTimerListener(listener: TimerListener) {
+  final override fun addTimerListener(listener: TimerListener) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
@@ -177,9 +186,13 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     if (timer == null) {
       timer = MyTimer(coroutineScope.childScope())
     }
-    val wrappedListener = if (AppExecutorUtil.propagateContextOrCancellation() && listener !is CapturingListener) CapturingListener(
-      listener)
-    else listener
+
+    val wrappedListener = if (AppExecutorUtil.propagateContextOrCancellation() && listener !is CapturingListener) {
+      CapturingListener(listener)
+    }
+    else {
+      listener
+    }
     timer!!.listeners.add(wrappedListener)
   }
 
@@ -195,7 +208,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
   }
 
-  override fun removeTimerListener(listener: TimerListener) {
+  final override fun removeTimerListener(listener: TimerListener) {
     if (listener is CapturingListener) {
       listener.childContext.continuation?.context?.job?.cancel()
     }
@@ -239,10 +252,10 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                    customizable = customizable)
   }
 
-  override fun createActionToolbar(place: String,
-                                   group: ActionGroup,
-                                   horizontal: Boolean,
-                                   separatorCreator: Function<in String, out Component>): ActionToolbar {
+  final override fun createActionToolbar(place: String,
+                                         group: ActionGroup,
+                                         horizontal: Boolean,
+                                         separatorCreator: Function<in String, out Component>): ActionToolbar {
     val toolbar = createActionToolbarImpl(place = place,
                                           group = group,
                                           horizontal = horizontal,
@@ -252,7 +265,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     return toolbar
   }
 
-  private fun registerPluginActions(module: IdeaPluginDescriptorImpl, keymapManager: KeymapManagerEx) {
+  private fun registerPluginActions(module: IdeaPluginDescriptorImpl, keymapManager: KeymapManagerEx, actionRegistrar: ActionRegistrar) {
     val elements = module.actions
     if (elements.isEmpty()) {
       return
@@ -281,10 +294,13 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
           }
         }
       }
+
       when (descriptor) {
         is ActionDescriptorAction -> {
           processActionElement(className = descriptor.className,
+                               isInternal = descriptor.isInternal,
                                element = element,
+                               actionRegistrar = actionRegistrar,
                                module = module,
                                bundle = bundle,
                                keymapManager = keymapManager,
@@ -294,6 +310,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
           processGroupElement(className = descriptor.className,
                               id = descriptor.id,
                               element = element,
+                              actionRegistrar = actionRegistrar,
                               module = module,
                               bundle = bundle,
                               keymapManager = keymapManager,
@@ -301,9 +318,16 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         }
         else -> {
           when (descriptor.name) {
-            ActionDescriptorName.separator -> processSeparatorNode(parentGroup = null, element = element, module = module, bundle = bundle)
-            ActionDescriptorName.reference -> processReferenceNode(element = element, module = module, bundle = bundle)
-            ActionDescriptorName.unregister -> processUnregisterNode(element = element, module = module)
+            ActionDescriptorName.separator -> processSeparatorNode(parentGroup = null,
+                                                                   element = element,
+                                                                   module = module,
+                                                                   bundle = bundle,
+                                                                   actionRegistrar = actionRegistrar)
+            ActionDescriptorName.reference -> processReferenceNode(element = element,
+                                                                   module = module,
+                                                                   bundle = bundle,
+                                                                   actionRegistrar = actionRegistrar)
+            ActionDescriptorName.unregister -> processUnregisterNode(element = element, module = module, actionRegistrar = actionRegistrar)
             ActionDescriptorName.prohibit -> processProhibitNode(element = element, module = module)
             else -> LOG.error("${descriptor.name} is unknown")
           }
@@ -313,10 +337,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     StartUpMeasurer.addPluginCost(module.pluginId.idString, "Actions", System.nanoTime() - startTime)
   }
 
-  override fun getAction(id: String): AnAction? = getActionImpl(id = id, canReturnStub = false)
+  final override fun getAction(id: String): AnAction? {
+    return doGetAction(id = id, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
+  }
 
-  private fun getActionImpl(id: String, canReturnStub: Boolean): AnAction? {
-    var action = idToAction.get(id)
+  private fun doGetAction(id: String, canReturnStub: Boolean, actionRegistrar: ActionRegistrar): AnAction? {
+    var action = actionRegistrar.getAction(id)
     if (canReturnStub || action !is ActionStubBase) {
       return action
     }
@@ -329,19 +355,19 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
 
     if (converted == null) {
-      unregisterAction(id)
+      unregisterAction(actionId = id, actionRegistrar = actionRegistrar)
       return null
     }
 
     synchronized(lock) {
       // get under lock - maybe already replaced in parallel
-      action = idToAction.get(id)
-      return replaceStub(stub = action as? ActionStubBase ?: return action, convertedAction = converted)
+      action = actionRegistrar.getAction(id)
+      return replaceStub(stub = action as? ActionStubBase ?: return action, convertedAction = converted, actionRegistrar = actionRegistrar)
     }
   }
 
   // executed under lock
-  private fun replaceStub(stub: ActionStubBase, convertedAction: AnAction): AnAction {
+  private fun replaceStub(stub: ActionStubBase, convertedAction: AnAction, actionRegistrar: ActionRegistrar): AnAction {
     if (actionToId.remove(stub) == null) {
       throw IllegalStateException("No action in actionToId by stub (stub=$stub)")
     }
@@ -350,7 +376,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
     actionToId.put(convertedAction, stub.id)
     val result = (if (stub is ActionStub) stub.projectType else null)?.let { ChameleonAction(convertedAction, it) } ?: convertedAction
-    idToAction = idToAction.with(stub.id, result)
+    actionRegistrar.putAction(stub.id, result)
     return result
   }
 
@@ -361,14 +387,16 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     synchronized(lock) { return actionToId.get(action) }
   }
 
-  override fun getActionIdList(idPrefix: String): List<String> {
-    return idToAction.keys.filter { it.startsWith(idPrefix) }
+  final override fun getActionIdList(idPrefix: String): List<String> {
+    return actionPostInitRegistrar.getActionIdList(idPrefix)
   }
 
   @Suppress("OVERRIDE_DEPRECATION")
-  override fun getActionIds(idPrefix: String): Array<String> = ArrayUtilRt.toStringArray(getActionIdList(idPrefix))
+  final override fun getActionIds(idPrefix: String): Array<String> = ArrayUtilRt.toStringArray(getActionIdList(idPrefix))
 
-  override fun isGroup(actionId: String): Boolean = getActionImpl(id = actionId, canReturnStub = true) is ActionGroup
+  final override fun isGroup(actionId: String): Boolean {
+    return doGetAction(id = actionId, canReturnStub = true, actionPostInitRegistrar) is ActionGroup
+  }
 
   @Suppress("removal", "OVERRIDE_DEPRECATION")
   override fun createButtonToolbar(actionPlace: String, messageActionGroup: ActionGroup): JComponent {
@@ -376,19 +404,23 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     return ButtonToolbarImpl(actionPlace, messageActionGroup)
   }
 
-  override fun getActionOrStub(id: String): AnAction? = getActionImpl(id = id, canReturnStub = true)
+  final override fun getActionOrStub(id: String): AnAction? {
+    return doGetAction(id = id, canReturnStub = true, actionRegistrar = actionPostInitRegistrar)
+  }
 
   @Experimental
   @Internal
   fun actionsOrStubs(): Sequence<AnAction> {
-    return idToAction.values.asSequence()
+    return actionPostInitRegistrar.actionsOrStubs()
   }
 
   /**
    * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of `AnAction`.
    */
   private fun processActionElement(className: String,
+                                   isInternal: Boolean,
                                    element: XmlElement,
+                                   actionRegistrar: ActionRegistrar,
                                    module: IdeaPluginDescriptorImpl,
                                    bundle: ResourceBundle?,
                                    keymapManager: KeymapManager,
@@ -399,7 +431,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       return null
     }
 
-    if (element.attributes.get(INTERNAL_ATTR_NAME).toBoolean() && !ApplicationManager.getApplication().isInternal) {
+    if (isInternal && !ApplicationManager.getApplication().isInternal) {
       notRegisteredInternalActionIds.add(id)
       return null
     }
@@ -433,7 +465,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     // process all links and key bindings if any
     for (e in element.children) {
       when (e.name) {
-        ADD_TO_GROUP_ELEMENT_NAME -> processAddToGroupNode(action = stub, element = e, module = module, secondary = isSecondary(e))
+        ADD_TO_GROUP_ELEMENT_NAME -> processAddToGroupNode(action = stub,
+                                                           element = e,
+                                                           module = module,
+                                                           secondary = isSecondary(e),
+                                                           actionRegistrar = actionRegistrar)
         "keyboard-shortcut" -> processKeyboardShortcutNode(element = e, actionId = id, module = module, keymapManager = keymapManager)
         "mouse-shortcut" -> processMouseShortcutNode(element = e, actionId = id, module = module, keymapManager = keymapManager)
         "abbreviation" -> processAbbreviationNode(e = e, id = id)
@@ -450,31 +486,31 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     if (shortcutOfActionId != null) {
       keymapManager.bindShortcuts(shortcutOfActionId, id)
     }
-    registerOrReplaceActionInner(element = element, id = id, action = stub, plugin = module)
+    registerOrReplaceActionInner(element = element, id = id, action = stub, plugin = module, actionRegistrar = actionRegistrar)
     return stub
   }
 
   private fun registerOrReplaceActionInner(element: XmlElement,
                                            id: String,
                                            action: AnAction,
-                                           plugin: IdeaPluginDescriptor) {
+                                           plugin: IdeaPluginDescriptor,
+                                           actionRegistrar: ActionRegistrar) {
     if (prohibitedActionIds.contains(id)) {
       return
     }
 
     synchronized(lock) {
       if (element.attributes.get(OVERRIDES_ATTR_NAME).toBoolean()) {
-        val actionOrStub = getActionOrStub(id)
+        val actionOrStub = doGetAction(id = id, canReturnStub = true, actionRegistrar = actionRegistrar)
         if (actionOrStub == null) {
           LOG.error("'$id' action group in '${plugin.name}' does not override anything")
           return
         }
-        if (action is ActionGroup && actionOrStub is ActionGroup &&
-            action.isPopup != actionOrStub.isPopup) {
+        if (action is ActionGroup && actionOrStub is ActionGroup && action.isPopup != actionOrStub.isPopup) {
           LOG.info("'$id' action group in '${plugin.name}' sets isPopup=$action.isPopup")
         }
 
-        val prev = replaceAction(actionId = id, newAction = action, pluginId = plugin.pluginId)
+        val prev = replaceAction(actionId = id, newAction = action, pluginId = plugin.pluginId, actionRegistrar = actionRegistrar)
         if (action is DefaultActionGroup && prev is DefaultActionGroup) {
           if (element.attributes.get("keep-content").toBoolean()) {
             action.copyFromGroup(prev)
@@ -482,10 +518,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         }
       }
       else {
-        registerAction(actionId = id,
-                       action = action,
-                       pluginId = plugin.pluginId,
-                       projectType = element.attributes.get(PROJECT_TYPE)?.let { ProjectType.create(it) })
+        doRegisterAction(actionId = id,
+                         action = action,
+                         pluginId = plugin.pluginId,
+                         projectType = element.attributes.get(PROJECT_TYPE)?.let { ProjectType.create(it) },
+                         actionRegistrar = actionRegistrar)
       }
       onActionLoadedFromXml(action = action, actionId = id, plugin = plugin)
     }
@@ -497,9 +534,10 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                   module: IdeaPluginDescriptorImpl,
                                   bundle: ResourceBundle?,
                                   keymapManager: KeymapManagerEx,
+                                  actionRegistrar: ActionRegistrar,
                                   classLoader: ClassLoader): AnAction? {
     try {
-      if (prohibitedActionIds.contains(id)) {
+      if (id != null && prohibitedActionIds.contains(id)) {
         return null
       }
 
@@ -557,7 +595,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         }
       }
 
-      registerOrReplaceActionInner(element = element, id = id, action = group, plugin = module)
+      registerOrReplaceActionInner(element = element, id = id, action = group, plugin = module, actionRegistrar = actionRegistrar)
 
       configureGroupDescriptionAndIcon(presentation = group.templatePresentation,
                                        description = element.attributes.get(DESCRIPTION),
@@ -589,9 +627,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
             }
             else {
               val action = processActionElement(className = childClassName,
+                                                isInternal = child.attributes.get(INTERNAL_ATTR_NAME).toBoolean(),
                                                 element = child,
                                                 module = module,
                                                 bundle = bundle,
+                                                actionRegistrar = actionRegistrar,
                                                 keymapManager = keymapManager,
                                                 classLoader = classLoader)
               if (action != null) {
@@ -604,7 +644,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
             }
           }
           SEPARATOR_ELEMENT_NAME -> {
-            processSeparatorNode(parentGroup = group as DefaultActionGroup, element = child, module = module, bundle = bundle)
+            processSeparatorNode(parentGroup = group as DefaultActionGroup,
+                                 element = child,
+                                 module = module,
+                                 bundle = bundle,
+                                 actionRegistrar = actionRegistrar)
           }
           GROUP_ELEMENT_NAME -> {
             var childClassName = child.attributes.get(CLASS_ATTR_NAME)
@@ -628,6 +672,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                module = module,
                                                bundle = bundle,
                                                keymapManager = keymapManager,
+                                               actionRegistrar = actionRegistrar,
                                                classLoader = classLoader)
               if (action != null) {
                 addToGroupInner(group = group, action = action, constraints = Constraints.LAST, module = module, secondary = false)
@@ -638,10 +683,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
             processAddToGroupNode(action = group,
                                   element = child,
                                   module = module,
-                                  secondary = isSecondary(child))
+                                  secondary = isSecondary(child),
+                                  actionRegistrar = actionRegistrar)
           }
           REFERENCE_ELEMENT_NAME -> {
-            val action = processReferenceElement(element = child, module = module)
+            val action = processReferenceElement(element = child, module = module, actionRegistrar = actionRegistrar)
             if (action != null) {
               addToGroupInner(group = group,
                               action = action,
@@ -668,11 +714,18 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
   }
 
-  private fun processReferenceNode(element: XmlElement, module: IdeaPluginDescriptor, bundle: ResourceBundle?) {
-    val action = processReferenceElement(element, module) ?: return
+  private fun processReferenceNode(element: XmlElement,
+                                   module: IdeaPluginDescriptor,
+                                   bundle: ResourceBundle?,
+                                   actionRegistrar: ActionRegistrar) {
+    val action = processReferenceElement(element = element, module = module, actionRegistrar = actionRegistrar) ?: return
     for (child in element.children) {
       if (ADD_TO_GROUP_ELEMENT_NAME == child.name) {
-        processAddToGroupNode(action = action, element = child, module = module, secondary = isSecondary(child))
+        processAddToGroupNode(action = action,
+                              element = child,
+                              module = module,
+                              secondary = isSecondary(child),
+                              actionRegistrar = actionRegistrar)
       }
       else if (SYNONYM_ELEMENT_NAME == child.name) {
         processSynonymNode(action = action, element = child, module = module, bundle = bundle)
@@ -683,14 +736,20 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   /**
    * @param element description of a link
    */
-  private fun processAddToGroupNode(action: AnAction, element: XmlElement, module: IdeaPluginDescriptor, secondary: Boolean) {
+  private fun processAddToGroupNode(action: AnAction,
+                                    element: XmlElement,
+                                    module: IdeaPluginDescriptor,
+                                    secondary: Boolean,
+                                    actionRegistrar: ActionRegistrar) {
     val name = if (action is ActionStub) action.className else action.javaClass.name
     val id = if (action is ActionStub) action.id else actionToId.get(action)!!
     val actionName = "$name ($id)"
 
     // parent group
-    val parentGroup = getParentGroup(groupId = element.attributes.get(GROUP_ID_ATTR_NAME), actionName = actionName, module = module)
-                      ?: return
+    val parentGroup = getParentGroup(groupId = element.attributes.get(GROUP_ID_ATTR_NAME),
+                                     actionName = actionName,
+                                     module = module,
+                                     actionRegistrar = actionRegistrar) ?: return
 
     // anchor attribute
     val anchor = parseAnchor(element.attributes.get("anchor"), actionName, module) ?: return
@@ -742,13 +801,16 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     addToGroupInner(group = group, action = action, constraints = constraints, module = null, secondary = false)
   }
 
-  fun getParentGroup(groupId: String?, actionName: String?, module: IdeaPluginDescriptor): DefaultActionGroup? {
+  private fun getParentGroup(groupId: String?,
+                             actionName: String?,
+                             module: IdeaPluginDescriptor,
+                             actionRegistrar: ActionRegistrar): DefaultActionGroup? {
     if (groupId.isNullOrEmpty()) {
       reportActionError(module, "$actionName: attribute \"group-id\" should be defined")
       return null
     }
 
-    val parentGroup = getActionImpl(id = groupId, canReturnStub = true)
+    val parentGroup = doGetAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar)
     if (parentGroup == null) {
       reportActionError(module = module,
                         message = "$actionName: group with id \"$groupId\" isn't registered so the action won't be added to it; the action can be invoked via \"Find Action\"",
@@ -772,7 +834,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   private fun processSeparatorNode(parentGroup: DefaultActionGroup?,
                                    element: XmlElement,
                                    module: IdeaPluginDescriptor,
-                                   bundle: ResourceBundle?) {
+                                   bundle: ResourceBundle?,
+                                   actionRegistrar: ActionRegistrar) {
     val text = element.attributes.get(TEXT_ATTR_NAME)
     val key = element.attributes.get(KEY_ATTR_NAME)
     val separator = when {
@@ -784,7 +847,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     // try to find inner <add-to-parent...> tag
     for (child in element.children) {
       if (ADD_TO_GROUP_ELEMENT_NAME == child.name) {
-        processAddToGroupNode(action = separator, element = child, module = module, secondary = isSecondary(child))
+        processAddToGroupNode(action = separator,
+                              element = child,
+                              module = module,
+                              secondary = isSecondary(child),
+                              actionRegistrar = actionRegistrar)
       }
     }
   }
@@ -798,24 +865,24 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     prohibitAction(id)
   }
 
-  private fun processUnregisterNode(element: XmlElement, module: IdeaPluginDescriptor) {
+  private fun processUnregisterNode(element: XmlElement, module: IdeaPluginDescriptor, actionRegistrar: ActionRegistrar) {
     val id = element.attributes.get(ID_ATTR_NAME)
     if (id == null) {
       reportActionError(module, "'id' attribute is required for 'unregister' elements")
       return
     }
 
-    val action = getAction(id)
+    val action = doGetAction(id = id, canReturnStub = false, actionRegistrar = actionRegistrar)
     if (action == null) {
       reportActionError(module, "Trying to unregister non-existing action $id")
       return
     }
 
     AbbreviationManager.getInstance().removeAllAbbreviations(id)
-    unregisterAction(id)
+    unregisterAction(actionId = id, actionRegistrar = actionRegistrar)
   }
 
-  private fun processReferenceElement(element: XmlElement, module: IdeaPluginDescriptor): AnAction? {
+  private fun processReferenceElement(element: XmlElement, module: IdeaPluginDescriptor, actionRegistrar: ActionRegistrar): AnAction? {
     val ref = getReferenceActionId(element)
     if (ref.isNullOrEmpty()) {
       reportActionError(module, "ID of reference element should be defined", null)
@@ -826,7 +893,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       return null
     }
 
-    val action = getActionImpl(ref, true)
+    val action = doGetAction(id = ref, canReturnStub = true, actionRegistrar = actionRegistrar)
     if (action == null) {
       if (!notRegisteredInternalActionIds.contains(ref)) {
         reportActionError(module, "action specified by reference isn't registered (ID=$ref)", null)
@@ -845,7 +912,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         ActionDescriptorName.action -> unloadActionElement(element)
         ActionDescriptorName.group -> unloadGroupElement(element)
         ActionDescriptorName.reference -> {
-          val action = processReferenceElement(element, module) ?: return
+          val action = processReferenceElement(element = element, module = module, actionRegistrar = actionPostInitRegistrar) ?: return
           val actionId = getReferenceActionId(element)
           for ((name, attributes) in element.children) {
             if (name != ADD_TO_GROUP_ELEMENT_NAME) {
@@ -853,7 +920,10 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
             }
 
             val groupId = attributes.get(GROUP_ID_ATTR_NAME)
-            val parentGroup = getParentGroup(groupId = groupId, actionName = actionId, module = module) ?: return
+            val parentGroup = getParentGroup(groupId = groupId,
+                                             actionName = actionId,
+                                             module = module,
+                                             actionRegistrar = actionPostInitRegistrar) ?: return
             parentGroup.remove(action)
             idToGroupId.get(actionId)?.remove(groupId)
           }
@@ -894,22 +964,36 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   override fun registerAction(actionId: String, action: AnAction, pluginId: PluginId?) {
     synchronized(lock) {
-      registerAction(actionId = actionId, action = action, pluginId = pluginId, projectType = null)
+      doRegisterAction(actionId = actionId,
+                       action = action,
+                       pluginId = pluginId,
+                       projectType = null,
+                       actionRegistrar = actionPostInitRegistrar)
     }
   }
 
   // executed under lock
-  private fun registerAction(actionId: String, action: AnAction, pluginId: PluginId?, projectType: ProjectType?) {
+  private fun doRegisterAction(actionId: String,
+                               action: AnAction,
+                               pluginId: PluginId?,
+                               projectType: ProjectType?,
+                               actionRegistrar: ActionRegistrar) {
     if (prohibitedActionIds.contains(actionId)) {
       return
     }
 
-    if (!addToMap(actionId = actionId, action = action, projectType = projectType)) {
-      reportActionIdCollision(actionId = actionId, action = action, pluginId = pluginId)
+    val existing = actionRegistrar.getAction(actionId)
+    if (!addToMap(actionId = actionId, existing = existing, action = action, projectType = projectType, actionRegistrar)) {
+      reportActionIdCollision(actionId = actionId,
+                              action = action,
+                              pluginId = pluginId,
+                              oldAction = actionRegistrar.getAction(actionId),
+                              pluginToId = pluginToId)
       return
     }
 
-    if (actionToId.containsKey(action)) {
+    val existingByAction = actionToId.putIfAbsent(action, actionId)
+    if (existingByAction != null) {
       val module = if (pluginId == null) null else PluginManagerCore.getPluginSet().findEnabledPlugin(pluginId)
       val message = "ID '${actionToId.get(action)}' is already taken by action ${actionToString(action)}." +
                     " ID '$actionId' cannot be registered for the same action"
@@ -924,132 +1008,82 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
     action.registerCustomShortcutSet(ProxyShortcutSet(actionId), null)
     idToIndex.put(actionId, registeredActionCount++)
-    actionToId.put(action, actionId)
     if (pluginId != null) {
       pluginToId.computeIfAbsent(pluginId) { mutableListOf() }.add(actionId)
     }
-    notifyCustomActionsSchema(actionId)
-    updateHandlers(action)
-  }
 
-  /**
-   * executed under lock
-   * @return true on success, false on action conflict
-   */
-  private fun addToMap(actionId: String, action: AnAction, projectType: ProjectType?): Boolean {
-    val existing = idToAction.get(actionId)
-    if (existing is ChameleonAction) {
-      val chameleonAction = existing
-      return chameleonAction.addAction(action, projectType)
-    }
-    else if (existing != null) {
-      // we need to create ChameleonAction even if 'projectType==null', in case 'ActionStub.getProjectType() != null'
-      val chameleonAction = ChameleonAction(existing, null)
-      if (!chameleonAction.addAction(action, projectType)) return false
-      idToAction = idToAction.with(actionId, chameleonAction)
-      return true
-    }
-    else if (projectType != null) {
-      val chameleonAction = ChameleonAction(action, projectType)
-      idToAction = idToAction.with(actionId, chameleonAction)
-      return true
-    }
-    else {
-      idToAction = idToAction.with(actionId, action)
-      return true
-    }
-  }
-
-  private fun reportActionIdCollision(actionId: String, action: AnAction, pluginId: PluginId?) {
-    val oldPluginInfo = pluginToId
-      .asSequence()
-      .filter { it.value.contains(actionId) }
-      .map { it.key }
-      .map { getPluginInfo(it) }
-      .joinToString(separator = ",")
-    val oldAction = idToAction.get(actionId)
-    val message = "ID '$actionId' is already taken by action ${actionToString(oldAction)} $oldPluginInfo. " +
-                  "Action ${actionToString(action)} cannot use the same ID"
-    if (pluginId == null) {
-      LOG.error(message)
-    }
-    else {
-      LOG.error(PluginException("$message (plugin $pluginId)", null, pluginId))
-    }
-  }
-
-  private fun actionToString(action: AnAction?): @NonNls String {
-    if (action == null) return "null"
-    when (action) {
-      is ChameleonAction -> return "ChameleonAction(" + action.actions.values.joinToString { actionToString(it) } + ")"
-      is ActionStub -> return "'$action' (${action.className})"
-      else -> return "'$action' (${action.javaClass})"
-    }
+    //if (actionRegistrar.isPostInit) {
+      notifyCustomActionsSchema(actionId)
+      updateHandlers(action)
+    //}
   }
 
   override fun registerAction(actionId: String, action: AnAction) {
     synchronized(lock) {
-      registerAction(actionId = actionId, action = action, pluginId = null, projectType = null)
+      doRegisterAction(actionId = actionId, action = action, pluginId = null, projectType = null, actionRegistrar = actionPostInitRegistrar)
     }
   }
 
   override fun unregisterAction(actionId: String) {
-    unregisterAction(actionId = actionId, removeFromGroups = true)
+    synchronized(lock) {
+      unregisterAction(actionId = actionId, actionRegistrar = actionPostInitRegistrar)
+    }
   }
 
-  private fun unregisterAction(actionId: String, removeFromGroups: Boolean) {
-    synchronized(lock) {
-      val actionToRemove = idToAction.get(actionId)
-      if (actionToRemove == null) {
-        LOG.debug { "action with ID $actionId wasn't registered" }
-        return
-      }
+  // must be called under lock
+  private fun unregisterAction(actionId: String, actionRegistrar: ActionRegistrar, removeFromGroups: Boolean = true) {
+    val actionToRemove = actionRegistrar.getAction(actionId)
+    if (actionToRemove == null) {
+      LOG.debug { "action with ID $actionId wasn't registered" }
+      return
+    }
 
-      idToAction = idToAction.without(actionId)
+    actionRegistrar.removeAction(actionId)
 
-      actionToId.remove(actionToRemove)
-      idToIndex.removeInt(actionId)
-      for (value in pluginToId.values) {
-        value.remove(actionId)
-      }
+    actionToId.remove(actionToRemove)
+    idToIndex.removeInt(actionId)
+    for (value in pluginToId.values) {
+      value.remove(actionId)
+    }
 
-      if (removeFromGroups) {
-        val customActionSchema = serviceIfCreated<CustomActionsSchema>()
-        for (groupId in (idToGroupId.get(actionId) ?: emptyList())) {
-          customActionSchema?.invalidateCustomizedActionGroup(groupId)
-          val group = getActionOrStub(groupId) as DefaultActionGroup?
-          if (group == null) {
-            LOG.error("Trying to remove action $actionId from non-existing group $groupId")
-            continue
-          }
+    if (removeFromGroups) {
+      val customActionSchema = serviceIfCreated<CustomActionsSchema>()
+      for (groupId in (idToGroupId.get(actionId) ?: emptyList())) {
+        customActionSchema?.invalidateCustomizedActionGroup(groupId)
+        val group = doGetAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar) as DefaultActionGroup?
+        if (group == null) {
+          LOG.error("Trying to remove action $actionId from non-existing group $groupId")
+          continue
+        }
 
-          group.remove(actionToRemove, actionId)
-          if (group !is ActionGroupStub) {
-            // group can be used as a stub in other actions
-            for (parentOfGroup in (idToGroupId.get(groupId) ?: emptyList())) {
-              val parentOfGroupAction = getActionOrStub(parentOfGroup) as DefaultActionGroup?
-              if (parentOfGroupAction == null) {
-                LOG.error("Trying to remove action $actionId from non-existing group $parentOfGroup")
-                continue
-              }
+        group.remove(actionToRemove, actionId)
+        if (group !is ActionGroupStub) {
+          // group can be used as a stub in other actions
+          for (parentOfGroup in (idToGroupId.get(groupId) ?: emptyList())) {
+            val parentOfGroupAction = doGetAction(id = parentOfGroup,
+                                                  canReturnStub = true,
+                                                  actionRegistrar = actionRegistrar) as DefaultActionGroup?
+            if (parentOfGroupAction == null) {
+              LOG.error("Trying to remove action $actionId from non-existing group $parentOfGroup")
+              continue
+            }
 
-              for (stub in parentOfGroupAction.childActionsOrStubs) {
-                if (stub is ActionGroupStub && groupId == stub.id) {
-                  stub.remove(actionToRemove, actionId)
-                }
+            for (stub in parentOfGroupAction.childActionsOrStubs) {
+              if (stub is ActionGroupStub && groupId == stub.id) {
+                stub.remove(actionToRemove, actionId)
               }
             }
           }
         }
       }
-
-      if (actionToRemove is ActionGroup) {
-        for (value in idToGroupId.values) {
-          value.remove(actionId)
-        }
-      }
-      updateHandlers(actionToRemove)
     }
+
+    if (actionToRemove is ActionGroup) {
+      for (value in idToGroupId.values) {
+        value.remove(actionId)
+      }
+    }
+    updateHandlers(actionToRemove)
   }
 
   /**
@@ -1059,7 +1093,10 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   @Internal
   fun prohibitAction(actionId: String) {
     synchronized(lock) {
-      prohibitedActionIds = prohibitedActionIds.add(actionId)
+      prohibitedActionIds = HashSet(prohibitedActionIds).let {
+        it.add(actionId)
+        it
+      }
     }
     val action = getAction(actionId)
     if (action != null) {
@@ -1071,7 +1108,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   @TestOnly
   fun resetProhibitedActions() {
     synchronized(lock) {
-      prohibitedActionIds = prohibitedActionIds.clear()
+      prohibitedActionIds = java.util.Set.of()
     }
   }
 
@@ -1107,21 +1144,26 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   override fun replaceAction(actionId: String, newAction: AnAction) {
-    val callerClass = ReflectionUtil.getGrandCallerClass()
+    val callerClass = walker.callerClass
     val plugin = if (callerClass == null) null else PluginManager.getPluginByClass(callerClass)
     synchronized(lock) {
-      replaceAction(actionId = actionId, newAction = newAction, pluginId = plugin?.pluginId)
+      replaceAction(actionId = actionId, newAction = newAction, pluginId = plugin?.pluginId, actionRegistrar = actionPostInitRegistrar)
     }
   }
 
-  private fun replaceAction(actionId: String, newAction: AnAction, pluginId: PluginId?): AnAction? {
+  private fun replaceAction(actionId: String, newAction: AnAction, pluginId: PluginId?, actionRegistrar: ActionRegistrar): AnAction? {
     if (prohibitedActionIds.contains(actionId)) {
       return null
     }
 
-    val oldAction = if (newAction is OverridingAction) getAction(actionId) else getActionOrStub(actionId)
+    val oldAction = if (newAction is OverridingAction) {
+      doGetAction(id = actionId, canReturnStub = false, actionRegistrar = actionRegistrar)
+    }
+    else {
+      doGetAction(id = actionId, canReturnStub = true, actionRegistrar = actionRegistrar)
+    }
     // valid indices >= 0
-    val oldIndex = idToIndex.getOrDefault<Any, Int>(actionId, -1)
+    val oldIndex = idToIndex.getInt(actionId)
     if (oldAction != null) {
       baseActions.put(actionId, oldAction)
       val isGroup = oldAction is ActionGroup
@@ -1130,13 +1172,18 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       }
 
       for (groupId in (idToGroupId.get(actionId) ?: emptyList())) {
-        val group = getActionOrStub(groupId) as DefaultActionGroup?
+        val group = doGetAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar) as DefaultActionGroup?
                     ?: throw IllegalStateException("Trying to replace action which has been added to a non-existing group $groupId")
         group.replaceAction(oldAction, newAction)
       }
-      unregisterAction(actionId = actionId, removeFromGroups = false)
+      unregisterAction(actionId = actionId, removeFromGroups = false, actionRegistrar = actionRegistrar)
     }
-    registerAction(actionId = actionId, action = newAction, pluginId = pluginId)
+
+    doRegisterAction(actionId = actionId,
+                     action = newAction,
+                     pluginId = pluginId,
+                     projectType = null,
+                     actionRegistrar = actionRegistrar)
     if (oldIndex >= 0) {
       idToIndex.put(actionId, oldIndex)
     }
@@ -1188,15 +1235,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   override fun getKeyboardShortcut(actionId: String): KeyboardShortcut? {
-    val action = getInstance().getAction(actionId) ?: return null
-    val shortcuts = action.shortcutSet.shortcuts
-    for (shortcut in shortcuts) {
+    val action = getAction(actionId) ?: return null
+    for (shortcut in action.shortcutSet.shortcuts) {
       // Shortcut can be a MouseShortcut here.
       // For example, `IdeaVIM` often assigns them
-      if (shortcut is KeyboardShortcut) {
-        if (shortcut.secondKeyStroke == null) {
-          return shortcut
-        }
+      if (shortcut is KeyboardShortcut && shortcut.secondKeyStroke == null) {
+        return shortcut
       }
     }
     return null
@@ -1218,11 +1262,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   val actionIds: Set<String>
-    get() = idToAction.keys
+    get() = actionPostInitRegistrar.ids
 
+  @TestOnly
   fun preloadActions() {
-    for (id in idToAction.keys) {
-      getActionImpl(id = id, canReturnStub = false)
+    for (id in actionPostInitRegistrar.ids) {
+      doGetAction(id = id, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
       // don't preload ActionGroup.getChildren() because that would un-stub child actions
       // and make it impossible to replace the corresponding actions later
       // (via unregisterAction+registerAction, as some app components do)
@@ -1237,7 +1282,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     ThreadingAssertions.assertEventDispatchThread()
     val result = ActionCallback()
     val doRunnable = {
-      tryToExecuteNow(action = action, inputEvent = inputEvent, contextComponent = contextComponent, place = place, result = result)
+      tryToExecuteNow(action = action,
+                      inputEvent = inputEvent,
+                      contextComponent = contextComponent,
+                      place = place,
+                      result = result,
+                      actionManager = this)
     }
     if (now) {
       doRunnable()
@@ -1248,58 +1298,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     return result
   }
 
-  private fun tryToExecuteNow(action: AnAction,
-                              inputEvent: InputEvent?,
-                              contextComponent: Component?,
-                              place: String?,
-                              result: ActionCallback) {
-    val presentation = action.templatePresentation.clone()
-    IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(
-      {
-        (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-          val context = getContextBy(contextComponent)
-          val event = AnActionEvent(
-            inputEvent, context,
-            place ?: ActionPlaces.UNKNOWN,
-            presentation, this,
-            inputEvent?.modifiersEx ?: 0
-          )
-          ActionUtil.lastUpdateAndCheckDumb(action, event, false)
-          if (!event.presentation.isEnabled) {
-            result.setRejected()
-            return@performUserActivity
-          }
-          addAwtListener(
-            { event1 ->
-              if (event1.id == WindowEvent.WINDOW_OPENED || event1.id == WindowEvent.WINDOW_ACTIVATED) {
-                if (!result.isProcessed) {
-                  val we = event1 as WindowEvent
-                  IdeFocusManager.findInstanceByComponent(we.window).doWhenFocusSettlesDown(
-                    result.createSetDoneRunnable(), ModalityState.defaultModalityState())
-                }
-              }
-            }, AWTEvent.WINDOW_EVENT_MASK, result)
-          try {
-            ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-          }
-          finally {
-            result.setDone()
-          }
-        }
-      }, ModalityState.defaultModalityState())
-  }
-
-
-  private class CapturingListener(@JvmField val timerListener: TimerListener) : TimerListener by timerListener {
-    val childContext: ChildContext = createChildContext()
-
-    override fun run() {
-      installThreadContext(childContext.context).use {
-        // this is periodic runnable that is invoked on timer; it should not complete a parent job
-        childContext.runAsCoroutine(completeOnFinish = false, timerListener::run)
-      }
-    }
-  }
 
   private val _timerEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
@@ -1366,6 +1364,61 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
           runListenerAction(listener)
         }
       }
+    }
+  }
+}
+
+private fun tryToExecuteNow(action: AnAction,
+                            actionManager: ActionManager,
+                            inputEvent: InputEvent?,
+                            contextComponent: Component?,
+                            place: String?,
+                            result: ActionCallback) {
+  val presentation = action.templatePresentation.clone()
+  IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(
+    {
+      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+        val context = getContextBy(contextComponent)
+        val event = AnActionEvent(
+          /* inputEvent = */ inputEvent,
+          /* dataContext = */ context,
+          /* place = */ place ?: ActionPlaces.UNKNOWN,
+          /* presentation = */ presentation,
+          /* actionManager = */ actionManager,
+          /* modifiers = */ inputEvent?.modifiersEx ?: 0
+        )
+        ActionUtil.lastUpdateAndCheckDumb(action, event, false)
+        if (!event.presentation.isEnabled) {
+          result.setRejected()
+          return@performUserActivity
+        }
+        addAwtListener(
+          { event1 ->
+            if (event1.id == WindowEvent.WINDOW_OPENED || event1.id == WindowEvent.WINDOW_ACTIVATED) {
+              if (!result.isProcessed) {
+                val we = event1 as WindowEvent
+                IdeFocusManager.findInstanceByComponent(we.window).doWhenFocusSettlesDown(
+                  result.createSetDoneRunnable(), ModalityState.defaultModalityState())
+              }
+            }
+          }, AWTEvent.WINDOW_EVENT_MASK, result)
+        try {
+          ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+        }
+        finally {
+          result.setDone()
+        }
+      }
+    }, ModalityState.defaultModalityState())
+}
+
+private class CapturingListener(@JvmField val timerListener: TimerListener) : TimerListener by timerListener {
+  val childContext: ChildContext = createChildContext()
+
+  override fun run() {
+    installThreadContext(childContext.context).use {
+      // this is periodic runnable that is invoked on timer; it should not complete a parent job
+      childContext.runAsCoroutine(completeOnFinish = false, timerListener::run)
     }
   }
 }
@@ -1803,3 +1856,118 @@ private fun configureGroupDescriptionAndIcon(presentation: Presentation,
     })
   }
 }
+
+/**
+ * Executed under lock.
+ * @return true on success, false on an action conflict
+ */
+private fun addToMap(actionId: String,
+                     existing: AnAction?,
+                     action: AnAction,
+                     projectType: ProjectType?,
+                     registrar: ActionRegistrar): Boolean {
+  if (existing is ChameleonAction) {
+    return existing.addAction(action, projectType)
+  }
+  else if (existing != null) {
+    // we need to create ChameleonAction even if 'projectType==null', in case 'ActionStub.getProjectType() != null'
+    val chameleonAction = ChameleonAction(existing, null)
+    if (!chameleonAction.addAction(action, projectType)) {
+      return false
+    }
+
+    registrar.putAction(actionId, chameleonAction)
+    return true
+  }
+  else if (projectType != null) {
+    val chameleonAction = ChameleonAction(action, projectType)
+    registrar.putAction(actionId, chameleonAction)
+    return true
+  }
+  else {
+    registrar.putAction(actionId, action)
+    return true
+  }
+}
+
+@Internal
+private sealed interface ActionRegistrar {
+  val isPostInit: Boolean
+
+  fun putAction(actionId: String, action: AnAction)
+
+  fun removeAction(actionId: String)
+
+  fun getAction(id: String): AnAction?
+}
+
+private class ActionPostInitRegistrar(@Volatile private var idToAction: Map<String, AnAction>) : ActionRegistrar {
+  val ids: Set<String>
+    get() = idToAction.keys
+
+  override val isPostInit: Boolean
+    get() = true
+
+  override fun putAction(actionId: String, action: AnAction) {
+    idToAction = idToAction.with(actionId, action)
+  }
+
+  override fun removeAction(actionId: String) {
+    idToAction = idToAction.without(actionId)
+  }
+
+  override fun getAction(id: String) = idToAction.get(id)
+
+  fun getActionIdList(idPrefix: String): List<String> {
+    return idToAction.keys.filter { it.startsWith(idPrefix) }
+  }
+
+  fun actionsOrStubs(): Sequence<AnAction> = idToAction.values.asSequence()
+}
+
+private class ActionPreInitRegistrar(private val idToAction: MutableMap<String, AnAction>) : ActionRegistrar {
+  override val isPostInit: Boolean
+    get() = false
+
+  override fun putAction(actionId: String, action: AnAction) {
+    idToAction.put(actionId, action)
+  }
+
+  override fun removeAction(actionId: String) {
+    idToAction.remove(actionId)
+  }
+
+  override fun getAction(id: String) = idToAction.get(id)
+}
+
+private fun reportActionIdCollision(actionId: String,
+                                    action: AnAction,
+                                    pluginId: PluginId?,
+                                    oldAction: AnAction?,
+                                    pluginToId: Map<PluginId, List<String>>) {
+  val oldPluginInfo = pluginToId
+    .asSequence()
+    .filter { it.value.contains(actionId) }
+    .map { it.key }
+    .map { getPluginInfo(it) }
+    .joinToString(separator = ",")
+  val message = "ID '$actionId' is already taken by action ${actionToString(oldAction)} $oldPluginInfo. " +
+                "Action ${actionToString(action)} cannot use the same ID"
+  if (pluginId == null) {
+    LOG.error(message)
+  }
+  else {
+    LOG.error(PluginException("$message (plugin $pluginId)", null, pluginId))
+  }
+}
+
+private fun actionToString(action: AnAction?): @NonNls String {
+  if (action == null) return "null"
+  when (action) {
+    is ChameleonAction -> return "ChameleonAction(" + action.actions.values.joinToString { actionToString(it) } + ")"
+    is ActionStub -> return "'$action' (${action.className})"
+    else -> return "'$action' (${action.javaClass})"
+  }
+}
+
+private val walker = StackWalker.getInstance(setOf(StackWalker.Option.RETAIN_CLASS_REFERENCE), 3)

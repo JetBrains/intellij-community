@@ -71,6 +71,7 @@ class RawPluginDescriptor {
 
   class ActionDescriptorAction(
     @JvmField val className: String,
+    @JvmField val isInternal: Boolean,
     element: XmlElement,
     resourceBundle: String?,
   ) : ActionDescriptor(name = ActionDescriptorName.action, element = element, resourceBundle = resourceBundle)

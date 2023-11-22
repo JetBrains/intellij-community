@@ -34,10 +34,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.*
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationPath
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SelectedEditorFilePath
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ToolbarFrameHeader
-import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
-import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
-import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
+import com.intellij.openapi.wm.impl.headertoolbar.*
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -451,7 +448,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       val wasCustomFrameHeaderVisible = helper.customFrameTitlePane.getComponent().isVisible
       val isCustomFrameHeaderVisible = !fullScreen
                                        || !SystemInfoRt.isMac && isToolbarInHeader()
-                                       || (SystemInfoRt.isMac && !isCompactHeader { computeMainActionGroups(CustomActionsSchema.getInstance()) })
+                                       || (SystemInfoRt.isMac && !isCompactHeader { blockingComputeMainActionGroups(CustomActionsSchema.getInstance()) })
       helper.customFrameTitlePane.getComponent().isVisible = isCustomFrameHeaderVisible
 
       if (wasCustomFrameHeaderVisible != isCustomFrameHeaderVisible) {
@@ -606,7 +603,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
                       && !(SystemInfoRt.isLinux && GlobalMenuLinux.isPresented())
                       && UISettings.shadowInstance.showMainMenu
                       && (!isMenuButtonInToolbar || isCompactHeader {
-      computeMainActionGroups(CustomActionsSchema.getInstance())
+      blockingComputeMainActionGroups(CustomActionsSchema.getInstance())
     } && ExperimentalUI.isNewUI()) && !hideNativeLinuxTitle)
     if (visible != menuBar.isVisible) {
       menuBar.isVisible = visible

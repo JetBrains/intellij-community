@@ -12,7 +12,6 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.Java11Shim
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.xml.dom.NoOpXmlInterner
@@ -301,10 +300,8 @@ private fun readRootElementChild(reader: XMLStreamReader2,
 }
 
 private val actionNameToEnum = run {
-  HashMap<String, ActionDescriptorName>().let { map ->
-    ActionDescriptorName.entries.associateByTo(map, ActionDescriptorName::name)
-    Java11Shim.INSTANCE.copyOf(map)
-  }
+  val entries = ActionDescriptorName.entries
+  entries.associateByTo(HashMap<String, ActionDescriptorName>(entries.size), ActionDescriptorName::name)
 }
 
 private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader2, readContext: ReadModuleContext) {
@@ -329,9 +326,10 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
 
     val element = readXmlAsModel(reader = reader, rootName = elementName, interner = readContext.interner)
 
+    val attributes = element.attributes
     when (name) {
       ActionDescriptorName.action -> {
-        val className = element.attributes.get("class")
+        val className = attributes.get("class")
         if (className.isNullOrEmpty()) {
           LOG.error("action element should have specified \"class\" attribute at ${reader.location}")
           reader.skipElement()
@@ -340,14 +338,15 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
 
         actionElements.add(ActionDescriptorAction(
           className = className,
+          isInternal = attributes.get("internal").toBoolean(),
           element = element,
           resourceBundle = resourceBundle,
         ))
       }
       ActionDescriptorName.group -> {
-        var className = element.attributes.get("class")
+        var className = attributes.get("class")
         if (className.isNullOrEmpty()) {
-          className = if (element.attributes.get("compact") == "true") {
+          className = if (attributes.get("compact") == "true") {
             "com.intellij.openapi.actionSystem.DefaultCompactActionGroup"
           }
           else {
@@ -355,7 +354,7 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
           }
         }
 
-        val id = element.attributes.get("id")
+        val id = attributes.get("id")
         if (id != null && id.isEmpty()) {
           LOG.error("ID of the group cannot be an empty string at ${reader.location}")
           reader.skipElement()

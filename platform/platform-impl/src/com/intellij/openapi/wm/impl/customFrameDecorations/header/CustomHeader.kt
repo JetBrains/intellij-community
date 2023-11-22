@@ -14,7 +14,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
-import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
+import com.intellij.openapi.wm.impl.headertoolbar.blockingComputeMainActionGroups
 import com.intellij.ui.*
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
@@ -157,7 +157,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     size.height = JBUI.scale(
       when {
         (rootPane as? IdeRootPane)?.isCompactHeader(mainToolbarActionSupplier = {
-          computeMainActionGroups(CustomActionsSchema.getInstance())
+          blockingComputeMainActionGroups(CustomActionsSchema.getInstance())
         }) == true -> {
           HEADER_HEIGHT_DFM
         }

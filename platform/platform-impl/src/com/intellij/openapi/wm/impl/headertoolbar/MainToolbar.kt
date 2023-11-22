@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -34,6 +33,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -415,24 +415,37 @@ internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Actio
 
 internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, HorizontalLayout.Group>> {
   return span("toolbar action groups computing") {
-    serviceAsync<ActionManager>()
-    val customActionSchema = CustomActionsSchema.getInstanceAsync()
-    computeMainActionGroups(customActionSchema)
+    computeMainActionGroups(CustomActionsSchema.getInstanceAsync())
   }
 }
 
+private suspend fun computeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+  val result = ArrayList<Pair<ActionGroup, HorizontalLayout.Group>>(3)
+  for (info in getMainToolbarGroups()) {
+    customActionSchema.getCorrectedActionAsync(info.id, info.name)?.let {
+      result.add(it to info.align)
+    }
+  }
+  return result
+}
+
+@RequiresBlockingContext
 internal fun computeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
-  return sequenceOf(
-    GroupInfo(IdeActions.GROUP_MAIN_TOOLBAR_LEFT, ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.Group.LEFT),
-    GroupInfo(IdeActions.GROUP_MAIN_TOOLBAR_CENTER, ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.Group.CENTER),
-    GroupInfo(IdeActions.GROUP_MAIN_TOOLBAR_RIGHT, ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.Group.RIGHT)
-  )
+  return getMainToolbarGroups
     .mapNotNull { info ->
       customActionSchema.getCorrectedAction(info.id, info.name)?.let {
         it to info.align
       }
     }
     .toList()
+}
+
+private fun getMainToolbarGroups(): Sequence<GroupInfo> {
+  return sequenceOf(
+    GroupInfo("MainToolbarLeft", ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.Group.LEFT),
+    GroupInfo("MainToolbarCenter", ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.Group.CENTER),
+    GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.Group.RIGHT)
+  )
 }
 
 internal fun isToolbarInHeader(isFullscreen: Boolean): Boolean {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeDependentAction;
@@ -11,12 +11,12 @@ import org.jetbrains.annotations.NotNull;
 final class PreviousProjectWindow extends IdeDependentAction implements DumbAware, LightEditCompatible {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    WindowDressing.getWindowActionGroup().activatePreviousWindow(e);
+    WindowDressing.Companion.getWindowActionGroup().activatePreviousWindow(e);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setEnabled(WindowDressing.getWindowActionGroup().isEnabled());
+    e.getPresentation().setEnabled(WindowDressing.Companion.getWindowActionGroup().isEnabled());
     super.update(e);
   }
 
