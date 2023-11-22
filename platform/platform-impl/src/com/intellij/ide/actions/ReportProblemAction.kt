@@ -3,38 +3,51 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.logsUploader.LogsPacker
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.NonNls
 
 open class ReportProblemAction : DumbAwareAction() {
+
   object Handler {
     fun submit(project: Project?) {
       if (project == null) return
-      val uploadLogs = confirmLogsUploading(project)
       service<ReportFeedbackService>().coroutineScope.launch {
         withBackgroundProgress(project, IdeBundle.message("reportProblemAction.progress.title.submitting"), true) {
-          val uploadedLogFolderName = if (uploadLogs) LogsPacker.uploadLogs(project) else null
           val url = ExternalProductResourceUrls.getInstance().bugReportUrl
           if (url != null) {
-            var description = SendFeedbackAction.getDescription(project)
-            if (uploadedLogFolderName != null) {
-              description += "\nAuto-uploaded logs URL (accessible to JetBrains employees only): ${
-                LogsPacker.getBrowseUrl(uploadedLogFolderName)
-              }"
-            }
+            val description = getIssueDescription(project)
             BrowserUtil.browse(url(description).toExternalForm(), project)
           }
         }
       }
+    }
+
+    private suspend fun getIssueDescription(project: Project?): String {
+      val uploadLogs = withContext(Dispatchers.EDT) {
+        confirmLogsUploading(project)
+      }
+      val description = SendFeedbackAction.getDescription()
+      val sb: @NonNls StringBuilder = StringBuilder("\n\n")
+      sb.append(description)
+      if (uploadLogs) {
+        val url = ReportFeedbackService.getInstance().collectLogs(project)
+        if (!url.isNullOrEmpty()) {
+          sb.append("\nAuto-uploaded logs URL (accessible to JetBrains employees only): ${url}")
+        }
+      }
+      return sb.toString()
     }
 
     private fun confirmLogsUploading(project: Project?): Boolean = MessageDialogBuilder.yesNo(
