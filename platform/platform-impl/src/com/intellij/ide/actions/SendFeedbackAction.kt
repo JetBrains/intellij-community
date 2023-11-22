@@ -144,7 +144,6 @@ class SendFeedbackAction : AnAction(), DumbAware {
       }
       return sb.toString()
     }
-
     private val EP_NAME = ExtensionPointName<FeedbackDescriptionProvider>("com.intellij.feedbackDescriptionProvider")
   }
 }
