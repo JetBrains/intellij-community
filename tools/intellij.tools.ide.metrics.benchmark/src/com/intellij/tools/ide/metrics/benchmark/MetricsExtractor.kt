@@ -44,16 +44,16 @@ class MetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathToTel
 
     val medianValueOfAttempts: Long = attempts.medianValue()
 
-    val attemptMeanMetric = "${metricsPrefix}attempt.mean.ms".toPerformanceMetricDuration(attempts.map { it.value }.average().toLong())
-    val attemptMedianMetric = "${metricsPrefix}attempt.median.ms".toPerformanceMetricDuration(medianValueOfAttempts)
-    val attemptRangeMetric = "${metricsPrefix}attempt.range.ms".toPerformanceMetricDuration(attempts.rangeValue())
-    val attemptSumMetric = "${metricsPrefix}attempt.sum.ms".toPerformanceMetricDuration(attempts.sumOf { it.value })
-    val attemptCountMetric = "${metricsPrefix}attempt.count".toPerformanceMetricDuration(attempts.size.toLong())
-    val attemptStandardDeviationMetric = "${metricsPrefix}attempt.standard.deviation".toPerformanceMetricDuration(
-      attempts.standardDeviationValue())
+    val attemptMeanMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.mean.ms", attempts.map { it.value }.average().toLong())
+    val attemptMedianMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.median.ms", medianValueOfAttempts)
+    val attemptRangeMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.range.ms", attempts.rangeValue())
+    val attemptSumMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.sum.ms", attempts.sumOf { it.value })
+    val attemptCountMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.count", attempts.size.toLong())
+    val attemptStandardDeviationMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.standard.deviation",
+                                                                        attempts.standardDeviationValue())
 
     val mainMetricValue: Long = originalMetrics.single { it.id.name == spanName }.value
-    val totalTestDurationMetric = "${metricsPrefix}total.test.duration.ms".toPerformanceMetricDuration(mainMetricValue)
+    val totalTestDurationMetric = PerformanceMetrics.newDuration("${metricsPrefix}total.test.duration.ms", mainMetricValue)
 
     return listOf(totalTestDurationMetric, attemptMeanMetric, attemptMedianMetric,
                   attemptRangeMetric, attemptSumMetric, attemptCountMetric, attemptStandardDeviationMetric)
