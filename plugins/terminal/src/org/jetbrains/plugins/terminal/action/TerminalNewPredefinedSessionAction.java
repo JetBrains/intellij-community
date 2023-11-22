@@ -24,7 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner;
+import org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory;
 import org.jetbrains.plugins.terminal.TerminalOptionsConfigurable;
 import org.jetbrains.plugins.terminal.TerminalTabState;
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
@@ -39,7 +39,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
 public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
@@ -181,14 +180,10 @@ public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project != null) {
-        var runner = new LocalBlockTerminalRunner(project) {
-          @Override
-          public @NotNull List<String> getInitialCommand(@NotNull Map<String, String> envs) {
-            return myCommand;
-          }
-        };
+        var runner = DefaultTerminalRunnerFactory.getInstance().createLocalRunner(project);
         TerminalTabState tabState = new TerminalTabState();
         tabState.myTabName = myPresentableName.get();
+        tabState.myShellCommand = myCommand;
         TerminalToolWindowManager.getInstance(project).createNewSession(runner, tabState);
       }
     }

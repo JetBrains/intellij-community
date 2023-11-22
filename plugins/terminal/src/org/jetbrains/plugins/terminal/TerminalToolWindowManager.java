@@ -97,9 +97,7 @@ public final class TerminalToolWindowManager implements Disposable {
 
   public TerminalToolWindowManager(@NotNull Project project) {
     myProject = project;
-    myTerminalRunner = ApplicationManager.getApplication()
-      .getService(DefaultTerminalRunnerFactory.class)
-      .create(project);
+    myTerminalRunner = DefaultTerminalRunnerFactory.getInstance().create(project);
   }
 
   @Override
