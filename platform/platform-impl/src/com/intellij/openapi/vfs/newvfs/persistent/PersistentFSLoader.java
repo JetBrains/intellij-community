@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.ContentHashEnumeratorOverDurableEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.ContentStorageAdapter;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.VFSContentStorageOverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageHelper;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagedStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverMMappedFile;
@@ -697,6 +698,11 @@ public final class PersistentFSLoader {
 
   private static @NotNull VFSContentStorage createContentStorage_makeStorage(@NotNull Path contentsHashesFile,
                                                                              @NotNull Path contentsFile) throws IOException {
+    if (FSRecordsImpl.USE_CONTENT_STORAGE_OVER_MMAPPED_FILE) {
+      LOG.info("VFS uses content storage over memory-mapped file");
+      return new VFSContentStorageOverMMappedFile(contentsFile);
+    }
+
     RefCountingContentStorage contentStorage;
     ExecutorService storingPool = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool");
     boolean useContentHashes = true;
@@ -718,7 +724,8 @@ public final class PersistentFSLoader {
   }
 
 
-  private static @NotNull ContentHashEnumerator openContentHashEnumeratorOrCreateEmpty(@NotNull Path contentsHashesFile) throws IOException {
+  private static @NotNull ContentHashEnumerator openContentHashEnumeratorOrCreateEmpty(@NotNull Path contentsHashesFile)
+    throws IOException {
     try {
       return openContentHashEnumerator(contentsHashesFile);
     }

@@ -31,7 +31,8 @@ import java.util.Arrays;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
 
 /**
- *
+ * {@link VFSContentStorage} implemented with memory-mapped files: uses {@link AppendOnlyLogOverMMappedFile} for
+ * storing data records (contentHash, content), and uses {@link ExtendibleHashMap} for mapping (contentHash->contentId)
  */
 public class VFSContentStorageOverMMappedFile implements VFSContentStorage {
   private static final Logger LOG = Logger.getInstance(VFSContentStorageOverMMappedFile.class);
@@ -43,15 +44,16 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage {
   private static final int CONTENT_HASH_LENGTH = ContentHashEnumerator.SIGNATURE_LENGTH;
 
   //TODO/MAYBE RC:
-  //           1. Implement compression: legacy storage implementation uses built-in jdk Inflater, but compression cost
-  //              is quite visible on CPU profiles, so maybe it is not worth to pay it?
-  //           2. AppendOnlyLog provides int64 ids, but by converting them to int32 we limit max content storage size to
-  //              just 2Gb, which is not a lot. We could relax this limit by relying on the fact AOL ids are int32-aligned,
-  //              hence could be /4, which effectively rises limit to 16Gb
-  //           3. ...
+  //           1. Compression: current implementation doesn't use compression, while legacy storage implementation does use
+  //              built-in jdk Inflater. Compression ratio is high for text files, but compression/decompression cost is
+  //              quite visible on CPU profiles, so maybe it is not worth to pay it?
+  //           2. Check multithreading semantics: it seems like hashToContentRecordIdMap being lock-protected, and
+  //              contentStorage being non-blocking give us thread-safety -- but needs to check more carefully
 
 
-  private final Path basePath;
+
+
+  private final Path storagePath;
 
   /**
    * Map [hashCodeOf(contentCryptoHash) -> recordId]
@@ -62,15 +64,15 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage {
 
   private final AppendOnlyLog contentStorage;
 
-  public VFSContentStorageOverMMappedFile(Path basePath) throws IOException {
-    this.basePath = basePath;
+  public VFSContentStorageOverMMappedFile(Path storagePath) throws IOException {
+    this.storagePath = storagePath;
     contentStorage = AppendOnlyLogFactory.withDefaults()
       .pageSize(64 * IOUtil.MiB)//use larger pages: content storage is usually quite big
       .failFileIfIncompatible()
       .failIfDataFormatVersionNotMatch(STORAGE_FORMAT_VERSION)
-      .open(basePath);
+      .open(storagePath);
 
-    Path mapPath = basePath.resolveSibling(basePath.getFileName().toString() + ".idToHash");
+    Path mapPath = storagePath.resolveSibling(storagePath.getFileName().toString() + ".idToHash");
     if (contentStorage.isEmpty()) {
       //ensure map is also empty
       FileUtil.delete(mapPath);
@@ -259,7 +261,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage {
   public void close() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
       IOException.class,
-      () -> new IOException("Close [" + basePath + "] fails"),
+      () -> new IOException("Close [" + storagePath + "] fails"),
       hashToContentRecordIdMap::close,
       contentStorage::close
     );
@@ -269,7 +271,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage {
   public void closeAndClean() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
       IOException.class,
-      () -> new IOException("closeAndClean [" + basePath + "] fails"),
+      () -> new IOException("closeAndClean [" + storagePath + "] fails"),
       hashToContentRecordIdMap::closeAndClean,
       contentStorage::closeAndClean
     );
