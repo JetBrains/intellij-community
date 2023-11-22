@@ -698,6 +698,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     val theme = currentTheme ?: return
+    // Remove the mapping previously imported from 2023.2.
+    lafToPreviousScheme.remove(theme.name)
     // Classic Light color scheme has id `EditorColorsScheme.DEFAULT_SCHEME_NAME` - save it as is
     if (Scheme.getBaseName(scheme.name) == theme.editorSchemeId) {
       lafToPreviousScheme.remove(theme.id)
