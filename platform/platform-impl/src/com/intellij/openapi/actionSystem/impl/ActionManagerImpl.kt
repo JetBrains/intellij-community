@@ -1013,7 +1013,9 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
 
     notifyCustomActionsSchema(actionId)
-    updateHandlers(action)
+    if (actionRegistrar.isPostInit) {
+      updateHandlers(action)
+    }
   }
 
   override fun registerAction(actionId: String, action: AnAction) {
@@ -1232,7 +1234,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
   }
 
-  override fun getKeyboardShortcut(actionId: String): KeyboardShortcut? {
+  final override fun getKeyboardShortcut(actionId: String): KeyboardShortcut? {
     val action = getAction(actionId) ?: return null
     for (shortcut in action.shortcutSet.shortcuts) {
       // Shortcut can be a MouseShortcut here.
@@ -1525,7 +1527,7 @@ private fun convertGroupStub(stub: ActionGroupStub, actionManager: ActionManager
                 componentManager = componentManager)
     ?: return null
   }
-  stub.initGroup(group, actionManager)
+  stub.initGroup(group, actionManager::getId)
   updateIconFromStub(stub = stub, anAction = group, componentManager = componentManager)
   return group
 }

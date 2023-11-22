@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.actionSystem.*
+import java.util.function.Function
 
 internal class ActionGroupStub(override val id: String,
                                @JvmField val actionClass: String,
@@ -14,7 +15,7 @@ internal class ActionGroupStub(override val id: String,
 
   var popupDefinedInXml: Boolean = false
 
-  fun initGroup(target: ActionGroup, actionManager: ActionManager) {
+  fun initGroup(target: ActionGroup, actionToId: Function<AnAction, String?>) {
     ActionStub.copyTemplatePresentation(templatePresentation, target.templatePresentation)
     copyActionTextOverrides(target)
 
@@ -25,7 +26,7 @@ internal class ActionGroupStub(override val id: String,
         throw PluginException("To accept children action group class must extend DefaultActionGroup, got `$actionClass`", plugin.pluginId)
       }
       for (action in children) {
-        target.addAction(action, Constraints.LAST, actionManager)
+        target.addAction(action, Constraints.LAST, actionToId)
       }
     }
     if (popupDefinedInXml) {
