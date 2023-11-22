@@ -130,7 +130,7 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
         if (scope == null) return;
         PsiDeclarationStatement declaration = ObjectUtils.tryCast(variable.getParent(), PsiDeclarationStatement.class);
         if (declaration == null) return;
-        PsiInstanceOfExpression instanceOf = InstanceOfUtils.findPatternCandidate(cast);
+        PsiInstanceOfExpression instanceOf = InstanceOfUtils.findPatternCandidate(cast, variable);
         if (instanceOf != null) {
           PsiPattern pattern = instanceOf.getPattern();
           PsiPatternVariable existingPatternVariable = JavaPsiPatternUtil.getPatternVariable(pattern);
@@ -240,6 +240,10 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
       if (typeElement == null) return;
       PsiInstanceOfExpression instanceOf = PsiTreeUtil.findSameElementInCopy(myInstanceOfPointer.getElement(), element.getContainingFile());
       if (instanceOf == null) return;
+      PsiTypeElement instanceOfType = instanceOf.getCheckType();
+      if (instanceOfType != null && instanceOfType.getType() instanceof PsiClassType classType && !classType.isRaw()) {
+        typeElement = instanceOfType;
+      }
       CommentTracker ct = new CommentTracker();
       StringBuilder text = new StringBuilder(ct.text(instanceOf.getOperand()));
       text.append(" instanceof ");

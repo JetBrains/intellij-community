@@ -140,7 +140,7 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
       (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText("(a)b", expression);
     Objects.requireNonNull(cast.getCastType()).replace(checkType);
     Objects.requireNonNull(cast.getOperand()).replace(instanceOf.getOperand());
-    PsiInstanceOfExpression candidate = InstanceOfUtils.findPatternCandidate(cast);
+    PsiInstanceOfExpression candidate = InstanceOfUtils.findPatternCandidate(cast, variable);
     if (candidate == null) return null;
     PsiPrimaryPattern pattern = candidate.getPattern();
     if (pattern != null) {
@@ -243,8 +243,8 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
     PsiTypeTestPattern newPattern = (PsiTypeTestPattern)Objects.requireNonNull(updated.getPattern());
     PsiTypeElement checkType = target.getCheckType();
     if (checkType == null) return;
-    Objects.requireNonNull(newPattern.getCheckType()).replace(checkType);
     PsiPatternVariable newVariable = (PsiPatternVariable)Objects.requireNonNull(newPattern.getPatternVariable()).replace(variable);
+    Objects.requireNonNull(newPattern.getCheckType()).replace(checkType);
     variable.delete();
     String name = new VariableNameGenerator(target, VariableKind.LOCAL_VARIABLE).byName(variable.getName())
       .generate(true);
