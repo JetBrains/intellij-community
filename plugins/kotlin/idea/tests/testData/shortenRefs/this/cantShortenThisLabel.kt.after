@@ -1,4 +1,3 @@
-// IGNORE_K2
 class A(val n: Int) {
     fun A.foo(): Int = this@A.n + n + 1
 }
