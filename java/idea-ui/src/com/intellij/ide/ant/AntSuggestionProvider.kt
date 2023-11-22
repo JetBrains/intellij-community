@@ -8,7 +8,6 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.buildSugges
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
-import com.intellij.psi.xml.XmlTag
 import com.intellij.ui.EditorNotificationPanel
 import java.util.function.Function
 
@@ -37,6 +36,6 @@ internal class AntSuggestionProvider : PluginSuggestionProvider {
     val rootTag = xmlFile.rootTag
     if (rootTag?.name != "project") return false
 
-    return rootTag.children.any { it is XmlTag && it.name == "target" }
+    return rootTag.getAttribute("default") != null
   }
 }
