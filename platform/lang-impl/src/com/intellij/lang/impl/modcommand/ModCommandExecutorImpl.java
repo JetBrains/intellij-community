@@ -22,6 +22,7 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModChooseMember.SelectionMode;
@@ -68,10 +69,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static java.util.Objects.requireNonNullElse;
@@ -407,37 +405,52 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (file == null) return false;
     PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(file);
     if (psiFile == null) return false;
-    PsiNamedElement element =
-      PsiTreeUtil.getNonStrictParentOfType(psiFile.findElementAt(rename.symbolRange().range().getStartOffset()), PsiNamedElement.class);
-    if (element == null) return false;
+    TextRange range = rename.symbolRange().range();
+    PsiElement injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, range.getStartOffset());
+    PsiElement psiElement = injectedElement != null ? injectedElement : psiFile.findElementAt(range.getStartOffset());
+    PsiNamedElement namedElement = PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiNamedElement.class);
+    if (namedElement == null) return false;
     Editor finalEditor = getEditor(project, editor, file);
     if (finalEditor == null) return false;
-    PsiElement nameIdentifier = element instanceof PsiNameIdentifierOwner owner ? owner.getNameIdentifier() : null;
-    if (TemplateManager.getInstance(project) instanceof TemplateManagerImpl manager &&
-        manager.shouldSkipInTests()) {
-      if (nameIdentifier == null) return true;
-      int offset = nameIdentifier.getTextRange().getEndOffset();
-      return executeNavigate(project, new ModNavigate(file, offset, offset, offset));
-    }
-    final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
-    processor.substituteElementToRename(element, finalEditor, new Pass<>() {
+    PsiElement nameIdentifier = namedElement instanceof PsiNameIdentifierOwner owner ? owner.getNameIdentifier() : null;
+    final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(namedElement);
+    processor.substituteElementToRename(namedElement, finalEditor, new Pass<>() {
       @Override
       public void pass(PsiElement substitutedElement) {
-        RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forContext(element);
+        RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forContext(namedElement);
         if (supportProvider != null &&
-            supportProvider.isInplaceRenameAvailable(element, element)) {
-          finalEditor.getCaretModel().moveToOffset(Objects.requireNonNullElse(nameIdentifier, element).getTextOffset());
-          final MemberInplaceRenamer renamer = new MemberInplaceRenamer(element, substitutedElement, finalEditor);
+            supportProvider.isInplaceRenameAvailable(namedElement, namedElement)) {
+          if (TemplateManager.getInstance(project) instanceof TemplateManagerImpl manager &&
+              manager.shouldSkipInTests()) {
+            if (nameIdentifier != null) {
+              int offset = nameIdentifier.getTextRange().getEndOffset();
+              executeNavigate(project, new ModNavigate(file, offset, offset, offset));
+            }
+            return;
+          }
+          finalEditor.getCaretModel().moveToOffset(requireNonNullElse(nameIdentifier, namedElement).getTextOffset());
+          final MemberInplaceRenamer renamer = new MemberInplaceRenamer(namedElement, substitutedElement, finalEditor);
           final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>(rename.nameSuggestions());
           renamer.performInplaceRefactoring(nameSuggestions);
         }
         else {
-          new RenameDialog(project, element, null, finalEditor) {
+          RenameDialog dialog = new RenameDialog(project, namedElement, null, finalEditor) {
             @Override
             public String[] getSuggestedNames() {
               return ArrayUtil.toStringArray(rename.nameSuggestions());
             }
-          }.show();
+          };
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            try {
+              dialog.performRename(rename.nameSuggestions().stream().min(Comparator.naturalOrder()).orElse("undefined"));
+            }
+            finally {
+              dialog.close();
+            }
+          }
+          else {
+            dialog.show();
+          } 
         }
       }
     });

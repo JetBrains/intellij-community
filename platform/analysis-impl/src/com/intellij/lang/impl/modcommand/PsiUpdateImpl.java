@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.InjectionEditService;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -73,6 +74,7 @@ final class PsiUpdateImpl {
     private final @NotNull PsiFile myOrigFile;
     private final @NotNull PsiFile myCopyFile;
     private final @NotNull PsiDocumentManager myManager;
+    private final @Nullable PsiFile myInjectedFileCopy;
     private boolean myDeleted;
 
     FileTracker(@NotNull PsiFile origFile) {
@@ -86,10 +88,10 @@ final class PsiUpdateImpl {
         PsiLanguageInjectionHost host = Objects.requireNonNull(injectionManager.getInjectionHost(origFile));
         PsiFile hostFile = host.getContainingFile();
         PsiFile hostFileCopy = (PsiFile)hostFile.copy();
-        PsiFile injectedFileCopy = getInjectedFileCopy(host, hostFileCopy, origFile.getLanguage());
-        myHostCopy = injectionManager.getInjectionHost(injectedFileCopy);
+        myInjectedFileCopy = getInjectedFileCopy(host, hostFileCopy, origFile.getLanguage());
+        myHostCopy = injectionManager.getInjectionHost(myInjectedFileCopy);
         Disposable disposable = ApplicationManager.getApplication().getService(InjectionEditService.class)
-          .synchronizeWithFragment(injectedFileCopy, myDocument);
+          .synchronizeWithFragment(myInjectedFileCopy, myDocument);
         Disposer.register(this, disposable);
         myTargetFile = hostFileCopy;
         origFile = hostFile;
@@ -99,6 +101,7 @@ final class PsiUpdateImpl {
         myHostCopy = null;
         myTargetFile = myCopyFile;
         myPositionDocument = myDocument;
+        myInjectedFileCopy = null;
       }
       myPositionDocument.addDocumentListener(this, this);
       myOrigText = myTargetFile.getText();
@@ -321,7 +324,14 @@ final class PsiUpdateImpl {
       SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(element);
       myTracker.unblock();
       Segment range = pointer.getRange();
-      return range == null ? null : TextRange.create(range);
+      if (range == null) return null;
+      if (myTracker.myInjectedFileCopy != null) {
+        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myTracker.myProject);
+        int start = instance.mapUnescapedOffsetToInjected(myTracker.myInjectedFileCopy, range.getStartOffset());
+        int end = instance.mapUnescapedOffsetToInjected(myTracker.myInjectedFileCopy, range.getEndOffset());
+        return ((DocumentWindow)myTracker.myInjectedFileCopy.getViewProvider().getDocument()).injectedToHost(TextRange.create(start, end));
+      }
+      return TextRange.create(range);
     }
 
     @Override
