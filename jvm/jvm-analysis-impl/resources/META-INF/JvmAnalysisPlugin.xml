@@ -75,6 +75,11 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit4.converter.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnit4ConverterInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="Junit4RunWithInspection"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.junit4.inherited.runwith.display.name"
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnit4RunWithInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnit5AssertionsConverter"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
