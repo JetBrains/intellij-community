@@ -27,9 +27,11 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.AppIcon.MacAppIcon
+import com.intellij.ui.Color16.Companion.toColor16
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.icons.createImageDescriptorList
 import com.intellij.ui.scale.DerivedScaleType
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
@@ -43,6 +45,7 @@ import com.intellij.util.ui.JBImageIcon
 import sun.awt.AWTAccessor
 import java.awt.*
 import java.awt.event.ActionEvent
+import java.awt.image.BufferedImage
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.util.function.Predicate
@@ -409,4 +412,62 @@ object AppUIUtil {
   }
 
   fun getAdjustedFractionalMetricsValue(): Any = adjustFractionalMetrics(UISettings.getPreferredFractionalMetricsValue())
+
+  /**
+   * Creates a horizontal gradient texture of the provided [width].
+   * The returned gradient does not suffer from the banding problem because it is created using 16 bits for each channel (argb)
+   * and then mapped to the 8 bits using Floyd–Steinberg dithering algorithm.
+   *
+   * The returned texture consists of a long smooth gradient, but the height of it is small - only 2px.
+   * The real height depends on the [JBUIScale.sysScale], for example, with 2.0 scale, it will be 4px.
+   * But even when the height is small, the calculation is still quite heavy, and it should not be calculated during each paint.
+   * Better to calculate it once, store, and then recalculate only when required [width] is changed.
+   */
+  fun createHorizontalGradientTexture(graphics: Graphics,
+                                      colorStart: Color,
+                                      colorEnd: Color,
+                                      width: Int,
+                                      xStart: Int = 0,
+                                      yStart: Int = 0): TexturePaint {
+    val imgHeight = 2
+    val image = ImageUtil.createImage(graphics, width, imgHeight, BufferedImage.TYPE_INT_ARGB)
+
+    val pixels: Array<Array<Color16>> = Array(image.height) { Array(image.width) { Color16.TRANSPARENT } }
+
+    val colorStart16 = colorStart.toColor16()
+    val colorEnd16 = colorEnd.toColor16()
+    val delta16 = colorEnd16 - colorStart16
+    for (x in 0 until image.width) {
+      val rel = x * 1.0 / (image.width - 1)
+      val curColor = colorStart16 + delta16 * rel
+      for (y in 0 until image.height) {
+        pixels[y][x] = curColor
+      }
+    }
+
+    val coefficients = doubleArrayOf(7.0 / 16, 3.0 / 16, 5.0 / 16, 1.0 / 16)
+    for (y in 0 until image.height) {
+      for (x in 0 until image.width) {
+        val oldColor: Color16 = pixels[y][x]
+        val newColor: Color = oldColor.toColor8()
+        image.setRGB(x, y, newColor.rgb)
+
+        val error: Color16 = oldColor - newColor.toColor16()
+        if (x + 1 < image.width) {
+          pixels[y][x + 1] = pixels[y][x + 1] + error * coefficients[0]
+        }
+        if (x - 1 >= 0 && y + 1 < image.height) {
+          pixels[y + 1][x - 1] = pixels[y + 1][x - 1] + error * coefficients[1]
+        }
+        if (y + 1 < image.height) {
+          pixels[y + 1][x] = pixels[y + 1][x] + error * coefficients[2]
+        }
+        if (x + 1 < image.width && y + 1 < image.height) {
+          pixels[y + 1][x + 1] = pixels[y + 1][x + 1] + error * coefficients[3]
+        }
+      }
+    }
+
+    return TexturePaint(image, Rectangle(xStart, yStart, width, imgHeight))
+  }
 }

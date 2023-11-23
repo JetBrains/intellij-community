@@ -6,9 +6,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.ui.AppUIUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.plugins.terminal.exp.TerminalUiUtils
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.TexturePaint
@@ -39,7 +39,7 @@ class GradientTextureCache(
   fun getTexture(graphics: Graphics2D, width: Int): TexturePaint {
     val realWidth = floor(JBUIScale.sysScale(graphics) * width).toInt()
     return if (realWidth != texture?.image?.width) {
-      TerminalUiUtils.createHorizontalGradientTexture(graphics, colorStart, colorEnd, width).also {
+      AppUIUtil.createHorizontalGradientTexture(graphics, colorStart, colorEnd, width).also {
         texture = it
       }
     }

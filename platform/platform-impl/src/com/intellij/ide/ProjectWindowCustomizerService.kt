@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.ide.actions.DistractionFreeModeController
+import com.intellij.ide.ui.GradientTextureCache
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -35,7 +36,10 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics2D
+import java.awt.RenderingHints
+import java.awt.Window
 import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
@@ -83,6 +87,8 @@ private data class ProjectColors(val gradient: Color,
 class ProjectWindowCustomizerService : Disposable {
   companion object {
     private var instance: ProjectWindowCustomizerService? = null
+    private var leftGradientCache: GradientTextureCache = GradientTextureCache()
+    private var rightGradientCache: GradientTextureCache = GradientTextureCache()
 
     init {
       ApplicationManager.registerCleaner { instance = null }
@@ -357,18 +363,14 @@ class ProjectWindowCustomizerService : Disposable {
       SwingUtilities.convertPoint(it.parent, it.x, it.y, parent).x.toFloat() + it.margin.left.toFloat() + projectIconWidth / 2
     } ?: 150f
 
-
-    val mainToolbarXPosition = (ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull())?.let {
-      SwingUtilities.convertPoint(it.parent, it.location, parent)
-    }?.x ?: if (isToolbarInHeader()) 0 else return true
+    if (ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull() == null && !isToolbarInHeader()) return true
     val saturation = Registry.doubleValue("ide.colorful.toolbar.gradient.saturation", 0.85).coerceIn(0.0, 1.0)
     val blendedColor = ColorUtil.blendColorsInRgb(parent.background, color, saturation).let { ColorUtil.toAlpha(it, color.alpha) }
-    val leftBound = (offset - length).coerceAtLeast(mainToolbarXPosition.toFloat() / 2)
-    g.paint = GradientPaint(leftBound, 0f, parent.background, offset, 0f, blendedColor)
-    g.fillRect(0, 0, offset.toInt(), height)
+    val leftBound = (offset - length).coerceAtLeast(0f).toInt()
+    g.paint = leftGradientCache.getTexture(g, (offset - leftBound).toInt(), parent.background, blendedColor, leftBound)
+    g.fillRect(leftBound, 0, (offset - leftBound).toInt(), height)
 
-    val rightBound = offset + length
-    g.paint = GradientPaint(offset, 0f, blendedColor, rightBound, 0f, parent.background)
+    g.paint = rightGradientCache.getTexture(g, length, blendedColor, parent.background, offset.toInt())
     g.fillRect(offset.toInt(), 0, length, height)
 
     return true
