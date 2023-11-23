@@ -78,6 +78,21 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/classes/FunctionWithClassTypeParameters.kt");
     }
 
+    @TestMetadata("conflicts/functions/DifferentSignatures.kt")
+    public void testConflicts_functions_DifferentSignatures() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/functions/DifferentSignatures.kt");
+    }
+
+    @TestMetadata("conflicts/functions/SameSignature.kt")
+    public void testConflicts_functions_SameSignature() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/functions/SameSignature.kt");
+    }
+
+    @TestMetadata("conflicts/functions/SameSignatureDifferentLevels.kt")
+    public void testConflicts_functions_SameSignatureDifferentLevels() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/functions/SameSignatureDifferentLevels.kt");
+    }
+
     @TestMetadata("EnumEntries.kt")
     public void testEnumEntries() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/EnumEntries.kt");

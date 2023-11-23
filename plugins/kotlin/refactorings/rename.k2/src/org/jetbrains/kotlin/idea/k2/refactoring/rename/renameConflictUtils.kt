@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.KtExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
@@ -133,11 +134,10 @@ fun checkCallableShadowing(
         copied.referenceExpression().replace(psiFactory.createNameIdentifier(newName))
         val codeFragment = psiFactory.createExpressionCodeFragment(if (copied.isValid) copied.text else newName, callExpression)
         val contentElement = codeFragment.getContentElement()
-        val referenceExpression = contentElement?.referenceExpression()
-
-        if (referenceExpression != null) {
+        if (contentElement != null) {
             analyze(codeFragment) {
-                val resolvedSymbol = referenceExpression.mainReference?.resolveToSymbol()
+                val resolveCall = contentElement.resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>()
+                val resolvedSymbol = resolveCall?.partiallyAppliedSymbol?.symbol
                 val newDeclaration = if (resolvedSymbol is KtSyntheticJavaPropertySymbol) {
                     val getter = resolvedSymbol.javaGetterSymbol.psi
                     externalDeclarations.addIfNotNull(getter)
@@ -205,8 +205,7 @@ private fun KtExpression.referenceExpression(): KtExpression {
 private fun createQualifiedExpression(callExpression: KtExpression, newName: String): KtExpression? {
     val psiFactory = KtPsiFactory(callExpression.project)
     val qualifiedExpression = analyze(callExpression) {
-        val resolveCall = callExpression.resolveCall()
-        val appliedSymbol = resolveCall?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+        val appliedSymbol = callExpression.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
         val receiver = appliedSymbol?.extensionReceiver ?: appliedSymbol?.dispatchReceiver
         if (receiver is KtImplicitReceiverValue) {
             val symbol = receiver.symbol
@@ -265,7 +264,6 @@ private fun reportShadowing(
     result: MutableList<UsageInfo>
 ) {
     val candidate = candidate as? PsiNamedElement ?: return
-    if (declaration.parent == candidate.parent) return
     val message = KotlinBundle.message(
         "text.0.will.be.shadowed.by.1",
         declaration.renderDescription(),
