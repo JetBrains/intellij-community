@@ -63,8 +63,13 @@ sealed class ProjectWizardJdkIntent {
   data class DetectedJdk(val version: @NlsSafe String, val home: @NlsSafe String) : ProjectWizardJdkIntent()
 }
 
-fun Row.projectWizardJdkComboBox(sdkProperty: GraphProperty<Sdk?>, sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>) {
-  cell(ProjectWizardJdkComboBox())
+fun Row.projectWizardJdkComboBox(
+  sdkProperty: GraphProperty<Sdk?>,
+  sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
+) {
+  val combo = ProjectWizardJdkComboBox()
+
+  cell(combo)
     .columns(COLUMNS_LARGE)
     .apply {
       val commentCell = comment("")
@@ -72,25 +77,35 @@ fun Row.projectWizardJdkComboBox(sdkProperty: GraphProperty<Sdk?>, sdkDownloadTa
         commentCell.comment?.let { it.text = component.comment }
       }
     }
-    .onChanged {
-      val (sdk, downloadTask) = when (val intent = it.selectedItem) {
-        is ExistingJdk -> (intent.jdk to null)
-        is DownloadJdk -> (null to intent.task)
-        else -> (null to null)
-      }
-      sdkProperty.set(sdk)
-      sdkDownloadTaskProperty.set(downloadTask)
-    }
     .validationOnApply {
       val intent = it.selectedItem
-      if (intent is DownloadJdk) {
-        val (path) = JdkInstaller.getInstance().validateInstallDir(intent.task.plannedHomeDir)
-        if (path == null) error(JavaUiBundle.message("jdk.location.error", intent.task.plannedHomeDir))
-        else null
-      } else {
-        null
+      if (intent !is DownloadJdk) { null }
+      else {
+        when (JdkInstaller.getInstance().validateInstallDir(intent.task.plannedHomeDir).first) {
+          null -> error(JavaUiBundle.message("jdk.location.error", intent.task.plannedHomeDir))
+          else -> null
+        }
       }
     }
+    .onChanged {
+      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty)
+    }
+
+  updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty)
+}
+
+private fun updateGraphProperties(
+  combo: ProjectWizardJdkComboBox,
+  sdkProperty: GraphProperty<Sdk?>,
+  sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
+) {
+  val (sdk, downloadTask) = when (val intent = combo.selectedItem) {
+    is ExistingJdk -> (intent.jdk to null)
+    is DownloadJdk -> (null to intent.task)
+    else -> (null to null)
+  }
+  sdkProperty.set(sdk)
+  sdkDownloadTaskProperty.set(downloadTask)
 }
 
 class ProjectWizardJdkComboBox(): ComboBox<ProjectWizardJdkIntent>() {
@@ -187,7 +202,8 @@ class ProjectWizardJdkComboBox(): ComboBox<ProjectWizardJdkIntent>() {
 
     if (registered.isNotEmpty()) {
       items.addAll(registered)
-    } else {
+    }
+    else {
       items.add(NoJdk)
     }
 
@@ -238,6 +254,9 @@ class ProjectWizardJdkComboBox(): ComboBox<ProjectWizardJdkIntent>() {
 
   override fun setSelectedItem(anObject: Any?) {
     val toSelect = when (anObject) {
+      is String -> {
+        registered.firstOrNull { it.jdk.name == anObject } ?: selectedItem
+      }
       is AddJdkFromJdkListDownloader -> {
         addDownloadItem(anObject.extension, this)
         selectedItem
