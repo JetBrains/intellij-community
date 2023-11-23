@@ -437,7 +437,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       return true
     }
 
-    return processActionOrWaitSecondStroke(keyStroke) || F10 == keyStroke
+    return processActionOrWaitSecondStroke(keyStroke) || keyStroke == F10
   }
 
   private fun processActionOrWaitSecondStroke(keyStroke: KeyStroke?): Boolean {
@@ -689,7 +689,9 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
   }
 }
 
-private val F10 = KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0)
+private val F10 by lazy(LazyThreadSafetyMode.NONE) {
+  KeyStroke.getKeyStroke(KeyEvent.VK_F10, 0)
+}
 
 private fun storeAsciiForChar(e: KeyEvent) {
   val aChar = e.keyChar
