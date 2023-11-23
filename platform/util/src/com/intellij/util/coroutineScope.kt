@@ -17,15 +17,6 @@ import com.intellij.platform.util.coroutines.namedChildScope as namedChildScope2
 
 @Deprecated(
   "The function was moved to another module and another package",
-  ReplaceWith("requireNoJob(context)", "com.intellij.platform.util.coroutines")
-)
-@Internal
-fun requireNoJob(context: CoroutineContext) {
-  com.intellij.platform.util.coroutines.requireNoJob(context)
-}
-
-@Deprecated(
-  "The function was moved to another module and another package",
   ReplaceWith("childScope(context, supervisor)", "com.intellij.platform.util.coroutines")
 )
 @Internal
