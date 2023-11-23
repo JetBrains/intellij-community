@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
 import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 
@@ -105,16 +106,16 @@ fun KotlinFacet.configureFacet(
 }
 
 fun IKotlinFacetSettings.noVersionAutoAdvance() {
-    compilerArguments?.let {
-        it.autoAdvanceLanguageVersion = false
-        it.autoAdvanceApiVersion = false
+    updateCompilerArguments {
+        autoAdvanceLanguageVersion = false
+        autoAdvanceApiVersion = false
     }
 }
 
 @Deprecated("Use IKotlinFacetSettings.noVersionAutoAdvance() instead")
 fun KotlinFacet.noVersionAutoAdvance() {
-    configuration.settings.compilerArguments?.let {
-        it.autoAdvanceLanguageVersion = false
-        it.autoAdvanceApiVersion = false
+    configuration.settings.updateCompilerArguments {
+        autoAdvanceLanguageVersion = false
+        autoAdvanceApiVersion = false
     }
 }

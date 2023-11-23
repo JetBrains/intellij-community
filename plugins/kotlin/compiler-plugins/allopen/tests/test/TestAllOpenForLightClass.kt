@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.idea.compilerPlugin.allopen.test
 
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.testFramework.LightProjectDescriptor
+import junit.framework.TestCase
 import org.jetbrains.kotlin.allopen.AbstractAllOpenDeclarationAttributeAltererExtension
 import org.jetbrains.kotlin.idea.compilerPlugin.allopen.ALL_OPEN_ANNOTATION_OPTION_PREFIX
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinProjectDescriptorWithFacet
 import org.jetbrains.kotlin.psi.KtFile
@@ -29,10 +31,14 @@ class TestAllOpenForLightClass : KotlinLightCodeInsightFixtureTestCase() {
         super.setUp()
 
         val facet = KotlinFacet.get(module) ?: error { "Facet not found" }
-        val configurationArguments = facet.configuration.settings.compilerArguments ?: error { "CompilerArguments not found" }
+        val facetSettings = facet.configuration.settings
 
-        configurationArguments.pluginClasspaths = arrayOf("SomeClasspath")
-        configurationArguments.pluginOptions = arrayOf("$ALL_OPEN_ANNOTATION_OPTION_PREFIX$allOpenAnnotationName")
+        TestCase.assertNotNull("CompilerArguments not found", facetSettings.compilerArguments)
+
+        facetSettings.updateCompilerArguments {
+            pluginClasspaths = arrayOf("SomeClasspath")
+            pluginOptions = arrayOf("$ALL_OPEN_ANNOTATION_OPTION_PREFIX$allOpenAnnotationName")
+        }
     }
 
     fun testAllOpenAnnotation() {

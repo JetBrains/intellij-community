@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.compiler.plugin.CliOptionValue
 import org.jetbrains.kotlin.compiler.plugin.parseLegacyPluginOption
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
+import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.*
@@ -172,7 +173,9 @@ class KotlinFacetCompilerPluginsTab(
     }
 
     override fun apply() {
-        configuration.settings.compilerArguments!!.pluginOptions = optionsByTable.toTypedArray()
+        configuration.settings.updateCompilerArguments {
+            pluginOptions = optionsByTable.toTypedArray()
+        }
     }
 
     override fun disposeUIResources() {

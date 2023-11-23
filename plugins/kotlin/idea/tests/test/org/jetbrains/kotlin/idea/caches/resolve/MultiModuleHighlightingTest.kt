@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationList
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinModuleOutOfCodeBlockModificationTracker
 import org.jetbrains.kotlin.idea.completion.test.withComponentRegistered
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
@@ -199,13 +200,17 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
 
     fun testSamWithReceiverExtension() {
         val module1 = module("m1").setupKotlinFacet {
-            settings.compilerArguments!!.pluginOptions =
-                arrayOf("plugin:$PLUGIN_ID:${ANNOTATION_OPTION_NAME}=anno.A")
+            if (settings.compilerArguments == null) error("Compiler arguments should not be null")
+            settings.updateCompilerArguments {
+                pluginOptions = arrayOf("plugin:$PLUGIN_ID:${ANNOTATION_OPTION_NAME}=anno.A")
+            }
         }
 
         val module2 = module("m2").setupKotlinFacet {
-            settings.compilerArguments!!.pluginOptions =
-                arrayOf("plugin:$PLUGIN_ID:${ANNOTATION_OPTION_NAME}=anno.B")
+            if (settings.compilerArguments == null) error("Compiler arguments should not be null")
+            settings.updateCompilerArguments {
+                pluginOptions = arrayOf("plugin:$PLUGIN_ID:${ANNOTATION_OPTION_NAME}=anno.B")
+            }
         }
 
 
