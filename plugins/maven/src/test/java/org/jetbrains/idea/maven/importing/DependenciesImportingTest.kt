@@ -1743,7 +1743,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     projectsManager.embeddersManager.reset() // to recognize repository change
 
     updateAllProjects()
-    projectsManager.waitForAfterImportJobs()
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
@@ -1777,7 +1776,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     projectsManager.embeddersManager.reset() // to recognize repository change
 
     updateAllProjects()
-    projectsManager.waitForAfterImportJobs()
 
     assertModuleLibDep("project", "Maven: org.testng:testng:jdk15:5.8",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",

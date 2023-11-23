@@ -119,9 +119,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     CacheForCompilerErrorMessages.connectToJdkListener(project, this);
   }
 
-  @ApiStatus.Internal
-  public abstract void waitForAfterImportJobs();
-
   @Override
   public MavenProjectsManagerState getState() {
     if (isInitialized()) {
@@ -818,9 +815,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public Promise<?> waitForImportCompletion() {
-
-    waitForAfterImportJobs();
-
+    // TODO: remove method
     AsyncPromise<?> promise = new AsyncPromise<>();
     promise.setResult(null);
     return promise;

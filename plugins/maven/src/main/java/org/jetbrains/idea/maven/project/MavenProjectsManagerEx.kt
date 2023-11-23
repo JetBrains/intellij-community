@@ -30,13 +30,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
-import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.importing.importActivityStarted
@@ -49,7 +47,6 @@ import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
@@ -392,22 +389,17 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
         }
       }
     }
-    afterImportJobs.add(pluginResolutionJob)
     val artifactDownloadJob = doScheduleDownloadArtifacts(projectsToImport.map { it.key },
                                                           null,
                                                           importingSettings.isDownloadSourcesAutomatically,
                                                           importingSettings.isDownloadDocsAutomatically)
-    afterImportJobs.add(artifactDownloadJob)
 
-    return importMavenProjects(projectsToImport, modelsProvider, syncActivity)
-  }
+    val createdModules = importMavenProjects(projectsToImport, modelsProvider, syncActivity)
 
-  private val afterImportJobs = JobSet()
+    pluginResolutionJob.join()
+    artifactDownloadJob.join()
 
-  @TestOnly
-  // plugin resolution, artifact downloading
-  override fun waitForAfterImportJobs() {
-    afterImportJobs.waitFor()
+    return createdModules
   }
 
   private suspend fun readMavenProjectsActivity(parentActivity: StructuredIdeActivity,
@@ -491,11 +483,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       MavenWrapperDownloader.checkOrInstallForSync(project, baseDir.toString())
     }
   }
-
-  private val mavenConsole: MavenConsole
-    get() {
-      return BTWMavenConsole(project, generalSettings.outputLevel)
-    }
 
   override fun scheduleDownloadArtifacts(projects: Collection<MavenProject>,
                                          artifacts: Collection<MavenArtifact>?,
@@ -623,24 +610,6 @@ class MavenProjectsManagerProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) = project.trackActivity(MavenActivityKey) {
     blockingContext {
       MavenProjectsManager.getInstance(project).onProjectStartup()
-    }
-  }
-}
-
-class JobSet {
-  private val jobs: MutableSet<Job> = ConcurrentHashMap.newKeySet()
-
-  fun add(job: Job) {
-    jobs.add(job)
-    job.invokeOnCompletion {
-      jobs.remove(job)
-    }
-  }
-
-  fun waitFor() {
-    runBlocking {
-      for (job in jobs)
-        job.join()
     }
   }
 }

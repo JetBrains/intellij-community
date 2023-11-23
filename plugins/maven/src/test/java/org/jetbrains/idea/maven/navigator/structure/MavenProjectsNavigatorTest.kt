@@ -262,8 +262,6 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       """.trimIndent())
     readFiles(myProjectPom, m)
 
-    projectsManager.waitForAfterImportJobs()
-
     projectsManager.projectsTree.ignoredFilesPaths = listOf(m.getPath())
 
     myNavigator!!.showIgnored = true

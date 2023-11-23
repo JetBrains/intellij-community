@@ -104,7 +104,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     removeFromLocalRepository("org/mytest/myartifact/")
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
     importProjectAsync(pomPlugins())
-    projectsManager.waitForAfterImportJobs()
     assertTrue(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
   }
 
@@ -311,7 +310,6 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     File(dir, "myartifact-1.0.pom.lastUpdated").writeText(lastUpdatedText)
 
     importProjectAsync(pomContent)
-    projectsManager.waitForAfterImportJobs()
     checks()
   }
 
