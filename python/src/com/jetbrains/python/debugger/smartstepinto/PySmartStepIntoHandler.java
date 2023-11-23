@@ -2,6 +2,7 @@
 package com.jetbrains.python.debugger.smartstepinto;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
@@ -12,6 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
@@ -22,14 +24,13 @@ import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepIntoVariant> {
   @NotNull private final XDebugSession mySession;
@@ -51,31 +52,37 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
   }
 
   @Override
-  @NotNull
-  public List<PySmartStepIntoVariant> computeSmartStepVariants(@NotNull XSourcePosition position) {
+  public @NotNull Promise<List<PySmartStepIntoVariant>> computeSmartStepVariantsAsync(@NotNull XSourcePosition position) {
+    var promise = new AsyncPromise<List<PySmartStepIntoVariant>>();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      var computedVariants = findVariants(position);
+      promise.setResult(computedVariants);
+    });
+    return promise;
+  }
+
+  private @NotNull List<PySmartStepIntoVariant> findVariants(@NotNull XSourcePosition position) {
+    ThreadingAssertions.assertBackgroundThread();
+
     PyStackFrame currentFrame = (PyStackFrame)mySession.getCurrentStackFrame();
     if (currentFrame == null || currentFrame.isComprehension()) return Collections.emptyList();
 
-    PySmartStepIntoContext context = createSmartStepIntoContext(currentFrame);
+    PySmartStepIntoContext context = ReadAction.compute(() -> createSmartStepIntoContext(currentFrame));
     if (context == null) return Collections.emptyList();
 
-    final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
+    var document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(position.getFile()));
     if (document == null) return Collections.emptyList();
 
-    Future<List<Pair<String, Boolean>>> future = ApplicationManager.getApplication().executeOnPooledThread(
-      () -> myProcess.getSmartStepIntoVariants(context.getStartLine(), context.getEndLine()));
+    var variantsFromPython = myProcess.getSmartStepIntoVariants(context.getStartLine(), context.getEndLine());
 
-    List<Pair<String, Boolean>> variantsFromPython;
-    try {
-      variantsFromPython = future.get();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      return Collections.emptyList();
-    }
+    if (variantsFromPython.isEmpty()) return Collections.emptyList();
 
-    if (variantsFromPython.size() == 0) return Collections.emptyList();
+    return ReadAction.compute(() -> removePossiblyUnreachableVariants(document, position.getLine(), variantsFromPython, context));
+  }
 
-    return removePossiblyUnreachableVariants(document, position.getLine(), variantsFromPython, context);
+  @Override
+  public @NotNull List<PySmartStepIntoVariant> computeSmartStepVariants(@NotNull XSourcePosition position) {
+    throw new IllegalStateException("Should not be called");
   }
 
   private @NotNull List<PySmartStepIntoVariant> removePossiblyUnreachableVariants(@NotNull Document document, int line,
