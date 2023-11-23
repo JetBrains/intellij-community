@@ -87,6 +87,11 @@ public interface FileBasedIndexInfrastructureExtension {
   InitializationResult initialize(@Nullable("null if default") String indexLayoutId);
 
   /**
+   * Attach data that was used with the passed project in the previous IDE session.
+   */
+  void attachData(@NotNull Project project);
+
+  /**
    * @return index persistent state root for given extension, namely a place where all cached data will be stored.
    * Every index extension persistent data should be stored in `{@link PathManager#getIndexRoot()}/getPersistentStateRoot()` dir.
    */
@@ -122,5 +127,11 @@ public interface FileBasedIndexInfrastructureExtension {
 
   enum InitializationResult {
     SUCCESSFULLY, INDEX_REBUILD_REQUIRED
+  }
+
+  static void attachAllExtensionsData(@NotNull Project project) {
+    for (FileBasedIndexInfrastructureExtension extension : EP_NAME.getExtensionList()) {
+      extension.attachData(project);
+    }
   }
 }
