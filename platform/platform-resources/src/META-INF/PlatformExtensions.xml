@@ -168,7 +168,7 @@
     <registryKey key="wsl.obtain.windows.host.ip.alternatively" os="windows" defaultValue="true" restartRequired="true"
                  description="Obtain Windows host machine IP alternatively (not using the recommended 'cat /etc/resolv.conf | grep nameserver')."/>
 
-    <registryKey key="wsl.proxy.connect.localhost" os="windows" defaultValue="false" restartRequired="false"
+    <registryKey key="wsl.proxy.connect.localhost" os="windows" defaultValue="true" restartRequired="false"
                  description="Connect to 127.0.0.1 on WSLProxy instead of public WSL IP which might be inaccessible due to routing issues"/>
 
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl" key="file" physical="true"/>
