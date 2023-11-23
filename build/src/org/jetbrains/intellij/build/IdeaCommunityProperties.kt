@@ -9,15 +9,15 @@ import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 
 import java.nio.file.Path
 
-internal fun createCommunityBuildContext(
+internal suspend fun createCommunityBuildContext(
   communityHome: BuildDependenciesCommunityRoot,
   options: BuildOptions = BuildOptions(),
   projectHome: Path = communityHome.communityRoot,
 ): BuildContext {
-  return BuildContextImpl.createContextBlocking(communityHome = communityHome,
-                                                projectHome = projectHome,
-                                                productProperties = IdeaCommunityProperties(communityHome.communityRoot),
-                                                options = options)
+  return BuildContextImpl.createContext(communityHome = communityHome,
+                                        projectHome = projectHome,
+                                        productProperties = IdeaCommunityProperties(communityHome.communityRoot),
+                                        options = options)
 }
 
 open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIdeaProperties() {

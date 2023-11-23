@@ -29,7 +29,11 @@ class BatchSpanProcessor(
   private val maxExportBatchSize: Int = 512
 ) : SpanProcessor {
   private val queue = Channel<ReadableSpan>(capacity = Channel.UNLIMITED)
-  private val flushRequested = Channel<CompletableDeferred<Unit>>(capacity = Channel.UNLIMITED)
+  private val flushRequested = Channel<FlushRequest>(capacity = Channel.UNLIMITED)
+
+  private data class FlushRequest(@JvmField val exportOnly: Boolean) {
+    @JvmField val job: CompletableDeferred<Unit> = CompletableDeferred()
+  }
 
   init {
     coroutineScope.launch {
@@ -37,15 +41,18 @@ class BatchSpanProcessor(
       try {
         while (true) {
           select {
-            flushRequested.onReceive { result ->
+            flushRequested.onReceive { request ->
               try {
-                exportCurrentBatch(batch)
-                for (spanExporter in spanExporters) {
-                  spanExporter.flush()
+                val isExported = exportCurrentBatch(batch)
+                if (isExported && !request.exportOnly) {
+                  for (spanExporter in spanExporters) {
+                    spanExporter.flush()
+                  }
                 }
+                Unit
               }
               finally {
-                result.complete(Unit)
+                request.job.complete(Unit)
               }
             }
             queue.onReceive { span ->
@@ -103,9 +110,13 @@ class BatchSpanProcessor(
   }
 
   suspend fun flush() {
-    val completableDeferred = CompletableDeferred<Unit>()
-    if (!flushRequested.trySend(completableDeferred).isClosed) {
-      completableDeferred.join()
+    doFlush(exportOnly = false)
+  }
+
+  suspend fun doFlush(exportOnly: Boolean) {
+    val flushRequest = FlushRequest(exportOnly = exportOnly)
+    if (!flushRequested.trySend(flushRequest).isClosed) {
+      flushRequest.job.join()
     }
   }
 
@@ -113,9 +124,9 @@ class BatchSpanProcessor(
     throw UnsupportedOperationException()
   }
 
-  private suspend fun exportCurrentBatch(batch: MutableList<SpanData>) {
+  private suspend fun exportCurrentBatch(batch: MutableList<SpanData>): Boolean {
     if (batch.isEmpty()) {
-      return
+      return false
     }
 
     try {
@@ -124,6 +135,7 @@ class BatchSpanProcessor(
           spanExporter.export(batch)
         }
       }
+      return true
     }
     catch (e: CancellationException) {
       throw e
@@ -134,6 +146,7 @@ class BatchSpanProcessor(
     finally {
       batch.clear()
     }
+    return false
   }
 
   suspend fun flushOtlp(scopeSpans: Collection<ScopeSpans>) {

@@ -58,9 +58,9 @@ suspend fun createCompilationContext(communityHome: BuildDependenciesCommunityRo
                                      projectHome: Path,
                                      defaultOutputRoot: Path,
                                      options: BuildOptions = BuildOptions()): CompilationContextImpl {
-  val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() }
+  val logDir = options.logPath?.let { Path.of(it) }
                ?: (options.outputRootPath ?: defaultOutputRoot).resolve("log")
-  TracerProviderManager.setOutput(logDir.resolve("trace.json"))
+  TracerProviderManager.setOutput(logDir.toAbsolutePath().normalize().resolve("trace.json"))
   return CompilationContextImpl.createCompilationContext(communityHome = communityHome,
                                                          projectHome = projectHome,
                                                          setupTracer = false,

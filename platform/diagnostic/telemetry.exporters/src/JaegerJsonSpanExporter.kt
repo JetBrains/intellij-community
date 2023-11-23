@@ -39,14 +39,13 @@ class JaegerJsonSpanExporter(
   init {
     // presume that telemetry stuff needs to be saved in log dir
     if (!file.isAbsolute || file.parent == null) {
-      Files.createDirectories(PathManager.getLogDir().toAbsolutePath()).apply {
-        tempTelemetryPath = this.resolve("telemetry.temp")
-        telemetryJsonPath = this.resolve(file)
-      }
+      val logDir = Files.createDirectories(PathManager.getLogDir().toAbsolutePath())
+      tempTelemetryPath = Files.createTempFile(logDir, "telemetry-", ".temp")
+      telemetryJsonPath = logDir.resolve(file)
     }
     // path is absolute and has a parent
     else {
-      tempTelemetryPath = Files.createDirectories(file.parent.toAbsolutePath()).resolve("telemetry.temp").toAbsolutePath()
+      tempTelemetryPath = Files.createTempFile(file.parent, "telemetry", ".temp").toAbsolutePath()
       telemetryJsonPath = file
     }
 

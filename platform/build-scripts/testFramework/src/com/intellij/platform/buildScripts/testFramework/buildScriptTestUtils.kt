@@ -103,13 +103,16 @@ fun runTestBuild(
         val reproducibilityTest = BuildArtifactsReproducibilityTest()
         repeat(reproducibilityTest.iterations) { iterationNumber ->
           launch {
-            val buildContext = BuildContextImpl.createContext(communityHome = communityHomePath,
-                                                              projectHome = homePath,
-                                                              productProperties = productProperties,
-                                                              proprietaryBuildTools = buildTools,
-                                                              options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer).also {
-                                                                reproducibilityTest.configure(it)
-                                                              })
+            val buildContext = BuildContextImpl.createContext(
+              communityHome = communityHomePath,
+              projectHome = homePath,
+              productProperties = productProperties,
+              proprietaryBuildTools = buildTools,
+              setupTracer = false,
+              options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer).also {
+                reproducibilityTest.configure(it)
+              },
+            )
             doRunTestBuild(
               context = buildContext,
               traceSpanName = "#$iterationNumber",
@@ -128,6 +131,7 @@ fun runTestBuild(
                                                    projectHome = homePath,
                                                    productProperties = productProperties,
                                                    proprietaryBuildTools = buildTools,
+                                                   setupTracer = false,
                                                    options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer)),
           traceSpanName = traceSpanName,
           build = { context ->
@@ -235,7 +239,7 @@ private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMe
 
 private suspend inline fun asSingleTraceFile(traceSpanName: String, build: () -> Unit) {
   val traceFile = TestLoggerFactory.getTestLogDir().resolve("$traceSpanName-trace.json")
-  TracerProviderManager.setOutput(traceFile)
+  TracerProviderManager.setOutput(traceFile.toAbsolutePath().normalize())
   try {
     build()
   }
@@ -245,7 +249,7 @@ private suspend inline fun asSingleTraceFile(traceSpanName: String, build: () ->
 }
 
 private suspend fun publishTraceFile() {
-  val trace = TracerProviderManager.finish()?.takeIf { it.exists() } ?: return
+  val trace = TracerProviderManager.finish()?.takeIf { Files.exists(it) } ?: return
   try {
     println("Performance report is written to $trace")
     println("##teamcity[publishArtifacts '$trace']")

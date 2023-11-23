@@ -86,8 +86,10 @@ class BuildContextImpl(
   }
 
   companion object {
+    @Suppress("DeprecatedCallableAddReplaceWith")
     @JvmStatic
     @JvmOverloads
+    @Deprecated("Use createContext")
     fun createContextBlocking(communityHome: BuildDependenciesCommunityRoot,
                               projectHome: Path,
                               productProperties: ProductProperties,
@@ -106,12 +108,15 @@ class BuildContextImpl(
                               projectHome: Path,
                               productProperties: ProductProperties,
                               proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                              setupTracer: Boolean = true,
                               options: BuildOptions = BuildOptions()): BuildContext {
       val compilationContext = CompilationContextImpl.createCompilationContext(
         communityHome = communityHome,
         projectHome = projectHome,
-        setupTracer = true,
-        buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
+        setupTracer = setupTracer,
+        buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome = projectHome,
+                                                                  productProperties = productProperties,
+                                                                  buildOptions = options),
         options = options,
       )
       return createContext(compilationContext = compilationContext,

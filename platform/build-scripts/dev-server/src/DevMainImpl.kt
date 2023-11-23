@@ -15,7 +15,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.ConsoleSpanExporter
-import org.jetbrains.intellij.build.TracerProviderManager
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.traceManagerInitializer
 import java.io.File
@@ -43,9 +42,8 @@ fun buildDevMain(): Collection<Path> {
           .setTracerProvider(tracerProvider)
           .build()
         val tracer = openTelemetry.getTracer("build-script")
-        TracerProviderManager.tracerProvider = tracerProvider
         BuildDependenciesDownloader.TRACER = tracer
-        tracer
+        tracer to spanProcessor
       }
 
       buildProductInProcess(BuildRequest(

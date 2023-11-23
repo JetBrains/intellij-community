@@ -112,7 +112,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
 
   override fun block(blockName: String, task: Callable<Unit>) {
     runBlocking {
-      TracerProviderManager.flush()
+      TraceManager.exportPendingSpans()
     }
 
     try {
@@ -124,7 +124,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
         catch (e: Throwable) {
           // print all pending spans
           runBlocking {
-            TracerProviderManager.flush()
+            TraceManager.exportPendingSpans()
           }
           throw e
         }
@@ -132,7 +132,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     }
     finally {
       runBlocking {
-        TracerProviderManager.flush()
+        TraceManager.exportPendingSpans()
       }
       processMessage(LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
     }

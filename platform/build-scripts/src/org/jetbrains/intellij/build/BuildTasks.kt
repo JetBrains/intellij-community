@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package org.jetbrains.intellij.build
 
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +46,7 @@ interface BuildTasks {
    */
   suspend fun buildNonBundledPlugins(mainPluginModules: List<String>)
 
+  @Deprecated("Use buildNonBundledPlugins", ReplaceWith("buildNonBundledPlugins(mainPluginModules)"))
   fun blockingBuildNonBundledPlugins(mainPluginModules: List<String>) {
     runBlocking(Dispatchers.Default) {
       buildNonBundledPlugins(mainPluginModules)
@@ -55,7 +58,7 @@ interface BuildTasks {
   fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>)
 
   fun compileModules(moduleNames: Collection<String>?) {
-    compileModules(moduleNames, emptyList())
+    compileModules(moduleNames = moduleNames, includingTestsInModules = java.util.List.of())
   }
 
   /**
