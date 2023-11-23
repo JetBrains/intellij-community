@@ -41,6 +41,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
     private const val CLASS_FROM_DEPENDENCY = "junit.framework.Test"
     private const val DEPENDENCY_SOURCES_JAR_CACHE_PATH = "caches/modules-2/files-2.1/junit/junit/4.12/" +
                                                           "a6c32b40bf3d76eca54e3c601e5d1470c86fcdfa/$DEPENDENCY_SOURCES_JAR"
+    private const val DEFAULT_ATTACH_SOURCE_DEADLINE_MS = 5000L
   }
 
   override fun setUp() {
@@ -87,7 +88,9 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
       addTestImplementationDependency(DEPENDENCY)
     }
     assertModules("project", "project.main", "project.test")
-    assertSourcesDownloadedAndAttached(targetModule = "project.test")
+    // Running Gradle with configuration cache for the first time lead to the task graph calculation.
+    // Because of that, action execution would be much slower.
+    assertSourcesDownloadedAndAttached(targetModule = "project.test", actionExecutionDeadlineMs = TimeUnit.SECONDS.toMillis(30))
   }
 
   @Test
@@ -143,6 +146,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
                                                  dependencyJar: String = DEPENDENCY_JAR,
                                                  dependencySourcesJar: String = DEPENDENCY_SOURCES_JAR,
                                                  classFromDependency: String = CLASS_FROM_DEPENDENCY,
+                                                 actionExecutionDeadlineMs: Long = DEFAULT_ATTACH_SOURCE_DEADLINE_MS,
                                                  targetModule: String
   ) {
     val library: LibraryOrderEntry = getModuleLibDeps(targetModule, dependencyName).single()
@@ -166,7 +170,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
         val callback = GradleAttachSourcesProvider().getActions(mutableListOf(library), psiFile)
           .single()
           .perform(mutableListOf(library))
-          .apply { waitFor(5000) }
+          .apply { waitFor(actionExecutionDeadlineMs) }
         assertNull(callback.error)
       }
       finally {
