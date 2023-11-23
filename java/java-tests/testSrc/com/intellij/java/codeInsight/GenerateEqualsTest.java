@@ -12,12 +12,11 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import com.intellij.util.Function;
-import com.intellij.util.Functions;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.function.Function;
 
 public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
 
@@ -95,11 +94,11 @@ public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testDifferentTypes() {
-    doTest(Functions.id(), Functions.id(), fields -> PsiField.EMPTY_ARRAY, true);
+    doTest(Function.identity(), Function.identity(), fields -> PsiField.EMPTY_ARRAY, true);
   }
 
   public void testDifferentTypesGetters() {
-    doTest(Functions.id(), Functions.id(), fields -> PsiField.EMPTY_ARRAY, true, true);
+    doTest(Function.identity(), Function.identity(), fields -> PsiField.EMPTY_ARRAY, true, true);
   }
 
   public void testDifferentTypesAllNotNull() {
@@ -111,15 +110,24 @@ public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testDifferentTypesNoDouble() {
-    doTest(Functions.id(), Functions.id(), Functions.id(), true);
+    doTest(Function.identity(), Function.identity(), Function.identity(), true);
   }
 
   public void testNameConflicts() {
     doTestWithTemplate(EqualsHashCodeTemplatesManager.INTELLI_J_DEFAULT);
   }
 
+  public void testPrefixes() {
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.LOCAL_VARIABLE_NAME_PREFIX = "l_";
+    settings.LOCAL_VARIABLE_NAME_SUFFIX = "_v";
+    settings.PARAMETER_NAME_PREFIX = "p_";
+    settings.PARAMETER_NAME_SUFFIX = "_r";
+    doTestWithTemplate(EqualsHashCodeTemplatesManager.INTELLI_J_DEFAULT);
+  }
+
   public void testClassWithTypeParams() {
-    doTest(Functions.id(), Functions.id(), Functions.id(), true);
+    doTest(Function.identity(), Function.identity(), Function.identity(), true);
   }
 
   public void testDifferentTypesSuperEqualsAndHashCodeApache3() {
@@ -153,7 +161,7 @@ public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
   private void doTestWithTemplate(String templateName) {
     try {
       EqualsHashCodeTemplatesManager.getInstance().setDefaultTemplate(templateName);
-      doTest(Functions.id(), Functions.id(), Functions.id(), true);
+      doTest(Function.identity(), Function.identity(), Function.identity(), true);
     }
     catch (Throwable throwable) {
       try (InputStream is = GenerateMembersUtil.class.getResourceAsStream("equalsHelper.vm")) {
@@ -210,7 +218,7 @@ public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
     PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (aClass == null) return;
     PsiField[] fields = aClass.getFields();
-    new GenerateEqualsHelper(getProject(), aClass, equals.fun(fields), hashCode.fun(fields), nonNull.fun(fields), false, useAccessors).invoke();
+    new GenerateEqualsHelper(getProject(), aClass, equals.apply(fields), hashCode.apply(fields), nonNull.apply(fields), false, useAccessors).invoke();
     FileDocumentManager.getInstance().saveAllDocuments();
   }
 
