@@ -100,7 +100,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
     val regexToDetectOutdatedGeneratedFiles = Regex(
       // Regex for searching generated implementations of MetadataStorage
-      "object [a-zA-Z0-9]+\\s*(\\(.*\\))?\\s*:\\s*MetadataStorage"
+      "object [a-zA-Z0-9]+\\s*(\\(.*\\))?\\s*:\\s*MetadataStorage\\s*\\{"
     )
 
     val (storage, jpsProjectSerializer) = runBlocking { loadProjectIntellijProject() }
