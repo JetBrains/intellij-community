@@ -285,17 +285,13 @@ public final class TraverseUIStarter implements ApplicationStarter {
   }
 
   private static @NotNull Map<String, Set<OptionDescription>> processKeymap(boolean splitByResourcePath) {
-    Map<String, Set<OptionDescription>> map = new HashMap<>();
+    Map<String, Set<OptionDescription>> map = new LinkedHashMap<>();
     ActionManagerImpl actionManager = (ActionManagerImpl)ActionManager.getInstance();
     Map<String, PluginId> actionToPluginId = splitByResourcePath ? getActionToPluginId() : Collections.emptyMap();
     String componentName = "ActionManager";
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
-    for (String id : actionManager.getActionIds()) {
-      AnAction action = actionManager.getAction(id);
-      if (action == null) {
-        throw new IllegalStateException("Cannot find action by id " + id);
-      }
-
+    for (Iterator<AnAction> iterator = actionManager.actions(false).iterator(); iterator.hasNext(); ) {
+      AnAction action = iterator.next();
       String module = splitByResourcePath ? getModuleByAction(action, actionToPluginId) : "";
       Set<OptionDescription> options = map.computeIfAbsent(module, __ -> new TreeSet<>());
       String text = action.getTemplatePresentation().getText();

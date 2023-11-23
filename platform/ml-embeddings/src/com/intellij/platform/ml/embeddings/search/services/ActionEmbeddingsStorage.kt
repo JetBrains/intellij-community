@@ -2,7 +2,6 @@
 package com.intellij.platform.ml.embeddings.search.services
 
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.ApplicationManager
@@ -112,13 +111,12 @@ class ActionEmbeddingsStorage(private val cs: CoroutineScope) : AbstractEmbeddin
 
     private suspend fun checkSearchEnabled() = serviceAsync<SemanticSearchSettings>().enabledInActionsTab
 
-    private fun shouldIndexAction(action: AnAction?): Boolean {
-      return action != null && !(action is ActionGroup && !action.isSearchable) && action.templatePresentation.hasText()
+    private fun shouldIndexAction(action: AnAction): Boolean {
+      return !(action is ActionGroup && !action.isSearchable) && action.templatePresentation.hasText()
     }
 
-    internal suspend fun getIndexableActionIds(): Set<String> {
-      val actionManager = (serviceAsync<ActionManager>() as ActionManagerImpl)
-      return actionManager.actionIds.filterTo(LinkedHashSet()) { shouldIndexAction(actionManager.getActionOrStub(it)) }
+    internal fun getIndexableActions(actionManager: ActionManagerImpl): Set<AnAction> {
+      return actionManager.actions(canReturnStub = true).filterTo(LinkedHashSet()) { shouldIndexAction(it) }
     }
   }
 }

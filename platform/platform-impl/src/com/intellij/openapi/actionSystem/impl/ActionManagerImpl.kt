@@ -60,8 +60,6 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.*
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.with
-import com.intellij.util.containers.without
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -127,7 +125,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       ThreadingAssertions.assertBackgroundThread()
     }
 
-    val idToAction = HashMap<String, AnAction>(5_000, 0.5f)
+    val idToAction = LinkedHashMap<String, AnAction>(5_000, 0.5f)
     val actionPreInitRegistrar = ActionPreInitRegistrar(idToAction)
     doRegisterActions(PluginManagerCore.getPluginSet().getEnabledModules(), actionRegistrar = actionPreInitRegistrar)
 
@@ -230,11 +228,15 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   override fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean): ActionToolbar {
-    return createActionToolbar(place, group, horizontal, false, true)
+    return createActionToolbar(place = place, group = group, horizontal = horizontal, decorateButtons = false, customizable = true)
   }
 
   override fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, decorateButtons: Boolean): ActionToolbar {
-    return createActionToolbarImpl(place, group, horizontal, decorateButtons, false)
+    return createActionToolbarImpl(place = place,
+                                   group = group,
+                                   horizontal = horizontal,
+                                   decorateButtons = decorateButtons,
+                                   customizable = false)
   }
 
   override fun createActionToolbar(place: String,
@@ -1264,6 +1266,20 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   val actionIds: Set<String>
     get() = actionPostInitRegistrar.ids
 
+  @Internal
+  fun actions(canReturnStub: Boolean): Sequence<AnAction> {
+    if (canReturnStub) {
+      // return snapshot
+      return actionPostInitRegistrar.actions.asSequence()
+    }
+    else {
+      return actionPostInitRegistrar.ids.asSequence()
+        .mapNotNull {
+          doGetAction(id = it, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
+        }
+    }
+  }
+
   @TestOnly
   fun preloadActions() {
     for (id in actionPostInitRegistrar.ids) {
@@ -1901,22 +1917,37 @@ private sealed interface ActionRegistrar {
   fun getAction(id: String): AnAction?
 }
 
-private class ActionPostInitRegistrar(@Volatile private var idToAction: Map<String, AnAction>) : ActionRegistrar {
+private class ActionPostInitRegistrar(@Volatile private var idToAction: LinkedHashMap<String, AnAction>) : ActionRegistrar {
   val ids: Set<String>
     get() = idToAction.keys
 
   override val isPostInit: Boolean
     get() = true
 
+  /**
+   * Stub actions here! Don't use it blindly.
+   */
   val actions: Collection<AnAction>
     get() = idToAction.values
 
   override fun putAction(actionId: String, action: AnAction) {
-    idToAction = idToAction.with(actionId, action)
+    val oldMap = idToAction
+    val result = LinkedHashMap<String, AnAction>(oldMap.size + 1)
+    result.putAll(oldMap)
+    result.put(actionId, action)
+    idToAction = result
   }
 
   override fun removeAction(actionId: String) {
-    idToAction = idToAction.without(actionId)
+    val oldMap = idToAction
+    if (!oldMap.containsKey(actionId)) {
+      return
+    }
+
+    val result = LinkedHashMap<String, AnAction>(oldMap.size, 0.5f)
+    result.putAll(oldMap)
+    result.remove(actionId)
+    idToAction = result
   }
 
   override fun getAction(id: String) = idToAction.get(id)
@@ -1928,7 +1959,7 @@ private class ActionPostInitRegistrar(@Volatile private var idToAction: Map<Stri
   fun actionsOrStubs(): Sequence<AnAction> = idToAction.values.asSequence()
 }
 
-private class ActionPreInitRegistrar(private val idToAction: MutableMap<String, AnAction>) : ActionRegistrar {
+private class ActionPreInitRegistrar(private val idToAction: LinkedHashMap<String, AnAction>) : ActionRegistrar {
   override val isPostInit: Boolean
     get() = false
 

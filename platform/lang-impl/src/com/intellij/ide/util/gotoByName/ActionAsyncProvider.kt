@@ -37,7 +37,7 @@ private val LOG = logger<ActionAsyncProvider>()
 @OptIn(ExperimentalCoroutinesApi::class)
 class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
-  private val myActionManager: ActionManager = ActionManager.getInstance()
+  private val actionManager: ActionManager = ActionManager.getInstance()
   private val myIntentions = ConcurrentHashMap<String, ApplyIntentionAction>()
 
   fun processActions(scope: CoroutineScope, presentationProvider: suspend (AnAction) -> Presentation, pattern: String,
@@ -68,7 +68,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
     LOG.debug("Start actions searching ($pattern)")
 
-    val actionIds = (myActionManager as ActionManagerImpl).actionIds
+    val actionIds = (actionManager as ActionManagerImpl).actionIds
 
     val comparator: Comparator<MatchedValue> = Comparator { o1, o2 -> o1.compareWeights(o2) }
 
@@ -180,7 +180,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
     return allIds.asFlow()
       .mapNotNull {
-        val action = myActionManager.getActionOrStub(it) ?: return@mapNotNull null
+        val action = actionManager.getActionOrStub(it) ?: return@mapNotNull null
         if (action is ActionGroup && !action.isSearchable) return@mapNotNull null
         action
       }
