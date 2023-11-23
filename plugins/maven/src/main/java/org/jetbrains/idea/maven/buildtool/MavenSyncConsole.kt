@@ -285,10 +285,10 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
     }
   }
 
-  fun getListener(type: MavenServerConsoleIndicator.ResolveType): ArtifactSyncListener {
+  private fun getKeyPrefix(type: MavenServerConsoleIndicator.ResolveType): String {
     return when (type) {
-      MavenServerConsoleIndicator.ResolveType.PLUGIN -> ArtifactSyncListenerImpl("maven.sync.plugins")
-      MavenServerConsoleIndicator.ResolveType.DEPENDENCY -> ArtifactSyncListenerImpl("maven.sync.dependencies")
+      MavenServerConsoleIndicator.ResolveType.PLUGIN -> "maven.sync.plugins"
+      MavenServerConsoleIndicator.ResolveType.DEPENDENCY -> "maven.sync.dependencies"
     }
   }
 
@@ -340,7 +340,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   }
 
   @Synchronized
-  private fun showBuildIssue(keyPrefix: String, dependency: String, errorMessage: String?) = doIfImportInProcess {
+  private fun showArtifactBuildIssue(keyPrefix: String, dependency: String, errorMessage: String?) = doIfImportInProcess {
     hasErrors = true
     hasUnresolved = true
     val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
@@ -351,10 +351,15 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
     addText(mySyncId, errorString, false)
   }
 
+  fun showArtifactBuildIssue(type: MavenServerConsoleIndicator.ResolveType, dependency: String, errorMessage: String?) {
+    showArtifactBuildIssue(getKeyPrefix(type), dependency, errorMessage)
+  }
+
   @Synchronized
-  private fun showBuildIssueNode(key: String, buildIssue: BuildIssue) = doIfImportInProcess {
+  fun showBuildIssue(buildIssue: BuildIssue) = doIfImportInProcess {
     hasErrors = true
     hasUnresolved = true
+    val key = getKeyPrefix(MavenServerConsoleIndicator.ResolveType.DEPENDENCY)
     startTask(mySyncId, key)
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(key, buildIssue, MessageEvent.Kind.ERROR))
   }
@@ -378,6 +383,13 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
     }
   }
 
+  fun finishPluginResolution() {
+    completeUmbrellaEvents(getKeyPrefix(MavenServerConsoleIndicator.ResolveType.PLUGIN))
+  }
+
+  fun finishArtifactsDownload() {
+    completeUmbrellaEvents(getKeyPrefix(MavenServerConsoleIndicator.ResolveType.DEPENDENCY))
+  }
 
   @Synchronized
   private fun completeUmbrellaEvents(keyPrefix: String) = doIfImportInProcess {
@@ -521,36 +533,6 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
     }
   }
 
-  private inner class ArtifactSyncListenerImpl(val keyPrefix: String) : ArtifactSyncListener {
-    override fun downloadStarted(dependency: String) {
-      downloadEventStarted(keyPrefix, dependency)
-    }
-
-    override fun downloadCompleted(dependency: String) {
-      downloadEventCompleted(keyPrefix, dependency)
-    }
-
-    override fun downloadFailed(dependency: String, error: String, stackTrace: String?) {
-      downloadEventFailed(keyPrefix, dependency, error, stackTrace)
-    }
-
-    override fun finish() {
-      completeUmbrellaEvents(keyPrefix)
-    }
-
-    override fun showError(dependency: String) {
-      showError(keyPrefix, dependency)
-    }
-
-    override fun showArtifactBuildIssue(dependency: String, errorMessage: String?) {
-      showBuildIssue(keyPrefix, dependency, errorMessage)
-    }
-
-    override fun showBuildIssue(dependency: String, buildIssue: BuildIssue) {
-      showBuildIssueNode(keyPrefix, buildIssue)
-    }
-  }
-
   companion object {
     val EXIT_CODE_OK = 0
     val EXIT_CODE_SIGTERM = 143
@@ -594,12 +576,12 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
   @Synchronized
   override fun handleDownloadEvents(downloadEvents: List<MavenArtifactEvent>) {
     for (e in downloadEvents) {
-      val listener = getListener(e.resolveType)
+      val key = getKeyPrefix(e.resolveType)
       val id = e.dependencyId
       when (e.artifactEventType) {
-        ArtifactEventType.DOWNLOAD_STARTED -> listener.downloadStarted(id)
-        ArtifactEventType.DOWNLOAD_COMPLETED -> listener.downloadCompleted(id)
-        ArtifactEventType.DOWNLOAD_FAILED -> listener.downloadFailed(id, e.errorMessage, e.stackTrace)
+        ArtifactEventType.DOWNLOAD_STARTED -> downloadEventStarted(key, id)
+        ArtifactEventType.DOWNLOAD_COMPLETED -> downloadEventCompleted(key, id)
+        ArtifactEventType.DOWNLOAD_FAILED -> downloadEventFailed(key, id, e.errorMessage, e.stackTrace)
       }
     }
   }
@@ -647,17 +629,3 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
     return LEVEL_TO_PREFIX[level]
   }
 }
-
-interface ArtifactSyncListener {
-  fun showError(dependency: String)
-  fun showArtifactBuildIssue(dependency: String, errorMessage: String?)
-  fun showBuildIssue(dependency: String, buildIssue: BuildIssue)
-  fun downloadStarted(dependency: String)
-  fun downloadCompleted(dependency: String)
-  fun downloadFailed(dependency: String, error: String, stackTrace: String?)
-  fun finish()
-}
-
-
-
-
