@@ -15,6 +15,7 @@ import com.intellij.ide.startup.importSettings.models.ILookAndFeel
 import com.intellij.ide.startup.importSettings.models.Keymap
 import com.intellij.ide.startup.importSettings.models.PatchedKeymap
 import com.intellij.ide.startup.importSettings.models.PluginFeature
+import com.intellij.ide.startup.importSettings.models.RecentPathInfo
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
@@ -23,6 +24,7 @@ import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.util.SystemInfo
 import javax.swing.Icon
 import javax.swing.KeyStroke
+import kotlin.io.path.Path
 
 open class TransferableSetting(
   override val id: String,
@@ -73,8 +75,8 @@ open class TransferableSetting(
     }
 
     fun plugins(features: Collection<FeatureInfo>): Multiple {
-      val items = features.asSequence().filter { !it.isHidden }.map(::FeatureSetting).toList()
       val limitForPreview = 3
+      val items = features.asSequence().filter { !it.isHidden }.map(::FeatureSetting).toList()
       val comment = NlsMessages.formatNarrowAndList(items.take(limitForPreview).map { it.nameForPreview })
       return TransferableSettingGroup(
         PLUGINS_ID,
@@ -85,12 +87,18 @@ open class TransferableSetting(
       )
     }
 
-    fun recentProjects() = TransferableSetting(
-      RECENT_PROJECTS_ID,
-      ImportSettingsBundle.message("transfer.settings.recent-projects"),
-      StartupImportIcons.Icons.Recent,
-      null
-    )
+    fun recentProjects(projects: List<RecentPathInfo>): Multiple {
+      val limitForPreview = 6
+      val items = projects.map(::RecentProjectSetting)
+      val comment = NlsMessages.formatNarrowAndList(items.take(limitForPreview).map { it.name })
+      return TransferableSettingGroup(
+        RECENT_PROJECTS_ID,
+        ImportSettingsBundle.message("transfer.settings.recent-projects"),
+        StartupImportIcons.Icons.Recent,
+        comment,
+        listOf(items)
+      )
+    }
   }
 }
 
@@ -153,4 +161,11 @@ private class FeatureSetting(feature: FeatureInfo) : ChildSetting {
         append(it)
       }
     }
+}
+
+private class RecentProjectSetting(private val item: RecentPathInfo) : ChildSetting {
+  override val id = ""
+  override val name = Path(item.path).fileName?.toString() ?: ""
+  override val leftComment = null
+  override val rightComment = null
 }

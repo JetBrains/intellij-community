@@ -146,7 +146,7 @@ class SettingTransferService : ExternalService {
             add(TransferableSetting.plugins(it))
           }
         }
-        settings.recentProjects.nullize()?.let { TransferableSetting.recentProjects() }?.let(::add)
+        settings.recentProjects.nullize()?.let(TransferableSetting::recentProjects)?.let(::add)
       }
     } ?: emptyList()
   }
