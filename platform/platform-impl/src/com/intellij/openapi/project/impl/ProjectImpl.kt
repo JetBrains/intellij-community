@@ -36,11 +36,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.serviceContainer.*
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.TimedReference
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx

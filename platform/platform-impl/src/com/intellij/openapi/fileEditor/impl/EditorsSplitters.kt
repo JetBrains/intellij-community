@@ -51,6 +51,7 @@ import com.intellij.platform.fileEditor.parseFileEntry
 import com.intellij.platform.fileEditor.writeWindow
 import com.intellij.platform.ide.IdeFingerprint
 import com.intellij.platform.ide.ideFingerprint
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
@@ -58,7 +59,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.IconUtil
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBRectangle

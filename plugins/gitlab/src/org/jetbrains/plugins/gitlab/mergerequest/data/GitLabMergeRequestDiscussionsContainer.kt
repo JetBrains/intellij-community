@@ -6,8 +6,8 @@ import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.diagnostic.logger
-import com. intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.openapi.project.Project
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*

@@ -2,9 +2,9 @@
 package com.intellij.platform.util.progress.impl
 
 import com.google.common.util.concurrent.AtomicDouble
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job

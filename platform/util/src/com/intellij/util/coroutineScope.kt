@@ -12,17 +12,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import com.intellij.platform.util.coroutines.attachAsChildTo as attachAsChildTo2
-import com.intellij.platform.util.coroutines.childScope as childScope2
 import com.intellij.platform.util.coroutines.namedChildScope as namedChildScope2
-
-@Deprecated(
-  "The function was moved to another module and another package",
-  ReplaceWith("childScope(context, supervisor)", "com.intellij.platform.util.coroutines")
-)
-@Internal
-@Experimental
-fun CoroutineScope.childScope(context: CoroutineContext = EmptyCoroutineContext, supervisor: Boolean = true): CoroutineScope =
-  childScope2(context, supervisor)
 
 @Deprecated(
   "The function was moved to another module and another package",

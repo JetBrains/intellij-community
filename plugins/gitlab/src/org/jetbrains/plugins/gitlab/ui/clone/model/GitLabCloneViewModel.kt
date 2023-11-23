@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.ui.clone.model
 import com.intellij.collaboration.auth.ui.login.LoginModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckoutProvider
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow

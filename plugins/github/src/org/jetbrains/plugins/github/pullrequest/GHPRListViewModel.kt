@@ -7,8 +7,8 @@ import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.CollectionListModel
-import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*

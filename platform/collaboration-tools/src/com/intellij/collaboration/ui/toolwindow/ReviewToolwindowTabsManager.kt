@@ -8,8 +8,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.content.*
-import com.intellij.util.childScope
 import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest

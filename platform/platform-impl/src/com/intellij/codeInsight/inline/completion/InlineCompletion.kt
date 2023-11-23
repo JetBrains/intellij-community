@@ -12,8 +12,8 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.observable.util.addKeyListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
-import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 
 object InlineCompletion {

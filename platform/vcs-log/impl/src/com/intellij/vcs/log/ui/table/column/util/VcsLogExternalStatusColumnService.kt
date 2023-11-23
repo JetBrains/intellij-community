@@ -6,9 +6,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.table.JBTable
-import com.intellij.util.childScope
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.data.MiniDetailsGetter
 import com.intellij.vcs.log.data.VcsCommitExternalStatus

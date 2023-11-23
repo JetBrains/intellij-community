@@ -5,7 +5,7 @@ package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.OpenTelemetrySdk

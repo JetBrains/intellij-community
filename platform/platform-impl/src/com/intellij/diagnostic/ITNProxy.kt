@@ -17,8 +17,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.security.CompositeX509TrustManager
-import com.intellij.util.childScope
 import com.intellij.util.io.DigestUtil.sha1
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.net.NetUtils
