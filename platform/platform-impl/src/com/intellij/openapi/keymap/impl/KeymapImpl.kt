@@ -13,6 +13,10 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
+import com.intellij.openapi.actionSystem.impl.AddShortcutOperation
+import com.intellij.openapi.actionSystem.impl.KeymapShortcutOperation
+import com.intellij.openapi.actionSystem.impl.RemoveAllShortcutsOperation
+import com.intellij.openapi.actionSystem.impl.RemoveShortcutOperation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
@@ -67,7 +71,6 @@ fun KeymapImpl(name: String, dataHolder: SchemeDataHolder<KeymapImpl>): KeymapIm
 
 open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDataHolder<KeymapImpl>? = null)
   : ExternalizableSchemeAdapter(), Keymap, SerializableScheme {
-
   @Volatile
   private var parent: KeymapImpl? = null
   private var unknownParentName: String? = null
@@ -84,7 +87,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       val dataHolder = dataHolder
       if (dataHolder != null) {
         this.dataHolder = null
-        readExternal(dataHolder.read())
+        readExternal(dataHolder.read(), ActionManagerEx.getInstanceEx())
       }
       return field
     }
@@ -172,20 +175,23 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   final override fun canModify(): Boolean = canModify
 
   override fun addShortcut(actionId: String, shortcut: Shortcut) {
-    addShortcut(actionId = actionId, shortcut = shortcut, fromSettings = false, actionManager = ActionManagerEx.getInstanceEx())
+    addShortcut(actionId = actionId,
+                shortcut = shortcut,
+                fromSettings = false,
+                actionBinding = ActionManagerEx.getInstanceEx()::getActionBinding)
   }
 
-  fun addShortcut(actionId: String, shortcut: Shortcut, fromSettings: Boolean, actionManager: ActionManagerEx) {
-    val boundShortcuts = actionManager.getActionBinding(actionId)?.let { actionIdToShortcuts[it] }
+  internal fun addShortcut(actionId: String, shortcut: Shortcut, fromSettings: Boolean, actionBinding: (String) -> String?) {
+    val boundShortcuts = actionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
     actionIdToShortcuts.compute(actionId) { id, list ->
       var result: List<Shortcut>? = list
       if (result == null) {
-        result = boundShortcuts ?: parent?.getShortcutList(id)?.map { convertShortcut(it) } ?: emptyList()
+        result = boundShortcuts ?: parent?.getShortcutList(id, actionBinding)?.map { convertShortcut(it) } ?: java.util.List.of()!!
       }
       if (!result.contains(shortcut)) {
         result = result + shortcut
       }
-      if (result.areShortcutsEqualToParent(id)) null else result
+      if (result.areShortcutsEqualToParent(id, actionBinding)) null else result
     }
 
     cleanShortcutsCache()
@@ -193,28 +199,60 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   private fun cleanShortcutsCache() {
-    keystrokeToActionIds = emptyMap()
-    mouseShortcutToActionIds = emptyMap()
-    gestureToActionIds = emptyMap()
+    keystrokeToActionIds = java.util.Map.of()
+    mouseShortcutToActionIds = java.util.Map.of()
+    gestureToActionIds = java.util.Map.of()
     schemeState = SchemeState.POSSIBLY_CHANGED
   }
 
   override fun removeAllActionShortcuts(actionId: String) {
-    for (shortcut in getShortcutList(actionId)) {
-      removeShortcut(actionId, shortcut)
+    return removeAllActionShortcuts(actionId, ActionManagerEx.getInstanceEx()::getActionBinding)
+  }
+
+  private fun removeAllActionShortcuts(actionId: String, actionBinding: (String) -> String?) {
+    for (shortcut in getShortcutList(actionId, actionBinding)) {
+      removeShortcut(actionId = actionId,
+                     toDelete = shortcut,
+                     fromSettings = false,
+                     actionBinding = actionBinding)
     }
   }
 
   override fun removeShortcut(actionId: String, toDelete: Shortcut) {
-    removeShortcut(actionId = actionId, toDelete = toDelete, fromSettings = false, actionManager = ActionManagerEx.getInstanceEx())
+    removeShortcut(actionId = actionId,
+                   toDelete = toDelete,
+                   fromSettings = false,
+                   actionBinding = ActionManagerEx.getInstanceEx()::getActionBinding)
   }
 
-  fun removeShortcut(actionId: String, toDelete: Shortcut, fromSettings: Boolean, actionManager: ActionManagerEx) {
-    val fromBinding = actionManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
+  internal fun apply(operations: List<KeymapShortcutOperation>, actionBinding: (String) -> String?, actionManager: ActionManagerEx) {
+    val dataHolder = dataHolder
+    if (dataHolder != null) {
+      this.dataHolder = null
+      readExternal(dataHolder.read(), actionManager)
+    }
+
+    for (operation in operations) {
+      when (operation) {
+        is RemoveShortcutOperation -> {
+          removeShortcut(operation.actionId, operation.shortcut, fromSettings = false, actionBinding = actionBinding)
+        }
+        is RemoveAllShortcutsOperation -> {
+          removeAllActionShortcuts(operation.actionId, actionBinding)
+        }
+        is AddShortcutOperation -> {
+          addShortcut(operation.actionId, operation.shortcut, fromSettings = false, actionBinding = actionBinding)
+        }
+      }
+    }
+  }
+
+  fun removeShortcut(actionId: String, toDelete: Shortcut, fromSettings: Boolean, actionBinding: (String) -> String?) {
+    val fromBinding = actionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
     actionIdToShortcuts.compute(actionId) { id, list ->
       when {
         list == null -> {
-          val inherited = fromBinding ?: parent?.getShortcutList(id)?.map { convertShortcut(it) }.nullize()
+          val inherited = fromBinding ?: parent?.getShortcutList(id, actionBinding)?.map { convertShortcut(it) }.nullize()
           if (inherited == null || !inherited.contains(toDelete)) {
             null
           }
@@ -226,7 +264,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         parent == null -> if (list.size == 1) null else java.util.List.copyOf(list - toDelete)
         else -> {
           val result = list - toDelete
-          if (result.areShortcutsEqualToParent(id)) null else java.util.List.copyOf(result)
+          if (result.areShortcutsEqualToParent(id, actionBinding)) null else java.util.List.copyOf(result)
         }
       }
     }
@@ -235,9 +273,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     fireShortcutChanged(actionId, fromSettings)
   }
 
-  private fun List<Shortcut>.areShortcutsEqualToParent(actionId: String): Boolean {
+  private fun List<Shortcut>.areShortcutsEqualToParent(actionId: String, actionBinding: (String) -> String?): Boolean {
     return parent.let { parent ->
-      parent != null && areShortcutsEqual(this, parent.getShortcutList(actionId).map { convertShortcut(it) })
+      parent != null && areShortcutsEqual(this, parent.getShortcutList(actionId, actionBinding = actionBinding).map { convertShortcut(it) })
     }
   }
 
@@ -284,8 +322,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   private fun getActionIdList(firstKeyStroke: KeyStroke, secondKeyStroke: KeyStroke?): List<String> {
     val ids = getActionIds(firstKeyStroke)
     var actualBindings: MutableList<String>? = null
+    val actionBinding = ActionManagerEx.getInstanceEx()::getActionBinding
     for (id in ids) {
-      for (shortcut in getShortcutList(id)) {
+      for (shortcut in getShortcutList(id, actionBinding)) {
         if (shortcut !is KeyboardShortcut) {
           continue
         }
@@ -385,10 +424,12 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   fun isActionBound(actionId: String): Boolean = ActionManagerEx.getInstanceEx().getBoundActions().contains(actionId)
 
   override fun getShortcuts(actionId: String?): Array<Shortcut> {
-    return getShortcutList(actionId).let { if (it.isEmpty()) Shortcut.EMPTY_ARRAY else it.toTypedArray() }
+    return getShortcutList(actionId, actionBinding = {
+      ActionManagerEx.getInstanceEx().getActionBinding(it)
+    }).let { if (it.isEmpty()) Shortcut.EMPTY_ARRAY else it.toTypedArray() }
   }
 
-  private fun getShortcutList(actionId: String?): List<Shortcut> {
+  private fun getShortcutList(actionId: String?, actionBinding: (String) -> String?): List<Shortcut> {
     if (actionId == null) {
       return emptyList()
     }
@@ -396,8 +437,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     // it is critical to use convertShortcut - otherwise MacOSDefaultKeymap doesn't convert shortcuts
     // todo why not convert on add? why we don't need to convert our own shortcuts?
     return actionIdToShortcuts.get(actionId)
-           ?: ActionManagerEx.getInstanceEx().getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
-           ?: parent?.getShortcutList(actionId)?.map { convertShortcut(it) }
+           ?: actionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
+           ?: parent?.getShortcutList(actionId, actionBinding)?.map { convertShortcut(it) }
            ?: emptyList()
   }
 
@@ -406,7 +447,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   // you must clear `actionIdToShortcuts` before calling
-  protected open fun readExternal(keymapElement: Element) {
+  protected open fun readExternal(keymapElement: Element, actionManager: ActionManagerEx) {
     if (KEY_MAP != keymapElement.name) {
       throw InvalidDataException("unknown element: $keymapElement")
     }
@@ -425,7 +466,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       if (parentScheme == null) {
         logger<KeymapImpl>().warn("Cannot find parent scheme $parentSchemeName for scheme $name")
         unknownParentName = parentSchemeName
-        notifyAboutMissingKeymap(parentSchemeName, IdeBundle.message("notification.content.cannot.find.parent.keymap", parentSchemeName, name), true)
+        notifyAboutMissingKeymap(parentSchemeName,
+                                 IdeBundle.message("notification.content.cannot.find.parent.keymap", parentSchemeName, name), true)
       }
       else {
         parent = parentScheme as KeymapImpl
@@ -440,7 +482,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         throw InvalidDataException("unknown element: $actionElement; Keymap's name=$name")
       }
 
-      val id = actionElement.getAttributeValue(ID_ATTRIBUTE) ?: throw InvalidDataException("Attribute 'id' cannot be null; Keymap's name=$name")
+      val id = actionElement.getAttributeValue(ID_ATTRIBUTE) ?: throw InvalidDataException(
+        "Attribute 'id' cannot be null; Keymap's name=$name")
       actionIds.add(id)
       val shortcuts = SmartList<Shortcut>()
 
@@ -448,7 +491,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         if (KEYBOARD_SHORTCUT == shortcutElement.name) {
           // Parse first keystroke
           val firstKeyStrokeStr = shortcutElement.getAttributeValue(FIRST_KEYSTROKE_ATTRIBUTE)
-                                  ?: throw InvalidDataException("Attribute '$FIRST_KEYSTROKE_ATTRIBUTE' cannot be null; Action's id=$id; Keymap's name=$name")
+                                  ?: throw InvalidDataException(
+                                    "Attribute '$FIRST_KEYSTROKE_ATTRIBUTE' cannot be null; Action's id=$id; Keymap's name=$name")
           if (skipInserts && firstKeyStrokeStr.contains("INSERT")) {
             continue
           }
@@ -595,12 +639,13 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         continue
       }
 
-      val useShortcutOf = ActionManagerEx.getInstanceEx().getActionBinding(id)
+      val actionManager = ActionManagerEx.getInstanceEx()
+      val useShortcutOf = actionManager.getActionBinding(id)
       if (useShortcutOf != null && useShortcutOf == actionId) {
         continue
       }
 
-      for (shortcut1 in getShortcutList(id)) {
+      for (shortcut1 in getShortcutList(id, actionBinding = { actionManager.getActionBinding(it) })) {
         if (shortcut1 !is KeyboardShortcut || shortcut1.firstKeyStroke != keyboardShortcut.firstKeyStroke) {
           continue
         }
@@ -658,23 +703,39 @@ private fun areShortcutsEqual(shortcuts1: List<Shortcut>, shortcuts2: List<Short
   return true
 }
 
-@Suppress("SpellCheckingInspection") private const val macOSKeymap = "com.intellij.plugins.macoskeymap"
-@Suppress("SpellCheckingInspection") private const val gnomeKeymap = "com.intellij.plugins.gnomekeymap"
-@Suppress("SpellCheckingInspection") private const val kdeKeymap = "com.intellij.plugins.kdekeymap"
-@Suppress("SpellCheckingInspection") private const val xwinKeymap = "com.intellij.plugins.xwinkeymap"
-@Suppress("SpellCheckingInspection") private const val eclipseKeymap = "com.intellij.plugins.eclipsekeymap"
-@Suppress("SpellCheckingInspection") private const val emacsKeymap = "com.intellij.plugins.emacskeymap"
-@Suppress("SpellCheckingInspection") private const val netbeansKeymap = "com.intellij.plugins.netbeanskeymap"
-@Suppress("SpellCheckingInspection") private const val qtcreatorKeymap = "com.intellij.plugins.qtcreatorkeymap"
-@Suppress("SpellCheckingInspection") private const val resharperKeymap = "com.intellij.plugins.resharperkeymap"
-@Suppress("SpellCheckingInspection") private const val sublimeKeymap = "com.intellij.plugins.sublimetextkeymap"
-@Suppress("SpellCheckingInspection") private const val visualStudioKeymap = "com.intellij.plugins.visualstudiokeymap"
+@Suppress("SpellCheckingInspection")
+private const val macOSKeymap = "com.intellij.plugins.macoskeymap"
+@Suppress("SpellCheckingInspection")
+private const val gnomeKeymap = "com.intellij.plugins.gnomekeymap"
+@Suppress("SpellCheckingInspection")
+private const val kdeKeymap = "com.intellij.plugins.kdekeymap"
+@Suppress("SpellCheckingInspection")
+private const val xwinKeymap = "com.intellij.plugins.xwinkeymap"
+@Suppress("SpellCheckingInspection")
+private const val eclipseKeymap = "com.intellij.plugins.eclipsekeymap"
+@Suppress("SpellCheckingInspection")
+private const val emacsKeymap = "com.intellij.plugins.emacskeymap"
+@Suppress("SpellCheckingInspection")
+private const val netbeansKeymap = "com.intellij.plugins.netbeanskeymap"
+@Suppress("SpellCheckingInspection")
+private const val qtcreatorKeymap = "com.intellij.plugins.qtcreatorkeymap"
+@Suppress("SpellCheckingInspection")
+private const val resharperKeymap = "com.intellij.plugins.resharperkeymap"
+@Suppress("SpellCheckingInspection")
+private const val sublimeKeymap = "com.intellij.plugins.sublimetextkeymap"
+@Suppress("SpellCheckingInspection")
+private const val visualStudioKeymap = "com.intellij.plugins.visualstudiokeymap"
 private const val visualStudio2022Keymap = "com.intellij.plugins.visualstudio2022keymap"
-@Suppress("SpellCheckingInspection") private const val xcodeKeymap = "com.intellij.plugins.xcodekeymap"
-@Suppress("SpellCheckingInspection") private const val visualAssistKeymap = "com.intellij.plugins.visualassistkeymap"
-@Suppress("SpellCheckingInspection") private const val riderKeymap = "com.intellij.plugins.riderkeymap"
-@Suppress("SpellCheckingInspection") private const val vsCodeKeymap = "com.intellij.plugins.vscodekeymap"
-@Suppress("SpellCheckingInspection") private const val vsForMacKeymap = "com.intellij.plugins.vsformackeymap"
+@Suppress("SpellCheckingInspection")
+private const val xcodeKeymap = "com.intellij.plugins.xcodekeymap"
+@Suppress("SpellCheckingInspection")
+private const val visualAssistKeymap = "com.intellij.plugins.visualassistkeymap"
+@Suppress("SpellCheckingInspection")
+private const val riderKeymap = "com.intellij.plugins.riderkeymap"
+@Suppress("SpellCheckingInspection")
+private const val vsCodeKeymap = "com.intellij.plugins.vscodekeymap"
+@Suppress("SpellCheckingInspection")
+private const val vsForMacKeymap = "com.intellij.plugins.vsformackeymap"
 
 internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.NotificationContent message: String, isParent: Boolean) {
   val connection = ApplicationManager.getApplication().messageBus.connect()
@@ -710,9 +771,9 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
             "Xcode" -> xcodeKeymap
             "Visual Studio for Mac" -> vsForMacKeymap
             "Rider",
-            "Rider OSX"-> riderKeymap
+            "Rider OSX" -> riderKeymap
             "VSCode",
-            "VSCode OSX"-> vsCodeKeymap
+            "VSCode OSX" -> vsCodeKeymap
             else -> null
           }
 
@@ -726,18 +787,19 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
             else -> object : NotificationAction(IdeBundle.message("action.text.install.keymap", keymapName)) {
               override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                 val connect = ApplicationManager.getApplication().messageBus.connect()
-                connect.subscribe(KeymapManagerListener.TOPIC, object: KeymapManagerListener {
+                connect.subscribe(KeymapManagerListener.TOPIC, object : KeymapManagerListener {
                   override fun keymapAdded(keymap: Keymap) {
                     ApplicationManager.getApplication().invokeLater {
                       if (keymap.name == keymapName) {
                         connect.disconnect()
-                        val successMessage = if (isParent) IdeBundle.message("notification.content.keymap.successfully.installed", keymapName)
+                        val successMessage = if (isParent) IdeBundle.message("notification.content.keymap.successfully.installed",
+                                                                             keymapName)
                         else {
                           KeymapManagerEx.getInstanceEx().activeKeymap = keymap
                           IdeBundle.message("notification.content.keymap.successfully.activated", keymapName)
                         }
                         Notification("KeymapInstalled", successMessage,
-                                                                                  NotificationType.INFORMATION).notify(e.project)
+                                     NotificationType.INFORMATION).notify(e.project)
                       }
                     }
                   }
@@ -759,7 +821,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
           }
 
           Notification("KeymapMissing", IdeBundle.message("notification.group.missing.keymap"),
-                                                                    message, NotificationType.ERROR)
+                       message, NotificationType.ERROR)
             .addAction(action)
             .notify(project)
         },

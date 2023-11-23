@@ -255,7 +255,7 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
 
   private static void addShortcut(Keymap keymap, String actionId, Shortcut shortcut) {
     if (keymap instanceof KeymapImpl) {
-      ((KeymapImpl)keymap).addShortcut(actionId, shortcut, true, ActionManagerEx.getInstanceEx());
+      ((KeymapImpl)keymap).addShortcut$intellij_platform_ide_impl(actionId, shortcut, true, ActionManagerEx.getInstanceEx()::getActionBinding);
     }
     else {
       keymap.addShortcut(actionId, shortcut);
@@ -264,7 +264,7 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
 
   private static void removeShortcut(Keymap keymap, String actionId, Shortcut shortcut) {
     if (keymap instanceof KeymapImpl) {
-      ((KeymapImpl)keymap).removeShortcut(actionId, shortcut, true, ActionManagerEx.getInstanceEx());
+      ((KeymapImpl)keymap).removeShortcut(actionId, shortcut, true, ActionManagerEx.getInstanceEx()::getActionBinding);
     }
     else {
       keymap.removeShortcut(actionId, shortcut);

@@ -4,7 +4,7 @@
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.AbstractBundle
-import com.intellij.BundleBase.message
+import com.intellij.BundleBase
 import com.intellij.DynamicBundle
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
@@ -33,17 +33,17 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.extensions.*
-import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.keymap.ex.KeymapManagerEx
-import com.intellij.openapi.keymap.impl.DefaultKeymap.Companion.isBundledKeymapHidden
+import com.intellij.openapi.keymap.impl.DefaultKeymap
+import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.ProjectType
 import com.intellij.openapi.util.*
@@ -127,7 +127,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       ThreadingAssertions.assertBackgroundThread()
     }
 
-    val idToAction = LinkedHashMap<String, AnAction>(5_000, 0.5f)
+    val idToAction = HashMap<String, AnAction>(5_000, 0.5f)
     val boundShortcuts = HashMap<String, String>(512, 0.5f)
     val actionPreInitRegistrar = ActionPreInitRegistrar(idToAction, boundShortcuts)
     doRegisterActions(PluginManagerCore.getPluginSet().getEnabledModules(), actionRegistrar = actionPreInitRegistrar)
@@ -172,11 +172,31 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   private fun doRegisterActions(modules: Iterable<IdeaPluginDescriptorImpl>, actionRegistrar: ActionRegistrar) {
-    val keymapManager = KeymapManagerEx.getInstanceEx()!!
+    val keymapToOperations = HashMap<String, MutableList<KeymapShortcutOperation>>()
     for (module in modules) {
-      registerPluginActions(module = module, keymapManager = keymapManager, actionRegistrar = actionRegistrar)
+      registerPluginActions(module = module, keymapToOperations = keymapToOperations, actionRegistrar = actionRegistrar)
       executeRegisterTaskForOldContent(module) {
-        registerPluginActions(module = it, keymapManager = keymapManager, actionRegistrar = actionRegistrar)
+        registerPluginActions(module = it, keymapToOperations = keymapToOperations, actionRegistrar = actionRegistrar)
+      }
+    }
+
+    // out of ActionManager constructor
+    coroutineScope.launch {
+      // make sure constructor is completed
+      serviceAsync<ActionManager>()
+
+      val keymapManager = serviceAsync<KeymapManager>()
+      for ((keymapName, operations) in keymapToOperations) {
+        val keymap = keymapManager.getKeymap(keymapName) as KeymapImpl?
+        if (keymap == null) {
+          val app = ApplicationManager.getApplication()
+          if (!app.isHeadlessEnvironment && !app.isCommandLine && !DefaultKeymap.isBundledKeymapHidden(keymapName)) {
+            LOG.info("keymap \"$keymapName\" not found")
+          }
+          continue
+        }
+
+        keymap.apply(operations, actionBinding = actionRegistrar::getActionBinding, actionManager = this@ActionManagerImpl)
       }
     }
   }
@@ -279,7 +299,9 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     return toolbar
   }
 
-  private fun registerPluginActions(module: IdeaPluginDescriptorImpl, keymapManager: KeymapManagerEx, actionRegistrar: ActionRegistrar) {
+  private fun registerPluginActions(module: IdeaPluginDescriptorImpl,
+                                    keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
+                                    actionRegistrar: ActionRegistrar) {
     val elements = module.actions
     if (elements.isEmpty()) {
       return
@@ -317,7 +339,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                actionRegistrar = actionRegistrar,
                                module = module,
                                bundle = bundle,
-                               keymapManager = keymapManager,
+                               keymapToOperations = keymapToOperations,
                                classLoader = module.classLoader)
         }
         is ActionDescriptorGroup -> {
@@ -327,7 +349,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                               actionRegistrar = actionRegistrar,
                               module = module,
                               bundle = bundle,
-                              keymapManager = keymapManager,
+                              keymapToOperations = keymapToOperations,
                               classLoader = module.classLoader)
         }
         else -> {
@@ -439,7 +461,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                    actionRegistrar: ActionRegistrar,
                                    module: IdeaPluginDescriptorImpl,
                                    bundle: ResourceBundle?,
-                                   keymapManager: KeymapManager,
+                                   keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
                                    classLoader: ClassLoader): AnAction? {
     // read ID and register a loaded action
     val id = obtainActionId(element = element, className = className)
@@ -486,10 +508,19 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                            module = module,
                                                            secondary = isSecondary(child),
                                                            actionRegistrar = actionRegistrar)
-        "keyboard-shortcut" -> processKeyboardShortcutNode(element = child, actionId = id, module = module, keymapManager = keymapManager)
-        "mouse-shortcut" -> processMouseShortcutNode(element = child, actionId = id, module = module, keymapManager = keymapManager)
+        "keyboard-shortcut" -> processKeyboardShortcutNode(element = child,
+                                                           actionId = id,
+                                                           module = module,
+                                                           keymapToOperations = keymapToOperations)
+        "mouse-shortcut" -> processMouseShortcutNode(element = child,
+                                                     actionId = id,
+                                                     module = module,
+                                                     keymapToOperations = keymapToOperations)
         "abbreviation" -> processAbbreviationNode(e = child, id = id)
-        OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(action = stub, id = stub.id, element = child, module = module,
+        OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(action = stub,
+                                                              id = stub.id,
+                                                              element = child,
+                                                              module = module,
                                                               bundle = bundle)
         SYNONYM_ELEMENT_NAME -> processSynonymNode(action = stub, element = child, module = module, bundle = bundle)
         else -> {
@@ -549,7 +580,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                   element: XmlElement,
                                   module: IdeaPluginDescriptorImpl,
                                   bundle: ResourceBundle?,
-                                  keymapManager: KeymapManagerEx,
+                                  keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
                                   actionRegistrar: ActionRegistrar,
                                   classLoader: ClassLoader): AnAction? {
     try {
@@ -648,7 +679,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                 module = module,
                                                 bundle = bundle,
                                                 actionRegistrar = actionRegistrar,
-                                                keymapManager = keymapManager,
+                                                keymapToOperations = keymapToOperations,
                                                 classLoader = classLoader)
               if (action != null) {
                 addToGroupInner(group = group,
@@ -687,7 +718,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                element = child,
                                                module = module,
                                                bundle = bundle,
-                                               keymapManager = keymapManager,
+                                               keymapToOperations = keymapToOperations,
                                                actionRegistrar = actionRegistrar,
                                                classLoader = classLoader)
               if (action != null) {
@@ -1391,6 +1422,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
       _timerEvents.tryEmit(Unit)
 
+      @Suppress("ForbiddenInSuspectContextMethod")
       withClientId(clientId).use {
         for (listener in listeners) {
           runListenerAction(listener)
@@ -1633,7 +1665,10 @@ private fun parseAnchor(anchorStr: String?, actionName: String?, module: IdeaPlu
   }
 }
 
-private fun processMouseShortcutNode(element: XmlElement, actionId: String, module: IdeaPluginDescriptor, keymapManager: KeymapManager) {
+private fun processMouseShortcutNode(element: XmlElement,
+                                     actionId: String,
+                                     module: IdeaPluginDescriptor,
+                                     keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>) {
   val keystrokeString = element.attributes.get("keystroke")
   if (keystrokeString.isNullOrBlank()) {
     reportActionError(module, "\"keystroke\" attribute must be specified for action with id=$actionId")
@@ -1654,24 +1689,15 @@ private fun processMouseShortcutNode(element: XmlElement, actionId: String, modu
     return
   }
 
-  val keymap = keymapManager.getKeymap(keymapName)
-  if (keymap == null) {
-    reportKeymapNotFound(module, keymapName)
-    return
-  }
-
-  processRemoveAndReplace(element = element, actionId = actionId, keymap = keymap, shortcut = shortcut)
+  processRemoveAndReplace(element = element,
+                          actionId = actionId,
+                          keymap = keymapName,
+                          shortcut = shortcut,
+                          keymapToOperations = keymapToOperations)
 }
 
 private fun reportActionError(module: PluginDescriptor, message: String, cause: Throwable? = null) {
   LOG.error(PluginException("$message (module=$module)", cause, module.pluginId))
-}
-
-private fun reportKeymapNotFound(module: PluginDescriptor, keymapName: String) {
-  val app = ApplicationManager.getApplication()
-  if (!app.isHeadlessEnvironment && !app.isCommandLine && !isBundledKeymapHidden(keymapName)) {
-    LOG.info("keymap \"$keymapName\" not found $module")
-  }
 }
 
 private fun getPluginInfo(id: PluginId?): String {
@@ -1717,7 +1743,7 @@ private fun processOverrideTextNode(action: AnAction,
     if (text.isNullOrEmpty() && bundle != null) {
       val prefix = if (action is ActionGroup) "group" else "action"
       val key = "$prefix.$id.$place.text"
-      action.addTextOverride(place) { message(bundle, key) }
+      action.addTextOverride(place) { BundleBase.message(bundle, key) }
     }
     else {
       action.addTextOverride(place) { text }
@@ -1733,7 +1759,7 @@ private fun processSynonymNode(action: AnAction, element: XmlElement, module: Id
   else {
     val key = element.attributes.get(KEY_ATTR_NAME)
     if (key != null && bundle != null) {
-      action.addSynonym { message(bundle, key) }
+      action.addSynonym { BundleBase.message(bundle, key) }
     }
     else {
       reportActionError(module, "Can't process synonym: neither text nor resource bundle key is specified")
@@ -1746,7 +1772,10 @@ private fun createSeparator(bundle: ResourceBundle?, key: String): Separator {
   return if (text == null) Separator.getInstance() else Separator(text)
 }
 
-private fun processKeyboardShortcutNode(element: XmlElement, actionId: String, module: PluginDescriptor, keymapManager: KeymapManager) {
+private fun processKeyboardShortcutNode(element: XmlElement,
+                                        actionId: String,
+                                        module: PluginDescriptor,
+                                        keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>) {
   val firstStrokeString = element.attributes.get("first-keystroke")
   if (firstStrokeString == null) {
     reportActionError(module, "\"first-keystroke\" attribute must be specified for action with id=$actionId")
@@ -1775,32 +1804,37 @@ private fun processKeyboardShortcutNode(element: XmlElement, actionId: String, m
     return
   }
 
-  val keymap = keymapManager.getKeymap(keymapName)
-  if (keymap == null) {
-    reportKeymapNotFound(module, keymapName)
-    return
-  }
-
   processRemoveAndReplace(element = element,
                           actionId = actionId,
-                          keymap = keymap,
-                          shortcut = KeyboardShortcut(firstKeyStroke, secondKeyStroke))
+                          keymap = keymapName,
+                          shortcut = KeyboardShortcut(firstKeyStroke, secondKeyStroke),
+                          keymapToOperations = keymapToOperations)
 }
 
-private fun processRemoveAndReplace(element: XmlElement, actionId: String, keymap: Keymap, shortcut: Shortcut) {
+private fun processRemoveAndReplace(element: XmlElement,
+                                    actionId: String,
+                                    keymap: String,
+                                    shortcut: Shortcut,
+                                    keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>) {
+  val operations = keymapToOperations.computeIfAbsent(keymap) { ArrayList() }
   val remove = element.attributes.get("remove").toBoolean()
   if (remove) {
-    keymap.removeShortcut(actionId, shortcut)
+    operations.add(RemoveShortcutOperation(actionId, shortcut))
   }
 
   val replace = element.attributes.get("replace-all").toBoolean()
   if (replace) {
-    keymap.removeAllActionShortcuts(actionId)
+    operations.add(RemoveAllShortcutsOperation(actionId))
   }
   if (!remove) {
-    keymap.addShortcut(actionId, shortcut)
+    operations.add(AddShortcutOperation(actionId, shortcut))
   }
 }
+
+internal sealed interface KeymapShortcutOperation
+internal class RemoveShortcutOperation(@JvmField val actionId: String, @JvmField val shortcut: Shortcut) : KeymapShortcutOperation
+internal class RemoveAllShortcutsOperation(@JvmField val actionId: String) : KeymapShortcutOperation
+internal class AddShortcutOperation(@JvmField val actionId: String, @JvmField val shortcut: Shortcut) : KeymapShortcutOperation
 
 private fun getReferenceActionId(element: XmlElement): String? {
   // support old style references by id
@@ -1936,6 +1970,8 @@ private sealed interface ActionRegistrar {
   fun bindShortcuts(sourceActionId: String, targetActionId: String)
 
   fun unbindShortcuts(targetActionId: String)
+
+  fun getActionBinding(actionId: String): String?
 }
 
 private class ActionPostInitRegistrar(
@@ -1955,23 +1991,11 @@ private class ActionPostInitRegistrar(
     get() = idToAction.values
 
   override fun putAction(actionId: String, action: AnAction) {
-    val oldMap = idToAction
-    val result = LinkedHashMap<String, AnAction>(oldMap.size + 1)
-    result.putAll(oldMap)
-    result.put(actionId, action)
-    idToAction = result
+    idToAction = idToAction.with(actionId, action)
   }
 
   override fun removeAction(actionId: String) {
-    val oldMap = idToAction
-    if (!oldMap.containsKey(actionId)) {
-      return
-    }
-
-    val result = LinkedHashMap<String, AnAction>(oldMap.size, 0.5f)
-    result.putAll(oldMap)
-    result.remove(actionId)
-    idToAction = result
+    idToAction = idToAction.without(actionId)
   }
 
   override fun getAction(id: String) = idToAction.get(id)
@@ -1984,24 +2008,7 @@ private class ActionPostInitRegistrar(
 
   fun getBoundActions(): Set<String> = boundShortcuts.keys
 
-  fun getActionBinding(actionId: String): String? {
-    val boundShortcuts = boundShortcuts
-
-    var visited: MutableSet<String>? = null
-    var id = actionId
-    while (true) {
-      val next = boundShortcuts.get(id) ?: break
-      if (visited == null) {
-        visited = HashSet()
-      }
-
-      id = next
-      if (!visited.add(id)) {
-        break
-      }
-    }
-    return if (id == actionId) null else id
-  }
+  override fun getActionBinding(actionId: String) = getActionBinding(actionId, boundShortcuts)
 
   override fun bindShortcuts(sourceActionId: String, targetActionId: String) {
     boundShortcuts = boundShortcuts.with(targetActionId, sourceActionId)
@@ -2012,9 +2019,27 @@ private class ActionPostInitRegistrar(
   }
 }
 
+private fun getActionBinding(actionId: String, boundShortcuts: Map<String, String>): String? {
+  var visited: MutableSet<String>? = null
+  var id = actionId
+  while (true) {
+    val next = boundShortcuts.get(id) ?: break
+    if (visited == null) {
+      visited = HashSet()
+    }
+
+    id = next
+    if (!visited.add(id)) {
+      break
+    }
+  }
+  return if (id == actionId) null else id
+}
+
+
 private class ActionPreInitRegistrar(
-  private val idToAction: LinkedHashMap<String, AnAction>,
-  private val boundShortcuts: MutableMap<String, String>,
+  private val idToAction: HashMap<String, AnAction>,
+  private val boundShortcuts: HashMap<String, String>,
 ) : ActionRegistrar {
   override val isPostInit: Boolean
     get() = false
@@ -2036,6 +2061,8 @@ private class ActionPreInitRegistrar(
   override fun unbindShortcuts(targetActionId: String) {
     boundShortcuts.remove(targetActionId)
   }
+
+  override fun getActionBinding(actionId: String) = getActionBinding(actionId, boundShortcuts)
 }
 
 private fun reportActionIdCollision(actionId: String,

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.FontUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   static final class ShortcutTracker implements ActionConfigurationCustomizer {
     @Override
     public void customize(@NotNull ActionManager actionManager) {
-      initShortcutTracker();
+      // don't execute as a part of ActionManager init
+      AppExecutorUtil.getAppExecutorService().execute(() -> initShortcutTracker());
     }
   }
 
@@ -119,8 +121,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
 
       @Override
-      public void shortcutChanged(@NotNull Keymap keymap,
-                                  @NotNull String actionId) {
+      public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
         if (RUN_ANYTHING_ACTION_ID.equals(actionId)) {
           updateShortcut();
         }
