@@ -3,6 +3,7 @@ package com.intellij.util
 
 import com.intellij.openapi.application.impl.assertNotReferenced
 import com.intellij.openapi.application.impl.assertReferenced
+import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication

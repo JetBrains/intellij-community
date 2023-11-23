@@ -3,23 +3,11 @@ package com.intellij.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
-import com.intellij.platform.util.coroutines.attachAsChildTo as attachAsChildTo2
-
-@Deprecated(
-  "The function was moved to another module and another package",
-  ReplaceWith("attachAsChildTo(secondaryParent)", "com.intellij.platform.util.coroutines")
-)
-@Internal
-@Suppress("DEPRECATION_ERROR")
-fun CoroutineScope.attachAsChildTo(secondaryParent: CoroutineScope) {
-  attachAsChildTo2(secondaryParent)
-}
 
 @Internal
 @Experimental
