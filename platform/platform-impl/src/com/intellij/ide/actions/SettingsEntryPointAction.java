@@ -364,29 +364,39 @@ public final class SettingsEntryPointAction extends DumbAwareAction
     }
 
     public void paintButton(@NotNull ActionButton button, @NotNull ActionButtonLook look, @NotNull Graphics g) {
-      int radius = JBUI.scale(6);
-      boolean compactMode = UISettings.getInstance().getCompactMode();
-      Insets insets = button.getInsets();
-      if (compactMode) {
-        int compact = JBUI.scale(3);
-        insets.set(insets.top + compact, insets.left + compact, insets.bottom + compact, insets.right + compact);
+      Graphics2D g2 = (Graphics2D)g.create();
+
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+        int radius = JBUI.scale(12);
+        boolean compactMode = UISettings.getInstance().getCompactMode();
+        Insets insets = button.getInsets();
+        if (compactMode) {
+          int compact = JBUI.scale(3);
+          insets.set(insets.top + compact, insets.left + compact, insets.bottom + compact, insets.right + compact);
+        }
+        Dimension size = button.getSize();
+        JBInsets.removeFrom(size, insets);
+
+        g2.setColor(JBUI.CurrentTheme.ManagedIde.getBadgeBackground(button.getPopState() != ActionButtonComponent.NORMAL));
+        g2.fillRoundRect(insets.left, insets.top, size.width, size.height, radius, radius);
+
+        g2.setColor(JBUI.CurrentTheme.ManagedIde.BADGE_BORDER);
+        g2.drawRoundRect(insets.left, insets.top, size.width, size.height, radius, radius);
+
+        int offset = JBUI.scale(compactMode ? 2 : 4);
+        int iconSize = JBUI.scale(20);
+        int height = button.getHeight();
+        look.paintIcon(g2, button, myFirstIcon, insets.left + offset + (iconSize - myFirstIcon.getIconWidth()) / 2,
+                       (height - myFirstIcon.getIconHeight()) / 2);
+        look.paintIcon(g2, button, mySecondIcon, insets.left + offset + iconSize + offset + (iconSize - mySecondIcon.getIconWidth()) / 2,
+                       (height - mySecondIcon.getIconHeight()) / 2);
       }
-      Dimension size = button.getSize();
-      JBInsets.removeFrom(size, insets);
-
-      g.setColor(JBUI.CurrentTheme.ManagedIde.getBadgeBackground(button.getPopState() != ActionButtonComponent.NORMAL));
-      g.fillRoundRect(insets.left, insets.top, size.width, size.height, radius, radius);
-
-      g.setColor(JBUI.CurrentTheme.ManagedIde.BADGE_BORDER);
-      g.drawRoundRect(insets.left, insets.top, size.width, size.height, radius, radius);
-
-      int offset = JBUI.scale(compactMode ? 2 : 4);
-      int iconSize = JBUI.scale(20);
-      int height = button.getHeight();
-      look.paintIcon(g, button, myFirstIcon, insets.left + offset + (iconSize - myFirstIcon.getIconWidth()) / 2,
-                     (height - myFirstIcon.getIconHeight()) / 2);
-      look.paintIcon(g, button, mySecondIcon, insets.left + offset + iconSize + offset + (iconSize - mySecondIcon.getIconWidth()) / 2,
-                     (height - mySecondIcon.getIconHeight()) / 2);
+      finally {
+        g2.dispose();
+      }
     }
 
     @Override
