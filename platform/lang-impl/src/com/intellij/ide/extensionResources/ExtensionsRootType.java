@@ -278,38 +278,23 @@ public final class ExtensionsRootType extends RootType {
 
   private void extractBundledExtensionsIfNeeded(@NotNull PluginId pluginId) {
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
-    if (plugin == null) {
+    if (plugin == null || updatingResources.contains(plugin) || !ResourceVersions.getInstance().shouldUpdateResourcesOf(plugin)) {
       return;
     }
 
-    if (startResourcesUpdate(plugin)) {
+    if (updatingResources.add(plugin)) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        boolean updated = false;
         try {
           extractBundledResources(pluginId, "");
-          updated = true;
+          ResourceVersions.getInstance().resourcesUpdated(plugin);
         }
         catch (IOException ex) {
           LOG.warn("Failed to extract bundled extensions for plugin: " + plugin.getName(), ex);
         }
         finally {
-          finishResourcesUpdate(plugin, updated);
+          updatingResources.remove(plugin);
         }
       });
     }
-  }
-
-  private boolean startResourcesUpdate(@NotNull IdeaPluginDescriptor plugin) {
-    if (updatingResources.contains(plugin) || !ResourceVersions.getInstance().shouldUpdateResourcesOf(plugin)) {
-      return false;
-    }
-    return updatingResources.add(plugin);
-  }
-
-  private void finishResourcesUpdate(@NotNull IdeaPluginDescriptor plugin, boolean updated) {
-    if (updated) {
-      ResourceVersions.getInstance().resourcesUpdated(plugin);
-    }
-    updatingResources.remove(plugin);
   }
 }
