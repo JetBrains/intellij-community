@@ -17,15 +17,20 @@ import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.VSP
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.registryUtils.impl.PrivateRegistryRoot
 import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.registryUtils.impl.RegistryRoot
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.sun.jna.platform.win32.WinReg
+import org.w3c.dom.Node
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.*
+import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.xpath.XPathConstants
+import javax.xml.xpath.XPathFactory
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 
@@ -48,6 +53,8 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
       }
     }
   }
+
+  private val appDataHiveFolder = Path("${WindowsEnvVariables.localApplicationData}\\Microsoft\\VisualStudio\\${hive.hiveString}")
 
   private val detourFile: File? = if (isRegistryDetourRequired()) detourFileInit() else null
 
@@ -199,19 +206,9 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
   }
 
   private fun recentProjectsNewVSInit(): MutableList<RecentPathInfo>? {
-    val regInfo = try {
-      (registryRootKey / "ApplicationPrivateSettings" / "_metadata" / "baselines" / "CodeContainers").getStringValue("Offline")
-    }
-                  catch (t2: Throwable) {
-                    logger.info("Super new method of gettings projects failed")
-                    logger.debug(t2)
-                    null
-                  } ?: return null
-
-    val regInfo2 = if (!regInfo.startsWith('{')) regInfo.drop(1) else regInfo
-
+    val dataSource = loadCodeContainersFromConfig() ?: loadCodeContainersFromRegistry() ?: return null
     val root = try {
-      ObjectMapper(JsonFactory().enable(JsonParser.Feature.ALLOW_COMMENTS)).readTree(regInfo2)
+      ObjectMapper(JsonFactory().enable(JsonParser.Feature.ALLOW_COMMENTS)).readTree(dataSource)
     }
     catch (t: Throwable) {
       logger.warn(t)
@@ -317,9 +314,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
   private fun detourFileInit(): File {
     check(isRegistryDetourRequired()) { "Calling getDetourFile for old VS" }
 
-    val pathToFolder = "${WindowsEnvVariables.localApplicationData}\\Microsoft\\VisualStudio\\${hive.hiveString}"
-
-    val file = File("$pathToFolder\\privateregistry.bin")
+    val file = appDataHiveFolder.resolve("privateregistry.bin").toFile()
 
     if (!file.exists()) {
       logger.warn("detour file is not found. did you delete it or its not vs<=17?")
@@ -327,5 +322,44 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     }
 
     return file
+  }
+
+  private fun loadCodeContainersFromConfig(): String? = logger.runAndLogException {
+    val configFile = appDataHiveFolder.resolve("ApplicationPrivateSettings.xml")
+    if (!configFile.exists()) return null
+    val document =
+      try {
+        val factory = DocumentBuilderFactory.newInstance()
+        val builder = factory.newDocumentBuilder()
+        builder.parse(configFile.toFile())
+      }
+      catch (e: Throwable) {
+        logger.info("Error reading the XML config file.", e)
+        return null
+      }
+
+    val query = XPathFactory.newInstance().newXPath()
+      .compile("/content/indexed/collection[@name='CodeContainers.Offline']")
+    val element = query.evaluate(document, XPathConstants.NODE) as? Node ?: run {
+      logger.info("\"$configFile\" has no CodeContainers defined.")
+      return null
+    }
+
+    element.textContent
+  }
+
+  private fun loadCodeContainersFromRegistry(): String? {
+    val regInfo =
+      try {
+        (registryRootKey / "ApplicationPrivateSettings" / "_metadata" / "baselines" / "CodeContainers").getStringValue("Offline")
+      }
+      catch (t2: Throwable) {
+        logger.info("Super new method of getting projects failed")
+        logger.debug(t2)
+        null
+      } ?: return null
+
+    val regInfo2 = if (!regInfo.startsWith('{')) regInfo.drop(1) else regInfo
+    return regInfo2
   }
 }
