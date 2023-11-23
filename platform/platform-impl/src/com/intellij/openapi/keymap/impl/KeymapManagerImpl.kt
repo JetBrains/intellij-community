@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "OVERRIDE_DEPRECATION", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.keymap.impl
 
@@ -104,8 +104,8 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     }
 
     BundledKeymapBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<BundledKeymapBean> {
-      override fun extensionAdded(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
-        val keymapName = getKeymapName(ep)
+      override fun extensionAdded(extension: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
+        val keymapName = getKeymapName(extension)
         //if (!SystemInfo.isMac &&
         //    keymapName != KeymapManager.MAC_OS_X_KEYMAP &&
         //    keymapName != KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP &&
@@ -113,7 +113,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
         //    schemeManager.findSchemeByName(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP) == null) return
         val keymap = DefaultKeymap.getInstance().loadKeymap(keymapName, object : SchemeDataHolder<KeymapImpl> {
           override fun read(): Element {
-            return JDOMUtil.load(ResourceUtil.getResourceAsBytes(getEffectiveFile(ep), pluginDescriptor.classLoader)!!)
+            return JDOMUtil.load(ResourceUtil.getResourceAsBytes(getEffectiveFile(extension), pluginDescriptor.classLoader)!!)
           }
         }, pluginDescriptor)
         schemeManager.addScheme(keymap)
@@ -121,8 +121,8 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
         // do no set current keymap here, consider: multi-keymap plugins, parent keymaps loading
       }
 
-      override fun extensionRemoved(ep: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
-        removeKeymap(getKeymapName(ep))
+      override fun extensionRemoved(extension: BundledKeymapBean, pluginDescriptor: PluginDescriptor) {
+        removeKeymap(getKeymapName(extension))
       }
     }, null)
   }
@@ -151,7 +151,9 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   override fun getAllKeymaps(): Array<Keymap> = getKeymaps(null).toTypedArray()
 
   fun getKeymaps(additionalFilter: Predicate<Keymap>?): List<Keymap> {
-    return schemeManager.allSchemes.filter { !it.presentableName.startsWith("$") && (additionalFilter == null || additionalFilter.test(it)) }
+    return schemeManager.allSchemes.filter {
+      !it.presentableName.startsWith('$') && (additionalFilter == null || additionalFilter.test(it))
+    }
   }
 
   override fun getKeymap(name: String): Keymap? = schemeManager.findSchemeByName(name)
@@ -167,7 +169,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   }
 
   override fun bindShortcuts(sourceActionId: String, targetActionId: String) {
-    boundShortcuts[targetActionId] = sourceActionId
+    boundShortcuts.put(targetActionId, sourceActionId)
   }
 
   override fun unbindShortcuts(targetActionId: String) {
@@ -226,7 +228,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     return if (!value.isNullOrBlank()) value else DefaultKeymap.getInstance().defaultKeymapName
   }
 
-  @Suppress("OverridingDeprecatedMember")
+  @Suppress("OverridingDeprecatedMember", "removal")
   override fun addKeymapManagerListener(listener: KeymapManagerListener, parentDisposable: Disposable) {
     pollQueue()
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(KeymapManagerListener.TOPIC, listener)
@@ -236,7 +238,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     listeners.removeIf { it is WeakKeymapManagerListener && it.isDead }
   }
 
-  @Suppress("OverridingDeprecatedMember")
+  @Suppress("OverridingDeprecatedMember", "removal")
   override fun removeKeymapManagerListener(listener: KeymapManagerListener) {
     pollQueue()
     listeners.remove(listener)

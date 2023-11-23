@@ -35,7 +35,6 @@ import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
 import org.jdom.Element
 import java.util.*
@@ -201,7 +200,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   override fun removeAllActionShortcuts(actionId: String) {
-    for (shortcut in getShortcuts(actionId)) {
+    for (shortcut in getShortcutList(actionId)) {
       removeShortcut(actionId, shortcut)
     }
   }
@@ -211,13 +210,17 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   fun removeShortcut(actionId: String, toDelete: Shortcut, fromSettings: Boolean) {
-    val fromBinding = keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts[it] }
+    val fromBinding = keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
     actionIdToShortcuts.compute(actionId) { id, list ->
       when {
         list == null -> {
-          val inherited = fromBinding ?: parent?.getShortcutList(id)?.mapSmart { convertShortcut(it) }.nullize()
-          if (inherited == null || !inherited.contains(toDelete)) null
-          else inherited - toDelete
+          val inherited = fromBinding ?: parent?.getShortcutList(id)?.map { convertShortcut(it) }.nullize()
+          if (inherited == null || !inherited.contains(toDelete)) {
+            null
+          }
+          else {
+            inherited - toDelete
+          }
         }
         !list.contains(toDelete) -> list
         parent == null -> if (list.size == 1) null else java.util.List.copyOf(list - toDelete)
@@ -234,20 +237,16 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   private fun List<Shortcut>.areShortcutsEqualToParent(actionId: String): Boolean {
     return parent.let { parent ->
-      parent != null && areShortcutsEqual(this, parent.getShortcutList(actionId).mapSmart { convertShortcut(it) })
+      parent != null && areShortcutsEqual(this, parent.getShortcutList(actionId).map { convertShortcut(it) })
     }
   }
 
   private fun getOwnOrBoundShortcuts(actionId: String): List<Shortcut> {
-    actionIdToShortcuts[actionId]?.let {
+    actionIdToShortcuts.get(actionId)?.let {
       return it
     }
 
-    val result = SmartList<Shortcut>()
-    keymapManager.getActionBinding(actionId)?.let {
-      result.addAll(getOwnOrBoundShortcuts(it))
-    }
-    return result
+    return getOwnOrBoundShortcuts(keymapManager.getActionBinding(actionId) ?: return java.util.List.of())
   }
 
   private fun getActionIds(shortcut: KeyboardModifierGestureShortcut): List<String> {

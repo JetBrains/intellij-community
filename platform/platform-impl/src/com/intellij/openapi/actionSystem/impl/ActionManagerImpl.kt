@@ -464,20 +464,20 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
 
     // process all links and key bindings if any
-    for (e in element.children) {
-      when (e.name) {
+    for (child in element.children) {
+      when (child.name) {
         ADD_TO_GROUP_ELEMENT_NAME -> processAddToGroupNode(action = stub,
-                                                           element = e,
+                                                           element = child,
                                                            module = module,
-                                                           secondary = isSecondary(e),
+                                                           secondary = isSecondary(child),
                                                            actionRegistrar = actionRegistrar)
-        "keyboard-shortcut" -> processKeyboardShortcutNode(element = e, actionId = id, module = module, keymapManager = keymapManager)
-        "mouse-shortcut" -> processMouseShortcutNode(element = e, actionId = id, module = module, keymapManager = keymapManager)
-        "abbreviation" -> processAbbreviationNode(e = e, id = id)
-        OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(action = stub, id = stub.id, element = e, module = module, bundle = bundle)
-        SYNONYM_ELEMENT_NAME -> processSynonymNode(action = stub, element = e, module = module, bundle = bundle)
+        "keyboard-shortcut" -> processKeyboardShortcutNode(element = child, actionId = id, module = module, keymapManager = keymapManager)
+        "mouse-shortcut" -> processMouseShortcutNode(element = child, actionId = id, module = module, keymapManager = keymapManager)
+        "abbreviation" -> processAbbreviationNode(e = child, id = id)
+        OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(action = stub, id = stub.id, element = child, module = module, bundle = bundle)
+        SYNONYM_ELEMENT_NAME -> processSynonymNode(action = stub, element = child, module = module, bundle = bundle)
         else -> {
-          reportActionError(module, "unexpected name of element \"" + e.name + "\"")
+          reportActionError(module, "unexpected name of element \"${child.name}\"")
           return null
         }
       }
@@ -1627,7 +1627,7 @@ private fun processMouseShortcutNode(element: XmlElement, actionId: String, modu
   val shortcut = try {
     KeymapUtil.parseMouseShortcut(keystrokeString)
   }
-  catch (ex: Exception) {
+  catch (_: Exception) {
     reportActionError(module, "\"keystroke\" attribute has invalid value for action with id=$actionId")
     return
   }
@@ -1773,10 +1773,11 @@ private fun processKeyboardShortcutNode(element: XmlElement, actionId: String, m
 
 private fun processRemoveAndReplace(element: XmlElement, actionId: String, keymap: Keymap, shortcut: Shortcut) {
   val remove = element.attributes.get("remove").toBoolean()
-  val replace = element.attributes.get("replace-all").toBoolean()
   if (remove) {
     keymap.removeShortcut(actionId, shortcut)
   }
+
+  val replace = element.attributes.get("replace-all").toBoolean()
   if (replace) {
     keymap.removeAllActionShortcuts(actionId)
   }
