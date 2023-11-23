@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.jetbrains.python.sdk.PythonSdkType.MOCK_PY_MARKER_KEY;
+
 
 public final class PythonMockSdk {
 
@@ -70,7 +72,7 @@ public final class PythonMockSdk {
     } else {
       application.invokeAndWait(() -> application.runWriteAction(runnable));
     }
-
+    sdk.putUserData(MOCK_PY_MARKER_KEY, true);
     return sdk;
 
     // com.jetbrains.python.psi.resolve.PythonSdkPathCache.getInstance() corrupts SDK, so have to clone

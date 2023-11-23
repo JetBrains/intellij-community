@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -71,6 +72,10 @@ public final class PythonSdkType extends SdkType {
   @NotNull
   @ApiStatus.Internal
   public static final Key<String> MOCK_PY_VERSION_KEY = Key.create("PY_MOCK_PY_VERSION_KEY");
+
+  @NotNull
+  @ApiStatus.Internal
+  public static final Key<Boolean> MOCK_PY_MARKER_KEY = KeyWithDefaultValue.create("MOCK_PY_MARKER_KEY", true);
 
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
 
@@ -597,7 +602,8 @@ public final class PythonSdkType extends SdkType {
   @SuppressWarnings("TestOnlyProblems")
   public static boolean isMock(@NotNull Sdk sdk) {
     return (sdk.getUserData(MOCK_PY_VERSION_KEY) != null) ||
-           (sdk.getUserData(MOCK_SYS_PATH_KEY) != null);
+           (sdk.getUserData(MOCK_SYS_PATH_KEY) != null) ||
+           (sdk.getUserData(MOCK_PY_MARKER_KEY) != null);
   }
 
   /**
