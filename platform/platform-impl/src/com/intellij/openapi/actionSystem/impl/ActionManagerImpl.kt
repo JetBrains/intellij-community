@@ -60,6 +60,8 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.*
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.with
+import com.intellij.util.containers.without
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
@@ -79,7 +81,6 @@ import java.awt.event.InputEvent
 import java.awt.event.WindowEvent
 import java.util.*
 import java.util.concurrent.CancellationException
-import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -120,8 +121,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   private val actionPostInitRegistrar: ActionPostInitRegistrar
 
-  private val boundShortcuts = ConcurrentHashMap<String, String>()
-
   init {
     val app = ApplicationManager.getApplication()
     if (!app.isUnitTestMode && !app.isHeadlessEnvironment && !app.isCommandLine) {
@@ -129,11 +128,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
 
     val idToAction = LinkedHashMap<String, AnAction>(5_000, 0.5f)
-    val actionPreInitRegistrar = ActionPreInitRegistrar(idToAction)
+    val boundShortcuts = HashMap<String, String>(512, 0.5f)
+    val actionPreInitRegistrar = ActionPreInitRegistrar(idToAction, boundShortcuts)
     doRegisterActions(PluginManagerCore.getPluginSet().getEnabledModules(), actionRegistrar = actionPreInitRegistrar)
 
     // by intention, _after_ doRegisterActions
-    actionPostInitRegistrar = ActionPostInitRegistrar(idToAction)
+    actionPostInitRegistrar = ActionPostInitRegistrar(idToAction = idToAction, boundShortcuts = boundShortcuts)
 
     EP.forEachExtensionSafe { it.customize(this) }
     DYNAMIC_EP_NAME.forEachExtensionSafe { it.registerActions(this) }
@@ -155,31 +155,16 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
   }
 
-  override fun getBoundActions(): Set<String> = boundShortcuts.keys
+  override fun getBoundActions(): Set<String> = actionPostInitRegistrar.getBoundActions()
 
-  override fun getActionBinding(actionId: String): String? {
-    var visited: MutableSet<String>? = null
-    var id = actionId
-    while (true) {
-      val next = boundShortcuts.get(id) ?: break
-      if (visited == null) {
-        visited = HashSet()
-      }
-
-      id = next
-      if (!visited.add(id)) {
-        break
-      }
-    }
-    return if (id == actionId) null else id
-  }
+  override fun getActionBinding(actionId: String): String? = actionPostInitRegistrar.getActionBinding(actionId)
 
   override fun bindShortcuts(sourceActionId: String, targetActionId: String) {
-    boundShortcuts.put(targetActionId, sourceActionId)
+    actionPostInitRegistrar.bindShortcuts(sourceActionId = sourceActionId, targetActionId = targetActionId)
   }
 
   override fun unbindShortcuts(targetActionId: String) {
-    boundShortcuts.remove(targetActionId)
+    actionPostInitRegistrar.unbindShortcuts(targetActionId)
   }
 
   internal fun registerActions(modules: Iterable<IdeaPluginDescriptorImpl>) {
@@ -504,7 +489,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         "keyboard-shortcut" -> processKeyboardShortcutNode(element = child, actionId = id, module = module, keymapManager = keymapManager)
         "mouse-shortcut" -> processMouseShortcutNode(element = child, actionId = id, module = module, keymapManager = keymapManager)
         "abbreviation" -> processAbbreviationNode(e = child, id = id)
-        OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(action = stub, id = stub.id, element = child, module = module, bundle = bundle)
+        OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(action = stub, id = stub.id, element = child, module = module,
+                                                              bundle = bundle)
         SYNONYM_ELEMENT_NAME -> processSynonymNode(action = stub, element = child, module = module, bundle = bundle)
         else -> {
           reportActionError(module, "unexpected name of element \"${child.name}\"")
@@ -514,7 +500,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
 
     element.attributes.get(USE_SHORTCUT_OF_ATTR_NAME)?.let { shortcutOfActionId ->
-      boundShortcuts.put(id, shortcutOfActionId)
+      actionRegistrar.bindShortcuts(sourceActionId = shortcutOfActionId, targetActionId = id)
     }
     registerOrReplaceActionInner(element = element, id = id, action = stub, plugin = module, actionRegistrar = actionRegistrar)
     return stub
@@ -644,7 +630,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       }
       val shortcutOfActionId = element.attributes.get(USE_SHORTCUT_OF_ATTR_NAME)
       if (customClass && shortcutOfActionId != null) {
-        boundShortcuts.put(id, shortcutOfActionId)
+        actionRegistrar.bindShortcuts(sourceActionId = shortcutOfActionId, targetActionId = id)
       }
 
       // Process all group's children. There are other groups, actions, references and links
@@ -1946,9 +1932,16 @@ private sealed interface ActionRegistrar {
   fun removeAction(actionId: String)
 
   fun getAction(id: String): AnAction?
+
+  fun bindShortcuts(sourceActionId: String, targetActionId: String)
+
+  fun unbindShortcuts(targetActionId: String)
 }
 
-private class ActionPostInitRegistrar(@Volatile private var idToAction: LinkedHashMap<String, AnAction>) : ActionRegistrar {
+private class ActionPostInitRegistrar(
+  @Volatile private var idToAction: Map<String, AnAction>,
+  @Volatile private var boundShortcuts: Map<String, String>,
+) : ActionRegistrar {
   val ids: Set<String>
     get() = idToAction.keys
 
@@ -1988,9 +1981,41 @@ private class ActionPostInitRegistrar(@Volatile private var idToAction: LinkedHa
   }
 
   fun actionsOrStubs(): Sequence<AnAction> = idToAction.values.asSequence()
+
+  fun getBoundActions(): Set<String> = boundShortcuts.keys
+
+  fun getActionBinding(actionId: String): String? {
+    val boundShortcuts = boundShortcuts
+
+    var visited: MutableSet<String>? = null
+    var id = actionId
+    while (true) {
+      val next = boundShortcuts.get(id) ?: break
+      if (visited == null) {
+        visited = HashSet()
+      }
+
+      id = next
+      if (!visited.add(id)) {
+        break
+      }
+    }
+    return if (id == actionId) null else id
+  }
+
+  override fun bindShortcuts(sourceActionId: String, targetActionId: String) {
+    boundShortcuts = boundShortcuts.with(targetActionId, sourceActionId)
+  }
+
+  override fun unbindShortcuts(targetActionId: String) {
+    boundShortcuts = boundShortcuts.without(targetActionId)
+  }
 }
 
-private class ActionPreInitRegistrar(private val idToAction: LinkedHashMap<String, AnAction>) : ActionRegistrar {
+private class ActionPreInitRegistrar(
+  private val idToAction: LinkedHashMap<String, AnAction>,
+  private val boundShortcuts: MutableMap<String, String>,
+) : ActionRegistrar {
   override val isPostInit: Boolean
     get() = false
 
@@ -2003,6 +2028,14 @@ private class ActionPreInitRegistrar(private val idToAction: LinkedHashMap<Strin
   }
 
   override fun getAction(id: String) = idToAction.get(id)
+
+  override fun bindShortcuts(sourceActionId: String, targetActionId: String) {
+    boundShortcuts.put(targetActionId, sourceActionId)
+  }
+
+  override fun unbindShortcuts(targetActionId: String) {
+    boundShortcuts.remove(targetActionId)
+  }
 }
 
 private fun reportActionIdCollision(actionId: String,
