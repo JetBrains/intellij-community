@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.keymap.impl
 
@@ -93,7 +93,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   private val keymapManager by lazy { KeymapManagerEx.getInstanceEx()!! }
 
   /**
-   * @return IDs of the action which are specified in the keymap. It doesn't return IDs of action from parent keymap.
+   * @return IDs of the action which are specified in the keymap. It doesn't return IDs of action from the parent keymap.
    */
   val ownActionIds: Array<String>
     get() = actionIdToShortcuts.keys.toTypedArray()
@@ -286,8 +286,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     val ids = getActionIds(firstKeyStroke)
     var actualBindings: MutableList<String>? = null
     for (id in ids) {
-      val shortcuts = getShortcuts(id)
-      for (shortcut in shortcuts) {
+      for (shortcut in getShortcutList(id)) {
         if (shortcut !is KeyboardShortcut) {
           continue
         }
@@ -397,19 +396,14 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
     // it is critical to use convertShortcut - otherwise MacOSDefaultKeymap doesn't convert shortcuts
     // todo why not convert on add? why we don't need to convert our own shortcuts?
-    return actionIdToShortcuts[actionId]
-           ?: keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts[it] }
-           ?: parent?.getShortcutList(actionId)?.mapSmart { convertShortcut(it) }
+    return actionIdToShortcuts.get(actionId)
+           ?: keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
+           ?: parent?.getShortcutList(actionId)?.map { convertShortcut(it) }
            ?: emptyList()
   }
 
-  fun getOwnShortcuts(actionId: String): Array<Shortcut> {
-    val own = actionIdToShortcuts[actionId] ?: return Shortcut.EMPTY_ARRAY
-    return if (own.isEmpty()) Shortcut.EMPTY_ARRAY else own.toTypedArray()
-  }
-
   fun hasShortcutDefined(actionId: String): Boolean {
-    return actionIdToShortcuts[actionId] != null || parent?.hasShortcutDefined(actionId) == true
+    return actionIdToShortcuts.get(actionId) != null || parent?.hasShortcutDefined(actionId) == true
   }
 
   // you must clear `actionIdToShortcuts` before calling
@@ -505,8 +499,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
           throw InvalidDataException("unknown element: $shortcutElement; Keymap's name=$name")
         }
       }
-      // creating the list even when there are no shortcuts (empty element means that an action overrides a parent one to clear shortcuts)
-      actionIdToShortcuts[id] = java.util.List.copyOf(shortcuts)
+      // creating the list even when there are no shortcuts
+      // (an empty element means that an action overrides a parent one to clear shortcuts)
+      actionIdToShortcuts.put(id, java.util.List.copyOf(shortcuts))
     }
 
     ActionsCollectorImpl.onActionsLoadedFromKeymapXml(this, actionIds)
@@ -685,6 +680,7 @@ private const val visualStudio2022Keymap = "com.intellij.plugins.visualstudio202
 internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.NotificationContent message: String, isParent: Boolean) {
   val connection = ApplicationManager.getApplication().messageBus.connect()
   connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    @Suppress("removal", "OVERRIDE_DEPRECATION")
     override fun projectOpened(project: Project) {
       connection.disconnect()
 
