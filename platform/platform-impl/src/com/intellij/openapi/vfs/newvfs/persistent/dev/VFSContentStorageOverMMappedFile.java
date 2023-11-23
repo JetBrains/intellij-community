@@ -71,7 +71,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
       .failIfDataFormatVersionNotMatch(STORAGE_FORMAT_VERSION)
       .open(storagePath);
 
-    Path mapPath = storagePath.resolveSibling(storagePath.getFileName().toString() + ".idToHash");
+    Path mapPath = storagePath.resolveSibling(storagePath.getFileName().toString() + ".hashToId");
     if (contentStorage.isEmpty()) {
       //ensure map is also empty
       FileUtil.delete(mapPath);
@@ -145,7 +145,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
           "record[" + recordId + "].length(" + recordSize + "b) < headerSize(" + recordHeaderSize + "b) => record is corrupted");
       }
       int uncompressedSize = buffer.getInt(CONTENT_HASH_LENGTH);
-      if (uncompressedSize > 0) {
+      if (uncompressedSize < 0) {
         throw new CorruptedException("record[" + recordId + "].uncompressedSize(" + uncompressedSize + "b) < 0 => record is corrupted");
       }
 
@@ -288,12 +288,22 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
 
   //===================== implementation infrastructure: ================================
 
-  private static int storageIdToContentId(long storageId) {
-    return Math.toIntExact(storageId);
+  private static int storageIdToContentId(long storageId) throws IOException {
+    if (((storageId - 1) & 0b11) != 0) {
+      //rely on AppendOnlyLogOverMMappedFile impl detail: records are int32-aligned
+      throw new AssertionError("Bug: storageId(=" + storageId + ") expected to be int32-aligned");
+    }
+
+    long id = ((storageId - 1) >> 2) + 1;
+    //return Math.toIntExact(id);
+    if ((int)id != id) {
+      throw new IOException("Overflow: storageId(=" + storageId + ") >MAX_INT even after /4");
+    }
+    return (int)id;
   }
 
   private static long contentIdToStorageId(int recordId) {
-    return (long)recordId;
+    return (((long)recordId - 1 ) << 2) + 1;
   }
 
   private static int hashCodeOf(byte[] contentHash) {

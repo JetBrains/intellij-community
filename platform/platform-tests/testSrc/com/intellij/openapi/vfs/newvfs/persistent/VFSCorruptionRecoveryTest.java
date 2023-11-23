@@ -201,7 +201,8 @@ public class VFSCorruptionRecoveryTest {
     }
 
     assertTrue(
-      "VFS is not rebuilt if one of " + filesNotLeadingToVFSRebuild + " is deleted",
+      "VFS must be rebuilt when each of it's crucial files is deleted" +
+      " -- but deleting of " + filesNotLeadingToVFSRebuild + " didn't lead to rebuild",
       filesNotLeadingToVFSRebuild.isEmpty()
     );
   }
