@@ -54,7 +54,7 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
   fun scheduleUpdateAllMavenProjects(spec: MavenImportSpec)
-  suspend fun updateAllMavenProjects(spec: MavenImportSpec): List<Module>
+  suspend fun updateAllMavenProjects(spec: MavenImportSpec)
 
   fun scheduleForceUpdateMavenProject(mavenProject: MavenProject) =
     scheduleForceUpdateMavenProjects(listOf(mavenProject))
@@ -68,10 +68,10 @@ interface MavenAsyncProjectsManager {
 
   suspend fun updateMavenProjects(spec: MavenImportSpec,
                                   filesToUpdate: List<VirtualFile>,
-                                  filesToDelete: List<VirtualFile>): List<Module>
+                                  filesToDelete: List<VirtualFile>)
 
   @ApiStatus.Internal
-  suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module>
+  suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>)
 
   suspend fun downloadArtifacts(projects: Collection<MavenProject>,
                                 artifacts: Collection<MavenArtifact>?,
@@ -101,8 +101,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     return updateAllMavenProjects(MavenImportSpec(false, true, false), modelsProvider)
   }
 
-  override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>): List<Module> {
-    return reapplyModelStructureOnly {
+  override suspend fun importMavenProjects(projectsToImport: Map<MavenProject, MavenProjectChanges>) {
+    reapplyModelStructureOnly {
       importMavenProjects(projectsToImport, null, it)
     }
   }
@@ -214,14 +214,13 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
   override suspend fun updateMavenProjects(spec: MavenImportSpec,
                                            filesToUpdate: List<VirtualFile>,
-                                           filesToDelete: List<VirtualFile>): List<Module> {
+                                           filesToDelete: List<VirtualFile>) {
     importMutex.withLock {
       MavenLog.LOG.warn(
         "updateMavenProjects started: ${spec.isForceReading} ${spec.isForceResolve} ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
-      val result = doUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
+      doUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
       MavenLog.LOG.warn(
         "updateMavenProjects finished: ${spec.isForceReading} ${spec.isForceResolve} ${spec.isExplicitImport} ${filesToUpdate.size} ${filesToDelete.size}")
-      return result
     }
   }
 
@@ -247,12 +246,12 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       // unit tests
       if (ApplicationManager.getApplication().isDispatchThread) {
         return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
-          updateAllMavenProjects(spec)
+          updateAllMavenProjects(spec, null)
         }
       }
       else {
         return runBlockingMaybeCancellable {
-          updateAllMavenProjects(spec)
+          updateAllMavenProjects(spec, null)
         }
       }
     }
@@ -271,8 +270,8 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     }
   }
 
-  override suspend fun updateAllMavenProjects(spec: MavenImportSpec): List<Module> {
-    return updateAllMavenProjects(spec, null)
+  override suspend fun updateAllMavenProjects(spec: MavenImportSpec) {
+    updateAllMavenProjects(spec, null)
   }
 
   private suspend fun updateAllMavenProjects(spec: MavenImportSpec,
