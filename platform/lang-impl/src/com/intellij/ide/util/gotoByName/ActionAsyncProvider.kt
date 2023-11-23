@@ -25,6 +25,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
@@ -183,13 +185,13 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
         action
       }
       .filter {
-        runCatching { (it is ActionStubBase) && myModel.actionMatches(pattern, matcher, it) == MatchMode.NONE }
+        runCatching { (it is ActionStubBase) && model.actionMatches(pattern, matcher, it) == MatchMode.NONE }
           .getOrLogException(LOG) == true
       }
       .transform {
         runCatching {
           val action = loadAction((it as ActionStubBase).id) ?: return@runCatching
-          val mode = myModel.actionMatches(pattern, matcher, action)
+          val mode = model.actionMatches(pattern, matcher, action)
           if (mode != MatchMode.NONE) {
             val weight = calcElementWeight(action, pattern, weightMatcher)
             emit(MatchedAction(action, mode, weight))
@@ -207,7 +209,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
   private fun topHitsFlow(pattern: String,
                           presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
     LOG.debug("Create TopHits flow ($pattern)")
-    val project = myModel.project
+    val project = model.project
     val commandAccelerator = SearchTopHitProvider.getTopHitAccelerator()
     val matcher = buildWeightMatcher(pattern)
 
@@ -245,9 +247,9 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
     return channelFlow {
       launch {
         for ((text, action) in getIntentionsMap()) {
-          if (myModel.actionMatches(pattern, matcher, action) != MatchMode.NONE) {
+          if (model.actionMatches(pattern, matcher, action) != MatchMode.NONE) {
             val groupMapping = GroupMapping.createFromText(text, false)
-            send(ActionWrapper(action, groupMapping, MatchMode.INTENTION, myModel, presentationProvider(action)))
+            send(ActionWrapper(action, groupMapping, MatchMode.INTENTION, model, presentationProvider(action)))
           }
         }
       }
@@ -258,7 +260,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
   private suspend fun getIntentionsMap(): Map<String, ApplyIntentionAction> {
     if (myIntentions.isEmpty()) {
       val intentions = readAction {
-        myModel.availableIntentions
+        model.availableIntentions
       }
 
       myIntentions.putAll(intentions)
@@ -272,7 +274,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
     val weightMatcher = buildWeightMatcher(pattern)
 
-    val map = myModel.configurablesNames
+    val map = model.configurablesNames
     val registrar = SearchableOptionsRegistrar.getInstance() as SearchableOptionsRegistrarImpl
 
     val words = registrar.getProcessedWords(pattern)
@@ -321,7 +323,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
           for (converter in ActionFromOptionDescriptorProvider.EP.extensionList) {
             val action = converter.provide(description)
             if (action != null) {
-              send(ActionWrapper(action, null, MatchMode.NAME, myModel, presentationProvider(action)))
+              send(ActionWrapper(action, null, MatchMode.NAME, model, presentationProvider(action)))
             }
           }
           send(description)
@@ -341,9 +343,9 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
   }
 
   private fun wrapAnAction(action: AnAction, presentation: Presentation, matchMode: MatchMode = MatchMode.NAME): ActionWrapper {
-    val groupMapping = myModel.getGroupMapping(action)
+    val groupMapping = model.getGroupMapping(action)
     groupMapping?.updateBeforeShow(myModel.updateSession)
-    return ActionWrapper(action, groupMapping, matchMode, myModel, presentation)
+    return ActionWrapper(action, groupMapping, matchMode, model, presentation)
   }
 
   private fun buildWeightMatcher(pattern: String): MinusculeMatcher = NameUtil.buildMatcher("*$pattern")
