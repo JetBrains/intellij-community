@@ -360,7 +360,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     // consume the wrong second stroke and keep on waiting
     return when {
       context.actions.isEmpty() -> true
-      processAction(e, myActionProcessor) -> {
+      processAction(e, actionProcessor) -> {
         set(text = null, project = context.project)
         true
       }
@@ -444,7 +444,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     if (!context.secondStrokeActions.isEmpty()) {
       firstKeyStroke = keyStroke
     }
-    return processAction(event = context.inputEvent, processor = myActionProcessor)
+    return processAction(event = context.inputEvent, processor = actionProcessor)
   }
 
   private fun waitSecondStroke(chosenAction: AnAction, presentation: Presentation) {
@@ -475,7 +475,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     return message.toString()
   }
 
-  private val myActionProcessor: ActionProcessor = object : ActionProcessor() {
+  private val actionProcessor: ActionProcessor = object : ActionProcessor() {
     override fun createEvent(inputEvent: InputEvent,
                              context: DataContext,
                              place: String,
@@ -505,9 +505,13 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
   }
 
   fun processAction(event: InputEvent, processor: ActionProcessor): Boolean {
-    return processAction(event, ActionPlaces.KEYBOARD_SHORTCUT, context.dataContext,
-                         context.actions.toList(), processor,
-                         presentationFactory, context.shortcut)
+    return processAction(e = event,
+                         place = ActionPlaces.KEYBOARD_SHORTCUT,
+                         context = context.dataContext,
+                         actions = context.actions.toList(),
+                         processor = processor,
+                         presentationFactory = presentationFactory,
+                         shortcut = context.shortcut)
   }
 
   internal fun processAction(e: InputEvent,
@@ -520,19 +524,28 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     if (actions.isEmpty()) {
       return false
     }
+
     val contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
     val wrappedContext = Utils.createAsyncDataContext(context)
     val project = CommonDataKeys.PROJECT.getData(wrappedContext)
     val dumb = project != null && DumbService.getInstance(project).isDumb
     val wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList<AnAction>()
 
-    fireBeforeShortcutTriggered(shortcut, actions, context)
+    fireBeforeShortcutTriggered(shortcut = shortcut, actions = actions, context = context)
 
     val (chosen, doPerform) = Utils.runWithInputEventEdtDispatcher(contextComponent) block@ {
       val chosen = Utils.runUpdateSessionForInputEvent(
-        actions, e, wrappedContext, place,
-        processor, presentationFactory) { rearranged, updater, events ->
-        doUpdateActionsInner(rearranged, updater, events, dumb, wouldBeEnabledIfNotDumb)
+        actions = actions,
+        inputEvent = e,
+        dataContext = wrappedContext,
+        place = place,
+        actionProcessor = processor,
+        factory = presentationFactory) { rearranged, updater, events ->
+        doUpdateActionsInner(actions = rearranged,
+                             updater = updater,
+                             events = events,
+                             dumb = dumb,
+                             wouldBeEnabledIfNotDumb = wouldBeEnabledIfNotDumb)
       }
       if (chosen == null) {
         return@block null
@@ -555,7 +568,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     }
 
     if (doPerform && chosen != null) {
-      doPerformActionInner(e, processor, context, chosen.action, chosen.event)
+      doPerformActionInner(e = e, processor = processor, context = context, action = chosen.action, actionEvent = chosen.event)
       logTimeMillis(chosen.startedAt, chosen.action)
     }
     else if (hasSecondStroke && chosen != null) {
