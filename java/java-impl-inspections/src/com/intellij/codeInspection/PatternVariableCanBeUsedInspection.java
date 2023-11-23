@@ -35,7 +35,7 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!HighlightingFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isAvailable(holder.getFile())) return;
         PsiTypeCastExpression qualifier = getQualifierReferenceExpression(call);
-        if(qualifier==null) return;
+        if (qualifier == null) return;
         PsiInstanceOfExpression candidate = InstanceOfUtils.findPatternCandidate(qualifier);
         if (candidate == null) return;
         PsiPrimaryPattern pattern = candidate.getPattern();
