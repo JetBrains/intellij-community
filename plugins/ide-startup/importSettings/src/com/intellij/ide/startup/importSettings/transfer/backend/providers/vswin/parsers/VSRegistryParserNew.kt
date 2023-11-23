@@ -83,7 +83,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     val regValue = try {
       registryRootKey.inChild("General").getStringValue("CurrentTheme")?.uppercase()
     }
-    catch (t: Throwable) {
+    catch (_: Throwable) {
       return null
     }
 
@@ -126,38 +126,14 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     }
   }
 
-  fun colorSchemesInit() {
-    // TODO: Finish this prototype
-    /*val thePath = registryRootKey / "ApplicationPrivateSettings" / "Microsoft" / "VisualStudio"
-    val rawUuid = thePath.getStringValue("ColorThemeNew")
-    if (rawUuid == null) return
-
-    val uuidStart = rawUuid.indexOf('{')
-    val uuid = rawUuid.subSequence(uuidStart until rawUuid.length)
-    println()
-
-    val rak2 = registryRootKey.
-    val colorKeys = Advapi32Util.registryGetKeys(rak2.first, "${rak2.second}\\Themes\\$uuid")
-    val a = ByteArrayOutputStream()
-    colorKeys.map {
-        Advapi32Util.registryGetBinaryValue(rak2.first, "${rak2.second}\\Themes\\$uuid\\$it", "Data")
-    }.forEach {
-        a.write(it)
-        a.write(0);a.write(0);a.write(0);a.write(0);a.write(0);a.write(0);a.write(0);a.write(0);a.write(0);a.write(0);
-    }
-    a.toByteArray()
-    Files.write(File("C:\\file.bin").toPath(), a.toByteArray())
-     */
-  }
-
   private fun envPathInit(): Pair<Path?, File?> {
     var envDir: Path? = null
     var devEnv: File? = null
 
-    val setupVSkey = registryRootKeyConfig / "Setup" / "VS"
+    val setupVSKey = registryRootKeyConfig / "Setup" / "VS"
 
     val fileDirStr = try {
-      setupVSkey.getStringValue("EnvironmentDirectory")
+      setupVSKey.getStringValue("EnvironmentDirectory")
     }
     catch (t: Throwable) {
       logger.warn("Failed to obtain path to EnvDir (probably vs is corrupted)")
@@ -169,7 +145,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     }
 
     val filePathStr = try {
-      setupVSkey.getStringValue("EnvironmentPath")
+      setupVSKey.getStringValue("EnvironmentPath")
     }
     catch (t: Throwable) {
       logger.warn("Failed to obtain path to EnvPath (probably vs is corrupted)")
@@ -199,13 +175,14 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
 
   private fun settingsFileInit(): File? {
 
-    val unexpandedPath = try {
-      registryRootKey.inChild("Profile").getStringValue("AutoSaveFile")
-    }
-                         catch (t: com.sun.jna.platform.win32.Win32Exception) {
-                           throw VSProfileSettingsFileNotFound(
-                             "A problem occurred while trying to work with registry. Probably key does not exist.")
-                         } ?: throw Exception("Unknown registry error")
+    val unexpandedPath =
+      try {
+        registryRootKey.inChild("Profile").getStringValue("AutoSaveFile")
+      }
+      catch (_: com.sun.jna.platform.win32.Win32Exception) {
+        throw VSProfileSettingsFileNotFound(
+          "A problem occurred while trying to work with registry. Probably key does not exist.")
+      } ?: throw Exception("Unknown registry error")
     val path = VSProfileDetectorUtils.expandPath(unexpandedPath, hive)
 
     return path?.let { File(it) }
@@ -324,7 +301,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
   private fun detourFileInit(): File {
     check(isRegistryDetourRequired()) { "Calling getDetourFile for old VS" }
 
-    val file = appDataHiveFolder.resolve("privateregistry.bin").toFile()
+    @Suppress("SpellCheckingInspection") val file = appDataHiveFolder.resolve("privateregistry.bin").toFile()
 
     if (!file.exists()) {
       logger.warn("detour file is not found. did you delete it or its not vs<=17?")
