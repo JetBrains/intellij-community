@@ -33,6 +33,7 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.sdk.PyDetectedSdk
+import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_NEW
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
@@ -236,7 +237,7 @@ private fun ComboBox<String?>.withBrowsableSdk(presenter: PythonAddInterpreterPr
                                                                  message("sdk.create.custom.python.browse.tooltip")) {
     val currentBaseSdkPathOnTarget = thisComboBox.item.nullize(nullizeSpaces = true)
     val currentBaseSdkVirtualFile = currentBaseSdkPathOnTarget?.let { presenter.tryGetVirtualFile(it) }
-    FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor(), null,
+    FileChooser.chooseFile(PythonSdkType.getInstance().homeChooserDescriptor, null,
                            currentBaseSdkVirtualFile) { file ->
       val nioPath = file?.toNioPath() ?: return@chooseFile
       val targetPath = presenter.getPathOnTarget(nioPath)
