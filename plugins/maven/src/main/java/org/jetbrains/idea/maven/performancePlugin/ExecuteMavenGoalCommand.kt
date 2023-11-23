@@ -28,7 +28,8 @@ class ExecuteMavenGoalCommand(text: String, line: Int) : AbstractCommand(text, l
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val promise = AsyncPromise<Any?>()
     val args = extractCommandArgument(PREFIX)
-    val moduleName = "(?<=moduleName)(.*)(?=goalName)".toRegex().find(args)!!.value.trim()
+    val moduleName = "(?<=moduleName)(.*)(?=goalName)".toRegex().find(args)?.value?.trim() ?: throw IllegalArgumentException(
+      "${args} doesn't contain valid module with goal name")
     val goal = args.substringAfter("goalName").trim()
     val project = context.getProject()
     project.messageBus.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
