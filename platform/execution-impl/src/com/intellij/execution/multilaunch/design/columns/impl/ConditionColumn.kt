@@ -110,7 +110,7 @@ class ConditionColumn(
         val panel = createPopupPanel(content, actions)
         return JBPopupFactory.getInstance()
           .createComponentPopupBuilder(panel, null)
-          .setMinSize(Dimension(JBUI.scale(350), JBUI.scale(275)))
+          .setMinSize(Dimension(JBUI.scale(350), JBUI.scale(20)))
           .setRequestFocus(true)
           .addListener(object : JBPopupListener {
             override fun beforeShown(event: LightweightWindowEvent) {
