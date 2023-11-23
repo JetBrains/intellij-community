@@ -70,10 +70,6 @@
                      key="inspection.type.may.be.weakened.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.abstraction.TypeMayBeWeakenedInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnresolvedClassReferenceRepair" bundle="messages.InspectionGadgetsBundle"
-                     key="unresolved.class.reference.repair.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.abstraction.UnresolvedClassReferenceRepairInspection"/>
 
     <!--group.names.assignment.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AssignmentToCatchBlockParameter" bundle="messages.InspectionGadgetsBundle"
