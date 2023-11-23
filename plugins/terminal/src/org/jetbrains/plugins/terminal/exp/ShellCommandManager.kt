@@ -3,10 +3,9 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.TerminalCustomCommandListener
-import java.nio.charset.StandardCharsets
+import org.jetbrains.plugins.terminal.TerminalUtil
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
@@ -15,7 +14,7 @@ class ShellCommandManager(terminal: Terminal) {
   private val listeners: CopyOnWriteArrayList<ShellCommandListener> = CopyOnWriteArrayList()
 
   @Volatile
-  private var commandRun: CommandRun? = null
+  private var startedCommand: StartedCommand? = null
 
   init {
     terminal.addCustomCommandListener(TerminalCustomCommandListener {
@@ -28,6 +27,7 @@ class ShellCommandManager(terminal: Terminal) {
           "command_history" -> processCommandHistoryEvent(it)
           "generator_finished" -> processGeneratorFinishedEvent(it)
           "clear_invoked" -> fireClearInvoked()
+          else -> LOG.warn("Unknown custom command: $it")
         }
       }
       catch (t: Throwable) {
@@ -37,65 +37,40 @@ class ShellCommandManager(terminal: Terminal) {
   }
 
   private fun processInitialized(event: List<String>) {
-    val directory = event.getOrNull(1)
-    val dir = if (directory != null && directory.startsWith("current_directory=")) {
-      decodeHex(directory.removePrefix("current_directory="))
-    }
-    else null
-    fireInitialized(dir)
+    val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValueOrNull(event.getOrNull(1))
+    fireInitialized(currentDirectory)
   }
 
   private fun processCommandStartedEvent(event: List<String>) {
-    val command = event.getOrNull(1)
-    val currentDirectory = event.getOrNull(2)
-    if (command != null && command.startsWith("command=") &&
-        currentDirectory != null && currentDirectory.startsWith("current_directory=")) {
-      val commandRun = CommandRun(System.nanoTime(),
-                                  decodeHex(currentDirectory.removePrefix("current_directory=")),
-                                  decodeHex(command.removePrefix("command=")))
-      this.commandRun = commandRun
-      fireCommandStarted(commandRun)
-    }
+    val command = Param.COMMAND.getDecodedValue(event.getOrNull(1))
+    val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(event.getOrNull(2))
+    val startedCommand = StartedCommand(System.nanoTime(), currentDirectory, command)
+    this.startedCommand = startedCommand
+    fireCommandStarted(startedCommand)
   }
 
   private fun processCommandFinishedEvent(event: List<String>) {
-    val exitCodeStr = event.getOrNull(1)
-    val currentDirectoryField = event.getOrNull(2)
-    if (exitCodeStr != null && exitCodeStr.startsWith("exit_code=") &&
-        currentDirectoryField != null && currentDirectoryField.startsWith("current_directory=")) {
-      val exitCode = try {
-        exitCodeStr.removePrefix("exit_code=").toInt()
+    val exitCode = Param.EXIT_CODE.getIntValue(event.getOrNull(1))
+    val newCurrentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(event.getOrNull(2))
+    val startedCommand = this.startedCommand
+    if (startedCommand != null) {
+      if (startedCommand.currentDirectory != newCurrentDirectory) {
+        fireDirectoryChanged(newCurrentDirectory)
       }
-      catch (_: NumberFormatException) {
-        return
-      }
-      val commandRun = this.commandRun
-      if (commandRun != null) {
-        val newDirectory = decodeHex(currentDirectoryField.removePrefix("current_directory="))
-        if (commandRun.workingDirectory != newDirectory) {
-          fireDirectoryChanged(newDirectory)
-        }
-      }
-      fireCommandFinished(commandRun, exitCode)
-      this.commandRun = null
     }
+    fireCommandFinished(startedCommand, exitCode)
+    this.startedCommand = null
   }
 
   private fun processCommandHistoryEvent(event: List<String>) {
-    val history = event.getOrNull(1)
-    if (history != null && history.startsWith("history_string=")) {
-      fireCommandHistoryReceived(decodeHex(history.removePrefix("history_string=")))
-    }
+    val history = Param.HISTORY_STRING.getDecodedValue(event.getOrNull(1))
+    fireCommandHistoryReceived(history)
   }
 
   private fun processGeneratorFinishedEvent(event: List<String>) {
-    val requestId = event.getOrNull(1)
-    val result = event.getOrNull(2)
-    if (requestId != null && requestId.startsWith("request_id=") &&
-        result != null && result.startsWith("result=")) {
-      val requestIdInt = requestId.removePrefix("request_id=").toIntOrNull() ?: return
-      fireGeneratorFinished(requestIdInt, decodeHex(result.removePrefix("result=")))
-    }
+    val requestId = Param.REQUEST_ID.getIntValue(event.getOrNull(1))
+    val result = Param.RESULT.getDecodedValue(event.getOrNull(2))
+    fireGeneratorFinished(requestId, result)
   }
 
   private fun fireInitialized(currentDirectory: String?) {
@@ -116,22 +91,22 @@ class ShellCommandManager(terminal: Terminal) {
     }
   }
 
-  private fun fireCommandStarted(commandRun: CommandRun) {
+  private fun fireCommandStarted(startedCommand: StartedCommand) {
     if (LOG.isDebugEnabled) {
-      LOG.debug("Shell event: command_started - $commandRun")
+      LOG.debug("Shell event: command_started - $startedCommand")
     }
     for (listener in listeners) {
-      listener.commandStarted(commandRun.command)
+      listener.commandStarted(startedCommand.command)
     }
   }
 
-  private fun fireCommandFinished(commandRun: CommandRun?, exitCode: Int) {
+  private fun fireCommandFinished(startedCommand: StartedCommand?, exitCode: Int) {
     if (LOG.isDebugEnabled) {
-      LOG.debug("Shell event: command_finished - $commandRun, exit code: $exitCode")
+      LOG.debug("Shell event: command_finished - $startedCommand, exit code: $exitCode")
     }
     for (listener in listeners) {
-      val duration = commandRun?.commandStartedNano?.let { TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - it) }
-      listener.commandFinished(commandRun?.command, exitCode, duration)
+      val duration = startedCommand?.commandStartedNano?.let { TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - it) }
+      listener.commandFinished(startedCommand?.command, exitCode, duration)
     }
   }
 
@@ -140,7 +115,7 @@ class ShellCommandManager(terminal: Terminal) {
       listener.directoryChanged(newDirectory)
     }
     if (LOG.isDebugEnabled) {
-      LOG.debug("Current directory changed from '${commandRun?.workingDirectory}' to '$newDirectory'")
+      LOG.debug("Current directory changed from '${startedCommand?.currentDirectory}' to '$newDirectory'")
     }
   }
 
@@ -171,22 +146,49 @@ class ShellCommandManager(terminal: Terminal) {
     }
   }
 
-  fun addListener(listener: ShellCommandListener, parentDisposable: Disposable? = null) {
-    listeners.add(listener)
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable) {
-        listeners.remove(listener)
-      }
-    }
-  }
-
-  private fun decodeHex(hexStr: String): String {
-    val bytes = HexFormat.of().parseHex(hexStr)
-    return String(bytes, StandardCharsets.UTF_8)
+  fun addListener(listener: ShellCommandListener, parentDisposable: Disposable) {
+    TerminalUtil.addItem(listeners, listener, parentDisposable)
   }
 
   companion object {
-    val LOG = logger<ShellCommandManager>()
+    private val LOG = logger<ShellCommandManager>()
+
+    @Throws(IllegalArgumentException::class)
+    private fun decodeHex(hexStr: String): String {
+      val bytes = HexFormat.of().parseHex(hexStr)
+      return String(bytes, Charsets.UTF_8)
+    }
+  }
+
+  private enum class Param {
+
+    EXIT_CODE,
+    CURRENT_DIRECTORY,
+    COMMAND,
+    HISTORY_STRING,
+    REQUEST_ID,
+    RESULT;
+
+    private val paramNameWithSeparator: String = "${paramName()}="
+
+    private fun paramName(): String = name.lowercase(Locale.ENGLISH)
+
+    fun getIntValue(nameAndValue: String?): Int {
+      return getValueOrNull(nameAndValue)?.toIntOrNull() ?: fail()
+    }
+
+    fun getDecodedValue(nameAndValue: String?): String = getDecodedValueOrNull(nameAndValue) ?: fail()
+
+    fun getDecodedValueOrNull(nameAndValue: String?): String? {
+      val encodedValue = getValueOrNull(nameAndValue) ?: return null
+      return decodeHex(encodedValue)
+    }
+
+    private fun getValueOrNull(nameAndValue: String?): String? {
+      return nameAndValue?.takeIf { it.startsWith(paramNameWithSeparator) }?.substring(paramNameWithSeparator.length)
+    }
+
+    private fun <T> fail(): T = throw IllegalStateException("Cannot parse ${paramName()}")
   }
 }
 
@@ -218,8 +220,8 @@ interface ShellCommandListener {
   fun clearInvoked() {}
 }
 
-private class CommandRun(val commandStartedNano: Long, val workingDirectory: String, val command: String) {
+private class StartedCommand(val commandStartedNano: Long, val currentDirectory: String, val command: String) {
   override fun toString(): String {
-    return "command: $command, workingDirectory: $workingDirectory"
+    return "command: $command, currentDirectory: $currentDirectory"
   }
 }

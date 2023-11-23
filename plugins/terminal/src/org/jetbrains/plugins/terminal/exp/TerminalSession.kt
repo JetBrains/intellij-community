@@ -99,7 +99,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
     }
   }
 
-  fun addCommandListener(listener: ShellCommandListener, parentDisposable: Disposable? = null) {
+  fun addCommandListener(listener: ShellCommandListener, parentDisposable: Disposable = this) {
     commandManager.addListener(listener, parentDisposable)
   }
 
