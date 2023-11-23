@@ -4,6 +4,7 @@ package com.intellij.ide.projectWizard
 import com.intellij.icons.AllIcons
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DefaultProjectFactory
@@ -66,8 +67,11 @@ sealed class ProjectWizardJdkIntent {
 fun Row.projectWizardJdkComboBox(
   sdkProperty: GraphProperty<Sdk?>,
   sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
+  sdkPropertyId: String,
 ) {
   val combo = ProjectWizardJdkComboBox()
+
+  val selectedJdkProperty = "jdk.selected.$sdkPropertyId"
 
   cell(combo)
     .columns(COLUMNS_LARGE)
@@ -88,19 +92,33 @@ fun Row.projectWizardJdkComboBox(
       }
     }
     .onChanged {
-      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty)
+      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, selectedJdkProperty)
     }
 
-  updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty)
+  val lastSelected = PropertiesComponent.getInstance().getValue(selectedJdkProperty)
+  if (lastSelected != null) {
+    combo.selectedItem = lastSelected
+  } else {
+    combo.registered
+      .maxByOrNull { JavaSdkVersion.fromVersionString(it.jdk.versionString ?: "")?.ordinal ?: 0 }
+      ?.let { combo.selectedItem = it }
+  }
+
+  updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, selectedJdkProperty)
 }
 
 private fun updateGraphProperties(
   combo: ProjectWizardJdkComboBox,
   sdkProperty: GraphProperty<Sdk?>,
   sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
+  selectedJdkProperty: String,
 ) {
+  val stateComponent = PropertiesComponent.getInstance()
   val (sdk, downloadTask) = when (val intent = combo.selectedItem) {
-    is ExistingJdk -> (intent.jdk to null)
+    is ExistingJdk -> {
+      stateComponent.setValue(selectedJdkProperty, intent.jdk.name)
+      (intent.jdk to null)
+    }
     is DownloadJdk -> (null to intent.task)
     else -> (null to null)
   }
