@@ -93,6 +93,31 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/functions/SameSignatureDifferentLevels.kt");
     }
 
+    @TestMetadata("conflicts/typeParameters/HidingClassByTypeParameter.kt")
+    public void testConflicts_typeParameters_HidingClassByTypeParameter() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/typeParameters/HidingClassByTypeParameter.kt");
+    }
+
+    @TestMetadata("conflicts/typeParameters/HidingClassByTypeParameter1.kt")
+    public void testConflicts_typeParameters_HidingClassByTypeParameter1() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/typeParameters/HidingClassByTypeParameter1.kt");
+    }
+
+    @TestMetadata("conflicts/typeParameters/TypeParameterVsLocalFunction.kt")
+    public void testConflicts_typeParameters_TypeParameterVsLocalFunction() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterVsLocalFunction.kt");
+    }
+
+    @TestMetadata("conflicts/typeParameters/TypeParameterVsPropertyInCompanion.kt")
+    public void testConflicts_typeParameters_TypeParameterVsPropertyInCompanion() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterVsPropertyInCompanion.kt");
+    }
+
+    @TestMetadata("conflicts/typeParameters/TypeParameterVsTypeAlias.kt")
+    public void testConflicts_typeParameters_TypeParameterVsTypeAlias() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterVsTypeAlias.kt");
+    }
+
     @TestMetadata("EnumEntries.kt")
     public void testEnumEntries() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/EnumEntries.kt");
@@ -181,16 +206,6 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
     @TestMetadata("HidingClassByInnerInCompanionObject.kt")
     public void testHidingClassByInnerInCompanionObject() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassByInnerInCompanionObject.kt");
-    }
-
-    @TestMetadata("HidingClassByTypeParameter.kt")
-    public void testHidingClassByTypeParameter() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassByTypeParameter.kt");
-    }
-
-    @TestMetadata("HidingClassByTypeParameter1.kt")
-    public void testHidingClassByTypeParameter1() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/rename/inplace/HidingClassByTypeParameter1.kt");
     }
 
     @TestMetadata("HidingClassFromCompanionObject.kt")

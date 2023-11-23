@@ -57,16 +57,36 @@ fun KtScope.findSiblingsByName(
 
     val classifierSymbols = getClassifierSymbols(newName)
     if (symbol is KtFunctionLikeSymbol) {
-        return classifierSymbols.flatMap { (it as? KtClassOrObjectSymbol)?.getDeclaredMemberScope()?.getConstructors() ?: emptySequence() } + callables
+        return (classifierSymbols.flatMap { (it as? KtClassOrObjectSymbol)?.getDeclaredMemberScope()?.getConstructors() ?: emptySequence() } + callables).filter { filterCandidates(symbol, it) }
     }
 
-    return classifierSymbols + callables.filter { callable ->
-        if (callable is KtFunctionLikeSymbol && symbol is KtClassOrObjectSymbol) {
-            symbol.getDeclaredMemberScope().getConstructors().any { areSameSignatures(it, callable) }
-        } else {
-            true
+    return (classifierSymbols + callables).filter { filterCandidates(symbol, it) }
+}
+
+context(KtAnalysisSession)
+private fun filterCandidates(symbol: KtDeclarationSymbol, candidateSymbol: KtDeclarationSymbol): Boolean {
+    if (candidateSymbol is KtFunctionLikeSymbol) {
+        val skipCandidate = when (symbol) {
+            is KtFunctionLikeSymbol -> !areSameSignatures(candidateSymbol, symbol)
+            is KtPropertySymbol -> !areSameSignatures(symbol, candidateSymbol)
+            is KtClassOrObjectSymbol -> symbol.getDeclaredMemberScope().getConstructors().none { areSameSignatures(it, candidateSymbol) }
+            else -> false
+        }
+
+        return !skipCandidate
+    }
+
+    if (candidateSymbol is KtPropertySymbol && symbol is KtFunctionLikeSymbol && !areSameSignatures(candidateSymbol, symbol)) {
+        return false
+    }
+
+    if (candidateSymbol is KtClassOrObjectSymbol && symbol is KtFunctionLikeSymbol) {
+        if (candidateSymbol.getDeclaredMemberScope().getConstructors().none { areSameSignatures(it, symbol) }) {
+            return false
         }
     }
+
+    return true
 }
 
 context(KtAnalysisSession)
@@ -149,18 +169,6 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
     for (candidateSymbol in potentialCandidates) {
         if (symbol == candidateSymbol) continue
         val candidate = candidateSymbol.psi as? PsiNamedElement ?: continue
-
-        if (candidateSymbol is KtFunctionLikeSymbol && symbol is KtFunctionLikeSymbol && !areSameSignatures(candidateSymbol, symbol)) {
-            continue
-        }
-
-        if (candidateSymbol is KtPropertySymbol && symbol is KtFunctionLikeSymbol && !areSameSignatures(candidateSymbol, symbol)) {
-            continue
-        }
-
-        if (candidateSymbol is KtFunctionLikeSymbol && symbol is KtPropertySymbol && !areSameSignatures(symbol, candidateSymbol)) {
-            continue
-        }
 
         val what = candidate.renderDescription()
         val where = candidate.representativeContainer()?.renderDescription() ?: continue
