@@ -149,6 +149,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       VirtualFile file = PsiUtilCore.getVirtualFile(element);
       if (file != null) notifyPresentationChanged(file);
     });
+    applyViewSettings();
   }
 
   void setStructureProvider(TreeStructureProvider provider) {
@@ -230,17 +231,21 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     model.onValidThread(() -> {
       root.childrenValid = false;
       LOG.debug("whole structure changed");
-      ViewSettings settings = root.getSettings();
-      boolean isShowExcludedFiles = false;
-      if (settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowExcludedFiles()) {
-        NamedScopeFilter filter = getFilter();
-        Class<? extends NamedScope> type = filter == null ? null : filter.getScope().getClass();
-        isShowExcludedFiles = !NamedScope.class.equals(type); // disable excluded files for custom scopes
-      }
-      model.setSettings(isShowExcludedFiles, PlatformUtils.isIntelliJ() && settings.isShowModules());
+      applyViewSettings();
       treeStructureChanged(null, null, null);
       if (onDone != null) onDone.run();
     });
+  }
+
+  private void applyViewSettings() {
+    ViewSettings settings = root.getSettings();
+    boolean isShowExcludedFiles = false;
+    if (settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowExcludedFiles()) {
+      NamedScopeFilter filter = getFilter();
+      Class<? extends NamedScope> type = filter == null ? null : filter.getScope().getClass();
+      isShowExcludedFiles = !NamedScope.class.equals(type); // disable excluded files for custom scopes
+    }
+    model.setSettings(isShowExcludedFiles, PlatformUtils.isIntelliJ() && settings.isShowModules());
   }
 
   private void update(@NotNull AbstractTreeNode<?> node, boolean structure) {
