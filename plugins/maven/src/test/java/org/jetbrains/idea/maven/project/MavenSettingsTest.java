@@ -113,40 +113,40 @@ public class MavenSettingsTest extends MavenTestCase {
       ExternalSystemProjectTrackerSettings projectTrackerSettings = ExternalSystemProjectTrackerSettings.getInstance(myProject);
       MavenWorkspaceSettingsComponent workspaceSettingsComponent = loadWorkspaceComponent(
         """
-          <MavenWorkspaceSettings>
+          <MavenImportPreferences>
             <option name="importingSettings">
               <MavenImportingSettings>
                 <option name="importAutomatically" value="true" />
               </MavenImportingSettings>
             </option>
-          </MavenWorkspaceSettings>
+          </MavenImportPreferences>
           """);
       assertFalse(workspaceSettingsComponent.getSettings().getImportingSettings().isImportAutomatically());
       assertEquals(ExternalSystemProjectTrackerSettings.AutoReloadType.ALL, projectTrackerSettings.getAutoReloadType());
-      assertEquals("<MavenWorkspaceSettings />", storeWorkspaceComponent(workspaceSettingsComponent));
+      assertEquals("<MavenWorkspacePersistedSettings />", storeWorkspaceComponent(workspaceSettingsComponent));
     });
     replaceService(myProject, ExternalSystemProjectTrackerSettings.class, new AutoImportProjectTrackerSettings(), () -> {
       ExternalSystemProjectTrackerSettings projectTrackerSettings = ExternalSystemProjectTrackerSettings.getInstance(myProject);
       MavenWorkspaceSettingsComponent workspaceSettingsComponent = loadWorkspaceComponent(
         """
-          <MavenWorkspaceSettings>
+          <MavenImportPreferences>
             <option name="importingSettings">
               <MavenImportingSettings>
                 <option name="importAutomatically" value="false" />
               </MavenImportingSettings>
             </option>
-          </MavenWorkspaceSettings>
+          </MavenImportPreferences>
           """);
       assertFalse(workspaceSettingsComponent.getSettings().getImportingSettings().isImportAutomatically());
       assertEquals(ExternalSystemProjectTrackerSettings.AutoReloadType.SELECTIVE, projectTrackerSettings.getAutoReloadType());
-      assertEquals("<MavenWorkspaceSettings />", storeWorkspaceComponent(workspaceSettingsComponent));
+      assertEquals("<MavenWorkspacePersistedSettings />", storeWorkspaceComponent(workspaceSettingsComponent));
     });
     replaceService(myProject, ExternalSystemProjectTrackerSettings.class, new AutoImportProjectTrackerSettings(), () -> {
       ExternalSystemProjectTrackerSettings projectTrackerSettings = ExternalSystemProjectTrackerSettings.getInstance(myProject);
-      MavenWorkspaceSettingsComponent workspaceSettingsComponent = loadWorkspaceComponent("<MavenWorkspaceSettings />");
+      MavenWorkspaceSettingsComponent workspaceSettingsComponent = loadWorkspaceComponent("<MavenWorkspacePersistedSettings />");
       assertFalse(workspaceSettingsComponent.getSettings().getImportingSettings().isImportAutomatically());
       assertEquals(ExternalSystemProjectTrackerSettings.AutoReloadType.SELECTIVE, projectTrackerSettings.getAutoReloadType());
-      assertEquals("<MavenWorkspaceSettings />", storeWorkspaceComponent(workspaceSettingsComponent));
+      assertEquals("<MavenWorkspacePersistedSettings />", storeWorkspaceComponent(workspaceSettingsComponent));
     });
   }
 

@@ -38,7 +38,7 @@ public final class MavenWorkspacePersistedSettings {
   }
 
   @Transient
-  MavenWorkspaceSettings getRealSettings() {
+  public MavenWorkspaceSettings getRealSettings() {
     return wrappee;
   }
 }

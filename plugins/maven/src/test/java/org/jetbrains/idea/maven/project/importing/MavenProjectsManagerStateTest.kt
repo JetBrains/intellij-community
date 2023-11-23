@@ -68,7 +68,7 @@ class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
 
     state = projectsManager.getState()
     assertUnorderedPathsAreEqual(state!!.originalFiles, listOf(p1.getPath(), p2.getPath()))
-    assertUnorderedElementsAreEqual(MavenWorkspaceSettingsComponent.getInstance(myProject).settings.enabledProfiles, "one", "two")
+    assertUnorderedElementsAreEqual(MavenWorkspaceSettingsComponent.getInstance(myProject).state.realSettings.enabledProfiles, "one", "two")
     assertUnorderedPathsAreEqual(state.ignoredFiles, listOf(p1.getPath()))
     assertUnorderedElementsAreEqual(state.ignoredPathMasks, "*.xxx")
 
