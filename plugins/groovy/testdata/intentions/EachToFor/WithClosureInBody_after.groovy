@@ -1,4 +1,4 @@
-for (it<caret> in []) {
+for (<caret>it in []) {
     if (it == 2) {
         println 2
     }

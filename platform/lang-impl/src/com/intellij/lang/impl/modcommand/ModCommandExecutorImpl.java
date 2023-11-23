@@ -13,21 +13,22 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.LangBundle;
-import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModChooseMember.SelectionMode;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -42,7 +43,6 @@ import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,13 +51,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.RenameDialog;
-import com.intellij.refactoring.rename.RenamePsiElementProcessor;
-import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
+import com.intellij.refactoring.rename.*;
 import com.intellij.refactoring.suggested.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -412,48 +409,19 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (namedElement == null) return false;
     Editor finalEditor = getEditor(project, editor, file);
     if (finalEditor == null) return false;
-    PsiElement nameIdentifier = namedElement instanceof PsiNameIdentifierOwner owner ? owner.getNameIdentifier() : null;
-    final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(namedElement);
-    processor.substituteElementToRename(namedElement, finalEditor, new Pass<>() {
-      @Override
-      public void pass(PsiElement substitutedElement) {
-        RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forContext(namedElement);
-        if (supportProvider != null &&
-            supportProvider.isInplaceRenameAvailable(namedElement, namedElement)) {
-          if (TemplateManager.getInstance(project) instanceof TemplateManagerImpl manager &&
-              manager.shouldSkipInTests()) {
-            if (nameIdentifier != null) {
-              int offset = nameIdentifier.getTextRange().getEndOffset();
-              executeNavigate(project, new ModNavigate(file, offset, offset, offset));
-            }
-            return;
-          }
-          finalEditor.getCaretModel().moveToOffset(requireNonNullElse(nameIdentifier, namedElement).getTextOffset());
-          final MemberInplaceRenamer renamer = new MemberInplaceRenamer(namedElement, substitutedElement, finalEditor);
-          final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>(rename.nameSuggestions());
-          renamer.performInplaceRefactoring(nameSuggestions);
-        }
-        else {
-          RenameDialog dialog = new RenameDialog(project, namedElement, null, finalEditor) {
-            @Override
-            public String[] getSuggestedNames() {
-              return ArrayUtil.toStringArray(rename.nameSuggestions());
-            }
-          };
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            try {
-              dialog.performRename(rename.nameSuggestions().stream().min(Comparator.naturalOrder()).orElse("undefined"));
-            }
-            finally {
-              dialog.close();
-            }
-          }
-          else {
-            dialog.show();
-          } 
-        }
-      }
-    });
+    DataContext context = DataManager.getInstance().getDataContext(finalEditor.getComponent());
+    DataContext finalContext = SimpleDataContext.builder()
+      .setParent(context)
+      .add(CommonDataKeys.PSI_ELEMENT, namedElement)
+      .add(PsiElementRenameHandler.NAME_SUGGESTIONS, rename.nameSuggestions())
+      .build();
+    PsiElement anchor = namedElement instanceof PsiNameIdentifierOwner owner ? 
+                        requireNonNullElse(owner.getNameIdentifier(), namedElement) : namedElement;
+    finalEditor.getCaretModel().moveToOffset(anchor.getTextOffset());
+    Renamer renamer = RenamerFactory.EP_NAME.getExtensionList().stream().flatMap(factory -> factory.createRenamers(finalContext).stream())
+      .findFirst().orElse(null);
+    if (renamer == null) return false;
+    renamer.performRename();
     return true;
   }
 
@@ -464,38 +432,6 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return finalEditor;
   }
 
-  static class NameExpression extends Expression {
-    private final String myOrig;
-    private final LookupElement[] cachedLookupElements;
-
-    NameExpression(String orig, List<String> suggestions) {
-      myOrig = orig;
-      cachedLookupElements = suggestions.stream()
-        .map(LookupElementBuilder::create)
-        .toArray(LookupElement[]::new);
-    }
-
-    @Override
-    public boolean requiresCommittedPSI() {
-      return false;
-    }
-
-    @Override
-    public com.intellij.codeInsight.template.Result calculateResult(ExpressionContext context) {
-      return new TextResult(myOrig);
-    }
-
-    @Override
-    public @NotNull LookupFocusDegree getLookupFocusDegree() {
-      return LookupFocusDegree.UNFOCUSED;
-    }
-
-    @Override
-    public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      return cachedLookupElements;
-    }
-  }
-  
   private static final class ErrorInTestException extends RuntimeException {
     private ErrorInTestException(String message) {
       super(message);

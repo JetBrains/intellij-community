@@ -1,6 +1,6 @@
 class MyList extends ArrayList {
   def foo() {
-      for (x<caret> in this) {
+      for (<caret>x in this) {
           print x;
       }
   }
