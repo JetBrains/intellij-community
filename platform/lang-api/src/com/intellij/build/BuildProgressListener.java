@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Build progress listener of build process.
- * Needed to filter, convert and transfer build evens between different build progress and output models.
+ * Can be used to filter, convert and transfer build events between different build progress and output models.
  */
 public interface BuildProgressListener {
   /**
