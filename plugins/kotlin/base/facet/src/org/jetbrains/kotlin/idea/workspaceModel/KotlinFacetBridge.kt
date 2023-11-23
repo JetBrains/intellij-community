@@ -47,7 +47,7 @@ class KotlinFacetBridge(
     }
 
     override fun getExternalSource(): ProjectModelExternalSource? {
-        return if (configuration.settings.externalProjectId.isEmpty()) return null
+        return super.getExternalSource() ?: if (configuration.settings.externalProjectId.isEmpty()) return null
         else ExternalProjectSystemRegistry.getInstance().getSourceById(configuration.settings.externalProjectId)
     }
 }
