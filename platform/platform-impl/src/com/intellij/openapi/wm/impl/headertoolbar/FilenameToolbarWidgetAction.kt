@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.ui.UISettings
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -16,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
@@ -24,8 +24,10 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatusManager
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
@@ -78,11 +80,14 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware {
 
     @Suppress("HardCodedStringLiteral")
     val filename = VfsPresentationUtil.getUniquePresentableNameForUI(project, file)
+    val pathFromProjectRoot = project.guessProjectDir()
+      ?.let { VfsUtilCore.getRelativePath(file, it) }
+      ?.let { FileUtil.toSystemDependentName(it) } ?: ""
     presentation.isEnabledAndVisible = true
     presentation.putClientProperty(FILE_COLOR, fg)
     presentation.putClientProperty(FILE_FULL_PATH, if (UISettings.getInstance().fullPathsInWindowHeader) file.path else null)
     presentation.text = StringUtil.shortenTextWithEllipsis(filename, 60, 30)
-    presentation.description = ActionsBundle.message("action.main.toolbar.Filename.tooltip.text", filename)
+    presentation.description = pathFromProjectRoot
     presentation.icon = icon
   }
 
