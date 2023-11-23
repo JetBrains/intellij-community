@@ -5,9 +5,9 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.components.service
-import com.jetbrains.python.packaging.pip.PypiPackageCache
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.requirements.psi.SimpleName
+import com.jetbrains.python.sdk.pythonSdk
 import icons.PythonIcons
 
 class RequirementsPackageNameCompletionContributor : CompletionContributor() {
@@ -15,11 +15,13 @@ class RequirementsPackageNameCompletionContributor : CompletionContributor() {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val position = parameters.position
     val parent = position.parent
+    val project = position.project
 
     if (parent is SimpleName) {
-      val cache = service<PypiPackageCache>()
-      val maxPriority = cache.packages.size
-      cache.packages.asSequence().map {
+      val repositoryManager = PythonPackageManager.forSdk(project, project.pythonSdk ?: return).repositoryManager
+      val packages = repositoryManager.allPackages()
+      val maxPriority = packages.size
+      packages.asSequence().map {
         LookupElementBuilder.create(it.lowercase()).withIcon(PythonIcons.Python.Python)
       }.mapIndexed { index, lookupElementBuilder ->
         PrioritizedLookupElement.withPriority(lookupElementBuilder, (maxPriority - index).toDouble())
