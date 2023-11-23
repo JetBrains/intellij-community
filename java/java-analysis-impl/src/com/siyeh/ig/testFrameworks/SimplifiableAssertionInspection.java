@@ -3,12 +3,16 @@ package com.siyeh.ig.testFrameworks;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.library.JavaLibraryUtil;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.text.VersionComparatorUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -93,7 +97,12 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
 
   private static boolean isInstanceOfMethodExistsWithMatchingParams(@NotNull AssertHint assertHint) {
     final PsiClass clazz = assertHint.getMethod().getContainingClass();
-    if (clazz == null) return false;
+    if (clazz == null || !"org.junit.jupiter.api.Assertions".equals(clazz.getQualifiedName())) return false;
+    final Module junitModule = ModuleUtilCore.findModuleForPsiElement(assertHint.getOriginalExpression());
+    if (junitModule != null) {
+      final String version = JavaLibraryUtil.getLibraryVersion(junitModule, "org.junit.jupiter:junit-jupiter-api");
+      if (version != null) return VersionComparatorUtil.compare(version, "5.8") >= 0;
+    }
     final PsiMethod[] methods = clazz.findMethodsByName("assertInstanceOf", true);
     final PsiParameterList originalParameters = assertHint.getMethod().getParameterList();
     for (final PsiMethod method : methods) {
