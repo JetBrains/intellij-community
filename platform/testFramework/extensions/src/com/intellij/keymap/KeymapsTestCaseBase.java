@@ -3,6 +3,7 @@ package com.intellij.keymap;
 
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -236,9 +237,9 @@ public abstract class KeymapsTestCaseBase {
   private Map<String, Map<Shortcut, List<String>>> collectActualDuplicatedShortcuts() {
     Map<String, Map<Shortcut, List<String>>> result = new HashMap<>();
 
-    KeymapManagerEx km = KeymapManagerEx.getInstanceEx();
-    Set<String> boundActions = km.getBoundActions();
-    Keymap[] keymaps = km.getAllKeymaps();
+    KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
+    Set<String> boundActions = ActionManagerEx.getInstanceEx().getBoundActions();
+    Keymap[] keymaps = keymapManager.getAllKeymaps();
 
     // fill shortcuts
     for (Keymap keymap : keymaps) {

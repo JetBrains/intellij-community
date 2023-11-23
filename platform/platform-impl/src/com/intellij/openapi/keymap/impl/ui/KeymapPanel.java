@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -254,7 +255,7 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
 
   private static void addShortcut(Keymap keymap, String actionId, Shortcut shortcut) {
     if (keymap instanceof KeymapImpl) {
-      ((KeymapImpl)keymap).addShortcut(actionId, shortcut, true);
+      ((KeymapImpl)keymap).addShortcut(actionId, shortcut, true, ActionManagerEx.getInstanceEx());
     }
     else {
       keymap.addShortcut(actionId, shortcut);
@@ -263,7 +264,7 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
 
   private static void removeShortcut(Keymap keymap, String actionId, Shortcut shortcut) {
     if (keymap instanceof KeymapImpl) {
-      ((KeymapImpl)keymap).removeShortcut(actionId, shortcut, true);
+      ((KeymapImpl)keymap).removeShortcut(actionId, shortcut, true, ActionManagerEx.getInstanceEx());
     }
     else {
       keymap.removeShortcut(actionId, shortcut);
@@ -401,7 +402,7 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
           myActionsTree.filter(filter, myQuickLists);
           final JTree tree = myActionsTree.getTree();
           TreeUtil.expandAll(tree);
-          if (filter == null || filter.length() == 0) {
+          if (filter == null || filter.isEmpty()) {
             TreeUtil.collapseAll(tree, 0);
             myTreeExpansionMonitor.restore();
           }

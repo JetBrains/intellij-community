@@ -79,6 +79,7 @@ import java.awt.event.InputEvent
 import java.awt.event.WindowEvent
 import java.util.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -119,6 +120,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   private val actionPostInitRegistrar: ActionPostInitRegistrar
 
+  private val boundShortcuts = ConcurrentHashMap<String, String>()
+
   init {
     val app = ApplicationManager.getApplication()
     if (!app.isUnitTestMode && !app.isHeadlessEnvironment && !app.isCommandLine) {
@@ -150,6 +153,33 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         updateHandlers(action)
       }
     }
+  }
+
+  override fun getBoundActions(): Set<String> = boundShortcuts.keys
+
+  override fun getActionBinding(actionId: String): String? {
+    var visited: MutableSet<String>? = null
+    var id = actionId
+    while (true) {
+      val next = boundShortcuts.get(id) ?: break
+      if (visited == null) {
+        visited = HashSet()
+      }
+
+      id = next
+      if (!visited.add(id)) {
+        break
+      }
+    }
+    return if (id == actionId) null else id
+  }
+
+  override fun bindShortcuts(sourceActionId: String, targetActionId: String) {
+    boundShortcuts.put(targetActionId, sourceActionId)
+  }
+
+  override fun unbindShortcuts(targetActionId: String) {
+    boundShortcuts.remove(targetActionId)
   }
 
   internal fun registerActions(modules: Iterable<IdeaPluginDescriptorImpl>) {
@@ -484,7 +514,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
 
     element.attributes.get(USE_SHORTCUT_OF_ATTR_NAME)?.let { shortcutOfActionId ->
-      keymapManager.bindShortcuts(shortcutOfActionId, id)
+      boundShortcuts.put(id, shortcutOfActionId)
     }
     registerOrReplaceActionInner(element = element, id = id, action = stub, plugin = module, actionRegistrar = actionRegistrar)
     return stub
@@ -524,7 +554,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                          projectType = element.attributes.get(PROJECT_TYPE)?.let { ProjectType.create(it) },
                          actionRegistrar = actionRegistrar)
       }
-      onActionLoadedFromXml(action = action, actionId = id, plugin = plugin)
+      onActionLoadedFromXml(actionId = id, plugin = plugin)
     }
   }
 
@@ -614,7 +644,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       }
       val shortcutOfActionId = element.attributes.get(USE_SHORTCUT_OF_ATTR_NAME)
       if (customClass && shortcutOfActionId != null) {
-        keymapManager.bindShortcuts(shortcutOfActionId, id)
+        boundShortcuts.put(id, shortcutOfActionId)
       }
 
       // Process all group's children. There are other groups, actions, references and links

@@ -27,7 +27,6 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
-import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
 
 const val KEYMAPS_DIR_PATH: String = "keymaps"
@@ -40,7 +39,6 @@ private const val NAME_ATTRIBUTE = "name"
        category = SettingsCategory.KEYMAP)
 class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<KeymapManagerListener>()
-  private val boundShortcuts = ConcurrentHashMap<String, String>()
   private val schemeManager: SchemeManager<Keymap>
 
   companion object {
@@ -166,33 +164,6 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
 
   override fun setActiveKeymap(keymap: Keymap) {
     schemeManager.setCurrent(keymap)
-  }
-
-  override fun bindShortcuts(sourceActionId: String, targetActionId: String) {
-    boundShortcuts.put(targetActionId, sourceActionId)
-  }
-
-  override fun unbindShortcuts(targetActionId: String) {
-    boundShortcuts.remove(targetActionId)
-  }
-
-  override fun getBoundActions(): Set<String> = boundShortcuts.keys
-
-  override fun getActionBinding(actionId: String): String? {
-    var visited: MutableSet<String>? = null
-    var id = actionId
-    while (true) {
-      val next = boundShortcuts.get(id) ?: break
-      if (visited == null) {
-        visited = HashSet()
-      }
-
-      id = next
-      if (!visited.add(id)) {
-        break
-      }
-    }
-    return if (id == actionId) null else id
   }
 
   override fun getSchemeManager(): SchemeManager<Keymap> = schemeManager

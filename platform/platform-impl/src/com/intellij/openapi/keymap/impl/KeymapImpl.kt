@@ -123,7 +123,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
         val map = HashMap<T, MutableList<String>>()
         actionIdToShortcuts.keys.forEach { addActionToShortcutMap(it, map) }
-        keymapManager.boundActions.forEach { addActionToShortcutMap(it, map) }
+        ActionManagerEx.getInstanceEx().getBoundActions().forEach { addActionToShortcutMap(it, map) }
         return map
       }
     }
@@ -172,11 +172,11 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   final override fun canModify(): Boolean = canModify
 
   override fun addShortcut(actionId: String, shortcut: Shortcut) {
-    addShortcut(actionId = actionId, shortcut = shortcut, fromSettings = false)
+    addShortcut(actionId = actionId, shortcut = shortcut, fromSettings = false, actionManager = ActionManagerEx.getInstanceEx())
   }
 
-  fun addShortcut(actionId: String, shortcut: Shortcut, fromSettings: Boolean) {
-    val boundShortcuts = keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts[it] }
+  fun addShortcut(actionId: String, shortcut: Shortcut, fromSettings: Boolean, actionManager: ActionManagerEx) {
+    val boundShortcuts = actionManager.getActionBinding(actionId)?.let { actionIdToShortcuts[it] }
     actionIdToShortcuts.compute(actionId) { id, list ->
       var result: List<Shortcut>? = list
       if (result == null) {
@@ -206,11 +206,11 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   override fun removeShortcut(actionId: String, toDelete: Shortcut) {
-    removeShortcut(actionId = actionId, toDelete = toDelete, fromSettings = false)
+    removeShortcut(actionId = actionId, toDelete = toDelete, fromSettings = false, actionManager = ActionManagerEx.getInstanceEx())
   }
 
-  fun removeShortcut(actionId: String, toDelete: Shortcut, fromSettings: Boolean) {
-    val fromBinding = keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
+  fun removeShortcut(actionId: String, toDelete: Shortcut, fromSettings: Boolean, actionManager: ActionManagerEx) {
+    val fromBinding = actionManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
     actionIdToShortcuts.compute(actionId) { id, list ->
       when {
         list == null -> {
@@ -246,7 +246,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       return it
     }
 
-    return getOwnOrBoundShortcuts(keymapManager.getActionBinding(actionId) ?: return java.util.List.of())
+    return getOwnOrBoundShortcuts(ActionManagerEx.getInstanceEx().getActionBinding(actionId) ?: return java.util.List.of())
   }
 
   private fun getActionIds(shortcut: KeyboardModifierGestureShortcut): List<String> {
@@ -361,7 +361,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         continue
       }
 
-      val key = keymapManager.getActionBinding(id)
+      val key = ActionManagerEx.getInstanceEx().getActionBinding(id)
       if (key != null && actionIdToShortcuts.containsKey(key)) {
         continue
       }
@@ -382,7 +382,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return list
   }
 
-  fun isActionBound(actionId: String): Boolean = keymapManager.boundActions.contains(actionId)
+  fun isActionBound(actionId: String): Boolean = ActionManagerEx.getInstanceEx().getBoundActions().contains(actionId)
 
   override fun getShortcuts(actionId: String?): Array<Shortcut> {
     return getShortcutList(actionId).let { if (it.isEmpty()) Shortcut.EMPTY_ARRAY else it.toTypedArray() }
@@ -396,7 +396,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     // it is critical to use convertShortcut - otherwise MacOSDefaultKeymap doesn't convert shortcuts
     // todo why not convert on add? why we don't need to convert our own shortcuts?
     return actionIdToShortcuts.get(actionId)
-           ?: keymapManager.getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
+           ?: ActionManagerEx.getInstanceEx().getActionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
            ?: parent?.getShortcutList(actionId)?.map { convertShortcut(it) }
            ?: emptyList()
   }
@@ -595,7 +595,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         continue
       }
 
-      val useShortcutOf = keymapManager.getActionBinding(id)
+      val useShortcutOf = ActionManagerEx.getInstanceEx().getActionBinding(id)
       if (useShortcutOf != null && useShortcutOf == actionId) {
         continue
       }

@@ -230,10 +230,7 @@ class ActionsCollectorImpl : ActionsCollector() {
       return ourAllowedList.isAllowedActionId(actionId)
     }
 
-    /** @noinspection unused
-     */
-    @JvmStatic
-    fun onActionLoadedFromXml(action: AnAction, actionId: String, plugin: IdeaPluginDescriptor?) {
+    internal fun onActionLoadedFromXml(actionId: String, plugin: IdeaPluginDescriptor?) {
       ourAllowedList.addActionLoadedFromXml(actionId, plugin)
     }
 

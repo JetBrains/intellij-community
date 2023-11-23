@@ -1,14 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
@@ -74,7 +73,7 @@ public class ActionsTreeTest {
     myActionWithUseShortcutOfNonExistent = new MyAction("text", "description");
     myActionWithFixedShortcuts = new MyAction("text", "description");
 
-    ActionManager actionManager = ActionManager.getInstance();
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     actionManager.registerAction(ACTION_WITHOUT_TEXT_AND_DESCRIPTION, myActionWithoutTextAndDescription);
     actionManager.registerAction(ACTION_WITH_TEXT_ONLY, myActionWithTextOnly);
     actionManager.registerAction(ACTION_WITH_TEXT_AND_DESCRIPTION, myActionWithTextAndDescription);
@@ -85,10 +84,10 @@ public class ActionsTreeTest {
     actionManager.registerAction(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION, myActionWithUseShortcutOfNonExistent);
     actionManager.registerAction(ACTION_WITH_FIXED_SHORTCUTS, myActionWithFixedShortcuts);
 
-    KeymapManagerEx.getInstanceEx().bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
-    KeymapManagerEx.getInstanceEx().bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
-    KeymapManagerEx.getInstanceEx().bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
-    KeymapManagerEx.getInstanceEx().bindShortcuts(NON_EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
+    actionManager.bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
+    actionManager.bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
+    actionManager.bindShortcuts(EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
+    actionManager.bindShortcuts(NON_EXISTENT_ACTION, ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
 
     setRestrictions(testDisposable, new ActionShortcutRestrictions(){
       @NotNull
@@ -99,8 +98,8 @@ public class ActionsTreeTest {
       }
     });
 
-    assertEquals("$Delete", KeymapManagerEx.getInstanceEx().getActionBinding(ACTION_EDITOR_DELETE_WITH_SHORTCUT));
-    assertEquals("$Cut", KeymapManagerEx.getInstanceEx().getActionBinding(ACTION_EDITOR_CUT_WITHOUT_SHORTCUT));
+    assertEquals("$Delete", actionManager.getActionBinding(ACTION_EDITOR_DELETE_WITH_SHORTCUT));
+    assertEquals("$Cut", actionManager.getActionBinding(ACTION_EDITOR_CUT_WITHOUT_SHORTCUT));
     assertNotNull(actionManager.getAction(ACTION_EDITOR_DELETE_WITH_SHORTCUT));
     assertNotNull(actionManager.getAction(ACTION_EDITOR_CUT_WITHOUT_SHORTCUT));
 
@@ -114,7 +113,7 @@ public class ActionsTreeTest {
                  myActionWithUseShortcutOfExistentRedefinedInParent,
                  myActionWithUseShortcutOfNonExistent,
                  myActionWithFixedShortcuts);
-    // populate action tree
+    // populate an action tree
     myActionsTree = new ActionsTree();
 
     KeyboardShortcut shortcut1 = new KeyboardShortcut(KeyStroke.getKeyStroke('1'), null);
@@ -131,7 +130,7 @@ public class ActionsTreeTest {
 
   @AfterEach
   void tearDown() {
-    ActionManager actionManager = ActionManager.getInstance();
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     DefaultActionGroup group = (DefaultActionGroup)actionManager.getAction(IdeActions.GROUP_EDITOR);
     group.remove(myActionWithoutTextAndDescription);
     group.remove(myActionWithTextOnly);
@@ -152,10 +151,10 @@ public class ActionsTreeTest {
     actionManager.unregisterAction(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
     actionManager.unregisterAction(ACTION_WITH_FIXED_SHORTCUTS);
 
-    KeymapManager.getInstance().unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
-    KeymapManager.getInstance().unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
-    KeymapManager.getInstance().unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
-    KeymapManager.getInstance().unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
+    actionManager.unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION);
+    actionManager.unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED);
+    actionManager.unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT);
+    actionManager.unbindShortcuts(ACTION_WITH_USE_SHORTCUT_OF_NON_EXISTENT_ACTION);
   }
 
   private static void setRestrictions(@TestDisposable @NotNull Disposable testDisposable,

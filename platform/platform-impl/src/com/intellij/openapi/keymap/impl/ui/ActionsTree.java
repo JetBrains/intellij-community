@@ -9,13 +9,13 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -231,7 +231,7 @@ public final class ActionsTree {
       condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, true));
     Group mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, true, condFilter);
 
-    if ((filter != null && filter.length() > 0 || shortcut != null) && mainGroup.initIds().isEmpty()) {
+    if ((filter != null && !filter.isEmpty() || shortcut != null) && mainGroup.initIds().isEmpty()) {
       condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, false));
       mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, false, condFilter);
     }
@@ -360,7 +360,7 @@ public final class ActionsTree {
 
   public void selectAction(String actionId) {
     String path = myMainGroup.getActionQualifiedPath(actionId, false);
-    String boundId = path == null ? KeymapManagerEx.getInstanceEx().getActionBinding(actionId) : null;
+    String boundId = path == null ? ActionManagerEx.getInstanceEx().getActionBinding(actionId) : null;
     if (path == null && boundId != null) {
       path = myMainGroup.getActionQualifiedPath(boundId, false);
       if (path == null) {
@@ -544,7 +544,7 @@ public final class ActionsTree {
       }
       else if (userObject instanceof String) {
         actionId = (String)userObject;
-        boundId = ((KeymapImpl)myKeymap).hasShortcutDefined(actionId) ? null : KeymapManagerEx.getInstanceEx().getActionBinding(actionId);
+        boundId = ((KeymapImpl)myKeymap).hasShortcutDefined(actionId) ? null : ActionManagerEx.getInstanceEx().getActionBinding(actionId);
         Presentation presentation = getTemplatePresentation(actionId, null);
         if (presentation == null) {
           text = actionId;
@@ -743,13 +743,13 @@ public final class ActionsTree {
             if (shortcuts != null && shortcuts.length > 0) {
               StringBuilder sb = new StringBuilder();
               for (Shortcut shortcut : shortcuts) {
-                if (sb.length() > 0) {
+                if (!sb.isEmpty()) {
                   sb.append(", ");
                 }
                 sb.append(KeyMapBundle.message("accessible.name.shortcut"));
                 sb.append(KeymapUtil.getShortcutText(shortcut));
               }
-              if (sb.length() > 0) {
+              if (!sb.isEmpty()) {
                 shortcutName = sb.toString();
               }
             }
@@ -830,7 +830,7 @@ public final class ActionsTree {
       }
       g.translate(0, -bounds.y + 1);
     }
-    if (abbreviations != null && abbreviations.size() > 0) {
+    if (abbreviations != null && !abbreviations.isEmpty()) {
       for (String abbreviation : abbreviations) {
         totalWidth += metrics.stringWidth(abbreviation);
         totalWidth += 10;

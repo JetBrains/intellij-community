@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.util.function.Consumer
 import java.util.function.Function
@@ -141,4 +142,16 @@ abstract class ActionManagerEx : ActionManager() {
   @get:ApiStatus.Internal
   @get:ApiStatus.Experimental
   abstract val timerEvents: Flow<Unit>
+
+  @Internal
+  abstract fun getActionBinding(actionId: String): String?
+
+  @Internal
+  abstract fun getBoundActions(): Set<String>
+
+  @Internal
+  abstract fun bindShortcuts(sourceActionId: String, targetActionId: String)
+
+  @Internal
+  abstract fun unbindShortcuts(targetActionId: String)
 }

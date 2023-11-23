@@ -4,8 +4,8 @@ package com.intellij.openapi.keymap.impl;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.testFramework.LightPlatformTestCase;
 import one.util.streamex.StreamEx;
 
@@ -231,7 +231,7 @@ public class KeymapTest extends LightPlatformTestCase {
     String BASE = "BASE_ACTION";
     String DEPENDENT = "DEPENDENT_ACTION";
 
-    KeymapManagerEx.getInstanceEx().bindShortcuts(BASE, DEPENDENT);
+    ActionManagerEx.getInstanceEx().bindShortcuts(BASE, DEPENDENT);
     try {
       myParent.addShortcut(BASE, shortcut1);
       myParent.addShortcut(BASE, shortcut2);
@@ -268,7 +268,7 @@ public class KeymapTest extends LightPlatformTestCase {
       assertSameElements(myChild.getShortcuts(DEPENDENT), shortcut2, shortcutA);
     }
     finally {
-      KeymapManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT);
+      ActionManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT);
     }
   }
 
@@ -281,8 +281,8 @@ public class KeymapTest extends LightPlatformTestCase {
     String BASE2 = "BASE_ACTION2";
     String DEPENDENT2 = "DEPENDENT_ACTION2";
 
-    KeymapManagerEx.getInstanceEx().bindShortcuts(BASE1, DEPENDENT1);
-    KeymapManagerEx.getInstanceEx().bindShortcuts(BASE2, DEPENDENT2);
+    ActionManagerEx.getInstanceEx().bindShortcuts(BASE1, DEPENDENT1);
+    ActionManagerEx.getInstanceEx().bindShortcuts(BASE2, DEPENDENT2);
     try {
       standalone.addShortcut(ACTION_1, shortcut1);
       standalone.addShortcut(BASE1, shortcut1);
@@ -309,8 +309,8 @@ public class KeymapTest extends LightPlatformTestCase {
       assertFalse(standalone.hasOwnActionId(DEPENDENT2));
     }
     finally{
-      KeymapManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT1);
-      KeymapManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT2);
+      ActionManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT1);
+      ActionManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT2);
     }
   }
 
@@ -344,7 +344,7 @@ public class KeymapTest extends LightPlatformTestCase {
     String BASE = "BASE_ACTION";
     String DEPENDENT = "DEPENDENT_ACTION";
 
-    KeymapManagerEx.getInstanceEx().bindShortcuts(BASE, DEPENDENT);
+    ActionManagerEx.getInstanceEx().bindShortcuts(BASE, DEPENDENT);
     try {
       assertSameElements(myParent.getShortcuts(BASE));
       assertSameElements(myParent.getShortcuts(DEPENDENT));
@@ -458,7 +458,7 @@ public class KeymapTest extends LightPlatformTestCase {
       assertTrue(myChild.hasOwnActionId(DEPENDENT));
     }
     finally {
-      KeymapManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT);
+      ActionManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT);
     }
   }
 
@@ -469,7 +469,7 @@ public class KeymapTest extends LightPlatformTestCase {
     String BASE = "BASE_ACTION";
     String DEPENDENT = "DEPENDENT_ACTION";
 
-    KeymapManagerEx.getInstanceEx().bindShortcuts(BASE, DEPENDENT);
+    ActionManagerEx.getInstanceEx().bindShortcuts(BASE, DEPENDENT);
     try {
       assertSameElements(myParent.getShortcuts(BASE));
       assertSameElements(myParent.getShortcuts(DEPENDENT));
@@ -594,7 +594,7 @@ public class KeymapTest extends LightPlatformTestCase {
       assertFalse(myChild.hasOwnActionId(DEPENDENT));
     }
     finally {
-      KeymapManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT);
+      ActionManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT);
     }
   }
 
@@ -605,7 +605,7 @@ public class KeymapTest extends LightPlatformTestCase {
     String BASE = "BASE_ACTION";
     String DEPENDENT = "DEPENDENT_ACTION";
 
-    KeymapManagerEx.getInstanceEx().bindShortcuts(BASE, DEPENDENT);
+    ActionManagerEx.getInstanceEx().bindShortcuts(BASE, DEPENDENT);
     try {
       assertSameElements(myParent.getShortcuts(BASE));
       assertSameElements(myParent.getShortcuts(DEPENDENT));
@@ -673,7 +673,7 @@ public class KeymapTest extends LightPlatformTestCase {
       assertFalse(myChild.hasOwnActionId(DEPENDENT));
     }
     finally {
-      KeymapManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT);
+      ActionManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT);
     }
   }
 
@@ -686,7 +686,7 @@ public class KeymapTest extends LightPlatformTestCase {
     String BASE = "BASE_ACTION";
     String DEPENDENT = "DEPENDENT_ACTION";
 
-    KeymapManagerEx.getInstanceEx().bindShortcuts(BASE, DEPENDENT);
+    ActionManagerEx.getInstanceEx().bindShortcuts(BASE, DEPENDENT);
     try {
       // parent:
       //  BASE -> shortcut1  <-- change is here
@@ -855,7 +855,7 @@ public class KeymapTest extends LightPlatformTestCase {
       assertFalse(myGrandChild.hasOwnActionId(DEPENDENT));
     }
     finally {
-      KeymapManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT);
+      ActionManagerEx.getInstanceEx().unbindShortcuts(DEPENDENT);
     }
   }
   

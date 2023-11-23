@@ -47,15 +47,4 @@ public abstract class KeymapManager {
    */
   @Deprecated(forRemoval = true)
   public abstract void removeKeymapManagerListener(@NotNull KeymapManagerListener listener);
-
-  /**
-   * Instructs the manager that one action should use shortcut of another one ({@code 'use-shortcut-of'} attribute at
-   * action's config located at plugin.xml).
-   *
-   * @param sourceActionId if of the action which shortcut should be used for the 'target action'
-   * @param targetActionId id of the action which should use shortcut of the 'source action'
-   */
-  public abstract void bindShortcuts(@NotNull String sourceActionId, @NotNull String targetActionId);
-
-  public abstract void unbindShortcuts(String targetActionId);
 }

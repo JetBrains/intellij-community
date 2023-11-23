@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -72,7 +73,8 @@ final class KeymapGenerator implements ApplicationStarter {
     xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n").append("<Keymaps>\n");
 
     KeymapManagerEx keyManager = KeymapManagerEx.getInstanceEx();
-    Set<String> boundActions = keyManager.getBoundActions();
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+    Set<String> boundActions = actionManager.getBoundActions();
 
     for (Keymap keymap : keyManager.getAllKeymaps()) {
       xml.append(LEVELS[0]).append("<Keymap name=\"").append(keymap.getPresentableName()).append("\">\n");
@@ -85,7 +87,7 @@ final class KeymapGenerator implements ApplicationStarter {
 
       //We need to inject bound actions under their real names in every keymap that doesn't already have them.
       boundActions.forEach(id -> {
-        final String binding = keyManager.getActionBinding(id);
+        final String binding = actionManager.getActionBinding(id);
         if (binding != null && !alreadyMapped.contains(id)) {
           renderAction(binding, id, keymap.getShortcuts(binding), xml);
         }
