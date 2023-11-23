@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -58,6 +59,8 @@ public final class SettingsEntryPointAction extends DumbAwareAction
     IconManager.getInstance().withIconBadge(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.NEW_UI);
   private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
   private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
+
+  private static final Logger LOG = Logger.getInstance(SettingsEntryPointAction.class);
 
   public SettingsEntryPointAction() {
     super(IdeBundle.messagePointer("settings.entry.point.tooltip"));
@@ -116,17 +119,22 @@ public final class SettingsEntryPointAction extends DumbAwareAction
     List<AnAction> pluginActions = new ArrayList<>();
 
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
-      for (UpdateAction action : provider.getUpdateActions(context)) {
-        Presentation presentation = action.getTemplatePresentation();
-        if (action.isIdeUpdate()) {
-          presentation.setIcon(AllIcons.Ide.Notification.IdeUpdate);
-          appActions.add(action);
+      try {
+        for (UpdateAction action : provider.getUpdateActions(context)) {
+          Presentation presentation = action.getTemplatePresentation();
+          if (action.isIdeUpdate()) {
+            presentation.setIcon(AllIcons.Ide.Notification.IdeUpdate);
+            appActions.add(action);
+          }
+          else {
+            presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
+            pluginActions.add(action);
+          }
+          action.markAsRead();
         }
-        else {
-          presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
-          pluginActions.add(action);
-        }
-        action.markAsRead();
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
 
@@ -169,8 +177,13 @@ public final class SettingsEntryPointAction extends DumbAwareAction
       int count = group.getChildrenCount();
 
       for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
-        for (AnAction action : provider.getLastActions(context)) {
-          group.add(action);
+        try {
+          for (AnAction action : provider.getLastActions(context)) {
+            group.add(action);
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
 
@@ -278,18 +291,23 @@ public final class SettingsEntryPointAction extends DumbAwareAction
 
     loop:
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
-      for (UpdateAction action : provider.getUpdateActions(DataContext.EMPTY_CONTEXT)) {
-        if (action.isNewAction()) {
-          if (action.isIdeUpdate()) {
-            ourShowPlatformUpdateIcon = true;
-          }
-          else {
-            ourShowPluginsUpdateIcon = true;
-          }
-          if (ourShowPlatformUpdateIcon && ourShowPluginsUpdateIcon) {
-            break loop;
+      try {
+        for (UpdateAction action : provider.getUpdateActions(DataContext.EMPTY_CONTEXT)) {
+          if (action.isNewAction()) {
+            if (action.isIdeUpdate()) {
+              ourShowPlatformUpdateIcon = true;
+            }
+            else {
+              ourShowPluginsUpdateIcon = true;
+            }
+            if (ourShowPlatformUpdateIcon && ourShowPluginsUpdateIcon) {
+              break loop;
+            }
           }
         }
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
 
@@ -306,9 +324,14 @@ public final class SettingsEntryPointAction extends DumbAwareAction
     boolean updates = ourShowPlatformUpdateIcon || ourShowPluginsUpdateIcon;
     if (!updates) {
       for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
-        if (!provider.getUpdateActions(DataContext.EMPTY_CONTEXT).isEmpty()) {
-          updates = true;
-          break;
+        try {
+          if (!provider.getUpdateActions(DataContext.EMPTY_CONTEXT).isEmpty()) {
+            updates = true;
+            break;
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
     }
@@ -412,17 +435,27 @@ public final class SettingsEntryPointAction extends DumbAwareAction
 
   private static @NotNull Icon getCustomizedIcon(@NotNull BadgeIconSupplier supplier) {
     for (IconCustomizer customizer : IconCustomizer.EP_NAME.getExtensionList()) {
-      Icon icon = customizer.getCustomIcon(supplier);
-      if (icon != null) return icon;
+      try {
+        Icon icon = customizer.getCustomIcon(supplier);
+        if (icon != null) return icon;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
     return supplier.getOriginalIcon();
   }
 
   private static @Nullable Icon getSecondIcon() {
     for (IconCustomizer customizer : IconCustomizer.EP_NAME.getExtensionList()) {
-      Icon icon = customizer.getSecondIcon();
-      if (icon != null) {
-        return icon;
+      try {
+        Icon icon = customizer.getSecondIcon();
+        if (icon != null) {
+          return icon;
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
     return null;
