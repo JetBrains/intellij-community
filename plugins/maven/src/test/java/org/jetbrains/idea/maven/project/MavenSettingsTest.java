@@ -154,7 +154,7 @@ public class MavenSettingsTest extends MavenTestCase {
     try {
       MavenWorkspaceSettingsComponent workspaceSettingsComponent = new MavenWorkspaceSettingsComponent(myProject);
       Element workspaceSettingsElement = JDOMUtil.load(rawWorkspaceSettingsComponent);
-      MavenWorkspaceSettings workspaceSettings = deserializeState(workspaceSettingsElement, MavenWorkspaceSettings.class, null);
+      MavenWorkspacePersistedSettings workspaceSettings = deserializeState(workspaceSettingsElement, MavenWorkspacePersistedSettings.class, null);
       workspaceSettingsComponent.loadState(workspaceSettings);
       return workspaceSettingsComponent;
     }
@@ -176,7 +176,7 @@ public class MavenSettingsTest extends MavenTestCase {
 
   private static String storeWorkspaceComponent(MavenWorkspaceSettingsComponent workspaceSettingsComponent) {
     try {
-      MavenWorkspaceSettings workspaceSettings = workspaceSettingsComponent.getState();
+      MavenWorkspacePersistedSettings workspaceSettings = workspaceSettingsComponent.getState();
       JdomSerializer jdomSerializer = XmlSerializer.getJdomSerializer();
       SkipDefaultsSerializationFilter serializationFilter = jdomSerializer.getDefaultSerializationFilter();
       Element workspaceSettingsElement = jdomSerializer.serialize(workspaceSettings, serializationFilter, true);

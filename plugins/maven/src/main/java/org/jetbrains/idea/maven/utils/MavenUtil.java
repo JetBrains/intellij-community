@@ -612,10 +612,15 @@ public class MavenUtil {
     return handler;
   }
 
+  /**
+   * @deprecated do not use this method, it mixes path to maven home and labels like "Use bundled maven"
+   * use {@link MavenUtil#getMavenHomeFile(org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType) getMavenHomeFile(StaticResolvedMavenHomeType} instead
+   */
   @Nullable
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
     if (!isEmptyOrSpaces(overrideMavenHome)) {
+      //noinspection HardCodedStringLiteral
       return MavenUtil.getMavenHomeFile(staticOrBundled(resolveMavenHomeType(overrideMavenHome)));
     }
 
@@ -910,6 +915,11 @@ public class MavenUtil {
     return new File(SystemProperties.getUserHome(), DOT_M2_DIR);
   }
 
+  /**
+   * @deprecated do not use this method, it mixes path to maven home and labels like "Use bundled maven" in overriddenMavenHome variable
+   * use {@link MavenUtil#resolveLocalRepository(String, StaticResolvedMavenHomeType, String) resolveLocalRepository(String, StaticResolvedMavenHomeType, String)}
+   * or {@link MavenUtil#resolveDefaultLocalRepository() resolveDefaultLocalRepository()} instead
+   */
   @NotNull
   @Deprecated(forRemoval = true)
   public static File resolveLocalRepository(@Nullable String overriddenLocalRepository,

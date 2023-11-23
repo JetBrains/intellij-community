@@ -10,20 +10,21 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 
+
 @State(name = "MavenImportPreferences", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@SuppressWarnings("LightServiceMigrationCode")
 // must be not a light service,
 // because SystemFileProcessor uses ComponentManagerEx.getServiceByClassName API to get instance of this service
-public final class MavenWorkspaceSettingsComponent implements PersistentStateComponent<MavenWorkspaceSettings> {
-  private MavenWorkspaceSettings mySettings;
+public final class MavenWorkspaceSettingsComponent implements PersistentStateComponent<MavenWorkspacePersistedSettings> {
+  private MavenWorkspacePersistedSettings mySettings;
 
   private final Project myProject;
 
   public MavenWorkspaceSettingsComponent(@NotNull Project project) {
     myProject = project;
-    mySettings = new MavenWorkspaceSettings();
+    mySettings = new MavenWorkspacePersistedSettings(new MavenWorkspaceSettings());
     mySettings.getGeneralSettings().setProject(project);
-    applyDefaults(mySettings);
-
+    applyDefaults(mySettings.getRealSettings());
   }
 
   public static MavenWorkspaceSettingsComponent getInstance(@NotNull Project project) {
@@ -32,7 +33,7 @@ public final class MavenWorkspaceSettingsComponent implements PersistentStateCom
 
   @Override
   @NotNull
-  public MavenWorkspaceSettings getState() {
+  public MavenWorkspacePersistedSettings getState() {
     MavenExplicitProfiles profiles = MavenProjectsManager.getInstance(myProject).getExplicitProfiles();
     mySettings.setEnabledProfiles(profiles.getEnabledProfiles());
     mySettings.setDisabledProfiles(profiles.getDisabledProfiles());
@@ -40,21 +41,21 @@ public final class MavenWorkspaceSettingsComponent implements PersistentStateCom
   }
 
   @Override
-  public void loadState(@NotNull MavenWorkspaceSettings state) {
+  public void loadState(@NotNull MavenWorkspacePersistedSettings state) {
     mySettings = state;
-    applyDefaults(mySettings);
-    migrateSettings(mySettings);
+    applyDefaults(mySettings.getRealSettings());
+    migrateSettings(mySettings.getRealSettings());
   }
 
   public MavenWorkspaceSettings getSettings() {
-    return mySettings;
+    return mySettings.getRealSettings();
   }
 
   private void applyDefaults(MavenWorkspaceSettings settings) {
     settings.getGeneralSettings().setProject(myProject);
   }
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings("removal")
   private void migrateSettings(MavenWorkspaceSettings settings) {
     MavenImportingSettings importingSettings = settings.getImportingSettings();
     if (importingSettings.isImportAutomatically()) {
