@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
@@ -47,7 +46,7 @@ internal object UpdateInstaller {
       val to = chain[i]
       val patchFile = getTempDir().resolve("patch-${from.withoutProductCode().asString()}-${to.withoutProductCode().asString()}.jar")
       val url = ExternalProductResourceUrls.getInstance().computePatchUrl(from, to)
-                ?: error("Metadata contains information about patch '$from' -> '$to', but 'computePatchUrl' returns 'null'")
+                ?: error("Metadata contains information about patch '${from}' -> '${to}', but 'computePatchUrl' returns 'null'")
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
         override fun setFraction(fraction: Double) {
           super.setFraction((i - 1) * share + fraction / share)
@@ -120,10 +119,7 @@ internal object UpdateInstaller {
   }
 
   fun cleanupPatch() {
-    val tempDir = getTempDir()
-    if (Files.exists(tempDir)) {
-      NioFiles.deleteRecursively(tempDir)
-    }
+    NioFiles.deleteRecursively(getTempDir())
   }
 
   @JvmStatic
@@ -132,34 +128,31 @@ internal object UpdateInstaller {
     indicator.text = IdeBundle.message("update.preparing.patch.progress")
 
     val tempDir = getTempDir()
-    if (FileUtil.isAncestor(PathManager.getHomePath(), tempDir.toString(), true)) {
-      throw IOException("Temp directory inside installation: $tempDir")
+    if (PathManager.isUnderHomeDirectory(tempDir)) {
+      throw IOException("Temp directory inside installation: ${tempDir}")
     }
     Files.createDirectories(tempDir)
 
-    var java = System.getProperty("java.home")
-    if (PathManager.isUnderHomeDirectory(Path.of(java))) {
+    var java = Path.of(System.getProperty("java.home"))
+    if (PathManager.isUnderHomeDirectory(java)) {
       val javaCopy = tempDir.resolve("jre")
-      if (Files.exists(javaCopy)) {
-        NioFiles.deleteRecursively(javaCopy)
-      }
-      FileUtil.copyDir(File(java), javaCopy.toFile())
+      NioFiles.deleteRecursively(javaCopy)
+      FileUtil.copyDir(java.toFile(), javaCopy.toFile())
 
-      val jnf = File(java, "../Frameworks/JavaNativeFoundation.framework")
-      if (jnf.isDirectory) {
+      val jnf = java.resolve("../Frameworks/JavaNativeFoundation.framework")
+      if (Files.isDirectory(jnf)) {
         val jnfCopy = tempDir.resolve("Frameworks/JavaNativeFoundation.framework")
-        if (Files.exists(jnfCopy)) {
-          NioFiles.deleteRecursively(jnfCopy)
-        }
-        FileUtil.copyDir(jnf, jnfCopy.toFile())
+        NioFiles.deleteRecursively(jnfCopy)
+        FileUtil.copyDir(jnf.toFile(), jnfCopy.toFile())
       }
 
-      java = javaCopy.toString()
+      java = javaCopy
     }
 
     val args = mutableListOf<String>()
+    val ideHome = PathManager.getHomePath()
 
-    if (SystemInfoRt.isWindows && !Files.isWritable(Path.of(PathManager.getHomePath()))) {
+    if (SystemInfo.isWindows && !Files.isWritable(Path.of(ideHome))) {
       val launcher = PathManager.findBinFile("launcher.exe")
       val elevator = PathManager.findBinFile("elevator.exe")  // "launcher" depends on "elevator"
       if (launcher != null && elevator != null) {
@@ -168,16 +161,16 @@ internal object UpdateInstaller {
       }
     }
 
-    args += File(java, if (SystemInfo.isWindows) "bin\\java.exe" else "bin/java").path
+    args += java.resolve(if (SystemInfo.isWindows) "bin\\java.exe" else "bin/java").toString()
     args += "-Xmx${2000}m"
     args += "-cp"
-    args += patchFiles.last().normalize().toAbsolutePath().toString()
+    args += patchFiles.last().toString()
 
     args += "-Djna.nosys=true"
     args += "-Djna.boot.library.path="
     args += "-Djna.debug_load=true"
     args += "-Djna.debug_load.jna=true"
-    args += "-Djava.io.tmpdir=$tempDir"
+    args += "-Djava.io.tmpdir=${tempDir}"
     args += "-Didea.updater.log=${PathManager.getLogPath()}"
     args += "-Dswing.defaultlaf=${UIManager.getSystemLookAndFeelClassName()}"
     args += "-Duser.language=${DynamicBundle.getLocale().language}"
@@ -185,7 +178,7 @@ internal object UpdateInstaller {
 
     args += UPDATER_MAIN_CLASS
     args += if (patchFiles.size == 1) "install" else "batch-install"
-    args += PathManager.getHomePath()
+    args += ideHome
     if (patchFiles.size > 1) {
       args += patchFiles.joinToString(File.pathSeparator)
     }
