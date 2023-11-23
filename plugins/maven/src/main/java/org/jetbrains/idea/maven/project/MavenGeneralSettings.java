@@ -163,6 +163,7 @@ public class MavenGeneralSettings implements Cloneable {
   @Nullable
   @Deprecated(forRemoval = true)
   @ApiStatus.ScheduledForRemoval
+  //to be removed in IDEA-338870
   public String getMavenHome() {
     if (myForPersistence) {
       return DEFAULT_MAVEN.getTitle(); //avoid saving data for this deprecated field
@@ -177,6 +178,7 @@ public class MavenGeneralSettings implements Cloneable {
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.ScheduledForRemoval
+  //to be removed in IDEA-338870
   public void setMavenHome(@NotNull final String mavenHome) {
     //noinspection HardCodedStringLiteral
     setMavenHome(resolveMavenHomeType(mavenHome), true);
