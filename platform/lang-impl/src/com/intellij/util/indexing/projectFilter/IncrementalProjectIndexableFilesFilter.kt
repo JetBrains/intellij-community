@@ -7,9 +7,7 @@ import com.intellij.util.indexing.IdFilter
 import java.util.concurrent.atomic.AtomicReference
 
 internal class IncrementalProjectIndexableFilesFilter : IdFilter() {
-  @Volatile
-  private var fileIds: ConcurrentBitSet = ConcurrentBitSet.create()
-  private var previousFileIds: ConcurrentBitSet? = null
+  private val fileIds: ConcurrentBitSet = ConcurrentBitSet.create()
   private val parallelUpdatesCounter = AtomicVersionedCounter()
 
   override fun getFilteringScopeType(): FilterScopeType = FilterScopeType.PROJECT_AND_LIBRARIES
@@ -17,20 +15,19 @@ internal class IncrementalProjectIndexableFilesFilter : IdFilter() {
   override fun containsFileId(fileId: Int): Boolean = fileIds.get(fileId)
 
   @Suppress("LocalVariableName")
-  fun ensureFileIdPresent(fileId: Int, add: () -> Boolean): FileAddStatus {
+  fun ensureFileIdPresent(fileId: Int, add: () -> Boolean): Boolean {
     assert(fileId > 0)
 
     return runUpdate {
       val _fileIds = fileIds
       if (_fileIds.get(fileId)) {
-        FileAddStatus.PRESENT
+        true
       }
       else if (add()) {
         _fileIds.set(fileId)
-        val _previousFileIds = previousFileIds
-        if (_previousFileIds == null || !_previousFileIds.get(fileId)) FileAddStatus.ADDED else FileAddStatus.PRESENT
+        true
       }
-      else FileAddStatus.SKIPPED
+      else false
     }
   }
 
@@ -41,19 +38,8 @@ internal class IncrementalProjectIndexableFilesFilter : IdFilter() {
     }
   }
 
-  fun memoizeAndResetFileIds() {
-    // called in sequential UnindexedFileUpdater tasks
-    runUpdate {
-      previousFileIds = fileIds
-      fileIds = ConcurrentBitSet.create()
-    }
-  }
-
-  fun resetPreviousFileIds() {
-    // called in sequential UnindexedFileUpdater tasks
-    runUpdate {
-      previousFileIds = null
-    }
+  fun resetFileIds() {
+    fileIds.clear()
   }
 
   private fun <T> runUpdate(action: () -> T): T {

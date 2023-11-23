@@ -551,7 +551,6 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     }
     finally {
       ProjectScanningHistoryImpl.Companion.finishDumbModeBeginningTracking(myProject);
-      myIndex.filesUpdateFinished(myProject);
       if (DependenciesIndexedStatusService.shouldBeUsed() && IndexInfrastructure.hasIndices()) {
         DependenciesIndexedStatusService.getInstance(myProject)
           .indexingFinished(!scanningHistory.getTimes().getWasInterrupted(), markRef.get());

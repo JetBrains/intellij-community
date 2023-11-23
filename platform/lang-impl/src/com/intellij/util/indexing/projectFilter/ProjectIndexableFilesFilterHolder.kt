@@ -25,13 +25,14 @@ internal enum class FileAddStatus {
 internal sealed class ProjectIndexableFilesFilterHolder {
   abstract fun getProjectIndexableFiles(project: Project): IdFilter?
 
-  abstract fun addFileId(fileId: Int, projects: () -> Set<Project>): FileAddStatus
+  /**
+   * @returns true if fileId already contained in or was added to one of project filters
+   */
+  abstract fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): Boolean
 
-  abstract fun addFileId(fileId: Int, project: Project): FileAddStatus
+  abstract fun addFileId(fileId: Int, project: Project)
 
   abstract fun entireProjectUpdateStarted(project: Project)
-
-  abstract fun entireProjectUpdateFinished(project: Project)
 
   abstract fun removeFile(fileId: Int)
 
@@ -61,20 +62,14 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   override fun entireProjectUpdateStarted(project: Project) {
     assert(UnindexedFilesUpdater.isIndexUpdateInProgress(project))
 
-    getFilter(project)?.memoizeAndResetFileIds()
-  }
-
-  override fun entireProjectUpdateFinished(project: Project) {
-    assert(UnindexedFilesUpdater.isIndexUpdateInProgress(project))
-
-    getFilter(project)?.resetPreviousFileIds()
+    getFilter(project)?.resetFileIds()
   }
 
   private fun getFilter(project: Project) = myProjectFilters.computeIfAbsent(project) {
     if (it.isDisposed) null else IncrementalProjectIndexableFilesFilter()
   }
 
-  override fun addFileId(fileId: Int, projects: () -> Set<Project>): FileAddStatus {
+  override fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): Boolean {
     val matchedProjects by lazy(LazyThreadSafetyMode.NONE) { projects() }
     val statuses = myProjectFilters.map { (p, filter) ->
       filter.ensureFileIdPresent(fileId) {
@@ -82,13 +77,11 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
       }
     }
 
-    if (statuses.all { it == FileAddStatus.SKIPPED }) return FileAddStatus.SKIPPED
-    if (statuses.any { it == FileAddStatus.ADDED }) return FileAddStatus.ADDED
-    return FileAddStatus.PRESENT
+    return statuses.any { it }
   }
 
-  override fun addFileId(fileId: Int, project: Project): FileAddStatus {
-    return myProjectFilters[project]?.ensureFileIdPresent(fileId) { true } ?: FileAddStatus.SKIPPED
+  override fun addFileId(fileId: Int, project: Project) {
+    myProjectFilters[project]?.ensureFileIdPresent(fileId) { true }
   }
 
   override fun removeFile(fileId: Int) {

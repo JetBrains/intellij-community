@@ -20,7 +20,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
 import com.intellij.util.indexing.dependencies.ScanningRequestToken;
-import com.intellij.util.indexing.projectFilter.FileAddStatus;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -189,24 +188,22 @@ final class UnindexedFilesFinder {
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, fileType, myProject);
       int inputId = FileBasedIndex.getFileId(file);
-      boolean fileWereJustAdded = myIndexableFilesFilterHolder.addFileId(inputId, myProject) == FileAddStatus.ADDED;
+      myIndexableFilesFilterHolder.addFileId(inputId, myProject);
 
       if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
         boolean wasInvalidated = false;
-        if (fileWereJustAdded) {
-          List<ID<?, ?>> ids = IndexingStamp.getNontrivialFileIndexedStates(inputId);
-          for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
-            for (ID<?, ?> id : ids) {
-              if (myFileBasedIndex.needsFileContentLoading(id)) {
-                long nowTime = System.nanoTime();
-                try {
-                  if (!processor.processUpToDateFile(indexedFile, inputId, id)) {
-                    wasInvalidated = true;
-                  }
+        List<ID<?, ?>> ids = IndexingStamp.getNontrivialFileIndexedStates(inputId);
+        for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
+          for (ID<?, ?> id : ids) {
+            if (myFileBasedIndex.needsFileContentLoading(id)) {
+              long nowTime = System.nanoTime();
+              try {
+                if (!processor.processUpToDateFile(indexedFile, inputId, id)) {
+                  wasInvalidated = true;
                 }
-                finally {
-                  fileStatusBuilder.timeProcessingUpToDateFiles += (System.nanoTime() - nowTime);
-                }
+              }
+              finally {
+                fileStatusBuilder.timeProcessingUpToDateFiles += (System.nanoTime() - nowTime);
               }
             }
           }
