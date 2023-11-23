@@ -8,7 +8,7 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Set;
 
 public class ConvertInterfaceToClassTest extends IPPTestCase {
   public void testBasic() { doTest(); }
@@ -20,14 +20,24 @@ public class ConvertInterfaceToClassTest extends IPPTestCase {
 
   public void testFunctionalExpressions() {
     UiInterceptors.register(new ConflictInterceptor(
-      List.of("() -> {...} in Test will not compile after converting interface <b><code>FunctionalExpressions</code></b> to a class")));
+      Set.of("() -> {...} in Test will not compile after converting interface <b><code>FunctionalExpressions</code></b> to a class")));
     doTest();
   }
 
   public void testExtendsConflict() {
     UiInterceptors.register(new ConflictInterceptor(
-      List.of("class <b><code>AaaImpl</code></b> implementing interface <b><code>Aaa</code></b> already extends class " +
+      Set.of("class <b><code>AaaImpl</code></b> implementing interface <b><code>Aaa</code></b> already extends class " +
               "<b><code>Bbb</code></b> and will not compile after converting interface <b><code>Aaa</code></b> to a class")));
+    doTest();
+  }
+
+  public void testInheritorWarnings() {
+    UiInterceptors.register(new ConflictInterceptor(
+      Set.of(
+        "() -> {...} in x() in InheritorWarnings.AX will not compile after converting interface <b><code>InheritorWarnings.Something</code></b> to a class",
+        "enum <b><code>InheritorWarnings.SomethingEnum</code></b> implementing interface <b><code>InheritorWarnings.Something</code></b> will not compile after converting interface <b><code>InheritorWarnings.Something</code></b> to a class",
+        "interface <b><code>InheritorWarnings.SomethingSub</code></b> implementing interface <b><code>InheritorWarnings.Something</code></b> will not compile after converting interface <b><code>InheritorWarnings.Something</code></b> to a class"
+      )));
     doTest();
   }
 

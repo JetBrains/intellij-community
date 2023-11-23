@@ -4,7 +4,7 @@ package com.intellij.ui;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
@@ -12,12 +12,12 @@ import static org.junit.Assert.assertEquals;
  * An interceptor that expects a conflict dialog. An interceptor assumes that "Continue" button will be pressed
  */
 public class ConflictInterceptor extends UiInterceptors.UiInterceptor<ConflictsDialog> {
-  private final List<String> myConflicts;
+  private final Set<String> myConflicts;
 
   /**
    * @param expectedConflicts list of expected conflicts
    */
-  public ConflictInterceptor(List<String> expectedConflicts) {
+  public ConflictInterceptor(Set<String> expectedConflicts) {
     super(ConflictsDialog.class);
     myConflicts = expectedConflicts;
   }
