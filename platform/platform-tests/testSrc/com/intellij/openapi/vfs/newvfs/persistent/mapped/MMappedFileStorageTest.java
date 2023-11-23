@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.mapped;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorage.Page;
+import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -258,5 +259,28 @@ public class MMappedFileStorageTest {
     }
 
     storage.fsync();
+  }
+
+  @Test
+  public void mappedStorageFailsOpenStorage_IfStorageParentDirectoryNotExist(@TempDir Path tempDir) {
+    Path nonExistentDir = tempDir.resolve("subdir");
+    Path storagePath = nonExistentDir.resolve("storage.file").toAbsolutePath();
+    try {
+      var storage = new MMappedFileStorage(storagePath, PAGE_SIZE);
+      storage.closeAndClean();
+      fail("Storage must fail to open file in non-existing directory");
+    }
+    catch (IOException e) {
+      //ok
+    }
+  }
+
+  @Test
+  public void mappedStorage_Factory_CreatesParentDirectoryIfNotExist(@TempDir Path tempDir) throws IOException {
+    Path nonExistentDir = tempDir.resolve("subdir");
+    Path storagePath = nonExistentDir.resolve("storage.file").toAbsolutePath();
+    try (var storage = MMappedFileStorageFactory.withDefaults().open(storagePath)) {
+      storage.closeAndClean();
+    }
   }
 }
