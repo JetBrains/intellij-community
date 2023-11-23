@@ -106,7 +106,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
     myProgressIndicator = new MavenProgressIndicator(myProject, new EmptyProgressIndicator(ModalityState.nonModal()), null);
 
-    MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspaceSettings());
+    MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspacePersistedSettings());
 
     String home = getTestMavenHome();
     if (home != null) {
