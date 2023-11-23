@@ -28,16 +28,13 @@ import com.intellij.openapi.wm.WindowManager
 /** Wraps intentions in [IntentionActionAsAction] to make it possible to assign shortcuts to them */
 @Service(Service.Level.APP)
 class IntentionShortcutManager : Disposable {
-
   private var registeredKeymap: Keymap? = null
 
   /** Check if intention has a shortcut assigned */
-  fun hasShortcut(intention: IntentionAction): Boolean =
-    getShortcutSet(intention)?.shortcuts?.isNotEmpty() == true
+  fun hasShortcut(intention: IntentionAction): Boolean = getShortcutSet(intention)?.shortcuts?.isNotEmpty() == true
 
   /** Get possible shortcuts assigned to intention */
-  fun getShortcutSet(intention: IntentionAction): ShortcutSet? =
-    ActionManager.getInstance().findIntentionWrapper(intention)?.shortcutSet
+  fun getShortcutSet(intention: IntentionAction): ShortcutSet? = ActionManager.getInstance().findIntentionWrapper(intention)?.shortcutSet
 
   /** Remove the first shortcuts assigned to intention and unregister the wrapping [IntentionActionAsAction] if no shortcuts remain */
   fun removeFirstIntentionShortcut(intention: IntentionAction) {
@@ -54,7 +51,6 @@ class IntentionShortcutManager : Disposable {
 
   /** Show the keyboard shortcut panel to assign a shortcut */
   fun promptForIntentionShortcut(intention: IntentionAction, project: Project) {
-
     ActionManager.getInstance().register(intention)
 
     val km = KeymapManager.getInstance()
@@ -78,11 +74,11 @@ class IntentionShortcutManager : Disposable {
     unregisterAction(intention.wrappedActionId)
   }
 
-  private fun ActionManager.findIntentionWrapper(intention: IntentionAction): AnAction? =
-    getAction(intention.wrappedActionId)
+  private fun ActionManager.findIntentionWrapper(intention: IntentionAction): AnAction? = getAction(intention.wrappedActionId)
 
-  internal fun findIntention(wrappedActionId: String): IntentionAction? =
-    IntentionManager.getInstance().availableIntentions.firstOrNull { it.wrappedActionId == wrappedActionId }
+  internal fun findIntention(wrappedActionId: String): IntentionAction? {
+    return IntentionManager.getInstance().availableIntentions.firstOrNull { it.wrappedActionId == wrappedActionId }
+  }
 
   /** Register all intentions with shortcuts and keep them up to date */
   private fun registerIntentionsInActiveKeymap(actionManager: ActionManager) {
@@ -102,33 +98,39 @@ class IntentionShortcutManager : Disposable {
       }
 
       override fun extensionRemoved(extension: IntentionActionBean, pluginDescriptor: PluginDescriptor) {
-        actionManager.unregisterIntentionsInExtension(extension)
+        unregisterIntentionsInExtension(actionManager, extension)
       }
     }, this)
   }
 
   private fun ActionManager.registerIntentionsInKeymap(keymap: Keymap?) {
-    keymap?.wrappedIntentionActions()?.forEach { register(it) }
+    keymap?.let {
+      for (action in wrappedIntentionActions(keymap)) {
+        register(action)
+      }
+    }
     registeredKeymap = keymap
   }
 
   private fun ActionManager.unregisterIntentionsInKeymap() {
-    registeredKeymap?.wrappedIntentionActions()?.forEach { unregister(it) }
+    for (it in wrappedIntentionActions(registeredKeymap ?: return)) {
+      unregister(it)
+    }
     registeredKeymap = null
   }
 
-  private fun ActionManager.unregisterIntentionsInExtension(extension: IntentionActionBean) {
-    registeredKeymap?.wrappedIntentionActions()?.forEach { intention ->
+  private fun unregisterIntentionsInExtension(actionManager: ActionManager, extension: IntentionActionBean) {
+    for (intention in wrappedIntentionActions(registeredKeymap ?: return)) {
       if (intention is IntentionActionWrapper && intention.implementationClassName == extension.className) {
-        unregister(intention)
+        actionManager.unregister(intention)
       }
     }
   }
 
   /** Collect all intentions with assigned shortcuts in a keymap */
-  private fun Keymap.wrappedIntentionActions(): Sequence<IntentionAction> {
+  private fun wrappedIntentionActions(keymap: Keymap): Sequence<IntentionAction> {
     val intentionsById = IntentionManager.getInstance().intentionActions.associateBy { it.wrappedActionId }
-    return actionIdList
+    return keymap.actionIdList
       .asSequence()
       .filter { it.startsWith(WRAPPER_PREFIX) }
       .mapNotNull { intentionsById[it] }
@@ -136,7 +138,7 @@ class IntentionShortcutManager : Disposable {
 
   override fun dispose() {}
 
-  class InitListener : ActionConfigurationCustomizer {
+  internal class InitListener : ActionConfigurationCustomizer {
     override fun customize(actionManager: ActionManager) {
       getInstance().registerIntentionsInActiveKeymap(actionManager)
     }
