@@ -51,8 +51,8 @@ public interface Keymap extends Scheme {
   Shortcut @NotNull [] getShortcuts(@Nullable String actionId);
 
   /**
-   * @return all actions including parent keymap that have the specified first keystroke. If there are no
-   * such actions then the method returns an empty array.
+   * @return all actions including parent keymap that have the specified first keystroke.
+   * If there are no such actions, then the method returns an empty array.
    */
   @NotNull String @NotNull [] getActionIds(@NotNull KeyStroke firstKeyStroke);
 
@@ -62,7 +62,13 @@ public interface Keymap extends Scheme {
    */
   String[] getActionIds(@NotNull KeyStroke firstKeyStroke, @Nullable KeyStroke secondKeyStroke);
 
+  /**
+   * @deprecated Use {@link #getActionIdList(Shortcut)}
+   */
+  @Deprecated
   @NotNull String @NotNull [] getActionIds(@NotNull Shortcut shortcut);
+
+  @NotNull List<String> getActionIdList(@NotNull Shortcut shortcut);
 
   /**
    * @return all actions with specified mouse shortcut.

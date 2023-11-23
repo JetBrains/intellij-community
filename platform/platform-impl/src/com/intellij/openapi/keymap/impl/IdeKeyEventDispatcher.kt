@@ -658,7 +658,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     val app = ApplicationManager.getApplication()
     val keymapManager = KeymapManager.getInstance()
     val keymap = keymapManager?.activeKeymap
-    val actionIds = keymap?.getActionIds(shortcut)?.takeIf { it.isNotEmpty() } ?: return
+    val actionIds = keymap?.getActionIdList(shortcut)?.takeIf { it.isNotEmpty() } ?: return
     val actionManager = app.getServiceIfCreated(ActionManager::class.java) ?: return
     for (actionId in actionIds) {
       val action = actionManager.getAction(actionId)

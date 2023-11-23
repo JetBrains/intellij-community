@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.openapi.keymap.impl
 
@@ -279,6 +279,10 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   override fun getActionIds(firstKeyStroke: KeyStroke, secondKeyStroke: KeyStroke?): Array<String> {
+    return ArrayUtilRt.toStringArray(getActionIdList())
+  }
+
+  private fun getActionIdList(firstKeyStroke: KeyStroke, secondKeyStroke: KeyStroke?): List<String> {
     val ids = getActionIds(firstKeyStroke)
     var actualBindings: MutableList<String>? = null
     for (id in ids) {
@@ -296,19 +300,29 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         }
       }
     }
-    return ArrayUtilRt.toStringArray(actualBindings)
+    return actualBindings ?: java.util.List.of()
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun getActionIds(shortcut: Shortcut): Array<String> {
+    return ArrayUtilRt.toStringArray(getActionIdList(shortcut))
+  }
+
+  override fun getActionIdList(shortcut: Shortcut): List<String> {
     return when (shortcut) {
       is KeyboardShortcut -> {
         val first = shortcut.firstKeyStroke
         val second = shortcut.secondKeyStroke
-        if (second == null) getActionIds(first) else getActionIds(first, second)
+        if (second == null) {
+          getActionIds(shortcut = first, shortcutToActionIds = { it.keystrokeToActionIds }, convertShortcut = KeymapImpl::convertKeyStroke)
+        }
+        else {
+          getActionIdList(first, second)
+        }
       }
-      is MouseShortcut -> ArrayUtilRt.toStringArray(getActionIds(shortcut))
-      is KeyboardModifierGestureShortcut -> ArrayUtilRt.toStringArray(getActionIds(shortcut))
-      else -> ArrayUtilRt.EMPTY_STRING_ARRAY
+      is MouseShortcut -> getActionIds(shortcut)
+      is KeyboardModifierGestureShortcut -> getActionIds(shortcut)
+      else -> java.util.List.of()
     }
   }
 

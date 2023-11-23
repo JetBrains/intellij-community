@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.keymap;
 
 import com.intellij.execution.ExecutorRegistry;
@@ -417,7 +417,7 @@ public abstract class KeymapsTestCaseBase {
                                       String.format("Invalid shortcut '%s' for action(s) %s in keymap '%s' " +
                                                     "(Ctrl-Alt-Fn shortcuts switch Linux virtual terminals (causes newbie panic), " +
                                                     "so either assign another shortcut, or remove it; see Keymap_XWin.xml for reference).",
-                                                    shortcut, List.of(keymap.getActionIds(shortcut)), keymap.getName())));
+                                                    shortcut, keymap.getActionIdList(shortcut), keymap.getName())));
       }
     }
   }

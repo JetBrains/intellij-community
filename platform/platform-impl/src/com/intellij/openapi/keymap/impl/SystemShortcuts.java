@@ -200,8 +200,8 @@ public final class SystemShortcuts {
     return result;
   }
 
-  public void onUserPressedShortcut(@NotNull Keymap keymap, String @NotNull [] actionIds, @NotNull KeyboardShortcut ksc) {
-    if (myNotifyCount > 0 || actionIds.length == 0) {
+  public void onUserPressedShortcut(@NotNull Keymap keymap, @NotNull List<String> actionIds, @NotNull KeyboardShortcut ksc) {
+    if (myNotifyCount > 0 || actionIds.isEmpty()) {
       return;
     }
 
