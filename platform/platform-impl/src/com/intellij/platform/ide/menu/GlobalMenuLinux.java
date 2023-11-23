@@ -226,7 +226,6 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   private final AtomicLong xid = new AtomicLong(0);
   private List<MenuItemInternal> roots;
   private Pointer windowHandle;
-  private boolean isRootsUpdated = false;
   private boolean isEnabled = true;
   private boolean myIsDisposed = false;
   // don't filter a first packet of events (it causes slow reaction of KDE applet)
@@ -390,21 +389,18 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     this.roots = newRoots;
     _trace("set new menu roots, count=%d", size);
-    isRootsUpdated = false;
     ourLib.execOnMainLoop(updateAllRoots);
   }
 
   private void _updateRoots() {
     // exec at glib-thread
-    if (isRootsUpdated || !isEnabled || myIsDisposed) {
+    if (!isEnabled || myIsDisposed) {
       return;
     }
     if (xid.get() == 0) {
       LOG.debug("can´t update roots of frame " + frame + " because xid == 0");
       return;
     }
-
-    isRootsUpdated = true;
 
     if (windowHandle == null) {
       windowHandle = ourLib.registerWindow(xid.get(), this);
@@ -456,7 +452,6 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     if (enabled) {
       _trace("enable global-menu");
-      isRootsUpdated = false;
       ourLib.execOnMainLoop(updateAllRoots);
     }
     else {
