@@ -7,12 +7,14 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.searchEverywhereMl.typos.SearchEverywhereStringToken
@@ -26,7 +28,6 @@ import java.util.regex.Pattern
 
 @Service(Service.Level.APP)
 internal class ActionsLanguageModel(val coroutineScope: CoroutineScope) {
-
   companion object {
     /**
      * Returns null if the application is not in an internal mode
@@ -86,13 +87,13 @@ internal class ActionsLanguageModel(val coroutineScope: CoroutineScope) {
       .let { SimpleLanguageModelDictionary(it) }
   }
 
-  private fun guessProject(): Project? {
-    val recentFocusedWindow = WindowManagerEx.getInstanceEx().mostRecentFocusedWindow
+  private suspend fun guessProject(): Project? {
+    val recentFocusedWindow = (serviceAsync<WindowManager>() as WindowManagerEx).mostRecentFocusedWindow
     if (recentFocusedWindow is IdeFrame) {
-      return (recentFocusedWindow as IdeFrame).project
+      return recentFocusedWindow.project
     }
     else {
-      return ProjectManager.getInstance().openProjects.firstOrNull { o -> o.isInitialized && !o.isDisposed }
+      return serviceAsync<ProjectManager>().openProjects.firstOrNull { o -> o.isInitialized && !o.isDisposed }
     }
   }
 }
