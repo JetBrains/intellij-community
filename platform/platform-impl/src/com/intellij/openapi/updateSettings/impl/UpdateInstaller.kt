@@ -181,6 +181,7 @@ internal object UpdateInstaller {
     args += "-Didea.updater.log=${PathManager.getLogPath()}"
     args += "-Dswing.defaultlaf=${UIManager.getSystemLookAndFeelClassName()}"
     args += "-Duser.language=${DynamicBundle.getLocale().language}"
+    args += "-Duser.coutry=${DynamicBundle.getLocale().country}"
 
     args += UPDATER_MAIN_CLASS
     args += if (patchFiles.size == 1) "install" else "batch-install"
