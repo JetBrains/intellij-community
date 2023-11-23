@@ -180,7 +180,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       addUnloadedModuleEntities(unloadedBuilder)
       sourcesToSave.removeAll(reloadingResult.affectedSources)
 
-      // Update orphanage storage
       if (reloadingResult.orphanageBuilder.hasChanges()) {
         EntitiesOrphanage.getInstance(project).update { it.addDiff(reloadingResult.orphanageBuilder) }
       }

@@ -73,13 +73,11 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       // Loading data if the external storage is disabled
       val moduleLoadedInfo = loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
       if (moduleLoadedInfo != null) {
-        // Load facets
         runCatchingXmlIssues(exceptionsCollector) {
           createFacetSerializer().loadFacetEntities(moduleLoadedInfo.moduleEntity, reader)
         }
 
         if (context.isOrphanageEnabled) {
-          // Load additional elements
           newModuleEntity = loadAdditionalContents(reader,
                                                    virtualFileManager,
                                                    moduleLoadedInfo.moduleEntity,
