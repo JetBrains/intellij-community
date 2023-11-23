@@ -2,7 +2,7 @@
 package com.intellij.execution.ijent
 
 import com.intellij.platform.ijent.IjentChildProcess
-import com.intellij.util.channel.ChannelInputStream
+import com.intellij.platform.util.coroutines.channel.ChannelInputStream
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import java.io.InputStream

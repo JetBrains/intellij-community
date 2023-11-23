@@ -2,7 +2,7 @@
 package com.intellij.execution.ijent
 
 import com.intellij.platform.ijent.IjentChildProcess
-import com.intellij.util.channel.ChannelOutputStream
+import com.intellij.platform.util.coroutines.channel.ChannelOutputStream
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.io.OutputStream
