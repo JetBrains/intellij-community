@@ -28,12 +28,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.instanceContainer.internal.*
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
-import com.intellij.util.namedChildScope
 import com.intellij.util.runSuppressing
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf

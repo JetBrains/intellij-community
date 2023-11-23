@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.internal
 
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.attachAsChildTo
-import com.intellij.util.namedChildScope
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.coroutines.CoroutineName

@@ -3,9 +3,9 @@ package com.intellij.platform.instanceContainer.instantiation
 
 import com.intellij.concurrency.installTemporaryThreadContext
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.toArray
-import com.intellij.util.namedChildScope
 import kotlinx.coroutines.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
