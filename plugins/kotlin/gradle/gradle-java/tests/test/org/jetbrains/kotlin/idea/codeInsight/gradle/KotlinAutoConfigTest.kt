@@ -4,9 +4,10 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.runInEdtAndGet
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.configuration.AutoConfigurationSettings
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
@@ -20,8 +21,8 @@ class KotlinAutoConfigTest : KotlinGradleImportingTestCase() {
 
     override fun testDataDirName(): String = "kotlinAutoConfig"
 
-    private fun testConfigure(moduleName: String, expectedResult: IdeKotlinVersion?) {
-        runInEdtAndWait {
+    private fun testConfigure(moduleName: String, expectedSuccess: Boolean): AutoConfigurationSettings? {
+        return runInEdtAndGet {
             val registryValue = Registry.get("kotlin.configuration.gradle.autoConfig.enabled")
             val oldValue = registryValue.asBoolean()
             registryValue.setValue(true, testRootDisposable)
@@ -30,22 +31,32 @@ class KotlinAutoConfigTest : KotlinGradleImportingTestCase() {
                     ModuleManager.getInstance(myProject).findModuleByName(moduleName)!!
                 }
 
-                val autoConfigStatus = runBlocking { findGradleModuleConfigurator().calculateAutoConfigSettings(module) }
-                assertEquals(expectedResult, autoConfigStatus?.kotlinVersion)
-                if (expectedResult != null) {
-                    assertEquals(module, autoConfigStatus?.module)
+                val settings = runBlocking { findGradleModuleConfigurator().calculateAutoConfigSettings(module) }
+                if (expectedSuccess) {
+                    assertEquals(module, settings?.module)
+                } else {
+                    assertNull(settings)
                 }
+                settings
             } finally {
                 registryValue.setValue(oldValue)
             }
         }
     }
 
+    private fun testConfigure(moduleName: String, expectedResult: IdeKotlinVersion?) {
+        val autoConfigStatus = testConfigure(moduleName, expectedResult != null)
+        assertEquals(expectedResult, autoConfigStatus?.kotlinVersion)
+    }
+
     @Test
     @TargetVersions("7.6")
     fun testSingleModule() {
         importProjectFromTestData()
-        testConfigure("project", IdeKotlinVersion.get("1.9.20"))
+        val settings = testConfigure("project", true)
+        assertNotNull(settings)
+        // Should always be the latest version, but we actually only care that some version is chosen
+        assertTrue(settings!!.kotlinVersion.compare("1.9.20") > 0)
     }
 
     @Test
@@ -122,7 +133,10 @@ class KotlinAutoConfigTest : KotlinGradleImportingTestCase() {
     @TargetVersions("7.6")
     fun testLibrarySubmodule() {
         importProjectFromTestData()
-        testConfigure("project.submodule", IdeKotlinVersion.get("1.9.20"))
+        val settings = testConfigure("project.submodule", true)
+        assertNotNull(settings)
+        // Should always be the latest version, but we actually only care that some version is chosen
+        assertTrue(settings!!.kotlinVersion.compare("1.9.20") > 0)
     }
 
     @Test
