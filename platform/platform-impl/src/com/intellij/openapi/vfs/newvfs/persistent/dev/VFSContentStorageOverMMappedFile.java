@@ -13,6 +13,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.Unmappable;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.storage.RecordIdIterator;
@@ -34,7 +35,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extend
  * {@link VFSContentStorage} implemented with memory-mapped files: uses {@link AppendOnlyLogOverMMappedFile} for
  * storing data records (contentHash, content), and uses {@link ExtendibleHashMap} for mapping (contentHash->contentId)
  */
-public class VFSContentStorageOverMMappedFile implements VFSContentStorage {
+public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unmappable {
   private static final Logger LOG = Logger.getInstance(VFSContentStorageOverMMappedFile.class);
 
   private static final int STORAGE_FORMAT_VERSION = 1;
@@ -51,8 +52,6 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage {
   //              contentStorage being non-blocking give us thread-safety -- but needs to check more carefully
 
 
-
-
   private final Path storagePath;
 
   /**
@@ -62,7 +61,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage {
    */
   private final ExtendibleHashMap hashToContentRecordIdMap;
 
-  private final AppendOnlyLog contentStorage;
+  private final AppendOnlyLogOverMMappedFile contentStorage;
 
   public VFSContentStorageOverMMappedFile(Path storagePath) throws IOException {
     this.storagePath = storagePath;
@@ -92,7 +91,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage {
 
   @Override
   public int getVersion() throws IOException {
-    return ((AppendOnlyLogOverMMappedFile)contentStorage).getUserDefinedHeaderField(EXTERNAL_VERSION_FIELD_NO);
+    return contentStorage.getUserDefinedHeaderField(EXTERNAL_VERSION_FIELD_NO);
   }
 
   @Override
@@ -264,6 +263,16 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage {
       () -> new IOException("Close [" + storagePath + "] fails"),
       hashToContentRecordIdMap::close,
       contentStorage::close
+    );
+  }
+
+  @Override
+  public void closeAndUnsafelyUnmap() throws IOException {
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      IOException.class,
+      () -> new IOException("Can't .closeAndUnsafelyUnmap() " + contentStorage + "/" + hashToContentRecordIdMap),
+      contentStorage::closeAndUnsafelyUnmap,
+      hashToContentRecordIdMap::closeAndUnsafelyUnmap
     );
   }
 
