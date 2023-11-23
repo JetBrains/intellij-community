@@ -67,7 +67,7 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
     localTask = new LocalTaskImpl(new GitlabTask(myRepository, issue));
     changeListComment = TaskUtil.getChangeListComment(localTask);
     // Project is unknown, so "" is substituted instead
-    assertEquals(" 2 #2 Sample title", changeListComment);
+    assertEquals("2 #2 Sample title", changeListComment);
   }
 
   public void testIssueFilteringByState() throws Exception {

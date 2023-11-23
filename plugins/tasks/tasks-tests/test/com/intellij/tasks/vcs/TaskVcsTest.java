@@ -515,6 +515,11 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     UIUtil.dispatchAllInvocationEvents();
   }
 
+  public void testChangelistNameWithoutId() {
+    LocalTaskImpl task = new LocalTaskImpl("", "foo");
+    assertEquals("foo", myTaskManager.getChangelistName(task));
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();

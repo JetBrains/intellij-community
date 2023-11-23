@@ -58,7 +58,7 @@ public final class TaskUtil {
       map.put("id", ""); // clear fake id
     }
     format = updateToVelocity(format);
-    return FileTemplateUtil.mergeTemplate(map, format, false);
+    return FileTemplateUtil.mergeTemplate(map, format, false).trim();
   }
 
   private static Map<String, String> formatFromExtensions(@NotNull LocalTask task) {
