@@ -34,6 +34,11 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
     private KotlinCommonCodeStyleSettings(boolean isTempForDeserialize) {
         super(KotlinLanguage.INSTANCE);
         this.isTempForDeserialize = isTempForDeserialize;
+
+        if (!isTempForDeserialize) {
+            // By default, use the Kotlin official style guide
+            applyKotlinCodeStyle(KotlinOfficialStyleGuide.CODE_STYLE_ID, this, false);
+        }
     }
 
     private static KotlinCommonCodeStyleSettings createForTempDeserialize() {
@@ -58,6 +63,9 @@ public class KotlinCommonCodeStyleSettings extends CommonCodeStyleSettings {
     @Override
     public void writeExternal(@NotNull Element element, @NotNull LanguageCodeStyleProvider provider) {
         CommonCodeStyleSettings defaultSettings = provider.getDefaultCommonSettings();
+
+        // Apply the chosen code style defaults to the value that is compared to when
+        // writing the settings to disk to reduce the amount of fields to serialize.
         applyKotlinCodeStyle(CODE_STYLE_DEFAULTS, defaultSettings, false);
 
         writeExternalBase(element, defaultSettings, provider);

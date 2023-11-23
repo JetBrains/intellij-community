@@ -88,11 +88,16 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
         PACKAGES_IMPORT_LAYOUT.addEntry(new KotlinPackageEntry("javax", true));
         PACKAGES_IMPORT_LAYOUT.addEntry(new KotlinPackageEntry("kotlin", true));
         PACKAGES_IMPORT_LAYOUT.addEntry(KotlinPackageEntry.ALL_OTHER_ALIAS_IMPORTS_ENTRY);
+
+        if (!isTempForDeserialize) {
+            // The new default for the code style is the Kotlin Official Style Guide
+            applyKotlinCodeStyle(KotlinOfficialStyleGuide.CODE_STYLE_ID, this, false);
+        }
     }
 
     @Override
     public Object clone() {
-        KotlinCodeStyleSettings clone = (KotlinCodeStyleSettings)super.clone();
+        KotlinCodeStyleSettings clone = (KotlinCodeStyleSettings) super.clone();
 
         clone.PACKAGES_TO_USE_STAR_IMPORTS = new KotlinPackageEntryTable();
         clone.PACKAGES_TO_USE_STAR_IMPORTS.copyFrom(this.PACKAGES_TO_USE_STAR_IMPORTS);
@@ -107,7 +112,7 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
     public boolean equals(Object obj) {
         if (!(obj instanceof KotlinCodeStyleSettings that)) return false;
 
-      if (!Comparing.equal(PACKAGES_TO_USE_STAR_IMPORTS, that.PACKAGES_TO_USE_STAR_IMPORTS)) return false;
+        if (!Comparing.equal(PACKAGES_TO_USE_STAR_IMPORTS, that.PACKAGES_TO_USE_STAR_IMPORTS)) return false;
         if (!Comparing.equal(PACKAGES_IMPORT_LAYOUT, that.PACKAGES_IMPORT_LAYOUT)) return false;
         if (!ReflectionUtil.comparePublicNonFinalFieldsWithSkip(this, that)) return false;
         return true;
@@ -117,13 +122,14 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
     public void writeExternal(Element parentElement, @NotNull CustomCodeStyleSettings parentSettings) throws WriteExternalException {
         if (CODE_STYLE_DEFAULTS != null) {
             KotlinCodeStyleSettings defaultKotlinCodeStyle = (KotlinCodeStyleSettings) parentSettings.clone();
-
+            // Apply the chosen code style defaults to the value that is compared to when
+            // writing the settings to disk to reduce the amount of fields to serialize.
             applyKotlinCodeStyle(CODE_STYLE_DEFAULTS, defaultKotlinCodeStyle, false);
 
-            parentSettings = defaultKotlinCodeStyle;
+            super.writeExternal(parentElement, defaultKotlinCodeStyle);
+        } else {
+            super.writeExternal(parentElement, parentSettings);
         }
-
-        super.writeExternal(parentElement, parentSettings);
     }
 
     @Override
