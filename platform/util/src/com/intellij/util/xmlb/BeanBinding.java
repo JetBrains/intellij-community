@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -389,7 +389,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
         else if (aClass == String.class) {
           LOG.error("Do not compute bindings for String");
         }
-        LOG.warn("no accessors for " + aClass.getName());
+        LOG.warn("No accessors for " + aClass.getName() + ". " +
+                 "This means that state class cannot be serialized properly. Please see https://jb.gg/ij-psoc");
       }
       return result;
     }
