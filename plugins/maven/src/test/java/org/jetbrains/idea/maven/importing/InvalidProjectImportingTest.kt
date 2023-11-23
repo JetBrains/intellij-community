@@ -250,7 +250,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                                 <module>foo</module>
                               </modules>
                               """.trimIndent())
-    resolvePlugins()
 
     assertModules("project")
 
@@ -302,7 +301,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
       """.trimIndent()) //  invalid tag
 
     importProjectWithErrors()
-    //resolvePlugins();
     assertModules("project", "foo")
 
     val root = rootProjects[0]
@@ -419,7 +417,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                                </pluginRepository>
                               </pluginRepositories>
                               """.trimIndent())
-    resolvePlugins()
 
     val root = rootProjects[0]
     assertProblems(root)
@@ -439,7 +436,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                                 </repository>
                               </distributionManagement>
                               """.trimIndent())
-    resolvePlugins()
 
     val root = rootProjects[0]
     assertProblems(root)
@@ -490,7 +486,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
       """.trimIndent())
 
     importProjectWithErrors()
-    resolvePlugins()
 
     val root = rootProjects[0]
 
@@ -519,7 +514,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
 
     importProjectWithErrors()
-    resolvePlugins()
 
     assertModuleLibDeps("project")
 
@@ -560,7 +554,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
       """.trimIndent())
 
     importProjectWithErrors()
-    resolvePlugins()
 
     val root = rootProjects[0]
     assertProblems(root)
@@ -672,7 +665,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                                 </extensions>
                               </build>
                               """.trimIndent())
-    resolvePlugins()
 
     assertProblems(rootProjects[0])
 
@@ -762,7 +754,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                                 </plugins>
                               </build>
                               """.trimIndent())
-    resolvePlugins()
 
     val root = rootProjects[0]
     assertProblems(root, "Unresolved plugin: 'xxx:yyy:1'")
@@ -790,7 +781,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                               </build>
                               """.trimIndent())
 
-    resolvePlugins()
 
     assertProblems(rootProjects[0])
   }
@@ -812,7 +802,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                                 </plugins>
                               </build>
                               """.trimIndent())
-    resolvePlugins()
 
     assertModules("project")
 

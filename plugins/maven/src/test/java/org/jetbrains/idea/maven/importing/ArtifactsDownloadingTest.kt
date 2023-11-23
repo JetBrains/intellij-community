@@ -284,8 +284,6 @@ ${VfsUtilCore.pathToUrl(myPathTransformer.toRemotePath(remoteRepo)!!)}</url>
                       </build>
                       """.trimIndent())
 
-      resolvePlugins()
-
       val f = File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar")
 
       assertTrue(f.exists())

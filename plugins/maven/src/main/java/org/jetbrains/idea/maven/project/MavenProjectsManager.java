@@ -813,14 +813,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     getSyncConsole().terminated(exitCode);
   }
 
-  @ApiStatus.Internal
-  public Promise<?> waitForImportCompletion() {
-    // TODO: remove method
-    AsyncPromise<?> promise = new AsyncPromise<>();
-    promise.setResult(null);
-    return promise;
-  }
-
   /**
    * @deprecated use {@link MavenFolderResolver}
    */

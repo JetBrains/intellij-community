@@ -11,8 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.write
 import junit.framework.TestCase
 import kotlinx.coroutines.Dispatchers
@@ -122,12 +120,7 @@ class MavenImportWizardTest : MavenProjectWizardTestCase() {
 
   private fun waitForMavenImporting(project: Project, file: VirtualFile) {
     val manager = MavenProjectsManager.getInstance(project)
-    manager.waitForImportCompletion()
     importMavenProjects(manager, List.of(file))
-    val promise = manager.waitForImportCompletion()
-    runInEdtAndWait {
-      PlatformTestUtil.waitForPromise(promise)
-    }
   }
 
   companion object {

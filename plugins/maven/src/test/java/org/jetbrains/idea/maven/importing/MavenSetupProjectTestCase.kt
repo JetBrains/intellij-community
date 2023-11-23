@@ -19,7 +19,6 @@ import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
@@ -100,8 +99,6 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
     projectManager.initForTests()
     withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       projectManager.waitForReadingCompletion()
-      //projectManager.performScheduledImportInTests()
-      projectManager.waitForImportCompletion()
     }
   }
 

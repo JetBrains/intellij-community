@@ -135,8 +135,6 @@ class MavenSurefirePluginTest : MavenDomWithIndicesTestCase() {
           </build>
         """.trimIndent())
 
-    resolvePlugins()
-
     createProjectPom(
       """
           <groupId>simpleMaven</groupId>

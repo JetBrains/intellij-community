@@ -19,7 +19,6 @@ class MavenPluginIndexTest : MavenDomWithIndicesTestCase() {
                         <artifactId>project</artifactId>
                         <version>1</version>
                         """.trimIndent())
-        resolvePlugins()
         checkDownloadedPlugins()
       }
     }

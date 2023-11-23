@@ -453,20 +453,10 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
     initProjectsManager(false)
     readProjects(files, disabledProfiles, *profiles)
-    resolvePlugins()
-    val promise = projectsManager.waitForImportCompletion()
-    ApplicationManager.getApplication().invokeAndWait { PlatformTestUtil.waitForPromise(promise) }
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
         assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
       }
-    }
-  }
-
-  protected fun waitForImportCompletion() {
-    edt<RuntimeException> {
-      PlatformTestUtil.waitForPromise(
-        projectsManager.waitForImportCompletion(), 60000)
     }
   }
 
@@ -476,7 +466,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected fun readProjects(files: List<VirtualFile>, disabledProfiles: List<String>, vararg profiles: String) {
     projectsManager.resetManagedFilesAndProfilesInTests(files, MavenExplicitProfiles(listOf(*profiles), disabledProfiles))
-    waitForImportCompletion()
   }
 
   protected fun updateProjectsAndImport(vararg files: VirtualFile) {
@@ -580,10 +569,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   protected fun resolveDependenciesAndImport() {
     ApplicationManager.getApplication().invokeAndWait { projectsManager.waitForReadingCompletion() }
-  }
-
-  protected fun resolvePlugins() {
-    projectsManager.waitForImportCompletion()
   }
 
   protected suspend fun downloadArtifacts() {

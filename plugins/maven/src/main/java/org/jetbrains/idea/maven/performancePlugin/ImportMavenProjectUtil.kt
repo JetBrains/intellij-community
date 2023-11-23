@@ -34,8 +34,6 @@ internal fun importProject(project: Project) {
       }
     }
 
-    MavenProjectsManager.getInstance(project).waitForImportCompletion()
-
     val mavenManager = MavenProjectsManager.getInstance(project)
     if (!mavenManager.isMavenizedProject) {
       val files = mavenManager.collectAllAvailablePomFiles()

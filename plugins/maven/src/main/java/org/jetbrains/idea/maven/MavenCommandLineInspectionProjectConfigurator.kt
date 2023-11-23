@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjec
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.LanguageLevelUtil.getNextLanguageLevel
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -30,7 +29,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.pom.java.LanguageLevel.HIGHEST
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.lang.JavaVersion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -45,9 +43,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.resolved
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import kotlin.io.path.pathString
 
 private const val MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY = "maven.create.dummy.module.on.first.import"
@@ -105,20 +100,6 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     }
     MavenLog.LOG.warn("linked finished for ${project.name}")
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
-    val promise = mavenProjectsManager.waitForImportCompletion()
-    while (true) {
-      try {
-        promise.blockingGet(10, TimeUnit.MILLISECONDS)
-        break
-      }
-      catch (e: TimeoutException) {
-
-      }
-      catch (e: ExecutionException) {
-        ExceptionUtil.rethrow(e)
-      }
-      ProgressManager.checkCanceled()
-    }
 
     Disposer.dispose(disposable)
 
