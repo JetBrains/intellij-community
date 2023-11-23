@@ -17,6 +17,8 @@ import com.intellij.util.ExceptionUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.MavenConsoleBundle
 import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenArtifactEvent
 import org.jetbrains.idea.maven.server.MavenServerConsoleEvent
@@ -179,12 +181,19 @@ class MavenDownloadConsole(myProject: Project,
     MavenConsoleBundle.message("maven.download.docs")
   }
 
-  fun startDownloadTask() {
-    startTask(MavenConsoleBundle.message("maven.download.task"))
+  fun startDownloadTask(projects: Collection<MavenProject>, artifacts: Collection<MavenArtifact>?) {
+    startTask(getStringRepresentation(projects, artifacts))
   }
 
-  fun finishDownloadTask() {
-    completeTask(MavenConsoleBundle.message("maven.download.task"), SuccessResultImpl())
+  fun finishDownloadTask(projects: Collection<MavenProject>, artifacts: Collection<MavenArtifact>?) {
+    completeTask(getStringRepresentation(projects, artifacts), SuccessResultImpl())
+  }
+
+  private fun getStringRepresentation(projects: Collection<MavenProject>, artifacts: Collection<MavenArtifact>?): String {
+    val projectNames = if (projects.isEmpty()) "-" else projects.map { it.mavenId }.joinToString()
+    val artifactNames = if (artifacts.isNullOrEmpty()) "" else artifacts.map { it.mavenId }.joinToString()
+    return if (artifactNames.isEmpty()) MavenConsoleBundle.message("maven.download.projects", projectNames)
+    else MavenConsoleBundle.message("maven.download.projects.and.artifacts", projectNames, artifactNames)
   }
 }
 

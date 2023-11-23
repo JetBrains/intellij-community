@@ -1739,7 +1739,10 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/")
 
-    repositoryPath = File(myDir, "__repo").path
+    waitForImportWithinTimeout {
+      repositoryPath = File(myDir, "__repo").path
+      Unit
+    }
     projectsManager.embeddersManager.reset() // to recognize repository change
 
     updateAllProjects()
@@ -1772,7 +1775,10 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/")
 
-    repositoryPath = File(myDir, "__repo").path
+    waitForImportWithinTimeout {
+      repositoryPath = File(myDir, "__repo").path
+      Unit
+    }
     projectsManager.embeddersManager.reset() // to recognize repository change
 
     updateAllProjects()

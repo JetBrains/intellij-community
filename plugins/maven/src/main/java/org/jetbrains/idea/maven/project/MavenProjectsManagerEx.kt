@@ -33,7 +33,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
-import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
@@ -530,10 +529,10 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     val downloadConsole = MavenDownloadConsole(project, sources, docs)
     try {
       downloadConsole.start()
-      downloadConsole.startDownloadTask()
-      val downloader = MavenArtifactDownloader(project, projectsTree, artifacts, progressReporter, MavenLogEventHandler)
+      downloadConsole.startDownloadTask(projects, artifacts)
+      val downloader = MavenArtifactDownloader(project, projectsTree, artifacts, progressReporter, downloadConsole)
       val result = downloader.downloadSourcesAndJavadocs(projects, sources, docs, embeddersManager)
-      downloadConsole.finishDownloadTask()
+      downloadConsole.finishDownloadTask(projects, artifacts)
       return result
     }
     catch (e: Exception) {
