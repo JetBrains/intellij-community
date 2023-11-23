@@ -22,13 +22,13 @@ import java.util.function.Supplier;
 public final class ActionStub extends AnAction implements ActionStubBase {
   private static final Logger LOG = Logger.getInstance(ActionStub.class);
 
-  private final @NotNull String myClassName;
-  private final @NotNull String myId;
-  private final @NotNull PluginDescriptor myPlugin;
-  private final @Nullable String myIconPath;
-  private final @Nullable ProjectType myProjectType;
-  private final @NotNull Supplier<Presentation> myTemplatePresentation;
-  private List<Supplier<String>> mySynonyms = Collections.emptyList();
+  private final @NotNull String className;
+  private final @NotNull String id;
+  private final @NotNull PluginDescriptor plugin;
+  private final @Nullable String iconPath;
+  private final @Nullable ProjectType projectType;
+  private final @NotNull Supplier<Presentation> templatePresentation;
+  private List<Supplier<String>> synonyms = Collections.emptyList();
 
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
@@ -36,51 +36,51 @@ public final class ActionStub extends AnAction implements ActionStubBase {
                     @Nullable String iconPath,
                     @Nullable ProjectType projectType,
                     @NotNull Supplier<Presentation> templatePresentation) {
-    myClassName = actionClass;
+    className = actionClass;
     LOG.assertTrue(!id.isEmpty());
-    myId = id;
-    myPlugin = plugin;
-    myIconPath = iconPath;
-    myProjectType = projectType;
-    myTemplatePresentation = templatePresentation;
+    this.id = id;
+    this.plugin = plugin;
+    this.iconPath = iconPath;
+    this.projectType = projectType;
+    this.templatePresentation = templatePresentation;
   }
 
   @Override
   public void addSynonym(@NotNull Supplier<String> text) {
-    if (mySynonyms == Collections.<Supplier<String>>emptyList()) {
-      mySynonyms = new SmartList<>(text);
+    if (synonyms == Collections.<Supplier<String>>emptyList()) {
+      synonyms = new SmartList<>(text);
     }
     else {
-      mySynonyms.add(text);
+      synonyms.add(text);
     }
   }
 
   @Override
   public @NotNull PluginDescriptor getPlugin() {
-    return myPlugin;
+    return plugin;
   }
 
   @Override
   @NotNull Presentation createTemplatePresentation() {
-    return myTemplatePresentation.get();
+    return templatePresentation.get();
   }
 
   public @NotNull String getClassName() {
-    return myClassName;
+    return className;
   }
 
   @Override
   public @NotNull String getId() {
-    return myId;
+    return id;
   }
 
   @Override
   public @Nullable String getIconPath() {
-    return myIconPath;
+    return iconPath;
   }
 
   public @Nullable ProjectType getProjectType() {
-    return myProjectType;
+    return projectType;
   }
 
   @Override
@@ -96,12 +96,12 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     copyTemplatePresentation(getTemplatePresentation(), targetAction.getTemplatePresentation());
     targetAction.setShortcutSet(getShortcutSet());
     copyActionTextOverrides(targetAction);
-    for (Supplier<String> synonym : mySynonyms) {
+    for (Supplier<String> synonym : synonyms) {
       targetAction.addSynonym(synonym);
     }
     if (targetAction instanceof ActionGroup) {
       LOG.warn(String.format("ActionGroup should be registered using <group> tag: id=\"%s\" class=\"%s\"",
-                             myId, targetAction.getClass().getName()));
+                             id, targetAction.getClass().getName()));
     }
   }
 

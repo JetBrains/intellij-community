@@ -446,7 +446,8 @@ public final class ActionUtil {
   }
 
   public static @NotNull List<AnAction> getActions(@NotNull JComponent component) {
-    return ContainerUtil.notNullize(ClientProperty.get(component, AnAction.ACTIONS_KEY));
+    List<AnAction> list = ClientProperty.get(component, AnAction.ACTIONS_KEY);
+    return list == null ? List.of() : list;
   }
 
   public static void clearActions(@NotNull JComponent component) {

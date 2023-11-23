@@ -42,7 +42,6 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ComponentWithMnemonics
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.speedSearch.SpeedSearchSupply
-import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.matching.KeyboardLayoutUtil
@@ -278,14 +277,14 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     if (selectedPath.isNotEmpty()) {
       if (selectedPath[0] !is ComboPopup) {
         // The following lines of code are a PATCH!!!
-        // It is needed to ignore ENTER KEY_TYPED events which sometimes can reach the editor when an action
-        // is invoked from the main menu via Enter key.
+        // It is needed to ignore ENTER KEY_TYPED events, which sometimes can reach the editor when an action
+        // is invoked from the main menu via an Enter key.
         state = KeyState.STATE_PROCESSED
         return processMenuActions(e, selectedPath[0])
       }
     }
 
-    // Keymap shortcuts (i.e. not local shortcuts) should work only in:
+    // Keymap shortcuts (i.e., not local shortcuts) should work only in:
     // - main frame
     // - floating focusedWindow
     // - when there's an editor in contexts
@@ -320,7 +319,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       return inSecondStrokeInProgressState()
     }
 
-    // it looks like RELEASEEs (from the first stroke) go here...  skip them
+    // it looks like RELEASEEs (from the first stroke) go here... skip them
     return true
   }
 
@@ -627,28 +626,27 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       component = component.getParent()
     }
 
-    addActionsFromActiveKeymap(shortcut)
-    if (context.secondStrokeActions.isEmpty() && shortcut is KeyboardShortcut) {
-      // little trick to invoke action which second stroke is a key w/o modifiers, but the user still
-      // holds the modifier key(s) of the first stroke
-      val firstKeyStroke = shortcut.firstKeyStroke
-      val secondKeyStroke = shortcut.secondKeyStroke
-      if (secondKeyStroke != null && secondKeyStroke.modifiers != 0 && firstKeyStroke.modifiers != 0) {
-        val altShortCut = KeyboardShortcut(firstKeyStroke, KeyStroke.getKeyStroke(secondKeyStroke.keyCode, 0))
-        addActionsFromActiveKeymap(altShortCut)
+    if (LoadingState.COMPONENTS_LOADED.isOccurred) {
+      addActionsFromActiveKeymap(shortcut)
+      if (context.secondStrokeActions.isEmpty() && shortcut is KeyboardShortcut) {
+        // little trick to invoke action which second stroke is a key w/o modifiers, but the user still
+        // holds the modifier key(s) of the first stroke
+        val firstKeyStroke = shortcut.firstKeyStroke
+        val secondKeyStroke = shortcut.secondKeyStroke
+        if (secondKeyStroke != null && secondKeyStroke.modifiers != 0 && firstKeyStroke.modifiers != 0) {
+          val altShortCut = KeyboardShortcut(firstKeyStroke, KeyStroke.getKeyStroke(secondKeyStroke.keyCode, 0))
+          addActionsFromActiveKeymap(altShortCut)
+        }
       }
     }
   }
 
   private fun addActionsFromActiveKeymap(shortcut: Shortcut) {
-    if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
-      return
-    }
-
-    val actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager::class.java) ?: return
+    val app = ApplicationManager.getApplication()
     val keymapManager = KeymapManager.getInstance()
     val keymap = keymapManager?.activeKeymap
-    val actionIds = keymap?.getActionIds(shortcut) ?: ArrayUtilRt.EMPTY_STRING_ARRAY
+    val actionIds = keymap?.getActionIds(shortcut)?.takeIf { it.isNotEmpty() } ?: return
+    val actionManager = app.getServiceIfCreated(ActionManager::class.java) ?: return
     for (actionId in actionIds) {
       val action = actionManager.getAction(actionId)
       if (action != null && (!context.isModalContext || action.isEnabledInModalContext)) {
@@ -656,10 +654,10 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       }
     }
 
-    if (keymap != null && actionIds.isNotEmpty() && shortcut is KeyboardShortcut) {
-      // a user-pressed keystroke and keymap has some actions assigned to sc (actions going to be executed)
-      // check whether this shortcut conflicts with system-wide shortcuts and notify user if necessary
-      // see IDEA-173174 Warn user about IDE keymap conflicts with native OS keymap
+    if (shortcut is KeyboardShortcut) {
+      // A user-pressed keystroke and keymap has some actions assigned to sc (actions going to be executed).
+      // Check whether this shortcut conflicts with system-wide shortcuts and notify user if necessary.
+      // See IDEA-173174 Warn user about IDE keymap conflicts with native OS keymap.
       SystemShortcuts.getInstance().onUserPressedShortcut(keymap, actionIds, shortcut)
     }
   }

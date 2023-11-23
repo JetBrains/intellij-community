@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.configurationStore.SchemeDataHolder
@@ -33,7 +35,6 @@ import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
 import org.jdom.Element
@@ -97,12 +98,13 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   val ownActionIds: Array<String>
     get() = actionIdToShortcuts.keys.toTypedArray()
 
-  private fun <T> cachedShortcuts(mapper: (Shortcut) -> T?): ReadWriteProperty<Any?, Map<T, MutableList<String>>> =
-    object : ReadWriteProperty<Any?, Map<T, MutableList<String>>> {
+  private fun <T> cachedShortcuts(mapper: (Shortcut) -> T?): ReadWriteProperty<Any?, Map<T, MutableList<String>>> {
+    return object : ReadWriteProperty<Any?, Map<T, MutableList<String>>> {
       private var cache: Map<T, MutableList<String>>? = null
 
-      override fun getValue(thisRef: Any?, property: KProperty<*>): Map<T, MutableList<String>> =
-        cache ?: mapShortcuts(mapper).also { cache = it }
+      override fun getValue(thisRef: Any?, property: KProperty<*>): Map<T, MutableList<String>> {
+        return cache ?: mapShortcuts(mapper).also { cache = it }
+      }
 
       override fun setValue(thisRef: Any?, property: KProperty<*>, value: Map<T, MutableList<String>>) {
         cache = null
@@ -112,7 +114,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         fun addActionToShortcutMap(actionId: String, map: MutableMap<T, MutableList<String>>) {
           for (shortcut in getOwnOrBoundShortcuts(actionId)) {
             mapper(shortcut)?.let {
-              val ids = map.getOrPut(it) { SmartList() }
+              val ids = map.computeIfAbsent(it) { SmartList() }
               if (!ids.contains(actionId)) {
                 ids.add(actionId)
               }
@@ -126,6 +128,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         return map
       }
     }
+  }
 
   // Accesses to these caches are non-synchronized, so must be performed
   // from EDT only (where all the modifications are currently done)
@@ -135,29 +138,30 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   override fun getPresentableName(): String = name
 
-  override fun deriveKeymap(newName: String): KeymapImpl =
+  override fun deriveKeymap(newName: String): KeymapImpl {
     if (canModify()) {
       val newKeymap = copy()
       newKeymap.name = newName
-      newKeymap
+      return newKeymap
     }
     else {
       val newKeymap = KeymapImpl()
       newKeymap.parent = this
       newKeymap.name = newName
-      newKeymap
+      return newKeymap
     }
+  }
 
-  fun copy(): KeymapImpl =
-    dataHolder?.let { KeymapImpl(name, it) }
-    ?: copyTo(KeymapImpl())
+  fun copy(): KeymapImpl {
+    return dataHolder?.let { KeymapImpl(name, it) } ?: copyTo(KeymapImpl())
+  }
 
   fun copyTo(otherKeymap: KeymapImpl): KeymapImpl {
     otherKeymap.cleanShortcutsCache()
 
     otherKeymap.actionIdToShortcuts.clear()
     otherKeymap.actionIdToShortcuts.putAll(actionIdToShortcuts)
-    // after actionIdToShortcuts (on first access we lazily read itself)
+    // after actionIdToShortcuts (on first access, we lazily read itself)
     otherKeymap.parent = parent
     otherKeymap.name = name
     otherKeymap.canModify = canModify()
@@ -169,7 +173,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   final override fun canModify(): Boolean = canModify
 
   override fun addShortcut(actionId: String, shortcut: Shortcut) {
-    addShortcut(actionId, shortcut, false)
+    addShortcut(actionId = actionId, shortcut = shortcut, fromSettings = false)
   }
 
   fun addShortcut(actionId: String, shortcut: Shortcut, fromSettings: Boolean) {
@@ -203,7 +207,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   override fun removeShortcut(actionId: String, toDelete: Shortcut) {
-    removeShortcut(actionId, toDelete, false)
+    removeShortcut(actionId = actionId, toDelete = toDelete, fromSettings = false)
   }
 
   fun removeShortcut(actionId: String, toDelete: Shortcut, fromSettings: Boolean) {
@@ -228,8 +232,11 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     fireShortcutChanged(actionId, fromSettings)
   }
 
-  private fun List<Shortcut>.areShortcutsEqualToParent(actionId: String) =
-    parent.let { parent -> parent != null && areShortcutsEqual(this, parent.getShortcutList(actionId).mapSmart { convertShortcut(it) }) }
+  private fun List<Shortcut>.areShortcutsEqualToParent(actionId: String): Boolean {
+    return parent.let { parent ->
+      parent != null && areShortcutsEqual(this, parent.getShortcutList(actionId).mapSmart { convertShortcut(it) })
+    }
+  }
 
   private fun getOwnOrBoundShortcuts(actionId: String): List<Shortcut> {
     actionIdToShortcuts[actionId]?.let {
@@ -330,15 +337,22 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
                                shortcutToActionIds: (keymap: KeymapImpl) -> Map<T, MutableList<String>>,
                                convertShortcut: (keymap: KeymapImpl, shortcut: T) -> T): List<String> {
     // first, get keystrokes from our own map
-    var list = shortcutToActionIds(this)[shortcut]
-    val parentIds = parent?.getActionIds(convertShortcut(this, shortcut), shortcutToActionIds, convertShortcut) ?: emptyList()
+    var list = shortcutToActionIds(this).get(shortcut)
+    val parentIds = parent?.getActionIds(shortcut = convertShortcut(this, shortcut),
+                                         shortcutToActionIds = shortcutToActionIds,
+                                         convertShortcut = convertShortcut) ?: emptyList()
     var isOriginalListInstance = list != null
     for (id in parentIds) {
       // add actions from the parent keymap only if they are absent in this keymap
       // do not add parent bind actions, if bind-on action is overwritten in the child
-      if (actionIdToShortcuts.containsKey(id)) continue
+      if (actionIdToShortcuts.containsKey(id)) {
+        continue
+      }
+
       val key = keymapManager.getActionBinding(id)
-      if (key != null && actionIdToShortcuts.containsKey(key)) continue
+      if (key != null && actionIdToShortcuts.containsKey(key)) {
+        continue
+      }
 
       if (list == null) {
         list = SmartList()
@@ -358,8 +372,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   fun isActionBound(actionId: String): Boolean = keymapManager.boundActions.contains(actionId)
 
-  override fun getShortcuts(actionId: String?): Array<Shortcut> =
-    getShortcutList(actionId).let { if (it.isEmpty()) Shortcut.EMPTY_ARRAY else it.toTypedArray() }
+  override fun getShortcuts(actionId: String?): Array<Shortcut> {
+    return getShortcutList(actionId).let { if (it.isEmpty()) Shortcut.EMPTY_ARRAY else it.toTypedArray() }
+  }
 
   private fun getShortcutList(actionId: String?): List<Shortcut> {
     if (actionId == null) {
@@ -379,8 +394,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return if (own.isEmpty()) Shortcut.EMPTY_ARRAY else own.toTypedArray()
   }
 
-  fun hasShortcutDefined(actionId: String): Boolean =
-    actionIdToShortcuts[actionId] != null || parent?.hasShortcutDefined(actionId) == true
+  fun hasShortcutDefined(actionId: String): Boolean {
+    return actionIdToShortcuts[actionId] != null || parent?.hasShortcutDefined(actionId) == true
+  }
 
   // you must clear `actionIdToShortcuts` before calling
   protected open fun readExternal(keymapElement: Element) {
@@ -585,7 +601,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
           continue
         }
 
-        result.getOrPut(id) { SmartList() }.add(shortcut1)
+        result.computeIfAbsent(id) { SmartList() }.add(shortcut1)
       }
     }
 
