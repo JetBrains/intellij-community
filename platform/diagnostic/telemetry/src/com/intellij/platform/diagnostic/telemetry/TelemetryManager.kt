@@ -6,6 +6,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -80,6 +81,16 @@ interface TelemetryManager {
    **/
   @TestOnly
   suspend fun forceFlushMetrics()
+
+  /**
+   * Blocking forceFlushMetrics function for test purposes.
+   *
+   * @see forceFlushMetrics
+   */
+  @TestOnly
+  fun forceFlushMetricsBlocking() = runBlocking {
+    forceFlushMetrics()
+  }
 }
 
 private val instance = SynchronizedClearableLazy {
