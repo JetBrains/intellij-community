@@ -24,15 +24,12 @@ class RequirementsVersionCompletionContributor : CompletionContributor() {
     val project = parameters.editor.project ?: return
 
     if (parent is VersionStmt) {
-      val manager = PythonPackageManager.forSdk(project, project.pythonSdk ?: return)
+      val repositoryManager = PythonPackageManager.forSdk(project, project.pythonSdk ?: return).repositoryManager
       val name = PsiTreeUtil.getParentOfType(parent, NameReq::class.java)?.simpleName?.text ?: return
       val versions = ApplicationUtil.runWithCheckCanceled({
                                                             runBlockingCancellable {
-                                                              val specification = manager.repositoryManager.createSpecification(name, null,
-                                                                                                                                null)
-                                                              val packageManager = PythonPackageManager.forSdk(project, project.pythonSdk!!)
-                                                              packageManager.repositoryManager.getPackageDetails(
-                                                                specification).availableVersions.sortedDescending()
+                                                              repositoryManager.getPackageDetails(
+                                                                repositoryManager.createSpecification(name, null, null)).availableVersions
                                                             }
                                                           }, ProgressManager.getInstance().progressIndicator)
 
