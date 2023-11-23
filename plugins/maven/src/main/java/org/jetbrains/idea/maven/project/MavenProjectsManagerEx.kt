@@ -393,11 +393,11 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
       }
     }
     afterImportJobs.add(pluginResolutionJob)
-    scheduleDownloadArtifacts(projectsToImport.map { it.key },
-                              null,
-                              importingSettings.isDownloadSourcesAutomatically,
-                              importingSettings.isDownloadDocsAutomatically)
-
+    val artifactDownloadJob = doScheduleDownloadArtifacts(projectsToImport.map { it.key },
+                                                          null,
+                                                          importingSettings.isDownloadSourcesAutomatically,
+                                                          importingSettings.isDownloadDocsAutomatically)
+    afterImportJobs.add(artifactDownloadJob)
 
     return importMavenProjects(projectsToImport, modelsProvider, syncActivity)
   }
@@ -501,12 +501,20 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                                          artifacts: Collection<MavenArtifact>?,
                                          sources: Boolean,
                                          docs: Boolean) {
-    if (!sources && !docs) return
+    doScheduleDownloadArtifacts(projects, artifacts, sources, docs)
+  }
 
-    project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingScheduled()
+  private fun doScheduleDownloadArtifacts(projects: Collection<MavenProject>,
+                                          artifacts: Collection<MavenArtifact>?,
+                                          sources: Boolean,
+                                          docs: Boolean): Job {
+    return cs.launch {
+      if (!sources && !docs) return@launch
 
-    val downloadArtifactJob = cs.launch { downloadArtifacts(projects, artifacts, sources, docs) }
-    afterImportJobs.add(downloadArtifactJob)
+      project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingScheduled()
+
+      downloadArtifacts(projects, artifacts, sources, docs)
+    }
   }
 
   override suspend fun downloadArtifacts(projects: Collection<MavenProject>,
