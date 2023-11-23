@@ -148,4 +148,9 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
 
     return buf.toString();
   }
+
+  @Override
+  public String toString() {
+    return getName() + getDescriptor();
+  }
 }

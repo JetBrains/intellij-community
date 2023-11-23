@@ -373,6 +373,11 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
         }
         if (toRecompile.contains(AnnotationChangesTracker.Recompile.USAGES)) {
           affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, propagated);
+          if (changedMethod.isAbstract()) {
+            for (Pair<JvmClass, JvmMethod> impl : future.getOverridingMethods(changedClass, changedMethod, changedMethod::isSameByJavaRules)) {
+              affectMemberUsages(context, impl.first.getReferenceID(), impl.getSecond(), Collections.emptyList());
+            }
+          }
         }
         if (toRecompile.contains(AnnotationChangesTracker.Recompile.SUBCLASSES)) {
           affectSubclasses(context, future, changedClass.getReferenceID(), false);
@@ -862,7 +867,7 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
   protected void affectMemberUsages(DifferentiateContext context, JvmNodeReferenceID clsId, ProtoMember member, Iterable<JvmNodeReferenceID> propagated, @Nullable Predicate<Node<?, ?>> constraint) {
     affectUsages(
       context,
-      member instanceof JvmMethod? "method" : member instanceof JvmField? "field" : "member",
+      (member instanceof JvmMethod? "method " : member instanceof JvmField? "field " : "member ") + member,
       flat(asIterable(clsId), propagated),
       id -> member.createUsage(id),
       constraint

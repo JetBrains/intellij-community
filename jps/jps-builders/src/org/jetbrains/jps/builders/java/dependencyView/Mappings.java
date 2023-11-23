@@ -1590,6 +1590,14 @@ public final class Mappings {
 
             if (toRecompile.contains(AnnotationsChangeTracker.Recompile.USAGES)) {
               myFuture.affectMethodUsages(m, propagated.get(), m.createUsage(myContext, it.name), usages, state.myDependants);
+              if (m.isAbstract()) {
+                final Collection<Pair<MethodRepr, ClassRepr>> overriding = new HashSet<>();
+                myFuture.addOverridingMethods(m, it, it, MethodRepr.equalByJavaRules(m), overriding, null);
+                for (Pair<MethodRepr, ClassRepr> p : overriding) {
+                  usages.add(p.getFirst().createUsage(myContext, p.getSecond().name));
+                  myFuture.appendDependents(p.getSecond(), state.myDependants);
+                }
+              }
               state.myAffectedUsages.addAll(usages);
               if (constrained) {
                 // remove any constraints so that all usages of this method are recompiled

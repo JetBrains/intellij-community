@@ -73,4 +73,8 @@ public final class JvmField extends ProtoMember implements DiffCapable<JvmField,
     }
   }
 
+  @Override
+  public String toString() {
+    return getName() + getType().getDescriptor();
+  }
 }
