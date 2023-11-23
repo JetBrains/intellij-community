@@ -8,7 +8,7 @@ import training.ui.welcomeScreen.OnboardingLessonPromoter
 import javax.swing.Icon
 
 internal class PyOnboardingTourPromoter : OnboardingLessonPromoter(
-  "python.onboarding", PythonLessonsBundle.message("python.onboarding.lesson.name")
+  "python.onboarding", "Python", PythonLessonsBundle.message("python.onboarding.lesson.name")
 ) {
   override val promoImage: Icon
     get() = IconLoader.getIcon("img/pycharm-onboarding-tour.png", PyOnboardingTourPromoter::class.java.classLoader)
