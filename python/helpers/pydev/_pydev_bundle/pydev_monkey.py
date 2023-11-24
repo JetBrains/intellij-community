@@ -246,9 +246,10 @@ def patch_args(args):
         # after the Python executable. We have to preserve them.
         while i < len(args) and args[i].startswith('-X'):
             new_args.append(args[i])
-            if i < len(args) - 1:
-                new_args.append(args[i + 1])
-                i += 1
+            if args[i] == '-X':
+                if i < len(args) - 1:
+                    new_args.append(args[i + 1])
+                    i += 1
             i += 1
 
         # Original args should be something as:
