@@ -96,4 +96,3 @@ $RECYCLE.BIN/
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
-/samples/standalone-new-ui/src/main/kotlin/org/jetbrains/jewel/samples/standalone/expui/pkgs/
