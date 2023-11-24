@@ -142,5 +142,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
+    <orderEntry type="module" module-name="intellij.terminal" />
   </component>
 </module>
