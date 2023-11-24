@@ -3,15 +3,16 @@ package org.jetbrains.kotlin.training.ift.lesson.essential
 
 
 import com.intellij.java.ift.lesson.essential.OnboardingTourLessonBase
+import com.intellij.java.ift.lesson.essential.ideaOnboardingLessonId
 import com.intellij.openapi.ui.popup.Balloon
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.training.ift.KotlinLessonsBundle
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.util.*
+import training.util.isToStringContains
 
-class KotlinOnboardingTourLesson : OnboardingTourLessonBase("kotlin.onboarding") {
+class KotlinOnboardingTourLesson : OnboardingTourLessonBase(ideaOnboardingLessonId) {
     override val demoFileExtension: String = "kt"
     override val learningProjectName: String = "KotlinLearningProject"
     private val samplePrintln = "println(\"AVERAGE of array \" + array.joinToString() + \" is \" + findAverage(array))"
