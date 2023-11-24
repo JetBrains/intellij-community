@@ -153,8 +153,7 @@ public final class TreeUtil {
    */
   public static void repaintPath(@NotNull JTree tree, @Nullable TreePath path) {
     assert EventQueue.isDispatchThread();
-    Rectangle bounds = tree.getPathBounds(path);
-    if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
+    repaintBounds(tree, tree.getPathBounds(path));
   }
 
   /**
@@ -163,7 +162,10 @@ public final class TreeUtil {
    */
   public static void repaintRow(@NotNull JTree tree, int row) {
     assert EventQueue.isDispatchThread();
-    Rectangle bounds = tree.getRowBounds(row);
+    repaintBounds(tree, tree.getRowBounds(row));
+  }
+
+  private static void repaintBounds(@NotNull JTree tree, @Nullable Rectangle bounds) {
     if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
   }
 
