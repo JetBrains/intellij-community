@@ -135,3 +135,15 @@ interface IjentSessionProvider {
     }
   }
 }
+
+internal class DefaultIjentSessionProvider(override val epCoroutineScope: CoroutineScope) : IjentSessionProvider {
+  override suspend fun connect(
+    id: IjentId,
+    communicationCoroutineScope: CoroutineScope,
+    platform: IjentExecFileProvider.SupportedPlatform,
+    inputStream: InputStream,
+    outputStream: OutputStream,
+  ): IjentApi {
+    throw UnsupportedOperationException()
+  }
+}

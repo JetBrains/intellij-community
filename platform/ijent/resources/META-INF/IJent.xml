@@ -1,0 +1,7 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+      serviceInterface="com.intellij.platform.ijent.IjentSessionProvider"
+      serviceImplementation="com.intellij.platform.ijent.DefaultIjentSessionProvider"/>
+  </extensions>
+</idea-plugin>
