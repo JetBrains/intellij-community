@@ -117,6 +117,10 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
 
         if (errors.isNullOrEmpty()) continue
 
+        for (error in errors!!) {
+          error.fix()
+        }
+
         val message = StringUtil.first(errors!!.take(100).joinToString(", ") { ReadAction.nonBlocking(Callable { it.presentableText }).executeSynchronously() },
           300,
           true)
@@ -133,22 +137,31 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   private fun runHealthCheck(project: Project, filter: IncrementalProjectIndexableFilesFilter): List<HealthCheckError> {
-    val errors = mutableListOf<HealthCheckError>()
-    val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
-    index.iterateIndexableFiles(ContentIterator {
-      if (it is VirtualFileWithId) {
-        val fileId = it.id
-        if (!filter.containsFileId(fileId) && filter.ensureFileIdPresent(fileId) { true } == FileAddStatus.ADDED) {
-          errors.add(HealthCheckError(project, it))
+    return filter.runAndCheckThatNoChangesHappened {
+      val errors = mutableListOf<HealthCheckError>()
+      val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
+      index.iterateIndexableFiles(ContentIterator {
+        if (it is VirtualFileWithId) {
+          val fileId = it.id
+          if (!filter.containsFileId(fileId)) {
+            errors.add(HealthCheckError(project, it, fileId, filter))
+          }
         }
-      }
-      true
-    }, project, ProgressManager.getInstance().progressIndicator)
-    return errors
+        true
+      }, project, ProgressManager.getInstance().progressIndicator)
+      errors
+    }
   }
 
-  private class HealthCheckError(private val project: Project, private val virtualFile: VirtualFile) {
+  private class HealthCheckError(private val project: Project,
+                                 private val virtualFile: VirtualFile,
+                                 private val fileId: Int,
+                                 private val filter: IncrementalProjectIndexableFilesFilter) {
     val presentableText: String
       get() = "file ${virtualFile.path} not found in ${project.name}"
+
+    fun fix() {
+      filter.ensureFileIdPresent(fileId) { true }
+    }
   }
 }
