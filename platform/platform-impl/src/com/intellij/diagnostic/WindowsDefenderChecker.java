@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.sun.jna.platform.win32.COM.COMException;
@@ -22,7 +23,6 @@ import com.sun.jna.platform.win32.Ole32;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -203,9 +203,10 @@ public class WindowsDefenderChecker {
   }
 
   private static ProcessOutput run(ProcessBuilder command, Charset charset) throws IOException {
+    var tempDir = NioFiles.createDirectories(Path.of(PathManager.getTempPath()));
     command.environment().put("PSModulePath", "");
     command.redirectErrorStream(true);
-    command.directory(new File(PathManager.getTempPath()));
+    command.directory(tempDir.toFile());
     return new CapturingProcessHandler(command.start(), charset, "PowerShell")
       .runProcess(POWERSHELL_COMMAND_TIMEOUT_MS);
   }
