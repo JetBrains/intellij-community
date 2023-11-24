@@ -16,6 +16,7 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 import java.util.function.Consumer
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 inline fun <T> SpanBuilder.useWithScopeBlocking(operation: (Span) -> T): T {
   val span = startSpan()
@@ -24,18 +25,10 @@ inline fun <T> SpanBuilder.useWithScopeBlocking(operation: (Span) -> T): T {
   }
 }
 
-suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext, crossinline operation: suspend CoroutineScope.(Span) -> T): T {
+suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext = EmptyCoroutineContext,
+                                                crossinline operation: suspend CoroutineScope.(Span) -> T): T {
   val span = startSpan()
   return withContext(Context.current().with(span).asContextElement() + context) {
-    span.use {
-      operation(span)
-    }
-  }
-}
-
-suspend inline fun <T> SpanBuilder.useWithScope2(crossinline operation: suspend (Span) -> T): T {
-  val span = startSpan()
-  return withContext(Context.current().with(span).asContextElement()) {
     span.use {
       operation(span)
     }

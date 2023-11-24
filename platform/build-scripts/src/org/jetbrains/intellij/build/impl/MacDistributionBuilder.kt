@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.SystemProperties
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
@@ -373,7 +373,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                                    macZip: Path,
                                    macZipWithoutRuntime: Path?, customizer: MacDistributionCustomizer,
                                    context: BuildContext) {
-    spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name).useWithScope2 {
+    spanBuilder("build macOS artifacts for specific arch").setAttribute("arch", arch.name).useWithScope {
       val notarize = SystemProperties.getBooleanProperty(
         "intellij.build.mac.notarize",
         !context.isStepSkipped(BuildOptions.MAC_NOTARIZE_STEP)
@@ -502,7 +502,7 @@ private suspend fun buildMacZip(macDistributionBuilder: MacDistributionBuilder,
       .setAttribute("zipRoot", zipRoot)
       .setAttribute(AttributeKey.stringArrayKey("directories"), directories.map { it.toString() })
       .setAttribute(AttributeKey.stringArrayKey("executableFilePatterns"), executableFileMatchers.values.toList())
-      .useWithScope2 {
+      .useWithScope {
         val entryCustomizer: (ZipArchiveEntry, Path, String) -> Unit = { entry, file, relativePathString ->
           val relativePath = Path.of(relativePathString)
           if (executableFileMatchers.any { it.key.matches(relativePath) } || (SystemInfoRt.isUnix && Files.isExecutable(file))) {

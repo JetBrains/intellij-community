@@ -5,7 +5,7 @@ package org.jetbrains.intellij.build.io
 
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
@@ -41,7 +41,7 @@ suspend fun runJava(mainClass: String,
     .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgsWithJson)
     .setAttribute("workingDir", "$workingDir")
     .setAttribute("timeoutMillis", timeout.toString())
-    .useWithScope2 { span ->
+    .useWithScope { span ->
       withContext(Dispatchers.IO) {
         val toDelete = ArrayList<Path>(3)
         var process: Process? = null
@@ -212,7 +212,7 @@ suspend fun runProcess(args: List<String>,
     .setAttribute(AttributeKey.stringArrayKey("args"), args)
     .setAttribute("workingDir", "$workingDir")
     .setAttribute("timeoutMillis", timeout.toString())
-    .useWithScope2 { span ->
+    .useWithScope { span ->
       withContext(Dispatchers.IO) {
         val toDelete = ArrayList<Path>(3)
         var process: Process? = null

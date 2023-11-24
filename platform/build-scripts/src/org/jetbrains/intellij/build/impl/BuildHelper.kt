@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
@@ -43,7 +43,7 @@ inline fun CoroutineScope.createSkippableJob(spanBuilder: SpanBuilder,
   }
   else {
     return launch {
-      spanBuilder.useWithScope2 {
+      spanBuilder.useWithScope {
         task()
       }
     }

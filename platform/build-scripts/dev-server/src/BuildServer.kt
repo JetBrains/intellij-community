@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -57,7 +57,7 @@ fun getIdeSystemProperties(runDir: Path): Map<String, String> {
 
 /** Returns IDE installation directory */
 suspend fun buildProductInProcess(request: BuildRequest): Path {
-  return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).useWithScope2 {
+  return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).useWithScope {
     val platformPrefix = request.platformPrefix
     val configuration = createConfiguration(homePath = request.homePath, productionClassOutput = request.productionClassOutput)
     val productConfiguration = getProductConfiguration(configuration, platformPrefix)

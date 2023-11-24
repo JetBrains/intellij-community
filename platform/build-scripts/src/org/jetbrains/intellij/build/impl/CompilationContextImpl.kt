@@ -5,7 +5,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import io.opentelemetry.api.common.AttributeKey
@@ -172,10 +172,10 @@ class CompilationContextImpl private constructor(
        * [defineJavaSdk] may be skipped using [CompiledClasses.isCompilationRequired]
        * after removing workaround from [JpsCompilationRunner.compileMissingArtifactsModules].
        */
-      spanBuilder("define JDK").useWithScope2 {
+      spanBuilder("define JDK").useWithScope {
         defineJavaSdk(context)
       }
-      spanBuilder("prepare for build").useWithScope2 {
+      spanBuilder("prepare for build").useWithScope {
         context.prepareForBuild()
       }
 
@@ -316,7 +316,7 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
   }
 
   withContext(Dispatchers.IO) {
-    spanBuilder("load project").useWithScope2 { span ->
+    spanBuilder("load project").useWithScope { span ->
       pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(
         Path.of(SystemProperties.getUserHome(), ".m2/repository").toString()))
       val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)

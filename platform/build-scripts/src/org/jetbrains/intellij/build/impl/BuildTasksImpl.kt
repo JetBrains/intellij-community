@@ -7,7 +7,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.io.Decompressor
 import com.intellij.util.system.CpuArch
@@ -229,7 +228,7 @@ fun createIdeaPropertyFile(context: BuildContext): CharSequence {
 }
 
 private suspend fun layoutShared(context: BuildContext) {
-  spanBuilder("copy files shared among all distributions").useWithScope2 {
+  spanBuilder("copy files shared among all distributions").useWithScope {
     val licenseOutDir = context.paths.distAllDir.resolve("license")
     withContext(Dispatchers.IO) {
       copyDir(context.paths.communityHomeDir.resolve("license"), licenseOutDir)
@@ -377,7 +376,7 @@ private suspend fun buildOsSpecificDistributions(context: BuildContext): List<Di
       }
 
       async {
-        spanBuilder(stepId).useWithScope2 {
+        spanBuilder(stepId).useWithScope {
           val osAndArchSpecificDistDirectory = getOsAndArchSpecificDistDirectory(osFamily = os, arch = arch, context = context)
           builder.buildArtifacts(osAndArchSpecificDistPath = osAndArchSpecificDistDirectory, arch = arch)
           checkClassFiles(root = osAndArchSpecificDistDirectory, context = context, isDistAll = false)
@@ -573,7 +572,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       val providedModuleFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
       val platform = createPlatformLayout(pluginsToPublish, context)
       compilationTasks.compileModules(moduleNames = getModulesForPluginsToPublish(platform, pluginsToPublish))
-      val builtinModuleData = spanBuilder("build provided module list").useWithScope2 {
+      val builtinModuleData = spanBuilder("build provided module list").useWithScope {
         val ideClasspath = createIdeClassPath(platform = platform, context = context)
 
         Files.deleteIfExists(providedModuleFile)
@@ -638,7 +637,7 @@ private fun buildProjectArtifacts(platform: PlatformLayout,
   compilationTasks.buildProjectArtifacts(artifactNames)
 }
 
-suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build distributions").useWithScope2 {
+suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build distributions").useWithScope {
   checkProductProperties(context as BuildContextImpl)
   copyDependenciesFile(context)
   logFreeDiskSpace("before compilation", context)
@@ -650,7 +649,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
   coroutineScope {
     createMavenArtifactJob(context, distributionState)
 
-    val distEntries = spanBuilder("build platform and plugin JARs").useWithScope2 {
+    val distEntries = spanBuilder("build platform and plugin JARs").useWithScope {
       if (context.shouldBuildDistributions()) {
         val entries = buildDistribution(state = distributionState, context)
         if (context.productProperties.buildSourcesArchive) {
@@ -1305,7 +1304,7 @@ internal suspend fun buildAdditionalAuthoringArtifacts(ideClassPath: Set<String>
 
 internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext) {
   withContext(Dispatchers.IO) {
-    spanBuilder("update last modified time").setAttribute("dir", directory.toString()).useWithScope2 {
+    spanBuilder("update last modified time").setAttribute("dir", directory.toString()).useWithScope {
       Files.walk(directory).use { tree ->
         val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
         tree.forEach {

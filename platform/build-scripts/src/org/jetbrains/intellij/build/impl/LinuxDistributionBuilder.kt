@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +43,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
   }
 
   override suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
-    spanBuilder("copy files for os distribution").setAttribute("os", targetOs.osName).setAttribute("arch", arch.name).useWithScope2 {
+    spanBuilder("copy files for os distribution").setAttribute("os", targetOs.osName).setAttribute("arch", arch.name).useWithScope {
       withContext(Dispatchers.IO) {
         val distBinDir = targetPath.resolve("bin")
         val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
@@ -165,7 +165,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
     spanBuilder("build Linux tar.gz")
       .setAttribute("runtimeDir", runtimeDir?.toString() ?: "")
-      .useWithScope2 {
+      .useWithScope {
         val executableFileMatchers = generateExecutableFilesMatchers(runtimeDir != null, arch).keys
         tar(tarPath, tarRoot, dirs, executableFileMatchers, context.options.buildDateInSeconds)
         checkInArchive(tarPath, tarRoot, context)

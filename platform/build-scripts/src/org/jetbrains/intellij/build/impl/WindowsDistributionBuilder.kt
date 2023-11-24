@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
@@ -265,7 +265,7 @@ internal class WindowsDistributionBuilder(
       spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
         .setAttribute("targetFile", targetFile.toString())
         .setAttribute("arch", arch.dirName)
-        .useWithScope2 {
+        .useWithScope {
           val dirs = mutableListOf(context.paths.distAllDir, winDistPath)
 
           if (runtimeDir != null) {
@@ -303,7 +303,7 @@ private suspend fun buildWinLauncher(winDistPath: Path,
                                      arch: JvmArchitecture,
                                      additionalNonCustomizableJvmArgs: List<String>,
                                      context: BuildContext) {
-  spanBuilder("build Windows executable").useWithScope2 {
+  spanBuilder("build Windows executable").useWithScope {
     val executableBaseName = "${context.productProperties.baseFileName}64"
     val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
     val icoFile = computeIcoPath(context)

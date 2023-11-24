@@ -4,7 +4,7 @@
 
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
@@ -25,7 +25,7 @@ internal suspend fun buildPlugins(pluginBuildDescriptors: List<PluginBuildDescri
                                   pluginCacheRootDir: Path,
                                   platformLayout: PlatformLayout,
                                   context: BuildContext): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
-  return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope2 { span ->
+  return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope { span ->
     val counter = LongAdder()
     val pluginEntries = coroutineScope {
       pluginBuildDescriptors.map { plugin ->
@@ -93,7 +93,7 @@ private suspend fun buildPlugin(plugin: PluginBuildDescriptor,
     .setAttribute("mainModule", plugin.layout.mainModule)
     .setAttribute("dir", plugin.layout.directoryName)
     .setAttribute("reason", reason)
-    .useWithScope2 {
+    .useWithScope {
       val (pluginEntries, _) = layoutDistribution(layout = plugin.layout,
                                                   platformLayout = platformLayout, targetDirectory = plugin.dir,
 

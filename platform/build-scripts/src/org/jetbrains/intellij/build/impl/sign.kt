@@ -3,7 +3,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.jetbrains.signatureverifier.ILogger
 import com.jetbrains.signatureverifier.InvalidDataException
@@ -179,7 +179,7 @@ internal suspend fun signMacBinaries(files: List<Path>,
   span.setAttribute("contentType", "application/x-mac-app-bin")
   span.setAttribute(AttributeKey.stringArrayKey("files"), files.map { it.name })
   val options = signingOptions(contentType = "application/x-mac-app-bin", context = context).putAll(m = additionalOptions)
-  span.useWithScope2 {
+  span.useWithScope {
     context.proprietaryBuildTools.signTool.signFiles(files = files, context = context, options = options)
     if (!permissions.isEmpty()) {
       // SRE-1223 workaround

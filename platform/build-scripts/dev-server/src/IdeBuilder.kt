@@ -6,7 +6,7 @@ package org.jetbrains.intellij.build.devServer
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.sha3_256
 import com.intellij.util.lang.PathClassLoader
@@ -80,7 +80,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     val runDir = rootDir.resolve("$productDirName/$productDirName")
     // on start, delete everything to avoid stale data
     if (Files.isDirectory(runDir)) {
-      val usePluginCache = spanBuilder("check plugin cache applicability").useWithScope2 {
+      val usePluginCache = spanBuilder("check plugin cache applicability").useWithScope {
         checkBuildModulesModificationAndMark(productConfiguration = productConfiguration, outDir = request.productionClassOutput)
       }
       prepareExistingRunDirForProduct(runDir = runDir, usePluginCache = usePluginCache)
@@ -114,7 +114,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
         Files.writeString(ideaPropertyFile, createIdeaPropertyFile(context))
       }
 
-      val (platformDistributionEntries, classPath) = spanBuilder("layout platform").useWithScope2 {
+      val (platformDistributionEntries, classPath) = spanBuilder("layout platform").useWithScope {
         layoutPlatform(runDir = runDir, platformLayout = platformLayout.await(), context = context)
       }
       
@@ -145,7 +145,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       launch {
         val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() +
                                      pluginDistributionEntriesDeferred.await().asSequence().map { it.second }.flatten()
-        spanBuilder("generate runtime repository").useWithScope2 {
+        spanBuilder("generate runtime repository").useWithScope {
           withContext(Dispatchers.IO) {
             generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
           }
@@ -276,7 +276,7 @@ private suspend fun createBuildContext(productConfiguration: ProductConfiguratio
 
     // load project is executed as part of compilation context creation - ~1 second
     val compilationContext = async {
-      spanBuilder("create build context").useWithScope2 {
+      spanBuilder("create build context").useWithScope {
         // we cannot inject a proper build time as it is a part of resources, so, set to the first day of the current month
         val options = BuildOptions(
           jarCacheDir = jarCacheDir,
@@ -339,11 +339,11 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
 private suspend fun createProductProperties(productConfiguration: ProductConfiguration, request: BuildRequest): ProductProperties {
   val classPathFiles = getBuildModules(productConfiguration).map { request.productionClassOutput.resolve(it) }.toList()
 
-  val classLoader = spanBuilder("create product properties classloader").useWithScope2 {
+  val classLoader = spanBuilder("create product properties classloader").useWithScope {
     PathClassLoader(UrlClassLoader.build().files(classPathFiles).parent(BuildRequest::class.java.classLoader))
   }
 
-  return spanBuilder("create product properties").useWithScope2 {
+  return spanBuilder("create product properties").useWithScope {
     val productPropertiesClass = try {
       classLoader.loadClass(productConfiguration.className)
     }

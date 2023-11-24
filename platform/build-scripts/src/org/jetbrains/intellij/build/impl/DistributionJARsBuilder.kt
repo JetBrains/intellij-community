@@ -6,7 +6,7 @@ package org.jetbrains.intellij.build.impl
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
@@ -76,7 +76,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
     val antTargetFile = antDir?.resolve("lib/ant.jar")
     val moduleOutputPatcher = ModuleOutputPatcher()
     val buildPlatformJob: Deferred<List<DistributionFileEntry>> = async(traceContext) {
-      spanBuilder("build platform lib").useWithScope2 {
+      spanBuilder("build platform lib").useWithScope {
         val result = buildLib(moduleOutputPatcher = moduleOutputPatcher, platform = state.platform, context = context)
         if (!isUpdateFromSources && context.productProperties.scrambleMainJar) {
           scramble(state.platform, context)
@@ -123,7 +123,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
 
   coroutineScope {
     launch(Dispatchers.IO) {
-      spanBuilder("generate content report").useWithScope2 {
+      spanBuilder("generate content report").useWithScope {
         Files.createDirectories(context.paths.artifactDir)
         val contentMappingJson = context.paths.artifactDir.resolve("content-mapping.json")
         writeProjectStructureReport(entries = entries, file = contentMappingJson, buildPaths = context.paths)
@@ -138,7 +138,7 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
     createBuildThirdPartyLibraryListJob(entries, context)
     if (context.useModularLoader || context.generateRuntimeModuleRepository) {
       launch(Dispatchers.IO) {
-        spanBuilder("generate runtime module repository").useWithScope2 {
+        spanBuilder("generate runtime module repository").useWithScope {
           generateRuntimeModuleRepository(entries, context)
         }
       }
@@ -184,7 +184,7 @@ suspend fun buildBundledPlugins(state: DistributionBuilderState,
     .setAttribute("isUpdateFromSources", isUpdateFromSources)
     .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
     .setAttribute("count", plugins.size.toLong())
-    .useWithScope2 { span ->
+    .useWithScope { span ->
       val pluginsToBundle = ArrayList<PluginLayout>(plugins.size)
       plugins.filterTo(pluginsToBundle) { satisfiesBundlingRequirements(it, osFamily = null, arch = null, context) }
       span.setAttribute("satisfiableCount", pluginsToBundle.size.toLong())
@@ -216,7 +216,7 @@ private suspend fun buildOsSpecificBundledPlugins(state: DistributionBuilderStat
   return spanBuilder("build os-specific bundled plugins")
     .setAttribute("isUpdateFromSources", isUpdateFromSources)
     .setAttribute(AttributeKey.stringArrayKey("pluginDirectoriesToSkip"), context.options.bundledPluginDirectoriesToSkip.toList())
-    .useWithScope2 {
+    .useWithScope {
       coroutineScope {
         getPluginDirectories(context, isUpdateFromSources).mapNotNull { (dist, targetDir) ->
           val (os, arch) = dist
@@ -235,7 +235,7 @@ private suspend fun buildOsSpecificBundledPlugins(state: DistributionBuilderStat
               .setAttribute("arch", arch.name)
               .setAttribute("count", osSpecificPlugins.size.toLong())
               .setAttribute("outDir", targetDir.toString())
-              .useWithScope2 {
+              .useWithScope {
                 buildPlugins(moduleOutputPatcher = ModuleOutputPatcher(),
                              plugins = osSpecificPlugins,
                              targetDir = targetDir,
@@ -254,13 +254,13 @@ suspend fun buildNonBundledPlugins(pluginsToPublish: Set<PluginLayout>,
                                    buildPlatformLibJob: Job?,
                                    state: DistributionBuilderState,
                                    context: BuildContext): List<DistributionFileEntry> {
-  return spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size.toLong()).useWithScope2 { span ->
+  return spanBuilder("build non-bundled plugins").setAttribute("count", pluginsToPublish.size.toLong()).useWithScope { span ->
     if (pluginsToPublish.isEmpty()) {
-      return@useWithScope2 emptyList<DistributionFileEntry>()
+      return@useWithScope emptyList<DistributionFileEntry>()
     }
     if (context.isStepSkipped(BuildOptions.NON_BUNDLED_PLUGINS_STEP)) {
       span.addEvent("skip")
-      return@useWithScope2 emptyList<DistributionFileEntry>()
+      return@useWithScope emptyList<DistributionFileEntry>()
     }
 
     val nonBundledPluginsArtifacts = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-plugins")
@@ -366,7 +366,7 @@ private suspend fun buildHelpPlugin(helpPlugin: PluginLayout,
                                     context: BuildContext): PluginRepositorySpec {
   val directory = helpPlugin.directoryName
   val destFile = targetDir.resolve("$directory.zip")
-  spanBuilder("build help plugin").setAttribute("dir", directory).useWithScope2 {
+  spanBuilder("build help plugin").setAttribute("dir", directory).useWithScope {
     buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
                  plugins = listOf(helpPlugin),
                  targetDir = pluginsToPublishDir.resolve(directory),
@@ -446,7 +446,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
       val directoryName = plugin.directoryName
       val pluginDir = targetDir.resolve(directoryName)
       val task = async {
-        spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).useWithScope2 {
+        spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).useWithScope {
           val (entries, file) = layoutDistribution(layout = plugin,
                                                    platformLayout = state.platform,
                                                    targetDirectory = pluginDir,
@@ -484,7 +484,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
 
     // scrambling can require classes from the platform
     buildPlatformJob?.let { task ->
-      spanBuilder("wait for platform lib for scrambling").useWithScope2 { task.join() }
+      spanBuilder("wait for platform lib for scrambling").useWithScope { task.join() }
     }
     coroutineScope {
       for (scrambleTask in scrambleTasks) {
@@ -527,7 +527,7 @@ private suspend fun buildPlatformSpecificPluginResources(plugins: Collection<Plu
     .forEach { (generator, pluginDir) ->
       spanBuilder("plugin")
         .setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString())
-        .useWithScope2 {
+        .useWithScope {
           generator(pluginDir, context)
         }
     }
@@ -604,7 +604,7 @@ suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
 
   return spanBuilder("layout lib")
     .setAttribute("path", targetDirectory.toString())
-    .useWithScope2 {
+    .useWithScope {
       layoutDistribution(layout = platform,
                          platformLayout = platform,
                          targetDirectory = targetDirectory,
@@ -718,7 +718,7 @@ private suspend fun scramble(platform: PlatformLayout, context: BuildContext) {
 }
 
 private suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildContext): List<DistributionFileEntry> {
-  return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).useWithScope2 {
+  return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).useWithScope {
     val sources = ArrayList<ZipSource>()
     val libraryData = ProjectLibraryData("Ant", LibraryPackMode.MERGED, reason = "ant")
     copyDir(sourceDir = context.paths.communityHomeDir.resolve("lib/ant"),
@@ -853,7 +853,7 @@ private fun loadPluginAutoPublishList(context: BuildContext): Predicate<PluginLa
 private suspend fun buildKeymapPlugins(targetDir: Path, context: BuildContext): List<Pair<Path, ByteArray>> {
   val keymapDir = context.paths.communityHomeDir.resolve("platform/platform-resources/src/keymaps")
   Files.createDirectories(targetDir)
-  return spanBuilder("build keymap plugins").useWithScope2 {
+  return spanBuilder("build keymap plugins").useWithScope {
     withContext(Dispatchers.IO) {
       listOf(
         arrayOf("Mac OS X", "Mac OS X 10.5+"),
@@ -888,7 +888,7 @@ suspend fun layoutDistribution(layout: BaseLayout,
       // patchers must be executed _before_ pack because patcher patches module output
       val patchers = layout.patchers
       if (!patchers.isEmpty()) {
-        spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope2 {
+        spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope {
           for (patcher in patchers) {
             patcher(moduleOutputPatcher, context)
           }
@@ -901,7 +901,7 @@ suspend fun layoutDistribution(layout: BaseLayout,
     val tasks = ArrayList<Deferred<Collection<DistributionFileEntry>>>(3)
     tasks.add(async {
       val outputDir = targetDirectory.resolve("lib")
-      spanBuilder("pack").setAttribute("outputDir", outputDir.toString()).useWithScope2 {
+      spanBuilder("pack").setAttribute("outputDir", outputDir.toString()).useWithScope {
         JarPackager.pack(includedModules = includedModules,
                          outputDir = outputDir,
                          isRootDir = layout is PlatformLayout,
@@ -918,7 +918,7 @@ suspend fun layoutDistribution(layout: BaseLayout,
         !context.options.skipCustomResourceGenerators &&
         (layout.resourcePaths.isNotEmpty() || layout is PluginLayout && !layout.resourceGenerators.isEmpty())) {
       tasks.add(async(Dispatchers.IO) {
-        spanBuilder("pack additional resources").useWithScope2 {
+        spanBuilder("pack additional resources").useWithScope {
           layoutAdditionalResources(layout = layout, context = context, targetDirectory = targetDirectory)
           emptyList()
         }
@@ -927,7 +927,7 @@ suspend fun layoutDistribution(layout: BaseLayout,
 
     if (!layout.includedArtifacts.isEmpty()) {
       tasks.add(async {
-        spanBuilder("pack artifacts").useWithScope2 {
+        spanBuilder("pack artifacts").useWithScope {
           layoutArtifacts(layout = layout, context = context, copyFiles = copyFiles, targetDirectory = targetDirectory)
         }
       })
@@ -968,7 +968,7 @@ private suspend fun layoutAdditionalResources(layout: BaseLayout, context: Build
 
   val resourceGenerators = layout.resourceGenerators
   if (!resourceGenerators.isEmpty()) {
-    spanBuilder("generate and pack resources").useWithScope2 {
+    spanBuilder("generate and pack resources").useWithScope {
       for (item in resourceGenerators) {
         item(targetDirectory, context)
       }
@@ -1071,7 +1071,7 @@ private suspend fun archivePlugins(items: Collection<NonBundledPlugin>, compress
             .setAttribute("input", source.toString())
             .setAttribute("outputFile", target.toString())
             .setAttribute("optimizedZip", optimized)
-            .useWithScope2 {
+            .useWithScope {
               if (optimized) {
                 writeNewZip(target, compress = compress, withOptimizedMetadataEnabled = false) { zipCreator ->
                   ZipArchiver(zipCreator).use { archiver ->
@@ -1100,7 +1100,7 @@ private suspend fun archivePlugins(items: Collection<NonBundledPlugin>, compress
               }
             }
           if (withBlockMap) {
-            spanBuilder("build plugin blockmap").setAttribute("file", target.toString()).useWithScope2 {
+            spanBuilder("build plugin blockmap").setAttribute("file", target.toString()).useWithScope {
               buildBlockMap(target, json)
             }
           }

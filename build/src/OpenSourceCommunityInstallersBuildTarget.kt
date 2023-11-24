@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
@@ -24,7 +24,7 @@ object OpenSourceCommunityInstallersBuildTarget {
       val context = createCommunityBuildContext(IdeaProjectLoaderUtil.guessCommunityHome(javaClass), options)
       BuildTasks.create(context).compileProjectAndTests(listOf("intellij.platform.jps.build.tests"))
       buildDistributions(context)
-      spanBuilder("build standalone JPS").useWithScope2 {
+      spanBuilder("build standalone JPS").useWithScope {
         buildCommunityStandaloneJpsBuilder(targetDir = context.paths.artifactDir.resolve("jps"), context = context)
       }
     }
