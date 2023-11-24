@@ -93,12 +93,6 @@ inline fun <T> SpanBuilder.use(operation: (Span) -> T): T {
   return startSpan().use(operation)
 }
 
-inline fun Span.useWithScope(operation: () -> Unit) {
-  makeCurrent().use {
-    use { operation.invoke() }
-  }
-}
-
 inline fun <T> Span.use(operation: (Span) -> T): T {
   try {
     return operation(this)

@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.*;
@@ -28,6 +29,7 @@ import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.impl.VcsLogSharedSettings;
 import com.intellij.vcs.log.util.PersistentUtil;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +40,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.useWithScope;
 
 public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
@@ -124,7 +125,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     if (!VcsLogCachesInvalidator.getInstance().isValid()) {
       // this is not recoverable
       // restart won't help here
-      // and can not shut down ide because of this
+      // and cannot shut down ide because of this
       // so use memory storage (probably leading to out of memory at some point) + no index
 
       LOG.error("Could not delete caches at " + PersistentUtil.LOG_CACHE);
@@ -185,14 +186,16 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
                                                                      false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            useWithScope(span, () -> {
-              indicator.setIndeterminate(true);
-              resetState();
-              readCurrentUser();
-              myRefresher.readFirstBlock();
-              fireDataPackChangeEvent(myRefresher.getCurrentDataPack());
-              return Unit.INSTANCE;
-            });
+            try (Scope ignored = span.makeCurrent()) {
+              TraceKt.use(span, (Span __) -> {
+                indicator.setIndeterminate(true);
+                resetState();
+                readCurrentUser();
+                myRefresher.readFirstBlock();
+                fireDataPackChangeEvent(myRefresher.getCurrentDataPack());
+                return Unit.INSTANCE;
+              });
+            }
           }
 
           @Override
@@ -200,10 +203,10 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
             synchronized (myLock) {
               // Here be dragons:
               // VcsLogProgressManager can cancel us when it's getting disposed,
-              // and we can also get cancelled by invalid git executable.
+              // and we can also get canceled by invalid git executable.
               // Since we do not know what's up, we just restore the state,
               // and it is entirely possible to start another initialization after that.
-              // Eventually, everything gets cancelled for good in VcsLogData.dispose.
+              // Eventually, everything gets canceled for good in VcsLogData.dispose.
               // But still.
               if (myState.equals(State.INITIALIZED)) {
                 myState = State.CREATED;
@@ -329,7 +332,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
   /**
    * Makes the log perform refresh for the given root.
-   * This refresh can be optimized, i.e. it can query VCS just for the part of the log.
+   * This refresh can be optimized, i.e., it can query VCS just for the part of the log.
    * @param optimized - if request should be optimized see {@link VcsLogRefresher#refresh}
    */
   public void refresh(@NotNull Collection<VirtualFile> roots, boolean optimized) {
