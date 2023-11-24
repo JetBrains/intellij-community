@@ -5404,6 +5404,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 runTest("testData/intentions/convertForEachToForLoop/nullableReceiver.kt");
             }
 
+            @TestMetadata("nullableReceiver2.kt")
+            public void testNullableReceiver2() throws Exception {
+                runTest("testData/intentions/convertForEachToForLoop/nullableReceiver2.kt");
+            }
+
             @TestMetadata("parenthesizedExpression.kt")
             public void testParenthesizedExpression() throws Exception {
                 runTest("testData/intentions/convertForEachToForLoop/parenthesizedExpression.kt");
