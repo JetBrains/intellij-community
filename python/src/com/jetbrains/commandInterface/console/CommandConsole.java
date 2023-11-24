@@ -24,7 +24,6 @@ import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.toolWindowWithActions.ConsoleWithProcess;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
