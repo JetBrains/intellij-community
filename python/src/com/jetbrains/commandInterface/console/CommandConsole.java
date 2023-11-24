@@ -124,6 +124,12 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
   }
 
   @Override
+  public void setInputText(@NotNull String query) {
+    super.setInputText(query);
+    getConsoleEditor().getCaretModel().moveToOffset(query.length());
+  }
+
+  @Override
   public void print(@NotNull String text, @NotNull final ConsoleViewContentType contentType) {
     if (myCommandsInfo != null) {
       final Function1<String, String> outputFilter = myCommandsInfo.getOutputFilter();
