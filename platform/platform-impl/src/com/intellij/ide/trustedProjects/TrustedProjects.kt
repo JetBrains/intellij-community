@@ -10,7 +10,7 @@ import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-internal object TrustedProjects {
+object TrustedProjects {
 
   fun isProjectTrusted(locatedProject: LocatedProject): Boolean {
     return getProjectTrustedState(locatedProject) == ThreeState.YES
