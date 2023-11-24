@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
+import java.awt.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -97,6 +98,8 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
                 if (typingTarget != null) {
                   span.addEvent("Typing " + currentChar);
                   typingTarget.type(String.valueOf(currentChar));
+                } else {
+                  span.addEvent("Focus owner is " + KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner().getClass());
                 }
               }
             })), i * delay, TimeUnit.MILLISECONDS);
