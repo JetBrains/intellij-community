@@ -8,6 +8,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
@@ -63,13 +64,15 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             addSampleCode: Boolean = true,
             gradleVersion: String? = null,
             gradleHome: String? = null,
-            useCompactProjectStructure: Boolean = false
+            useCompactProjectStructure: Boolean = false,
+            kotlinStdlib: LibraryOrderEntry? = null
         ) {
             NewProjectWizardModuleBuilder()
                 .apply {
                     wizard.apply(emptyList(), setOf(GenerationPhase.PREPARE))
                     wizard.jdk = sdk
                     wizard.isCreatingNewProject = isProject
+                    wizard.stdlibForJps = kotlinStdlib
                     wizard.context.writeSettings {
                         StructurePlugin.name.reference.setValue(projectName)
                         StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
