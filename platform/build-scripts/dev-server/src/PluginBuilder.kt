@@ -57,7 +57,7 @@ internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
     val reason = checkCache(plugin = plugin, projectOutDir = outDir, pluginCacheRootDir = pluginCacheRootDir)
 
     if (reason == null || reason == "initial build") {
-      if (plugin.layout.directoryName == "clion-radler" && hasResourcePaths(plugin.layout)) {
+      if (plugin.layout.mainModule == "intellij.rider.plugins.clion.radler" && hasResourcePaths(plugin.layout)) {
         // copy custom resources
         spanBuilder("build plugin")
           .setAttribute("mainModule", mainModule)
