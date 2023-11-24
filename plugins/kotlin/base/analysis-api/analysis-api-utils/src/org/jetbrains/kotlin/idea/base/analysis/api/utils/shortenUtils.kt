@@ -140,6 +140,12 @@ fun ShortenCommand.invokeShortening(): List<KtElement> {
         call.deleteQualifier()?.let { shorteningResults.add(it) }
     }
 
+    for (labelInfo in thisLabelsToShorten) {
+        val thisWithLabel = labelInfo.labelToShorten.element ?: continue
+        thisWithLabel.labelQualifier?.delete()
+        shorteningResults.add(thisWithLabel)
+    }
+
     for (kDocNamePointer in kDocQualifiersToShorten) {
         val kDocName = kDocNamePointer.element ?: continue
         kDocName.deleteQualifier()
