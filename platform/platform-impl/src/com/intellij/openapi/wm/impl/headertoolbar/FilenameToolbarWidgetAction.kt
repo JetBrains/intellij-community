@@ -82,12 +82,12 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware {
     val filename = VfsPresentationUtil.getUniquePresentableNameForUI(project, file)
     val pathFromProjectRoot = project.guessProjectDir()
       ?.let { VfsUtilCore.getRelativePath(file, it) }
-      ?.let { FileUtil.toSystemDependentName(it) } ?: ""
+      ?.let { FileUtil.toSystemDependentName(it) }
     presentation.isEnabledAndVisible = true
     presentation.putClientProperty(FILE_COLOR, fg)
     presentation.putClientProperty(FILE_FULL_PATH, if (UISettings.getInstance().fullPathsInWindowHeader) file.path else null)
     presentation.text = StringUtil.shortenTextWithEllipsis(filename, 60, 30)
-    presentation.description = pathFromProjectRoot
+    presentation.description = pathFromProjectRoot ?: if (filename != presentation.text) filename else null
     presentation.icon = icon
   }
 
