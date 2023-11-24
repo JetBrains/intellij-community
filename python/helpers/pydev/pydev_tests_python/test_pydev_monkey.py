@@ -158,6 +158,24 @@ class TestCase(unittest.TestCase):
             '-another_arg'
         ])
 
+    def test_monkey_patch_glued_x_interpreter_arg(self):
+        SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}
+        check = ['/usr/bin/python', '-Xpycache_prefix=/tmp/cpython-cache', 'manage.py',
+                 'runserver', 'localhost:8000']
+        self.assertEqual(pydev_monkey.patch_args(check), [
+            '/usr/bin/python',
+            '-Xpycache_prefix=/tmp/cpython-cache',
+            get_pydevd_file(),
+            '--port',
+            '0',
+            '--client',
+            '127.0.0.1',
+            '--file',
+            'manage.py',
+            'runserver',
+            'localhost:8000'
+        ])
+
     def test_monkey_patch_x_program_arg(self):
         SetupHolder.setup = {'client': '127.0.0.1', 'port': '0'}
         check = ['C:\\bin\\python.exe', '-u', 'target.py', '-c', '-X', 'foo=bar',
