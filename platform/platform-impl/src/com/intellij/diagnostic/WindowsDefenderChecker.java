@@ -164,7 +164,7 @@ public class WindowsDefenderChecker {
         return false;
       }
 
-      var scriptlet = "(Get-AuthenticodeSignature '" + script + "').Status";
+      var scriptlet = "(Get-AuthenticodeSignature '" + script.toString().replace("'", "''") + "').Status";
       var command = new ProcessBuilder(psh.getPath(), "-NoProfile", "-NonInteractive", "-Command", scriptlet);
       var output = run(command, Charset.defaultCharset());
       if (output.getExitCode() != 0) {
