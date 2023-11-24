@@ -28,6 +28,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -166,9 +167,10 @@ public class WindowsDefenderChecker {
 
       var scriptlet = "(Get-AuthenticodeSignature '" + script.toString().replace("'", "''") + "').Status";
       var command = new ProcessBuilder(psh.getPath(), "-NoProfile", "-NonInteractive", "-Command", scriptlet);
+      var start = System.nanoTime();
       var output = run(command, Charset.defaultCharset());
       if (output.getExitCode() != 0) {
-        LOG.info("validation failed:\n[" + output.getExitCode() + "] " + command.command() + "\noutput: " + output.getStdout().trim());
+        logProcessError("validation failed", command, start, output);
         return false;
       }
       var status = output.getStdout().trim();
@@ -185,9 +187,10 @@ public class WindowsDefenderChecker {
         Stream.of(launcher.toString(), psh.getPath(), "-ExecutionPolicy", "Bypass", "-NoProfile", "-NonInteractive", "-File", script.toString()),
         paths.stream().map(Path::toString)
       ).toList());
+      start = System.nanoTime();
       output = run(command, StandardCharsets.UTF_8);
       if (output.getExitCode() != 0) {
-        LOG.info("script failed:\n[" + output.getExitCode() + "] " + command.command() + "\noutput: " + output.getStdout().trim());
+        logProcessError("exclusion failed", command, start, output);
         return false;
       }
       else {
@@ -209,6 +212,11 @@ public class WindowsDefenderChecker {
     command.directory(tempDir.toFile());
     return new CapturingProcessHandler(command.start(), charset, "PowerShell")
       .runProcess(POWERSHELL_COMMAND_TIMEOUT_MS);
+  }
+
+  private static void logProcessError(String prefix, ProcessBuilder command, long start, ProcessOutput output) {
+    var t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+    LOG.info(prefix + ":\n[" + output.getExitCode() + ", " + t + "ms] " + command.command() + "\noutput: " + output.getStdout().trim());
   }
 
   private static void logCaller(String prefix) {
