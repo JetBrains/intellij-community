@@ -159,7 +159,7 @@ suspend fun deployAndLaunchIjentGettingPath(
   wslCommandLineOptionsModifier(wslCommandLineOptions)
 
   val targetPlatform = IjentExecFileProvider.SupportedPlatform.X86_64__LINUX
-  val ijentBinary = IjentExecFileProvider.getIjentBinary(targetPlatform)
+  val ijentBinary = IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform)
 
   val wslIjentBinary = wslDistribution.getWslPath(ijentBinary.toAbsolutePath())!!
 
