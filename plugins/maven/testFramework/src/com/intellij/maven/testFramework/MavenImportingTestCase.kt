@@ -4,7 +4,6 @@ package com.intellij.maven.testFramework
 import com.intellij.application.options.CodeStyle
 import com.intellij.compiler.CompilerTestUtil
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
-import com.intellij.maven.testFramework.utils.importMavenProjects
 import com.intellij.openapi.application.*
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
@@ -412,7 +411,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   protected fun importProjectWithErrors() {
     val files = listOf(myProjectPom)
     doImportProjects(files, false)
-    importMavenProjects(projectsManager, files)
   }
 
   protected fun importProjectWithProfiles(vararg profiles: String) {

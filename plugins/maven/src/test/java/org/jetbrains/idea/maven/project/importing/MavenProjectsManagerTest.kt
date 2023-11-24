@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DeleteAction
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.maven.testFramework.utils.importMavenProjects
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -35,7 +34,6 @@ import org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider
 import org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction
 import org.jetbrains.idea.maven.project.projectRoot.MavenModuleStructureExtension
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
-import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Assume
 import org.junit.Test
 
@@ -374,8 +372,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     writeAction {
       ModuleDeleteProvider.detachModules(myProject, arrayOf(module))
     }
-    //myProjectsManager.performScheduledImportInTests();
-    importMavenProjects(projectsManager)
     assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"))
     assertTrue(projectsManager.isIgnored(projectsManager.findProject(m)!!))
   }
