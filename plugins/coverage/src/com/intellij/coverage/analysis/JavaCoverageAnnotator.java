@@ -101,36 +101,31 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     myStructure = null;
   }
 
-  public static class JavaPackageAnnotator implements Annotator {
+  public static class JavaCoverageInfoCollector implements CoverageInfoCollector {
     private final JavaCoverageAnnotator myAnnotator;
 
-    public JavaPackageAnnotator(JavaCoverageAnnotator annotator) { myAnnotator = annotator; }
+    public JavaCoverageInfoCollector(JavaCoverageAnnotator annotator) { myAnnotator = annotator; }
 
     @Override
-    public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
-      myAnnotator.myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
-    }
-
-    @Override
-    public void annotatePackage(String packageQualifiedName,
-                                PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
-                                boolean flatten) {
+    public void addPackage(String packageQualifiedName,
+                           PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
+                           boolean flatten) {
       if (flatten) {
         myAnnotator.myFlattenPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
       }
       else {
-        annotatePackage(packageQualifiedName, packageCoverageInfo);
+        myAnnotator.myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
       }
     }
 
     @Override
-    public void annotateSourceDirectory(VirtualFile dir,
-                                        PackageAnnotator.PackageCoverageInfo dirCoverageInfo) {
+    public void addSourceDirectory(VirtualFile dir,
+                                   PackageAnnotator.PackageCoverageInfo dirCoverageInfo) {
       myAnnotator.myDirCoverageInfos.put(dir, dirCoverageInfo);
     }
 
     @Override
-    public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
+    public void addClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
       myAnnotator.myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
     }
   }
@@ -285,12 +280,12 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
   }
 
   private void collectSummaryInfo(@NotNull CoverageSuitesBundle suite, Project project) {
-    var annotator = new JavaPackageAnnotator(this);
+    var collector = new JavaCoverageInfoCollector(this);
     if (shouldSkipUnloadedClassesAnalysis(suite)) {
-      JavaCoverageReportEnumerator.collectSummaryInReport(suite, project, annotator);
+      JavaCoverageReportEnumerator.collectSummaryInReport(suite, project, collector);
     }
     else {
-      new JavaCoverageClassesAnnotator(suite, project, annotator).visitSuite();
+      new JavaCoverageClassesAnnotator(suite, project, collector).visitSuite();
     }
   }
 

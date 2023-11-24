@@ -2,7 +2,7 @@
 package com.intellij.coverage
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings
-import com.intellij.coverage.analysis.Annotator
+import com.intellij.coverage.analysis.CoverageInfoCollector
 import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator
 import com.intellij.coverage.analysis.JavaCoverageReportEnumerator
 import com.intellij.coverage.analysis.PackageAnnotator.*
@@ -202,25 +202,21 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   }
 }
 
-private class PackageAnnotationConsumer : Annotator {
+private class PackageAnnotationConsumer : CoverageInfoCollector {
   val myDirectoryCoverage: MutableMap<VirtualFile, PackageCoverageInfo> = HashMap()
   val myPackageCoverage: MutableMap<String, PackageCoverageInfo> = HashMap()
   val myFlatPackageCoverage: MutableMap<String, PackageCoverageInfo> = HashMap()
   val myClassCoverageInfo: MutableMap<String, ClassCoverageInfo> = ConcurrentHashMap()
 
-  override fun annotateSourceDirectory(virtualFile: VirtualFile, packageCoverageInfo: PackageCoverageInfo) {
+  override fun addSourceDirectory(virtualFile: VirtualFile, packageCoverageInfo: PackageCoverageInfo) {
     myDirectoryCoverage[virtualFile] = packageCoverageInfo
   }
 
-  override fun annotatePackage(packageQualifiedName: String, packageCoverageInfo: PackageCoverageInfo) {
-    myPackageCoverage[packageQualifiedName] = packageCoverageInfo
-  }
-
-  override fun annotatePackage(packageQualifiedName: String, packageCoverageInfo: PackageCoverageInfo, flatten: Boolean) {
+  override fun addPackage(packageQualifiedName: String, packageCoverageInfo: PackageCoverageInfo, flatten: Boolean) {
     (if (flatten) myFlatPackageCoverage else myPackageCoverage)[packageQualifiedName] = packageCoverageInfo
   }
 
-  override fun annotateClass(classQualifiedName: String, classCoverageInfo: ClassCoverageInfo) {
+  override fun addClass(classQualifiedName: String, classCoverageInfo: ClassCoverageInfo) {
     myClassCoverageInfo[classQualifiedName] = classCoverageInfo
   }
 }

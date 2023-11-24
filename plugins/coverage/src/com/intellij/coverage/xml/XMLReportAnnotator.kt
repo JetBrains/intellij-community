@@ -4,7 +4,7 @@ package com.intellij.coverage.xml
 import com.intellij.coverage.CoverageDataManager
 import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.analysis.AnalysisUtils
-import com.intellij.coverage.analysis.Annotator
+import com.intellij.coverage.analysis.CoverageInfoCollector
 import com.intellij.coverage.analysis.JavaCoverageAnnotator
 import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator
 import com.intellij.coverage.analysis.PackageAnnotator.ClassCoverageInfo
@@ -21,13 +21,13 @@ import com.intellij.rt.coverage.report.XMLProjectData
 @Service(Service.Level.PROJECT)
 class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(project) {
   override fun createRenewRequest(suite: CoverageSuitesBundle, dataManager: CoverageDataManager) = Runnable {
-    annotate(suite, dataManager, JavaPackageAnnotator(this))
+    annotate(suite, dataManager, JavaCoverageInfoCollector(this))
     myStructure = CoverageClassStructure(project, this)
     Disposer.register(this, myStructure)
     dataManager.triggerPresentationUpdate()
   }
 
-  fun annotate(suite: CoverageSuitesBundle, dataManager: CoverageDataManager, annotator: Annotator) {
+  fun annotate(suite: CoverageSuitesBundle, dataManager: CoverageDataManager, collector: CoverageInfoCollector) {
     val classCoverage = hashMapOf<String, ClassCoverageInfo>()
     val flattenPackageCoverage = hashMapOf<String, PackageCoverageInfo>()
     val flattenDirectoryCoverage = hashMapOf<VirtualFile, PackageCoverageInfo>()
@@ -59,11 +59,11 @@ class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(project) {
     classCoverage.entries.groupBy { AnalysisUtils.getSourceToplevelFQName(it.key) }.forEach { (className, classes) ->
       val coverage = ClassCoverageInfo()
       classes.forEach { coverage.append(it.value) }
-      annotator.annotateClass(className, coverage)
+      collector.addClass(className, coverage)
     }
 
-    JavaCoverageClassesAnnotator.annotatePackages(flattenPackageCoverage, annotator)
-    JavaCoverageClassesAnnotator.annotateDirectories(flattenDirectoryCoverage, annotator, sourceRoots)
+    JavaCoverageClassesAnnotator.annotatePackages(flattenPackageCoverage, collector)
+    JavaCoverageClassesAnnotator.annotateDirectories(flattenDirectoryCoverage, collector, sourceRoots)
   }
 
   private fun findFile(packageName: String, fileName: String?, sourceRoots: Collection<VirtualFile>): VirtualFile? {
