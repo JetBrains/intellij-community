@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -820,12 +819,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   @Deprecated
   public void scheduleFoldersResolveForAllProjects() {
     MavenProjectsManagerUtilKt.scheduleFoldersResolveForAllProjects(myProject);
-  }
-
-  public void waitForReadingCompletion() {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      FileDocumentManager.getInstance().saveAllDocuments();
-    }
   }
 
   /**

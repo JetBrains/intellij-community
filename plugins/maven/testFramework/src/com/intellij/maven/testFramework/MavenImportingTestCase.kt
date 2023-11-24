@@ -87,7 +87,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   @Throws(Exception::class)
   override fun tearDown() {
-    val projectsManager = myProjectsManager
     runAll(
       ThrowableRunnable<Throwable> { WriteAction.runAndWait<RuntimeException> { JavaAwareProjectJdkTableImpl.removeInternalJdkInTests() } },
       ThrowableRunnable<Throwable> { TestDialogManager.setTestDialog(TestDialog.DEFAULT) },
@@ -466,10 +465,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     projectsManager.resetManagedFilesAndProfilesInTests(files, MavenExplicitProfiles(listOf(*profiles), disabledProfiles))
   }
 
-  protected fun updateProjectsAndImport(vararg files: VirtualFile) {
-    readProjects(*files)
-  }
-
   protected fun initProjectsManager(enableEventHandling: Boolean) {
     projectsManager.initForTests()
     if (enableEventHandling) {
@@ -537,32 +532,9 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     projectsManager.updateAllMavenProjects(MavenImportSpec.EXPLICIT_IMPORT)
   }
 
-  protected fun waitForReadingCompletion() {
-    ApplicationManager.getApplication().invokeAndWait {
-      try {
-        projectsManager.waitForReadingCompletion()
-      }
-      catch (e: Exception) {
-        throw RuntimeException(e)
-      }
-    }
-  }
-
   @Throws(Exception::class)
   protected open fun readProjects() {
     readProjects(projectsManager.getProjectsFiles())
-  }
-
-  protected fun readProjects(vararg files: VirtualFile?) {
-    val projects: MutableList<MavenProject> = ArrayList()
-    for (each in files) {
-      val mavenProject = projectsManager.findProject(each!!)
-      if (null != mavenProject) {
-        projects.add(mavenProject)
-      }
-    }
-    projectsManager.scheduleForceUpdateMavenProjects(projects)
-    waitForReadingCompletion()
   }
 
   protected suspend fun downloadArtifacts() {

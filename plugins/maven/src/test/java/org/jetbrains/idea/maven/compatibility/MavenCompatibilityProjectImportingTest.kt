@@ -224,7 +224,6 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                     </modules>
                     """.trimIndent())
 
-    waitForReadingCompletion()
     assertModules("project", mn("project", "module1"))
 
     assertModuleLibDep(mn("project", "module1"), "Maven: junit:junit:4.0")
@@ -267,7 +266,6 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                     </modules>
                     """.trimIndent())
 
-    waitForReadingCompletion()
     assertModules("project", mn("project", "module1"))
 
     assertModuleLibDep(mn("project", "module1"), "Maven: org.example:intellijmaventest:1.0")
@@ -304,7 +302,6 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                     <module>module1</module>
                     </modules>
                     """.trimIndent())
-    waitForReadingCompletion()
     assertModuleLibDep(mn("project", "module1"), "Maven: org.example:intellijmaventest:2.0")
   }
 
@@ -335,7 +332,6 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                             <revision>1.0-SNAPSHOT</revision>
                         </properties>
                     """.trimIndent())
-    waitForReadingCompletion()
 
     assertModules("project", mn("project", "module1"))
   }
