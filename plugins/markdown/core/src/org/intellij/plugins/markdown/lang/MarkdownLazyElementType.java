@@ -61,7 +61,7 @@ public class MarkdownLazyElementType extends ILazyParseableElementType {
     final var tree = builder.getTreeBuilt();
     final var actualElement = tree.getFirstChildNode().getFirstChildNode();
 
-    ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime());
+    ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime() - startTime);
 
     return actualElement;
   }
