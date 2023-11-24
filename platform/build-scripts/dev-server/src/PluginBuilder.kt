@@ -63,7 +63,7 @@ internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
           .setAttribute("mainModule", mainModule)
           .setAttribute("dir", plugin.layout.directoryName)
           .setAttribute("reason", "copy custom resources")
-          .useWithScope2 {
+          .useWithScope {
             layoutResourcePaths(layout = plugin.layout, context = context, targetDirectory = plugin.dir, overwrite = true)
           }
       }
