@@ -29,7 +29,10 @@ import java.util.concurrent.ConcurrentMap;
 
 public final class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileStatusMap.class);
-  public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting";
+  public static final String CHANGES_NOT_ALLOWED_DURING_HIGHLIGHTING = "PSI/document/model changes are not allowed during highlighting, " +
+                                                                       "because it leads to the daemon unnecessary restarts. If you really do need to start write action " +
+                                                                       "during the highlighting, you can pass `canChangeDocument=true` to the CodeInsightTestFixtureImpl#instantiateAndRun() " +
+                                                                       "and accept the daemon unresponsiveness/blinking/slowdowns.";
   private final Project myProject;
   private final Map<@NotNull Document, FileStatus> myDocumentToStatusMap = new WeakHashMap<>(); // all dirty if absent
   private volatile boolean myAllowDirt = true;
