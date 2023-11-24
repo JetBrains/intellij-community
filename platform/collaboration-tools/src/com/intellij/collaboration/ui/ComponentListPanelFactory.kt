@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.COMPONENT_SCOPE_KEY
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ClientProperty
+import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import java.util.*
@@ -48,6 +50,66 @@ object ComponentListPanelFactory {
 
     for (item in model.items) {
       panel.add(componentFactory(item))
+    }
+
+    return panel
+  }
+
+  fun <T : Any> createVertical(cs: CoroutineScope, model: ListModel<T>, gap: Int = 0,
+                               componentFactory: CoroutineScope.(T) -> JComponent): JPanel {
+    val panel = VerticalListPanel(gap)
+    cs.launchNow(Dispatchers.Main.immediate) {
+      val listener = object : ListDataListener {
+        private fun addComponent(idx: Int, item: T) {
+          val scope = childScope()
+          val component = scope.componentFactory(item).also {
+            ClientProperty.put(it, COMPONENT_SCOPE_KEY, scope)
+          }
+          panel.add(component, idx)
+        }
+
+        private fun removeComponent(idx: Int) {
+          val component = panel.getComponent(idx)
+          val componentCs = ClientProperty.get(component, COMPONENT_SCOPE_KEY)
+          componentCs?.coroutineContext?.get(Job)?.cancel()
+          panel.remove(idx)
+        }
+
+        override fun intervalRemoved(e: ListDataEvent) {
+          for (i in e.index1 downTo e.index0) {
+            removeComponent(i)
+          }
+          panel.revalidate()
+          panel.repaint()
+        }
+
+        override fun intervalAdded(e: ListDataEvent) {
+          for (i in e.index0..e.index1) {
+            addComponent(i, model.getElementAt(i))
+          }
+          panel.revalidate()
+          panel.repaint()
+        }
+
+        override fun contentsChanged(e: ListDataEvent) {
+          for (i in e.index1 downTo e.index0) {
+            removeComponent(i)
+          }
+          for (i in e.index0..e.index1) {
+            addComponent(i, model.getElementAt(i))
+          }
+          panel.validate()
+          panel.repaint()
+        }
+      }
+      model.addListDataListener(listener)
+
+      if (model.size > 0) {
+        listener.intervalAdded(ListDataEvent(model, ListDataEvent.INTERVAL_ADDED, 0, model.size - 1))
+      }
+      awaitCancellationAndInvoke {
+        model.removeListDataListener(listener)
+      }
     }
 
     return panel

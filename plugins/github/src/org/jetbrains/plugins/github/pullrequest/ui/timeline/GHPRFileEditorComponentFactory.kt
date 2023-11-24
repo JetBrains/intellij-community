@@ -99,7 +99,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     val description = createDescription(loadedDetails)
     val itemComponentFactory = createItemComponentFactory()
 
-    val timeline = ComponentListPanelFactory.createVertical(timelineModel, componentFactory = itemComponentFactory)
+    val timeline = ComponentListPanelFactory.createVertical(cs, timelineModel, componentFactory = itemComponentFactory)
     val timelineLoader = timelineVm.timelineLoader
 
     val progressAndErrorPanel = JPanel(ListLayout.vertical(0, ListLayout.Alignment.CENTER)).apply {

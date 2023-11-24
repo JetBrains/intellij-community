@@ -29,6 +29,7 @@ import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import net.miginfocom.layout.CC
@@ -60,7 +61,10 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineItemUIUt
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import java.awt.Component
 import java.awt.Container
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
@@ -75,11 +79,11 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
                                        private val ghostUser: GHUser,
                                        private val prAuthor: GHActor?,
                                        private val currentUser: GHUser)
-  : (GHPRTimelineItem) -> JComponent {
+  : (CoroutineScope, GHPRTimelineItem) -> JComponent {
 
   private val eventComponentFactory = GHPRTimelineEventComponentFactoryImpl(htmlImageLoader, avatarIconsProvider, ghostUser)
 
-  override fun invoke(item: GHPRTimelineItem): JComponent {
+  override fun invoke(cs: CoroutineScope, item: GHPRTimelineItem): JComponent {
     try {
       return when (item) {
         is GHPullRequestCommitShort -> createComponent(listOf(item))
