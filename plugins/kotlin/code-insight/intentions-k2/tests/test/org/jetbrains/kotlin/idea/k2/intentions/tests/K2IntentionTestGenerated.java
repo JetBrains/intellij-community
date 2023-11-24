@@ -4991,7 +4991,68 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/mergeIfs")
+    public static class MergeIfs extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("caretAfterLeftBrace.kt")
+        public void testCaretAfterLeftBrace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/mergeIfs/caretAfterLeftBrace.kt");
+        }
+
+        @TestMetadata("caretAfterRightBrace.kt")
+        public void testCaretAfterRightBrace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/mergeIfs/caretAfterRightBrace.kt");
+        }
+
+        @TestMetadata("caretOnNestedIf.kt")
+        public void testCaretOnNestedIf() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/mergeIfs/caretOnNestedIf.kt");
+        }
+
+        @TestMetadata("caretOnNestedIf2.kt")
+        public void testCaretOnNestedIf2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/mergeIfs/caretOnNestedIf2.kt");
+        }
+
+        @TestMetadata("comments.kt")
+        public void testComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/mergeIfs/comments.kt");
+        }
+
+        @TestMetadata("comments2.kt")
+        public void testComments2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/mergeIfs/comments2.kt");
+        }
+
+        @TestMetadata("comments3.kt")
+        public void testComments3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/mergeIfs/comments3.kt");
+        }
+
+        @TestMetadata("else1.kt")
+        public void testElse1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/mergeIfs/else1.kt");
+        }
+
+        @TestMetadata("else2.kt")
+        public void testElse2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/mergeIfs/else2.kt");
+        }
+
+        @TestMetadata("expression.kt")
+        public void testExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/mergeIfs/expression.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/mergeIfs/simple.kt");
+        }
+    }
 
 
 
