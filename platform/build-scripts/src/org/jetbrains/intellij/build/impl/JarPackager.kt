@@ -27,7 +27,6 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.FileSystems
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.security.MessageDigest
@@ -129,7 +128,7 @@ class JarPackager private constructor(private val outputDir: Path,
                      layout: BaseLayout?,
                      platformLayout: PlatformLayout?,
                      moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
-                     dryRun: Boolean = false,
+                     dryRun: Boolean,
                      moduleWithSearchableOptions: Set<String> = emptySet(),
                      context: BuildContext): Collection<DistributionFileEntry> {
 
@@ -190,10 +189,10 @@ class JarPackager private constructor(private val outputDir: Path,
         val list = mutableListOf<DistributionFileEntry>()
         val hasher = Hashing.komihash5_0().hashStream()
         for (item in packager.jarDescriptors.values) {
-          computeDistributionFileEntries(item = item, hasher = hasher, list = list, dryRun = dryRun)
+          computeDistributionFileEntries(item = item, hasher = hasher, list = list, dryRun = dryRun, cacheManager = cacheManager)
         }
         for (item in packager.dirDescriptors.values) {
-          computeDistributionFileEntries(item = item, hasher = hasher, list = list, dryRun = dryRun)
+          computeDistributionFileEntries(item = item, hasher = hasher, list = list, dryRun = dryRun, cacheManager = cacheManager)
         }
 
         // sort because projectStructureMapping is a concurrent collection
@@ -806,18 +805,19 @@ private fun isFromLocalMavenRepo(path: Path) = path.startsWith(MAVEN_REPO)
 private fun computeDistributionFileEntries(item: AssetDescriptor,
                                            hasher: HashStream64,
                                            list: MutableList<DistributionFileEntry>,
-                                           dryRun: Boolean) {
+                                           dryRun: Boolean,
+                                           cacheManager: JarCacheManager) {
   for ((module, sources) in item.includedModules) {
     var size = 0
     hasher.reset()
     hasher.putInt(sources.size)
     for (source in sources) {
       size += source.size
-      if (!dryRun && source.hash == 0L && (source !is DirSource || Files.exists(source.dir))) {
-        Span.current().addEvent("Zero hash for $source")
+      if (!dryRun) {
+        cacheManager.validateHash(source)
+        hasher.putLong(source.hash)
+        hasher.putInt(source.size)
       }
-      hasher.putLong(source.hash)
-      hasher.putInt(source.size)
     }
 
     val hash = hasher.asLong

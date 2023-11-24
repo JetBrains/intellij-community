@@ -4,7 +4,7 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.containers.ContainerUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -78,7 +78,7 @@ fun packAndUploadToServer(context: CompilationContext, zipDir: Path, config: Com
     }
   }
   else {
-    spanBuilder("pack classes").useWithScope {
+    spanBuilder("pack classes").useWithScopeBlocking {
       packCompilationResult(context, zipDir)
     }
   }
@@ -146,7 +146,7 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
     }
   }
 
-  spanBuilder("build zip archives").useWithScope {
+  spanBuilder("build zip archives").useWithScopeBlocking {
     val traceContext = Context.current()
     ForkJoinTask.invokeAll(items.map { item ->
       ForkJoinTask.adapt(Callable {
@@ -214,7 +214,7 @@ private fun upload(config: CompilationCacheUploadConfiguration,
   }
 
   spanBuilder("upload archives").setAttribute(AttributeKey.stringArrayKey("items"),
-                                              items.map(PackAndUploadItem::name)).useWithScope {
+                                              items.map(PackAndUploadItem::name)).useWithScopeBlocking {
     uploadArchives(reportStatisticValue = messages::reportStatisticValue,
                    config = config,
                    metadataJson = metadataJson,
@@ -245,7 +245,7 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
 
     var verifyTime = 0L
     val upToDate = ContainerUtil.newConcurrentSet<String>()
-    spanBuilder("check previously unpacked directories").useWithScope { span ->
+    spanBuilder("check previously unpacked directories").useWithScopeBlocking { span ->
       verifyTime += checkPreviouslyUnpackedDirectories(items = items,
                                                        span = span,
                                                        upToDate = upToDate,
@@ -255,7 +255,7 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
     reportStatisticValue("compile-parts:up-to-date:count", upToDate.size.toString())
 
     val toUnpack = LinkedHashSet<FetchAndUnpackItem>(items.size)
-    val toDownload = spanBuilder("check previously downloaded archives").useWithScope { span ->
+    val toDownload = spanBuilder("check previously downloaded archives").useWithScopeBlocking { span ->
       val start = System.nanoTime()
       val result = ForkJoinTask.invokeAll(items.mapNotNull { item ->
         if (upToDate.contains(item.name)) {
@@ -539,7 +539,7 @@ inline fun <T> forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: () 
       .setParent(context)
       .setAttribute(THREAD_NAME, thread.name)
       .setAttribute(THREAD_ID, thread.id)
-      .useWithScope {
+      .useWithScopeBlocking {
         operation()
       }
   })

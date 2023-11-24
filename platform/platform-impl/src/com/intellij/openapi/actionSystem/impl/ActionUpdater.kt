@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
@@ -43,7 +44,6 @@ import com.intellij.util.ui.EDT
 import com.intellij.util.use
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
@@ -190,7 +190,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         edtCallsCount++
         edtWaitNanos += start - start0
         currentEDTWaitMillis = TimeUnit.NANOSECONDS.toMillis(start - start0)
-        Utils.getTracer(true).spanBuilder(operationName).useWithScope { span: Span ->
+        Utils.getTracer(true).spanBuilder(operationName).useWithScopeBlocking { span: Span ->
           val prevStack = ourInEDTActionOperationStack
           val prevNoRules = isNoRulesInEDTSection
           var traceCookie: ThreadDumpService.Cookie? = null

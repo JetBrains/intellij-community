@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.*
@@ -117,7 +117,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
 
     try {
       processMessage(LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
-      spanBuilder(blockName.lowercase(Locale.getDefault())).useWithScope {
+      spanBuilder(blockName.lowercase(Locale.getDefault())).useWithScopeBlocking {
         try {
           task.call()
         }

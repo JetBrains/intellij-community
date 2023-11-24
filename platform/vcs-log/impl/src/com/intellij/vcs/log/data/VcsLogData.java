@@ -28,6 +28,7 @@ import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.impl.VcsLogSharedSettings;
 import com.intellij.vcs.log.util.PersistentUtil;
 import io.opentelemetry.api.trace.Span;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -37,7 +38,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runSpanWithScope;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.useWithScope;
 
 public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
@@ -184,12 +185,13 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
                                                                      false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            runSpanWithScope(span, () -> {
+            useWithScope(span, () -> {
               indicator.setIndeterminate(true);
               resetState();
               readCurrentUser();
               myRefresher.readFirstBlock();
               fireDataPackChangeEvent(myRefresher.getCurrentDataPack());
+              return Unit.INSTANCE;
             });
           }
 

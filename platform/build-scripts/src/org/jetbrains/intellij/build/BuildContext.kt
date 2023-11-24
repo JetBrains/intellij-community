@@ -136,14 +136,16 @@ fun executeStepSync(context: BuildContext, stepMessage: String, stepId: String, 
     Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))
   }
   else {
-    spanBuilder(stepMessage).use {
+    spanBuilder(stepMessage).startSpan().use {
       step.run()
     }
   }
   return true
 }
 
-suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend CoroutineScope.(Span) -> Unit) {
+suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder,
+                                            stepId: String,
+                                            crossinline step: suspend CoroutineScope.(Span) -> Unit) {
   if (isStepSkipped(stepId)) {
     spanBuilder.startSpan().addEvent("skip '$stepId' step").end()
   }

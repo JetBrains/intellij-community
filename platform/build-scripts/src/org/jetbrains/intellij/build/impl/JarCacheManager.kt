@@ -14,10 +14,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jetbrains.intellij.build.Source
-import org.jetbrains.intellij.build.SourceAndCacheStrategy
-import org.jetbrains.intellij.build.ZipSource
-import org.jetbrains.intellij.build.createSourceAndCacheStrategyList
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.CacheDirCleanup
 import java.math.BigInteger
 import java.nio.file.FileAlreadyExistsException
@@ -47,6 +44,8 @@ internal sealed interface JarCacheManager {
                               nativeFiles: MutableMap<ZipSource, List<String>>?,
                               span: Span,
                               producer: SourceBuilder): Path
+
+  fun validateHash(source: Source)
 }
 
 internal data object NonCachingJarCacheManager : JarCacheManager {
@@ -57,6 +56,9 @@ internal data object NonCachingJarCacheManager : JarCacheManager {
                                        producer: SourceBuilder): Path {
     producer.produce()
     return targetFile
+  }
+
+  override fun validateHash(source: Source) {
   }
 }
 
@@ -168,6 +170,12 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path,
       return cacheFile
     }
     return targetFile
+  }
+
+  override fun validateHash(source: Source) {
+    if (source.hash == 0L && (source !is DirSource || Files.exists(source.dir))) {
+      Span.current().addEvent("Zero hash for $source")
+    }
   }
 }
 

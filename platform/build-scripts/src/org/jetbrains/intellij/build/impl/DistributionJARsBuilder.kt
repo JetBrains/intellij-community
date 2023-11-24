@@ -6,8 +6,8 @@ package org.jetbrains.intellij.build.impl
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.io.Compressor
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
@@ -337,11 +337,12 @@ suspend fun buildNonBundledPlugins(pluginsToPublish: Set<PluginLayout>,
 }
 
 private suspend fun validatePlugin(path: Path, context: BuildContext) {
-  context.executeStep(spanBuilder("plugin validation").setAttribute("path", "$path"), BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED) {
-    if (!Files.exists(path)) {
-      it.addEvent("path doesn't exist, skipped")
+  context.executeStep(spanBuilder("plugin validation").setAttribute("path", "$path"), BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED) { span ->
+    if (Files.notExists(path)) {
+      span.addEvent("path doesn't exist, skipped")
       return@executeStep
     }
+
     val pluginManager = IdePluginManager.createManager()
     val id = (pluginManager.createPlugin(path, validateDescriptor = false)
       as? PluginCreationSuccess)
@@ -591,7 +592,7 @@ suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
         patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher = moduleOutputPatcher, context = context)
       }
       launch {
-        spanBuilder("write patched app info").useWithScope {
+        spanBuilder("write patched app info").useWithScopeBlocking {
           val moduleOutDir = context.getModuleOutputDir(context.findRequiredModule("intellij.platform.core"))
           val relativePath = "com/intellij/openapi/application/ApplicationNamesInfo.class"
           val result = injectAppInfo(inFile = moduleOutDir.resolve(relativePath), newFieldValue = context.applicationInfo.appInfoXml)

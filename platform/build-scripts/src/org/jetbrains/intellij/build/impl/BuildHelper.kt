@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.system.OS
 import com.intellij.util.xml.dom.readXmlAsModel
@@ -28,7 +28,7 @@ import kotlin.io.path.copyTo
 import kotlin.time.Duration
 
 internal fun span(spanBuilder: SpanBuilder, task: Runnable) {
-  spanBuilder.useWithScope {
+  spanBuilder.useWithScopeBlocking {
     task.run()
   }
 }
@@ -60,7 +60,7 @@ fun copyDirWithFileFilter(fromDir: Path, targetDir: Path, fileFilter: Predicate<
 fun zip(context: CompilationContext, targetFile: Path, dir: Path) {
   spanBuilder("pack")
     .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
-    .useWithScope {
+    .useWithScopeBlocking {
       org.jetbrains.intellij.build.io.zip(targetFile = targetFile, dirs = mapOf(dir to ""))
     }
 }
