@@ -2,21 +2,21 @@
 package com.intellij.platform.ml.embeddings.search.services
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.search.listeners.SemanticIndexingFinishListener
 import com.intellij.platform.ml.embeddings.search.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
+import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -93,7 +93,7 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
     launch {
       if (files != null) indexSetupJob.get()?.join() // wait for the previous indexing to complete
       val storageSetupTask = DiskSynchronizedEmbeddingsStorageSetup(index, indexSetupJob, getIndexableEntities(files), files == null)
-      runWithSpan(SEMANTIC_SEARCH_TRACER, spanIndexName + "Indexing") {
+      SEMANTIC_SEARCH_TRACER.spanBuilder(spanIndexName + "Indexing").useWithScope {
         try {
           if (Registry.`is`("search.everywhere.ml.semantic.indexing.show.progress")) {
             withBackgroundProgress(project, setupTitle) {

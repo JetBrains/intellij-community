@@ -8,8 +8,8 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
-import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
 import com.intellij.platform.ml.embeddings.search.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -43,11 +43,13 @@ abstract class FileContentBasedEmbeddingsStorage<T : IndexableEntity>(project: P
         }
       }
 
-      files?.forEach { processFile(it) } ?: runWithSpan(SEMANTIC_SEARCH_TRACER, spanIndexName + "Scanning") {
-        ProjectRootManager.getInstance(project).contentSourceRoots.forEach { root ->
-          VfsUtilCore.iterateChildrenRecursively(root, null) { file ->
-            processFile(file)
-            return@iterateChildrenRecursively true
+      files?.forEach { processFile(it) } ?: run {
+        SEMANTIC_SEARCH_TRACER.spanBuilder(spanIndexName + "Scanning").useWithScope {
+          ProjectRootManager.getInstance(project).contentSourceRoots.forEach { root ->
+            VfsUtilCore.iterateChildrenRecursively(root, null) { file ->
+              processFile(file)
+              return@iterateChildrenRecursively true
+            }
           }
         }
       }

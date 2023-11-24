@@ -29,8 +29,19 @@ suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext = Empt
                                                 crossinline operation: suspend CoroutineScope.(Span) -> T): T {
   val span = startSpan()
   return withContext(Context.current().with(span).asContextElement() + context) {
-    span.use {
+    try {
       operation(span)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      span.recordException(e)
+      span.setStatus(StatusCode.ERROR)
+      throw e
+    }
+    finally {
+      span.end()
     }
   }
 }
@@ -40,10 +51,10 @@ fun <T> computeWithSpanAttribute(tracer: IJTracer,
                                  attributeName: String,
                                  attributeValue: (T) -> String,
                                  operation: () -> T): T {
-  return computeWithSpan(tracer, spanName) { span ->
+  return tracer.spanBuilder(spanName).useWithScopeBlocking { span ->
     val result = operation.invoke()
     span.setAttribute(attributeName, attributeValue.invoke(result))
-    return@computeWithSpan result
+    result
   }
 }
 
@@ -51,21 +62,17 @@ fun <T> computeWithSpanAttributes(tracer: IJTracer,
                                   spanName: String,
                                   attributeGenerator: (T) -> Map<String, String>,
                                   operation: () -> T): T {
-  return computeWithSpan(tracer, spanName) { span ->
+  return tracer.spanBuilder(spanName).useWithScopeBlocking { span ->
     val result = operation.invoke()
     attributeGenerator.invoke(result).forEach { (attributeName, attributeValue) ->
       span.setAttribute(attributeName, attributeValue)
     }
-    return@computeWithSpan result
+    result
   }
 }
 
 inline fun <T> computeWithSpan(tracer: Tracer, spanName: String, operation: (Span) -> T): T {
   return tracer.spanBuilder(spanName).useWithScopeBlocking(operation)
-}
-
-inline fun runWithSpan(tracer: Tracer, spanName: String, operation: (Span) -> Unit) {
-  tracer.spanBuilder(spanName).useWithScopeBlocking(operation)
 }
 
 internal fun <T> computeWithSpanIgnoreThrows(tracer: Tracer,

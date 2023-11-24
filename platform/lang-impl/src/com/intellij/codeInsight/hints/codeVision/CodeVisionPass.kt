@@ -17,9 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpan
-import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
@@ -66,22 +64,20 @@ class CodeVisionPass(
                         providerIdToLenses: ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>,
                         providers: List<DaemonBoundCodeVisionProvider>) {
       val modificationTracker = PsiModificationTracker.getInstance(editor.project)
-      runWithSpan(tracer, "codeVision") { span ->
+      tracer.spanBuilder("codeVision").useWithScopeBlocking { span ->
         span.setAttribute("file", file.name)
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(providers, progress, Processor { provider ->
-            span.useWithScope {
-              computeWithSpan(tracer, provider.javaClass.simpleName) {
-                val results: List<Pair<TextRange, CodeVisionEntry>>
-                val duration = measureTimeMillis {
-                  results = provider.computeForEditor(editor, file)
-                }
-                CodeVisionFusCollector.reportCodeVisionProviderDuration(editor, file.language, duration, provider::class.java)
-                providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
-                                                                                                        modificationTracker.modificationCount)
-              }
+          tracer.spanBuilder(provider.javaClass.simpleName).useWithScopeBlocking {
+            val results: List<Pair<TextRange, CodeVisionEntry>>
+            val duration = measureTimeMillis {
+              results = provider.computeForEditor(editor, file)
             }
-            true
-          })
+            CodeVisionFusCollector.reportCodeVisionProviderDuration(editor, file.language, duration, provider::class.java)
+            providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
+                                                                                                    modificationTracker.modificationCount)
+          }
+          true
+        })
       }
     }
 
