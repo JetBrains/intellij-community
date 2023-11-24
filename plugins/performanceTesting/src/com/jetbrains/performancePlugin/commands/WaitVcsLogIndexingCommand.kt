@@ -83,7 +83,15 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
     vcsIndex.indexingRoots.forEach { LOG.info("Status of git root ${it.name}, indexed = ${vcsIndex.isIndexed(it)}") }
 
     withContext(Dispatchers.IO) {
-      LOG.info("Log cache dir is ${PersistentUtil.LOG_CACHE} with size ${Files.size(PersistentUtil.LOG_CACHE)} bytes")
+      if (Files.exists(PersistentUtil.LOG_CACHE)) {
+        LOG.info("Log cache dir is ${PersistentUtil.LOG_CACHE} with size ${Files.size(PersistentUtil.LOG_CACHE)} bytes")
+        Files.walk(PersistentUtil.LOG_CACHE)
+          .forEach { LOG.info("File $it with size ${Files.size(it)} bytes") }
+
+      }
+      else {
+        LOG.warn("Log cache dir ${PersistentUtil.LOG_CACHE} doesnt exist")
+      }
     }
 
   }
