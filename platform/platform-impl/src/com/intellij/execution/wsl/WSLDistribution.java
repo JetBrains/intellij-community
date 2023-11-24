@@ -775,6 +775,10 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   public @NonNls @Nullable String getEnvironmentVariable(String name) {
+    if (Registry.is("wsl.use.remote.agent.for.launch.processes")) {
+      Map<String, String> map = WslIjentManager.getInstance().fetchLoginShellEnv(this, null, false);
+      return map.get(name);
+    }
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setExecuteCommandInInteractiveShell(true)
       .setExecuteCommandInLoginShell(true);
