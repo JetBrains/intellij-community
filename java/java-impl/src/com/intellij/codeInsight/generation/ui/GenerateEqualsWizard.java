@@ -252,7 +252,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
   @Override
   protected void addSteps() {
     if (myEqualsPanel != null) {
-      addStep(new TemplateChooserStep(myClass.hasModifierProperty(PsiModifier.FINAL), myClass));
+      addStep(new TemplateChooserStep(myClass));
     }
     super.addSteps();
   }
@@ -337,7 +337,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
   private final class TemplateChooserStep extends StepAdapter {
     private final JComponent myPanel;
 
-    private TemplateChooserStep(boolean isFinal, PsiClass psiClass) {
+    private TemplateChooserStep(PsiClass psiClass) {
       myPanel = new JPanel(new VerticalFlowLayout());
       final JPanel templateChooserPanel = new JPanel(new BorderLayout());
       final JLabel templateChooserLabel = new JLabel(JavaBundle.message("generate.equals.hashcode.template"));
@@ -365,6 +365,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       myPanel.add(templateChooserPanel);
 
       final JCheckBox checkbox = new NonFocusableCheckBox(JavaBundle.message("generate.equals.hashcode.accept.sublcasses"));
+      boolean isFinal = myClass.hasModifierProperty(PsiModifier.FINAL);
       checkbox.setSelected(!isFinal && CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER);
       checkbox.setEnabled(!isFinal);
       checkbox.addActionListener(new ActionListener() {
