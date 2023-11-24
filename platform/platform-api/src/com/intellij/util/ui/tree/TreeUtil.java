@@ -166,7 +166,8 @@ public final class TreeUtil {
   }
 
   private static void repaintBounds(@NotNull JTree tree, @Nullable Rectangle bounds) {
-    if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
+    // repaint extra below and above to avoid artifacts when using fractional scaling on Windows
+    if (bounds != null) tree.repaint(0, bounds.y - 1, tree.getWidth(), bounds.height + 2);
   }
 
   /**
