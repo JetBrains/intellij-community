@@ -119,6 +119,11 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
   }
 
   @Override
+  public void requestFocus() {
+    super.getPreferredFocusableComponent().requestFocus();
+  }
+
+  @Override
   public void print(@NotNull String text, @NotNull final ConsoleViewContentType contentType) {
     if (myCommandsInfo != null) {
       final Function1<String, String> outputFilter = myCommandsInfo.getOutputFilter();
