@@ -4,15 +4,16 @@ package com.intellij.tasks.context
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
 import com.intellij.openapi.fileEditor.impl.EditorSplitterState
+import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.tasks.TaskBundle
-import com.intellij.ui.ComponentUtil
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.impl.DockManagerImpl
 import org.jdom.Element
 import java.awt.KeyboardFocusManager
+import java.awt.Window
 
 private class OpenEditorsContextProvider : WorkingContextProvider() {
   override fun getId(): String = "editors"
@@ -26,22 +27,30 @@ private class OpenEditorsContextProvider : WorkingContextProvider() {
   }
 
   override fun loadContext(project: Project, element: Element) {
-    // Since 'clearContext' is run before 'loadContext', if editor had focus initially, it will be in a 'detached' state now.
-    // This check will work as expected only if 'loadContext' is called immediately after 'clearContext' call (i.e. in the same EDT event).
-    val editorHadFocus = ComponentUtil.getWindow(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner) == null
+    val requestFocus = editorHadFocus()
 
     val fileEditorManager = getFileEditorManager(project)
     if (fileEditorManager != null) {
       runBlockingModalWithRawProgressReporter(project, TaskBundle.message("open.editors.and.positions")) {
-        fileEditorManager.mainSplitters.restoreEditors(state = EditorSplitterState(element), requestFocus = editorHadFocus)
+        fileEditorManager.mainSplitters.restoreEditors(state = EditorSplitterState(element), requestFocus = requestFocus)
       }
     }
     val dockState = element.getChild("state")
     if (dockState != null) {
       val dockManager = DockManager.getInstance(project) as DockManagerImpl
       dockManager.loadState(dockState)
-      dockManager.readState(requestFocus = editorHadFocus)
+      dockManager.readState(requestFocus = requestFocus)
     }
+  }
+
+  private fun editorHadFocus(): Boolean {
+    var c = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+    while (c != null) {
+      if (c is Window) return false
+      if (c is EditorsSplitters) return true
+      c = c.parent
+    }
+    return true // if editor was focused, but was closed by `clearContext` call, we'll get here
   }
 
   override fun clearContext(project: Project) {
