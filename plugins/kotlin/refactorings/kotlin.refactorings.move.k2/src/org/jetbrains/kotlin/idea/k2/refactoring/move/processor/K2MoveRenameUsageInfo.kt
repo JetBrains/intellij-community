@@ -315,17 +315,16 @@ sealed class K2MoveRenameUsageInfo(
             usageInfosByFile: Map<PsiFile, List<K2MoveRenameUsageInfo>>,
             oldToNewMap: MutableMap<PsiElement, PsiElement>
         ) = allowAnalysisFromWriteAction {
+            // TODO handle bulk usage updating in a better way, there should be API for this
             allowAnalysisOnEdt {
                 usageInfosByFile.forEach { (file, usageInfos) ->
                     val qualifiedElements = usageInfos.mapNotNull { usageInfo ->
                         val newElement = oldToNewMap[usageInfo.referencedElement] as? KtNamedDeclaration ?: usageInfo.referencedElement
                         val result = usageInfo.retarget(newElement)
-                        val smartPointerManager = SmartPointerManager.getInstance(file.project)
-                        if (usageInfo is Qualifiable && result != null) smartPointerManager.createSmartPsiElementPointer(result) else null
+                        if (usageInfo is Qualifiable && result != null) result else null
                     }
                     if (file !is KtFile) return@forEach
-                    qualifiedElements.forEach shortening@{ ptr ->
-                        val qualifiedElem = ptr.element ?: return@shortening
+                    qualifiedElements.forEach shortening@{ qualifiedElem ->
                         analyze(file) {
                             collectPossibleReferenceShortenings(file, qualifiedElem.textRange).invokeShortening()
                         }
