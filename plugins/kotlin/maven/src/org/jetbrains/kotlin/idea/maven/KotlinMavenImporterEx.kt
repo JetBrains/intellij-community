@@ -68,7 +68,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             emptyList(),
             KotlinModuleKind.DEFAULT,
             "",
-            CompilerSettingsData("", "", "", true, "lib"), "", module.entitySource
+            CompilerSettingsData("", "", "", true, "lib", true), "", module.entitySource
         ) {
             this.module = module
         }
@@ -248,13 +248,14 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             this.compilerArguments = KotlinModuleSettingsSerializer.serializeToString(kotlinFacetSettings.compilerArguments)
             val compilerSettings = kotlinFacetSettings.compilerSettings
             this.compilerSettings =
-                if (compilerSettings == null) CompilerSettingsData("", "", "", true, "lib")
+                if (compilerSettings == null) CompilerSettingsData("", "", "", true, "lib", false)
                 else CompilerSettingsData(
                     compilerSettings.additionalArguments,
                     compilerSettings.scriptTemplates,
                     compilerSettings.scriptTemplatesClasspath,
                     compilerSettings.copyJsLibraryFiles,
-                    compilerSettings.outputDirectoryForJsLibraryFiles
+                    compilerSettings.outputDirectoryForJsLibraryFiles,
+                    true
                 )
             this.targetPlatform = kotlinFacetSettings.targetPlatform?.serializeComponentPlatforms() ?: ""
         }

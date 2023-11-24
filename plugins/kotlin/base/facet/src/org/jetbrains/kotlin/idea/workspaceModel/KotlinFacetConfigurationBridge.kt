@@ -46,7 +46,7 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
                                      pureKotlinSourceFolders = emptyList(),
                                      kind = KotlinModuleKind.DEFAULT,
                                      compilerArguments = "",
-                                     compilerSettings = CompilerSettingsData("", "", "", true, "lib"),
+                                     compilerSettings = CompilerSettingsData("", "", "", true, "lib", false),
                                      targetPlatform = "",
                                      entitySource = object : EntitySource {}) as KotlinSettingsEntity.Builder
             )

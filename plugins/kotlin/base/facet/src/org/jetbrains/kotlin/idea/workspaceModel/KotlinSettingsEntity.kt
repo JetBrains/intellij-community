@@ -149,7 +149,8 @@ data class CompilerSettingsData(
     val scriptTemplates: String,
     val scriptTemplatesClasspath: String,
     val copyJsLibraryFiles: Boolean,
-    val outputDirectoryForJsLibraryFiles: String
+    val outputDirectoryForJsLibraryFiles: String,
+    val isInitialized: Boolean
 )
 
 val ModuleEntity.kotlinSettings: List<@Child KotlinSettingsEntity>

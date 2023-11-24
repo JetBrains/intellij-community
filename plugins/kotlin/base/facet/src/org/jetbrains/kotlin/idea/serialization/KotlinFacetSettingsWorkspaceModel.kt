@@ -71,12 +71,17 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
             }
         }
 
-    private var _compilerSettings: CompilerSettings? = entity.compilerSettings.toCompilerSettings()
     override var compilerSettings: CompilerSettings?
-        get() = _compilerSettings
+        get() {
+            val compilerSettingsData = entity.compilerSettings
+            if (!compilerSettingsData.isInitialized) return null
+            return compilerSettingsData.toCompilerSettings { newSettings ->
+                entity.compilerSettings = newSettings.toCompilerSettingsData()
+                updateMergedArguments()
+            }
+        }
         set(value) {
             entity.compilerSettings = value.toCompilerSettingsData()
-            _compilerSettings = value
             updateMergedArguments()
         }
 

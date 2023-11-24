@@ -127,7 +127,7 @@ class KotlinFacetEventListenerTest {
                                                  emptyList(),
                                                  KotlinModuleKind.DEFAULT,
                                                  "",
-                                                 CompilerSettingsData("", "", "", true, "lib"),
+                                                 CompilerSettingsData("", "", "", true, "lib", false),
                                                  "",
                                                  object : EntitySource {}) {
                                 module = moduleEntity
@@ -198,7 +198,7 @@ class KotlinFacetEventListenerTest {
                                                  emptyList(),
                                                  KotlinModuleKind.DEFAULT,
                                                  "",
-                                                 CompilerSettingsData("", "", "", true, "lib"),
+                                                 CompilerSettingsData("", "", "", true, "lib", false),
                                                  "",
                                                  object : EntitySource {}) {
                                 module = moduleEntity

@@ -51,7 +51,7 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
             emptyList(),
             KotlinModuleKind.DEFAULT,
             "",
-            CompilerSettingsData("", "", "", true, "lib"),
+            CompilerSettingsData("", "", "", true, "lib", false),
             "",
             entitySource
         ) {
@@ -90,7 +90,8 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
                 compilerSettings.scriptTemplates,
                 compilerSettings.scriptTemplatesClasspath,
                 compilerSettings.copyJsLibraryFiles,
-                compilerSettings.outputDirectoryForJsLibraryFiles
+                compilerSettings.outputDirectoryForJsLibraryFiles,
+                true
             )
         }
     }

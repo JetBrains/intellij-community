@@ -694,7 +694,7 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
 
     @OptIn(EntityStorageInstrumentationApi::class)
     override fun createEntity(snapshot: EntityStorageInstrumentation): KotlinSettingsEntity {
-      val entityId = createEntityId()
+        val entityId = createEntityId()
         return snapshot.initializeEntity(entityId) {
             val entity = KotlinSettingsEntityImpl(this)
             entity.snapshot = snapshot
