@@ -65,6 +65,7 @@
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="error-prone-annotations" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="Java Compatibility" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="javax.activation" level="project" />
