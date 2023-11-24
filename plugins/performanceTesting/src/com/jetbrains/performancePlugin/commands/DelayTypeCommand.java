@@ -99,7 +99,8 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
                   span.addEvent("Typing " + currentChar);
                   typingTarget.type(String.valueOf(currentChar));
                 } else {
-                  span.addEvent("Focus owner is " + KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner().getClass());
+                  span.addEvent("Focus was lost");
+                  result.setError("Focus was lost during typing. Current focus is in: " + KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner().getClass());
                 }
               }
             })), i * delay, TimeUnit.MILLISECONDS);
@@ -128,4 +129,5 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
 
     return result;
   }
+
 }
