@@ -372,7 +372,6 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     val counter = AtomicInteger()
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false)
     importProjectAsync()
-    resolveDependenciesAndImport()
     if (null == MavenProjectLegacyImporter.getAnswerToDeleteObsoleteModulesQuestion()) {
       counter.incrementAndGet()
     }

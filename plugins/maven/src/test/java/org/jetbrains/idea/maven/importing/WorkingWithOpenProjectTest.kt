@@ -64,8 +64,6 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
                                 """.trimIndent()))
     }
 
-    resolveDependenciesAndImport()
-
     assertModuleLibDep("project", "Maven: junit:junit:4.0")
   }
 }

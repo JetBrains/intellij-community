@@ -640,7 +640,6 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                               </build>
                               """.trimIndent())
 
-    resolveDependenciesAndImport()
     val root = rootProjects[0]
     val problems = root.getProblems()
     UsefulTestCase.assertSize(1, problems)
@@ -668,7 +667,8 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
     assertProblems(rootProjects[0])
 
-    resolveDependenciesAndImport()
+    updateAllProjects()
+
     assertProblems(rootProjects[0])
   }
 

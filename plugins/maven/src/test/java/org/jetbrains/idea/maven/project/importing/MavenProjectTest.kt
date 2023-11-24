@@ -853,7 +853,6 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                                        """.trimIndent())
 
     importProjects(m1, m2)
-    resolveDependenciesAndImport()
     assertDependenciesNodes(projectsTree.rootProjects[0].dependencyTree,
                             "test:m2:jar:1->(junit:junit:jar:4.0->(),test:lib2:jar:1->()),test:lib1:jar:1->()")
   }
@@ -891,7 +890,6 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                                        """.trimIndent())
 
     importProjects(m1, m2)
-    resolveDependenciesAndImport()
 
     assertDependenciesNodes(projectsTree.rootProjects[0].dependencyTree,
                             "test:m2:pom:test:1->(test:lib:jar:1->())")
@@ -933,7 +931,6 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                                        """.trimIndent())
 
     importProjects(m1, m2)
-    resolveDependenciesAndImport()
     val nodes = projectsTree.rootProjects[0].dependencyTree
     assertDependenciesNodes(nodes,
                             "test:m2:jar:1->(test:lib:jar:2[CONFLICT:test:lib:jar:1]->())," +
@@ -992,7 +989,6 @@ class MavenProjectTest : MavenMultiVersionImportingTestCase() {
                                        """.trimIndent())
 
     importProjects(m1, m2, m3)
-    resolveDependenciesAndImport()
     val nodes = projectsTree.findProject(m1)!!.dependencyTree
     assertDependenciesNodes(nodes, "test:m2:jar:1->(test:lib:jar:1->()),test:m3:jar:1->(test:lib:jar:1[DUPLICATE:test:lib:jar:1]->())")
 

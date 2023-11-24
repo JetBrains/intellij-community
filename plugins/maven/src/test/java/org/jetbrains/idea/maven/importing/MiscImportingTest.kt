@@ -321,7 +321,6 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
     val m = getModule("project")
-    resolveDependenciesAndImport()
     assertSame(m, getModule("project"))
   }
 

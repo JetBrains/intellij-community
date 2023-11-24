@@ -971,7 +971,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       """.trimIndent())
 
     importProjectAsync()
-    resolveDependenciesAndImport()
     assertModules("project", "m1", "m2")
 
     assertModuleLibDeps("m2", "Maven: group:id:1")
@@ -1002,7 +1001,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                       </dependency>
                     </dependencies>
                     """.trimIndent())
-    resolveDependenciesAndImport()
 
     assertModules("project")
     assertModuleLibDep("project", "Maven: xml-apis:xml-apis:1.0.b2")
@@ -2456,8 +2454,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       rootModel.commit()
     }
 
-    resolveDependenciesAndImport()
-
     // JDK position was saved
     val orderEntries = ModuleRootManager.getInstance(getModule("m1")).getOrderEntries()
     assert(orderEntries.size == 4)
@@ -2501,8 +2497,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       rootModel.rearrangeOrderEntries(arrayOf(orderEntries[2], orderEntries[3], orderEntries[0], orderEntries[1]))
       rootModel.commit()
     }
-
-    resolveDependenciesAndImport()
 
     // JDK position was saved
     val orderEntries = ModuleRootManager.getInstance(getModule("m1")).getOrderEntries()

@@ -157,7 +157,6 @@ ${repositoriesSection()}<dependencies>
 """)
     assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
 
-    resolveDependenciesAndImport()
     downloadArtifacts()
 
     assertModuleLibDep("project",
@@ -217,7 +216,6 @@ ${repositoriesSection()}<dependencies>
 """)
     assertModuleLibDeps("project", "Maven: test:foo:1-SNAPSHOT")
 
-    resolveDependenciesAndImport()
     downloadArtifacts()
 
     assertModuleLibDep("project",
@@ -255,8 +253,6 @@ ${repositoriesSection()}<dependencies>
                      </build>
                      """.trimIndent())
     removeFromLocalRepository("test")
-
-    resolveDependenciesAndImport()
 
     assertModuleLibDep("project",
                        "Maven: test:foo:1-SNAPSHOT",

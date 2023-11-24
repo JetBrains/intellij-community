@@ -116,19 +116,15 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                                              """.trimIndent())
     importProjectAsync(m1)
     assertModules("m1")
-    resolveDependenciesAndImport() // ensure no pending imports
     waitForImportWithinTimeout {
       projectsManager.addManagedFiles(listOf(m2))
     }
-    resolveDependenciesAndImport()
     assertModules("m1", "m2")
 
-    //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     waitForImportWithinTimeout {
       projectsManager.removeManagedFiles(listOf(m2))
     }
-    resolveDependenciesAndImport()
     assertModules("m1")
   }
 
@@ -154,8 +150,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>project</artifactId>
                        <version>2
                        """.trimIndent())
-    waitForReadingCompletion()
-    resolveDependenciesAndImport()
     assertFalse(called[0]) // on update
   }
 
@@ -549,7 +543,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
     val log = StringBuilder()
-    //myProjectsManager.performScheduledImportInTests();
     projectsManager.addProjectsTreeListener(object : MavenProjectsTree.Listener {
       override fun projectsUpdated(updated: List<Pair<MavenProject, MavenProjectChanges>>, deleted: List<MavenProject>) {
         for (each in updated) {
@@ -563,7 +556,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     withContext(Dispatchers.EDT) {
       FileContentUtil.reparseFiles(myProject, projectsManager.getProjectsFiles(), true)
     }
-    projectsManager.waitForReadingCompletion()
     assertTrue(log.toString(), log.length == 0)
   }
 

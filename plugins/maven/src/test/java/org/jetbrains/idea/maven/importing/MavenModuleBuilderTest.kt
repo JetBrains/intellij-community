@@ -8,8 +8,6 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.RunAll.Companion.runAll
-import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
@@ -372,7 +370,5 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
       myBuilder!!.createModule(model)
       model.commit()
     }
-
-    resolveDependenciesAndImport()
   }
 }

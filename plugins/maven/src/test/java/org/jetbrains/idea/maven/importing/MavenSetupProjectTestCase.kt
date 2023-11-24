@@ -97,9 +97,6 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
 
     val projectManager = MavenProjectsManager.getInstance(project)
     projectManager.initForTests()
-    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-      projectManager.waitForReadingCompletion()
-    }
   }
 
   fun getGeneralSettings(project: Project): MavenGeneralSettings {

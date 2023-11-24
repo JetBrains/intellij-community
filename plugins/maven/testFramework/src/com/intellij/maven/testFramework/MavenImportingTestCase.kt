@@ -565,10 +565,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     waitForReadingCompletion()
   }
 
-  protected fun resolveDependenciesAndImport() {
-    ApplicationManager.getApplication().invokeAndWait { projectsManager.waitForReadingCompletion() }
-  }
-
   protected suspend fun downloadArtifacts() {
     projectsManager.downloadArtifacts(projectsManager.getProjects(), null, true, true)
   }

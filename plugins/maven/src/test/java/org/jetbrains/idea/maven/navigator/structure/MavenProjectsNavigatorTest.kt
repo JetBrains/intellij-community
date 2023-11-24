@@ -184,7 +184,6 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                        <version>1</version>
                        """.trimIndent())
     readFiles(myProjectPom)
-    resolveDependenciesAndImport()
     assertEquals(1, rootNodes.size)
     MavenUtil.cleanAllRunnables()
 
