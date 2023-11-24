@@ -407,9 +407,9 @@ public final class SettingsEntryPointAction extends DumbAwareAction
         g2.fillRoundRect(insets.left, insets.top, size.width, size.height, radius, radius);
 
         g2.setColor(JBUI.CurrentTheme.ManagedIde.BADGE_BORDER);
-        g2.drawRoundRect(insets.left, insets.top, size.width, size.height, radius, radius);
+        g2.drawRoundRect(insets.left, insets.top, size.width, size.height - 1, radius, radius);
 
-        int offset = JBUI.scale(compactMode ? 2 : 4);
+        int offset = JBUI.scale(compactMode ? 3 : 6);
         int iconSize = JBUI.scale(20);
         int height = button.getHeight();
         look.paintIcon(g2, button, myFirstIcon, insets.left + offset + (iconSize - myFirstIcon.getIconWidth()) / 2,
@@ -424,12 +424,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction
 
     @Override
     public int getIconWidth() {
-      return JBUI.scale(52);
+      return JBUI.scale(UISettings.getInstance().getCompactMode() ? 52 : 58);
     }
 
     @Override
     public int getIconHeight() {
-      return JBUI.scale(28);
+      return JBUI.scale(30);
     }
   }
 
