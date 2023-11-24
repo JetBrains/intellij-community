@@ -117,9 +117,9 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
 
         if (errors.isNullOrEmpty()) continue
 
-        val message = StringUtil.first(errors!!.map { ReadAction.nonBlocking(Callable { it.presentableText }) }.joinToString(", "),
-                                       300,
-                                       true)
+        val message = StringUtil.first(errors!!.take(100).joinToString(", ") { ReadAction.nonBlocking(Callable { it.presentableText }).executeSynchronously() },
+          300,
+          true)
         FileBasedIndexImpl.LOG.error("Project indexable filter health check errors: $message")
 
       }
