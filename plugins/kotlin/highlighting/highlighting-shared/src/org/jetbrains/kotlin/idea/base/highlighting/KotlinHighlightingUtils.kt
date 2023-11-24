@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderConten
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.script.experimental.api.ScriptDiagnostic
@@ -46,7 +47,8 @@ fun KtFile.shouldHighlightFile(): Boolean {
     return CachedValuesManager.getManager(project).getCachedValue(file) {
         CachedValueProvider.Result.create(
             file.calculateShouldHighlightFile(),
-            ProjectRootModificationTracker.getInstance(project)
+            ProjectRootModificationTracker.getInstance(project),
+            ScriptDependenciesModificationTracker.getInstance(project)
         )
     }
 }
