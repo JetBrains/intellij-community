@@ -352,9 +352,9 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     }
   }
 
-  internal fun selectOpenedCompositeOnStartup(composite: EditorComposite) {
+  internal fun selectOpenedCompositeOnStartup(composite: EditorComposite, requestFocus: Boolean) {
     composite.selectedEditor?.selectNotify()
-    setSelectedComposite(composite = composite, focusEditor = true)
+    setSelectedComposite(composite = composite, focusEditor = requestFocus)
     updateTabsVisibility()
     owner.validate()
   }

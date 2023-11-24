@@ -243,11 +243,11 @@ open class EditorsSplitters internal constructor(
   }
 
   @Internal
-  suspend fun restoreEditors(state: EditorSplitterState) {
+  suspend fun restoreEditors(state: EditorSplitterState, requestFocus: Boolean = true) {
     withContext(Dispatchers.EDT) {
       removeAll()
     }
-    UiBuilder(this).process(state = state) { add(it, BorderLayout.CENTER) }
+    UiBuilder(this).process(state = state, requestFocus = requestFocus) { add(it, BorderLayout.CENTER) }
     withContext(Dispatchers.EDT) {
       validate()
 
@@ -267,7 +267,7 @@ open class EditorsSplitters internal constructor(
   @Internal
   suspend fun createEditors(state: EditorSplitterState) {
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
-    UiBuilder(this).process(state = state) { add(it, BorderLayout.CENTER) }
+    UiBuilder(this).process(state = state, requestFocus = true) { add(it, BorderLayout.CENTER) }
   }
 
   fun addSelectedEditorsTo(result: MutableCollection<FileEditor>) {
@@ -321,9 +321,10 @@ open class EditorsSplitters internal constructor(
     currentCompositeFlow.value = window?.selectedComposite
   }
 
-  fun openFilesAsync(): Job {
+  fun openFilesAsync(requestFocus: Boolean): Job {
     return coroutineScope.launch {
-      restoreEditors(state = state.getAndSet(null) ?: return@launch)
+      restoreEditors(state = state.getAndSet(null) ?: return@launch,
+                     requestFocus = requestFocus)
     }
   }
 
@@ -850,7 +851,7 @@ class EditorSplitterState(element: Element) {
 }
 
 private class UiBuilder(private val splitters: EditorsSplitters) {
-  suspend fun process(state: EditorSplitterState, addChild: (child: JComponent) -> Unit) {
+  suspend fun process(state: EditorSplitterState, requestFocus: Boolean, addChild: (child: JComponent) -> Unit) {
     val splitState = state.splitters
     if (splitState == null) {
       val leaf = state.leaf
@@ -872,7 +873,10 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
           }
         }
       }
-      processFiles(fileEntries = trimmedFiles, tabSizeLimit = leaf?.tabSizeLimit ?: Int.MAX_VALUE, addChild = addChild)
+      processFiles(fileEntries = trimmedFiles,
+                   tabSizeLimit = leaf?.tabSizeLimit ?: Int.MAX_VALUE,
+                   addChild = addChild,
+                   requestFocus = requestFocus)
     }
     else {
       val splitter = withContext(Dispatchers.EDT) {
@@ -885,14 +889,15 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         splitter
       }
 
-      process(state = splitState.firstSplitter, addChild = { splitter.firstComponent = it })
-      process(state = splitState.secondSplitter, addChild = { splitter.secondComponent = it })
+      process(state = splitState.firstSplitter, requestFocus = requestFocus) { splitter.firstComponent = it }
+      process(state = splitState.secondSplitter, requestFocus = requestFocus) { splitter.secondComponent = it }
     }
   }
 
   private suspend fun processFiles(fileEntries: List<FileEntry>,
                                    tabSizeLimit: Int,
-                                   addChild: (child: JComponent) -> Unit) {
+                                   addChild: (child: JComponent) -> Unit,
+                                   requestFocus: Boolean) {
     coroutineScope {
       val windowDeferred = async(Dispatchers.EDT) {
         val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
@@ -944,7 +949,7 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         val composite = focusedFile?.let { window.getComposite(it) } ?: window.selectedComposite ?: return@launch
         // OPENED_IN_BULK is forcing 'JBTabsImpl.addTabWithoutUpdating',
         // so these need to be fired even if the composite is already selected
-        window.selectOpenedCompositeOnStartup(composite = composite)
+        window.selectOpenedCompositeOnStartup(composite = composite, requestFocus = requestFocus)
         splitters.setCurrentWindowAndComposite(window = window)
       }
     }
