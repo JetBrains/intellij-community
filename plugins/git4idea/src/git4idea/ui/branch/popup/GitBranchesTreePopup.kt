@@ -36,6 +36,7 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
@@ -561,7 +562,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
 
     override fun mouseMoved(e: MouseEvent) {
-      if (!isMouseMoved(e.locationOnScreen)) return
+      if (!isMouseMoved(e.locationOnScreen)
+          // Don't change the selection on mouse move in the screen reader mode,
+          // because it could conflict with screen reader features that move the mouse pointer.
+          || ScreenReader.isActive()) return
       val path = getPath(e)
       if (path != null) {
         tree.selectionPath = path
