@@ -1,32 +1,17 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.jetbrains.toolWindowWithActions;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.commandInterface.console;
 
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -36,7 +21,7 @@ import java.util.List;
  * @author Ilya.Kazakevich
  */
 @SuppressWarnings({"SerializableClassInSecureContext"}) // Who will serialize panel?
-class PanelWithActions extends JPanel {
+final class PanelWithActions extends JPanel {
 
   /**
    * @param dataComponent           component to be added in the action panel
@@ -44,7 +29,7 @@ class PanelWithActions extends JPanel {
    * @param actionListenerComponent component to bind to action shortcuts (null if no shortcuts will be used)
    * @param customActions           additional actions to add
    */
-  protected PanelWithActions(@NotNull final JComponent dataComponent,
+  private PanelWithActions(@NotNull final JComponent dataComponent,
                              @NotNull final Collection<Runnable> closeListeners,
                              @Nullable final JComponent actionListenerComponent,
                              final AnAction @NotNull ... customActions) {
@@ -98,5 +83,23 @@ class PanelWithActions extends JPanel {
         closeListener.run();
       }
     }
+  }
+
+  @NotNull
+  public static JComponent createConsolePanelWithActions(
+    @NotNull final ConsoleWithProcess consoleWithProcess,
+    @Nullable final JComponent actionListenerComponent,
+    @Nullable final Collection<? extends Runnable> closeListeners,
+    final AnAction @NotNull ... customActions
+  ) {
+    final ConsoleStopProcessAction stopProcessAction = new ConsoleStopProcessAction(consoleWithProcess);
+
+    // Add "stop action" as action and as close listener to stop process when console is closing
+    final Collection<Runnable> resultCloseListeners = new ArrayList<>(Collections.singleton(stopProcessAction));
+    if (closeListeners != null) {
+      resultCloseListeners.addAll(closeListeners);
+    }
+    final AnAction[] resultActions = ArrayUtil.mergeArrays(new AnAction[]{stopProcessAction}, customActions);
+    return new PanelWithActions(consoleWithProcess.getComponent(), resultCloseListeners, actionListenerComponent, resultActions);
   }
 }
