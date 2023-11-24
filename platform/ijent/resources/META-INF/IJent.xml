@@ -3,5 +3,14 @@
     <applicationService
       serviceInterface="com.intellij.platform.ijent.IjentSessionProvider"
       serviceImplementation="com.intellij.platform.ijent.DefaultIjentSessionProvider"/>
+
+    <registryKey
+      description="Using the experimental remote agent inside WSL to launch processes."
+      key="wsl.use.remote.agent.for.launch.processes"
+      os="windows"
+      restartRequired="false"
+      defaultValue="false"/><!-- IMPORTANT:
+        When the default value is changed, usages of the key should be inspected too. The default value still may be hardcoded
+        somewhere else. Hardcoded values were introduced to prevent failures of some unit tests. They must not affect production. -->
   </extensions>
 </idea-plugin>

@@ -112,7 +112,7 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
     @JvmStatic
     fun isIjentAvailable(): Boolean {
       val id = PluginId.getId("intellij.platform.ijent.impl")
-      return Registry.`is`("wsl.use.remote.agent.for.launch.processes") && PluginManagerCore.getPlugin(id)?.isEnabled == true
+      return Registry.`is`("wsl.use.remote.agent.for.launch.processes", false) && PluginManagerCore.getPlugin(id)?.isEnabled == true
     }
 
     @JvmStatic

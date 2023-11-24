@@ -141,7 +141,6 @@
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagerConfigurableService"
                         serviceImplementation="com.intellij.ide.plugins.PluginManagerConfigurableServiceImpl"/>
 
-    <registryKey defaultValue="false" os="windows" description="Using the experimental remote agent inside WSL to launch processes." key="wsl.use.remote.agent.for.launch.processes" restartRequired="false"/>
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginManagementPolicy"
                         serviceImplementation="com.intellij.ide.plugins.DefaultPluginManagementPolicy"/>
 
