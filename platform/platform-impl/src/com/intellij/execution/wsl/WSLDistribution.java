@@ -227,6 +227,7 @@ public class WSLDistribution implements AbstractWslDistribution {
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
     if (mustRunCommandLineWithIjent(options)) {
+      commandLine.withEscapingForLocalRun(false);
       if (commandLine instanceof PtyCommandLine) {
         commandLine.setProcessCreator((processBuilder) -> {
           var ptyOptions = ((PtyCommandLine)commandLine).getPtyOptions();
