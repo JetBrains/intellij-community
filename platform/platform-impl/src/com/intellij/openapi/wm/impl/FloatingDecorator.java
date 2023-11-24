@@ -78,7 +78,6 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       // The problem is that Window.setLocation() doesn't work properly wjen the dialod is displayable.
       // Therefore we use native WM decoration.
       contentPane.add(decorator, BorderLayout.CENTER);
-      getRootPane().putClientProperty("Window.style", "small");
     }
 
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
