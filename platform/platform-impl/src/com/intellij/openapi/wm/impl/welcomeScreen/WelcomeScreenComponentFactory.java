@@ -99,7 +99,7 @@ public final class WelcomeScreenComponentFactory {
     textPanel.add(namePanel);
     textPanel.add(version);
     panel.add(textPanel, BorderLayout.CENTER);
-    panel.setToolTipText(applicationName + " " + appVersion);
+    panel.setToolTipText(IdeBundle.message("about.box.build.number", appInfo.getBuild()));
 
     panel.addMouseListener(new MouseAdapter() {
       @Override
