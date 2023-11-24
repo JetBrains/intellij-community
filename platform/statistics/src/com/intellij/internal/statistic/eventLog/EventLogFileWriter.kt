@@ -6,6 +6,8 @@ import org.jetbrains.annotations.TestOnly
 import java.io.*
 import java.nio.file.Path
 import java.util.function.Supplier
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 
 /**
  * File writer with rotation when the file reaches a [maxFileSizeInBytes] and deletion by [maxFileAge].
@@ -19,7 +21,7 @@ open class EventLogFileWriter(
   private val dir: Path,
   private val maxFileSizeInBytes: Int,
   private val logFilePathProvider: (dir: Path) -> File,
-  private val maxFileAge: Long = 7 * 24 * 60 * 60 * 100
+  private val maxFileAge: Duration = 7.days
 ) : AutoCloseable {
   private val lock = Any() // protects all mutable fields
   private val currentFileData: FileData by lazy { FileData(dir, logFilePathProvider) }
@@ -34,9 +36,8 @@ open class EventLogFileWriter(
   @TestOnly
   constructor(dir: Path,
               maxFileSize: Int,
-              maxFileAge: Long,
               logFilePathProvider: (dir: Path) -> File,
-              logFilesSupplier: Supplier<List<File>>) : this(dir, maxFileSize, logFilePathProvider, maxFileAge) {
+              logFilesSupplier: Supplier<List<File>>) : this(dir, maxFileSize, logFilePathProvider) {
     this.logFilesSupplier = logFilesSupplier
   }
 
@@ -96,7 +97,7 @@ open class EventLogFileWriter(
   }
 
   protected open fun cleanUpOldFiles() {
-    val oldestAcceptable = System.currentTimeMillis() - maxFileAge
+    val oldestAcceptable = System.currentTimeMillis() - maxFileAge.inWholeMilliseconds
     if (oldestExistingFile != -1L && oldestAcceptable < oldestExistingFile) {
       return
     }
