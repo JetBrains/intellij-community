@@ -1266,21 +1266,6 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/inSuperTypes/baseClass.kt");
             }
 
-            @TestMetadata("baseClassArguments.kt")
-            public void testBaseClassArguments() throws Exception {
-                runTest("../testData/basic/common/inSuperTypes/baseClassArguments.kt");
-            }
-
-            @TestMetadata("baseClassDelegation.kt")
-            public void testBaseClassDelegation() throws Exception {
-                runTest("../testData/basic/common/inSuperTypes/baseClassDelegation.kt");
-            }
-
-            @TestMetadata("baseClassLambdaArgument.kt")
-            public void testBaseClassLambdaArgument() throws Exception {
-                runTest("../testData/basic/common/inSuperTypes/baseClassLambdaArgument.kt");
-            }
-
             @TestMetadata("baseClassWithPrefix.kt")
             public void testBaseClassWithPrefix() throws Exception {
                 runTest("../testData/basic/common/inSuperTypes/baseClassWithPrefix.kt");
@@ -2916,11 +2901,6 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("InPropertyAccessor.kt")
             public void testInPropertyAccessor() throws Exception {
                 runTest("../testData/basic/common/InPropertyAccessor.kt");
-            }
-
-            @TestMetadata("InPropertyDelegate.kt")
-            public void testInPropertyDelegate() throws Exception {
-                runTest("../testData/basic/common/InPropertyDelegate.kt");
             }
 
             @TestMetadata("InPropertyInitializer.kt")
