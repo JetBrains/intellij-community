@@ -14,7 +14,10 @@ import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.util.*
 
-class JavaOnboardingTourLesson : OnboardingTourLessonBase("java.onboarding") {
+// store as global const to not load the JavaOnboardingTourLesson class in onboarding promoter on Welcome Screen
+const val ideaOnboardingLessonId: String = "idea.onboarding"
+
+class JavaOnboardingTourLesson : OnboardingTourLessonBase(ideaOnboardingLessonId) {
   override val demoFileExtension: String = "java"
   override val learningProjectName: String = "IdeaLearningProject"
   override val sample: LessonSample = parseLessonSample("""
