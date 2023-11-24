@@ -338,7 +338,12 @@ object CommunityLibraryLicenses {
       .simplifiedBsd("https://github.com/fb55/entities/blob/master/LICENSE"),
     LibraryLicense(name = "epydoc", attachedTo = "intellij.python", version = "3.0.1",
                    url = "https://epydoc.sourceforge.net/").mit(),
-    LibraryLicense(name = "fastutil", libraryName = "fastutil-min", url = "https://github.com/vigna/fastutil")
+    LibraryLicense(name = "error-prone-annotations", libraryName = "error-prone-annotations",
+                   url = "https://github.com/google/error-prone")
+      .apache("https://github.com/google/error-prone/blob/master/COPYING")
+      .suppliedByOrganizations(Suppliers.GOOGLE),
+    LibraryLicense(name = "fastutil", libraryName = "fastutil-min",
+                   url = "https://github.com/vigna/fastutil")
       .apache("https://github.com/vigna/fastutil/blob/master/LICENSE-2.0")
       .suppliedByPersons("Sebastiano Vigna"),
     ffmpegLibraryLicense("ffmpeg"),
