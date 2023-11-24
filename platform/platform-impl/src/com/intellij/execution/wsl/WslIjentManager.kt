@@ -155,6 +155,8 @@ suspend fun deployAndLaunchIjentGettingPath(
   // with possible user extensions in ~/.profile
   val wslCommandLineOptions = WSLCommandLineOptions()
     .setExecuteCommandInInteractiveShell(false)
+    .setExecuteCommandInLoginShell(false)
+    .setExecuteCommandInShell(false)
 
   wslCommandLineOptionsModifier(wslCommandLineOptions)
 
@@ -163,12 +165,7 @@ suspend fun deployAndLaunchIjentGettingPath(
 
   val wslIjentBinary = wslDistribution.getWslPath(ijentBinary.toAbsolutePath())!!
 
-  val commandLine = WSLDistribution.neverRunTTYFix(GeneralCommandLine(
-    // It's supposed that WslDistribution always converts commands into SHELL.
-    // There's no strict reason to call 'exec', just a tiny optimization.
-    listOf("exec") +
-    getIjentGrpcArgv(wslIjentBinary)
-  ))
+  val commandLine = WSLDistribution.neverRunTTYFix(GeneralCommandLine(getIjentGrpcArgv(wslIjentBinary)))
   wslDistribution.doPatchCommandLine(commandLine, project, wslCommandLineOptions)
 
   LOG.debug {
