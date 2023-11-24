@@ -23,6 +23,8 @@ import java.util.List;
 @SuppressWarnings({"SerializableClassInSecureContext"}) // Who will serialize panel?
 final class PanelWithActions extends JPanel {
 
+  private final JComponent myDataComponent;
+
   /**
    * @param dataComponent           component to be added in the action panel
    * @param closeListeners          Listeners to delegate "close all" command (when user clicks red cross aka "close" button)
@@ -30,9 +32,10 @@ final class PanelWithActions extends JPanel {
    * @param customActions           additional actions to add
    */
   private PanelWithActions(@NotNull final JComponent dataComponent,
-                             @NotNull final Collection<Runnable> closeListeners,
-                             @Nullable final JComponent actionListenerComponent,
-                             final AnAction @NotNull ... customActions) {
+                           @NotNull final Collection<Runnable> closeListeners,
+                           @Nullable final JComponent actionListenerComponent,
+                           final AnAction @NotNull ... customActions) {
+    myDataComponent = dataComponent;
 
     // Box layout: panel goes to the left, console to the right
     final LayoutManager layout = new BoxLayout(this, BoxLayout.LINE_AXIS);
@@ -54,6 +57,16 @@ final class PanelWithActions extends JPanel {
     if (actionListenerComponent != null) {
       AbstractConsoleRunnerWithHistory.registerActionShortcuts(actionList, actionListenerComponent);
     }
+  }
+
+  @Override
+  public boolean isFocusable() {
+    return myDataComponent.isFocusable();
+  }
+
+  @Override
+  public void requestFocus() {
+    myDataComponent.requestFocus();
   }
 
   /**
