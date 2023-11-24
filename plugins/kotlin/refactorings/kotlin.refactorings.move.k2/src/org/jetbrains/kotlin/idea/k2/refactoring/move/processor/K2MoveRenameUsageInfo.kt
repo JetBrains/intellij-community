@@ -315,7 +315,6 @@ sealed class K2MoveRenameUsageInfo(
             usageInfosByFile: Map<PsiFile, List<K2MoveRenameUsageInfo>>,
             oldToNewMap: MutableMap<PsiElement, PsiElement>
         ) = allowAnalysisFromWriteAction {
-            // TODO handle bulk usage updating in a better way, there should be API for this
             allowAnalysisOnEdt {
                 usageInfosByFile.forEach { (file, usageInfos) ->
                     val qualifiedElements = usageInfos.mapNotNull { usageInfo ->
@@ -324,7 +323,9 @@ sealed class K2MoveRenameUsageInfo(
                         if (usageInfo is Qualifiable && result != null) result else null
                     }
                     if (file !is KtFile) return@forEach
-                    qualifiedElements.forEach shortening@{ qualifiedElem ->
+
+                    // TODO handle bulk usage shortening in a better way, there should be API for this
+                    qualifiedElements.forEach { qualifiedElem ->
                         analyze(file) {
                             collectPossibleReferenceShortenings(file, qualifiedElem.textRange).invokeShortening()
                         }
