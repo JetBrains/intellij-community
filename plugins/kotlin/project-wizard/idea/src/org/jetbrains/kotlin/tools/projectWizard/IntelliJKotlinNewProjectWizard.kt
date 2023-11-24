@@ -7,15 +7,25 @@ import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.impl.LibraryScopeCache
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
+import com.intellij.util.indexing.DumbModeAccessType
+import com.intellij.util.indexing.FileBasedIndex
+import org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
+import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.StdlibVersionChooserDialog
 
 internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
 
@@ -64,6 +74,10 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
         }
 
         override fun setupProject(project: Project) {
+            val kotlinStdlib = if (!context.isCreatingNewProject) {
+                searchForKotlinStdlibAndShowDialogIfFoundSeveral(project)
+            } else null
+
             KotlinNewProjectWizard.generateProject(
                 project = project,
                 projectPath = "$path/$name",
@@ -72,8 +86,45 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 sdk = sdk,
                 buildSystemType = BuildSystemType.Jps,
                 addSampleCode = false,
-                useCompactProjectStructure = useCompactProject
+                useCompactProjectStructure = useCompactProject,
+                kotlinStdlib = kotlinStdlib
             )
+        }
+
+        private fun searchForKotlinStdlibAndShowDialogIfFoundSeveral(project: Project): LibraryOrderEntry? {
+            val libraries = findKotlinStdlibs(project)
+            val dialog = StdlibVersionChooserDialog(project, libraries)
+            val availableLibraries = dialog.availableLibraries
+
+            val kotlinStdlib = when (availableLibraries.size) {
+                0 -> null
+                1 -> availableLibraries.values.first()
+                else -> {
+                    dialog.show()
+                    if (!dialog.isOK) {
+                        availableLibraries.values.first()
+                    } else {
+                        dialog.getChosenLibrary()
+                    }
+                }
+            }
+            return kotlinStdlib
+        }
+
+        private fun findKotlinStdlibs(project: Project): Set<LibraryOrderEntry> {
+            return runWithModalProgressBlocking(project, KotlinNewProjectWizardUIBundle.message("searching.for.stdlibs.progress.title")) {
+                readAction {
+                    val allLibrariesScope = LibraryScopeCache.getInstance(project).librariesOnlyScope
+                    val allStdlibFiles = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
+                        FileBasedIndex.getInstance()
+                            .getContainingFiles(KotlinStdlibIndex.NAME, KotlinStdlibIndex.KOTLIN_STDLIB_NAME, allLibrariesScope)
+                    })
+                    allStdlibFiles.flatMapTo(mutableSetOf()) { virtualFile ->
+                        ProjectFileIndex.getInstance(project).getOrderEntriesForFile(virtualFile).filterIsInstance<LibraryOrderEntry>()
+                            .filter { !it.isModuleLevel }
+                    }
+                }
+            }
         }
     }
 

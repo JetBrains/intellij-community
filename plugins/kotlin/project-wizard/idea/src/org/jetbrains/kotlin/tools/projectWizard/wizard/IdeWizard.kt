@@ -5,6 +5,7 @@ import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
 import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription
@@ -49,6 +50,8 @@ class IdeWizard(
         val libraryOptionsPanel = LibraryOptionsPanel(libraryDescription, "", FrameworkLibraryVersionFilter.ALL, librariesContainer, false)
         JpsData(libraryDescription, librariesContainer, libraryOptionsPanel)
     }
+
+    var stdlibForJps: LibraryOrderEntry? = null
 
     var jdk: Sdk? = null
 
