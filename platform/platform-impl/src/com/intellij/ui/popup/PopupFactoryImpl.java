@@ -356,6 +356,14 @@ public class PopupFactoryImpl extends JBPopupFactory {
         step.updateStepItems(getList());
       }
     }
+
+    public void registerShortcuts() {
+      for (Object value : getListStep().getValues()) {
+        if (value instanceof AnActionHolder) {
+          ((AnActionHolder)value).getAction().registerCustomShortcutSet(getComponent(), this);
+        }
+      }
+    }
   }
 
   @Override
