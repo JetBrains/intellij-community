@@ -36,7 +36,6 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.loadWithSizes
 import com.intellij.util.JBHiDPIScaledImage
-import com.intellij.util.PlatformUtils
 import com.intellij.util.ResourceUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.ImageUtil
@@ -176,7 +175,8 @@ fun findAppIcon(): String? {
 fun isWindowIconAlreadyExternallySet(): Boolean {
   return when {
     SystemInfoRt.isWindows -> java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
-    SystemInfoRt.isMac -> isMacDocIconSet || !PlatformUtils.isJetBrainsClient()
+    // to prevent mess with java dukes when running from source
+    SystemInfoRt.isMac -> isMacDocIconSet || !PluginManagerCore.isRunningFromSources()
     else -> false
   }
 }

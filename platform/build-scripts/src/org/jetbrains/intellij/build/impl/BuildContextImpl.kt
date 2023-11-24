@@ -240,7 +240,7 @@ class BuildContextImpl(
   override fun includeBreakGenLibraries() = isJavaSupportedInProduct
 
   private val isJavaSupportedInProduct: Boolean
-    get() = productProperties.productLayout.bundledPluginModules.contains("intellij.java.plugin")
+    get() = productProperties.productLayout.bundledPluginModules.contains(JavaPluginLayout.MAIN_MODULE_NAME)
 
   override fun patchInspectScript(path: Path) {
     //todo use placeholder in inspect.sh/inspect.bat file instead
