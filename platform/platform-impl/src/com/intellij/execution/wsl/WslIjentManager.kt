@@ -7,19 +7,20 @@ import com.intellij.execution.ijent.IjentChildPtyProcessAdapter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.*
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.io.computeDetached
 import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
@@ -143,6 +144,7 @@ suspend fun deployAndLaunchIjent(
   wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
 ): IjentApi = deployAndLaunchIjentGettingPath(ijentCoroutineScope, project, wslDistribution, wslCommandLineOptionsModifier).second
 
+@OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
 @VisibleForTesting
 suspend fun deployAndLaunchIjentGettingPath(
   ijentCoroutineScope: CoroutineScope,
@@ -160,31 +162,9 @@ suspend fun deployAndLaunchIjentGettingPath(
 
   wslCommandLineOptionsModifier(wslCommandLineOptions)
 
-  val targetPlatform = IjentExecFileProvider.SupportedPlatform.X86_64__LINUX
-  val ijentBinary = IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform)
-
-  val wslIjentBinary = wslDistribution.getWslPath(ijentBinary.toAbsolutePath())!!
-
-  val commandLine = WSLDistribution.neverRunTTYFix(GeneralCommandLine(getIjentGrpcArgv(wslIjentBinary)))
+  val commandLine = WSLDistribution.neverRunTTYFix(GeneralCommandLine("/bin/sh"))
   wslDistribution.doPatchCommandLine(commandLine, project, wslCommandLineOptions)
 
-  LOG.debug {
-    "Going to launch IJent: ${commandLine.commandLineString}"
-  }
-
-  val process = commandLine.createProcess()
-  try {
-    return wslIjentBinary to IjentSessionProvider.connect(ijentCoroutineScope, targetPlatform, process)
-  }
-  catch (err: Throwable) {
-    try {
-      process.destroy()
-    }
-    catch (err2: Throwable) {
-      err.addSuppressed(err)
-    }
-    throw err
-  }
+  val process = computeDetached { commandLine.createProcess() }
+  return IjentSessionProvider.bootstrapOverShellSession(ijentCoroutineScope, process)
 }
-
-private val LOG = Logger.getInstance("com.intellij.platform.ijent.IjentWslLauncher")

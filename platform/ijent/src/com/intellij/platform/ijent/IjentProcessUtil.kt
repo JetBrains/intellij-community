@@ -7,7 +7,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.map2Array
 
-fun getIjentGrpcArgv(remotePathToIjent: String, additionalEnv: Map<String, String> = mapOf()): List<String> {
+/**
+ * If [selfDeleteOnExit] is true, IJent tries to delete itself AND its parent directory during/after it has exited.
+ */
+fun getIjentGrpcArgv(
+  remotePathToIjent: String,
+  additionalEnv: Map<String, String> = mapOf(),
+  selfDeleteOnExit: Boolean = false,
+): List<String> {
   val (debuggingLogLevel, backtrace) = when {
     ApplicationManager.getApplication()?.isUnitTestMode == true -> "trace" to true
     LOG.isTraceEnabled -> "trace" to true
@@ -23,6 +30,7 @@ fun getIjentGrpcArgv(remotePathToIjent: String, additionalEnv: Map<String, Strin
     // "gdbserver", "0.0.0.0:12345",  // https://sourceware.org/gdb/onlinedocs/gdb/Connecting.html
     remotePathToIjent,
     "grpc-stdio-server",
+    if (selfDeleteOnExit) "--self-delete-on-exit" else null,
   )
 }
 
