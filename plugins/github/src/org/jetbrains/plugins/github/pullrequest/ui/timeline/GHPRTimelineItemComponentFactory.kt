@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.async.combineAndCollect
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
@@ -13,7 +14,6 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil.
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
-import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.invokeLater
@@ -90,7 +90,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         is GHPRTimelineGroupedCommits -> createComponent(item.items)
 
         is GHIssueComment -> createComponent(item)
-        is GHPullRequestReview -> createComponent(item)
+        is GHPullRequestReview -> cs.createComponent(item)
 
         is GHPRTimelineEvent -> eventComponentFactory.createComponent(item)
         is GHPRTimelineItem.Unknown -> throw IllegalStateException("Unknown item type: " + item.__typename)
@@ -183,7 +183,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     return createTimelineItem(avatarIconsProvider, comment.author ?: ghostUser, comment.createdAt, panelHandle.panel, actionsPanel)
   }
 
-  private fun createComponent(review: GHPullRequestReview): JComponent {
+  private fun CoroutineScope.createComponent(review: GHPullRequestReview): JComponent {
     val reviewThreadsModel = reviewsThreadsModelsProvider.getReviewThreadsModel(review.id)
 
     val loadingPanel = JPanel(SingleComponentCenteringLayout()).apply {
@@ -212,9 +212,9 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       }
     })
 
-    val threadsPanel = GHPRReviewThreadsPanel.create(reviewThreadsModel) { thread ->
-      createThreadItem(thread)
-    }
+    val threadsPanel = ComponentListPanelFactory.createVertical(this, reviewThreadsModel, componentFactory = {
+      createThreadItem(it)
+    })
 
     val reviewItem = createReviewContentItem(review)
     return VerticalListPanel(0).apply {
@@ -224,9 +224,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
   }
 
-  private fun createThreadItem(thread: GHPRReviewThreadModel): JComponent {
-    val coroutineScopeProvider = ActivatableCoroutineScopeProvider()
-
+  private fun CoroutineScope.createThreadItem(thread: GHPRReviewThreadModel): JComponent {
     val firstComment: GHPRReviewCommentModel = (if (thread.size <= 0) null else thread.getElementAt(0))
                                                ?: return JPanel(null)
 
@@ -251,30 +249,30 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
       })
     }
 
-    val diff = GHPRReviewThreadComponent.createThreadDiff(project, thread, selectInToolWindowHelper)
+    val diff = GHPRReviewThreadComponent.createThreadDiffIn(this, project, thread, selectInToolWindowHelper)
 
     val repliesCollapsedState = MutableStateFlow(true)
-    coroutineScopeProvider.launchInScope {
+    launchNow {
       thread.collapsedState.collect {
         if (it) repliesCollapsedState.value = true
       }
     }
 
-    coroutineScopeProvider.launchInScope {
+    launchNow {
       repliesCollapsedState.collect {
         if (!it) thread.collapsedState.value = false
       }
     }
 
-    val commentComponentFactory = GHPRReviewCommentComponent.factory(project, thread, ghostUser,
-                                                                     reviewDataProvider, htmlImageLoader, avatarIconsProvider,
-                                                                     suggestedChangeHelper,
-                                                                     CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY,
-                                                                     false,
-                                                                     CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
 
-
-    val commentsListPanel = ComponentListPanelFactory.createVertical(thread.repliesModel, componentFactory = commentComponentFactory)
+    val commentsListPanel = ComponentListPanelFactory.createVertical(this, thread.repliesModel, componentFactory = { comment ->
+      GHPRReviewCommentComponent.create(project, thread, comment, ghostUser,
+                                        reviewDataProvider, htmlImageLoader, avatarIconsProvider,
+                                        suggestedChangeHelper,
+                                        CodeReviewChatItemUIUtil.ComponentType.FULL_SECONDARY,
+                                        false,
+                                        CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
+    })
 
     val commentsPanel = if (reviewDataProvider.canComment()) {
       val actionsComponent = GHPRReviewThreadComponent
@@ -314,7 +312,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         border = JBUI.Borders.empty(Thread.Replies.ActionsFolded.VERTICAL_PADDING, 0)
       }
 
-    coroutineScopeProvider.launchInScope {
+    launchNow {
       repliesCollapsedState.collect {
         collapsedThreadActionsComponent.isVisible = it
         commentsPanel.isVisible = !it
@@ -322,7 +320,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     }
 
     val diffAndText = VerticalListPanel(Thread.DIFF_TEXT_GAP).apply {
-      coroutineScopeProvider.launchInScope {
+      launchNow {
         combineAndCollect(thread.collapsedState, textFlow) { collapsed, text ->
           removeAll()
           if (collapsed) {
@@ -360,8 +358,6 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
     val mainItem = buildTimelineItem(avatarIconsProvider, actor, content) {
       withHeader(titlePanel, actionsPanel)
       maxContentWidth = null
-    }.also {
-      coroutineScopeProvider.activateWith(it)
     }
 
     return VerticalListPanel().apply {

@@ -21,6 +21,7 @@ object ComponentListPanelFactory {
 
     model.addListDataListener(object : ListDataListener {
       override fun intervalRemoved(e: ListDataEvent) {
+        if (e.index0 < 0 || e.index1 < 0) return
         for (i in e.index1 downTo e.index0) {
           panel.remove(i)
         }
@@ -29,6 +30,7 @@ object ComponentListPanelFactory {
       }
 
       override fun intervalAdded(e: ListDataEvent) {
+        if (e.index0 < 0 || e.index1 < 0) return
         for (i in e.index0..e.index1) {
           panel.add(componentFactory(model.getElementAt(i)), i)
         }
@@ -37,6 +39,7 @@ object ComponentListPanelFactory {
       }
 
       override fun contentsChanged(e: ListDataEvent) {
+        if (e.index0 < 0 || e.index1 < 0) return
         for (i in e.index1 downTo e.index0) {
           panel.remove(i)
         }
@@ -76,6 +79,7 @@ object ComponentListPanelFactory {
         }
 
         override fun intervalRemoved(e: ListDataEvent) {
+          if (e.index0 < 0 || e.index1 < 0) return
           for (i in e.index1 downTo e.index0) {
             removeComponent(i)
           }
@@ -84,6 +88,7 @@ object ComponentListPanelFactory {
         }
 
         override fun intervalAdded(e: ListDataEvent) {
+          if (e.index0 < 0 || e.index1 < 0) return
           for (i in e.index0..e.index1) {
             addComponent(i, model.getElementAt(i))
           }
@@ -92,6 +97,7 @@ object ComponentListPanelFactory {
         }
 
         override fun contentsChanged(e: ListDataEvent) {
+          if (e.index0 < 0 || e.index1 < 0) return
           for (i in e.index1 downTo e.index0) {
             removeComponent(i)
           }

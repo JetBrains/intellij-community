@@ -17,7 +17,6 @@ import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFa
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
-import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.diff.util.LineRange
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
@@ -27,7 +26,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
@@ -81,9 +79,10 @@ object GHPRReviewThreadComponent {
     return panel
   }
 
-  fun createThreadDiff(project: Project,
-                       thread: GHPRReviewThreadModel,
-                       selectInToolWindowHelper: GHPRSelectInToolWindowHelper): JComponent {
+  fun createThreadDiffIn(cs: CoroutineScope,
+                         project: Project,
+                         thread: GHPRReviewThreadModel,
+                         selectInToolWindowHelper: GHPRSelectInToolWindowHelper): JComponent {
     val vm = object : CollapsibleTimelineItemViewModel {
       override val collapsible = MutableStateFlow(false)
 
@@ -103,26 +102,17 @@ object GHPRReviewThreadComponent {
       }
     }
 
-
-    val scopeProvider = ActivatableCoroutineScopeProvider()
-    return Wrapper().also {
-      scopeProvider.activateWith(it)
-
-      val fileNameClickListener = flowOf(ActionListener {
-        val commit = if (thread.isOutdated || thread.commit?.oid == null) {
-          thread.originalCommit?.oid
-        }
-        else {
-          null
-        }
-        selectInToolWindowHelper.selectChange(commit, thread.filePath)
-      })
-      scopeProvider.doInScope {
-        val comp = TimelineDiffComponentFactory.createDiffWithHeader(this, vm, thread.filePath, fileNameClickListener) {
-          createDiff(thread, project)
-        }
-        it.setContent(comp)
+    val fileNameClickListener = flowOf(ActionListener {
+      val commit = if (thread.isOutdated || thread.commit?.oid == null) {
+        thread.originalCommit?.oid
       }
+      else {
+        null
+      }
+      selectInToolWindowHelper.selectChange(commit, thread.filePath)
+    })
+    return TimelineDiffComponentFactory.createDiffWithHeader(cs, vm, thread.filePath, fileNameClickListener) {
+      createDiff(thread, project)
     }
   }
 
