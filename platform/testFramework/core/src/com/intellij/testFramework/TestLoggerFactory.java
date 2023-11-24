@@ -126,7 +126,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   public static @NotNull Path getTestLogDir() {
     String property = System.getProperty(PROPERTY_LOG_PATH);
-    return property != null ? Path.of(property) : Path.of(PathManager.getSystemPath(), LOG_DIR);
+    return property == null ? Path.of(PathManager.getSystemPath(), LOG_DIR) : Path.of(property).normalize();
   }
 
   public static void dumpLogToStdout(@NotNull String testStartMarker) {

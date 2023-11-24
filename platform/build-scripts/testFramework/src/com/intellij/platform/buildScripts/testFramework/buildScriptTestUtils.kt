@@ -239,20 +239,24 @@ private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMe
 
 private suspend inline fun asSingleTraceFile(traceSpanName: String, build: () -> Unit) {
   val traceFile = TestLoggerFactory.getTestLogDir().resolve("$traceSpanName-trace.json")
-  TracerProviderManager.setOutput(traceFile.toAbsolutePath().normalize())
+  JaegerJsonSpanExporterManager.setOutput(traceFile)
   try {
     build()
   }
   finally {
-    publishTraceFile()
+    publishTraceFile(traceFile)
   }
 }
 
-private suspend fun publishTraceFile() {
-  val trace = TracerProviderManager.finish()?.takeIf { Files.exists(it) } ?: return
+private suspend fun publishTraceFile(traceFile: Path) {
   try {
-    println("Performance report is written to $trace")
-    println("##teamcity[publishArtifacts '$trace']")
+    TraceManager.shutdown()
+    if (Files.notExists(traceFile)) {
+      return
+    }
+
+    println("Performance report is written to $traceFile")
+    println("##teamcity[publishArtifacts '$traceFile']")
   }
   catch (e: Exception) {
     System.err.println("cannot write performance report:")

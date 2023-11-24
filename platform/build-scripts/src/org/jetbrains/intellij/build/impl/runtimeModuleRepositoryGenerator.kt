@@ -12,6 +12,7 @@ import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDe
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.structure.base.utils.exists
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
@@ -209,7 +210,7 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Run
       return mainLocation
     }
     val sorted = paths.sorted()
-    context.messages.warning("Cannot choose the main location for '${moduleId.stringId}' among $sorted, the first one will be used")
+    Span.current().addEvent("cannot choose the main location for '${moduleId.stringId}' among $sorted, the first one will be used")
     return sorted.first()
   }
 

@@ -60,7 +60,7 @@ suspend fun createCompilationContext(communityHome: BuildDependenciesCommunityRo
                                      options: BuildOptions = BuildOptions()): CompilationContextImpl {
   val logDir = options.logPath?.let { Path.of(it) }
                ?: (options.outputRootPath ?: defaultOutputRoot).resolve("log")
-  TracerProviderManager.setOutput(logDir.toAbsolutePath().normalize().resolve("trace.json"))
+  JaegerJsonSpanExporterManager.setOutput(logDir.toAbsolutePath().normalize().resolve("trace.json"))
   return CompilationContextImpl.createCompilationContext(communityHome = communityHome,
                                                          projectHome = projectHome,
                                                          setupTracer = false,
@@ -160,7 +160,7 @@ class CompilationContextImpl private constructor(
       // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
       // (see createCopyForProduct)
       if (setupTracer) {
-        TracerProviderManager.setOutput(buildPaths.logDir.resolve("trace.json"))
+        JaegerJsonSpanExporterManager.setOutput(buildPaths.logDir.resolve("trace.json"))
       }
 
       val context = CompilationContextImpl(model = model,

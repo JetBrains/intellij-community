@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.exists
 
 class CompilationCacheTest {
   companion object {
@@ -17,7 +16,7 @@ class CompilationCacheTest {
     @JvmStatic
     fun flushTracer() {
       runBlocking {
-        TracerProviderManager.finish()
+        TraceManager.shutdown()
       }
     }
   }
@@ -25,7 +24,7 @@ class CompilationCacheTest {
   @Test
   fun testUnpack() {
     val metadataFile = Path.of("/Volumes/data/Documents/idea/out/compilation-archive/metadata.json")
-    assumeTrue(metadataFile.exists())
+    assumeTrue(Files.exists(metadataFile))
 
     // do not use Junit TempDir - it is very slow
     val outDir = Files.createTempDirectory("CompilationCacheTest")

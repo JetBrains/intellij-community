@@ -3,7 +3,6 @@ package com.intellij.platform.diagnostic.telemetry.exporters
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
-import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.trace.IdGenerator
@@ -13,42 +12,35 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.io.BufferedWriter
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.StandardCopyOption
-import java.nio.file.StandardOpenOption
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
+import java.nio.file.*
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 import java.util.concurrent.TimeUnit
+
+private val MAIN_WRITE: Set<OpenOption> = EnumSet.of(StandardOpenOption.CREATE,
+                                                     StandardOpenOption.WRITE,
+                                                     StandardOpenOption.TRUNCATE_EXISTING)
 
 // https://github.com/jaegertracing/jaeger-ui/issues/381
 @ApiStatus.Internal
 class JaegerJsonSpanExporter(
-  val file: Path,
+  private val finalFile: Path,
   serviceName: String,
   serviceVersion: String? = null,
   serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
   private val tempTelemetryPath: Path
-  private val telemetryJsonPath: Path
   private val writer: JsonGenerator
 
   private val lock = Mutex()
 
   init {
-    // presume that telemetry stuff needs to be saved in log dir
-    if (!file.isAbsolute || file.parent == null) {
-      val logDir = Files.createDirectories(PathManager.getLogDir().toAbsolutePath())
-      tempTelemetryPath = Files.createTempFile(logDir, "telemetry-", ".temp")
-      telemetryJsonPath = logDir.resolve(file)
-    }
-    // path is absolute and has a parent
-    else {
-      tempTelemetryPath = Files.createTempFile(file.parent, "telemetry", ".temp").toAbsolutePath()
-      telemetryJsonPath = file
-    }
-
+    val parent = finalFile.parent
+    Files.createDirectories(parent)
+    tempTelemetryPath = Files.createTempFile(parent, "telemetry-", ".temp").toAbsolutePath()
     writer = JsonFactory().createGenerator(Files.newBufferedWriter(tempTelemetryPath))
       .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
 
@@ -120,7 +112,6 @@ class JaegerJsonSpanExporter(
         }
         writer.writeEndObject()
       }
-      writer.flush()
     }
   }
 
@@ -180,7 +171,7 @@ class JaegerJsonSpanExporter(
           return@withContext
         }
 
-        Files.move(tempTelemetryPath, telemetryJsonPath, StandardCopyOption.REPLACE_EXISTING)
+        Files.move(tempTelemetryPath, finalFile, StandardCopyOption.REPLACE_EXISTING)
       }
     }
   }
@@ -188,12 +179,23 @@ class JaegerJsonSpanExporter(
   override suspend fun flush() {
     lock.withReentrantLock {
       // if shutdown was already invoked OR nothing has been written to the temp file
-      if (writer.isClosed || Files.notExists(tempTelemetryPath)) {
+      if (writer.isClosed) {
         return@withReentrantLock
       }
 
-      Files.copy(tempTelemetryPath, telemetryJsonPath, StandardCopyOption.REPLACE_EXISTING)
-      closeJsonFile(Files.newBufferedWriter(file, StandardOpenOption.APPEND))
+      writer.flush()
+
+      if (Files.notExists(tempTelemetryPath)) {
+        return@withReentrantLock
+      }
+
+      // JsonGenerator created from scratch can't close unfinished a json object
+      FileChannel.open(finalFile, MAIN_WRITE).use { finalChannel ->
+        FileChannel.open(tempTelemetryPath, StandardOpenOption.READ).use {
+          it.transferTo(0, Long.MAX_VALUE, finalChannel)
+        }
+        finalChannel.write(ByteBuffer.wrap(jsonEnd))
+      }
     }
   }
 }
@@ -274,7 +276,4 @@ private fun closeJsonFile(jsonGenerator: JsonGenerator) {
   jsonGenerator.close()
 }
 
-private fun closeJsonFile(writer: BufferedWriter) {
-  // JsonGenerator created from scratch can't close unfinished a json object
-  writer.use { it.append("]}]}") }
-}
+private val jsonEnd = "]}]}".encodeToByteArray()

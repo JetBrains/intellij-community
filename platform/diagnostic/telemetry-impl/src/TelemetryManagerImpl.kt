@@ -6,6 +6,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -200,11 +201,21 @@ private class IntelliJTracerImpl(private val scope: Scope, private val otlpServi
   }
 }
 
+private fun normalizeTelemetryFile(file: Path): Path {
+  if (file.parent != null && file.isAbsolute) {
+    return file
+  }
+  else {
+    // presume that telemetry stuff needs to be saved in log dir
+    return PathManager.getLogDir().toAbsolutePath().resolve(file)
+  }
+}
+
 private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = false): MutableList<AsyncSpanExporter> {
   val spanExporters = mutableListOf<AsyncSpanExporter>()
   System.getProperty("idea.diagnostic.opentelemetry.file")?.let { traceFile ->
     spanExporters.add(JaegerJsonSpanExporter(
-      file = Path.of(traceFile),
+      finalFile = normalizeTelemetryFile(Path.of(traceFile)),
       serviceName = resource.getAttribute(AttributeKey.stringKey("service.name"))!!,
       serviceVersion = resource.getAttribute(AttributeKey.stringKey("service.version")),
       serviceNamespace = resource.getAttribute(AttributeKey.stringKey("service.namespace")),

@@ -23,7 +23,7 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalCoroutinesApi::class)
 @Internal
 class BatchSpanProcessor(
-  coroutineScope: CoroutineScope,
+  private val coroutineScope: CoroutineScope,
   private val spanExporters: List<AsyncSpanExporter>,
   private val scheduleDelay: Duration = 1.minutes,
   private val maxExportBatchSize: Int = 512
@@ -43,11 +43,10 @@ class BatchSpanProcessor(
           select {
             flushRequested.onReceive { request ->
               try {
-                val isExported = exportCurrentBatch(batch)
-                if (isExported && !request.exportOnly) {
-                  for (spanExporter in spanExporters) {
-                    spanExporter.flush()
-                  }
+                // todo use result as isExported and do not flush
+                exportCurrentBatch(batch)
+                if (!request.exportOnly) {
+                  flushExporters()
                 }
                 Unit
               }
@@ -60,12 +59,15 @@ class BatchSpanProcessor(
 
               if (batch.size >= maxExportBatchSize) {
                 exportCurrentBatch(batch)
+                flushExporters()
               }
             }
 
             // or if no new spans for a while, flush buffer
             onTimeout(scheduleDelay) {
-              exportCurrentBatch(batch)
+              if (exportCurrentBatch(batch)) {
+                flushExporters()
+              }
             }
           }
         }
@@ -91,6 +93,19 @@ class BatchSpanProcessor(
     }
   }
 
+  private suspend fun flushExporters() {
+    for (spanExporter in spanExporters) {
+      try {
+        withTimeout(10.seconds) {
+          spanExporter.flush()
+        }
+      }
+      catch (e: TimeoutCancellationException) {
+        logger<BatchSpanProcessor>().error("Failed to flush", e)
+      }
+    }
+  }
+
   override fun onStart(parentContext: Context, span: ReadWriteSpan) {
   }
 
@@ -103,6 +118,11 @@ class BatchSpanProcessor(
   }
 
   override fun isEndRequired(): Boolean = true
+
+  // shutdown must be performed using scope - explicit shutdown is not required
+  suspend fun forceShutdown() {
+    coroutineScope.coroutineContext.job.cancelAndJoin()
+  }
 
   override fun shutdown(): CompletableResultCode {
     // shutdown must be performed using scope - explicit shutdown is not required
