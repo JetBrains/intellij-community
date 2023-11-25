@@ -2,10 +2,9 @@
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
@@ -16,8 +15,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.junit.Test
 
 class MavenDirectoryCompletionContributorTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = true
-
   @Test
   fun testVariants() = runBlocking {
     createProjectPom("""
@@ -40,14 +37,13 @@ class MavenDirectoryCompletionContributorTest : MavenMultiVersionImportingTestCa
 
     importProjectAsync()
 
-    fun check(dir: VirtualFile, vararg expected: Pair<String, JpsModuleSourceRootType<*>>) {
-      val psiDir = ApplicationManager.getApplication().runReadAction<PsiDirectory> {
-        PsiManager.getInstance(myProject).findDirectory(dir)!!
+    suspend fun check(dir: VirtualFile, vararg expected: Pair<String, JpsModuleSourceRootType<*>>) {
+      readAction {
+        val psiDir = PsiManager.getInstance(myProject).findDirectory(dir)!!
+        Assertions.assertThat(MavenDirectoryCompletionContributor().getVariants(psiDir).map {
+          FileUtil.getRelativePath(dir.path, FileUtil.toSystemIndependentName(it.path), '/') to it.rootType
+        }).containsExactlyInAnyOrder(*expected)
       }
-
-      Assertions.assertThat(MavenDirectoryCompletionContributor().getVariants(psiDir).map {
-        FileUtil.getRelativePath(dir.path, FileUtil.toSystemIndependentName(it.path), '/') to it.rootType
-      }).containsExactlyInAnyOrder(*expected)
     }
 
     val resources = defaultResources().map { it to JavaResourceRootType.RESOURCE } + defaultTestResources().map { it to JavaResourceRootType.TEST_RESOURCE }
