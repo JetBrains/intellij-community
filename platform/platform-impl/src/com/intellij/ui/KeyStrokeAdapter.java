@@ -17,13 +17,6 @@ import java.util.StringTokenizer;
 
 public class KeyStrokeAdapter implements KeyListener {
   private static final Logger LOG = Logger.getInstance(KeyStrokeAdapter.class);
-  private static final Map<Integer, Integer> MODIFIERS_MASKS = Map.ofEntries(
-    Map.entry(KeyEvent.VK_SHIFT, KeyEvent.SHIFT_MASK | KeyEvent.SHIFT_DOWN_MASK),
-    Map.entry(KeyEvent.VK_ALT, KeyEvent.ALT_MASK | KeyEvent.ALT_DOWN_MASK),
-    Map.entry(KeyEvent.VK_CONTROL, KeyEvent.CTRL_MASK | KeyEvent.CTRL_DOWN_MASK),
-    Map.entry(KeyEvent.VK_META, KeyEvent.META_MASK | KeyEvent.META_DOWN_MASK),
-    Map.entry(KeyEvent.VK_ALT_GRAPH, KeyEvent.ALT_GRAPH_MASK | KeyEvent.ALT_GRAPH_DOWN_MASK)
-  );
 
   @Override
   public void keyTyped(KeyEvent event) {
@@ -87,10 +80,7 @@ public class KeyStrokeAdapter implements KeyListener {
         if (code == KeyEvent.VK_UNDEFINED) {
           code = event.getExtendedKeyCode();
         }
-        int modifiers = event.getModifiers();
-        // Remove the extra modifier when the event describes a single modifier being pressed/released
-        modifiers &= ~MODIFIERS_MASKS.getOrDefault(code, 0);
-        return getKeyStroke(code, modifiers, released);
+        return getKeyStroke(code, event.getModifiers(), released);
       }
     }
     return null;
