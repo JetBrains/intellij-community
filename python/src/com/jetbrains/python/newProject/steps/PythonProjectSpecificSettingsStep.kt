@@ -18,6 +18,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectGenerator
@@ -29,6 +30,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.PythonProjectGenerator
+import com.jetbrains.python.newProject.PythonPromoProjectGenerator
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.sdk.PyLazySdk
@@ -85,7 +87,13 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
   private var interpreterPanel: PythonAddNewEnvironmentPanel? = null
 
   override fun createBasePanel(): JPanel {
-    if (myProjectGenerator !is PythonProjectGenerator<*>) return super.createBasePanel()
+    val projectGenerator = myProjectGenerator
+    if (projectGenerator !is PythonProjectGenerator<*>) return super.createBasePanel()
+    if (projectGenerator is PythonPromoProjectGenerator) {
+      myCreateButton.isEnabled = false
+      myLocationField = TextFieldWithBrowseButton()
+      return projectGenerator.createPromoPanel()
+    }
 
     val nextProjectName = myProjectDirectory.get()
     projectName.set(nextProjectName.nameWithoutExtension)
