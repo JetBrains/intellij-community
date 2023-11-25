@@ -28,8 +28,7 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.junit.Test
 
 class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   private fun findAddMavenIntention(): IntentionAction {
     for (intention in myFixture.getAvailableIntentions()) {
       if (intention.getText().contains("Add Maven")) {

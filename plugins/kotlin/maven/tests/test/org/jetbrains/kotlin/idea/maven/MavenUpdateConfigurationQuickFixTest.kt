@@ -36,8 +36,6 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
     private val artifactDownloadingScheduled = AtomicInteger()
     private val artifactDownloadingFinished = AtomicInteger()
 
-    override fun runInDispatchThread() = false
-
     override fun setUp() {
         super.setUp()
         myProject.messageBus.connect(testRootDisposable)

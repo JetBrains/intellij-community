@@ -11,8 +11,6 @@ import org.junit.Test
 import java.io.File
 
 class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
   override fun setUp() = runBlocking {
     super.setUp()
 

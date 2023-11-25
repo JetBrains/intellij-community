@@ -8,8 +8,6 @@ import org.junit.Test
 import java.io.File
 
 class SnapshotDependenciesImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
   private var remoteRepoDir: File? = null
 
   override fun setUp() {

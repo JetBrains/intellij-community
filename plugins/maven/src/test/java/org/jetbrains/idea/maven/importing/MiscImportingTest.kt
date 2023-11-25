@@ -31,8 +31,6 @@ import java.util.function.Function
 class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   private val myEventsTestHelper = MavenEventsTestHelper()
 
-  override fun runInDispatchThread() = false
-
   override fun setUp() {
     super.setUp()
     myEventsTestHelper.setUp(myProject)

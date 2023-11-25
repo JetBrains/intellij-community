@@ -9,8 +9,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenFolderResolverTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   private lateinit var myTestSyncViewManager: SyncViewManager
   private val myEvents: MutableList<BuildEvent> = ArrayList()
 

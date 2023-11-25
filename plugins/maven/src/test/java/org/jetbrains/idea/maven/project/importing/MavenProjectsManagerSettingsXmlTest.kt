@@ -6,14 +6,11 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.utils.MavenUtil
-import org.junit.Assume
 import org.junit.Test
 import java.io.File
 
 class MavenProjectsManagerSettingsXmlTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() {
     super.setUp()
     initProjectsManager(true)

@@ -27,8 +27,6 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
   private var myNavigator: MavenProjectsNavigator? = null
   private var myStructure: MavenProjectsStructure? = null
 
-  override fun runInDispatchThread() = false
-
   override fun setUp() = runBlocking {
     super.setUp()
     myProject.replaceService(ToolWindowManager::class.java, object : ToolWindowHeadlessManagerImpl(myProject) {

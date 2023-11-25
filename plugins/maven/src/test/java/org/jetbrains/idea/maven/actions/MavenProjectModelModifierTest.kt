@@ -13,7 +13,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -24,8 +23,6 @@ import org.junit.Test
 import java.util.regex.Pattern
 
 class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
-  override fun runInDispatchThread() = false
-
 
   @Test
   fun testAddExternalLibraryDependency() = runBlocking {

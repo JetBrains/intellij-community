@@ -15,8 +15,7 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 
 class MavenConfigImportingTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = false
-  
+    
   @Test
   fun testResolveJvmConfigProperty() = runBlocking {
     createProjectSubFile(MavenConstants.JVM_CONFIG_RELATIVE_PATH, "-Dver=1")

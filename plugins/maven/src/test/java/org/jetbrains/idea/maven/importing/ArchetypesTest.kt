@@ -13,8 +13,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.String
 
 class ArchetypesTest : MavenTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   /**
    * very time consumed test (uses the network and -U maven flag)
    */

@@ -5,25 +5,19 @@ import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ArrayUtil
-import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
-import org.junit.Assume
 import org.junit.Test
 
 class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestCase() {
   private var myBuilder: AbstractMavenModuleBuilder? = null
 
-  override fun runInDispatchThread() = false
-  
   override fun setUp() {
     super.setUp()
     myBuilder = MavenJavaModuleBuilder()

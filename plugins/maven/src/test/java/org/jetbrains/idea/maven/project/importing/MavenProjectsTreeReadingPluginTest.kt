@@ -10,8 +10,7 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.junit.Test
 
 class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   @Test
   fun testDoNotUpdateChildAfterParentWasResolved() = runBlocking {
     createProjectPom("""

@@ -27,9 +27,6 @@ import org.jetbrains.idea.maven.project.actions.AddManagedFilesAction
 import org.jetbrains.idea.maven.utils.MavenUtil.SYSTEM_ID
 
 abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() {
-
-  override fun runInDispatchThread() = false
-
   fun generateProject(id: String): ProjectInfo {
     val name = "${System.currentTimeMillis()}-$id"
     createProjectSubFile("$name-external-module/pom.xml", MavenBuildFileBuilder("$name-external-module").generate())

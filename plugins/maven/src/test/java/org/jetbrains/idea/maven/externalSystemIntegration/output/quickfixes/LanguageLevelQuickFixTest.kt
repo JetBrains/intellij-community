@@ -5,7 +5,6 @@ import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.RunAll
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -14,9 +13,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 
 class LanguageLevelQuickFixTest : MavenDomTestCase() {
-
-  override fun runInDispatchThread() = false
-
 
   @Test
   fun `test property empty quick fix`() = runBlocking {

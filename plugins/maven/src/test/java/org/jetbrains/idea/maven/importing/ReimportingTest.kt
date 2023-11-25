@@ -17,8 +17,6 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
 class ReimportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
   override fun setUp() = runBlocking {
     super.setUp()
     createProjectPom("""

@@ -11,8 +11,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 
 class MavenDontExcludeTargetTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   fun testDontExcludeTargetTest() = runBlocking {
     MavenProjectsManager.getInstance(myProject).importingSettings.isExcludeTargetFolder = false
 

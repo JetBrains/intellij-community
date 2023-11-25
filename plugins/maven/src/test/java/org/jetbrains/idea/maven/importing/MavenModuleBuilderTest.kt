@@ -23,9 +23,6 @@ import org.junit.Test
 class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
   private var myBuilder: AbstractMavenModuleBuilder? = null
 
-  override fun runInDispatchThread() = false
-
-
   override fun setUp() {
     super.setUp()
     myBuilder = MavenJavaModuleBuilder()

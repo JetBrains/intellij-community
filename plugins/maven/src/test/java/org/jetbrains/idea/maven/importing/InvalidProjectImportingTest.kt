@@ -26,8 +26,7 @@ import org.junit.Test
 import java.io.IOException
 
 class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   @Test
   fun testResetDependenciesWhenProjectContainsErrors() = runBlocking {
     //Registry.get("maven.server.debug").setValue(true);

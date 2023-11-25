@@ -25,8 +25,7 @@ import java.io.File
 import java.util.*
 
 class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
-  override fun runInDispatchThread() = false
-  
+    
   @Test
   fun JavadocsAndSources() = runBlocking {
     importProjectAsync("""

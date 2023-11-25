@@ -35,8 +35,7 @@ import org.junit.Test
 import java.io.File
 
 class MavenFoldersUpdatingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-  @Test
+    @Test
   fun testUpdatingExternallyCreatedFolders() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>

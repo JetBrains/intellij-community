@@ -16,8 +16,7 @@ import org.junit.Test
 import java.io.File
 
 class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String
 

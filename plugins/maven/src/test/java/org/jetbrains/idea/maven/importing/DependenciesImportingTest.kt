@@ -22,8 +22,7 @@ import java.io.File
 import java.util.*
 
 class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() {
     super.setUp()
     projectsManager.initForTests()

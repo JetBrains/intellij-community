@@ -16,11 +16,6 @@ import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
-
-  override fun runInDispatchThread(): Boolean {
-    return false
-  }
-
   @Test
   fun testFilesSavedOnAction() = runBlocking {
     val projectPom = createProjectPom("<groupId>test</groupId>" +

@@ -15,8 +15,7 @@ import org.junit.Test
 import java.io.IOException
 
 class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   private var myShortcutsManager: MavenShortcutsManager? = null
 
   override fun setUp() {

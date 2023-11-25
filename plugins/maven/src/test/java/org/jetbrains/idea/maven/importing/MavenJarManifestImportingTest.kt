@@ -11,8 +11,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 class MavenJarManifestImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   @Test
   fun `test jar manifest automatic module name`() = runBlocking {
     assumeTrue(isWorkspaceImport)

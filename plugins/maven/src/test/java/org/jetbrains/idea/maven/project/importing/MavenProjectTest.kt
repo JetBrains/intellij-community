@@ -18,8 +18,7 @@ import java.io.File
 import java.util.*
 
 class MavenProjectTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   @Test
   fun testCollectingPlugins() = runBlocking {
     importProjectAsync("""
