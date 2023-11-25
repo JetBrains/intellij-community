@@ -56,8 +56,6 @@ import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.DefaultBundleService
-import com.intellij.util.ReflectionUtil
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.with
@@ -92,7 +90,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val DEFAULT_ACTION_GROUP_CLASS_NAME = DefaultActionGroup::class.java.name
 
-open class ActionManagerImpl protected constructor(private val coroutineScope: CoroutineScope) : ActionManagerEx(), Disposable {
+open class ActionManagerImpl protected constructor(private val coroutineScope: CoroutineScope) : ActionManagerEx() {
   private val lock = Any()
 
   private val pluginToId = HashMap<PluginId, MutableList<String>>()
@@ -182,7 +180,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
     // out of ActionManager constructor
     coroutineScope.launch {
-      // make sure constructor is completed
+      // make sure the constructor is completed
       serviceAsync<ActionManager>()
 
       val keymapManager = serviceAsync<KeymapManager>()
@@ -198,13 +196,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
         keymap.apply(operations, actionBinding = actionRegistrar::getActionBinding, actionManager = this@ActionManagerImpl)
       }
-    }
-  }
-
-  final override fun dispose() {
-    timer?.let {
-      it.stop()
-      timer = null
     }
   }
 
