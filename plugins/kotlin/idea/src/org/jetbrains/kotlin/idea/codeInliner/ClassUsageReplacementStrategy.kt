@@ -7,11 +7,14 @@ import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithAnnotationAnalyzer
+import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithData
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
+import org.jetbrains.kotlin.idea.util.ImportInsertHelperImpl
 import org.jetbrains.kotlin.idea.util.replaceOrCreateTypeArgumentList
 import org.jetbrains.kotlin.ir.expressions.typeParametersCount
 import org.jetbrains.kotlin.name.FqName
@@ -21,7 +24,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 class ClassUsageReplacementStrategy(
     typeReplacement: KtUserType?,
     constructorReplacement: CodeToInline?,
-    project: Project
+    project: Project,
+    private val replaceWith: ReplaceWithData,
 ) : UsageReplacementStrategy {
 
     private val factory = KtPsiFactory(project)
@@ -79,6 +83,9 @@ class ClassUsageReplacementStrategy(
     }
 
     private fun replaceConstructorCallWithOtherTypeConstruction(callExpression: KtCallElement): KtElement {
+        val project = callExpression.project
+        val file = callExpression.containingKtFile
+
         val referenceExpression = typeReplacement?.referenceExpression ?: error("Couldn't find referenceExpression")
         val classFromReplacement = KotlinClassShortNameIndex
             .get(referenceExpression.text, callExpression.project, callExpression.resolveScope)
@@ -113,6 +120,13 @@ class ClassUsageReplacementStrategy(
             expressionToReplace.replaced(newExpression)
         } else {
             expressionToReplace
+        }
+
+        val importedNames = file.importDirectives.mapNotNull { it.importPath?.importedName }
+        ReplaceWithAnnotationAnalyzer.importFqNames(replaceWith).forEach {
+            if (it.shortName() !in importedNames) {
+                ImportInsertHelperImpl.addImport(project, file, it)
+            }
         }
 
         return ShortenReferences.DEFAULT.process(result)

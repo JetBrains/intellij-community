@@ -258,7 +258,7 @@ abstract class DeprecatedSymbolUsageFixBase(
                             }
 
                             //TODO: check that it's really resolved and is not an object otherwise it can be expression as well
-                            ClassUsageReplacementStrategy(replacementType, null, element.project)
+                            ClassUsageReplacementStrategy(replacementType, null, element.project, replaceWith)
                         }
                         target is ClassDescriptor -> {
                             val constructor = target.unsubstitutedPrimaryConstructor ?: return null
@@ -268,7 +268,7 @@ abstract class DeprecatedSymbolUsageFixBase(
                                 resolutionFacade,
                                 reformat
                             ) ?: return null
-                            ClassUsageReplacementStrategy(null, replacementExpression, element.project)
+                            ClassUsageReplacementStrategy(null, replacementExpression, element.project, replaceWith)
                         }
                         else -> null
                     }

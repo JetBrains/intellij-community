@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.asExpression
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
+import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithAnnotationAnalyzer
+import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithData
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.*
 import org.jetbrains.kotlin.idea.refactoring.util.specifyExplicitLambdaSignature
 import org.jetbrains.kotlin.idea.references.canBeResolvedViaImport
@@ -60,7 +62,8 @@ class CodeToInlineBuilder(private val targetCallable: CallableDescriptor,
             mainExpression = mainExpression,
             statementsBefore = statementsBefore,
             analyze = { it.analyze(BodyResolveMode.PARTIAL) },
-            reformat = reformat
+            reformat = reformat,
+            replaceWith = null,
         )
     }
 
@@ -69,6 +72,7 @@ class CodeToInlineBuilder(private val targetCallable: CallableDescriptor,
         statementsBefore: List<KtExpression>,
         analyze: (KtExpression) -> BindingContext,
         reformat: Boolean,
+        replaceWith: ReplaceWithData?,
     ): MutableCodeToInline {
         val alwaysKeepMainExpression =
             when (val descriptor = mainExpression?.getResolvedCall(analyze(mainExpression))?.resultingDescriptor) {
@@ -121,6 +125,12 @@ class CodeToInlineBuilder(private val targetCallable: CallableDescriptor,
             }
         }
 
+        if (replaceWith != null) {
+            ReplaceWithAnnotationAnalyzer.importFqNames(replaceWith).forEach {
+                codeToInline.fqNamesToImport.add(ImportPath(fqName = it, isAllUnder = false))
+            }
+        }
+
         return codeToInline
     }
 
@@ -140,7 +150,8 @@ class CodeToInlineBuilder(private val targetCallable: CallableDescriptor,
         statementsBefore: List<KtExpression>,
         analyze: (KtExpression) -> BindingContext,
         reformat: Boolean,
-    ): CodeToInline = prepareMutableCodeToInline(mainExpression, statementsBefore, analyze, reformat).toNonMutable()
+        replaceWith: ReplaceWithData,
+    ): CodeToInline = prepareMutableCodeToInline(mainExpression, statementsBefore, analyze, reformat, replaceWith).toNonMutable()
 
     private fun getParametersForFunctionLiteral(
         functionLiteralExpression: KtLambdaExpression,

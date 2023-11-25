@@ -2096,65 +2096,98 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/deprecatedSymbolUsage/imports")
-        public static class Imports extends AbstractQuickFixMultiFileTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K1;
+        public abstract static class Imports extends AbstractQuickFixMultiFileTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/deprecatedSymbolUsage/imports/explicit")
+            public static class Explicit extends AbstractQuickFixMultiFileTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                }
+
+                @TestMetadata("constructor.before.Main.kt")
+                public void testConstructor() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/imports/explicit/constructor.before.Main.kt");
+                }
+
+                @TestMetadata("function.before.Main.kt")
+                public void testFunction() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/imports/explicit/function.before.Main.kt");
+                }
+
+                @TestMetadata("property.before.Main.kt")
+                public void testProperty() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/imports/explicit/property.before.Main.kt");
+                }
             }
 
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/quickfix/deprecatedSymbolUsage/imports")
+            public static class Uncategorized extends AbstractQuickFixMultiFileTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
+                }
 
-            @TestMetadata("addImportForCompanionObject.before.Main.kt")
-            public void testAddImportForCompanionObject() throws Exception {
-                runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportForCompanionObject.before.Main.kt");
-            }
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                }
 
-            @TestMetadata("addImportForCompanionObject2.before.Main.kt")
-            public void testAddImportForCompanionObject2() throws Exception {
-                runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportForCompanionObject2.before.Main.kt");
-            }
+                @TestMetadata("addImportForCompanionObject.before.Main.kt")
+                public void testAddImportForCompanionObject() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportForCompanionObject.before.Main.kt");
+                }
 
-            @TestMetadata("addImportForOperator.before.Main.kt")
-            public void testAddImportForOperator() throws Exception {
-                runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportForOperator.before.Main.kt");
-            }
+                @TestMetadata("addImportForCompanionObject2.before.Main.kt")
+                public void testAddImportForCompanionObject2() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportForCompanionObject2.before.Main.kt");
+                }
 
-            @TestMetadata("addImportFromSamePackage.before.Main.kt")
-            public void testAddImportFromSamePackage() throws Exception {
-                runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportFromSamePackage.before.Main.kt");
-            }
+                @TestMetadata("addImportForOperator.before.Main.kt")
+                public void testAddImportForOperator() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportForOperator.before.Main.kt");
+                }
 
-            @TestMetadata("addImportFromSamePackage2.before.Main.kt")
-            public void testAddImportFromSamePackage2() throws Exception {
-                runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportFromSamePackage2.before.Main.kt");
-            }
+                @TestMetadata("addImportFromSamePackage.before.Main.kt")
+                public void testAddImportFromSamePackage() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportFromSamePackage.before.Main.kt");
+                }
 
-            @TestMetadata("addImportFromSamePackage3.before.Main.kt")
-            public void testAddImportFromSamePackage3() throws Exception {
-                runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportFromSamePackage3.before.Main.kt");
-            }
+                @TestMetadata("addImportFromSamePackage2.before.Main.kt")
+                public void testAddImportFromSamePackage2() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportFromSamePackage2.before.Main.kt");
+                }
 
-            @TestMetadata("addImports.before.Main.kt")
-            public void testAddImports() throws Exception {
-                runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImports.before.Main.kt");
-            }
+                @TestMetadata("addImportFromSamePackage3.before.Main.kt")
+                public void testAddImportFromSamePackage3() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportFromSamePackage3.before.Main.kt");
+                }
 
-            @TestMetadata("addImportsSimple.before.Main.kt")
-            public void testAddImportsSimple() throws Exception {
-                runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportsSimple.before.Main.kt");
-            }
+                @TestMetadata("addImports.before.Main.kt")
+                public void testAddImports() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImports.before.Main.kt");
+                }
 
-            @TestMetadata("addImportsWithSameName.before.Main.kt")
-            public void testAddImportsWithSameName() throws Exception {
-                runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportsWithSameName.before.Main.kt");
-            }
+                @TestMetadata("addImportsSimple.before.Main.kt")
+                public void testAddImportsSimple() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportsSimple.before.Main.kt");
+                }
 
-            @TestMetadata("rootPackage.before.Main.kt")
-            public void testRootPackage() throws Exception {
-                runTest("testData/quickfix/deprecatedSymbolUsage/imports/rootPackage.before.Main.kt");
+                @TestMetadata("addImportsWithSameName.before.Main.kt")
+                public void testAddImportsWithSameName() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportsWithSameName.before.Main.kt");
+                }
+
+                @TestMetadata("rootPackage.before.Main.kt")
+                public void testRootPackage() throws Exception {
+                    runTest("testData/quickfix/deprecatedSymbolUsage/imports/rootPackage.before.Main.kt");
+                }
             }
         }
 

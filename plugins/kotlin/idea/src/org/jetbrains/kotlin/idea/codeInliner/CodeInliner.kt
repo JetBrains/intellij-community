@@ -137,7 +137,7 @@ class CodeInliner (
 
         val lexicalScope = lexicalScopeElement.getResolutionScope(lexicalScopeElement.analyze(BodyResolveMode.PARTIAL_FOR_COMPLETION))
 
-        val importDescriptors = codeToInline.fqNamesToImport.mapNotNull { importPath ->
+        val importDescriptors = codeToInline.fqNamesToImport.distinct().mapNotNull { importPath ->
             val importDescriptor = file.resolveImportReference(importPath.fqName).firstOrNull() ?: return@mapNotNull null
             importPath to importDescriptor
         }
@@ -152,8 +152,11 @@ class CodeInliner (
 
         introduceVariablesForParameters(elementToBeReplaced, receiver, receiverType, introduceValuesForParameters)
 
+        val importedNames = file.importDirectives.mapNotNull { it.importPath?.importedName }
         for ((importPath, importDescriptor) in importDescriptors) {
-            ImportInsertHelper.getInstance(project).importDescriptor(file, importDescriptor, aliasName = importPath.alias)
+            if (importPath.importedName !in importedNames) {
+                ImportInsertHelper.getInstance(project).importDescriptor(file, importDescriptor, aliasName = importPath.alias)
+            }
         }
 
         codeToInline.extraComments?.restoreComments(elementToBeReplaced)
