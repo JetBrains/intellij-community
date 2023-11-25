@@ -947,7 +947,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       upgradeTo.setBackground(panelBackground);
       upgradeTo.setForeground(groupFg);
       upgradeTo.setIconOnTheRight(true);
-      upgradeTo.append(FeaturePromoBundle.message("get.prefix"));
+      upgradeTo.append(FeaturePromoBundle.message("get.prefix") + " ");
       upgradeTo.setTransparentIconBackground(true);
 
       BorderLayoutPanel compositeUpgradeHint = JBUI.Panels.simplePanel(promo)

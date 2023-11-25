@@ -69,7 +69,7 @@ object PromoPages {
       row {
         cell()
 
-        (button(FeaturePromoBundle.message("get.prefix", page.suggestedIde.name)) {
+        (button(FeaturePromoBundle.message("get.prefix.with.placeholder", page.suggestedIde.name)) {
           source.openDownloadPageAndLog(null, page.suggestedIde.downloadUrl, page.pluginId?.let(PluginId::getId))
         }).applyToComponent {
           this.icon = AllIcons.Ide.External_link_arrow
