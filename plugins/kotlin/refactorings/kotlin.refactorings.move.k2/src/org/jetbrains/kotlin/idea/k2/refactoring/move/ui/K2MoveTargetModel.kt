@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo
+import com.intellij.refactoring.util.RefactoringMessageUtil
 import com.intellij.ui.RecentsManager
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Paths
 import javax.swing.JComponent
+import kotlin.io.path.isRegularFile
 
 sealed interface K2MoveTargetModel {
     val directory: PsiDirectory
@@ -44,9 +46,9 @@ sealed interface K2MoveTargetModel {
     ) : K2MoveTargetModel {
         override fun toDescriptor(): K2MoveTargetDescriptor.SourceDirectory = K2MoveTargetDescriptor.SourceDirectory(pkgName, directory)
 
-        lateinit var pkgChooser: PackageNameReferenceEditorCombo
+        protected lateinit var pkgChooser: PackageNameReferenceEditorCombo
 
-        lateinit var destinationChooser: KotlinDestinationFolderComboBox
+        protected lateinit var destinationChooser: KotlinDestinationFolderComboBox
 
         context(Panel)
         override fun buildPanel(project: Project, onError: (String?, JComponent) -> Unit) {
@@ -91,11 +93,25 @@ sealed interface K2MoveTargetModel {
 
         override fun toDescriptor(): K2MoveTargetDescriptor.File = K2MoveTargetDescriptor.File(file, pkgName, directory)
 
-        lateinit var fileChooser: TextFieldWithBrowseButton
+        private lateinit var fileChooser: TextFieldWithBrowseButton
 
         context(Panel)
         override fun buildPanel(project: Project, onError: (String?, JComponent) -> Unit) {
             super.buildPanel(project, onError)
+            fun updateFileChooser() {
+                (destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper)?.directory?.virtualFile?.path?.let { dirPath ->
+                    val currentFileName = fileChooser.text.substringAfterLast("/")
+                    val fullPath = "$dirPath/$currentFileName"
+                    if (fullPath != fileChooser.text) fileChooser.text = fullPath
+                }
+            }
+            destinationChooser.comboBox.addActionListener {
+                updateFileChooser()
+            }
+            destinationChooser.comboBox.addPropertyChangeListener { // invoked when changing pkg in pkg chooser
+                if (it.propertyName != "model") return@addPropertyChangeListener
+                updateFileChooser()
+            }
             row {
                 label(KotlinBundle.message("label.text.file")).align(AlignX.LEFT)
                 fileChooser = cell(TextFieldWithBrowseButton()).align(AlignX.FILL).component
