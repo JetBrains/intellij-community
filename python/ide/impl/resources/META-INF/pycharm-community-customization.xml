@@ -143,6 +143,24 @@
     <action class="com.jetbrains.python.promotion.PromoJupyterAction"
             id="PromoJupyterAction"
             icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action id="NewJupyterNotebook" class="com.jetbrains.python.promotion.NewJupyterNotebookFile"
+            icon="AllIcons.Ultimate.PycharmLock">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+    <action id="NewJavaScriptFile" class="com.jetbrains.python.promotion.NewJavaScriptFile"
+            icon="AllIcons.Ultimate.PycharmLock">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+    <action id="NewTypeScriptFile" class="com.jetbrains.python.promotion.NewTypeScriptFile"
+            icon="AllIcons.Ultimate.PycharmLock">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+    <action id="NewSqlFile" class="com.jetbrains.python.promotion.NewSqlFile"
+            icon="AllIcons.Ultimate.PycharmLock">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

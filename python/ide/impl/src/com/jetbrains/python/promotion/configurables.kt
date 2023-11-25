@@ -7,6 +7,7 @@ import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.ConfigurableWithId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
 import com.intellij.openapi.util.NlsContexts
+import icons.PythonIcons
 import javax.swing.Icon
 import javax.swing.JComponent
 import kotlin.reflect.KClass
@@ -25,7 +26,7 @@ internal abstract class ProPromoConfigurableProvider(private val clazz: KClass<o
 
 private fun featurePage(@NlsContexts.Label title: String, items: List<PromoFeatureListItem>, pluginId: String): JComponent {
   return PromoPages.build(PromoFeaturePage(
-    AllIcons.Ultimate.PycharmLock,
+    PythonIcons.Python.Pycharm,
     PluginAdvertiserService.pyCharmProfessional,
     title,
     items,
@@ -41,24 +42,28 @@ internal class PromoDjangoConfigurableProvider : ProPromoConfigurableProvider(Pr
 internal class PromoJupyterConfigurableProvider : ProPromoConfigurableProvider(PromoJupyterConfigurable::class)
 internal class PromoRemoteSshConfigurableProvider : ProPromoConfigurableProvider(PromoRemoteSshConfigurable::class)
 
+
+internal fun databaseFeatures(): JComponent = featurePage(
+  FeaturePromoBundle.message("feature.database.description.html", "https://www.jetbrains.com/help/idea/relational-databases.html"),
+  listOf(
+    PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.database.code")),
+    PromoFeatureListItem(AllIcons.Nodes.DataTables, FeaturePromoBundle.message("feature.database.create.and.manage")),
+    PromoFeatureListItem(AllIcons.Actions.Run_anything, FeaturePromoBundle.message("feature.database.run")),
+    PromoFeatureListItem(AllIcons.ToolbarDecorator.Import, FeaturePromoBundle.message("feature.database.export"))
+  ),
+  "com.intellij.database"
+)
+
 internal class PromoDatabaseConfigurable : ProPromoConfigurable() {
   override fun getId(): String = "promo.database"
   override fun getDisplayName(): String = FeaturePromoBundle.message("promo.configurable.database")
 
   override fun createComponent(): JComponent {
-    return featurePage(
-      FeaturePromoBundle.message("feature.database.description.html", "https://www.jetbrains.com/help/idea/relational-databases.html"),
-      listOf(
-        PromoFeatureListItem(AllIcons.Nodes.DataTables, FeaturePromoBundle.message("feature.database.create.and.manage")),
-        PromoFeatureListItem(AllIcons.Actions.Run_anything, FeaturePromoBundle.message("feature.database.run")),
-        PromoFeatureListItem(AllIcons.ToolbarDecorator.Import, FeaturePromoBundle.message("feature.database.export"))
-      ),
-      "com.intellij.database"
-    )
+    return databaseFeatures()
   }
 }
 
-private fun javascriptFeaturePage(): JComponent {
+internal fun javascriptFeatures(): JComponent {
   @Suppress("DialogTitleCapitalization")
   return featurePage(
     FeaturePromoBundle.message("feature.javascript.description.html",
@@ -75,13 +80,13 @@ private fun javascriptFeaturePage(): JComponent {
 internal class PromoJSConfigurable : ProPromoConfigurable() {
   override fun getId(): String = "promo.javascript"
   override fun getDisplayName(): String = FeaturePromoBundle.message("promo.configurable.javascript")
-  override fun createComponent(): JComponent = javascriptFeaturePage()
+  override fun createComponent(): JComponent = javascriptFeatures()
 }
 
 internal class PromoTSConfigurable : ProPromoConfigurable() {
   override fun getId(): String = "promo.typescript"
   override fun getDisplayName(): String = FeaturePromoBundle.message("promo.configurable.typescript")
-  override fun createComponent(): JComponent = javascriptFeaturePage()
+  override fun createComponent(): JComponent = javascriptFeatures()
 }
 
 internal class PromoDjangoConfigurable : ProPromoConfigurable() {
@@ -108,7 +113,7 @@ internal val djangoPromoFeatureList = listOf(
   PromoFeatureListItem(AllIcons.General.Web, FeaturePromoBundle.message("feature.django.endpoints"))
 )
 
-private fun djangoFeatures(): JComponent {
+internal fun djangoFeatures(): JComponent {
   return featurePage(
     FeaturePromoBundle.message("feature.django.description.html",
                                "https://www.jetbrains.com/help/pycharm/django-support.html"),
@@ -117,7 +122,7 @@ private fun djangoFeatures(): JComponent {
   )
 }
 
-private fun jupyterFeatures(): JComponent {
+internal fun jupyterFeatures(): JComponent {
   return featurePage(
     FeaturePromoBundle.message("feature.jupyter.description",
                                "https://www.jetbrains.com/help/pycharm/jupyter-notebook-support.html"),
@@ -133,7 +138,7 @@ private fun jupyterFeatures(): JComponent {
 }
 
 
-private fun sshFeatures(): JComponent {
+internal fun sshFeatures(): JComponent {
   return featurePage(
     FeaturePromoBundle.message("feature.remoteSsh.description.html",
                                "https://www.jetbrains.com/help/pycharm/create-ssh-configurations.html"),
