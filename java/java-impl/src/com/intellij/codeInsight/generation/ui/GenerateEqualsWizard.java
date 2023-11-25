@@ -286,9 +286,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
     @Override
     public boolean isMemberEnabled(MemberInfo member) {
-      if (!(member.getMember() instanceof PsiField field)) return false;
-      final PsiType type = field.getType();
-      return JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5) || !PsiAdapter.isNestedArray(type);
+      return member.getMember() instanceof PsiField;
     }
 
     @Override
