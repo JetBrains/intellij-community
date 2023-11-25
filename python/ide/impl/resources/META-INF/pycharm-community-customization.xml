@@ -101,6 +101,8 @@
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>
   </actions>
+
+  <!-- Promotions -->
   <actions resource-bundle="messages.PyCharmCommunityCustomizationBundle">
     <action class="com.jetbrains.python.promotion.PromoAiCodeCompletion"
             id="PromoAiCodeCompletion"
@@ -142,4 +144,39 @@
             id="PromoJupyterAction"
             icon="AllIcons.Ultimate.PycharmLock" />
   </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationConfigurable id="promo.database"
+                             groupId="tools"
+                             provider="com.jetbrains.python.promotion.PromoDatabaseConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.database"/>
+    <applicationConfigurable id="promo.javascript"
+                             groupId="language"
+                             provider="com.jetbrains.python.promotion.PromoJSConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.javascript"/>
+    <applicationConfigurable id="promo.typescript"
+                             groupId="language"
+                             provider="com.jetbrains.python.promotion.PromoTSConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.typescript"/>
+
+    <applicationConfigurable id="promo.django"
+                             groupId="language"
+                             provider="com.jetbrains.python.promotion.PromoDjangoConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.django"/>
+    <applicationConfigurable id="promo.remoteSsh"
+                             groupId="tools"
+                             provider="com.jetbrains.python.promotion.PromoRemoteSshConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.remoteSsh"/>
+    <applicationConfigurable id="promo.jupyter"
+                             groupId="language"
+                             provider="com.jetbrains.python.promotion.PromoJupyterConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.jupyter"/>
+  </extensions>
+
 </idea-plugin>
