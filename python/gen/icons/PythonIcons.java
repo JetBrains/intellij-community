@@ -15,8 +15,34 @@ public final class PythonIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, PythonIcons.class.getClassLoader(), cacheKey, flags);
   }
 
+  public static final class Appengine {
+    /** 16x16 */ public static final @NotNull Icon AppEngine = load("icons/com/jetbrains/appengine/appEngine.svg", -1437181157, 0);
+    /** 13x13 */ public static final @NotNull Icon AppEngineToolWindow = load("icons/com/jetbrains/appengine/appEngineToolWindow.svg", -541355102, 2);
+    /** 16x16 */ public static final @NotNull Icon Required = load("icons/com/jetbrains/appengine/required.svg", 523530909, 0);
+  }
+
+  public static final class Chameleon {
+    /** 16x16 */ public static final @NotNull Icon Chameleon = load("icons/com/jetbrains/chameleon/chameleon.svg", 2142509670, 0);
+  }
+
   public static final class Cython {
     /** 16x16 */ public static final @NotNull Icon CythonFile = load("icons/com/jetbrains/cython/cythonFile.svg", 1578851495, 0);
+  }
+
+  public static final class Django {
+    /** 13x13 */ public static final @NotNull Icon DjangoLogo = load("icons/com/jetbrains/django/django-logo.svg", -752028990, 2);
+  }
+
+  public static final class Fastapi {
+    /** 16x16 */ public static final @NotNull Icon FastapiLogo = load("icons/com/jetbrains/fastapi/fastapi-logo.svg", -878949971, 0);
+  }
+
+  public static final class Flask {
+    /** 16x16 */ public static final @NotNull Icon FlaskLogo = load("icons/com/jetbrains/flask/flask-logo.svg", 522485296, 2);
+  }
+
+  public static final class Pyramid {
+    /** 16x16 */ public static final @NotNull Icon PyramidLogo = load("icons/com/jetbrains/pyramid/pyramid-logo.svg", 1268295525, 0);
   }
 
   public static final class Python {
