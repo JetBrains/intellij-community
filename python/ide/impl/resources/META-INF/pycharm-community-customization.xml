@@ -146,6 +146,8 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <directoryProjectGenerator implementation="com.jetbrains.python.promotion.DjangoPromoProjectGenerator"/>
+
     <applicationConfigurable id="promo.database"
                              groupId="tools"
                              provider="com.jetbrains.python.promotion.PromoDatabaseConfigurableProvider"

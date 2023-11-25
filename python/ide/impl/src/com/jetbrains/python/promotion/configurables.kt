@@ -102,16 +102,18 @@ internal class PromoRemoteSshConfigurable : ProPromoConfigurable() {
   override fun createComponent(): JComponent = sshFeatures()
 }
 
+internal val djangoPromoFeatureList = listOf(
+  PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.django.code")),
+  PromoFeatureListItem(AllIcons.FileTypes.Html, FeaturePromoBundle.message("feature.django.djangoTemplates")),
+  PromoFeatureListItem(AllIcons.General.Web, FeaturePromoBundle.message("feature.django.endpoints"))
+)
+
 private fun djangoFeatures(): JComponent {
   return featurePage(
     FeaturePromoBundle.message("feature.django.description.html",
                                "https://www.jetbrains.com/help/pycharm/django-support.html"),
-    listOf(
-      PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.django.code")),
-      PromoFeatureListItem(AllIcons.FileTypes.Html, FeaturePromoBundle.message("feature.django.djangoTemplates")),
-      PromoFeatureListItem(AllIcons.General.Web, FeaturePromoBundle.message("feature.django.endpoints"))
-    ),
-    "JavaScript"
+    djangoPromoFeatureList,
+    "Django"
   )
 }
 
