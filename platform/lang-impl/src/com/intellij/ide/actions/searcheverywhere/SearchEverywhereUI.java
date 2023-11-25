@@ -1164,7 +1164,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private void onMouseClicked(@NotNull MouseEvent e) {
     boolean multiSelectMode = e.isShiftDown() || UIUtil.isControlKeyDown(e);
     boolean previewMode = isPreviewActive();
-    if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode && !previewMode) {
+    if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode && (!previewMode || e.getClickCount() == 2)) {
       e.consume();
       final int i = myResultsList.locationToIndex(e.getPoint());
       if (i > -1) {
