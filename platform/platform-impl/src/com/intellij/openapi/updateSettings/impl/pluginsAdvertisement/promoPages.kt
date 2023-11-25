@@ -10,7 +10,6 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBFont
 import javax.swing.Icon
-import javax.swing.JComponent
 import javax.swing.SwingConstants
 
 class PromoFeaturePage(
@@ -57,8 +56,8 @@ object PromoPages {
         panel {
           for (feature in page.features) {
             row {
-              icon(feature.icon).gap(RightGap.SMALL)
-              label(feature.title)
+              icon(feature.icon).gap(RightGap.SMALL).align(AlignY.TOP)
+              text(feature.title)
             }
           }
         }
