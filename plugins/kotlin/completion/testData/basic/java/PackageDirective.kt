@@ -1,4 +1,4 @@
-// FIR_COMPARISON
+// IGNORE_K2
 package java.lang.<caret>
 
 // EXIST: annotation

@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.psi.KtFile
 internal class Fe10ShortenReferencesFacility : ShortenReferencesFacility {
     private fun createFe10Shortener(commonShortenOptions: ShortenOptions): ShortenReferences {
         val matchingFe10Options = ShortenReferences.Options.DEFAULT.copy(
-            removeThis = commonShortenOptions.removeThis
+            removeThis = commonShortenOptions.removeThis,
+            removeThisLabels = commonShortenOptions.removeThisLabels,
         )
 
         // do not create a new instance of reference shortener if the options are default ones

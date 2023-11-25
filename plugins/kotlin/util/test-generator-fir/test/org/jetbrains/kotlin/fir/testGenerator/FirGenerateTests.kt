@@ -366,6 +366,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirShortenRefsTest> {
             model("shortenRefsFir", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
+            model("shortenRefs/this", pattern = KT_WITHOUT_DOTS, testMethodName = "doTestWithMuting")
         }
 
         testClass<AbstractFirParameterInfoTest> {

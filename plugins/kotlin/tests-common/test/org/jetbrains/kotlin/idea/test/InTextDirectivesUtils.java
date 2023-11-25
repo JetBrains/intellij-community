@@ -112,6 +112,15 @@ public final class InTextDirectivesUtils {
         return strings.get(0);
     }
 
+    @Nullable
+    public static String findLineWithPrefixRemoved(String fileText, String prefix) {
+        var lines = findLinesWithPrefixesRemoved(fileText, prefix);
+        if (lines.size() > 1) {
+            throw new IllegalArgumentException("The test data should only contain at most one line with prefix `" + prefix + "`.");
+        }
+        return !lines.isEmpty() ? lines.get(0) : null;
+    }
+
     @NotNull
     public static List<String> findLinesWithPrefixesRemoved(String fileText, String... prefixes) {
         return findLinesWithPrefixesRemoved(fileText, true, true, prefixes);

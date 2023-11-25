@@ -28,6 +28,26 @@ public class ProjectWideOutOfBlockKotlinModificationTrackerTestGenerated extends
         runTest("testData/outOfBlockProjectWide/contract.kt");
     }
 
+    @TestMetadata("contractAddition.kt")
+    public void testContractAddition() throws Exception {
+        runTest("testData/outOfBlockProjectWide/contractAddition.kt");
+    }
+
+    @TestMetadata("contractRemoval.kt")
+    public void testContractRemoval() throws Exception {
+        runTest("testData/outOfBlockProjectWide/contractRemoval.kt");
+    }
+
+    @TestMetadata("contractUnwrapping.kt")
+    public void testContractUnwrapping() throws Exception {
+        runTest("testData/outOfBlockProjectWide/contractUnwrapping.kt");
+    }
+
+    @TestMetadata("contractWrapping.kt")
+    public void testContractWrapping() throws Exception {
+        runTest("testData/outOfBlockProjectWide/contractWrapping.kt");
+    }
+
     @TestMetadata("funInCompanionObject.kt")
     public void testFunInCompanionObject() throws Exception {
         runTest("testData/outOfBlockProjectWide/funInCompanionObject.kt");

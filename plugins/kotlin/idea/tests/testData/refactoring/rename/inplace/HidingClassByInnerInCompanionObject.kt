@@ -9,6 +9,4 @@ open class A {
         val c : C = C()
     }
 }
-// https://youtrack.jetbrains.com/issue/KT-63627
 // IGNORE_K1
-// IGNORE_K2

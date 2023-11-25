@@ -36,8 +36,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerA.assertModifiedOnce("module A with added module dependency")
         trackerB.assertNotModified("unchanged module B")
         trackerC.assertNotModified("unchanged module C")
-
-        disposeTrackers(trackerA, trackerB, trackerC)
     }
 
     fun `test source module state modification after adding module dependency with existing dependent`() {
@@ -56,8 +54,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerA.assertModifiedOnce("module A with added module dependency")
         trackerB.assertNotModified("unchanged module B")
         trackerC.assertNotModified("unchanged module C with a dependency on module A")
-
-        disposeTrackers(trackerA, trackerB, trackerC)
     }
 
     fun `test source module state modification after removing module dependency`() {
@@ -76,8 +72,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerA.assertModifiedOnce("module A with removed module dependency")
         trackerB.assertNotModified("unchanged module B")
         trackerC.assertNotModified("unchanged module C")
-
-        disposeTrackers(trackerA, trackerB, trackerC)
     }
 
     fun `test source module state modification after adding module roots`() {
@@ -94,8 +88,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerA.assertModifiedOnce("module A with added module roots")
         trackerB.assertNotModified("unchanged module B")
         trackerC.assertNotModified("unchanged module C")
-
-        disposeTrackers(trackerA, trackerB, trackerC)
     }
 
     fun `test source module state modification after removing module roots`() {
@@ -114,8 +106,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerA.assertModifiedOnce("module A with removed module roots")
         trackerB.assertNotModified("unchanged module B")
         trackerC.assertNotModified("unchanged module C")
-
-        disposeTrackers(trackerA, trackerB, trackerC)
     }
 
     fun `test source module state modification after adding library dependency`() {
@@ -132,8 +122,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerA.assertModifiedOnce("module A with added library dependency")
         trackerB.assertNotModified("unchanged module B")
         trackerC.assertNotModified("unchanged module C")
-
-        disposeTrackers(trackerA, trackerB, trackerC)
     }
 
     fun `test source module state modification after removing library dependency`() {
@@ -152,8 +140,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerA.assertModifiedOnce("module A with removed module dependency")
         trackerB.assertNotModified("unchanged module B")
         trackerC.assertNotModified("unchanged module C")
-
-        disposeTrackers(trackerA, trackerB, trackerC)
     }
 
     fun `test source module state modification after removal`() {
@@ -170,8 +156,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerA.assertModifiedOnce("disposed module A", shouldBeRemoval = true)
         trackerB.assertNotModified("unchanged module B")
         trackerC.assertNotModified("unchanged module C")
-
-        disposeTrackers(trackerA, trackerB, trackerC)
     }
 
     fun `test library module state modification after root replacement`() {
@@ -194,8 +178,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerB.assertNotModified("unchanged library B")
         trackerC.assertNotModified("unchanged module C")
         trackerD.assertNotModified("unchanged module D")
-
-        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
     }
 
     private fun Library.swapRoot() = runWriteAction {
@@ -227,8 +209,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerB.assertNotModified("unchanged library B")
         trackerC.assertNotModified("unchanged module C")
         trackerD.assertNotModified("unchanged module D")
-
-        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
     }
 
     fun `test script module state modification after moving the script file to another module`() {
@@ -258,8 +238,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         // state of the destination module E is not affected by a file move, so the tracker should not register any module state
         // modification events.
         trackerE.assertNotModified("unchanged destination module E")
-
-        disposeTrackers(trackerA, trackerB, trackerC, trackerD, trackerE)
     }
 
     fun `test script module state modification after moving the script file outside the content root`() {
@@ -281,8 +259,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerB.assertNotModified("unchanged script B")
         trackerC.assertNotModified("unchanged library C")
         trackerD.assertNotModified("unchanged module D")
-
-        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
     }
 
     fun `test script module state modification after deleting the script file`() {
@@ -302,8 +278,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerB.assertNotModified("unchanged script B")
         trackerC.assertNotModified("unchanged library C")
         trackerD.assertNotModified("unchanged module D")
-
-        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
     }
 
     fun `test not-under-content-root module state modification after moving the file to another module`() {
@@ -333,8 +307,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         // state of the destination module E is not affected by a file move, so the tracker should not register any module state
         // modification events.
         trackerE.assertNotModified("unchanged destination module E")
-
-        disposeTrackers(trackerA, trackerB, trackerC, trackerD, trackerE)
     }
 
     fun `test not-under-content-root module state modification after moving the file outside the content root`() {
@@ -356,8 +328,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerB.assertNotModified("unchanged not-under-content-root file B")
         trackerC.assertNotModified("unchanged library C")
         trackerD.assertNotModified("unchanged module D")
-
-        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
     }
 
     fun `test not-under-content-root module state modification after deleting the file`() {
@@ -377,8 +347,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerB.assertNotModified("unchanged not-under-content-root file B")
         trackerC.assertNotModified("unchanged library C")
         trackerD.assertNotModified("unchanged module D")
-
-        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
     }
 
     fun `test module facet`() {
@@ -394,8 +362,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
 
         trackerA.assertModifiedOnce("module A with added facet")
         trackerB.assertNotModified("unchanged module B")
-
-        disposeTrackers(trackerA, trackerB)
     }
 
     fun `test module jvm settings`() {
@@ -409,8 +375,6 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
 
         trackerA.assertModifiedOnce("module A language level is changed")
         trackerB.assertNotModified("unchanged module B")
-
-        disposeTrackers(trackerA, trackerB)
     }
 
 }

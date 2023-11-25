@@ -1,5 +1,4 @@
-// FIR_COMPARISON
-// FIR_IDENTICAL
+// IGNORE_K2
 
 import java.util.TimeZone<caret>
 

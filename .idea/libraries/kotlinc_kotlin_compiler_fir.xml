@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-fir" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:2.0.0-dev-7829">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:2.0.0-dev-8665">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.0.0-dev-7829/kotlin-compiler-fir-for-ide-2.0.0-dev-7829.jar">
-          <sha256sum>968ae65a2c4293c847face45a3efb5f0429a0aca94f75fefd941793afea54a8e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.0.0-dev-8665/kotlin-compiler-fir-for-ide-2.0.0-dev-8665.jar">
+          <sha256sum>eaa8ee1d479929651edb50bd715b2bc605a1568d59bd216c3a62be5045712d37</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.0.0-dev-7829/kotlin-compiler-fir-for-ide-2.0.0-dev-7829.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.0.0-dev-8665/kotlin-compiler-fir-for-ide-2.0.0-dev-8665.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.0.0-dev-7829/kotlin-compiler-fir-for-ide-2.0.0-dev-7829-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.0.0-dev-8665/kotlin-compiler-fir-for-ide-2.0.0-dev-8665-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

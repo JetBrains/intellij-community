@@ -1,5 +1,4 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
+// IGNORE_K2
 package b
 
 import b.Bar.A.<caret>
