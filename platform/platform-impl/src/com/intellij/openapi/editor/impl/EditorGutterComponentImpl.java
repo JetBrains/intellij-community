@@ -708,17 +708,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public Color getBackground() {
-    if (myEditor.isInDistractionFreeMode() || !myPaintBackground) {
-      return myEditor.getBackgroundColor();
-    }
-
-    if (ExperimentalUI.isNewUI()) {
-      Color bg = myEditor.getColorsScheme().getColor(EditorColors.EDITOR_GUTTER_BACKGROUND);
-      return bg == null ? myEditor.getBackgroundColor() : bg;
-    }
-
-    Color color = myEditor.getColorsScheme().getColor(EditorColors.GUTTER_BACKGROUND);
-    return color != null ? color : EditorColors.GUTTER_BACKGROUND.getDefaultColor();
+    return EditorGutterColor.getEditorGutterBackgroundColor(myEditor, myPaintBackground);
   }
 
   private Font getFontForLineNumbers() {
