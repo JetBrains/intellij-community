@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-jps-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-common-for-ide:2.0.0-dev-8665">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-jps-common-for-ide:2.0.0-dev-8733">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.0.0-dev-8665/kotlin-jps-common-for-ide-2.0.0-dev-8665.jar">
-          <sha256sum>f3f43489ef817e4b5945c7d8d187f4021881b1f7225181a2afcc28f8348c10e5</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.0.0-dev-8733/kotlin-jps-common-for-ide-2.0.0-dev-8733.jar">
+          <sha256sum>579bc5958c5c4db3ff35ddb77de8fe2c9dc0cc152c42408c4f6e6d54ddc67375</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.0.0-dev-8665/kotlin-jps-common-for-ide-2.0.0-dev-8665.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.0.0-dev-8733/kotlin-jps-common-for-ide-2.0.0-dev-8733.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.0.0-dev-8665/kotlin-jps-common-for-ide-2.0.0-dev-8665-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.0.0-dev-8733/kotlin-jps-common-for-ide-2.0.0-dev-8733-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-compiler-impl" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.0.0-dev-8665">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.0.0-dev-8733">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.0.0-dev-8665/kotlin-scripting-compiler-impl-2.0.0-dev-8665.jar">
-          <sha256sum>6ed661e6c07aa3c72b9b7167a1ba20600218c5f34b5c56619f76a8b1ffb6a56f</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.0.0-dev-8733/kotlin-scripting-compiler-impl-2.0.0-dev-8733.jar">
+          <sha256sum>5c4d7c35c3719fe649bc89cb74544998167810507b619530795f32faa6bec3b1</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.0.0-dev-8665/kotlin-scripting-compiler-impl-2.0.0-dev-8665.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.0.0-dev-8733/kotlin-scripting-compiler-impl-2.0.0-dev-8733.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.0.0-dev-8665/kotlin-scripting-compiler-impl-2.0.0-dev-8665-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.0.0-dev-8733/kotlin-scripting-compiler-impl-2.0.0-dev-8733-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
