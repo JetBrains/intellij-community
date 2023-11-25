@@ -794,9 +794,9 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     fun testParameterToReceiverImplicitReceivers() = doTest { receiverParameterInfo = newParameters[0] }
 
-    fun testConvertLambdaParameterToReceiver() = doTest { receiverParameterInfo = newParameters[2] } //this@label not collapsed
+    fun testConvertLambdaParameterToReceiver() = doTest { receiverParameterInfo = newParameters[2] }
 
-    fun testConvertReceiverToParameterForMember2() = doTest {//this@label not collapsed
+    fun testConvertReceiverToParameterForMember2() = doTest {//unrelated "this@label" is not collapsed
         receiverParameterInfo = null
 
         val newParameters = newParameters
@@ -804,7 +804,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         setNewParameter(1, newParameters[0])
     }
 
-    fun testConvertReceiverToParameterForMember3() = doTest {//this@label not collapsed
+    fun testConvertReceiverToParameterForMember3() = doTest {//unrelated "this@label" is not collapsed
         receiverParameterInfo = null
     }
 
@@ -815,19 +815,19 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         newParameters[0].name = "abc"
     }
 
-    fun testChangeReceiver() = doTest { receiverParameterInfo = newParameters[1] } //this@label not collapsed
+    fun testChangeReceiver() = doTest { receiverParameterInfo = newParameters[1] }
 
-    fun testChangeReceiverForMember() = doTest { receiverParameterInfo = newParameters[1] } //this@label not collapsed
+    fun testChangeReceiverForMember() = doTest { receiverParameterInfo = newParameters[1] }
 
-    fun testConvertParameterToReceiverForMember1() = doTest { receiverParameterInfo = newParameters[0] } //this@label not collapsed
+    fun testConvertParameterToReceiverForMember1() = doTest { receiverParameterInfo = newParameters[0] }
 
-    fun testConvertParameterToReceiverForMemberUltraLight() = doTest { receiverParameterInfo = newParameters[0] }//this@label not collapsed
+    fun testConvertParameterToReceiverForMemberUltraLight() = doTest { receiverParameterInfo = newParameters[0] }
 
-    fun testConvertParameterToReceiverForMember2() = doTest { receiverParameterInfo = newParameters[1] }//this@label not collapsed
+    fun testConvertParameterToReceiverForMember2() = doTest { receiverParameterInfo = newParameters[1] }
 
     fun testConvertParameterToReceiverForMemberConflict() = doTestConflict { receiverParameterInfo = newParameters[0] }
 
-    fun testConvertReceiverToParameterForMember1() = doTest { receiverParameterInfo = null }//this@label not collapsed
+    fun testConvertReceiverToParameterForMember1() = doTest { receiverParameterInfo = null }
 
     fun testAddNewReceiver() = doTestAndIgnoreConflicts {
         val defaultValueForCall = KtPsiFactory(project).createExpression("X(0)")
@@ -854,9 +854,9 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         receiverParameterInfo = createKotlinParameter("_", "Any", defaultValueForCall, currentType = "X")
     }
 
-    fun testConvertParameterToReceiver1() = doTest { receiverParameterInfo = newParameters[0] } //this@label not collapsed
+    fun testConvertParameterToReceiver1() = doTest { receiverParameterInfo = newParameters[0] }
 
-    fun testConvertParameterToReceiver2() = doTest { receiverParameterInfo = newParameters[1] }//this@label not collapsed
+    fun testConvertParameterToReceiver2() = doTest { receiverParameterInfo = newParameters[1] }
 
     fun testConvertReceiverToParameter1() = doTest { receiverParameterInfo = null }
 
@@ -876,7 +876,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
     fun testReceiverInSafeCall() = doTestConflict { receiverParameterInfo = null }
 
 
-    fun testConvertToExtensionAndRename() = doTest {//this@label not collapsed
+    fun testConvertToExtensionAndRename() = doTest {
         receiverParameterInfo = newParameters[0]
         newName = "foo1"
     }

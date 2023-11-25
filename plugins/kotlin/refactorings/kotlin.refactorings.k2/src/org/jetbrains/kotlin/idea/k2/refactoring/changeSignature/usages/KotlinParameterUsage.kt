@@ -22,7 +22,7 @@ internal class KotlinParameterUsage(
     ): KtElement {
         val newElement = KtPsiFactory(element.project).createExpression(getReplacementText(changeInfo))
         val elementToReplace = (element.parent as? KtThisExpression) ?: element
-        return elementToReplace.replace(newElement) as KtElement
+        return elementToReplace.replace(newElement).parent as KtElement
     }
 
     private fun getReplacementText(changeInfo: KotlinChangeInfoBase): String {
@@ -46,7 +46,7 @@ internal class KotlinNonQualifiedOuterThisUsage(
     ): KtElement {
         val newElement = KtPsiFactory(element.project).createExpression(getReplacementText())
         val elementToReplace = (element.parent as? KtThisExpression) ?: element
-        return elementToReplace.replace(newElement) as KtElement
+        return elementToReplace.replace(newElement).parent as KtElement
     }
 
     private fun getReplacementText(): String = "this@${targetDescriptor.asString()}"
@@ -83,6 +83,6 @@ internal class KotlinImplicitThisUsage(
     ): KtElement {
         val newQualifiedCall = KtPsiFactory(element.project).createExpression("${getNewReceiverText()}.${element.text}"
         ) as KtQualifiedExpression
-        return element.replace(newQualifiedCall) as KtElement
+        return element.replace(newQualifiedCall).parent as KtElement
     }
 }
