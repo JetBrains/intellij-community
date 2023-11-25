@@ -6,6 +6,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPropertyFindUsagesTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   override fun setUp() = runBlocking {
     super.setUp()
 

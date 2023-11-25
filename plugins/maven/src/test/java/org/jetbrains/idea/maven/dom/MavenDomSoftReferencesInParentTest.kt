@@ -25,6 +25,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
 class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
   override fun setUp() {
     super.setUp()
     VirtualFileManager.getInstance().syncRefresh()

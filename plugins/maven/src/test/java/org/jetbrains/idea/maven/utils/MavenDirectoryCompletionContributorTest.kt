@@ -16,6 +16,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.junit.Test
 
 class MavenDirectoryCompletionContributorTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = true
 
   @Test
   fun testVariants() = runBlocking {

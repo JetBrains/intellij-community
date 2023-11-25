@@ -9,6 +9,11 @@ import org.junit.Test;
 
 public class MavenRedundantGroupIdTest extends MavenDomTestCase {
   @Override
+  public boolean runInDispatchThread() {
+    return true;
+  }
+
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
 

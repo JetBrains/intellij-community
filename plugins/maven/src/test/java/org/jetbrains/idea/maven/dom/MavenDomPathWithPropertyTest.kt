@@ -6,6 +6,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDomPathWithPropertyTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   @Test
   fun testRename() = runBlocking {
     importProjectAsync(

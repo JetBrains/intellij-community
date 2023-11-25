@@ -5,6 +5,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPropertyInActivationSectionTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   @Test
   fun testResolvePropertyFromActivationSection() = runBlocking {
     importProjectAsync(

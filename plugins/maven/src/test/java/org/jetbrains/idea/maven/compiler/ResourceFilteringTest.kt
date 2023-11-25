@@ -31,6 +31,8 @@ import org.junit.Test
 import java.io.IOException
 
 class ResourceFilteringTest : MavenCompilingTestCase() {
+  override fun runInDispatchThread() = true
+
   @Test
   fun testBasic() = runBlocking {
     createProjectSubFile("resources/file.properties", """

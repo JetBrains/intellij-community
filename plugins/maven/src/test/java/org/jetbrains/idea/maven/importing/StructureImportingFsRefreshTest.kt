@@ -15,6 +15,7 @@ import org.junit.Test
 import java.io.File
 
 class StructureImportingFsRefreshTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = true
 
   @Test
   fun testRefreshFSAfterImport() = runBlocking {

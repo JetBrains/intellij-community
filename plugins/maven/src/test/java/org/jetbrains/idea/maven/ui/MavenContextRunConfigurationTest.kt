@@ -16,6 +16,8 @@ import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.junit.Test
 
 class MavenContextRunConfigurationTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   private lateinit var myNavigator: MavenProjectsNavigator
 
   @Throws(Exception::class)

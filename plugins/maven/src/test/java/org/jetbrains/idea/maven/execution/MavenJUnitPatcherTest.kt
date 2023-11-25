@@ -27,6 +27,7 @@ import org.junit.Test
 import java.io.File
 
 class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = true
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()

@@ -6,6 +6,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenSuperNavigationTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   @Test
   fun testNavigationToManagingDependencyWithoutModules() = runBlocking {
     configureProjectPom(

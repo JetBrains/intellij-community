@@ -13,6 +13,8 @@ import org.junit.Test
 import javax.swing.JTree
 
 class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = true
+
   private lateinit var myStructure: TestProjectTreeStructure
 
   @Throws(Exception::class)

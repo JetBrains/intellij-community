@@ -25,6 +25,11 @@ import java.util.stream.Stream;
 
 
 public class MavenSearcherTest extends MavenIndicesTestCase {
+  @Override
+  public boolean runInDispatchThread() {
+    return true;
+  }
+
   private static final String[] JUNIT_VERSIONS = {"junit:junit:4.0", "junit:junit:3.8.2", "junit:junit:3.8.1"};
   private static final String[] JMOCK_VERSIONS = {"jmock:jmock:1.2.0", "jmock:jmock:1.1.0", "jmock:jmock:1.0.0"};
   private static final String[] COMMONS_IO_VERSIONS = {"commons-io:commons-io:2.4"};

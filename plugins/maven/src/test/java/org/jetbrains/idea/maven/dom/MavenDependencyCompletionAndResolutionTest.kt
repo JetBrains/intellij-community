@@ -19,6 +19,7 @@ import java.io.File
 import java.io.IOException
 
 class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
+  override fun runInDispatchThread() = true
   override fun importProjectOnSetup(): Boolean {
     return true
   }

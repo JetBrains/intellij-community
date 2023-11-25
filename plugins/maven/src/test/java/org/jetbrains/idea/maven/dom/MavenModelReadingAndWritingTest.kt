@@ -15,6 +15,8 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.junit.Test
 
 class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = true
+
   override fun setUp() = runBlocking {
     super.setUp()
 
