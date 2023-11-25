@@ -227,6 +227,34 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
       context.affectUsage(new ClassUsage(changedClass.getReferenceID()), n -> n instanceof JVMClassNode<?, ?> && ((JVMClassNode<?, ?>)n).isSynthetic());
     }
 
+    boolean wasLambdaTarget = present.isLambdaTarget(change.getPast());
+    boolean isLambdaTarget = future.isLambdaTarget(change.getNow());
+    if (wasLambdaTarget && !isLambdaTarget) {
+      // affectLambdaInstantiations
+      for (ReferenceID id : present.withAllSubclasses(changedClass.getReferenceID())) {
+        if (id.equals(changedClass.getReferenceID()) || present.isLambdaTarget(id)) {
+          String clsName = present.getNodeName(id);
+          if (clsName != null) {
+            debug("The interface could be not a SAM interface anymore => affecting lambda instantiations for ", clsName);
+            context.affectUsage(new ClassNewUsage(clsName));
+          }
+        }
+      }
+    }
+    else if (!wasLambdaTarget && isLambdaTarget) {
+      // should affect lambda instantiations on overloads, because some calls may have become ambiguous
+      TypeRepr.ClassType samType = new TypeRepr.ClassType(changedClass.getName());
+      for (JvmClass depClass : flat(map(context.getGraph().getDependingNodes(changedClass.getReferenceID()), dep -> present.getNodes(dep, JvmClass.class)))) {
+        JvmMethod methodWithSAMType = find(depClass.getMethods(), m -> contains(m.getArgTypes(), samType));
+        if (methodWithSAMType == null) {
+          continue;
+        }
+        if (!processMethodArgumentBecameLambdaTarget(context, depClass, methodWithSAMType, samType, future, present)) {
+          return false;
+        }
+      }
+    }
+
     Difference.Specifier<TypeRepr.ClassType, ?> annotationsDiff = classDiff.annotations();
     if (!annotationsDiff.unchanged()) {
       EnumSet<AnnotationChangesTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationChangesTracker.Recompile.class);
@@ -255,17 +283,48 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
     return true;
   }
 
+  protected boolean processMethodArgumentBecameLambdaTarget(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, TypeRepr.ClassType argSAMType, Utils future, Utils present) {
+    Iterable<OverloadDescriptor> overloaded = findAllOverloads(future, cls, m -> {
+      if (!Objects.equals(clsMethod.getName(), m.getName()) || m.isSame(clsMethod)) {
+        return null;
+      }
+      // find methods with the same name and arg count as a pattern method, but different signature.
+      // calls to found method should look like a call to a pattern method
+      Iterator<TypeRepr> patternSignatureTypes = clsMethod.getArgTypes().iterator();
+      for (TypeRepr arg : m.getArgTypes()) {
+        if (!patternSignatureTypes.hasNext()) {
+          return null;
+        }
+        TypeRepr patternArg = patternSignatureTypes.next();
+        if (patternArg.equals(argSAMType)) {
+          if (arg.equals(argSAMType) || !(arg instanceof TypeRepr.ClassType)) {
+            return null;
+          }
+        }
+        else {
+          if (Boolean.FALSE.equals(future.isSubtypeOf(arg, patternArg)) && Boolean.FALSE.equals(future.isSubtypeOf(patternArg, arg))) {
+            return null;
+          }
+        }
+      }
+      return patternSignatureTypes.hasNext()? null : m.getFlags();
+    });
+    for (OverloadDescriptor descr : overloaded) {
+      debug("Found method ", clsMethod, " that uses SAM interface ", argSAMType.getJvmName(), " in its signature --- affect potential lambda-target usages of overloaded method: ", descr.overloadMethod);
+      affectMemberUsages(
+        context,
+        descr.owner.getReferenceID(),
+        descr.overloadMethod,
+        future.collectSubclassesWithoutMethod(descr.owner.getReferenceID(), descr.overloadMethod),
+        n -> n instanceof JvmClass && future.isVisibleIn(cls, clsMethod, (JvmClass)n)
+      );
+    }
+    return true;
+  }
+
   @Override
   protected boolean processChangedMethods(DifferentiateContext context, JvmClass changedClass, Iterable<Difference.Change<JvmMethod, JvmMethod.Diff>> changed, Utils future, Utils present) {
     debug("Processing changed methods: ");
-
-    if (changedClass.isInterface()) {
-      for (Difference.Change<JvmMethod, JvmMethod.Diff> change : filter(changed, ch -> ch.getDiff().getRemovedFlags().isAbstract())) {
-        debug("Method became non-abstract: ", change.getPast().getName());
-        affectLambdaInstantiations(context, present, changedClass.getReferenceID());
-        break;
-      }
-    }
 
     for (Difference.Change<JvmMethod, JvmMethod.Diff> change : changed) {
       JvmMethod changedMethod = change.getPast();
@@ -342,9 +401,6 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
           if (addedFlags.isFinal() || addedFlags.isPublic() || addedFlags.isAbstract()) {
             debug("Added final, public or abstract specifier --- affecting subclasses");
             affectSubclasses(context, future, changedClass.getReferenceID(), false);
-            if (changedClass.isInterface() && addedFlags.isAbstract()) {
-              affectLambdaInstantiations(context, present, changedClass.getReferenceID());
-            }
           }
 
           if (addedFlags.isProtected() && !removedFlags.isPrivate()) {
@@ -405,7 +461,7 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
           descr.accessScope.isPackageLocal()? new PackageConstraint(changedClass.getPackageName()).negate() :
           descr.accessScope.isProtected()? new InheritanceConstraint(future, changedClass).negate() : null;
 
-        affectMemberUsages(context, descr.owner, descr.overloadMethod, future.collectSubclassesWithoutMethod(descr.owner, descr.overloadMethod), constr);
+        affectMemberUsages(context, descr.owner.getReferenceID(), descr.overloadMethod, future.collectSubclassesWithoutMethod(descr.owner.getReferenceID(), descr.overloadMethod), constr);
       }
     }
 
@@ -416,7 +472,7 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
   private static Iterable<OverloadDescriptor> findAllOverloads(Utils utils, final JvmClass cls, Function<? super JvmMethod, JVMFlags> correspondenceFinder) {
     Function<JvmClass, Iterable<OverloadDescriptor>> mapper = c -> filter(map(c.getMethods(), m -> {
       JVMFlags accessScope = correspondenceFinder.apply(m);
-      return accessScope != null? new OverloadDescriptor(accessScope, m, c.getReferenceID()) : null;
+      return accessScope != null? new OverloadDescriptor(accessScope, m, c) : null;
     }), notNullFilter());
 
     return flat(
@@ -428,9 +484,9 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
   private static final class OverloadDescriptor {
     final JVMFlags accessScope;
     final JvmMethod overloadMethod;
-    final JvmNodeReferenceID owner;
+    final JvmClass owner;
 
-    OverloadDescriptor(JVMFlags accessScope, JvmMethod overloadMethod, JvmNodeReferenceID owner) {
+    OverloadDescriptor(JVMFlags accessScope, JvmMethod overloadMethod, JvmClass owner) {
       this.accessScope = accessScope;
       this.overloadMethod = overloadMethod;
       this.owner = owner;
@@ -510,16 +566,6 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
         debug("Class is abstract, or is interface, or added non-private method is abstract => affecting all subclasses");
         affectSubclasses(context, future, changedClass.getReferenceID(), false);
         break;
-      }
-    }
-
-    if (changedClass.isInterface()) {
-      for (JvmMethod addedMethod : added) {
-        if (!addedMethod.isPrivate() && addedMethod.isAbstract()) {
-          debug("Added non-private abstract method: ", addedMethod.getName());
-          affectLambdaInstantiations(context, present, changedClass.getReferenceID());
-          break;
-        }
       }
     }
 
@@ -915,18 +961,6 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
         if (nodeName != null) {
           context.affectUsage(new ClassUsage(nodeName));
           debug("Affect usage of class ", nodeName);
-        }
-      }
-    }
-  }
-
-  private void affectLambdaInstantiations(DifferentiateContext context, Utils utils, ReferenceID fromClass) {
-    for (ReferenceID id : utils.withAllSubclasses(fromClass)) {
-      if (utils.isLambdaTarget(id)) {
-        String clsName = utils.getNodeName(id);
-        if (clsName != null) {
-          debug("The interface could be not a SAM interface anymore or lambda target method name has changed => affecting lambda instantiations for ", clsName);
-          context.affectUsage(new ClassNewUsage(clsName));
         }
       }
     }

@@ -59,19 +59,21 @@ public final class Utils {
     return null;
   }
 
-  // test if a ClassRepr is a SAM interface
+  // test if a JvmClass is a SAM interface
   public boolean isLambdaTarget(ReferenceID classId) {
-    for (JvmClass cls : getNodes(classId, JvmClass.class)) {
-      if (cls.isInterface()) {
-        int amFound = 0;
-        for (JvmMethod method : allMethodsRecursively(cls)) {
-          if (method.isAbstract() && ++amFound > 1) {
-            break;
-          }
+    return !isEmpty(filter(getNodes(classId, JvmClass.class), this::isLambdaTarget));
+  }
+
+  public boolean isLambdaTarget(JvmClass cls) {
+    if (cls.isInterface()) {
+      int amFound = 0;
+      for (JvmMethod method : allMethodsRecursively(cls)) {
+        if (method.isAbstract() && ++amFound > 1) {
+          break;
         }
-        if (amFound == 1) {
-          return true;
-        }
+      }
+      if (amFound == 1) {
+        return true;
       }
     }
     return false;
@@ -291,7 +293,7 @@ public final class Utils {
 
       final String descr = whom.getDescriptor();
 
-      if (descr.equals("Ljava/lang/Cloneable") || descr.equals("Ljava/lang/Object") || descr.equals("Ljava/io/Serializable")) {
+      if ("Ljava/lang/Cloneable;".equals(descr) || "Ljava/lang/Object;".equals(descr) || "Ljava/io/Serializable;".equals(descr)) {
         return Boolean.TRUE;
       }
 

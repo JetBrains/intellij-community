@@ -4,9 +4,11 @@ package org.jetbrains.jps.dependency.kotlin;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.dependency.AffectionScopeMetaUsage;
 import org.jetbrains.jps.dependency.DifferentiateContext;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.*;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.util.*;
 
@@ -57,6 +59,62 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JavaDifferentiat
     return true;
   }
 
+  @Override
+  protected boolean processMethodArgumentBecameLambdaTarget(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, TypeRepr.ClassType argSAMType, Utils future, Utils present) {
+    if (!super.processMethodArgumentBecameLambdaTarget(context, cls, clsMethod, argSAMType, future, present)) {
+      return false;
+    }
+    context.affectUsage(new AffectionScopeMetaUsage(cls.getReferenceID()));
+    affectConflictingExtensionMethods(context, cls, clsMethod, future);
+    return true;
+  }
+
+  @Override
+  protected boolean processAddedMethod(DifferentiateContext context, JvmClass changedClass, JvmMethod addedMethod, Utils future, Utils present) {
+    if (!super.processAddedMethod(context, changedClass, addedMethod, future, present)) {
+      return false;
+    }
+    // any added method may conflict with an extension method to this class, defined elsewhere
+    if (!addedMethod.isPrivate()) {
+      affectConflictingExtensionMethods(context, changedClass, addedMethod, future);
+    }
+    return true;
+  }
+
+  private static void affectConflictingExtensionMethods(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, Utils utils) {
+    TypeRepr.ClassType firstArgType = new TypeRepr.ClassType(cls.getName()); // the first arg is always the class being extended
+    context.affectUsage((n, u) -> {
+      if (!(u instanceof MethodUsage) || !(n instanceof JvmClass)) {
+        return false;
+      }
+      MethodUsage methodUsage = (MethodUsage)u;
+      JvmClass contextCls = (JvmClass)n;
+      if (Objects.equals(methodUsage.getElementOwner(), cls.getReferenceID()) || !Objects.equals(methodUsage.getName(), clsMethod.getName())) {
+        return false;
+      }
+      Type calledMethodType = Type.getType(methodUsage.getDescriptor());
+      if (!Objects.equals(clsMethod.getType(), TypeRepr.getType(calledMethodType.getReturnType()))) {
+        return false;
+      }
+      Iterator<TypeRepr> args = map(Arrays.asList(calledMethodType.getArgumentTypes()), TypeRepr::getType).iterator();
+      if (!args.hasNext() || !firstArgType.equals(args.next())) {
+        return false;
+      }
+      for (TypeRepr expectedArgType : clsMethod.getArgTypes()) {
+        if (!args.hasNext()) {
+          return false;
+        }
+        TypeRepr argType = args.next();
+        if (Boolean.FALSE.equals(utils.isSubtypeOf(argType, expectedArgType)) && Boolean.FALSE.equals(utils.isSubtypeOf(expectedArgType, argType))) {
+          return false;
+        }
+      }
+      if (args.hasNext()) {
+        return false;
+      }
+      return utils.isVisibleIn(cls, clsMethod, contextCls);
+    });
+  }
 
   private static class PropertyDescriptor{
     @NotNull
