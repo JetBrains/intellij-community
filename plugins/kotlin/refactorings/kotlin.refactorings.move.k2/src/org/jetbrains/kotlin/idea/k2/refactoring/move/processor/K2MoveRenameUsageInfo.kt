@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -152,6 +153,8 @@ sealed class K2MoveRenameUsageInfo(
     }
 
     companion object {
+        private val LOG = Logger.getInstance(K2MoveRenameUsageInfo::class.java)
+
         fun find(declaration: KtNamedDeclaration): List<UsageInfo> {
             return preProcessUsages(findInternalUsages(declaration) + findExternalUsages(declaration))
         }
@@ -306,8 +309,22 @@ sealed class K2MoveRenameUsageInfo(
         }
 
         private fun List<K2MoveRenameUsageInfo>.sortedByFile(): Map<PsiFile, List<K2MoveRenameUsageInfo>> {
-            return groupBy { it.element?.containingFile ?: error("Element should have containing file") }
-                .mapValues { (_, value) -> value.sortedBy { it.element?.textOffset } }
+            return buildMap {
+                for (usageInfo in this@sortedByFile) {
+                    val element = usageInfo.element
+                    if (element == null) {
+                        LOG.warn("Could not update usage because element is invalid")
+                        continue
+                    }
+                    val containingFile = element.containingFile
+                    if (containingFile == null) {
+                        LOG.warn("Could not update usage because element has no containing file")
+                        continue
+                    }
+                    val usageInfos: MutableList<K2MoveRenameUsageInfo> = getOrPut(containingFile) { mutableListOf() }
+                    usageInfos.add(usageInfo)
+                }
+            }.mapValues { (_, value) -> value.sortedBy { it.element?.textOffset } }
         }
 
         @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
