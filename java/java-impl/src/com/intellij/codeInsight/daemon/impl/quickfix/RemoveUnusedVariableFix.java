@@ -34,9 +34,14 @@ public class RemoveUnusedVariableFix extends PsiBasedModCommandAction<PsiVariabl
     return QuickFixBundle.message("remove.unused.element.family", JavaElementKind.VARIABLE.object());
   }
 
+  @NotNull
+  protected String getText(@NotNull PsiVariable variable) {
+    return CommonQuickFixBundle.message("fix.remove.title.x", JavaElementKind.fromElement(variable).object(), variable.getName());
+  }
+
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiVariable variable) {
-    String message = CommonQuickFixBundle.message("fix.remove.title.x", JavaElementKind.fromElement(variable).object(), variable.getName());
+    String message = getText(variable);
     return Presentation.of(message);
   }
 
