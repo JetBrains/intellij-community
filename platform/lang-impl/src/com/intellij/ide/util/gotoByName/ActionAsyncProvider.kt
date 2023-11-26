@@ -45,7 +45,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
   @RequiresBlockingContext
   @RequiresBackgroundThread
   fun processActions(pattern: String, ids: Set<String>, consumer: Predicate<in MatchedValue>): Unit = runBlockingCancellable {
-    runUpdateSessionForActionSearch(myModel.getUpdateSession()) { presentationProvider ->
+    runUpdateSessionForActionSearch(myModel.updateSession) { presentationProvider ->
       myModel.buildGroupMappings()
 
       val matchedActionsFlowDeferred = async { matchedActionsAndStubsFlow(pattern, ids, presentationProvider) }
