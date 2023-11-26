@@ -3,7 +3,10 @@ package com.jetbrains.python.promotion
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.wizard.withVisualPadding
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FeaturePromoBundle
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeaturePage
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.newProject.PyNewProjectSettings
 import com.jetbrains.python.newProject.PythonProjectGenerator
@@ -36,7 +39,8 @@ internal class DjangoPromoProjectGenerator : PythonProjectGenerator<PyNewProject
         FeaturePromoBundle.message("free.trial.hint"),
         null,
       ),
-      FUSEventSource.NEW_PROJECT_WIZARD
+      openDownloadLink = createOpenDownloadPageLambda(PromoEventSource.PROJECT_WIZARD, PromoTopic.Django),
+      openLearnMore = createOpenLearnMorePageLambda(PromoEventSource.PROJECT_WIZARD, PromoTopic.Django)
     ).withVisualPadding()
   }
 }
