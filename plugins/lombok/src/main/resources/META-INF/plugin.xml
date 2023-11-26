@@ -87,6 +87,7 @@
 
     <findUsagesHandlerFactory
       implementation="de.plushnikov.intellij.plugin.extension.LombokFieldFindUsagesHandlerFactory"/>
+    <readWriteAccessDetector implementation="de.plushnikov.intellij.plugin.extension.LombokReadWriteAccessDetector" id="lombok" order="before java"/>
 
     <renameHandler implementation="de.plushnikov.intellij.plugin.extension.LombokElementRenameHandler" order="first"/>
     <renameHandler implementation="de.plushnikov.intellij.plugin.extension.LombokElementRenameVetoHandler"
