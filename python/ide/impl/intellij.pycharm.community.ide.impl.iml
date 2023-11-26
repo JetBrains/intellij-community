@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.featuresTrainer" />
     <orderEntry type="module" module-name="intellij.python.featuresTrainer" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" name="http-client" level="project" />
   </component>
 </module>

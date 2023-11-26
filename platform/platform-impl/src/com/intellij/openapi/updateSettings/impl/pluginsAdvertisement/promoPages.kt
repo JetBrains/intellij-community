@@ -27,11 +27,7 @@ class PromoFeatureListItem(
 )
 
 object PromoPages {
-  fun build(page: PromoFeaturePage): DialogPanel {
-    return build(page, FUSEventSource.SETTINGS)
-  }
-
-  fun build(page: PromoFeaturePage, source: FUSEventSource): DialogPanel {
+  fun build(page: PromoFeaturePage, openLearnMore: (url: String) -> Unit, openDownloadLink: () -> Unit): DialogPanel {
     val panel = panel {
       row {
         icon(page.productIcon)
@@ -44,9 +40,8 @@ object PromoPages {
 
       row {
         cell()
-
         text(page.descriptionHtml) {
-          source.learnMoreAndLog(null, it.url.toExternalForm(), page.pluginId?.let(PluginId::getId))
+          openLearnMore(it.url.toExternalForm())
         }
       }.layout(RowLayout.PARENT_GRID)
 
@@ -70,7 +65,7 @@ object PromoPages {
         cell()
 
         (button(FeaturePromoBundle.message("get.prefix.with.placeholder", page.suggestedIde.name)) {
-          source.openDownloadPageAndLog(null, page.suggestedIde.downloadUrl, page.pluginId?.let(PluginId::getId))
+          openDownloadLink()
         }).applyToComponent {
           this.icon = AllIcons.Ide.External_link_arrow
           this.horizontalTextPosition = SwingConstants.LEFT
@@ -82,5 +77,19 @@ object PromoPages {
     }
 
     return panel
+  }
+
+  fun build(page: PromoFeaturePage): DialogPanel {
+    return build(page, FUSEventSource.SETTINGS)
+  }
+
+  fun build(page: PromoFeaturePage, source: FUSEventSource): DialogPanel {
+    return build(page = page,
+                 openLearnMore = {
+                    source.learnMoreAndLog(null, it, page.pluginId?.let(PluginId::getId))
+                 },
+                 openDownloadLink = {
+                   source.openDownloadPageAndLog(null, page.suggestedIde.downloadUrl, page.pluginId?.let(PluginId::getId))
+                 })
   }
 }
