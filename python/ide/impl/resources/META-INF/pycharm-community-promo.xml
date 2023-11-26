@@ -1,0 +1,99 @@
+<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<idea-plugin>
+  <resource-bundle>messages.PyBundle</resource-bundle>
+  <actions resource-bundle="messages.PyCharmCommunityCustomizationBundle">
+    <action class="com.jetbrains.python.promotion.PromoAiCodeCompletion"
+            id="PromoAiCodeCompletion"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoDatabaseAction"
+            id="PromoDatabaseAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoDataFrameAction"
+            id="PromoDataFrameAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoDjangoAction"
+            id="PromoDjangoAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoDockerAction"
+            id="PromoDockerAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoEndpointsAction"
+            id="PromoEndpointsAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoJavaScriptAction"
+            id="PromoJavaScriptAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoSshRemoteToolsAction"
+            id="PromoSshRemoteToolsAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoPlotsAction"
+            id="PromoPlotsAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action class="com.jetbrains.python.promotion.PromoJupyterAction"
+            id="PromoJupyterAction"
+            icon="AllIcons.Ultimate.PycharmLock" />
+
+    <action id="PromoNewJupyterNotebook" class="com.jetbrains.python.promotion.NewJupyterNotebookFile"
+            icon="AllIcons.Ultimate.PycharmLock">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+    <action id="PromoNewJavaScriptFile" class="com.jetbrains.python.promotion.NewJavaScriptFile"
+            icon="AllIcons.Ultimate.PycharmLock">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+    <action id="PromoNewTypeScriptFile" class="com.jetbrains.python.promotion.NewTypeScriptFile"
+            icon="AllIcons.Ultimate.PycharmLock">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+    <action id="PromoNewSqlFile" class="com.jetbrains.python.promotion.NewSqlFile"
+            icon="AllIcons.Ultimate.PycharmLock">
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </action>
+
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <directoryProjectGenerator implementation="com.jetbrains.python.promotion.DjangoPromoProjectGenerator"/>
+
+    <applicationConfigurable id="promo.database"
+                             groupId="tools"
+                             provider="com.jetbrains.python.promotion.PromoDatabaseConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.database"/>
+    <applicationConfigurable id="promo.javascript"
+                             groupId="language"
+                             provider="com.jetbrains.python.promotion.PromoJSConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.javascript"/>
+    <applicationConfigurable id="promo.typescript"
+                             groupId="language"
+                             provider="com.jetbrains.python.promotion.PromoTSConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.typescript"/>
+
+    <applicationConfigurable id="promo.django"
+                             groupId="language"
+                             provider="com.jetbrains.python.promotion.PromoDjangoConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.django"/>
+    <applicationConfigurable id="promo.remoteSsh"
+                             groupId="tools"
+                             provider="com.jetbrains.python.promotion.PromoRemoteSshConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.remoteSsh"/>
+    <applicationConfigurable id="promo.jupyter"
+                             groupId="language"
+                             provider="com.jetbrains.python.promotion.PromoJupyterConfigurableProvider"
+                             bundle="messages.FeaturePromoBundle"
+                             key="promo.configurable.jupyter"/>
+  </extensions>
+</idea-plugin>
