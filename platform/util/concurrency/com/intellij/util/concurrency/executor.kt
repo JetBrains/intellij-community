@@ -26,8 +26,9 @@ fun executeOnPooledIoThread(task: Runnable) {
 }
 
 @Internal
-fun createSingleTaskApplicationPoolExecutor(name: String, coroutineScope: CoroutineScope): Executor =
-  CoroutineDispatcherBackedExecutor(coroutineScope, context = Dispatchers.IO.limitedParallelism(1) + CoroutineName(name))
+fun createSingleTaskApplicationPoolExecutor(name: String, coroutineScope: CoroutineScope): Executor {
+  return CoroutineDispatcherBackedExecutor(coroutineScope, context = Dispatchers.IO.limitedParallelism(1) + CoroutineName(name))
+}
 
 @Internal
 class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, private val context: CoroutineContext) : Executor {
