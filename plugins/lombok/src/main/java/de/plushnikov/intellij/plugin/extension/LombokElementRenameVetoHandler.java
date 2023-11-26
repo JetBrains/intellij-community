@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class LombokElementRenameVetoHandler implements RenameHandler {
   @Override
-  public boolean isAvailableOnDataContext(DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     final PsiElement element = PsiElementRenameHandler.getElement(dataContext);
     return element instanceof LombokLightClassBuilder ||
       ((element instanceof LombokLightMethodBuilder || element instanceof LombokLightFieldBuilder)
@@ -31,7 +31,7 @@ public class LombokElementRenameVetoHandler implements RenameHandler {
   }
 
   @Override
-  public boolean isRenaming(DataContext dataContext) {
+  public boolean isRenaming(@NotNull DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 
