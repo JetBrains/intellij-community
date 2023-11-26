@@ -1,5 +1,7 @@
 package de.plushnikov.intellij.plugin.psi;
 
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
@@ -28,6 +30,11 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     myNameIdentifier = new LombokLightIdentifier(manager, name);
     myModifierList = new LombokLightModifierList(manager);
     setBaseIcon(LombokIcons.Nodes.LombokField);
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 
   @Override
