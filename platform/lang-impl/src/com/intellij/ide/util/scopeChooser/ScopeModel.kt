@@ -14,24 +14,15 @@ import com.intellij.psi.search.SearchScopeProvider
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.Promise
 import java.util.function.Predicate
 
 
-class ScopeModel(options: Set<Option>) {
-
-  enum class Option {
-    LIBRARIES,
-    SEARCH_RESULTS,
-    FROM_SELECTION,
-    USAGE_VIEW,
-    EMPTY_SCOPES
-  }
+class ScopeModel(options: Set<ScopeOption>) {
 
   private val separators: HashMap<String, ListSeparator> = HashMap()
-  private val options = mutableSetOf<Option>().apply { addAll(options) }
+  private val options = mutableSetOf<ScopeOption>().apply { addAll(options) }
   private lateinit var project: Project
 
   fun init(project: Project) {
@@ -44,7 +35,7 @@ class ScopeModel(options: Set<Option>) {
 
   fun getSeparatorName(firstElementName: String): ListSeparator? = separators[firstElementName]
 
-  fun setOption(option: Option, set: Boolean) {
+  fun setOption(option: ScopeOption, set: Boolean) {
     if (set) {
       options.add(option)
     }
@@ -53,7 +44,7 @@ class ScopeModel(options: Set<Option>) {
     }
   }
 
-  fun isSet(option: Option): Boolean {
+  fun isSet(option: ScopeOption): Boolean {
     return options.contains(option)
   }
 
@@ -63,11 +54,11 @@ class ScopeModel(options: Set<Option>) {
       .thenAsync { dataContext ->
         PredefinedSearchScopeProvider.getInstance().getPredefinedScopesAsync(
           project, dataContext,
-          options.contains(Option.LIBRARIES),
-          options.contains(Option.SEARCH_RESULTS),
-          options.contains(Option.FROM_SELECTION),
-          options.contains(Option.USAGE_VIEW),
-          options.contains(Option.EMPTY_SCOPES)
+          options.contains(ScopeOption.LIBRARIES),
+          options.contains(ScopeOption.SEARCH_RESULTS),
+          options.contains(ScopeOption.FROM_SELECTION),
+          options.contains(ScopeOption.USAGE_VIEW),
+          options.contains(ScopeOption.EMPTY_SCOPES)
         ).then { predefinedScopes ->
           separators.clear()
           doProcessScopes(project, dataContext, predefinedScopes,
@@ -80,16 +71,16 @@ class ScopeModel(options: Set<Option>) {
 
     @JvmStatic
     @Deprecated("Use ScopeModel.getScopeDescriptors method instead, this method may block UI")
-    fun getScopeDescriptors(project: Project, dataContext: DataContext, options: Set<Option>): List<ScopeDescriptor> {
+    fun getScopeDescriptors(project: Project, dataContext: DataContext, options: Set<ScopeOption>): List<ScopeDescriptor> {
       val model = ScopeModel(options)
       model.init(project)
       val predefinedScopes = PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(
         project, dataContext,
-        options.contains(Option.LIBRARIES),
-        options.contains(Option.SEARCH_RESULTS),
-        options.contains(Option.FROM_SELECTION),
-        options.contains(Option.USAGE_VIEW),
-        options.contains(Option.EMPTY_SCOPES)
+        options.contains(ScopeOption.LIBRARIES),
+        options.contains(ScopeOption.SEARCH_RESULTS),
+        options.contains(ScopeOption.FROM_SELECTION),
+        options.contains(ScopeOption.USAGE_VIEW),
+        options.contains(ScopeOption.EMPTY_SCOPES)
       )
       return doProcessScopes(project, dataContext, predefinedScopes, null) { true }
     }
@@ -155,10 +146,4 @@ class ScopeModel(options: Set<Option>) {
     }
   }
 
-  class ScopeSeparator @Internal constructor(@Nls val text: String) : ScopeDescriptor(null) {
-
-    override fun getDisplayName(): String {
-      return text
-    }
-  }
 }

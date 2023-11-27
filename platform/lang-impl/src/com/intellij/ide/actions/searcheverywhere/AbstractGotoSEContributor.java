@@ -10,6 +10,7 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.ide.util.scopeChooser.ScopeModel;
+import com.intellij.ide.util.scopeChooser.ScopeOption;
 import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
@@ -108,7 +109,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
   protected List<ScopeDescriptor> createScopes() {
     DataContext context = createContext(myProject, myPsiContext);
-    return ScopeModel.getScopeDescriptors(myProject, context, EnumSet.of(ScopeModel.Option.LIBRARIES, ScopeModel.Option.EMPTY_SCOPES));
+    return ScopeModel.getScopeDescriptors(myProject, context, EnumSet.of(ScopeOption.LIBRARIES, ScopeOption.EMPTY_SCOPES));
   }
 
   @NotNull

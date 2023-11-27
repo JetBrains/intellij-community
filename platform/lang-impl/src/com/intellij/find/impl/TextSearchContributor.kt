@@ -17,6 +17,7 @@ import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.SETabSwit
 import com.intellij.ide.actions.searcheverywhere.footer.createTextExtendedInfo
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeModel
+import com.intellij.ide.util.scopeChooser.ScopeOption
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -198,7 +199,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
 
   private fun createScopes() = mutableListOf<ScopeDescriptor>().apply {
     addAll(ScopeModel.getScopeDescriptors(project, createContext(project, psiContext),
-                                          setOf(ScopeModel.Option.LIBRARIES, ScopeModel.Option.EMPTY_SCOPES)))
+                                          setOf(ScopeOption.LIBRARIES, ScopeOption.EMPTY_SCOPES)))
   }
 
   override fun getScope(): ScopeDescriptor = selectedScopeDescriptor

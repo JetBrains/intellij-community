@@ -42,7 +42,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private Project myProject;
   private @Nullable Condition<? super ScopeDescriptor> myScopeFilter;
   private BrowseListener myBrowseListener;
-  private final ScopeModel scopeModel = new ScopeModel(EnumSet.of(ScopeModel.Option.FROM_SELECTION, ScopeModel.Option.USAGE_VIEW));
+  private final ScopeModel scopeModel = new ScopeModel(EnumSet.of(ScopeOption.FROM_SELECTION, ScopeOption.USAGE_VIEW));
 
   private @Nullable SearchScope preselectedScope;
 
@@ -77,8 +77,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
 
     scopeModel.init(project);
-    scopeModel.setOption(ScopeModel.Option.LIBRARIES, suggestSearchInLibs);
-    scopeModel.setOption(ScopeModel.Option.SEARCH_RESULTS, prevSearchWholeFiles);
+    scopeModel.setOption(ScopeOption.LIBRARIES, suggestSearchInLibs);
+    scopeModel.setOption(ScopeOption.SEARCH_RESULTS, prevSearchWholeFiles);
     myProject = project;
 
     NamedScopesHolder.ScopeListener scopeListener = () -> {
@@ -167,11 +167,11 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   }
 
   public void setCurrentSelection(boolean currentSelection) {
-    scopeModel.setOption(ScopeModel.Option.FROM_SELECTION, currentSelection);
+    scopeModel.setOption(ScopeOption.FROM_SELECTION, currentSelection);
   }
 
   public void setUsageView(boolean usageView) {
-    scopeModel.setOption(ScopeModel.Option.USAGE_VIEW, usageView);
+    scopeModel.setOption(ScopeOption.USAGE_VIEW, usageView);
   }
 
   public void selectItem(@Nullable Object selection) {
@@ -214,7 +214,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   protected void updateModel(@NotNull DefaultComboBoxModel<ScopeDescriptor> model,
                              @NotNull List<? extends ScopeDescriptor> descriptors) {
     for (ScopeDescriptor descriptor : descriptors) {
-      if (!(descriptor instanceof ScopeModel.ScopeSeparator)) {
+      if (!(descriptor instanceof ScopeSeparator)) {
         model.addElement(descriptor);
       }
     }
@@ -239,7 +239,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   }
 
   public void setShowEmptyScopes(boolean showEmptyScopes) {
-    scopeModel.setOption(ScopeModel.Option.EMPTY_SCOPES, showEmptyScopes);
+    scopeModel.setOption(ScopeOption.EMPTY_SCOPES, showEmptyScopes);
   }
 
   @Nullable
@@ -288,7 +288,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
                                                   int index,
                                                   boolean selected,
                                                   boolean hasFocus) {
-      if (value instanceof ScopeModel.ScopeSeparator) {
+      if (value instanceof ScopeSeparator) {
         separator.setText(value.getDisplayName());
         separator.setBorder(index == -1 ? null : new JBEmptyBorder(UIUtil.DEFAULT_VGAP, 2, UIUtil.DEFAULT_VGAP, 0));
         return separator;

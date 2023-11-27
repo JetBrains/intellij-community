@@ -18,7 +18,7 @@ import javax.swing.JComponent
 
 class ScopeChooserGroup(project: Project, parentDisposable: Disposable, initialScope: SearchScope?) : ActionGroup(), CustomComponentAction {
 
-  private val scopeModel = ScopeModel(setOf(ScopeModel.Option.FROM_SELECTION, ScopeModel.Option.USAGE_VIEW))
+  private val scopeModel = ScopeModel(setOf(ScopeOption.FROM_SELECTION, ScopeOption.USAGE_VIEW))
   private var actions = arrayOf<AnAction>()
   private val changeListeners = mutableListOf<Consumer<SearchScope?>>()
 
@@ -71,7 +71,7 @@ class ScopeChooserGroup(project: Project, parentDisposable: Disposable, initialS
   @RequiresEdt
   private fun updateActions(descriptors: List<ScopeDescriptor>) {
     actions = descriptors.map { descriptor ->
-      if (descriptor is ScopeModel.ScopeSeparator)
+      if (descriptor is ScopeSeparator)
         Separator(descriptor.text)
       else
         DumbAwareAction.create(descriptor.displayName, descriptor.icon) {
