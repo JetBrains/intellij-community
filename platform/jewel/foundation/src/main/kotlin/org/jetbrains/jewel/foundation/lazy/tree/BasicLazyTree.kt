@@ -37,7 +37,6 @@ import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
 import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.foundation.state.SelectableComponentState
-import org.jetbrains.jewel.foundation.utils.Log
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -315,8 +314,6 @@ private fun Tree.Element<*>.flattenTree(state: TreeState): MutableList<Tree.Elem
                     state.openNodes -= buildSet { getAllSubNodes(this@flattenTree) }
                 }
             }
-            Log.w("the node is open, loading children for $id")
-            Log.w("children size: ${children?.size}")
             open(true)
             children?.forEach { child -> orderedChildren.addAll(child.flattenTree(state)) }
         }

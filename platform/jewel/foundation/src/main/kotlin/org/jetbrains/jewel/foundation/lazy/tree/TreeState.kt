@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.SelectableScope
-import org.jetbrains.jewel.foundation.utils.Log
 
 @Composable
 public fun rememberTreeState(
@@ -27,13 +26,11 @@ public class TreeState(
     public var openNodes: Set<Any> by mutableStateOf<Set<Any>>(emptySet())
 
     public fun toggleNode(nodeId: Any) {
-        Log.d("toggleNode $nodeId")
         if (nodeId in openNodes) {
             openNodes -= nodeId
         } else {
             openNodes += nodeId
         }
-        Log.d("open nodes ${openNodes.map { it.toString() }}")
     }
 
     public fun openNodes(nodes: List<Any>) {

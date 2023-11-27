@@ -38,14 +38,3 @@ internal interface Logger {
         log(LogLevel.Trace, LogLevel.Trace.color + msg + resetColor())
     }
 }
-
-// TODO remove and replace with real logger
-@Deprecated("Use a real logger instead")
-internal object Log : Logger {
-
-    override var currentLogLevel: LogLevel = LogLevel.Off
-
-    override fun log(level: LogLevel, msg: String) {
-        if (currentLogLevel.ordinal <= level.ordinal) println(msg)
-    }
-}

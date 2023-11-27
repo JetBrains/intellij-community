@@ -2,7 +2,6 @@ package org.jetbrains.jewel.foundation.lazy.tree
 
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.isCtrlPressed
@@ -17,7 +16,6 @@ import org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.SelectionMode
-import org.jetbrains.jewel.foundation.utils.Log
 import org.jetbrains.skiko.hostOs
 
 public interface KeyActions {
@@ -72,22 +70,18 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
             when {
                 pointerEvent.keyboardModifiers.isContiguousSelectionKeyPressed &&
                     pointerEvent.keyboardModifiers.isCtrlPressed -> {
-                    Log.i("ctrl and shift pressed on click")
                     // do nothing
                 }
 
                 pointerEvent.keyboardModifiers.isContiguousSelectionKeyPressed -> {
-                    Log.i("shift pressed on click")
                     onExtendSelectionToKey(key, allKeys, selectableLazyListState, selectionMode)
                 }
 
                 pointerEvent.keyboardModifiers.isMultiSelectionKeyPressed -> {
-                    Log.i("ctrl pressed on click")
                     toggleKeySelection(key, allKeys, selectableLazyListState)
                 }
 
                 else -> {
-                    Log.i("single click")
                     selectableLazyListState.selectedKeys = listOf(key)
                     selectableLazyListState.lastActiveItemIndex = allKeys.indexOfFirst { it.key == key }
                 }
@@ -161,7 +155,6 @@ public class DefaultTreeViewPointerEventAction(
             when {
                 pointerEvent.keyboardModifiers.isContiguousSelectionKeyPressed &&
                     pointerEvent.keyboardModifiers.isCtrlPressed -> {
-                    Log.t("ctrl and shift pressed on click")
                 }
 
                 pointerEvent.keyboardModifiers.isContiguousSelectionKeyPressed -> {
@@ -169,7 +162,6 @@ public class DefaultTreeViewPointerEventAction(
                 }
 
                 pointerEvent.keyboardModifiers.isMultiSelectionKeyPressed -> {
-                    Log.t("multi selection pressed")
                     selectableLazyListState.lastKeyEventUsedMouse = false
                     super.toggleKeySelection(key, allKeys, selectableLazyListState)
                 }
@@ -199,7 +191,6 @@ public class DefaultTreeViewPointerEventAction(
             }
             onElementDoubleClick(item)
             elementClickedTmpHolder = null
-            Log.d("doubleClicked!")
         } else {
             elementClickedTmpHolder = item.id
             // is a single click
@@ -208,8 +199,6 @@ public class DefaultTreeViewPointerEventAction(
                 delay(doubleClickTimeDelayMillis)
                 if (elementClickedTmpHolder == item.id) elementClickedTmpHolder = null
             }
-
-            Log.d("singleClicked!")
         }
     }
 }
@@ -237,7 +226,6 @@ public class DefaultTreeViewKeyActions(
         val keyEvent = this
         with(keybindings) {
             with(actions) {
-                Log.d(keyEvent.key.keyCode.toString())
                 if (selectionMode == SelectionMode.None) return@lambda false
                 when {
                     isSelectParent -> onSelectParent(keys, state)
