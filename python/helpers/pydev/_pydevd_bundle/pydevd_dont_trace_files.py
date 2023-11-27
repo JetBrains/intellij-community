@@ -110,6 +110,7 @@ DONT_TRACE = {
     'pydevd_nest_asyncio.py': PYDEV_FILE,
     'pydevd_pandas.py': PYDEV_FILE,
     'pydevd_pep_669_tracing.py': PYDEV_FILE,
+    'pydevd_pep_669_tracing_wrapper.py': PYDEV_FILE,
     'pydevd_plugin_numpy_types.py': PYDEV_FILE,
     'pydevd_plugin_utils.py': PYDEV_FILE,
     'pydevd_plugins_django_form_str.py': PYDEV_FILE,
