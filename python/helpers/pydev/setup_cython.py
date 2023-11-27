@@ -122,13 +122,6 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
             # Always compile the .c (and not the .pyx) file (which we should keep
             # up-to-date by running build_tools/build.py).
 
-            # In case it's a pydevd_frame_evaluator extension with the version suffix.
-            import re
-            target_pydevd_name = extension_name
-            m = re.search(r"_\d+_\d+$", extension_name)
-            if m:
-                target_pydevd_name = extension_name[:m.start()]
-
             # The C file for Python 3.11 and older is incompatible with
             # Python 3.12.
             effective_c_file_name = "%s.c" % (
