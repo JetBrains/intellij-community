@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.impl.projectlevelman.MappingsToRoots;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.update.DisposableUpdate;
@@ -47,7 +48,6 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
   // grouped; if there are several mappings one under another, will return the upmost
   @NotNull private final SvnMapping myMoreRealMapping = new SvnMapping();
   @NotNull private final List<RootUrlInfo> myErrorRoots = new ArrayList<>();
-  @NotNull private final MyRootsHelper myRootsHelper;
   @NotNull private final Project myProject;
   @NotNull private final NestedCopiesHolder myNestedCopiesHolder = new NestedCopiesHolder();
   private boolean myInitialized;
@@ -56,35 +56,9 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
   private final @NotNull MergingUpdateQueue myRefreshQueue =
     new MergingUpdateQueue("Refresh Working Copies", 100, true, null, this, null, POOLED_THREAD);
 
-  private static final class MyRootsHelper {
-    @NotNull private final static ThreadLocal<Boolean> ourInProgress = ThreadLocal.withInitial(() -> Boolean.FALSE);
-    @NotNull private final Project myProject;
-    @NotNull private final ProjectLevelVcsManager myVcsManager;
-
-    private MyRootsHelper(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {
-      myProject = project;
-      myVcsManager = vcsManager;
-    }
-
-    public VirtualFile @NotNull [] execute() {
-      try {
-        ourInProgress.set(Boolean.TRUE);
-        return myVcsManager.getRootsUnderVcs(SvnVcs.getInstance(myProject));
-      }
-      finally {
-        ourInProgress.set(Boolean.FALSE);
-      }
-    }
-
-    public static boolean isInProgress() {
-      return ourInProgress.get();
-    }
-  }
-
   @SuppressWarnings("UnusedDeclaration")
   private SvnFileUrlMappingImpl(@NotNull Project project) {
     myProject = project;
-    myRootsHelper = new MyRootsHelper(project, ProjectLevelVcsManager.getInstance(project));
   }
 
   @Override
@@ -167,8 +141,6 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
   @Override
   @NotNull
   public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
-    if (MyRootsHelper.isInProgress()) return new ArrayList<>(result);
-
     List<VirtualFile> cachedRoots;
     List<VirtualFile> lonelyRoots;
     synchronized (myMonitor) {
@@ -209,7 +181,7 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
 
   private void refresh() {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
-    VirtualFile[] roots = myRootsHelper.execute();
+    VirtualFile[] roots = getNotFilteredRoots();
     SvnRootsDetector rootsDetector = new SvnRootsDetector(this, vcs, myNestedCopiesHolder);
     SvnRootsDetector.Result result = rootsDetector.detectCopyRoots(roots, init());
 
@@ -274,9 +246,14 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
     }
   }
 
+  /**
+   * Get raw roots from mappings, without applying our own {@link #convertRoots} and {@link #myMoreRealMapping}.
+   */
   @Override
   public VirtualFile @NotNull [] getNotFilteredRoots() {
-    return myRootsHelper.execute();
+    SvnVcs svnVcs = SvnVcs.getInstance(myProject);
+    List<VirtualFile> roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcsWithoutFiltering(svnVcs);
+    return MappingsToRoots.filterAllowedRoots(myProject, roots, svnVcs);
   }
 
   @Override
