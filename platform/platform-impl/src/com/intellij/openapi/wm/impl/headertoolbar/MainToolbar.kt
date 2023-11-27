@@ -202,7 +202,7 @@ class MainToolbar(
 
   override fun paintComponent(g: Graphics?) {
     super.paintComponent(g)
-    if (!isToolbarInHeader()) {
+    if ((frame.rootPane as? IdeRootPane)?.isToolbarInHeader() == false) {
       ProjectWindowCustomizerService.getInstance().paint(frame, this, g as Graphics2D)
     }
   }
@@ -435,13 +435,13 @@ internal fun computeMainActionGroups(customActionSchema: CustomActionsSchema): L
     .toList()
 }
 
-internal fun isToolbarInHeader(): Boolean {
+internal fun isToolbarInHeader(isFullscreen: Boolean): Boolean {
   if (IdeFrameDecorator.isCustomDecorationAvailable) {
     if (SystemInfoRt.isMac) {
       return true
     }
     val settings = UISettings.getInstance()
-    if (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle) {
+    if (SystemInfoRt.isWindows && !settings.separateMainMenu && settings.mergeMainMenuWithWindowTitle && !isFullscreen) {
       return true
     }
   }
