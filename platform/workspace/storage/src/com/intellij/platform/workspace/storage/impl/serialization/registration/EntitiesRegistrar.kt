@@ -11,57 +11,40 @@ import com.intellij.platform.workspace.storage.impl.toClassId
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
-import com.intellij.platform.workspace.storage.metadata.utils.collectClasses
 
 internal fun registerEntitiesClasses(kryo: Kryo, cacheMetadata: CacheMetadata,
                                      typesResolver: EntityTypesResolver, classCache: Object2IntWithDefaultMap<TypeInfo>) =
-  EntitiesRegistrar(typesResolver, cacheMetadata.toListWithPluginId(), classCache).registerClasses(kryo)
+  EntitiesRegistrar(typesResolver, cacheMetadata, classCache).registerClasses(kryo)
 
 
 private class EntitiesRegistrar(
   private val typesResolver: EntityTypesResolver,
-  private val entitiesMetadata: List<Pair<PluginId, StorageTypeMetadata>>,
+  private val typesMetadata: Iterable<Pair<PluginId, StorageTypeMetadata>>,
   private val classCache: Object2IntWithDefaultMap<TypeInfo>
 ): StorageRegistrar {
 
   override fun registerClasses(kryo: Kryo) {
-    val collector = UsedClassesCollector()
-
-    entitiesMetadata.forEach { (pluginId, typeMetadata) ->
-      val (objects, classes) = typeMetadata.collectClasses().partition { it is FinalClassMetadata.ObjectMetadata }
-
+    typesMetadata.forEach { (pluginId, typeMetadata) ->
       // TODO("Test it. Custom classes can have another plugin id")
-      classes.forEach { collector.add(resolveClass(it.fqName, pluginId)) }
-      objects.forEach { collector.addObject(resolveClass(it.fqName, pluginId)) }
-
-      if (typeMetadata is EntityMetadata) {
-        collector.add(resolveClass(typeMetadata.entityDataFqName, pluginId))
+      val clazz = when (typeMetadata) {
+        is EntityMetadata -> resolveClass(typeMetadata.entityDataFqName, pluginId)
+        is FinalClassMetadata -> resolveClass(typeMetadata.fqName, pluginId)
+        else -> null // we don't need to register abstract types
+      }
+      if (clazz != null) {
+        if (typeMetadata is FinalClassMetadata.ObjectMetadata) {
+          registerSingletonSerializer(kryo) { clazz.getDeclaredField("INSTANCE").get(0) }
+        }
+        else {
+          kryo.register(clazz)
+        }
       }
     }
-
-    collector.collectionObjects.sortedBy { it.name }.forEach {
-      registerSingletonSerializer(kryo) { it.getDeclaredField("INSTANCE").get(0) }
-    }
-
-    collector.collection.sortedBy { it.name }.forEach { kryo.register(it) }
   }
 
   private fun resolveClass(fqName: String, pluginId: PluginId): Class<*> {
     val resolvedClass = typesResolver.resolveClass(fqName, pluginId)
     classCache.putIfAbsent(TypeInfo(fqName, pluginId), resolvedClass.toClassId())
     return resolvedClass
-  }
-}
-
-private class UsedClassesCollector(
-  val collection: MutableSet<Class<out Any>> = HashSet(),
-  val collectionObjects: MutableSet<Class<out Any>> = HashSet(),
-) {
-  fun add(clazz: Class<out Any>) {
-    collection.add(clazz)
-  }
-
-  fun addObject(clazz: Class<out Any>) {
-    collectionObjects.add(clazz)
   }
 }

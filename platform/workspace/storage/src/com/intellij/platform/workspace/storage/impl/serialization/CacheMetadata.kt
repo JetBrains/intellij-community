@@ -6,63 +6,90 @@ import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.platform.workspace.storage.impl.findWorkspaceEntity
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.resolver.TypeMetadataResolver
+import com.intellij.platform.workspace.storage.metadata.utils.collectTypesByFqn
 
 internal fun loadCurrentEntitiesMetadata(cacheMetadata: CacheMetadata,
                                          typesResolver: EntityTypesResolver): List<StorageTypeMetadata>? {
-  val currentMetadata = arrayListOf<StorageTypeMetadata>()
-
-  cacheMetadata.toListWithPluginId().forEach { (pluginId, typeMetadata) ->
+  return cacheMetadata.map { (pluginId, typeMetadata) ->
     val currentTypeMetadata = TypeMetadataResolver.getInstance()
       .resolveTypeMetadataOrNull(typeMetadata.fqName, pluginId, typesResolver) ?: return null
-    currentMetadata.add(currentTypeMetadata)
+    currentTypeMetadata
   }
-
-  return currentMetadata
 }
 
 internal fun getCacheMetadata(entityStorage: EntityStorageSnapshotImpl, typesResolver: EntityTypesResolver): CacheMetadata {
-  val cacheMetadata = CacheMetadata()
+  val cacheMetadata = CacheMetadata.MutableCacheMetadata(typesResolver)
 
   //collecting entities with unique entity family
   entityStorage.entitiesByType.entityFamilies.forEachIndexed { i, entityFamily ->
     val entity = entityFamily?.entities?.firstNotNullOfOrNull { it }
     if (entity != null) {
-      val pluginId = typesResolver.getPluginId(i.findWorkspaceEntity())
-      cacheMetadata.add(pluginId, entity.getMetadata())
+      cacheMetadata.add(i.findWorkspaceEntity())
     }
   }
 
-  val classes: MutableSet<Class<*>> = LinkedHashSet()
   //collecting unique entity source classes
-  classes.addAll(entityStorage.indexes.entitySourceIndex.entries().map { it::class.java })
+  cacheMetadata.addAll(entityStorage.indexes.entitySourceIndex.entries().map { it::class.java })
   //collecting unique symbolic id classes
-  classes.addAll(entityStorage.indexes.symbolicIdIndex.entries().map { it::class.java })
+  cacheMetadata.addAll(entityStorage.indexes.symbolicIdIndex.entries().map { it::class.java })
 
-  classes.forEach {
-    val pluginId: PluginId = typesResolver.getPluginId(it)
-    val typeMetadata = TypeMetadataResolver.getInstance().resolveTypeMetadata(it.name, pluginId, typesResolver)
-    cacheMetadata.add(pluginId, typeMetadata)
-  }
-
-  return cacheMetadata
+  return cacheMetadata.toImmutable()
 }
 
 
 internal class CacheMetadata(
-  private val metadataByPluginId: MutableMap<PluginId, MutableList<StorageTypeMetadata>> = hashMapOf()
-) {
-  fun add(pluginId: PluginId, metadata: StorageTypeMetadata) {
-    metadataByPluginId.getOrPut(pluginId) { arrayListOf() }.add(metadata)
+  private val metadataWithPluginId: List<Pair<PluginId, List<StorageTypeMetadata>>>
+): Iterable<Pair<PluginId, StorageTypeMetadata>> {
+
+  fun toList(): List<StorageTypeMetadata> = metadataWithPluginId.flatMap { it.second }
+
+  override fun iterator(): Iterator<Pair<PluginId, StorageTypeMetadata>> {
+    return CacheMetadataIterator(metadataWithPluginId.iterator())
   }
 
-  fun toList(): List<StorageTypeMetadata> = metadataByPluginId.values.flatten()
 
-  fun toListWithPluginId(): List<Pair<PluginId, StorageTypeMetadata>> {
-    val metadataWithPluginId = arrayListOf<Pair<PluginId, StorageTypeMetadata>>()
-    metadataByPluginId.forEach { (pluginId, typesMetadata) ->
-      typesMetadata.forEach { metadataWithPluginId.add(pluginId to it) }
+  internal class MutableCacheMetadata(private val typesResolver: EntityTypesResolver) {
+    private val metadataByPluginId: MutableMap<PluginId, MutableMap<String, StorageTypeMetadata>> = hashMapOf()
+
+    fun add(clazz: Class<*>) {
+      val pluginId: PluginId = typesResolver.getPluginId(clazz)
+      val typeMetadata = TypeMetadataResolver.getInstance().resolveTypeMetadata(clazz.name, pluginId, typesResolver)
+
+      val metadataByFqn = metadataByPluginId.getOrPut(pluginId) { hashMapOf() }
+      typeMetadata.collectTypesByFqn(metadataByFqn)
     }
-    return metadataWithPluginId
+
+    fun addAll(classes: Iterable<Class<*>>) = classes.forEach(::add)
+
+    fun toImmutable(): CacheMetadata = CacheMetadata(metadataByPluginId.map { it.key to it.value.values.toList() })
+  }
+
+
+  private class CacheMetadataIterator(
+    private val metadataWithPluginIdIterator: Iterator<Pair<PluginId, List<StorageTypeMetadata>>>
+  ): Iterator<Pair<PluginId, StorageTypeMetadata>> {
+
+    private var currentPluginId: PluginId = null
+    private var metadataIterator: Iterator<StorageTypeMetadata>? = null
+
+    override fun hasNext(): Boolean {
+      updateIterator()
+      return metadataIterator?.hasNext() == true
+    }
+
+    override fun next(): Pair<PluginId, StorageTypeMetadata> {
+      updateIterator()
+      val typeMetadata = metadataIterator?.next() ?: throw NoSuchElementException("Next on empty iterator")
+      return Pair(currentPluginId, typeMetadata)
+    }
+
+    private fun updateIterator() {
+      while (metadataWithPluginIdIterator.hasNext() && metadataIterator?.hasNext() != true) {
+        val pair = metadataWithPluginIdIterator.next()
+        currentPluginId = pair.first
+        metadataIterator = pair.second.iterator()
+      }
+    }
   }
 }
 

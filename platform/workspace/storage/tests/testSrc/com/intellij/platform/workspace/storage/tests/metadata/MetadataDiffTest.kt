@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.EntityReference
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.SimpleType.CustomType
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.SimpleType.PrimitiveType
+import com.intellij.platform.workspace.storage.metadata.utils.collectTypesByFqn
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -394,8 +395,14 @@ class MetadataDiffTest {
 
 
   private fun twoEntitiesDiff(current: EntityMetadata, cache: EntityMetadata): Boolean {
-    val comparisonResult = CacheMetadataComparator().areEquals(listOf(cache), listOf(current))
+    val comparisonResult = CacheMetadataComparator().areEquals(getAllTypes(cache), getAllTypes(current))
     return comparisonResult.areEquals
+  }
+
+  private fun getAllTypes(type: StorageTypeMetadata): List<StorageTypeMetadata> {
+    val typesByFqn = hashMapOf<String, StorageTypeMetadata>()
+    type.collectTypesByFqn(typesByFqn)
+    return typesByFqn.values.toList()
   }
 
 

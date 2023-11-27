@@ -4,32 +4,21 @@ package com.intellij.platform.workspace.storage.metadata.utils
 import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.SimpleType.CustomType
 
-
-internal fun StorageTypeMetadata.collectClasses(
-  classes: MutableMap<String, StorageClassMetadata> = hashMapOf()
-): List<StorageClassMetadata> {
-  return collectClassesByFqn(classes).values.toList()
-}
-
-internal fun StorageTypeMetadata.collectClassesByFqn(
-  classes: MutableMap<String, StorageClassMetadata> = hashMapOf()
-): Map<String, StorageClassMetadata> {
-  recursiveTypeFinder(this, classes) { type ->
-    type is StorageClassMetadata && type !is FinalClassMetadata.KnownClass
+internal fun StorageTypeMetadata.collectTypesByFqn(types: MutableMap<String, StorageTypeMetadata>) {
+  recursiveTypeFinder(this, types) { type ->
+    type !is FinalClassMetadata.KnownClass
   }
-  return classes
 }
 
 
-@Suppress("UNCHECKED_CAST")
-private fun <T> recursiveTypeFinder(type: StorageTypeMetadata, types: MutableMap<String, T>,
-                                    valueSelector: (StorageTypeMetadata) -> Boolean) {
+private fun recursiveTypeFinder(type: StorageTypeMetadata, types: MutableMap<String, StorageTypeMetadata>,
+                                valueSelector: (StorageTypeMetadata) -> Boolean) {
   if (types.containsKey(type.fqName)) {
     return
   }
 
   if (valueSelector.invoke(type)) {
-    types[type.fqName] = type as T
+    types[type.fqName] = type
   }
 
   val valueTypes: MutableList<ValueTypeMetadata> = arrayListOf()

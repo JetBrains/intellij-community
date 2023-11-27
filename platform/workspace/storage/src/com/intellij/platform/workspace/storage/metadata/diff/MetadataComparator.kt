@@ -6,7 +6,6 @@ import com.intellij.platform.workspace.storage.metadata.diff.ComparisonUtil.comp
 import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata.EnumClassMetadata
 import com.intellij.platform.workspace.storage.metadata.utils.MetadataTypesFqnComparator
-import com.intellij.platform.workspace.storage.metadata.utils.collectClassesByFqn
 
 internal fun interface MetadataComparator<T> {
   fun areEquals(cache: T, current: T): ComparisonResult
@@ -18,25 +17,19 @@ internal fun interface MetadataComparator<T> {
  *
  * To check the versions it compares entities metadata from cache and current metadata.
  */
-internal class CacheMetadataComparator: MetadataComparator<List<StorageTypeMetadata>> {
-  override fun areEquals(cache: List<StorageTypeMetadata>, current: List<StorageTypeMetadata>): ComparisonResult {
+internal class CacheMetadataComparator: MetadataComparator<Iterable<StorageTypeMetadata>> {
+  override fun areEquals(cache: Iterable<StorageTypeMetadata>, current: Iterable<StorageTypeMetadata>): ComparisonResult {
+    val typesComparator = TypesComparator(cache.associateBy { it.fqName }, current.associateBy { it.fqName })
     return compareAndPrintToLog("entities versions") {
-      compareSubset("cache metadata", cache, current,
-                  TypesComparator(collectAllClasses(cache), collectAllClasses(current)), classNameAsKey)
+      compareSubset("cache metadata", cache, current, typesComparator, classNameAsKey)
     }
-  }
-
-  private fun collectAllClasses(types: List<StorageTypeMetadata>): Map<String, StorageClassMetadata> {
-    val classes: MutableMap<String, StorageClassMetadata> = hashMapOf()
-    types.forEach { classes.putAll(it.collectClassesByFqn()) }
-    return classes
   }
 }
 
 /**
  * Used to compare [StorageTypeMetadata].
  *
- * [cacheClasses] and [currentClasses] are used to find "real" metadata class for [FinalClassMetadata.KnownClass] during comparison.
+ * [cacheTypesByFqn] and [currentTypesByFqn] are used to find "real" metadata class for [FinalClassMetadata.KnownClass] during comparison.
  * Because in case of cycled references between classes one reference is real metadata class (e.g. [FinalClassMetadata.ClassMetadata])
  * and another is [FinalClassMetadata.KnownClass] (stores just a class name).
  *
@@ -45,8 +38,8 @@ internal class CacheMetadataComparator: MetadataComparator<List<StorageTypeMetad
  *
  * @property propertiesComparator used to compare [StorageTypeMetadata.properties]
  */
-private class TypesComparator(private val cacheClasses: Map<String, StorageClassMetadata>,
-                              private val currentClasses: Map<String, StorageClassMetadata>): MetadataComparator<StorageTypeMetadata> {
+private class TypesComparator(private val cacheTypesByFqn: Map<String, StorageTypeMetadata>,
+                              private val currentTypesByFqn: Map<String, StorageTypeMetadata>): MetadataComparator<StorageTypeMetadata> {
   private val propertiesComparator: MetadataComparator<PropertyMetadata> = PropertiesComparator(this)
   private val comparedTypes: MutableSet<Pair<String, String>> = mutableSetOf()
 
@@ -55,8 +48,8 @@ private class TypesComparator(private val cacheClasses: Map<String, StorageClass
       return Equal
     }
 
-    val cacheType = findType(cache, cacheClasses)
-    val currentType = findType(current, currentClasses)
+    val cacheType = findType(cache, cacheTypesByFqn)
+    val currentType = findType(current, currentTypesByFqn)
     return typesAreEquals(cacheType, currentType)
   }
 
@@ -89,7 +82,7 @@ private class TypesComparator(private val cacheClasses: Map<String, StorageClass
     }
   }
 
-  private fun findType(type: StorageTypeMetadata, classes: Map<String, StorageClassMetadata>) = classes[type.fqName] ?: type
+  private fun findType(type: StorageTypeMetadata, typesByFqn: Map<String, StorageTypeMetadata>) = typesByFqn[type.fqName] ?: type
 
   private fun notComputableProperties(properties: List<PropertyMetadata>) = properties.filterNot { it.isComputable }
 }
