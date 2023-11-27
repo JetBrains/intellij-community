@@ -64,7 +64,6 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JavaDifferentiat
     if (!super.processMethodArgumentBecameLambdaTarget(context, cls, clsMethod, argSAMType, future, present)) {
       return false;
     }
-    context.affectUsage(new AffectionScopeMetaUsage(cls.getReferenceID()));
     affectConflictingExtensionMethods(context, cls, clsMethod, future);
     return true;
   }
@@ -82,14 +81,21 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JavaDifferentiat
   }
 
   private static void affectConflictingExtensionMethods(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, Utils utils) {
-    TypeRepr.ClassType firstArgType = new TypeRepr.ClassType(cls.getName()); // the first arg is always the class being extended
+    // the first arg is always the class being extended
+    Set<String> firstArgTypes = collect(
+      map(flat(utils.allSupertypes(cls.getReferenceID()), utils.collectSubclassesWithoutMethod(cls.getReferenceID(), clsMethod)), id -> id.getNodeName()), new HashSet<>()
+    );
+    firstArgTypes.add(cls.getName());
+    for (String clsName : firstArgTypes) {
+      context.affectUsage(new AffectionScopeMetaUsage(new JvmNodeReferenceID(clsName)));
+    }
     context.affectUsage((n, u) -> {
       if (!(u instanceof MethodUsage) || !(n instanceof JvmClass)) {
         return false;
       }
       MethodUsage methodUsage = (MethodUsage)u;
       JvmClass contextCls = (JvmClass)n;
-      if (Objects.equals(methodUsage.getElementOwner(), cls.getReferenceID()) || !Objects.equals(methodUsage.getName(), clsMethod.getName())) {
+      if (firstArgTypes.contains(methodUsage.getElementOwner().getNodeName()) || !Objects.equals(methodUsage.getName(), clsMethod.getName())) {
         return false;
       }
       Type calledMethodType = Type.getType(methodUsage.getDescriptor());
@@ -97,7 +103,11 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JavaDifferentiat
         return false;
       }
       Iterator<TypeRepr> args = map(Arrays.asList(calledMethodType.getArgumentTypes()), TypeRepr::getType).iterator();
-      if (!args.hasNext() || !firstArgType.equals(args.next())) {
+      if (!args.hasNext()) {
+        return false;
+      }
+      TypeRepr firstArgType = args.next();
+      if (!(firstArgType instanceof TypeRepr.ClassType) || !firstArgTypes.contains(((TypeRepr.ClassType)firstArgType).getJvmName())) {
         return false;
       }
       for (TypeRepr expectedArgType : clsMethod.getArgTypes()) {
