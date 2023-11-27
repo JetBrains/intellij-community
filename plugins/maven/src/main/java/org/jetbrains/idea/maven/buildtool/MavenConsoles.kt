@@ -77,7 +77,7 @@ abstract class MavenSyncConsoleBase(protected val myProject: Project) : MavenEve
     progressListener.onEvent(myTaskId, createMessageEvent(myProject, myTaskId, e))
   }
 
-  fun addError(message: String) {
+  fun addError(@NlsSafe message: String) {
     val group = SyncBundle.message("build.event.title.error")
     progressListener.onEvent(myTaskId, MessageEventImpl(myTaskId, MessageEvent.Kind.ERROR, group, message, message))
   }
@@ -134,7 +134,7 @@ abstract class MavenSyncConsoleBase(protected val myProject: Project) : MavenEve
     return LEVEL_TO_PREFIX[level]
   }
 
-  private fun doPrint(text: String, type: OutputType) {
+  private fun doPrint(@NlsSafe text: String, type: OutputType) {
     val stdout = type == OutputType.NORMAL
     if (StringUtil.isEmpty(text)) {
       return

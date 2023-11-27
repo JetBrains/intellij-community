@@ -199,6 +199,7 @@ public class MavenGeneralSettings implements Cloneable {
   @TestOnly
   @Deprecated
   public void setMavenHomeNoFire(@NotNull final String mavenHome) {
+    //noinspection HardCodedStringLiteral
     setMavenHome(resolveMavenHomeType(mavenHome), false);
   }
 

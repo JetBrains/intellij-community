@@ -6,5 +6,5 @@ import org.jetbrains.annotations.Nls
 
 object MavenActivityKey : ActivityKey {
   override val presentableName: @Nls String
-    get() = "maven"
+    get() = MavenUtil.MAVEN_NAME
 }

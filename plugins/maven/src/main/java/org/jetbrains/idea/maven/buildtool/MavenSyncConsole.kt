@@ -613,7 +613,7 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
     }
   }
 
-  private fun doPrint(text: String, type: OutputType) {
+  private fun doPrint(@NlsSafe text: String, type: OutputType) {
     addText(text, type == OutputType.NORMAL)
   }
 

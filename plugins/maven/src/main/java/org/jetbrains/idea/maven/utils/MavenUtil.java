@@ -925,6 +925,7 @@ public class MavenUtil {
   public static File resolveLocalRepository(@Nullable String overriddenLocalRepository,
                                             @Nullable String overriddenMavenHome,
                                             @Nullable String overriddenUserSettingsFile) {
+    //noinspection HardCodedStringLiteral
     MavenHomeType type = resolveMavenHomeType(overriddenMavenHome);
     if (type instanceof StaticResolvedMavenHomeType st) {
       return resolveLocalRepository(overriddenLocalRepository, st, overriddenUserSettingsFile);
