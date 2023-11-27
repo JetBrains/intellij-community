@@ -7,7 +7,7 @@ class A {
 
     fun m() {
         rename.f(42)
-        f(0)
+        this@A.f(0)
     }
 }
 

@@ -1,35 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.PsiReference
+import com.intellij.psi.*
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.KtExplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
-import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
-import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.conflicts.findSiblingsByName
 import org.jetbrains.kotlin.idea.refactoring.conflicts.renderDescription
@@ -39,25 +22,10 @@ import org.jetbrains.kotlin.idea.refactoring.rename.UsageInfoWithReplacement
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
-import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.addIfNotNull
-import kotlin.collections.mutableSetOf
 
 fun checkClassNameShadowing(
     declaration: KtClassLikeDeclaration,
@@ -120,75 +88,116 @@ fun checkCallableShadowing(
     originalUsages: MutableList<UsageInfo>,
     newUsages: MutableList<UsageInfo>
 ) {
+    val shadowedElements = newUsages.mapNotNull { (it as? BasicUnresolvableCollisionUsageInfo)?.element }.toSet()
+
     val psiFactory = KtPsiFactory(declaration.project)
     val externalDeclarations = mutableSetOf<PsiElement>()
+    val notQualifiedExternalDeclarations = mutableMapOf<PsiElement, PsiElement>()
     val usageIterator = originalUsages.listIterator()
     while (usageIterator.hasNext()) {
 
         val usage = usageIterator.next()
         val refElement = usage.element as? KtSimpleNameExpression ?: continue
-        if (refElement.getStrictParentOfType<KtTypeReference>() != null) continue
+        if (refElement.getStrictParentOfType<KtTypeReference>() != null ||
+            refElement.getStrictParentOfType<KtImportDirective>() != null) continue
 
         val callExpression = refElement.parent as? KtCallExpression ?: refElement.parent as? KtQualifiedExpression ?: refElement
-        val copied = callExpression.copied()
-        copied.referenceExpression().replace(psiFactory.createNameIdentifier(newName))
-        val codeFragment = psiFactory.createExpressionCodeFragment(if (copied.isValid) copied.text else newName, callExpression)
-        val contentElement = codeFragment.getContentElement()
-        if (contentElement != null) {
-            analyze(codeFragment) {
-                val resolveCall = contentElement.resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>()
-                val resolvedSymbol = resolveCall?.partiallyAppliedSymbol?.symbol
-                val newDeclaration = if (resolvedSymbol is KtSyntheticJavaPropertySymbol) {
-                    val getter = resolvedSymbol.javaGetterSymbol.psi
-                    externalDeclarations.addIfNotNull(getter)
-                    externalDeclarations.addIfNotNull(resolvedSymbol.javaSetterSymbol?.psi)
-                    getter
-                } else {
-                    val element = resolvedSymbol?.psi
-                    externalDeclarations.addIfNotNull(element)
-                    element
-                }
-                if (newDeclaration != null && (declaration !is KtParameter || declaration.hasValOrVar()) && !PsiTreeUtil.isAncestor(newDeclaration, declaration, true)) {
-                    val expression = refElement.parent as? KtCallExpression ?: refElement
-                    val qualifiedExpression = createQualifiedExpression(expression, newName)
-                    if (qualifiedExpression != null) {
-                        usageIterator.set(UsageInfoWithReplacement(expression, declaration, qualifiedExpression))
-                    } else {
-                        reportShadowing(declaration, declaration, newDeclaration, refElement, newUsages)
+        val topLevel = PsiTreeUtil.getTopmostParentOfType(refElement, KtQualifiedExpression::class.java) ?: callExpression
+        val offsetInCopy = callExpression.textRange.shiftLeft(topLevel.textRange.startOffset)
+
+        //take top level qualified expression, perform copy and replace initial refElement in copy with a newName
+        val codeFragment = psiFactory.createCodeFragmentWithNewName(callExpression, topLevel, newName)
+
+        val newDeclaration = analyze(codeFragment) {
+            //restore callExpression in copy
+            //offsets are required because context is ignored in KtPsiFactory and codeFragment is always created with eventsEnabled on,
+            //meaning that you can't change it without WA which is here not allowed, because conflict checking is under RA in progress
+            val copyCallExpression =
+                PsiTreeUtil.getParentOfType(codeFragment.findElementAt(offsetInCopy.startOffset), false, callExpression.javaClass)
+            val resolveCall = copyCallExpression?.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()
+            val resolvedSymbol = resolveCall?.partiallyAppliedSymbol?.symbol
+            if (resolvedSymbol is KtSyntheticJavaPropertySymbol) {
+                val getter = resolvedSymbol.javaGetterSymbol.psi
+                externalDeclarations.addIfNotNull(getter)
+                externalDeclarations.addIfNotNull(resolvedSymbol.javaSetterSymbol?.psi)
+                getter
+            } else {
+                val element = resolvedSymbol?.psi
+                externalDeclarations.addIfNotNull(element)
+                element
+            }
+        }
+
+        if (newDeclaration != null && (declaration !is KtParameter || declaration.hasValOrVar()) && !PsiTreeUtil.isAncestor(newDeclaration, declaration, true)) {
+            if (newDeclaration in shadowedElements) continue
+            val expression = refElement.parent as? KtCallExpression ?: refElement
+            val qualifiedState = createQualifiedExpression(expression, newName)
+            if (qualifiedState != null) {
+                val qualifiedExpression = qualifiedState.expression
+                if (qualifiedExpression != null) {
+                    val newReferenceExpression = //can't call resolve on qualified expression because it doesn't have context
+                        getNewCallee(psiFactory.createExpressionCodeFragment(qualifiedExpression.text, callExpression).getContentElement())
+                    if (newReferenceExpression?.mainReference?.resolve() == newDeclaration) {
+                        //if we tried to qualify (no explicit receiver) but it still points to external declaration,
+                        //means that most probably it's impossible to distinguish calls
+                        reportShadowing(declaration, newDeclaration, refElement, newUsages)
                     }
-                } else {
-                    //k1 fails to compile otherwise
+                    else {
+                        usageIterator.set(UsageInfoWithReplacement(expression, declaration, qualifiedExpression))
+                    }
+
+                    continue
                 }
+            }
+
+            if (qualifiedState == null || !qualifiedState.explicitlyQualified) {
+                //if we could not qualify, e.g. anonymous or local,
+                //probably we can qualify all references to external declaration and that's fine
+                notQualifiedExternalDeclarations[newDeclaration] = refElement
             }
         }
     }
 
     fun retargetExternalDeclaration(externalDeclaration: PsiElement) {
-        val processor: (PsiReference) -> Unit = processor@ { ref ->
-            val refElement = ref.element as? KtSimpleNameExpression ?: return@processor
-            if (refElement.getStrictParentOfType<KtTypeReference>() != null) return@processor
-            val expression = refElement.parent as? KtCallExpression ?: refElement
-            val qualifiedExpression = createQualifiedExpression(expression, newName)
-            if (qualifiedExpression != null) {
-                newUsages.add(UsageInfoWithReplacement(expression, declaration, qualifiedExpression))
+        val needToBeQualified = notQualifiedExternalDeclarations.contains(externalDeclaration)
+        val processor: (PsiReference) -> Boolean = processor@ { ref ->
+            val refElement = ref.element as? KtSimpleNameExpression ?: return@processor true
+            if (refElement.getStrictParentOfType<KtTypeReference>() != null ||
+                refElement.getStrictParentOfType<KtImportDirective>() != null) {
+                return@processor true
             }
+
+            val expression = refElement.parent as? KtCallExpression ?: refElement
+            val qualifiedState = createQualifiedExpression(expression, newName)
+            if (qualifiedState?.expression != null) {
+                newUsages.add(UsageInfoWithReplacement(expression, declaration, qualifiedState.expression))
+                return@processor true
+            }
+            return@processor !needToBeQualified || qualifiedState?.explicitlyQualified == true
         }
-        if (externalDeclaration is PsiMethod) {
+        val success = if (externalDeclaration is PsiMethod) {
             MethodReferencesSearch.search(externalDeclaration, declaration.useScope, true).forEach(processor)
         }
         else {
             ReferencesSearch.search(externalDeclaration, declaration.useScope).forEach(processor)
         }
+
+        if (!success && needToBeQualified) {
+            reportShadowing(declaration, externalDeclaration, notQualifiedExternalDeclarations[externalDeclaration]!!, newUsages)
+        }
     }
 
     for (externalDeclaration in externalDeclarations) {
-        retargetExternalDeclaration(externalDeclaration)
+        if (externalDeclaration !in shadowedElements) {
+            retargetExternalDeclaration(externalDeclaration)
+        }
     }
 
     analyze(declaration) {
         //check outer callables hiding/hidden by rename
         val processedDeclarations = mutableSetOf<PsiElement>()
         processedDeclarations.addAll(externalDeclarations)
+        processedDeclarations.addAll(shadowedElements)
         retargetExternalDeclarations(declaration, newName) {
             val callableDeclaration = it.psi as? KtNamedDeclaration
             if (callableDeclaration != null && processedDeclarations.add(callableDeclaration)) {
@@ -198,78 +207,126 @@ fun checkCallableShadowing(
     }
 }
 
-private fun KtExpression.referenceExpression(): KtExpression {
-    return (this as? KtCallExpression)?.calleeExpression ?: (this as? KtQualifiedExpression)?.selectorExpression ?: this
+private fun getNewCallee(ktExpression: KtExpression?): KtSimpleNameExpression? {
+    return if (ktExpression is KtCallableReferenceExpression) {
+        ktExpression.callableReference
+    } else {
+        ktExpression?.getQualifiedElementSelector() as? KtSimpleNameExpression
+    }
 }
 
-private fun createQualifiedExpression(callExpression: KtExpression, newName: String): KtExpression? {
+private fun KtPsiFactory.createCodeFragmentWithNewName(
+    callExpression: KtExpression,
+    topLevel: KtExpression,
+    newName: String
+): KtExpressionCodeFragment {
+    val mark = PsiTreeUtil.mark(callExpression)
+    val topLevelCopy = topLevel.copy()
+    val copiedExpression = PsiTreeUtil.releaseMark(topLevelCopy, mark) as KtExpression
+    val replacement = createExpression(newName)
+    val replaced = when (copiedExpression) {
+        is KtCallExpression -> {
+            copiedExpression.calleeExpression?.replace(replacement)
+            topLevelCopy
+        }
+
+        is KtQualifiedExpression -> {
+            copiedExpression.selectorExpression?.replace(replacement)
+            topLevelCopy
+        }
+
+        else -> {
+            val sameTopLevel = topLevel == callExpression
+            val expression = copiedExpression.replace(replacement) as KtExpression
+            if (sameTopLevel) expression else topLevelCopy
+        }
+    }
+    return createExpressionCodeFragment(replaced.text, callExpression)
+}
+
+private data class QualifiedState(val expression: KtExpression?, val explicitlyQualified: Boolean)
+
+private fun createQualifiedExpression(callExpression: KtExpression, newName: String): QualifiedState? {
     val psiFactory = KtPsiFactory(callExpression.project)
-    val qualifiedExpression = analyze(callExpression) {
+    analyze(callExpression) {
         val appliedSymbol = callExpression.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
         val receiver = appliedSymbol?.extensionReceiver ?: appliedSymbol?.dispatchReceiver
-        if (receiver is KtImplicitReceiverValue) {
-            val symbol = receiver.symbol
-            if ((symbol as? KtClassOrObjectSymbol)?.classKind == KtClassKind.COMPANION_OBJECT) {
+
+        fun getThisQualifier(receiverValue: KtImplicitReceiverValue): String {
+            val symbol = receiverValue.symbol
+            return if ((symbol as? KtClassOrObjectSymbol)?.classKind == KtClassKind.COMPANION_OBJECT) {
                 //specify companion name to avoid clashes with enum entries
                 symbol.name!!.asString()
-            }
-            else if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
+            } else if (symbol is KtClassifierSymbol && symbol !is KtAnonymousObjectSymbol) {
                 "this@" + symbol.name!!.asString()
-            }
-            else if (symbol is KtReceiverParameterSymbol && symbol.owningCallableSymbol is KtNamedSymbol) {
-                receiver.type.expandedClassSymbol?.name?.let { "this@$it" } ?: "this"
-            }
-            else {
+            } else if (symbol is KtReceiverParameterSymbol && symbol.owningCallableSymbol is KtNamedSymbol) {
+                receiverValue.type.expandedClassSymbol?.name?.let { "this@$it" } ?: "this"
+            } else {
                 "this"
             }
-        } else if (receiver == null) {
-            val symbol = appliedSymbol?.symbol
-            val containingSymbol = symbol?.getContainingSymbol()
-            val containerFQN =
-                if (containingSymbol is KtClassOrObjectSymbol) {
-                    containingSymbol.classIdIfNonLocal?.asSingleFqName()?.parent()
-                } else {
-                    (symbol?.psi as? KtElement)?.containingKtFile?.packageFqName
-                }
-            containerFQN?.asString()?.takeIf { it.isNotEmpty() }
         }
-        else if (receiver is KtExplicitReceiverValue) {
+
+        fun getExplicitQualifier(receiverValue: KtExplicitReceiverValue): String? {
             val containingSymbol = appliedSymbol?.symbol?.getContainingSymbol()
             val enumClassSymbol = containingSymbol?.getContainingSymbol()
             //add companion qualifier to avoid clashes with enum entries
-            if (containingSymbol is KtNamedClassOrObjectSymbol && containingSymbol.classKind == KtClassKind.COMPANION_OBJECT &&
+            return if (containingSymbol is KtNamedClassOrObjectSymbol && containingSymbol.classKind == KtClassKind.COMPANION_OBJECT &&
                 enumClassSymbol is KtNamedClassOrObjectSymbol && enumClassSymbol.classKind == KtClassKind.ENUM_CLASS &&
-                (receiver.expression as? KtNameReferenceExpression)?.mainReference?.resolve() == containingSymbol.psi
+                (receiverValue.expression as? KtNameReferenceExpression)?.mainReference?.resolve() == containingSymbol.psi
             ) {
                 containingSymbol.name.asString()
-            } else null
+            } else {
+                null
+            }
         }
-        else null
-    }?.let { psiFactory.createExpressionByPattern("$it.$0", callExpression) } ?: callExpression.copied()
-    val newCallee = if (qualifiedExpression is KtCallableReferenceExpression) {
-        qualifiedExpression.callableReference
-    } else {
-        qualifiedExpression.getQualifiedElementSelector() as? KtSimpleNameExpression
+
+        val qualifierText = when (receiver) {
+            is KtImplicitReceiverValue -> getThisQualifier(receiver)
+
+            is KtExplicitReceiverValue -> {
+                getExplicitQualifier(receiver) ?: return QualifiedState(null, true)
+            }
+
+            is KtSmartCastedReceiverValue -> {
+                when (val receiverValue = receiver.original) {
+                    is KtImplicitReceiverValue -> getThisQualifier(receiverValue)
+                    is KtExplicitReceiverValue -> getExplicitQualifier(receiverValue)
+                    else -> null
+                }
+            }
+
+            null -> {
+                val symbol = appliedSymbol?.symbol
+                val containingSymbol = symbol?.getContainingSymbol()
+                val containerFQN =
+                    if (containingSymbol is KtClassOrObjectSymbol) {
+                        containingSymbol.classIdIfNonLocal?.asSingleFqName()?.parent()
+                    } else {
+                        (symbol?.psi as? KtElement)?.containingKtFile?.packageFqName
+                    }
+                containerFQN?.asString()?.takeIf { it.isNotEmpty() }
+            }
+        } ?: return null
+
+        val qualifiedExpression = psiFactory.createExpressionByPattern("$qualifierText.$0", callExpression)
+        getNewCallee(qualifiedExpression)?.getReferencedNameElement()?.replace(psiFactory.createNameIdentifier(newName))
+        return QualifiedState(qualifiedExpression, receiver is KtExplicitReceiverValue)
     }
-    newCallee?.getReferencedNameElement()?.replace(psiFactory.createNameIdentifier(newName))
-    return qualifiedExpression
 }
 
-context(KtAnalysisSession)
 private fun reportShadowing(
     declaration: PsiNamedElement,
-    elementToBindUsageInfoTo: PsiElement,
     candidate: PsiElement,
     refElement: PsiElement,
     result: MutableList<UsageInfo>
 ) {
-    val candidate = candidate as? PsiNamedElement ?: return
+    val candidatePresentation = (candidate as? PsiNamedElement)?.renderDescription() ?: return
     val message = KotlinBundle.message(
         "text.0.will.be.shadowed.by.1",
         declaration.renderDescription(),
-        candidate.renderDescription()
+        candidatePresentation
     ).capitalize()
-    result += BasicUnresolvableCollisionUsageInfo(refElement, elementToBindUsageInfoTo, message)
+    result += BasicUnresolvableCollisionUsageInfo(refElement, declaration, message)
 }
 
 context(KtAnalysisSession)

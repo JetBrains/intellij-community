@@ -78,6 +78,16 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/conflicts/classes/FunctionWithClassTypeParameters.kt");
     }
 
+    @TestMetadata("conflicts/functions/DefaultParameter.kt")
+    public void testConflicts_functions_DefaultParameter() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/functions/DefaultParameter.kt");
+    }
+
+    @TestMetadata("conflicts/functions/DefaultParameterInClass.kt")
+    public void testConflicts_functions_DefaultParameterInClass() throws Exception {
+        runTest("testData/refactoring/rename/inplace/conflicts/functions/DefaultParameterInClass.kt");
+    }
+
     @TestMetadata("conflicts/functions/DifferentSignatures.kt")
     public void testConflicts_functions_DifferentSignatures() throws Exception {
         runTest("testData/refactoring/rename/inplace/conflicts/functions/DifferentSignatures.kt");
