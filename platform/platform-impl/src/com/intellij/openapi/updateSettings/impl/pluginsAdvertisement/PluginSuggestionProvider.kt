@@ -18,10 +18,9 @@ interface PluginSuggestionProvider {
   fun getSuggestion(project: Project, file: VirtualFile): Function<FileEditor, EditorNotificationPanel?>?
 }
 
-@ApiStatus.Internal
-class DefaultPluginSuggestion(
+internal class DefaultPluginSuggestion(
   private val project: Project,
-  private val pluginId: String,
+  private val pluginIds: List<String>,
   private val pluginName: String,
   private val fileLabel: String,
   private val suggestionDismissKey: String
@@ -32,8 +31,6 @@ class DefaultPluginSuggestion(
     panel.text = IdeBundle.message("plugins.advertiser.plugins.found", fileLabel)
 
     panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.install.plugin.name", pluginName)) {
-      val pluginIds = listOf(pluginId)
-
       FUSEventSource.EDITOR.logInstallPlugins(pluginIds, project)
       installAndEnable(project, pluginIds.map(PluginId::getId).toSet(), true) {
         EditorNotifications.getInstance(project).updateAllNotifications()
@@ -51,18 +48,30 @@ class DefaultPluginSuggestion(
 }
 
 fun buildSuggestionIfNeeded(project: Project,
-                            pluginId: String,
+                            pluginIds: List<String>,
                             pluginName: String,
                             fileLabel: String,
                             suggestionDismissKey: String): Function<FileEditor, EditorNotificationPanel?>? {
   if (PropertiesComponent.getInstance().isTrueValue(suggestionDismissKey)) return null
 
-  val requiredPluginId = PluginId.getId(pluginId)
-  if (PluginManager.isPluginInstalled(requiredPluginId)) return null
+  val requiredPluginIds = pluginIds.filter { id ->
+    val requiredPluginId = PluginId.getId(id)
+    !PluginManager.isPluginInstalled(requiredPluginId)
+  }
+
+  if (requiredPluginIds.isEmpty()) return null
 
   return DefaultPluginSuggestion(project,
-                                 pluginId = pluginId,
+                                 pluginIds = requiredPluginIds,
                                  pluginName = pluginName,
                                  fileLabel = fileLabel,
                                  suggestionDismissKey = suggestionDismissKey)
+}
+
+fun buildSuggestionIfNeeded(project: Project,
+                            pluginId: String,
+                            pluginName: String,
+                            fileLabel: String,
+                            suggestionDismissKey: String): Function<FileEditor, EditorNotificationPanel?>? {
+  return buildSuggestionIfNeeded(project, listOf(pluginId), pluginName, fileLabel, suggestionDismissKey)
 }

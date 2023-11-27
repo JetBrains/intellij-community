@@ -2456,6 +2456,7 @@
     <iconMapper mappingFile="JavaUIIconsMapping.json"/>
 
     <pluginSuggestionProvider implementation="com.intellij.ide.ant.AntSuggestionProvider"/>
+    <pluginSuggestionProvider implementation="com.intellij.ide.android.AndroidSuggestionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
