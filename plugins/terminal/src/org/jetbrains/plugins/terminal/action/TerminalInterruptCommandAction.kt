@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.action
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.terminal.TerminalBundle
@@ -14,7 +16,7 @@ import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
 class TerminalInterruptCommandAction : DumbAwareAction(TerminalBundle.message("action.Terminal.InterruptCommand.text")),
-                                       ActionPromoter, ActionRemoteBehaviorSpecification.Disabled {
+                                       ActionRemoteBehaviorSpecification.Disabled {
   init {
     val keyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK)
     shortcutSet = CustomShortcutSet(keyStroke)
@@ -36,12 +38,4 @@ class TerminalInterruptCommandAction : DumbAwareAction(TerminalBundle.message("a
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-  override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
-    // This action has the same shortcut as Copy actions on Windows and Linux - Ctrl + C.
-    // But this action should be checked for enabled after all copy actions.
-    val copyTextAction = actions.find { it is TerminalCopyTextAction }
-    val copyBlockAction = actions.find { it is TerminalCopyBlockAction }
-    return listOfNotNull(copyTextAction, copyBlockAction, this)
-  }
 }

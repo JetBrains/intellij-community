@@ -6,13 +6,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.terminal.exp.CommandBlock
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
-import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
 
-class TerminalCopyBlockAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+class TerminalCopyBlockAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.editor ?: return
     val selectionController = e.selectionController ?: return

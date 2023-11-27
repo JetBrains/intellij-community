@@ -5,13 +5,13 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
-import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
 
-class TerminalCopyTextAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+class TerminalCopyTextAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     val selectedText = e.editor?.selectionModel?.selectedText ?: return
     CopyPasteManager.copyTextToClipboard(selectedText)

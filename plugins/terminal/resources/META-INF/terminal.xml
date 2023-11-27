@@ -37,6 +37,7 @@
     <iconMapper mappingFile="TerminalIconMappings.json"/>
     <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal"/>
 
+    <actionPromoter implementation="org.jetbrains.plugins.terminal.action.TerminalCtrlCActionsPromoter"/>
     <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalEnterHandler"
                          id="terminalEnter" order="first"/>
     <editorActionHandler action="EditorUp" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalCaretUpHandler"
