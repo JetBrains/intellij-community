@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
@@ -548,7 +547,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public void notifyDirectoryMappingChanged() {
-    BackgroundTaskUtil.syncPublisher(myProject, VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
+    fireDirectoryMappingsChanged();
   }
 
   void readDirectoryMappings(@NotNull Element element) {

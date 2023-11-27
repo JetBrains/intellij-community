@@ -48,6 +48,10 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   @NotNull
   public abstract List<PersistentVcsShowConfirmationOption> getAllConfirmations();
 
+  /**
+   * @deprecated A plugin should not need to call this.
+   */
+  @Deprecated
   public abstract void notifyDirectoryMappingChanged();
 
   @RequiresEdt
@@ -59,6 +63,10 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
 
   public abstract void scheduleMappedRootsUpdate();
 
+  /**
+   * @deprecated A plugin should not need to call this.
+   */
+  @Deprecated
   public abstract void fireDirectoryMappingsChanged();
 
   /**
