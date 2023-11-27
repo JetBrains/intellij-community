@@ -265,7 +265,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   fun testWithDependencyLastUpdatedWithErrorForceUpdate() = runBlocking {
     doLastUpdatedTest(true, pom()) {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)
-      TestCase.assertEquals(0, projectsManager.rootProjects[0].problems.size)
+      TestCase.assertEquals(projectsManager.rootProjects[0].problems.joinToString{it.toString()}, 0, projectsManager.rootProjects[0].problems.size)
     }
   }
 
@@ -273,7 +273,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
   fun testWithPluginLastUpdatedWithErrorForceUpdate() = runBlocking {
     doLastUpdatedTest(true, pomPlugins()) {
       TestCase.assertEquals(1, projectsManager.rootProjects.size)
-      TestCase.assertEquals(0, projectsManager.rootProjects[0].problems.size)
+      TestCase.assertEquals(projectsManager.rootProjects[0].problems.joinToString{it.toString()},0, projectsManager.rootProjects[0].problems.size)
     }
     val helper = MavenCustomRepositoryHelper(myDir, "local1", "remote")
     removeFromLocalRepository("org/mytest/myartifact/")
