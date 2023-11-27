@@ -26,6 +26,7 @@ public final class PersistentFSAttributeAccessor {
 
   public boolean hasAttributePage(final int fileId,
                                   final @NotNull FileAttribute attribute) throws IOException {
+    connection.ensureFileIdIsValid(fileId);
     return attributesStorage.hasAttributePage(connection, fileId, attribute);
   }
 
@@ -68,50 +69,47 @@ public final class PersistentFSAttributeAccessor {
   <R> @Nullable R readAttributeRaw(final int fileId,
                                    final @NotNull FileAttribute attribute,
                                    final ByteBufferReader<R> reader) throws IOException {
-    if (attributesStorage instanceof AttributesStorageOverBlobStorage storage) {
-      return storage.readAttributeRaw(connection, fileId, attribute, buffer -> {
-        if (attribute.isVersioned()) {
-          final int actualVersion = DataInputOutputUtil.readINT(buffer);
-          if (actualVersion != attribute.getVersion()) {
-            return null;
-          }
-        }
-        return reader.read(buffer);
-      });
-    }
-    else {
+    if (!(attributesStorage instanceof AttributesStorageOverBlobStorage newAttributesStorage)) {
       throw new UnsupportedOperationException("Raw attribute access is not implemented for " + attributesStorage.getClass().getName());
     }
+
+    connection.ensureFileIdIsValid(fileId);
+
+    return newAttributesStorage.readAttributeRaw(connection, fileId, attribute, buffer -> {
+      if (attribute.isVersioned()) {
+        final int actualVersion = DataInputOutputUtil.readINT(buffer);
+        if (actualVersion != attribute.getVersion()) {
+          return null;
+        }
+      }
+      return reader.read(buffer);
+    });
   }
 
   public void writeAttributeRaw(final int fileId,
                                 final @NotNull FileAttribute attribute,
                                 final ByteBufferWriter writer) {
-    if (attributesStorage instanceof AttributesStorageOverBlobStorage storage) {
-      throw new UnsupportedOperationException("Method not implemented yet");
-      //TODO RC: drill hole for storage.writeAttributeRaw(connection, fileId, attribute, writer)
-      //return storage.writeAttribute(connection, fileId, attribute, buffer -> {
-      //  if (attribute.isVersioned()) {
-      //    DataInputOutputUtil.writeINT(buffer);
-      //  }
-      //  return writer.write(buffer);
-      //});
-    }
-    else {
+    if (!(attributesStorage instanceof AttributesStorageOverBlobStorage newAttributesStorage)) {
       throw new UnsupportedOperationException("Raw attribute access is not implemented for " + attributesStorage.getClass().getName());
     }
-  }
 
-  //======================================================================================
+    connection.ensureFileIdIsValid(fileId);
+    throw new UnsupportedOperationException("Method not implemented yet");
+    //TODO RC: drill hole for storage.writeAttributeRaw(connection, fileId, attribute, writer)
+    //return storage.writeAttribute(connection, fileId, attribute, buffer -> {
+    //  if (attribute.isVersioned()) {
+    //    DataInputOutputUtil.writeINT(buffer);
+    //  }
+    //  return writer.write(buffer);
+    //});
+  }
 
   /**
    * Opens given attribute of given file for writing
    */
   public @NotNull AttributeOutputStream writeAttribute(final int fileId,
                                                        final @NotNull FileAttribute attribute) {
-    //MAYBE RC: check fileId for be in range (1..max)? fileId will be checked on stream.close(),
-    //          but it is quite common to swallow exceptions from stream.close() -- and in general
-    //          it is better to fail earlier
+    connection.ensureFileIdIsValid(fileId);
     final AttributeOutputStream attributeStream = attributesStorage.writeAttribute(connection, fileId, attribute);
     if (attribute.isVersioned()) {
       try {
@@ -126,6 +124,7 @@ public final class PersistentFSAttributeAccessor {
   }
 
   public void deleteAttributes(final int fileId) throws IOException {
+    connection.ensureFileIdIsValid(fileId);
     attributesStorage.deleteAttributes(connection, fileId);
   }
 }

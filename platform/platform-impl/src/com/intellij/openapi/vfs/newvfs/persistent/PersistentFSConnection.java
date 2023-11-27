@@ -424,6 +424,14 @@ public final class PersistentFSConnection {
     assert id > 0 : id;
   }
 
+  /**@throws IndexOutOfBoundsException if fileId is outside already allocated file ids */
+  void ensureFileIdIsValid(int fileId) throws IndexOutOfBoundsException{
+    int maxAllocatedID = records.maxAllocatedID();
+    if (fileId <= 0 || fileId > maxAllocatedID) {
+      throw new IndexOutOfBoundsException("fileId[" + fileId + "] is outside valid/allocated ids range [1.." + maxAllocatedID + "]");
+    }
+  }
+
   private static void showCorruptionNotification(boolean insisting) {
     NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE Caches");
     var actions = new ArrayList<AnAction>();
@@ -490,7 +498,7 @@ public final class PersistentFSConnection {
           try {
             connection.doForce();
           }
-          catch (AlreadyDisposedException | RejectedExecutionException e){
+          catch (AlreadyDisposedException | RejectedExecutionException e) {
             LOG.warn("Stop flushing: pool is shutting down or whole application is closing", e);
             scheduledFuture.cancel(false);
           }
