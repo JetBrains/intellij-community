@@ -13,6 +13,7 @@ import com.intellij.platform.ae.database.AEDatabaseLifetime
 import com.intellij.platform.ae.database.activities.ReadableUserActivity
 import com.intellij.platform.ae.database.activities.WritableDatabaseBackedCounterUserActivity
 import com.intellij.platform.ae.database.utils.InstantUtils
+import com.intellij.util.asSafely
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
@@ -172,7 +173,7 @@ internal class FusBasedCounterUserActivityService(cs: CoroutineScope) {
 
   init {
     cs.launch {
-      activitiesSubmitFlow.collectLatest {
+      activitiesSubmitFlow.collect {
         val activity = find(it.group, it.event, it.fields)
         if (activity != null) {
           activity.increment(it.fields, it.time)
@@ -182,7 +183,8 @@ internal class FusBasedCounterUserActivityService(cs: CoroutineScope) {
   }
 
   fun submit(group: String, event: String, fields: Map<String, Any>) {
-    activitiesSubmitFlow.tryEmit(ActivitySubmission(group, event, fields, InstantUtils.Now))
+    val time = fields["created"]?.asSafely<Long>()?.let { Instant.ofEpochMilli(it) } ?: InstantUtils.Now
+    activitiesSubmitFlow.tryEmit(ActivitySubmission(group, event, fields, time))
   }
 
   private suspend fun find(group: String, event: String, fields: Map<String, Any>): FusBasedCounterUserActivity? {
