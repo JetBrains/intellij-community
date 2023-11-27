@@ -244,13 +244,11 @@ internal class XmlDataWriter(private val rootElementName: String?,
         writer.append(entry.key)
         writer.append('=')
         writer.append('"')
+        var value = entry.value
         if (replacePathMap != null) {
-          val value = replacePathMap.substitute(JDOMUtil.escapeText(entry.value, false, true), SystemInfo.isFileSystemCaseSensitive)
-          writer.append(value)
+          value = replacePathMap.substitute(value, SystemInfo.isFileSystemCaseSensitive)
         }
-        else {
-          writer.append(JDOMUtil.escapeText(entry.value, false, true))
-        }
+        writer.append(JDOMUtil.escapeText(value, false, true))
         writer.append('"')
       }
 
