@@ -14,9 +14,9 @@ open class OpentelemetryJsonParser(private val spanFilter: SpanFilter) {
                                         retries = 5,
                                         printFailuresMode = PrintFailuresMode.ONLY_LAST_FAILURE,
                                         delay = 300.milliseconds) {
-      val json = Files.readString(file)
-
-      val root = jacksonObjectMapper().readTree(json)
+      val root = Files.newInputStream(file).use {
+        jacksonObjectMapper().readTree(it)
+      }
       val data = root.get("data")
       if (data == null || data.isEmpty) {
         throw IllegalArgumentException("No 'data' node in json at path $file")
@@ -29,18 +29,19 @@ open class OpentelemetryJsonParser(private val spanFilter: SpanFilter) {
     }
 
     val allSpans = spanData!![0].get("spans")
-    if (allSpans == null || allSpans.isEmpty)
+    if (allSpans == null || allSpans.isEmpty) {
       throw IllegalStateException("No spans was found")
+    }
     return allSpans
   }
 
   private fun getParentToSpanMap(file: Path): Map<String, Set<SpanElement>> {
-    val indexParentToChild = mutableMapOf<String, MutableSet<SpanElement>>()
+    val indexParentToChild = LinkedHashMap<String, MutableSet<SpanElement>>()
     val spans = getSpans(file)
     for (span in spans) {
       val parentSpanId = span.getParentSpanId()
       if (parentSpanId != null) {
-        indexParentToChild.getOrPut(parentSpanId) { mutableSetOf() }.add(span.toSpanElement())
+        indexParentToChild.computeIfAbsent(parentSpanId) { LinkedHashSet() }.add(span.toSpanElement())
       }
     }
     return indexParentToChild
@@ -50,7 +51,7 @@ open class OpentelemetryJsonParser(private val spanFilter: SpanFilter) {
     val spans = getSpanElements(getSpans(file))
     val index = getParentToSpanMap(file)
     val filter = spans.filter { spanElement -> spanFilter.filter(spanElement) }
-    val result = mutableSetOf<SpanElement>()
+    val result = LinkedHashSet<SpanElement>()
     filter.forEach {
       result.add(it)
       processChild(result, it, index)
