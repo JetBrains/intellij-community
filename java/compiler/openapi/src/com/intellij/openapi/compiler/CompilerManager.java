@@ -14,10 +14,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * A "root" class in compiler subsystem - allows one to register a custom compiler or a compilation task, register/unregister a compilation listener
@@ -276,6 +278,23 @@ public abstract class CompilerManager {
                                                           Collection<? extends File> sourcePath,
                                                           Collection<? extends File> files,
                                                           File outputDir) throws IOException, CompilationException;
+
+  /**
+   * Compiles java files with given parameters and provides a way to listen to diagnostics reported and class objects created during the
+   * compilation. Listeners will be invoked regardless of the compilation result (success/failure).
+   *
+   * @return {@code true} if compilation succeeds, {@code false} otherwise
+   */
+  public abstract boolean compileJavaCode(List<String> options,
+                                          Collection<? extends File> platformCp,
+                                          Collection<? extends File> classpath,
+                                          Collection<? extends File> upgradeModulePath,
+                                          Collection<? extends File> modulePath,
+                                          Collection<? extends File> sourcePath,
+                                          Collection<? extends File> files,
+                                          File outputDir,
+                                          DiagnosticListener<? super JavaFileObject> diagnosticListener,
+                                          Consumer<? super ClassObject> outputListener) throws IOException;
 
   @Nullable
   public abstract File getJavacCompilerWorkingDir();
