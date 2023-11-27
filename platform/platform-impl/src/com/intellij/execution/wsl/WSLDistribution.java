@@ -233,12 +233,12 @@ public class WSLDistribution implements AbstractWslDistribution {
           var ptyOptions = ((PtyCommandLine)commandLine).getPtyOptions();
           var ijentPty = new IjentApi.Pty(ptyOptions.getInitialColumns(), ptyOptions.getInitialRows(), !ptyOptions.getConsoleMode());
 
-          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, options, ijentPty);
+          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, ijentPty, options.isSudo());
         });
       }
       else {
         commandLine.setProcessCreator((processBuilder) -> {
-          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, options, null);
+          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, null, options.isSudo());
         });
       }
     }

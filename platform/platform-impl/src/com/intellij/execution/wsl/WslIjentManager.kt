@@ -57,17 +57,34 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
     }
   }
 
+  /**
+   * Runs a process inside a WSL container defined by [wslDistribution] using IJent.
+   *
+   * [project] is supposed to be used only for showing notifications with appropriate modality. Therefore, it may be almost safely omitted.
+   *
+   * [processBuilder] chosen as a convenient adapter for already written code. The functions uses command line arguments, environment
+   * variables and the working directory defined by [processBuilder].
+   *
+   * The function ignores [ProcessBuilder.redirectInput], [ProcessBuilder.redirectOutput], [ProcessBuilder.redirectError] and similar
+   * methods. Stdin, stdout, and stderr are always piped. The caller MUST drain both [Process.getInputStream] and [Process.getErrorStream].
+   * Otherwise, the remote operating system may suspend the remote process due to buffer overflow.
+   *
+   * [isSudo] allows to start IJent inside WSL through sudo. It implies that all children processes, including [processBuilder] will run
+   * from the root user as well.
+   */
+  @RequiresBackgroundThread
+  @RequiresBlockingContext
   fun runProcessBlocking(
     wslDistribution: WSLDistribution,
     project: Project?,
     processBuilder: ProcessBuilder,
-    options: WSLCommandLineOptions,
-    pty: IjentApi.Pty?
+    pty: IjentApi.Pty?,
+    isSudo: Boolean,
   ): Process {
     return runBlocking {
       val command = processBuilder.command()
 
-      val ijentApi = getIjentApi(wslDistribution, project, options.isSudo)
+      val ijentApi = getIjentApi(wslDistribution, project, isSudo)
       when (val processResult = ijentApi.executeProcess(
         exe = FileUtil.toSystemIndependentName(command.first()),
         args = *command.toList().drop(1).toTypedArray(),
