@@ -382,7 +382,7 @@ public class org/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLazyColum
 	public fun <init> ()V
 	public fun handlePointerEventPress (Landroidx/compose/ui/input/pointer/PointerEvent;Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Ljava/util/List;Ljava/lang/Object;)V
 	public fun onExtendSelectionToKey (Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;)V
-	public fun toggleKeySelection (Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;)V
+	public fun toggleKeySelection (Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;)V
 }
 
 public class org/jetbrains/jewel/foundation/lazy/tree/DefaultSelectableLazyColumnKeyActions : org/jetbrains/jewel/foundation/lazy/tree/KeyActions {
@@ -470,7 +470,7 @@ public final class org/jetbrains/jewel/foundation/lazy/tree/KeyActionsKt {
 public abstract interface class org/jetbrains/jewel/foundation/lazy/tree/PointerEventActions {
 	public abstract fun handlePointerEventPress (Landroidx/compose/ui/input/pointer/PointerEvent;Lorg/jetbrains/jewel/foundation/lazy/SelectableColumnKeybindings;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;Ljava/util/List;Ljava/lang/Object;)V
 	public abstract fun onExtendSelectionToKey (Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;)V
-	public abstract fun toggleKeySelection (Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;)V
+	public abstract fun toggleKeySelection (Ljava/lang/Object;Ljava/util/List;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lorg/jetbrains/jewel/foundation/lazy/SelectionMode;)V
 }
 
 public final class org/jetbrains/jewel/foundation/lazy/tree/Tree {

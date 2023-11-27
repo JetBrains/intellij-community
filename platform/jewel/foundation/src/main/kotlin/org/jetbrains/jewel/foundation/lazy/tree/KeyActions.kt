@@ -46,6 +46,7 @@ public interface PointerEventActions {
         key: Any,
         allKeys: List<SelectableLazyListKey>,
         selectableLazyListState: SelectableLazyListState,
+        selectionMode: SelectionMode,
     )
 
     public fun onExtendSelectionToKey(
@@ -78,7 +79,7 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
                 }
 
                 pointerEvent.keyboardModifiers.isMultiSelectionKeyPressed -> {
-                    toggleKeySelection(key, allKeys, selectableLazyListState)
+                    toggleKeySelection(key, allKeys, selectableLazyListState, selectionMode)
                 }
 
                 else -> {
@@ -93,11 +94,18 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
         key: Any,
         allKeys: List<SelectableLazyListKey>,
         selectableLazyListState: SelectableLazyListState,
+        selectionMode: SelectionMode,
     ) {
-        selectableLazyListState.selectedKeys = if (selectableLazyListState.selectedKeys.contains(key)) {
-            selectableLazyListState.selectedKeys - key
-        } else {
-            selectableLazyListState.selectedKeys + key
+        when (selectionMode) {
+            SelectionMode.None -> return
+            SelectionMode.Single -> selectableLazyListState.selectedKeys = setOf(key)
+            SelectionMode.Multiple -> {
+                if (key in selectableLazyListState.selectedKeys) {
+                    selectableLazyListState.selectedKeys -= key
+                } else {
+                    selectableLazyListState.selectedKeys += key
+                }
+            }
         }
         selectableLazyListState.lastActiveItemIndex = allKeys.indexOfFirst { it == key }
     }
@@ -161,8 +169,9 @@ public class DefaultTreeViewPointerEventAction(
 
                 pointerEvent.keyboardModifiers.isMultiSelectionKeyPressed -> {
                     selectableLazyListState.lastKeyEventUsedMouse = false
-                    super.toggleKeySelection(key, allKeys, selectableLazyListState)
+                    super.toggleKeySelection(key, allKeys, selectableLazyListState, selectionMode)
                 }
+
                 else -> {
                     selectableLazyListState.selectedKeys = setOf(key)
                 }

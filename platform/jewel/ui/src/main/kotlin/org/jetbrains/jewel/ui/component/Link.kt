@@ -260,7 +260,6 @@ private fun LinkImpl(
             .clickable(
                 onClick = {
                     linkState = linkState.copy(visited = true)
-                    println("clicked Link")
                     onClick()
                 },
                 enabled = enabled,

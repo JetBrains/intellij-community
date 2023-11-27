@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyColumn
+import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -70,6 +71,7 @@ fun SelectableLazyColumnSample() {
         modifier = Modifier.size(200.dp, 200.dp),
     ) {
         SelectableLazyColumn(
+            selectionMode = SelectionMode.Multiple,
             modifier = Modifier.focusable(interactionSource = interactionSource),
             state = state,
             content = {
