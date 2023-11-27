@@ -121,7 +121,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
           }.cancellable()
 
           descriptorFlow.takeWhile {
-            consumer.process(it)
+            blockingContext { consumer.process(it) }
           }.collect {}
         }
 
@@ -146,7 +146,7 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
 
               val prepareDescriptor = prepareSemanticDescriptor(descriptor, knownItems, TimeoutUtil.getDurationMillis(searchStart))
               mutex.withLock { prepareDescriptor() }?.let {
-                consumer.process(it)
+                blockingContext { consumer.process(it) }
                 foundItemsCount++
               }
               if (priority != DescriptorPriority.HIGH && foundItemsCount >= desiredResultsCount) break
