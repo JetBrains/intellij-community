@@ -68,7 +68,7 @@ class PySdkToInstallCollector : CounterUsagesCollector() {
     }
 
 
-    private val GROUP = EventLogGroup("python.sdk.install.events", 3)
+    private val GROUP = EventLogGroup("python.sdk.install.events", 4)
 
     private val versionField = EventFields.StringValidatedByRegexp("py_version", "version")
 
