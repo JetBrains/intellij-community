@@ -2,13 +2,11 @@
 package com.intellij.vcs.log;
 
 import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class VcsLogBundle {
   private static final @NonNls String BUNDLE = "messages.VcsLogBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(VcsLogBundle.class, BUNDLE);
