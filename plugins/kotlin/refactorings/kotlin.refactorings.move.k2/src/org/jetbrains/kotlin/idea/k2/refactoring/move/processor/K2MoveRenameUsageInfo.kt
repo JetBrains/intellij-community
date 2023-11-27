@@ -313,12 +313,12 @@ sealed class K2MoveRenameUsageInfo(
                 for (usageInfo in this@sortedByFile) {
                     val element = usageInfo.element
                     if (element == null) {
-                        LOG.warn("Could not update usage because element is invalid")
+                        LOG.error("Could not update usage because element is invalid")
                         continue
                     }
                     val containingFile = element.containingFile
                     if (containingFile == null) {
-                        LOG.warn("Could not update usage because element has no containing file")
+                        LOG.error("Could not update usage because element has no containing file")
                         continue
                     }
                     val usageInfos: MutableList<K2MoveRenameUsageInfo> = getOrPut(containingFile) { mutableListOf() }
