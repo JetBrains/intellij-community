@@ -6,7 +6,6 @@ import com.intellij.util.containers.ThreadLocalRandom;
 import com.intellij.util.containers.Unsafe;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.processing.Generated;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
@@ -15,6 +14,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
+ * DO NOT MODIFY. THIS FILE WAS PORTED FROM THE OTHER REPOSITORY AND SHOULD BE TREATED AS GENERATED
  * Adapted from Doug Lea <a href="https://gee.cs.oswego.edu/dl/concurrency-interest/index.html">ConcurrentHashMap</a> to long keys
  * with following additions/changes:
  * - added hashing strategy argument
@@ -25,7 +25,6 @@ import java.util.function.Predicate;
  * Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentLongObjectMap()} to create this map
  */
 @SuppressWarnings("ALL")
-@Generated("Do not modify, to ease following ports")
 final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
 
   /*

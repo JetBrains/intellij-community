@@ -15,6 +15,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
 /**
+ * DO NOT MODIFY. THIS FILE WAS PORTED FROM THE OTHER REPOSITORY AND SHOULD BE TREATED AS GENERATED
  * Adapted from Doug Lea <a href="https://gee.cs.oswego.edu/dl/concurrency-interest/index.html">ConcurrentHashMap</a> to int keys
  * with following additions/changes:
  * - added hashing strategy argument
