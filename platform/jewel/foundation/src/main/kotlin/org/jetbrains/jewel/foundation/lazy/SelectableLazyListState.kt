@@ -21,7 +21,7 @@ public val SelectableLazyListState.visibleItemsRange: IntRange
 
 public interface SelectableScope {
 
-    public var selectedKeys: List<Any>
+    public var selectedKeys: Set<Any>
 }
 
 /**
@@ -36,7 +36,7 @@ public class SelectableLazyListState(
 
     internal var lastKeyEventUsedMouse: Boolean = false
 
-    override var selectedKeys: List<Any> by mutableStateOf(emptyList<Any>())
+    override var selectedKeys: Set<Any> by mutableStateOf(emptySet())
 
     public var lastActiveItemIndex: Int? = null
 

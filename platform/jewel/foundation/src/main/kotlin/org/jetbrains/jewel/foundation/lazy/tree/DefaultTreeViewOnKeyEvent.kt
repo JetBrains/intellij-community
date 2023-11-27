@@ -41,7 +41,7 @@ public open class DefaultTreeViewOnKeyEvent(
                             ?.let {
                                 state.lastActiveItemIndex =
                                     keys.indexOfFirst { selectableKey -> selectableKey.key == parentNodeKey }
-                                state.selectedKeys = listOf(parentNodeKey)
+                                state.selectedKeys = setOf(parentNodeKey)
                             }
                     }
             }
@@ -59,7 +59,7 @@ public open class DefaultTreeViewOnKeyEvent(
             if (keys[i].key in keyNodeList) {
                 if (keys[i] is SelectableLazyListKey.Selectable) {
                     state.lastActiveItemIndex = i
-                    state.selectedKeys = listOf(keys[i].key)
+                    state.selectedKeys = setOf(keys[i].key)
                 }
                 break
             }

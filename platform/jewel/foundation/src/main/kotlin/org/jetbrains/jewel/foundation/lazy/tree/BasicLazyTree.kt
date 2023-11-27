@@ -15,8 +15,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -149,8 +149,21 @@ public fun <T> BasicLazyTree(
                         ?: false,
                 )
 
-            val backgroundShape by remember {
-                mutableStateOf(RoundedCornerShape(elementBackgroundCornerSize))
+            val backgroundShape by derivedStateOf {
+                val hasRoundedTopCorners = flattenedTree.getOrNull(index - 1)?.id?.let {
+                    it !in treeState.delegate.selectedKeys
+                } ?: false
+                val hasRoundedBottomCorners = flattenedTree.getOrNull(index + 1)?.id?.let {
+                    it !in treeState.delegate.selectedKeys
+                } ?: false
+                val topCornerSize = computerCornerSize(hasRoundedTopCorners, elementBackgroundCornerSize)
+                val bottomCornerSize = computerCornerSize(hasRoundedBottomCorners, elementBackgroundCornerSize)
+                RoundedCornerShape(
+                    topStart = topCornerSize,
+                    topEnd = topCornerSize,
+                    bottomEnd = bottomCornerSize,
+                    bottomStart = bottomCornerSize,
+                )
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -200,6 +213,11 @@ public fun <T> BasicLazyTree(
         }
     }
 }
+
+private fun computerCornerSize(
+    isRounded: Boolean,
+    cornerSize: CornerSize,
+) = if (isRounded) cornerSize else CornerSize(0.dp)
 
 private fun Modifier.elementBackground(
     state: TreeElementState,

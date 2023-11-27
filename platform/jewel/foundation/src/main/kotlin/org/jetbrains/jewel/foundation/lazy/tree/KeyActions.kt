@@ -82,7 +82,7 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
                 }
 
                 else -> {
-                    selectableLazyListState.selectedKeys = listOf(key)
+                    selectableLazyListState.selectedKeys = setOf(key)
                     selectableLazyListState.lastActiveItemIndex = allKeys.indexOfFirst { it.key == key }
                 }
             }
@@ -94,12 +94,10 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
         allKeys: List<SelectableLazyListKey>,
         selectableLazyListState: SelectableLazyListState,
     ) {
-        if (selectableLazyListState.selectedKeys.contains(key)) {
-            selectableLazyListState.selectedKeys =
-                selectableLazyListState.selectedKeys.toMutableList().also { it.remove(key) }
+        selectableLazyListState.selectedKeys = if (selectableLazyListState.selectedKeys.contains(key)) {
+            selectableLazyListState.selectedKeys - key
         } else {
-            selectableLazyListState.selectedKeys =
-                selectableLazyListState.selectedKeys.toMutableList().also { it.add(key) }
+            selectableLazyListState.selectedKeys + key
         }
         selectableLazyListState.lastActiveItemIndex = allKeys.indexOfFirst { it == key }
     }
@@ -112,7 +110,7 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
     ) {
         if (selectionMode == SelectionMode.None) return
         if (selectionMode == SelectionMode.Single) {
-            state.selectedKeys = listOf(key)
+            state.selectedKeys = setOf(key)
         } else {
             val currentIndex = allKeys.indexOfFirst { it.key == key }.coerceAtLeast(0)
             val lastFocussed = state.lastActiveItemIndex ?: currentIndex
@@ -133,7 +131,7 @@ public open class DefaultSelectableLazyColumnEventAction : PointerEventActions {
                     }
                 }
             }
-            state.selectedKeys = state.selectedKeys.toMutableList().also { it.addAll(keys) }
+            state.selectedKeys += keys
             state.lastActiveItemIndex = allKeys.indexOfFirst { it.key == key }
         }
     }
@@ -165,9 +163,8 @@ public class DefaultTreeViewPointerEventAction(
                     selectableLazyListState.lastKeyEventUsedMouse = false
                     super.toggleKeySelection(key, allKeys, selectableLazyListState)
                 }
-
                 else -> {
-                    selectableLazyListState.selectedKeys = listOf(key)
+                    selectableLazyListState.selectedKeys = setOf(key)
                 }
             }
         }

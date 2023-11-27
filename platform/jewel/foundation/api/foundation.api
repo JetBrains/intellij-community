@@ -306,13 +306,13 @@ public final class org/jetbrains/jewel/foundation/lazy/SelectableLazyListState :
 	public final fun getLastActiveItemIndex ()Ljava/lang/Integer;
 	public final fun getLayoutInfo ()Landroidx/compose/foundation/lazy/LazyListLayoutInfo;
 	public final fun getLazyListState ()Landroidx/compose/foundation/lazy/LazyListState;
-	public fun getSelectedKeys ()Ljava/util/List;
+	public fun getSelectedKeys ()Ljava/util/Set;
 	public fun isScrollInProgress ()Z
 	public fun scroll (Landroidx/compose/foundation/MutatePriority;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun scrollToItem (IZILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun scrollToItem$default (Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;IZILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun setLastActiveItemIndex (Ljava/lang/Integer;)V
-	public fun setSelectedKeys (Ljava/util/List;)V
+	public fun setSelectedKeys (Ljava/util/Set;)V
 }
 
 public final class org/jetbrains/jewel/foundation/lazy/SelectableLazyListStateKt {
@@ -322,8 +322,8 @@ public final class org/jetbrains/jewel/foundation/lazy/SelectableLazyListStateKt
 }
 
 public abstract interface class org/jetbrains/jewel/foundation/lazy/SelectableScope {
-	public abstract fun getSelectedKeys ()Ljava/util/List;
-	public abstract fun setSelectedKeys (Ljava/util/List;)V
+	public abstract fun getSelectedKeys ()Ljava/util/Set;
+	public abstract fun setSelectedKeys (Ljava/util/Set;)V
 }
 
 public final class org/jetbrains/jewel/foundation/lazy/SelectionMode : java/lang/Enum {
@@ -638,12 +638,12 @@ public final class org/jetbrains/jewel/foundation/lazy/tree/TreeState : androidx
 	public fun getCanScrollBackward ()Z
 	public fun getCanScrollForward ()Z
 	public final fun getOpenNodes ()Ljava/util/Set;
-	public fun getSelectedKeys ()Ljava/util/List;
+	public fun getSelectedKeys ()Ljava/util/Set;
 	public fun isScrollInProgress ()Z
 	public final fun openNodes (Ljava/util/List;)V
 	public fun scroll (Landroidx/compose/foundation/MutatePriority;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun setOpenNodes (Ljava/util/Set;)V
-	public fun setSelectedKeys (Ljava/util/List;)V
+	public fun setSelectedKeys (Ljava/util/Set;)V
 	public final fun toggleNode (Ljava/lang/Object;)V
 }
 
