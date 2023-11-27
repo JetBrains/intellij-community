@@ -139,6 +139,11 @@
       <keyboard-shortcut first-keystroke="control D" keymap="Mac OS X" replace-all="true"/>
       <keyboard-shortcut first-keystroke="control D" keymap="Mac OS X 10.5+" replace-all="true"/>
     </action>
+    <action id="Terminal.ClearPrompt" class="org.jetbrains.plugins.terminal.action.TerminalClearPrompt">
+      <keyboard-shortcut first-keystroke="control C" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control C" keymap="Mac OS X" replace-all="true"/>
+      <keyboard-shortcut first-keystroke="control C" keymap="Mac OS X 10.5+" replace-all="true"/>
+    </action>
 
     <group id="Terminal.OutputContextMenu">
       <reference ref="Terminal.CopyBlock"/>
