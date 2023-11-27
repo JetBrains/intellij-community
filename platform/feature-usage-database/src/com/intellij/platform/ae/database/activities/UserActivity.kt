@@ -10,7 +10,7 @@ package com.intellij.platform.ae.database.activities
  * You don't want to implement this interface. Instead, implement:
  * * [WritableDatabaseBackedCounterUserActivity]: a counter user activity that can be stored in a database
  * * [WritableDatabaseBackedTimeSpanUserActivity]: a time span user activity that can be stored in a database
- * * [ReadableUserActivity] / [VariableReadableUserActivity]: if your activity can return a result
+ * * [ReadableUserActivity]: if your activity can return a result
  * * [DatabaseBackedCounterUserActivity] / [DatabaseBackedTimeSpanUserActivity]: useful for readable user activities,
  * if you need to access database (it most cases you would like to do so)
  *
@@ -27,9 +27,6 @@ package com.intellij.platform.ae.database.activities
  *
  * When the developer will be asked to calculate some new value and it can be calculated with data about when IDE was running, they can easily
  * reuse data from user activity (1)
- *
- * Note that here we use objects and don't register them at any extension points, at least for now. All objects should go to
- * [com.intellij.ae.database.v2.events] (at least for now)
  */
 sealed interface UserActivity {
   val id: String
@@ -44,5 +41,5 @@ interface ReadableUserActivity<TResult> : UserActivity {
    * 'getter' methods in your class, but this method should return some sort of
    * default value
    */
-  suspend fun get(): TResult
+  suspend fun getActivityValue(): TResult
 }

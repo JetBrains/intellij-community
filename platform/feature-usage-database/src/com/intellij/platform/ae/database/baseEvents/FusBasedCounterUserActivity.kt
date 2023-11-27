@@ -100,7 +100,7 @@ abstract class FusBasedCounterUserActivity : ReadableUserActivity<Int>, Writable
 
   final override val id: String by lazy { definition.id }
 
-  final override suspend fun get(): Int {
+  final override suspend fun getActivityValue(): Int {
     return getDatabase().getActivitySum(this, null, null)
   }
 
@@ -210,7 +210,7 @@ internal class FusBasedCounterUserActivityService(cs: CoroutineScope) {
   }
 }
 
-class Listener : StatisticsEventLogListener {
+private class Listener : StatisticsEventLogListener {
   override fun onLogEvent(validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?) {
     // rawEventId and rawData can't be used
 

@@ -12,7 +12,7 @@ import com.intellij.platform.ae.database.runUpdateEvent
 object CompletionCharactersSpared : ReadableUserActivity<Int>, WritableDatabaseBackedCounterUserActivity() {
   override val id = "completion.spared"
 
-  override suspend fun get(): Int {
+  override suspend fun getActivityValue(): Int {
     return getDatabase().getActivitySum(this, null, null)
   }
 
