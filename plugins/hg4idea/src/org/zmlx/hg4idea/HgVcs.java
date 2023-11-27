@@ -58,6 +58,7 @@ import org.zmlx.hg4idea.util.HgVersion;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
@@ -94,7 +95,7 @@ public class HgVcs extends AbstractVcs {
   private final HgUpdateEnvironment updateEnvironment;
   private final HgCommittedChangesProvider committedChangesProvider;
 
-  private Disposable myDisposable;
+  private final AtomicReference<Disposable> myDisposable = new AtomicReference<>();
 
   private final HgMergeProvider myMergeProvider;
   private HgExecutableValidator myExecutableValidator;
@@ -229,7 +230,11 @@ public class HgVcs extends AbstractVcs {
   @Override
   public void activate() {
     Disposable disposable = Disposer.newDisposable();
-    myDisposable = disposable;
+    // do not leak Project if 'deactivate' is never called
+    Disposer.register(HgDisposable.getInstance(myProject), disposable);
+    // workaround the race between 'activate' and 'deactivate'
+    Disposable oldDisposable = myDisposable.getAndSet(disposable);
+    if (oldDisposable != null) Disposer.dispose(oldDisposable);
 
     // validate hg executable on start and update hg version
     checkExecutableAndVersion();
@@ -258,10 +263,8 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public void deactivate() {
-    if (myDisposable != null) {
-      Disposer.dispose(myDisposable);
-      myDisposable = null;
-    }
+    Disposable disposable = myDisposable.getAndSet(null);
+    if (disposable != null) Disposer.dispose(disposable);
   }
 
   public static @Nullable HgVcs getInstance(Project project) {

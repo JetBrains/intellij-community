@@ -55,6 +55,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
@@ -70,7 +71,7 @@ public final class GitVcs extends AbstractVcs {
   private static final Logger LOG = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);
 
-  private Disposable myDisposable;
+  private final AtomicReference<Disposable> myDisposable = new AtomicReference<>();
   private GitVFSListener myVFSListener; // a VFS listener that tracks file addition, deletion, and renaming.
 
   private final ReadWriteLock myCommandLock = new ReentrantReadWriteLock(true); // The command read/write lock
@@ -193,7 +194,11 @@ public final class GitVcs extends AbstractVcs {
   @Override
   protected void activate() {
     Disposable disposable = Disposer.newDisposable();
-    myDisposable = disposable;
+    // do not leak Project if 'deactivate' is never called
+    Disposer.register(GitDisposable.getInstance(myProject), disposable);
+    // workaround the race between 'activate' and 'deactivate'
+    Disposable oldDisposable = myDisposable.getAndSet(disposable);
+    if (oldDisposable != null) Disposer.dispose(oldDisposable);
 
     BackgroundTaskUtil.executeOnPooledThread(disposable, ()
       -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject));
@@ -212,10 +217,8 @@ public final class GitVcs extends AbstractVcs {
   @Override
   protected void deactivate() {
     myVFSListener = null;
-    if (myDisposable != null) {
-      Disposer.dispose(myDisposable);
-      myDisposable = null;
-    }
+    Disposable disposable = myDisposable.getAndSet(null);
+    if (disposable != null) Disposer.dispose(disposable);
   }
 
   @Override
