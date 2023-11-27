@@ -35,32 +35,37 @@ internal class KeyChainCredentialStore : CredentialStore {
       val passwordRef = PointerByReference()
       val itemRef = PointerByReference()
       val errorCode = checkForError("find", library.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes?.size ?: 0, accountNameBytes, passwordSize, passwordRef, itemRef))
-      if (errorCode == errSecUserCanceled) {
-        return ACCESS_TO_KEY_CHAIN_DENIED
-      }
-      if (errorCode == errUserNameNotCorrect) {
-        return CANNOT_UNLOCK_KEYCHAIN
-      }
-
-      val pointer = passwordRef.value ?: return null
-      val password = OneTimeString(pointer.getByteArray(0, passwordSize.get(0)))
-      library.SecKeychainItemFreeContent(null, pointer)
-
-      var effectiveAccountName = accountName
-      if (effectiveAccountName == null) {
-        val attributes = PointerByReference()
-        checkForError("SecKeychainItemCopyAttributesAndData", library.SecKeychainItemCopyAttributesAndData(itemRef.value!!, SecKeychainAttributeInfo(kSecAccountItemAttr), null, attributes, null, null))
-        val attributeList = SecKeychainAttributeList(attributes.value)
-        try {
-          attributeList.read()
-          effectiveAccountName = readAttributes(attributeList).get(kSecAccountItemAttr)
+      try {
+        if (errorCode == errSecUserCanceled) {
+          return ACCESS_TO_KEY_CHAIN_DENIED
         }
-        finally {
-          library.SecKeychainItemFreeAttributesAndData(attributeList, null)
+        if (errorCode == errUserNameNotCorrect) {
+          return CANNOT_UNLOCK_KEYCHAIN
         }
+
+        val pointer = passwordRef.value ?: return null
+        val password = OneTimeString(pointer.getByteArray(0, passwordSize.get(0)))
+        library.SecKeychainItemFreeContent(null, pointer)
+
+        var effectiveAccountName = accountName
+        if (effectiveAccountName == null) {
+          val attributes = PointerByReference()
+          checkForError("SecKeychainItemCopyAttributesAndData",
+                        library.SecKeychainItemCopyAttributesAndData(itemRef.value!!, SecKeychainAttributeInfo(kSecAccountItemAttr), null,
+                                                                     attributes, null, null))
+          val attributeList = SecKeychainAttributeList(attributes.value)
+          try {
+            attributeList.read()
+            effectiveAccountName = readAttributes(attributeList).get(kSecAccountItemAttr)
+          }
+          finally {
+            library.SecKeychainItemFreeAttributesAndData(attributeList, null)
+          }
+        }
+        return Credentials(effectiveAccountName, password)
+      } finally {
+        itemRef.value?.let { library.CFRelease(it) }
       }
-      itemRef.value?.let { library.CFRelease(it) }
-      return Credentials(effectiveAccountName, password)
     }
 
     private fun checkForError(message: String, code: Int): Int {
