@@ -81,11 +81,16 @@ public final class IdeaTestUtil {
                   version.feature >= 7 ? version.feature :
                   version.feature >= 5 ? 7 :
                   4;
+    String sdkName = getMockJdkName(version);
     if (mockJdk > 9) {
-      return createMockJdkFromRepository("java " + version, mockJdk);
+      return createMockJdkFromRepository(sdkName, mockJdk);
     }
     String path = getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1." + mockJdk).getPath();
-    return createMockJdk("java " + version, path);
+    return createMockJdk(sdkName, path);
+  }
+
+  public static @NotNull String getMockJdkName(@NotNull JavaVersion version) {
+    return "java " + version;
   }
 
   private static Sdk createMockJdkFromRepository(String name, int version) {

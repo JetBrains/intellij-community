@@ -55,7 +55,7 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
     }
 
     Sdk sdk = ModuleRootManager.getInstance(ModuleManager.getInstance(getProject()).getModules()[0]).getSdk();
-    if (Objects.requireNonNull(JAVA_1_7.getSdk()).getName().equals(sdk == null ? null : sdk.getName())) {
+    if (((ProjectDescriptor)JAVA_1_7).getSdkName().equals(sdk == null ? null : sdk.getName())) {
       final PsiClass object = JavaPsiFacade.getInstance(getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()));
       assertNotNull(object);
 
