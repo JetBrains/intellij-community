@@ -20,7 +20,9 @@ import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.sqlite.*
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
+import kotlin.io.path.isWritable
 import kotlin.time.Duration.Companion.seconds
 
 private val logger = logger<SqliteLazyInitializedDatabase>()
@@ -157,9 +159,20 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
       return Path.of(tempPath)
     }
 
-    val folder = PathManager.getCommonDataPath().resolve("IntelliJ")
-    folder.createDirectories()
+    val fileName = "ae_${IdService.getInstance().id}.db"
 
-    return folder.resolve("ae_${IdService.getInstance().id}.db")
+    val folder = PathManager.getCommonDataPath().resolve("IntelliJ")
+    val desiredDatabasePath = folder.resolve(fileName)
+
+    // javadoc for Files.isWritable(): "Checks if the **file located by this path exists** and is writable"
+    if ((desiredDatabasePath.exists() && !desiredDatabasePath.isWritable())
+        || !desiredDatabasePath.exists() && !folder.isWritable()
+        || System.getProperty("ae.database.forceConfigFolder")?.toBoolean() == true) {
+      logger.warn("Requested file {${folder.absolutePathString()} is not writable")
+      return PathManager.getConfigDir().resolve(fileName)
+    }
+
+    folder.createDirectories()
+    return desiredDatabasePath
   }
 }
