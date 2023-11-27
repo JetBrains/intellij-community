@@ -33,7 +33,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -42,7 +42,6 @@ import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.keymap.impl.DefaultKeymap
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.ProjectType
@@ -119,6 +118,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   private val actionPostInitRegistrar: ActionPostInitRegistrar
 
+  private val keymapToOperations: Map<String, List<KeymapShortcutOperation>>
+
   init {
     val app = ApplicationManager.getApplication()
     if (!app.isUnitTestMode && !app.isHeadlessEnvironment && !app.isCommandLine) {
@@ -128,7 +129,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     val idToAction = HashMap<String, AnAction>(5_000, 0.5f)
     val boundShortcuts = HashMap<String, String>(512, 0.5f)
     val actionPreInitRegistrar = ActionPreInitRegistrar(idToAction, boundShortcuts)
-    doRegisterActions(modules = PluginManagerCore.getPluginSet().getEnabledModules(), actionRegistrar = actionPreInitRegistrar)
+    val keymapToOperations = HashMap<String, MutableList<KeymapShortcutOperation>>()
+    doRegisterActions(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                      keymapToOperations = keymapToOperations,
+                      actionRegistrar = actionPreInitRegistrar)
+    this.keymapToOperations = keymapToOperations
 
     // by intention, _after_ doRegisterActions
     actionPostInitRegistrar = ActionPostInitRegistrar(idToAction = idToAction, boundShortcuts = boundShortcuts)
@@ -165,38 +170,32 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     actionPostInitRegistrar.unbindShortcuts(targetActionId)
   }
 
+  // for dynamic plugins
   internal fun registerActions(modules: Iterable<IdeaPluginDescriptorImpl>) {
-    doRegisterActions(modules = modules, actionRegistrar = actionPostInitRegistrar)
+    val keymapToOperations = HashMap<String, MutableList<KeymapShortcutOperation>>()
+    doRegisterActions(modules = modules, keymapToOperations = keymapToOperations, actionRegistrar = actionPostInitRegistrar)
+    if (keymapToOperations.isNotEmpty()) {
+      val keymapManager = service<KeymapManager>()
+      for ((keymapName, operations) in keymapToOperations) {
+        val keymap = keymapManager.getKeymap(keymapName) as KeymapImpl? ?: continue
+        keymap.initShortcuts(operations = operations, actionBinding = actionPostInitRegistrar::getActionBinding)
+      }
+    }
   }
 
-  private fun doRegisterActions(modules: Iterable<IdeaPluginDescriptorImpl>, actionRegistrar: ActionRegistrar) {
-    val keymapToOperations = HashMap<String, MutableList<KeymapShortcutOperation>>()
+  private fun doRegisterActions(modules: Iterable<IdeaPluginDescriptorImpl>,
+                                keymapToOperations: MutableMap<String, MutableList<KeymapShortcutOperation>>,
+                                actionRegistrar: ActionRegistrar) {
     for (module in modules) {
       registerPluginActions(module = module, keymapToOperations = keymapToOperations, actionRegistrar = actionRegistrar)
       executeRegisterTaskForOldContent(module) {
         registerPluginActions(module = it, keymapToOperations = keymapToOperations, actionRegistrar = actionRegistrar)
       }
     }
+  }
 
-    // out of ActionManager constructor
-    coroutineScope.launch {
-      // make sure the constructor is completed
-      serviceAsync<ActionManager>()
-
-      val keymapManager = serviceAsync<KeymapManager>()
-      for ((keymapName, operations) in keymapToOperations) {
-        val keymap = keymapManager.getKeymap(keymapName) as KeymapImpl?
-        if (keymap == null) {
-          val app = ApplicationManager.getApplication()
-          if (!app.isHeadlessEnvironment && !app.isCommandLine && !DefaultKeymap.isBundledKeymapHidden(keymapName)) {
-            LOG.info("Keymap \"$keymapName\" not found")
-          }
-          continue
-        }
-
-        keymap.apply(operations, actionBinding = actionRegistrar::getActionBinding)
-      }
-    }
+  internal fun getKeymapPendingOperations(keymapName: String): List<KeymapShortcutOperation> {
+    return keymapToOperations.get(keymapName) ?: java.util.List.of()
   }
 
   final override fun addTimerListener(listener: TimerListener) {

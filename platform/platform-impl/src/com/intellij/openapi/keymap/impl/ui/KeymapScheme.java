@@ -63,9 +63,10 @@ final class KeymapScheme implements Scheme {
   /**
    * @return a mutable copy, which is created on demand
    */
-  @NotNull
-  KeymapImpl getMutable() {
-    if (mutable != null) return mutable;
+  @NotNull KeymapImpl getMutable() {
+    if (mutable != null) {
+      return mutable;
+    }
     assert isMutable() : "create a mutable copy for immutable keymap";
     mutable = original.copyTo(new KeymapImpl());
     return mutable;
@@ -143,7 +144,9 @@ final class KeymapScheme implements Scheme {
    */
   @NotNull
   Keymap apply() {
-    if (mutable != null) mutable.copyTo(original);
+    if (mutable != null) {
+      mutable.copyTo(original);
+    }
     return original;
   }
 
@@ -154,7 +157,9 @@ final class KeymapScheme implements Scheme {
   @NotNull
   KeymapScheme copy(@NotNull String name) {
     KeymapImpl keymap = original.deriveKeymap(name);
-    if (mutable != null) mutable.copyTo(keymap);
+    if (mutable != null) {
+      mutable.copyTo(keymap);
+    }
     return new KeymapScheme(keymap);
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.openapi.keymap.impl
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.MouseShortcut
+import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.keymap.Keymap
@@ -26,12 +27,15 @@ open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>,
 
   override fun getPresentableName(): String = DefaultKeymap.getInstance().getKeymapPresentableName(this)
 
-  override fun readExternal(keymapElement: Element, actionManager: ActionManagerEx) {
-    super.readExternal(keymapElement, actionManager)
+  override fun readExternal(keymapElement: Element,
+                            actionIdToShortcuts: MutableMap<String, List<Shortcut>>,
+                            actionManager: ActionManagerEx) {
+    super.readExternal(keymapElement = keymapElement, actionIdToShortcuts = actionIdToShortcuts, actionManager = actionManager)
 
     if (KeymapManager.DEFAULT_IDEA_KEYMAP == name && (SystemInfoRt.isWindows || SystemInfoRt.isMac)) {
       addShortcut(actionId = IdeActions.ACTION_GOTO_DECLARATION,
                   shortcut = MouseShortcut(MouseEvent.BUTTON2, 0, 1),
+                  actionIdToShortcuts = actionIdToShortcuts,
                   fromSettings = false,
                   actionBinding = actionManager::getActionBinding)
     }

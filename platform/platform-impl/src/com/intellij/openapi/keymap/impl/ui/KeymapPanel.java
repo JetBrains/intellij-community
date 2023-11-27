@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -255,7 +254,7 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
 
   private static void addShortcut(Keymap keymap, String actionId, Shortcut shortcut) {
     if (keymap instanceof KeymapImpl) {
-      ((KeymapImpl)keymap).addShortcut$intellij_platform_ide_impl(actionId, shortcut, true, ActionManagerEx.getInstanceEx()::getActionBinding);
+      ((KeymapImpl)keymap).addShortcutFromSettings$intellij_platform_ide_impl(actionId, shortcut);
     }
     else {
       keymap.addShortcut(actionId, shortcut);
@@ -264,7 +263,7 @@ public final class KeymapPanel extends JPanel implements SearchableConfigurable,
 
   private static void removeShortcut(Keymap keymap, String actionId, Shortcut shortcut) {
     if (keymap instanceof KeymapImpl) {
-      ((KeymapImpl)keymap).removeShortcut(actionId, shortcut, true, ActionManagerEx.getInstanceEx()::getActionBinding);
+      ((KeymapImpl)keymap).removeShortcutFromSettings$intellij_platform_ide_impl(actionId, shortcut);
     }
     else {
       keymap.removeShortcut(actionId, shortcut);
