@@ -9,11 +9,20 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import com.jetbrains.python.promotion.PyCharmPromoCollector.PromoLearnModeEvent
+import com.jetbrains.python.promotion.PyCharmPromoCollector.PromoOpenDownloadPageEvent
 import org.apache.http.client.utils.URIBuilder
 import java.net.URISyntaxException
 
-class PyCharmPromoCollector : CounterUsagesCollector() {
+object PyCharmPromoCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
+
+  private const val FUS_GROUP_ID = "pycharm.promo"
+  private val GROUP = EventLogGroup(FUS_GROUP_ID, 1)
+  private val PromoEventSourceField = EventFields.Enum("source", PromoEventSource::class.java) { it.name.lowercase() }
+  private val PromoTopicField = EventFields.Enum("topic", PromoTopic::class.java) { it.name.lowercase() }
+  internal val PromoOpenDownloadPageEvent = GROUP.registerEvent("open.download.page", PromoEventSourceField, PromoTopicField)
+  internal val PromoLearnModeEvent = GROUP.registerEvent("open.learn.more.page", PromoEventSourceField, PromoTopicField)
 }
 
 internal enum class PromoEventSource {
@@ -52,7 +61,7 @@ private fun createLinkWithInfo(promoTopic: PromoTopic, originalUrl: String): Str
     return URIBuilder(originalUrl)
       .setParameter("utm_source", "product")
       .setParameter("utm_medium", "link")
-      .setParameter("utm_campaign", "pycharm")
+      .setParameter("utm_campaign", ApplicationInfo.getInstance().getBuild().productCode)
       .setParameter("utm_content", ApplicationInfo.getInstance().shortVersion)
       .setParameter("utm_term", promoTopic.name.lowercase())
       .build().toString()
@@ -63,9 +72,3 @@ private fun createLinkWithInfo(promoTopic: PromoTopic, originalUrl: String): Str
   }
 }
 
-const val FUS_GROUP_ID = "pycharm.promo"
-private val GROUP = EventLogGroup(FUS_GROUP_ID, 1)
-private val PromoEventSourceField = EventFields.Enum("source", PromoEventSource::class.java) { it.name.lowercase() }
-private val PromoTopicField = EventFields.Enum("topic", PromoTopic::class.java) { it.name.lowercase() }
-private val PromoOpenDownloadPageEvent = GROUP.registerEvent("open.download.page", PromoEventSourceField, PromoTopicField)
-private val PromoLearnModeEvent = GROUP.registerEvent("open.learn.more.page", PromoEventSourceField, PromoTopicField)
