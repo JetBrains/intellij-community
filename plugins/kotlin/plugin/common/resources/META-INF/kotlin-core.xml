@@ -148,6 +148,8 @@
 
     <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
 
+    <lang.floatingToolbarCustomizer language="kotlin" implementationClass="com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer$DefaultGroup"/>
+
     <lang.foldingBuilder
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.KotlinFoldingBuilder"/>
