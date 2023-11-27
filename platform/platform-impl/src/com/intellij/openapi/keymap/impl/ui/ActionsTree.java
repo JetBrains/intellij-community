@@ -604,12 +604,15 @@ public final class ActionsTree {
       SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
 
       if (boundId != null) {
-        append(" ");
-        append(IdeBundle.message("uses.shortcut.of"), SimpleTextAttributes.GRAY_ATTRIBUTES);
-        append(" ");
+        AnAction boundAction = ActionManager.getInstance().getAction(boundId);
+        if (boundAction != null) {
+          append(" ");
+          append(IdeBundle.message("uses.shortcut.of"), SimpleTextAttributes.GRAY_ATTRIBUTES);
+          append(" ");
 
-        String boundText = getActionText(ActionManager.getInstance().getAction(boundId), boundId, actionId);
-        append(boundText, GRAY_LINK, new SelectActionRunnable(boundId));
+          String boundText = getActionText(boundAction, boundId, actionId);
+          append(boundText, GRAY_LINK, new SelectActionRunnable(boundId));
+        }
       }
 
       if (actionId != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
