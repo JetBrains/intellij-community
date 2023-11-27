@@ -23,10 +23,9 @@ class CommandSpecCompletion(
     if (commandTokens.isEmpty() || commandTokens.singleOrNull()?.isBlank() == true) {
       return null  // do not propose command suggestions if there is an empty command prefix
     }
-    val suggestionsProvider = CommandTreeSuggestionsProvider(runtimeDataProvider)
     if (commandTokens.size == 1) {
-      // command name is incomplete, so provide suggestions for commands
-      return suggestionsProvider.getAvailableCommands()
+      // command name is incomplete, so provide suggestions for commands and files
+      return computeCommandsAndFiles(commandTokens)
     }
     val command = commandTokens.first()
     val arguments = commandTokens.subList(1, commandTokens.size)
@@ -35,19 +34,31 @@ class CommandSpecCompletion(
 
     val completeArguments = arguments.subList(0, arguments.size - 1)
     val lastArgument = arguments.last()
+    val suggestionsProvider = CommandTreeSuggestionsProvider(runtimeDataProvider)
     val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
                                                             command, commandSpec, completeArguments)
     return computeSuggestions(suggestionsProvider, rootNode, lastArgument)
   }
 
+  private suspend fun computeCommandsAndFiles(commandTokens: List<String>): List<BaseSuggestion> {
+    assert(commandTokens.isNotEmpty())
+    val files = computeFileItems(commandTokens) ?: emptyList()
+    return if (commandTokens.last().contains("/")) {
+      files  // cur token contains path delimiter, so it is a path, and we should not propose commands
+    }
+    else {
+      val suggestionsProvider = CommandTreeSuggestionsProvider(runtimeDataProvider)
+      val commands = suggestionsProvider.getAvailableCommands()
+      files + commands
+    }
+  }
+
   /**
-   * Returns the file suggestions for the last argument from [commandTokens]
-   * But returns null if [commandTokens] length is less than 2,
-   * because it is strange to propose files when there is no complete command.
+   * Returns the file suggestions for the last argument from [commandTokens] if this list is not empty.
    */
   suspend fun computeFileItems(commandTokens: List<String>): List<BaseSuggestion>? {
-    if (commandTokens.size < 2) {
-      return null  // do not propose files if there is no complete command
+    if (commandTokens.isEmpty() || commandTokens.singleOrNull()?.isBlank() == true) {
+      return null
     }
     val suggestionsProvider = CommandTreeSuggestionsProvider(runtimeDataProvider)
     val fakeArgument = ShellArgument(templates = listOf("filepaths"))
