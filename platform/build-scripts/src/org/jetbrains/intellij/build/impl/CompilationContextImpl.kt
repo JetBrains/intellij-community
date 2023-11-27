@@ -105,12 +105,26 @@ class CompilationContextImpl private constructor(
   override val bundledRuntime: BundledRuntime
   override lateinit var compilationData: JpsCompilationData
 
-  override val stableJdkHome: Path by lazy {
-    JdkDownloader.getJdkHome(communityHome, Span.current()::addEvent)
+  @Volatile
+  private var cachedJdkHome: Path? = null
+
+  override suspend fun getStableJdkHome(): Path {
+    var jdkHome = cachedJdkHome
+    if (jdkHome == null) {
+      jdkHome = JdkDownloader.getJdkHome(communityHome, Span.current()::addEvent)
+      cachedJdkHome = jdkHome
+    }
+    return jdkHome
   }
 
   override val stableJavaExecutable: Path by lazy {
-    JdkDownloader.getJavaExecutable(stableJdkHome)
+    var jdkHome = cachedJdkHome
+    if (jdkHome == null) {
+      // blocking doesn't matter, getStableJdkHome is mostly always called before
+      jdkHome = JdkDownloader.blockingGetJdkHome(communityHome, Span.current()::addEvent)
+      cachedJdkHome = jdkHome
+    }
+    JdkDownloader.getJavaExecutable(jdkHome)
   }
 
   init {
@@ -350,8 +364,8 @@ private class BuildPathsImpl(communityHome: BuildDependenciesCommunityRoot, proj
   }
 }
 
-private fun defineJavaSdk(context: CompilationContext) {
-  val homePath = context.stableJdkHome
+private suspend fun defineJavaSdk(context: CompilationContext) {
+  val homePath = context.getStableJdkHome()
   val jbrVersionName = "jbr-17"
   defineJdk(global = context.projectModel.global, jdkName = jbrVersionName, homeDir = homePath)
   readModulesFromReleaseFile(model = context.projectModel, sdkName = jbrVersionName, sdkHome = homePath)
@@ -373,8 +387,8 @@ private fun defineJavaSdk(context: CompilationContext) {
     }
 
     if (context.projectModel.global.libraryCollection.findLibrary(sdkName) == null) {
-      defineJdk(context.projectModel.global, sdkName, homePath)
-      readModulesFromReleaseFile(context.projectModel, sdkName, homePath)
+      defineJdk(global = context.projectModel.global, jdkName = sdkName, homeDir = homePath)
+      readModulesFromReleaseFile(model = context.projectModel, sdkName = sdkName, sdkHome = homePath)
     }
   }
 }

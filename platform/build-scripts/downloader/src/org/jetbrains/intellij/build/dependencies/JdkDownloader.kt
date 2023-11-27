@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
-import org.jetbrains.intellij.build.downloadFileToCacheLocationSync
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.downloadFileToCacheLocation
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
@@ -11,7 +13,13 @@ import java.util.logging.Logger
  * Provides a current JBR SDK
  */
 object JdkDownloader {
-  fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, infoLog: (String) -> Unit): Path {
+  fun blockingGetJdkHome(communityRoot: BuildDependenciesCommunityRoot, infoLog: (String) -> Unit): Path {
+    return runBlocking(Dispatchers.IO) {
+      getJdkHome(communityRoot, infoLog)
+    }
+  }
+
+  suspend fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, infoLog: (String) -> Unit): Path {
     val os = OS.current
     val arch = Arch.current
     return getJdkHome(communityRoot = communityRoot, os = os, arch = arch, infoLog = infoLog)
@@ -19,14 +27,14 @@ object JdkDownloader {
 
   @JvmStatic
   fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot): Path {
-    return getJdkHome(communityRoot) {
+    return blockingGetJdkHome(communityRoot) {
       Logger.getLogger(JdkDownloader::class.java.name).info(it)
     }
   }
 
-  fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch, infoLog: (String) -> Unit): Path {
-    val jdkUrl = getUrl(communityRoot, os, arch)
-    val jdkArchive = downloadFileToCacheLocationSync(url = jdkUrl.toString(), communityRoot = communityRoot)
+  suspend fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch, infoLog: (String) -> Unit): Path {
+    val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch)
+    val jdkArchive = downloadFileToCacheLocation(url = jdkUrl.toString(), communityRoot = communityRoot)
     val jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot = communityRoot,
                                                                               archiveFile = jdkArchive,
                                                                               BuildDependenciesExtractOptions.STRIP_ROOT)

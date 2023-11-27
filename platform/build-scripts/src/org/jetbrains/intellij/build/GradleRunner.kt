@@ -91,7 +91,7 @@ class GradleRunner(
     command.addAll(tasks)
     val gradleCall = {
       val processBuilder = ProcessBuilder(command).directory(gradleProjectDir.toFile())
-      processBuilder.environment().put("JAVA_HOME", JdkDownloader.getJdkHome(communityRoot, Span.current()::addEvent).toString())
+      processBuilder.environment().put("JAVA_HOME", JdkDownloader.blockingGetJdkHome(communityRoot, Span.current()::addEvent).toString())
       processBuilder.inheritIO()
       synchronized(gradleProjectDir.toString().intern()) {
         processBuilder.start().waitFor() == 0
