@@ -28,6 +28,8 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.containers.CollectionFactory
 import io.opentelemetry.api.metrics.Meter
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
@@ -75,7 +77,7 @@ internal open class EntityStorageSnapshotImpl(
 
   // I suppose that we can use some kind of array of arrays to get a quicker access (just two accesses by-index)
   // However, it's not implemented currently because I'm not sure about threading.
-  private val entitiesCache = ConcurrentHashMap<EntityId, WorkspaceEntity>()
+  private val entityCache: Long2ObjectMap<WorkspaceEntity> = Long2ObjectOpenHashMap() // guarded by entityCache
 
   override fun <T> cached(query: StorageQuery<T>): T {
     return snapshotCache.cached(query)
@@ -90,13 +92,15 @@ internal open class EntityStorageSnapshotImpl(
   override fun toSnapshot(): EntityStorageSnapshot = this
 
   override fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T {
-    val found = entitiesCache[entityId]
+    val found = synchronized(entityCache) { entityCache[entityId] }
     if (found != null) {
       @Suppress("UNCHECKED_CAST")
       return found as T
     }
     val newData = newInstance()
-    entitiesCache[entityId] = newData
+    synchronized(entityCache) {
+      entityCache.put(entityId, newData)
+    }
     return newData
   }
 
