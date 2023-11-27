@@ -1,15 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindText
@@ -19,12 +14,10 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.WslContext
 import com.jetbrains.python.sdk.add.target.conda.condaSupportedLanguages
-import com.jetbrains.python.sdk.add.target.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
-import kotlinx.coroutines.Dispatchers
 import java.io.File
 
 class CondaNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
@@ -59,14 +52,7 @@ class CondaNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Pyt
   }
 
   override fun getOrCreateSdk(): Sdk {
-    return runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.conda.create.progress"),
-                                        TaskCancellation.nonCancellable()) {
-      presenter.createCondaCommand()
-        .createCondaSdkAlongWithNewEnv(NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), envName.get()),
-                                       Dispatchers.EDT,
-                                       state.basePythonSdks.get(),
-                                       ProjectManager.getInstance().defaultProject).getOrThrow()
-    }
+    return presenter.createCondaEnvironment(NewCondaEnvRequest.EmptyNamedEnv(pythonVersion.get(), envName.get()))
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {

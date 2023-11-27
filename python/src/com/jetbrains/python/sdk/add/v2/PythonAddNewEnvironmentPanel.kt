@@ -10,21 +10,15 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.notEqualsTo
 import com.intellij.openapi.observable.util.or
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
-import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
-import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
@@ -135,19 +129,10 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
   fun getSdk(): Sdk? {
     presenter.navigator.saveLastState()
     return when (selectedMode.get()) {
-      PROJECT_VENV -> {
-        val venvPath = Path.of(projectPath.get(), ".venv")
-        val venvPathOnTarget = presenter.getPathOnTarget(venvPath)
-        createVirtualEnvSynchronously(pythonBaseVersion.get(), basePythonSdks.get(), venvPathOnTarget, projectPath.get(), null, null)
-      }
-      BASE_CONDA -> {
-        runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.conda.select.progress"),
-                                     TaskCancellation.nonCancellable()) {
-          presenter.createCondaCommand()
-            .createCondaSdkFromExistingEnv(presenter.baseConda!!.envIdentity, basePythonSdks.get(),
-                                           ProjectManager.getInstance().defaultProject)
-        }
-      }
+      PROJECT_VENV -> presenter.setupVirtualenv(Path.of(projectPath.get(), ".venv"),
+                                                projectPath.get(),
+                                                pythonBaseVersion.get()!!)
+      BASE_CONDA -> presenter.selectCondaEnvironment(presenter.baseConda!!.envIdentity)
       CUSTOM -> custom.getSdk()
     }
   }

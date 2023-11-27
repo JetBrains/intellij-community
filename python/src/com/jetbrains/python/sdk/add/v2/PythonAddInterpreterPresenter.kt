@@ -6,6 +6,7 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
@@ -21,6 +22,7 @@ import com.jetbrains.python.sdk.add.ProjectLocationContext
 import com.jetbrains.python.sdk.add.ProjectLocationContexts
 import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
 import com.jetbrains.python.sdk.add.target.createDetectedSdk
+import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import com.jetbrains.python.sdk.detectSystemWideSdksSuspended
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
@@ -40,6 +42,16 @@ internal fun PythonAddInterpreterPresenter.tryGetVirtualFile(pathOnTarget: FullP
 
 internal fun PythonAddInterpreterPresenter.getPathOnTarget(path: Path): @NlsSafe String =
   path.convertToPathOnTarget(targetEnvironmentConfiguration)
+
+
+internal fun PythonAddInterpreterPresenter.setupVirtualenv(venvPath: Path, projectPath: String, baseSdk: Sdk): Sdk {
+  val venvPathOnTarget = getPathOnTarget(venvPath)
+  val savedSdk = setupSdkIfDetected(baseSdk, state.allSdks.get())
+  val sdk = createVirtualEnvSynchronously(savedSdk, state.allSdks.get(), venvPathOnTarget,
+                                          projectPath, null, null) ?: error("Failed to create SDK")
+  SdkConfigurationUtil.addSdk(sdk)
+  return sdk
+}
 
 /**
  * Note. This class could be made a view-model in Model-View-ViewModel pattern. This would completely decouple its logic from the view. To

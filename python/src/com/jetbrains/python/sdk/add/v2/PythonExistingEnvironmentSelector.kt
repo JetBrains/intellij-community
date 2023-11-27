@@ -25,7 +25,8 @@ class PythonExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter
   }
 
   override fun getOrCreateSdk(): Sdk {
-    return state.selectedVenv.get()!!
+    val selectedSdk = state.selectedVenv.get() ?: error("Unknown sdk selected")
+    return setupSdkIfDetected(selectedSdk, state.allSdks.get())
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
