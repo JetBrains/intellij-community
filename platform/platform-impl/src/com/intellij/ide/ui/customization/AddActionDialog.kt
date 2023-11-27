@@ -9,10 +9,12 @@ import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.ex.QuickListsManager
 import com.intellij.openapi.actionSystem.impl.ActionGroupStub
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Pair
+import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
@@ -21,6 +23,7 @@ import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
@@ -54,6 +57,16 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
   init {
     title = IdeBundle.message("action.choose.actions.to.add")
     init()
+
+    val doubleClickHandler = object : DoubleClickListener() {
+      override fun onDoubleClick(event: MouseEvent): Boolean {
+        if (selectedTreePaths.isNotEmpty()) doOKAction()
+        return true
+      }
+    }
+
+    doubleClickHandler.installOn(actionsTree)
+    myDisposable.whenDisposed { doubleClickHandler.uninstall(actionsTree) }
   }
 
   override fun createCenterPanel(): JComponent {
