@@ -6,6 +6,7 @@ import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.ThreadLocalRandom;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.processing.Generated;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.*;
@@ -24,6 +25,7 @@ import java.util.function.Predicate;
  * Use {@link ConcurrentCollectionFactory#createConcurrentLongObjectMap()} to create this map
  */
 @SuppressWarnings("ALL")
+@Generated("Do not modify, to ease following ports")
 final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
 
   /*
