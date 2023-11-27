@@ -689,7 +689,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   private void updatePreviewVisibility(@NotNull SETab tab) {
     boolean noProviders = ContainerUtil.filterIsInstance(tab.getContributors(), SearchEverywherePreviewProvider.class).isEmpty();
-    myUsagePreviewPanel.setVisible(isPreviewEnabled() && isPreviewActive() && !noProviders && !myResultsList.isEmpty());
+    if (myUsagePreviewPanel != null) {
+      myUsagePreviewPanel.setVisible(isPreviewEnabled() && isPreviewActive() && !noProviders && !myResultsList.isEmpty());
+    }
   }
 
   @Override
