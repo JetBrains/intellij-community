@@ -208,10 +208,10 @@ public class ComparisonFailureData {
     failureData = createFileComparisonFailure(assertion);
     if (failureData != null) return failureData;
 
-    failureData = createOpentest4jAssertion(assertion);
+    failureData = createJunitComparisonFailure(assertion);
     if (failureData != null) return failureData;
 
-    failureData = createJunitComparisonFailure(assertion);
+    failureData = createOpentest4jAssertion(assertion);
     return failureData;
   }
 
