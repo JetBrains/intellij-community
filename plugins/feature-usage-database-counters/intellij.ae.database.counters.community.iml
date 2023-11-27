@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
-    <orderEntry type="module" module-name="intellij.platform.ae.database" />
+    <orderEntry type="module" module-name="intellij.ae.database" />
     <orderEntry type="module" module-name="intellij.platform.sqlite" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
   </component>

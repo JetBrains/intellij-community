@@ -1,4 +1,15 @@
-<idea-plugin package="com.intellij.platform.ae.database">
+<idea-plugin implementation-detail="true">
+  <id>com.jetbrains.ae.database</id>
+  <name>Feature Usage Database</name>
+  <description>A simple database that locally counts various feature usage</description>
+  <vendor>JetBrains</vendor>
+
+  <incompatible-with>com.intellij.cwm.guest</incompatible-with>
+  <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
+  <incompatible-with>com.intellij.gateway</incompatible-with>
+
+  <depends>com.intellij.modules.platform</depends>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.platform.ae.database.fusBasedCounterUserActivity"
                     interface="com.intellij.platform.ae.database.baseEvents.FusBasedCounterUserActivity$Factory"

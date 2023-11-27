@@ -11,4 +11,5 @@
   <incompatible-with>com.intellij.gateway</incompatible-with>
 
   <depends>com.intellij.modules.platform</depends>
+  <depends>com.jetbrains.ae.database</depends>
 </idea-plugin>

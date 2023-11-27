@@ -19,6 +19,7 @@ import java.util.function.BiConsumer
 val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.platform.images",
   "intellij.dev",
+  "intellij.ae.database",
   "intellij.ae.database.counters.community"
 )
 

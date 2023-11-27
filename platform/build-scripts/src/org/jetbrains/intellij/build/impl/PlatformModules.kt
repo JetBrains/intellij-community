@@ -97,9 +97,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.compose.skikoRuntime",
 
   "intellij.platform.markdown.utils",
-  "intellij.platform.util.commonsLangV2Shim",
-
-  "intellij.platform.ae.database"
+  "intellij.platform.util.commonsLangV2Shim"
 )
 
 internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = persistentMapOf(
