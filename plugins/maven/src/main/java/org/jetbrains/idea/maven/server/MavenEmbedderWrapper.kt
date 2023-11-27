@@ -173,7 +173,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   @Throws(MavenProcessCanceledException::class)
-  fun readModel(file: File?): MavenModel {
+  fun readModel(file: File?): MavenModel? {
     return performCancelable<MavenModel, RuntimeException> { getOrCreateWrappee().readModel(file, ourToken) }
   }
 
