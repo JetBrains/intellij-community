@@ -38,7 +38,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -123,9 +123,9 @@ public final class GradleUtil {
   }
 
   private static @Nullable Properties readGradleProperties(@NotNull Path wrapperPropertiesFile) {
-    try (Reader wrapperPropertiesReader = Files.newBufferedReader(wrapperPropertiesFile)) {
+    try (InputStream wrapperInputStream = Files.newInputStream(wrapperPropertiesFile)) {
       final Properties props = new Properties();
-      props.load(wrapperPropertiesReader);
+      props.load(wrapperInputStream);
       return props;
     }
     catch (Exception e) {
