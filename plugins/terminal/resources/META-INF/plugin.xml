@@ -88,7 +88,7 @@
     <action id="Terminal.SmartCommandExecution.Debug" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="control shift ENTER" keymap="$default"/>
     </action>
-    <action id="Terminal.ClearBuffer" class="com.intellij.openapi.actionSystem.EmptyAction">
+    <action id="Terminal.ClearBuffer" class="org.jetbrains.plugins.terminal.action.TerminalClearAction">
       <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
       <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X"/>
       <keyboard-shortcut first-keystroke="meta K" keymap="Mac OS X 10.5+"/>
