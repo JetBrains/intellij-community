@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
@@ -310,7 +311,11 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
 
     if (isFullIndexUpdate()) {
       // the full VFS refresh makes sense only after it's loaded, i.e., after scanning files to index is finished
-      myProject.getService(InitialVfsRefreshService.class).scheduleInitialVfsRefresh();
+      var service = myProject.getService(InitialVfsRefreshService.class);
+      service.scheduleInitialVfsRefresh();
+      if (ApplicationManager.getApplication().isCommandLine() && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
+        service.waitInitialVfsRefreshFinished();
+      }
     }
   }
 
