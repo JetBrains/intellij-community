@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see DynamicActionConfigurationCustomizer
  */
+@ApiStatus.Internal
 public interface ActionConfigurationCustomizer {
-
   /**
    * @param actionManager action manager being initialized
    */

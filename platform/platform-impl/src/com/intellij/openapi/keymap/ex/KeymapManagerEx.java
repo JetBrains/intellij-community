@@ -13,8 +13,7 @@ public abstract class KeymapManagerEx extends KeymapManager {
   }
 
   /**
-   * @return all available keymaps. The method return an empty array if no
-   * keymaps are available.
+   * @return all available keymaps. The method returns an empty array if no keymaps are available.
    */
   public abstract Keymap[] getAllKeymaps();
 

@@ -128,7 +128,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     val idToAction = HashMap<String, AnAction>(5_000, 0.5f)
     val boundShortcuts = HashMap<String, String>(512, 0.5f)
     val actionPreInitRegistrar = ActionPreInitRegistrar(idToAction, boundShortcuts)
-    doRegisterActions(PluginManagerCore.getPluginSet().getEnabledModules(), actionRegistrar = actionPreInitRegistrar)
+    doRegisterActions(modules = PluginManagerCore.getPluginSet().getEnabledModules(), actionRegistrar = actionPreInitRegistrar)
 
     // by intention, _after_ doRegisterActions
     actionPostInitRegistrar = ActionPostInitRegistrar(idToAction = idToAction, boundShortcuts = boundShortcuts)
@@ -189,12 +189,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         if (keymap == null) {
           val app = ApplicationManager.getApplication()
           if (!app.isHeadlessEnvironment && !app.isCommandLine && !DefaultKeymap.isBundledKeymapHidden(keymapName)) {
-            LOG.info("keymap \"$keymapName\" not found")
+            LOG.info("Keymap \"$keymapName\" not found")
           }
           continue
         }
 
-        keymap.apply(operations, actionBinding = actionRegistrar::getActionBinding, actionManager = this@ActionManagerImpl)
+        keymap.apply(operations, actionBinding = actionRegistrar::getActionBinding)
       }
     }
   }
@@ -521,8 +521,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       }
     }
 
-    element.attributes.get(USE_SHORTCUT_OF_ATTR_NAME)?.let { shortcutOfActionId ->
-      actionRegistrar.bindShortcuts(sourceActionId = shortcutOfActionId, targetActionId = id)
+    element.attributes.get(USE_SHORTCUT_OF_ATTR_NAME)?.let {
+      actionRegistrar.bindShortcuts(sourceActionId = it, targetActionId = id)
     }
     registerOrReplaceActionInner(element = element, id = id, action = stub, plugin = module, actionRegistrar = actionRegistrar)
     return stub
@@ -868,8 +868,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   /**
    * @param parentGroup group which is the parent of the separator. It can be `null` in that
    * case separator will be added to a group described in the <add-to-group ...> sub element.
-   * @param element     XML element which represent separator.
-  </add-to-group> */
+   * @param element     XML element which represent separator. `</add-to-group>`
+   */
   @Suppress("HardCodedStringLiteral")
   private fun processSeparatorNode(parentGroup: DefaultActionGroup?,
                                    element: XmlElement,

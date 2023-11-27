@@ -620,7 +620,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   }
 
   @Override
-  protected Set<String> getBoundActions() {
+  protected @NotNull Set<String> getBoundActions() {
     return DEFAULT_BOUND_ACTIONS;
   }
 

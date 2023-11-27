@@ -69,7 +69,7 @@ fun KeymapImpl(name: String, dataHolder: SchemeDataHolder<KeymapImpl>): KeymapIm
   return result
 }
 
-open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDataHolder<KeymapImpl>? = null)
+open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var dataHolder: SchemeDataHolder<KeymapImpl>? = null)
   : ExternalizableSchemeAdapter(), Keymap, SerializableScheme {
   @Volatile
   private var parent: KeymapImpl? = null
@@ -82,9 +82,16 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   override fun getSchemeState(): SchemeState? = schemeState
 
+  @Volatile
+  private var pendingInit: List<KeymapShortcutOperation>? = null
+
   private val actionIdToShortcuts = ConcurrentHashMap<String, List<Shortcut>>()
     get() {
       val dataHolder = dataHolder
+      pendingInit?.let {
+        pendingInit = null
+        init(it, ActionManagerEx.getInstanceEx()::getActionBinding)
+      }
       if (dataHolder != null) {
         this.dataHolder = null
         readExternal(dataHolder.read(), ActionManagerEx.getInstanceEx())
@@ -113,8 +120,10 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       }
 
       private fun mapShortcuts(mapper: (Shortcut) -> T?): Map<T, MutableList<String>> {
+        val actionManager = ActionManagerEx.getInstanceEx()
+
         fun addActionToShortcutMap(actionId: String, map: MutableMap<T, MutableList<String>>) {
-          for (shortcut in getOwnOrBoundShortcuts(actionId)) {
+          for (shortcut in getOwnOrBoundShortcuts(actionId, actionManager)) {
             mapper(shortcut)?.let {
               val ids = map.computeIfAbsent(it) { SmartList() }
               if (!ids.contains(actionId)) {
@@ -126,7 +135,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
         val map = HashMap<T, MutableList<String>>()
         actionIdToShortcuts.keys.forEach { addActionToShortcutMap(it, map) }
-        ActionManagerEx.getInstanceEx().getBoundActions().forEach { addActionToShortcutMap(it, map) }
+        actionManager.getBoundActions().forEach { addActionToShortcutMap(it, map) }
         return map
       }
     }
@@ -225,13 +234,17 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
                    actionBinding = ActionManagerEx.getInstanceEx()::getActionBinding)
   }
 
-  internal fun apply(operations: List<KeymapShortcutOperation>, actionBinding: (String) -> String?, actionManager: ActionManagerEx) {
+  internal fun apply(operations: List<KeymapShortcutOperation>, actionBinding: (String) -> String?) {
     val dataHolder = dataHolder
-    if (dataHolder != null) {
-      this.dataHolder = null
-      readExternal(dataHolder.read(), actionManager)
+    if (dataHolder == null) {
+      pendingInit = java.util.List.copyOf(operations)
     }
+    else {
+      init(operations, actionBinding)
+    }
+  }
 
+  private fun init(operations: List<KeymapShortcutOperation>, actionBinding: (String) -> String?) {
     for (operation in operations) {
       when (operation) {
         is RemoveShortcutOperation -> {
@@ -270,7 +283,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     }
 
     cleanShortcutsCache()
-    fireShortcutChanged(actionId, fromSettings)
+    fireShortcutChanged(actionId = actionId, fromSettings = fromSettings)
   }
 
   private fun List<Shortcut>.areShortcutsEqualToParent(actionId: String, actionBinding: (String) -> String?): Boolean {
@@ -279,12 +292,12 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     }
   }
 
-  private fun getOwnOrBoundShortcuts(actionId: String): List<Shortcut> {
+  private fun getOwnOrBoundShortcuts(actionId: String, actionManager: ActionManagerEx): List<Shortcut> {
     actionIdToShortcuts.get(actionId)?.let {
       return it
     }
 
-    return getOwnOrBoundShortcuts(ActionManagerEx.getInstanceEx().getActionBinding(actionId) ?: return java.util.List.of())
+    return getOwnOrBoundShortcuts(actionManager.getActionBinding(actionId) ?: return java.util.List.of(), actionManager)
   }
 
   private fun getActionIds(shortcut: KeyboardModifierGestureShortcut): List<String> {
@@ -367,7 +380,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     var convertedShortcut = shortcut
     var keymap = this
     do {
-      val list = keymap.mouseShortcutToActionIds[convertedShortcut]
+      val list = keymap.mouseShortcutToActionIds.get(convertedShortcut)
       if (list != null && list.contains(actionId)) {
         return true
       }
@@ -391,7 +404,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     var list = shortcutToActionIds(this).get(shortcut)
     val parentIds = parent?.getActionIds(shortcut = convertShortcut(this, shortcut),
                                          shortcutToActionIds = shortcutToActionIds,
-                                         convertShortcut = convertShortcut) ?: emptyList()
+                                         convertShortcut = convertShortcut) ?: java.util.List.of()
     var isOriginalListInstance = list != null
     for (id in parentIds) {
       // add actions from the parent keymap only if they are absent in this keymap
@@ -417,16 +430,13 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         list.add(id)
       }
     }
-    sortInRegistrationOrder(list ?: return emptyList())
+    sortInRegistrationOrder(list ?: return java.util.List.of())
     return list
   }
 
-  fun isActionBound(actionId: String): Boolean = ActionManagerEx.getInstanceEx().getBoundActions().contains(actionId)
-
   override fun getShortcuts(actionId: String?): Array<Shortcut> {
-    return getShortcutList(actionId, actionBinding = {
-      ActionManagerEx.getInstanceEx().getActionBinding(it)
-    }).let { if (it.isEmpty()) Shortcut.EMPTY_ARRAY else it.toTypedArray() }
+    val result = getShortcutList(actionId, actionBinding = { ActionManagerEx.getInstanceEx().getActionBinding(it) })
+    return if (result.isEmpty()) Shortcut.EMPTY_ARRAY else result.toTypedArray()
   }
 
   private fun getShortcutList(actionId: String?, actionBinding: (String) -> String?): List<Shortcut> {
@@ -439,7 +449,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     return actionIdToShortcuts.get(actionId)
            ?: actionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
            ?: parent?.getShortcutList(actionId, actionBinding)?.map { convertShortcut(it) }
-           ?: emptyList()
+           ?: java.util.List.of()
   }
 
   fun hasShortcutDefined(actionId: String): Boolean {

@@ -9,10 +9,9 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.MacOSDefaultKeymap;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.testFramework.ApplicationExtension;
 import com.intellij.testFramework.junit5.DynamicTests;
 import com.intellij.testFramework.junit5.NamedFailure;
@@ -47,7 +46,7 @@ public abstract class KeymapsTestCaseBase {
 
   protected abstract Set<String> getUnknownActions();
 
-  protected abstract Set<String> getBoundActions();
+  protected abstract @NotNull Set<String> getBoundActions();
 
   protected abstract Collection<String> getConflictSafeGroups();
 
@@ -377,7 +376,7 @@ public abstract class KeymapsTestCaseBase {
     String text = KeyStrokeAdapter.toString(fst);
     int offset = text.lastIndexOf(' ');
     if (offset == -1) offset = 0;
-    return text.substring(0, offset) + StringUtil.toUpperCase(text.substring(offset));
+    return text.substring(0, offset) + Strings.toUpperCase(text.substring(offset));
   }
 
   private static Shortcut convertShortcutForParent(Shortcut key, Keymap keymap) {
@@ -428,14 +427,15 @@ public abstract class KeymapsTestCaseBase {
   public List<DynamicTest> testBoundActions() {
     List<NamedFailure> failures = new ArrayList<>();
 
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     Set<String> knownBoundActions = getBoundActions();
+    for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
+      for (String actionId : keymap.getActionIdList()) {
+        if (knownBoundActions.contains(actionId)) {
+          continue;
+        }
 
-    Keymap[] keymaps = KeymapManagerEx.getInstanceEx().getAllKeymaps();
-    for (Keymap keymap : keymaps) {
-      KeymapImpl keymapImpl = (KeymapImpl)keymap;
-      for (String actionId : keymapImpl.getActionIds()) {
-        if (knownBoundActions.contains(actionId)) continue;
-        boolean isBound = keymapImpl.isActionBound(actionId);
+        boolean isBound = actionManager.getBoundActions().contains(actionId);
         if (isBound) {
           failures.add(new NamedFailure("bound action with shortcut in " + keymap.getName() + ": " + actionId,
                                         "Please remove action from keymaps, or add to the 'known bound actions' list"));
