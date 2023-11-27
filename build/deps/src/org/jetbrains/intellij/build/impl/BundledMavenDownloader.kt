@@ -134,7 +134,7 @@ object BundledMavenDownloader {
 
   suspend fun downloadMavenDistribution(communityRoot: BuildDependenciesCommunityRoot): Path {
     val extractDir = communityRoot.communityRoot.resolve("plugins/maven/maven36-server-impl/lib/maven3")
-    val properties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot)
+    val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
     val bundledMavenVersion = properties.property("bundledMavenVersion")
     mutex.withLock {
       val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
