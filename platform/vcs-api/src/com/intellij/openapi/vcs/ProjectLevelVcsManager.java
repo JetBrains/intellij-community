@@ -25,11 +25,20 @@ import java.util.List;
  * Manages the version control systems used by a specific project.
  */
 public abstract class ProjectLevelVcsManager {
+  /**
+   * Fired when {@link #getVcsFor(VirtualFile)} and similar methods change their value.
+   */
   @Topic.ProjectLevel
   public static final Topic<VcsMappingListener> VCS_CONFIGURATION_CHANGED =
     new Topic<>(VcsMappingListener.class, Topic.BroadcastDirection.NONE);
+
   /**
-   * VCS configuration changed in VCS plugin.
+   * This event is only fired by SVN plugin.
+   * <p>
+   * Typically, it can be ignored unless plugin supports SVN and uses
+   * {@link #getRootsUnderVcs(AbstractVcs)}, {@link #getAllVcsRoots} or {@link #getAllVersionedRoots()} methods.
+   * <p>
+   * See {@link org.jetbrains.idea.svn.SvnFileUrlMappingImpl} and {@link AbstractVcs#getCustomConvertor}.
    */
   @Topic.ProjectLevel
   public static final Topic<PluginVcsMappingListener> VCS_CONFIGURATION_CHANGED_IN_PLUGIN =
