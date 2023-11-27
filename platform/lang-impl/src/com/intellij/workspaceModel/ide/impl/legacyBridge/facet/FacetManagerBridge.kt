@@ -124,7 +124,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
   }
 }
 
-open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase() {
+class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase() {
 
   init {
     // Initialize facet bridges after loading from cache
@@ -263,10 +263,6 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
     private val LOG = logger<FacetModelBridge>()
 
     internal fun EntityStorage.facetMapping(): ExternalEntityMapping<Facet<*>> {
-      return this.getExternalMapping(FACET_BRIDGE_MAPPING_ID)
-    }
-
-    fun MutableEntityStorage.facetMapping(): ExternalEntityMapping<Facet<*>> {
       return this.getExternalMapping(FACET_BRIDGE_MAPPING_ID)
     }
 
