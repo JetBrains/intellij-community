@@ -19,6 +19,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.jetbrains.commandInterface.command.Command;
 import com.jetbrains.commandInterface.command.SimpleCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ import java.util.List;
  */
 public class CommandBasedProcessRunner extends ProcessWithConsoleRunner {
   @NotNull
-  private final SimpleCommand myCommand;
+  private final Command myCommand;
   @NotNull
   private final Module myModule;
   @NotNull
@@ -47,7 +48,7 @@ public class CommandBasedProcessRunner extends ProcessWithConsoleRunner {
    * @param module     module to run on
    * @param parameters command parameters
    */
-  public CommandBasedProcessRunner(@NotNull final SimpleCommand command,
+  public CommandBasedProcessRunner(@NotNull final Command command,
                                    @NotNull final Module module,
                                    final String @NotNull ... parameters) {
     myCommand = command;
