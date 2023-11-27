@@ -14,9 +14,9 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -171,15 +171,19 @@ public final class PlainDescriptor extends PsiVarDescriptor {
   private static boolean methodCanBeCalledFromConstructorBeforeFieldInitializing(@NotNull PsiField target,
                                                                                  @NotNull PsiMethod method,
                                                                                  @NotNull PsiClass placeClass) {
-     if (target.hasInitializer() || method.isConstructor() ||
+    if (target.hasInitializer() || method.isConstructor() ||
         //consider cases with only one constructor to do it faster
         placeClass.getConstructors().length != 1) {
       return false;
     }
     PsiMethod constructor = placeClass.getConstructors()[0];
-    if (constructor.getBody() == null ||
-        constructor.getBody().getStatements().length == 0 ||
-        constructor.getBody().getStatements()[0] instanceof PsiSuperExpression) {
+    PsiCodeBlock constructorBody = constructor.getBody();
+    if (constructorBody == null ||
+        constructorBody.getStatements().length == 0) {
+      return false;
+    }
+    PsiMethodCallExpression callInConstructor = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+    if (callInConstructor != null) {
       return false;
     }
     PsiMethodCallExpression methodCallExpression = findCallIn(target, placeClass, method);
@@ -195,8 +199,23 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     return false;
   }
 
-  private record MethodInfo(Map<String, Map<PsiMethod, PsiMethodCallExpression>> methods, boolean hasCallOutside){}
+  /**
+   * @param methods - grouped calls and corresponded methods by their name
+   * @param hasCallOutside - there are any calls, except instance calls of the same class on `this` qualifier
+   */
+  private record ConstructorMethodInfo(Map<String, Map<PsiMethod, PsiMethodCallExpression>> methods,
+                                       boolean hasCallOutside) {
+  }
 
+  /**
+   * Find a method call expression in the given field's context class.
+   * It is supposed that context class contains only one constructor for simplification
+   *
+   * @param field         The field to search for method calls.
+   * @param contextClass  The context class. The first constructor of this class is used to search for method calls.
+   * @param method        The method to look for within the context class.
+   * @return The found method call expression, or null if not found.
+   */
   @Nullable
   private static PsiMethodCallExpression findCallIn(@NotNull PsiField field,
                                                     @NotNull PsiClass contextClass,
@@ -206,19 +225,20 @@ public final class PlainDescriptor extends PsiVarDescriptor {
       return null;
     }
 
-    MethodInfo cacheValue = CachedValuesManager.getCachedValue(contextClass, () -> {
+    ConstructorMethodInfo cacheValue = CachedValuesManager.getCachedValue(contextClass, () -> {
       PsiMethod context = contextClass.getConstructors()[0];
-      ConcurrentHashMap<String, Map<PsiMethod, PsiMethodCallExpression>> collectedMethods = new ConcurrentHashMap<>();
-      Ref<Boolean> callsOutside = new Ref<>(false);
       PsiManager psiManager = context.getManager();
-      JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
+      var visitor = new JavaRecursiveElementWalkingVisitor() {
+        final ConcurrentHashMap<String, Map<PsiMethod, PsiMethodCallExpression>> collectedMethods = new ConcurrentHashMap<>();
+        boolean callsOutside = false;
         @Override
-        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
-        @Override
-        public void visitClass(@NotNull PsiClass aClass) {}
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) { }
 
         @Override
-        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {}
+        public void visitClass(@NotNull PsiClass aClass) { }
+
+        @Override
+        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) { }
 
         @Override
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCallExpression) {
@@ -228,35 +248,27 @@ public final class PlainDescriptor extends PsiVarDescriptor {
             if (resolvedMethod != null &&
                 resolvedMethod.getContainingClass() != null &&
                 psiManager.areElementsEquivalent(resolvedMethod.getContainingClass(), contextClass)) {
-              collectedMethods.compute(resolvedMethod.getName(),
-                                       (ignoreKey, methodsByCall) -> {
-                                         if (methodsByCall == null) {
-                                           methodsByCall = new HashMap<>();
-                                         }
-                                         if (!methodsByCall.containsKey(resolvedMethod)) {
-                                           methodsByCall.put(resolvedMethod, methodCallExpression);
-                                         }
-                                         return methodsByCall;
-                                       });
+              collectedMethods.computeIfAbsent(resolvedMethod.getName(), k -> new HashMap<>())
+                .putIfAbsent(resolvedMethod, methodCallExpression);
             }
             else {
-              callsOutside.set(true);
+              callsOutside = true;
             }
           }
           else {
-            callsOutside.set(true);
+            callsOutside = true;
           }
           super.visitMethodCallExpression(methodCallExpression);
         }
       };
       context.accept(visitor);
-      return CachedValueProvider.Result.create( new MethodInfo(collectedMethods, callsOutside.get()), PsiModificationTracker.MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(new ConstructorMethodInfo(visitor.collectedMethods, visitor.callsOutside),
+                                               PsiModificationTracker.MODIFICATION_COUNT);
     });
     PsiManager psiManager = contextClass.getManager();
     if (field.hasModifierProperty(PsiModifier.FINAL) ||
-        (!cacheValue.hasCallOutside() &&
-         cacheValue.methods().size() == 1 &&
-         cacheValue.methods().entrySet().iterator().next().getValue().size() == 1)) {
+        //simplification, that there is no another way to initialize fields
+        hasOnlyOneInsideCall(cacheValue)) {
       Map<PsiMethod, PsiMethodCallExpression> methodsByCall = cacheValue.methods().get(method.getName());
       if (methodsByCall == null) {
         return null;
@@ -268,6 +280,15 @@ public final class PlainDescriptor extends PsiVarDescriptor {
       }
     }
     return null;
+  }
+
+  private static boolean hasOnlyOneInsideCall(ConstructorMethodInfo constructorMethodInfo) {
+    Map<String, Map<PsiMethod, PsiMethodCallExpression>> methods = constructorMethodInfo.methods();
+    if (constructorMethodInfo.hasCallOutside() || methods.size() != 1) {
+      return false;
+    }
+    Map<PsiMethod, PsiMethodCallExpression> callExpressionMap = methods.entrySet().iterator().next().getValue();
+    return callExpressionMap.size() == 1;
   }
 
   private static int getWriteOffset(PsiField target) {

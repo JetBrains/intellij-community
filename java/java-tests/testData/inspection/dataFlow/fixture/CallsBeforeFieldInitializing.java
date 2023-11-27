@@ -45,12 +45,12 @@ class OrdinaryClassInitAfter {
   }
 }
 
-class OrdinaryClassNotNull {
+class OrdinaryClassFieldNotFinal {
 
   String name;
   int id;
 
-  public OrdinaryClassNotNull() {
+  public OrdinaryClassFieldNotFinal() {
     validateMyFields();
     name = "";
   }
@@ -79,6 +79,46 @@ class OrdinaryClassNotNullSeveralCalls {
 
   private void validateMyFields() {
     if (this.name.isEmpty()) {
+      throw new IllegalArgumentException();
+    }
+  }
+}
+
+class Parent{}
+class ClassWithParent extends Parent {
+
+  String name;
+  int id;
+
+  public ClassWithParent() {
+    super();
+    validateMyFields();
+    name = "";
+  }
+
+  private void initName() {
+    name = "";
+  }
+
+  private void validateMyFields() {
+    if (this.name.isEmpty()) {
+      throw new IllegalArgumentException();
+    }
+  }
+}
+
+
+class OrdinaryClassWithClassQualifier {
+
+  String name;
+  int id;
+
+  public OrdinaryClassWithClassQualifier() {
+    validateMyFields();
+  }
+
+  private void validateMyFields() {
+    if (OrdinaryClassWithClassQualifier.this.name.<warning descr="Method invocation 'isEmpty' may produce 'NullPointerException'">isEmpty</warning>()) {
       throw new IllegalArgumentException();
     }
   }
