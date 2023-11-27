@@ -12,10 +12,16 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.ae.database.AEDatabaseLifetime
 import com.intellij.platform.ae.database.activities.ReadableUserActivity
 import com.intellij.platform.ae.database.activities.WritableDatabaseBackedCounterUserActivity
+import com.intellij.platform.ae.database.utils.InstantUtils
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.time.Instant
 
 data class FusEventDefinitionField<T>(
   val type: Class<T>,
@@ -98,8 +104,8 @@ abstract class FusBasedCounterUserActivity : ReadableUserActivity<Int>, Writable
     return getDatabase().getActivitySum(this, null, null)
   }
 
-  internal suspend fun increment(fields: Map<String, Any>) {
-    getDatabase().submit(this, getIncrementValue(fields))
+  internal suspend fun increment(fields: Map<String, Any>, eventTime: Instant) {
+    getDatabase().submit(this, getIncrementValue(fields), eventTime)
   }
 
   /**
@@ -151,16 +157,35 @@ abstract class FusBasedCounterUserActivity : ReadableUserActivity<Int>, Writable
 }
 
 @Service(Service.Level.APP)
-internal class FusBasedCounterUserActivityService {
+internal class FusBasedCounterUserActivityService(cs: CoroutineScope) {
   companion object {
     fun getInstance() = ApplicationManager.getApplication().service<FusBasedCounterUserActivityService>()
   }
+
+  private data class ActivitySubmission(val group: String, val event: String, val fields: Map<String, Any>, val time: Instant)
+
+  private val activitiesSubmitFlow = MutableSharedFlow<ActivitySubmission>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   // group to event
   private val activitiesLock = Mutex()
   private val activities = mutableMapOf<Pair<String, String>, MutableList<FusBasedCounterUserActivity>>()
 
-  suspend fun find(group: String, event: String, fields: Map<String, Any>): FusBasedCounterUserActivity? {
+  init {
+    cs.launch {
+      activitiesSubmitFlow.collectLatest {
+        val activity = find(it.group, it.event, it.fields)
+        if (activity != null) {
+          activity.increment(it.fields, it.time)
+        }
+      }
+    }
+  }
+
+  fun submit(group: String, event: String, fields: Map<String, Any>) {
+    activitiesSubmitFlow.tryEmit(ActivitySubmission(group, event, fields, InstantUtils.Now))
+  }
+
+  private suspend fun find(group: String, event: String, fields: Map<String, Any>): FusBasedCounterUserActivity? {
     activitiesLock.withLock {
       if (activities.isEmpty()) {
         for (activity in FusBasedCounterUserActivity.EP_NAME.extensionList.map { it.getInstance() }) {
@@ -189,13 +214,11 @@ class Listener : StatisticsEventLogListener {
   override fun onLogEvent(validatedEvent: LogEvent, rawEventId: String?, rawData: Map<String, Any>?) {
     // rawEventId and rawData can't be used
 
-    AEDatabaseLifetime.getScope().launch {
-      val group = validatedEvent.group.id
-      val event = validatedEvent.event.id
-      val fields = validatedEvent.event.data
-      val activity = FusBasedCounterUserActivityService.getInstance().find(group, event, fields)
-      activity?.increment(fields)
-    }
+    val group = validatedEvent.group.id
+    val event = validatedEvent.event.id
+    val fields = validatedEvent.event.data
+
+    FusBasedCounterUserActivityService.getInstance().submit(group, event, fields)
   }
 }
 

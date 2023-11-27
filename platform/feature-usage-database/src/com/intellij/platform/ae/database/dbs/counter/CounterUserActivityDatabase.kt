@@ -58,9 +58,9 @@ class CounterUserActivityDatabase(cs: CoroutineScope) : ICounterUserActivityData
    *
    * This method doesn't submit to database, but first submits to throttler which
    */
-  override suspend fun submit(activity: DatabaseBackedCounterUserActivity, diff: Int) {
+  override suspend fun submit(activity: DatabaseBackedCounterUserActivity, diff: Int, eventTime: Instant) {
     thisLogger().info("${activity.id} = $diff")
-    throttler.submit(activity, diff)
+    throttler.submit(activity, diff, eventTime)
   }
 
   /**

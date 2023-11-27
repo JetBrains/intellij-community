@@ -46,14 +46,13 @@ internal class CounterUserActivityDatabaseThrottler(private val cs: CoroutineSco
     }
   }
 
-  suspend fun submit(activity: DatabaseBackedCounterUserActivity, newValue: Int) {
+  suspend fun submit(activity: DatabaseBackedCounterUserActivity, newValue: Int, eventTime: Instant = InstantUtils.Now) {
     eventsLock.withLock {
-      val now = InstantUtils.Now
       val ev = events.getOrElse(activity) {
-        CounterUserActivityHits(now, now, 0)
+        CounterUserActivityHits(eventTime, eventTime, 0)
       }
 
-      ev.lastOccurance = now
+      ev.lastOccurance = eventTime
       ev.count += newValue
 
       events[activity] = ev
