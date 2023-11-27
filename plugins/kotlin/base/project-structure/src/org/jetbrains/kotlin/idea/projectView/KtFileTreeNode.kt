@@ -13,14 +13,15 @@ import org.jetbrains.kotlin.psi.KtFile
 class KtFileTreeNode(
     project: Project?,
     val ktFile: KtFile,
-    viewSettings: ViewSettings
+    viewSettings: ViewSettings,
+    private val mandatoryChildren: Collection<AbstractTreeNode<*>>
 ) : PsiFileNode(project, ktFile, viewSettings) {
 
     override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> =
         if (settings.isShowMembers) {
-            ktFile.toDeclarationsNodes(settings)
+            mandatoryChildren + ktFile.toDeclarationsNodes(settings)
         } else {
-            emptyList()
+            mandatoryChildren
         }
 }
 

@@ -12,16 +12,27 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtPsiUtil
 
-class KtClassOrObjectTreeNode(project: Project?, ktClassOrObject: KtClassOrObject, viewSettings: ViewSettings) :
-    AbstractPsiBasedNode<KtClassOrObject>(project, ktClassOrObject, viewSettings) {
+class KtClassOrObjectTreeNode(
+    project: Project?,
+    ktClassOrObject: KtClassOrObject,
+    viewSettings: ViewSettings,
+    private val mandatoryChildren: Collection<AbstractTreeNode<*>>
+) : AbstractPsiBasedNode<KtClassOrObject>(project, ktClassOrObject, viewSettings) {
+
+    // this constructor is kept for plugin API compatibility
+    constructor(
+        project: Project?,
+        ktClassOrObject: KtClassOrObject,
+        viewSettings: ViewSettings
+    ) : this(project, ktClassOrObject, viewSettings, emptyList())
 
     override fun extractPsiFromValue(): PsiElement? = value
 
     override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> =
         if (value != null && settings.isShowMembers) {
-            value.getStructureDeclarations().toNodes(settings)
+            mandatoryChildren + value.getStructureDeclarations().toNodes(settings)
         } else {
-            emptyList()
+            mandatoryChildren
         }
 
     override fun updateImpl(data: PresentationData) {
