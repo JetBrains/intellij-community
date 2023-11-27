@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.application
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -62,5 +63,15 @@ class InitialVfsRefreshService(private val project: Project, private val scope: 
   suspend fun awaitInitialVfsRefreshFinished(): Unit = future.await()
 
   @RequiresBlockingContext
-  fun waitInitialVfsRefreshFinished(): Unit = runBlockingCancellable { awaitInitialVfsRefreshFinished() }
+  fun waitInitialVfsRefreshFinished() {
+    if (application.isDispatchThread) {
+      runWithModalProgressBlocking(project, "") {
+        awaitInitialVfsRefreshFinished()
+      }
+    } else {
+      runBlockingCancellable {
+        awaitInitialVfsRefreshFinished()
+      }
+    }
+  }
 }
