@@ -56,6 +56,10 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
     doTest()
   }
 
+  fun testReturnTypeHasTypeParam() {
+    doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyAppService", "getInstance"))
+  }
+
   fun testGetInstanceServicesKtMethodsNoWarnings() {
     doTestWithServicesKt()
   }
