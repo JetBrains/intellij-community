@@ -18,7 +18,7 @@ interface VcsLogCommitSelection {
   /**
    * Identifiers of the commits selected in the table.
    *
-   * @see com.intellij.vcs.log.data.VcsLogStorage.getCommitIndex
+   * @see VcsLogDataProvider.getCommitIndex
    */
   val ids: List<Int>
 
