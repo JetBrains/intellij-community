@@ -2464,6 +2464,7 @@
     <optionController implementation="com.intellij.compiler.JavaCompilerConfiguration$Provider"/>
 
     <pluginSuggestionProvider implementation="com.intellij.ide.ant.AntSuggestionProvider"/>
+    <pluginSuggestionProvider implementation="com.intellij.ide.android.AndroidSuggestionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
