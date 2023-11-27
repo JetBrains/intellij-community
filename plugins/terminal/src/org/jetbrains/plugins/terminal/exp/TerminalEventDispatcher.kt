@@ -49,6 +49,8 @@ internal abstract class TerminalEventDispatcher(
   private var myRegistered = false
   private var actionsToSkip: List<AnAction> = emptyList()
 
+  private var ignoreNextKeyTypedEvent: Boolean = false
+
   override fun dispatch(e: AWTEvent): Boolean {
     if (e is KeyEvent) {
       dispatchKeyEvent(e)
@@ -58,7 +60,14 @@ internal abstract class TerminalEventDispatcher(
 
   private fun dispatchKeyEvent(e: KeyEvent) {
     if (!skipAction(e)) {
-      handleKeyEvent(e)
+      if (e.id != KeyEvent.KEY_TYPED || !ignoreNextKeyTypedEvent) {
+        ignoreNextKeyTypedEvent = false
+        handleKeyEvent(e)
+      }
+    }
+    else {
+      // KeyEvent will be handled by action system, so we need to remember that the next KeyTyped event is not needed
+      ignoreNextKeyTypedEvent = true
     }
   }
 
@@ -106,6 +115,8 @@ internal abstract class TerminalEventDispatcher(
     }
 
     override fun keyPressed(e: KeyEvent) {
+      // Action system has not consumed this KeyPressed event, so, next KeyTyped should be handled.
+      ignoreNextKeyTypedEvent = false
       handleKeyEvent(e)
     }
   }
@@ -164,7 +175,9 @@ internal abstract class TerminalEventDispatcher(
       "TerminalIncreaseFontSize",
       "TerminalDecreaseFontSize",
       "TerminalResetFontSize",
-      "Terminal.Paste"
+      "Terminal.Paste",
+      "Terminal.CopySelectedText",
+      "Terminal.CopyBlock"
     )
 
     fun getActionsToSkip(): List<AnAction> {
