@@ -473,7 +473,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
         val typeArgumentList = getQualifiedTypeArgumentList(KtPsiUtil.safeDeparenthesize(physicalExpression))
 
-        val isInplaceAvailable = editor != null && !isUnitTestMode()
+        val isInplaceAvailable = isInplaceAvailable(editor, project)
 
         val allOccurrences = occurrencesToReplace ?: expression.findOccurrences(containers.occurrenceContainer)
 
@@ -591,7 +591,7 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             }
         }
 
-        if (isInplaceAvailable && occurrencesToReplace == null) {
+        if (isInplaceAvailable && occurrencesToReplace == null && !isUnitTestMode()) {
             val chooser = object : OccurrencesChooser<KtExpression>(editor) {
                 override fun getOccurrenceRange(occurrence: KtExpression): TextRange? {
                     return occurrence.extractableSubstringInfo?.contentRange ?: occurrence.textRange

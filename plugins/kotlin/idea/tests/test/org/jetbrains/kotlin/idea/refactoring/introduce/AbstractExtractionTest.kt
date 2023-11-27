@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.introduce
 
 import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.completion.JavaCompletionUtil
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
@@ -55,6 +56,7 @@ import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.util.findElementByCommentPrefix
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.*
@@ -76,6 +78,8 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
     protected open fun doIntroduceVariableTest(unused: String) {
         doTestIfNotDisabledByFileDirective { file ->
+            TemplateManagerImpl.setTemplateTesting(getTestRootDisposable())
+
             file as KtFile
 
             getIntroduceVariableHandler().invoke(
@@ -84,6 +88,11 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 file,
                 DataManager.getInstance().getDataContext(fixture.editor.component)
             )
+
+            val templateState = TemplateManagerImpl.getTemplateState(editor)
+            if (templateState?.isFinished() == false) {
+                project.executeCommand("") { templateState.gotoEnd(false) }
+            }
         }
     }
 

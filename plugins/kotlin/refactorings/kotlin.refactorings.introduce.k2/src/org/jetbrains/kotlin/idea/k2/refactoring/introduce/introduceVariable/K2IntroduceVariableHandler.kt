@@ -421,7 +421,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             }
         }
 
-        val isInplaceAvailable = editor != null && !isUnitTestMode()
+        val isInplaceAvailable = editor != null
 
         val callback = {
             val replaceOccurrence = expression.shouldReplaceOccurrence(containers.targetContainer)
@@ -519,7 +519,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             }
 
         }
-        if (isInplaceAvailable) {
+        if (isInplaceAvailable && !isUnitTestMode()) {
             application.invokeLater {
                 SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { callback() }
             }

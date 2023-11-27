@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.introduce
 
+import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -176,6 +178,12 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
             if (isFunctionalExpression()) return true
             val parent = parent as? KtFunction ?: return false
             return parent.bodyExpression == this && (parent is KtFunctionLiteral || parent.isFunctionalExpression())
+        }
+
+        fun isInplaceAvailable(editor: Editor?, project: Project) = when {
+            editor == null -> false
+            isUnitTestMode() -> (TemplateManager.getInstance(project) as? TemplateManagerImpl)?.shouldSkipInTests() == false
+            else -> true
         }
     }
 }
