@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.framework.ui
 import com.google.common.io.Closeables
 import com.google.gson.JsonParser
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
@@ -34,7 +34,8 @@ class ConfigureDialogWithModulesAndVersion(
     minimumVersion: String
 ) : DialogWrapper(project) {
     private val chooseModulePanel = ChooseModulePanel(project, configurator, excludedModules)
-    private val kotlinVersionChooser = KotlinVersionChooser(project, minimumVersion)
+    private val kotlinVersionChooser =
+        KotlinVersionChooser(project, minimumVersion, disposable, ModalityState.stateForComponent(window))
 
     private val listOfKotlinVersionsAndModulesText = AtomicProperty("")
     private val jvmModulesTargetingUnsupportedJvm: Map<String, List<String>>
@@ -76,8 +77,6 @@ class ConfigureDialogWithModulesAndVersion(
         chooseModulePanel.notifyOnChange {
             showWarningIfThereAreDifferentKotlinVersions()
         }
-
-        Disposer.register(disposable, kotlinVersionChooser)
 
         init()
     }
