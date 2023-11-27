@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.dsl.builder.Align
@@ -66,8 +67,11 @@ class PoetryNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
 
   override fun getOrCreateSdk(): Sdk {
     PropertiesComponent.getInstance().poetryPath = executable.get().nullize()
-    return setupPoetrySdkUnderProgress(null, null, state.basePythonSdks.get(), state.projectPath.get(),
-                                       basePythonVersion.get()!!.homePath, false)!!
+    val baseSdk = setupSdkIfDetected(basePythonVersion.get()!!, state.allSdks.get())
+    val newSdk = setupPoetrySdkUnderProgress(null, null, state.basePythonSdks.get(), state.projectPath.get(),
+                                             baseSdk.homePath, false)!!
+    SdkConfigurationUtil.addSdk(newSdk)
+    return newSdk
   }
   
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {

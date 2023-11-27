@@ -29,7 +29,6 @@ import com.jetbrains.python.sdk.add.LocalContext
 import com.jetbrains.python.sdk.add.ProjectLocationContext
 import com.jetbrains.python.sdk.add.WslContext
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
-import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
@@ -163,14 +162,7 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
   }
 
   override fun getOrCreateSdk(): Sdk {
-    val venvRootOnTarget = presenter.getPathOnTarget(Path.of(location.get()))
-    return createVirtualEnvSynchronously(basePythonVersion.get(),
-                                         state.basePythonSdks.get(),
-                                         venvRootOnTarget,
-                                         state.projectPath.get(),
-                                         null, null,
-                                         inheritSitePackages = inheritSitePackages.get(),
-                                         makeShared = makeAvailable.get())!!
+    return presenter.setupVirtualenv(Path.of(location.get()), state.projectPath.get(), basePythonVersion.get()!!)
   }
 
   companion object {

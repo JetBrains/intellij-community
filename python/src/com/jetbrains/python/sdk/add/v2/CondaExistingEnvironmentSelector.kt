@@ -7,20 +7,15 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.layout.predicate
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.add.WslContext
-import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.statistics.InterpreterCreationMode
@@ -117,12 +112,7 @@ class CondaExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter)
   }
 
   override fun getOrCreateSdk(): Sdk {
-    return runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.conda.select.progress"),
-                                        TaskCancellation.nonCancellable()) {
-      presenter.createCondaCommand()
-        .createCondaSdkFromExistingEnv(selectedEnvironment.get()!!.envIdentity, state.basePythonSdks.get(),
-                                       ProjectManager.getInstance().defaultProject)
-    }
+    return presenter.selectCondaEnvironment(selectedEnvironment.get()!!.envIdentity)
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
