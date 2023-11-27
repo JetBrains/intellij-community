@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
-import org.jetbrains.kotlin.idea.core.script.loadScriptDefinitionsOnDemand
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
@@ -103,7 +102,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
             logger.debug("async script definitions update started")
         }
 
-        if (loadScriptDefinitionsOnDemand && !isFileIndexUpdate) {
+        if (!isFileIndexUpdate) {
             loadSync(EmptyProgressIndicator())
         } else {
             val task = object : Task.Backgroundable(

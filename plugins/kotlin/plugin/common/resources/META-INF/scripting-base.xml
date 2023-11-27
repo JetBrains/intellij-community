@@ -72,8 +72,6 @@
 
     <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.ScriptTrafficLightRendererContributor"/>
 
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.core.script.LoadScriptDefinitionsStartupActivity" order="last"/>
-
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.core.script.dependencies.JavaClassesInScriptDependenciesShortNameCache"/>
 
 
@@ -110,19 +108,6 @@
             key="kotlin.scripting.index.dependencies.sources"
             description="Index script dependencies sources eagerly (not deferred)"
             defaultValue="false"
-            restartRequired="true"/>
-
-    <registryKey
-            key="kotlin.scripting.deferred.definition.attempts.num"
-            description="Script definition loading has async nature. In synchronous contexts we use a sync-wrapper waiting for the loading
-              under the hood. This key limits the number of polling attempts (each takes milliseconds)."
-            defaultValue="20"
-            restartRequired="false"/>
-
-    <registryKey
-            key="kotlin.scripting.load.definitions.on.demand"
-            description="Script definitions (as a part of metadata) are loaded lazily and synchronously when value of this key is 'true'."
-            defaultValue="true"
             restartRequired="true"/>
 
     <fileType name="script-definition-marker" fieldName="INSTANCE"
