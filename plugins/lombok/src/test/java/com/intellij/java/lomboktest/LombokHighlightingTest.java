@@ -57,6 +57,10 @@ public class LombokHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testBuilderWithPredefinedBuilderClassMethods() {
+    doTest();
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
