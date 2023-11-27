@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -255,7 +256,7 @@ object GitStashOperations {
       override fun run(indicator: ProgressIndicator) {
         DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("stash.action.name")).use { _ ->
           val successfulRoots = linkedSetOf<VirtualFile>()
-          val failedRoots = linkedMapOf<VirtualFile, String>()
+          val failedRoots = linkedMapOf<VirtualFile, @NlsSafe String>()
           for (root in roots) {
             val activity = GitStashUsageCollector.logStashPush(project)
             val result = Git.getInstance().runCommand(createHandler(root))
