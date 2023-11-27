@@ -146,15 +146,16 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     val start = System.currentTimeMillis()
 
     ensureIsUpToDate()
-    for (value in fileSets.values) {
-      value.forEach { storedFileSet ->
-        when (storedFileSet) {
-          is WorkspaceFileSetImpl -> {
-            visitor.visitIncludedRoot(storedFileSet)
-          }
-          is ExcludedFileSet -> Unit
+    val action = { storedFileSet: StoredFileSet ->
+      when (storedFileSet) {
+        is WorkspaceFileSetImpl -> {
+          visitor.visitIncludedRoot(storedFileSet)
         }
+        is ExcludedFileSet -> Unit
       }
+    }
+    for (value in fileSets.values) {
+      value.forEach(action)
     }
 
     WorkspaceFileIndexData.visitFileSetsTimeMs.addElapsedTimeMs(start)
