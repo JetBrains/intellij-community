@@ -7,6 +7,7 @@ import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.ConfigurableWithId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FeaturePromoBundle
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeatureListItem
+import com.jetbrains.python.PyCharmCommunityCustomizationBundle
 import javax.swing.Icon
 import javax.swing.JComponent
 import kotlin.reflect.KClass
@@ -54,24 +55,18 @@ internal class PromoTSConfigurable : ProPromoConfigurable() {
 
 internal class PromoDjangoConfigurable : ProPromoConfigurable() {
   override fun getId(): String = "promo.django"
-  override fun getDisplayName(): String = FeaturePromoBundle.message("promo.configurable.django")
+  override fun getDisplayName(): String = PyCharmCommunityCustomizationBundle.message("promo.configurable.django")
   override fun createComponent(): JComponent =  djangoFeatures(PromoEventSource.SETTINGS)
 }
 
 internal class PromoJupyterConfigurable : ProPromoConfigurable() {
   override fun getId(): String = "promo.jupyter"
-  override fun getDisplayName(): String = FeaturePromoBundle.message("promo.configurable.jupyter")
+  override fun getDisplayName(): String = PyCharmCommunityCustomizationBundle.message("promo.configurable.jupyter")
   override fun createComponent(): JComponent =  jupyterFeatures(PromoEventSource.SETTINGS)
 }
 
 internal class PromoRemoteSshConfigurable : ProPromoConfigurable() {
   override fun getId(): String = "promo.remoteSsh"
-  override fun getDisplayName(): String = FeaturePromoBundle.message("promo.configurable.remoteSsh")
+  override fun getDisplayName(): String = PyCharmCommunityCustomizationBundle.message("promo.configurable.remoteSsh")
   override fun createComponent(): JComponent = sshFeatures(PromoEventSource.SETTINGS)
 }
-
-internal val djangoPromoFeatureList = listOf(
-  PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.django.code")),
-  PromoFeatureListItem(AllIcons.FileTypes.Html, FeaturePromoBundle.message("feature.django.djangoTemplates")),
-  PromoFeatureListItem(AllIcons.General.Web, FeaturePromoBundle.message("feature.django.endpoints"))
-)

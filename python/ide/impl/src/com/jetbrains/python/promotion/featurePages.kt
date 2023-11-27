@@ -4,6 +4,7 @@ package com.jetbrains.python.promotion
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
 import com.intellij.openapi.util.NlsContexts
+import com.jetbrains.python.PyCharmCommunityCustomizationBundle
 import icons.PythonIcons
 import javax.swing.JComponent
 
@@ -54,8 +55,8 @@ internal fun javascriptFeatures(source: PromoEventSource, promoTopic: PromoTopic
 
 internal fun djangoFeatures(source: PromoEventSource): JComponent {
   return featurePage(
-    FeaturePromoBundle.message("feature.django.description.html",
-                               "https://www.jetbrains.com/help/pycharm/django-support.html"),
+    PyCharmCommunityCustomizationBundle.message("feature.django.description.html",
+                                                "https://www.jetbrains.com/help/pycharm/django-support.html"),
     djangoPromoFeatureList,
     source,
     PromoTopic.Django
@@ -64,13 +65,13 @@ internal fun djangoFeatures(source: PromoEventSource): JComponent {
 
 internal fun jupyterFeatures(source: PromoEventSource): JComponent {
   return featurePage(
-    FeaturePromoBundle.message("feature.jupyter.description",
+    PyCharmCommunityCustomizationBundle.message("feature.jupyter.description",
                                "https://www.jetbrains.com/help/pycharm/jupyter-notebook-support.html"),
     listOf(
-      PromoFeatureListItem(AllIcons.Actions.ReformatCode, FeaturePromoBundle.message("feature.jupyter.code")),
-      PromoFeatureListItem(AllIcons.Actions.StartDebugger, FeaturePromoBundle.message("feature.jupyter.debugger")),
-      PromoFeatureListItem(AllIcons.Nodes.DataSchema, FeaturePromoBundle.message("feature.jupyter.tables")),
-      PromoFeatureListItem(AllIcons.Vcs.Branch, FeaturePromoBundle.message("feature.jupyter.vcs"))
+      PromoFeatureListItem(AllIcons.Actions.ReformatCode, PyCharmCommunityCustomizationBundle.message("feature.jupyter.code")),
+      PromoFeatureListItem(AllIcons.Actions.StartDebugger, PyCharmCommunityCustomizationBundle.message("feature.jupyter.debugger")),
+      PromoFeatureListItem(AllIcons.Nodes.DataSchema, PyCharmCommunityCustomizationBundle.message("feature.jupyter.tables")),
+      PromoFeatureListItem(AllIcons.Vcs.Branch, PyCharmCommunityCustomizationBundle.message("feature.jupyter.vcs"))
 
     ),
     source,
@@ -80,14 +81,20 @@ internal fun jupyterFeatures(source: PromoEventSource): JComponent {
 
 internal fun sshFeatures(source: PromoEventSource): JComponent {
   return featurePage(
-    FeaturePromoBundle.message("feature.remoteSsh.description.html",
-                               "https://www.jetbrains.com/help/pycharm/create-ssh-configurations.html"),
+    PyCharmCommunityCustomizationBundle.message("feature.remoteSsh.description.html",
+                                                "https://www.jetbrains.com/help/pycharm/create-ssh-configurations.html"),
     listOf(
-      PromoFeatureListItem(AllIcons.Actions.Execute, FeaturePromoBundle.message("feature.remoteSsh.run")),
-      PromoFeatureListItem(AllIcons.Nodes.Deploy, FeaturePromoBundle.message("feature.remoteSsh.deploy")),
-      PromoFeatureListItem(AllIcons.Toolwindows.SettingSync, FeaturePromoBundle.message("feature.remoteSsh.sync"))
+      PromoFeatureListItem(AllIcons.Actions.Execute, PyCharmCommunityCustomizationBundle.message("feature.remoteSsh.run")),
+      PromoFeatureListItem(AllIcons.Nodes.Deploy, PyCharmCommunityCustomizationBundle.message("feature.remoteSsh.deploy")),
+      PromoFeatureListItem(AllIcons.Toolwindows.SettingSync, PyCharmCommunityCustomizationBundle.message("feature.remoteSsh.sync"))
     ),
     source,
     PromoTopic.RemoteSSH
   )
 }
+
+internal val djangoPromoFeatureList = listOf(
+  PromoFeatureListItem(AllIcons.Actions.ReformatCode, PyCharmCommunityCustomizationBundle.message("feature.django.code")),
+  PromoFeatureListItem(AllIcons.FileTypes.Html, PyCharmCommunityCustomizationBundle.message("feature.django.djangoTemplates")),
+  PromoFeatureListItem(AllIcons.General.Web, PyCharmCommunityCustomizationBundle.message("feature.django.endpoints"))
+)

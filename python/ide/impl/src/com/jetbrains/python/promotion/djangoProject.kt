@@ -8,6 +8,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeaturePage
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
 import com.intellij.openapi.util.NlsSafe
+import com.jetbrains.python.PyCharmCommunityCustomizationBundle
 import com.jetbrains.python.newProject.PyNewProjectSettings
 import com.jetbrains.python.newProject.PythonProjectGenerator
 import com.jetbrains.python.newProject.PythonPromoProjectGenerator
@@ -32,8 +33,8 @@ internal class DjangoPromoProjectGenerator : PythonProjectGenerator<PyNewProject
       PromoFeaturePage(
         PythonIcons.Python.Pycharm,
         PluginAdvertiserService.pyCharmProfessional,
-        FeaturePromoBundle.message("feature.django.description.html",
-                                   "https://www.jetbrains.com/help/pycharm/django-support.html"
+        PyCharmCommunityCustomizationBundle.message("feature.django.description.html",
+                                                    "https://www.jetbrains.com/help/pycharm/django-support.html"
         ),
         djangoPromoFeatureList,
         FeaturePromoBundle.message("free.trial.hint"),
