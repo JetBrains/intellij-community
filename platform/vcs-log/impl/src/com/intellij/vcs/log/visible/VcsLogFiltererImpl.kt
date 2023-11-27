@@ -95,8 +95,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
         commitCandidates = when (val commitsForRangeFilter = filterByRange(storage, logProviders, dataPack, rangeFilters)) {
           is RangeFilterResult.Commits -> IntCollectionUtil.union(listOf(commitsReachableFromHeads, commitsForRangeFilter.commits))
-          is RangeFilterResult.Error -> null
-          is RangeFilterResult.InvalidRange -> null
+          RangeFilterResult.Error, RangeFilterResult.InvalidRange -> null
         }
         forceFilterByVcs = commitCandidates == null
 
