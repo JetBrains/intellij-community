@@ -2,10 +2,18 @@
 package com.intellij.platform.ijent
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.platform.ijent.IjentExecFileProvider.Companion.getIjentBinary
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+
+private const val LINUX = "linux"
+private const val DARWIN = "darwin"
+private const val WINDOWS = "windows"
+
+private val arm64Names = setOf("arm64", "aarch64")
+private val amd64Names = setOf("amd64", "x86_64", "x86-64")
 
 /**
  * Gets the path to the IJent binary. See [getIjentBinary].
@@ -29,12 +37,20 @@ interface IjentExecFileProvider {
     private val mutex = Mutex()
   }
 
-  enum class SupportedPlatform {
-    AARCH64__DARWIN,
-    AARCH64__LINUX,
-    X86_64__DARWIN,
-    X86_64__LINUX,
-    X86_64__WINDOWS,
+  enum class SupportedPlatform(private val os: String, private val archNames: Set<String>) {
+    AARCH64__DARWIN(DARWIN, arm64Names),
+    AARCH64__LINUX(LINUX, arm64Names),
+    X86_64__DARWIN(DARWIN, amd64Names),
+    X86_64__LINUX(LINUX, amd64Names),
+    X86_64__WINDOWS(WINDOWS, amd64Names);
+
+    fun isFor(os: String, arch: String): Boolean {
+      return os.lowercase().trim() == this.os && arch.lowercase().trim() in this.archNames
+    }
+
+    companion object {
+      fun getFor(os: String, arch: String) = entries.firstOrNull { it.isFor(os, arch) }
+    }
   }
 
   @ApiStatus.OverrideOnly
