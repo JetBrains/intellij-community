@@ -58,13 +58,13 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
                               howServiceRetrieved: Service.Level,
                               holder: ProblemsHolder,
                               retrievingExpression: UExpression) {
-    val qualifiedName = replacementMethod.getContainingUClass()?.qualifiedName ?: return
-    val serviceName = StringUtil.getShortName(qualifiedName)
-    val message = DevKitBundle.message("inspection.simplifiable.service.retrieving.can.be.replaced.with", serviceName,
+    val qualifiedServiceName = replacementMethod.getContainingUClass()?.qualifiedName ?: return
+    val shortServiceName = StringUtil.getShortName(qualifiedServiceName)
+    val message = DevKitBundle.message("inspection.simplifiable.service.retrieving.can.be.replaced.with", shortServiceName,
                                        replacementMethod.name)
     val methodNameProvider = MethodNameProviders.forLanguage(retrievingExpression.lang)
     val methodName = methodNameProvider?.getName(replacementMethod) ?: replacementMethod.name
-    val fix = ReplaceWithGetInstanceCallFix(serviceName, methodName, howServiceRetrieved)
+    val fix = ReplaceWithGetInstanceCallFix(qualifiedServiceName, shortServiceName, methodName, howServiceRetrieved)
     when (retrievingExpression) {
       is UQualifiedReferenceExpression -> holder.registerUProblem(retrievingExpression, message, fixes = arrayOf(fix))
       is UCallExpression -> holder.registerUProblem(retrievingExpression, message, fixes = arrayOf(fix))
@@ -104,19 +104,20 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
     return (method.uastBody as? UBlockExpression)?.expressions?.singleOrNull() as? UReturnExpression
   }
 
-  private class ReplaceWithGetInstanceCallFix(private val serviceName: String,
+  private class ReplaceWithGetInstanceCallFix(private val qualifiedServiceName: String,
+                                              private val shortServiceName: String,
                                               private val methodName: String,
                                               private val howServiceRetrieved: Service.Level) : LocalQuickFix {
 
-    override fun getFamilyName(): String = DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", serviceName,
-                                                                methodName)
+    override fun getFamilyName(): String {
+      return DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", shortServiceName, methodName)
+    }
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val call = descriptor.psiElement.toUElement()?.getParentOfType<UCallExpression>() ?: return
       val oldRetrievingExpression = getRetrievingExpression(call) ?: return
       val generationPlugin = UastCodeGenerationPlugin.byLanguage(descriptor.psiElement.language) ?: return
       val factory = generationPlugin.getElementFactory(project)
-      val serviceName = oldRetrievingExpression.getExpressionType()?.canonicalText ?: return
       val parameters = when {
         howServiceRetrieved == Service.Level.APP -> emptyList()
         howServiceRetrieved == Service.Level.PROJECT &&
@@ -124,7 +125,8 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
         else -> return
       }
       val context = oldRetrievingExpression.sourcePsi
-      val receiver = factory.createQualifiedReference(serviceName, context) ?: factory.createSimpleReference(serviceName, context)
+      val receiver = factory.createQualifiedReference(qualifiedServiceName, context)
+                     ?: factory.createSimpleReference(qualifiedServiceName, context)
       val newCall = factory.createCallExpression(receiver = receiver, methodName = methodName, parameters = parameters,
                                                  expectedReturnType = oldRetrievingExpression.getExpressionType(),
                                                  kind = UastCallKind.METHOD_CALL,
