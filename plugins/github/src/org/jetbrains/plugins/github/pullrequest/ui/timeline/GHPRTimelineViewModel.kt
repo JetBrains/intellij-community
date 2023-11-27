@@ -5,10 +5,17 @@ import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
@@ -36,6 +43,10 @@ interface GHPRTimelineViewModel {
   val detailsVm: GHPRDetailsTimelineViewModel
 
   val timelineLoader: GHListLoader<GHPRTimelineItem>
+
+  val isLoading: StateFlow<Boolean>
+  val loadingError: StateFlow<Throwable?>
+
   val loadingErrorHandler: GHLoadingErrorHandler
 
   val commentVm: GHPRNewCommentViewModel?
@@ -58,7 +69,7 @@ internal class GHPRTimelineViewModelImpl(
   dataContext: GHPRDataContext,
   dataProvider: GHPRDataProvider
 ) : GHPRTimelineViewModel {
-  private val cs = parentCs.childScope(CoroutineName("GitHub Pull Request Timeline View Model"))
+  private val cs = parentCs.childScope(Dispatchers.Main + CoroutineName("GitHub Pull Request Timeline View Model"))
 
   private val securityService = dataContext.securityService
   private val repositoryDataService = dataContext.repositoryDataService
@@ -87,6 +98,24 @@ internal class GHPRTimelineViewModelImpl(
 
   override val htmlImageLoader = dataContext.htmlImageLoader
   override val avatarIconsProvider = dataContext.avatarIconsProvider
+
+  override val isLoading: StateFlow<Boolean> = callbackFlow {
+    val disposable = Disposer.newDisposable()
+    timelineLoader.addLoadingStateChangeListener(disposable) {
+      trySend(timelineLoader.loading)
+    }
+    send(timelineLoader.loading)
+    awaitClose { Disposer.dispose(disposable) }
+  }.stateIn(cs, SharingStarted.Eagerly, timelineLoader.loading)
+
+  override val loadingError: StateFlow<Throwable?> = callbackFlow {
+    val disposable = Disposer.newDisposable()
+    timelineLoader.addErrorChangeListener(disposable) {
+      trySend(timelineLoader.error)
+    }
+    send(timelineLoader.error)
+    awaitClose { Disposer.dispose(disposable) }
+  }.stateIn(cs, SharingStarted.Eagerly, timelineLoader.error)
 
   override fun update() {
     if (timelineLoader.loadedData.isNotEmpty())

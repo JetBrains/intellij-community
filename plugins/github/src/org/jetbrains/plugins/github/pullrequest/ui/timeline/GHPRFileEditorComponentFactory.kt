@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.CommonBundle
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -13,9 +14,12 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFie
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.comment.submitActionIn
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.util.bindTextHtmlIn
 import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.ide.DataManager
@@ -39,12 +43,14 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
 import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
+import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -58,24 +64,19 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
   private val uiDisposable = cs.nestedDisposable()
 
-  private val errorModel = GHHandledErrorPanelModel(GithubBundle.message("pull.request.timeline.cannot.load"),
-                                                    timelineVm.loadingErrorHandler)
   private val timelineModel = GHPRTimelineMergingModel()
 
-  init {
-    timelineVm.timelineLoader.addErrorChangeListener(uiDisposable) {
-      errorModel.error = timelineVm.timelineLoader.error
-    }
-    errorModel.error = timelineVm.timelineLoader.error
+  private val timelineLoader = timelineVm.timelineLoader
 
-    timelineVm.timelineLoader.addDataListener(uiDisposable, object : GHListLoader.ListDataListener {
+  init {
+    timelineLoader.addDataListener(uiDisposable, object : GHListLoader.ListDataListener {
       override fun onDataAdded(startIdx: Int) {
-        val loadedData = timelineVm.timelineLoader.loadedData
+        val loadedData = timelineLoader.loadedData
         timelineModel.add(loadedData.subList(startIdx, loadedData.size))
       }
 
       override fun onDataUpdated(idx: Int) {
-        val loadedData = timelineVm.timelineLoader.loadedData
+        val loadedData = timelineLoader.loadedData
         val item = loadedData[idx]
         timelineModel.update(item)
       }
@@ -87,7 +88,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
       override fun onAllDataRemoved() = timelineModel.removeAll()
     })
-    timelineModel.add(timelineVm.timelineLoader.loadedData)
+    timelineModel.add(timelineLoader.loadedData)
   }
 
   fun create(): JComponent {
@@ -100,21 +101,15 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     val itemComponentFactory = createItemComponentFactory()
 
     val timeline = ComponentListPanelFactory.createVertical(cs, timelineModel, componentFactory = itemComponentFactory)
-    val timelineLoader = timelineVm.timelineLoader
 
     val progressAndErrorPanel = JPanel(ListLayout.vertical(0, ListLayout.Alignment.CENTER)).apply {
       isOpaque = false
-
-      val errorPanel = GHHtmlErrorPanel.create(errorModel).apply {
-        border = CodeReviewTimelineUIUtil.ITEM_BORDER
-      }
+      val errorPanel = ErrorStatusPanelFactory.create(cs, timelineVm.loadingError, ErrorPresenter())
 
       val loadingIcon = JLabel(AnimatedIcon.Default()).apply {
         border = CodeReviewTimelineUIUtil.ITEM_BORDER
-        isVisible = timelineLoader.loading
-      }
-      timelineLoader.addLoadingStateChangeListener(uiDisposable) {
-        loadingIcon.isVisible = timelineLoader.loading
+        isVisible = false
+        bindVisibilityIn(cs, timelineVm.isLoading)
       }
 
       add(errorPanel)
@@ -286,4 +281,14 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comment.save.hint",
                                                                      CommentInputActionsComponentFactory.submitShortcutText))
     )
+
+  private inner class ErrorPresenter : ErrorStatusPresenter<Throwable> {
+    override fun getErrorTitle(error: Throwable): String = GithubBundle.message("pull.request.timeline.cannot.load")
+
+    override fun getErrorDescription(error: Throwable): String =
+      if (error is GithubAuthenticationException) GithubBundle.message("pull.request.list.error.authorization")
+      else GHHtmlErrorPanel.getLoadingErrorText(error)
+
+    override fun getErrorAction(error: Throwable): Action? = timelineVm.loadingErrorHandler.getActionForError(error)
+  }
 }
