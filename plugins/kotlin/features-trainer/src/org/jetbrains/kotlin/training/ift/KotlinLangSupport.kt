@@ -18,6 +18,7 @@ import java.nio.file.Path
 class KotlinLangSupport : JavaBasedLangSupport() {
     override val contentRootDirectoryName = "KotlinLearningProject"
 
+    override val defaultProductName: String = "IDEA"
     override val primaryLanguage: String = "kotlin"
     override val scratchFileName: String = "Learning.kt"
 

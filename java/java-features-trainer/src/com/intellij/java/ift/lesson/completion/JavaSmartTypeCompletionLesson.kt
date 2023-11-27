@@ -1,14 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ift.lesson.completion
 
-import com.intellij.java.ift.JavaLessonsBundle
 import training.dsl.*
-import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.learn.LessonsBundle
-import training.learn.course.KLesson
 
-class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", LessonsBundle.message("smart.completion.lesson.name")) {
-  val sample: LessonSample = parseLessonSample("""
+class JavaSmartTypeCompletionLesson : SmartTypeCompletionLessonBase() {
+  override val sample: LessonSample = parseLessonSample("""
     import java.lang.String;
     import java.util.HashSet;
     import java.util.LinkedList;
@@ -34,43 +30,13 @@ class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", LessonsBu
     }
   """.trimIndent())
 
-  override val lessonContent: LessonContext.() -> Unit = {
-    prepareSample(sample)
-    task {
-      text(JavaLessonsBundle.message("java.smart.type.completion.apply", action("SmartTypeCompletion"), action("EditorChooseLookupItem")))
-      trigger("SmartTypeCompletion")
-      stateCheck {
-        val text = editor.document.text
-        text.contains("strings = arrayBlockingQueue;") || text.contains("strings = linkedList;")
-      }
-      restoreIfModifiedOrMoved(sample)
-      testSmartCompletion()
-    }
+  override val firstCompletionItem: String = "linkedList"
+  override val firstCompletionCheck: String = "strings = linkedList;"
+
+  override val secondCompletionItem: String = "arrayBlockingQueue"
+  override val secondCompletionCheck: String = "return arrayBlockingQueue.toArray(new String[0]);"
+
+  override fun LessonContext.setCaretForSecondItem() {
     caret(20, 16)
-    task {
-      text(JavaLessonsBundle.message("java.smart.type.completion.return", action("SmartTypeCompletion"), action("EditorChooseLookupItem")))
-      trigger("SmartTypeCompletion")
-      stateCheck {
-        val text = editor.document.text
-        text.contains("return arrayBlockingQueue.toArray(new String[0]);")
-        || text.contains("return strings.toArray(new String[0]);")
-      }
-      restoreIfModifiedOrMoved()
-      testSmartCompletion()
-    }
   }
-
-  private fun TaskContext.testSmartCompletion() {
-    test {
-      invokeActionViaShortcut("CTRL SHIFT SPACE")
-      ideFrame {
-        jListContains("arrayBlockingQueue").item(0).doubleClick()
-      }
-    }
-  }
-
-  override val helpLinks: Map<String, String> get() = mapOf(
-    Pair(LessonsBundle.message("help.code.completion"),
-         LessonUtil.getHelpLink("auto-completing-code.html")),
-  )
 }
