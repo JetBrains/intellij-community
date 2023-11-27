@@ -46,7 +46,9 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
     PsiClass psiClass = CreateFromUsageUtils.createClass(referenceElement, getKind(), null);
-    WriteAction.run(() -> setupClassFromNewExpression(psiClass, newExpression));
+    if (psiClass != null) {
+      WriteAction.run(() -> setupClassFromNewExpression(psiClass, newExpression));
+    }
   }
 
   @Override
@@ -67,7 +69,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return CreateClassKind.CLASS;
   }
 
-  protected void setupClassFromNewExpression(final PsiClass aClass, final PsiNewExpression newExpression) {
+  protected void setupClassFromNewExpression(@NotNull final PsiClass aClass, @NotNull final PsiNewExpression newExpression) {
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
     if (classReference != null && aClass.isPhysical()) {
       classReference.bindToElement(aClass);
