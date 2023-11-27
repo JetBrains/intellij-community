@@ -89,7 +89,7 @@ object JaegerJsonSpanExporterManager {
   }
 
   suspend fun setOutput(file: Path) {
-    jaegerJsonSpanExporter.getAndSet(JaegerJsonSpanExporter(finalFile = file, serviceName = "build"))?.shutdown()
+    jaegerJsonSpanExporter.getAndSet(JaegerJsonSpanExporter(file = file, serviceName = "build"))?.shutdown()
     if (shutdownHookAdded.compareAndSet(false, true)) {
       Runtime.getRuntime().addShutdownHook(Thread({
                                                     runBlocking {

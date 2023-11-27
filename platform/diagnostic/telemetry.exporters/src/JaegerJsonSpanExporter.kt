@@ -13,36 +13,41 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
+import java.nio.channels.Channels
 import java.nio.channels.FileChannel
-import java.nio.file.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-private val MAIN_WRITE: Set<OpenOption> = EnumSet.of(StandardOpenOption.CREATE,
-                                                     StandardOpenOption.WRITE,
-                                                     StandardOpenOption.TRUNCATE_EXISTING)
-
 // https://github.com/jaegertracing/jaeger-ui/issues/381
 @ApiStatus.Internal
 class JaegerJsonSpanExporter(
-  private val finalFile: Path,
+  file: Path,
   serviceName: String,
   serviceVersion: String? = null,
   serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
-  private val tempTelemetryPath: Path
+  private val fileChannel: FileChannel
   private val writer: JsonGenerator
 
   private val lock = Mutex()
 
   init {
-    val parent = finalFile.parent
+    val parent = file.parent
     Files.createDirectories(parent)
-    tempTelemetryPath = Files.createTempFile(parent, "telemetry-", ".temp").toAbsolutePath()
-    writer = JsonFactory().createGenerator(Files.newBufferedWriter(tempTelemetryPath))
+
+    fileChannel = FileChannel.open(file, EnumSet.of(StandardOpenOption.CREATE,
+                                                    StandardOpenOption.WRITE,
+                                                    StandardOpenOption.TRUNCATE_EXISTING))
+
+    writer = JsonFactory().createGenerator(Channels.newOutputStream(fileChannel))
       .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
+      // Channels.newOutputStream doesn't implement flush, but just to be sure
+      .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false)
 
     beginWriter(w = writer, serviceName = serviceName, serviceVersion = serviceVersion, serviceNamespace = serviceNamespace)
   }
@@ -165,13 +170,9 @@ class JaegerJsonSpanExporter(
   override suspend fun shutdown() {
     lock.withReentrantLock {
       withContext(Dispatchers.IO) {
-        closeJsonFile(writer)
-        // nothing was written to the file
-        if (Files.notExists(tempTelemetryPath)) {
-          return@withContext
+        fileChannel.use {
+          closeJsonFile(writer)
         }
-
-        Files.move(tempTelemetryPath, finalFile, StandardCopyOption.REPLACE_EXISTING)
       }
     }
   }
@@ -184,18 +185,9 @@ class JaegerJsonSpanExporter(
       }
 
       writer.flush()
-
-      if (Files.notExists(tempTelemetryPath)) {
-        return@withReentrantLock
-      }
-
-      // JsonGenerator created from scratch can't close unfinished a json object
-      FileChannel.open(finalFile, MAIN_WRITE).use { finalChannel ->
-        FileChannel.open(tempTelemetryPath, StandardOpenOption.READ).use {
-          it.transferTo(0, Long.MAX_VALUE, finalChannel)
-        }
-        finalChannel.write(ByteBuffer.wrap(jsonEnd))
-      }
+      fileChannel.write(ByteBuffer.wrap(jsonEnd))
+      fileChannel.force(false)
+      fileChannel.position(fileChannel.position() - jsonEnd.size)
     }
   }
 }

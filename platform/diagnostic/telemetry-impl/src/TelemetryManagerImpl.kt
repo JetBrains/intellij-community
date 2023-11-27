@@ -215,7 +215,7 @@ private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = fa
   val spanExporters = mutableListOf<AsyncSpanExporter>()
   System.getProperty("idea.diagnostic.opentelemetry.file")?.let { traceFile ->
     spanExporters.add(JaegerJsonSpanExporter(
-      finalFile = normalizeTelemetryFile(Path.of(traceFile)),
+      file = normalizeTelemetryFile(Path.of(traceFile)),
       serviceName = resource.getAttribute(AttributeKey.stringKey("service.name"))!!,
       serviceVersion = resource.getAttribute(AttributeKey.stringKey("service.version")),
       serviceNamespace = resource.getAttribute(AttributeKey.stringKey("service.namespace")),
