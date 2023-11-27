@@ -100,6 +100,8 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   override fun runHealthCheck() {
+    if (!IndexInfrastructure.hasIndices()) return
+
     try {
       for ((project, filter) in myProjectFilters) {
         var errors: List<HealthCheckError>? = null
@@ -117,7 +119,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
         val message = StringUtil.first(errors!!.take(100).joinToString(", ") { ReadAction.nonBlocking(Callable { it.presentableText }).executeSynchronously() },
           300,
           true)
-        FileBasedIndexImpl.LOG.error("Project indexable filter health check errors: $message")
+        FileBasedIndexImpl.LOG.error("Project indexable filter health check found ${errors!!.size} errors: $message")
 
       }
     }
