@@ -286,13 +286,21 @@ public class ComparisonFailureData {
 
   private static ComparisonFailureData createJunitComparisonFailure(Throwable assertion) {
     try {
-      String expected = get(assertion, EXPECTED, "fExpected");
-      String actual = get(assertion, ACTUAL, "fActual");
+      String expected = getExpected(assertion);
+      String actual = getActual(assertion);
       return new ComparisonFailureData(expected, actual);
     }
     catch (IllegalAccessException | NoSuchFieldException e) {
       return null;
     }
+  }
+
+  public static String getActual(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
+    return get(assertion, ACTUAL, "fActual");
+  }
+
+  public static String getExpected(Throwable assertion) throws IllegalAccessException, NoSuchFieldException {
+    return get(assertion, EXPECTED, "fExpected");
   }
 
   private static String get(final Throwable assertion, final Map<Class<?>, Field> staticMap, final String fieldName) throws IllegalAccessException, NoSuchFieldException {
