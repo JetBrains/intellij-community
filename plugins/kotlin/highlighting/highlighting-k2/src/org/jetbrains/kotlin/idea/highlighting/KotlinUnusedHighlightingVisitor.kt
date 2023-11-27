@@ -13,7 +13,9 @@ import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.concurrency.JobLauncher
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Predicates
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
@@ -22,6 +24,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
@@ -33,8 +36,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 context(KtAnalysisSession)
-class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile,
-                                      private val holder: HighlightInfoHolder) : KtVisitorVoid() {
+class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
     private val enabled: Boolean
     private val deadCodeKey: HighlightDisplayKey?
     private val deadCodeInspection: LocalInspectionTool?
@@ -66,19 +68,9 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile,
         Divider.divideInsideAndOutsideAllRoots(ktFile, ktFile.textRange, holder.annotationSession.priorityRange, Predicates.alwaysTrue()) { dividedElements ->
             registerLocalReferences(dividedElements.inside())
             registerLocalReferences(dividedElements.outside())
-
-            val declarationVisitor = object : KtVisitorVoid() {
-                override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
-                    handleDeclaration(declaration, deadCodeInspection!!, deadCodeInfoType!!, deadCodeKey!!, holder)
-                }
-            }
             // highlight visible symbols first
-            for (declaration in dividedElements.inside()) {
-                declaration.accept(declarationVisitor)
-            }
-            for (declaration in dividedElements.outside()) {
-                declaration.accept(declarationVisitor)
-            }
+            collectAndHighlightNamedElements(dividedElements.inside(), holder)
+            collectAndHighlightNamedElements(dividedElements.outside(), holder)
             true
         }
     }
@@ -130,9 +122,21 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile,
         }
     }
 
-    override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
-        if (enabled) {
-            handleDeclaration(declaration, deadCodeInspection!!, deadCodeInfoType!!, deadCodeKey!!, holder)
+    private fun collectAndHighlightNamedElements(psiElements: List<PsiElement>, holder: HighlightInfoHolder) {
+        val namedElements: MutableList<KtNamedDeclaration> = mutableListOf()
+        val namedElementVisitor = object : KtVisitorVoid() {
+            override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+                namedElements.add(declaration)
+            }
+        }
+        for (declaration in psiElements) {
+            declaration.accept(namedElementVisitor)
+        }
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(namedElements, ProgressManager.getGlobalProgressIndicator()) { declaration ->
+            analyze(declaration) {
+                handleDeclaration(declaration, deadCodeInspection!!, deadCodeInfoType!!, deadCodeKey!!, holder)
+            }
+            true
         }
     }
 

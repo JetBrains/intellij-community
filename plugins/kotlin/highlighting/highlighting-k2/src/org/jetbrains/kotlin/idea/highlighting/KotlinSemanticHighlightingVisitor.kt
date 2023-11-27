@@ -36,7 +36,7 @@ class KotlinSemanticHighlightingVisitor : HighlightVisitor {
                  */
                 analyzers = null
             }
-            KotlinUnusedHighlightingVisitor(ktFile as KtFile, holder).collectHighlights(holder)
+            KotlinUnusedHighlightingVisitor(ktFile as KtFile).collectHighlights(holder)
         }
         return true
     }
