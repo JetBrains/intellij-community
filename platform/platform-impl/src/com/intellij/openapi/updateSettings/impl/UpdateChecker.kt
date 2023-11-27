@@ -38,10 +38,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -645,9 +642,12 @@ private fun doUpdateAndShowResult(
   val platformUpdates = UpdateChecker.getPlatformUpdates(updateSettings, indicator)
   if (platformUpdates is PlatformUpdates.ConnectionError) {
     if (userInitiated) {
-      showErrors(project = project,
-                 message = IdeBundle.message("updates.error.connection.failed", platformUpdates.error.message),
-                 preferDialog = preferDialog)
+      val err = platformUpdates.error
+      val message = when {
+        err is HttpRequests.HttpStatusException && err.statusCode == HttpRequests.CUSTOM_ERROR_CODE && err.message != null -> err.message!!
+        else -> IdeBundle.message("updates.error.connection.failed", err.message)
+      }
+      showErrors(project, message, preferDialog)
     }
     callback?.setRejected()
     return null
