@@ -267,7 +267,8 @@ public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, Persisten
         // all listeners are asynchronous
         BackgroundTaskUtil.syncPublisher(myProject, SvnVcs.ROOTS_RELOADED).consume(true);
         BackgroundTaskUtil.syncPublisher(myProject, ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN).directoryMappingChanged();
-      } else {
+      }
+      else {
         BackgroundTaskUtil.syncPublisher(myProject, SvnVcs.ROOTS_RELOADED).consume(false);
       }
     }

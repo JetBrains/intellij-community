@@ -18,7 +18,9 @@ import java.util.Collection;
 import java.util.List;
 
 public final class MappingsToRoots {
-  public static VirtualFile @NotNull [] getRootsUnderVcs(@NotNull Project project, @NotNull NewMappings newMappings, @NotNull AbstractVcs vcs) {
+  public static VirtualFile @NotNull [] getRootsUnderVcs(@NotNull Project project,
+                                                         @NotNull NewMappings newMappings,
+                                                         @NotNull AbstractVcs vcs) {
     List<VirtualFile> mappings = new ArrayList<>(newMappings.getMappingsAsFilesUnderVcs(vcs));
 
     final AbstractVcs.RootsConvertor convertor = vcs.getCustomConvertor();
@@ -48,12 +50,13 @@ public final class MappingsToRoots {
   /**
    * @return mapped roots and all modules inside: modules might have different settings
    * @see com.intellij.openapi.vcs.VcsRootSettings
-   *
    * @deprecated To be removed
    */
   @NotNull
   @Deprecated(forRemoval = true)
-  public static List<VirtualFile> getDetailedVcsMappings(@NotNull Project project, @NotNull NewMappings newMappings, @NotNull AbstractVcs vcs) {
+  public static List<VirtualFile> getDetailedVcsMappings(@NotNull Project project,
+                                                         @NotNull NewMappings newMappings,
+                                                         @NotNull AbstractVcs vcs) {
     // same as above, but no compression
     List<VirtualFile> roots = new ArrayList<>(newMappings.getMappingsAsFilesUnderVcs(vcs));
 

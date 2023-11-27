@@ -67,9 +67,9 @@ public abstract class ProjectLevelVcsManager {
 
   /**
    * Returns the VCS managing the specified file.
-
+   *
    * @return the VCS instance, or {@code null} if the file does not belong to any module or the module
-   *         it belongs to is not under version control.
+   * it belongs to is not under version control.
    */
   public abstract @Nullable AbstractVcs getVcsFor(@Nullable VirtualFile file);
 
@@ -77,7 +77,7 @@ public abstract class ProjectLevelVcsManager {
    * Returns the VCS managing the specified file path.
    *
    * @return the VCS instance, or {@code null} if the file does not belong to any module or the module
-   *         it belongs to is not under version control.
+   * it belongs to is not under version control.
    */
   public abstract @Nullable AbstractVcs getVcsFor(@Nullable FilePath file);
 
@@ -191,9 +191,10 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated Use just {@link #setDirectoryMappings(List)}.
    */
   @Deprecated(forRemoval = true)
-  public void updateActiveVcss() {}
+  public void updateActiveVcss() { }
 
   public abstract List<VcsDirectoryMapping> getDirectoryMappings();
+
   public abstract List<VcsDirectoryMapping> getDirectoryMappings(AbstractVcs vcs);
 
   public abstract @Nullable VcsDirectoryMapping getDirectoryMappingFor(@Nullable FilePath path);
@@ -218,9 +219,13 @@ public abstract class ProjectLevelVcsManager {
   public abstract CheckoutProvider.Listener getCompositeCheckoutListener();
 
   public abstract VcsHistoryCache getVcsHistoryCache();
+
   public abstract ContentRevisionCache getContentRevisionCache();
+
   public abstract boolean isFileInContent(final VirtualFile vf);
+
   public abstract boolean isIgnored(@NotNull VirtualFile vf);
+
   public abstract boolean isIgnored(@NotNull FilePath filePath);
 
   public abstract @NotNull VcsAnnotationLocalChangesListener getAnnotationLocalChangesListener();
