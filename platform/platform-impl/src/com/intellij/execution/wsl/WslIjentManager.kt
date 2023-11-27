@@ -15,6 +15,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.*
 import com.intellij.util.SuspendingLazy
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.suspendingLazy
 import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.coroutines.CoroutineScope
@@ -47,6 +49,8 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
     }!!.getValue()
   }
 
+  @RequiresBackgroundThread
+  @RequiresBlockingContext
   fun fetchLoginShellEnv(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): Map<String, String> {
     return runBlocking {
       getIjentApi(wslDistribution, project, rootUser).fetchLoginShellEnvVariables()
