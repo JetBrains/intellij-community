@@ -43,9 +43,8 @@ class BatchSpanProcessor(
           select {
             flushRequested.onReceive { request ->
               try {
-                // todo use result as isExported and do not flush
-                exportCurrentBatch(batch)
-                if (!request.exportOnly) {
+                val isExported = exportCurrentBatch(batch)
+                if (isExported && !request.exportOnly) {
                   flushExporters()
                 }
                 Unit
@@ -56,10 +55,8 @@ class BatchSpanProcessor(
             }
             queue.onReceive { span ->
               batch.add(span.toSpanData())
-
               if (batch.size >= maxExportBatchSize) {
                 exportCurrentBatch(batch)
-                flushExporters()
               }
             }
 
@@ -100,7 +97,10 @@ class BatchSpanProcessor(
           spanExporter.flush()
         }
       }
-      catch (e: TimeoutCancellationException) {
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Exception) {
         logger<BatchSpanProcessor>().error("Failed to flush", e)
       }
     }
