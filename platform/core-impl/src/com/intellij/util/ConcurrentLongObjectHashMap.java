@@ -6,6 +6,7 @@ import com.intellij.util.containers.ThreadLocalRandom;
 import com.intellij.util.containers.Unsafe;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.processing.Generated;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
@@ -25,6 +26,7 @@ import java.util.function.Predicate;
  * Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentLongObjectMap()} to create this map
  */
 @SuppressWarnings("ALL")
+@Generated("Do not modify, to ease following ports")
 final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
 
   /*
