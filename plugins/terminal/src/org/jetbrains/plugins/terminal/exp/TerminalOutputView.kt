@@ -16,6 +16,7 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.util.preferredHeight
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.plugins.terminal.action.TerminalInterruptCommandAction
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -86,6 +87,7 @@ class TerminalOutputView(
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
     editor.settings.isUseSoftWraps = true
     stickScrollBarToBottom(editor.scrollPane.verticalScrollBar)
+    TerminalInterruptCommandAction().registerCustomShortcutSet(editor.contentComponent, null)
     return editor
   }
 
