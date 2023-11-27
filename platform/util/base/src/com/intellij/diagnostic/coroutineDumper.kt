@@ -89,6 +89,7 @@ fun dumpCoroutines(scope: CoroutineScope? = null, stripDump: Boolean = true): St
  * at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:123)
  * ```
  */
+@OptIn(InternalCoroutinesApi::class)
 private fun dumpCoroutines(jobTree: List<JobTreeNode>, out: PrintStream, stripDump: Boolean) {
   for ((job: Job, info: DebugCoroutineInfo?, level: Int) in jobTree) {
     if (level == 0) {
@@ -164,6 +165,7 @@ private fun jobTree(scope: CoroutineScope? = null): Sequence<JobTreeNode> {
   }
 }
 
+@OptIn(InternalCoroutinesApi::class)
 private fun Job.rootJob(): Job {
   var result = this
   while (true) {
