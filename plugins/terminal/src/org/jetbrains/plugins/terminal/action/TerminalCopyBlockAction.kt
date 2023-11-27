@@ -8,30 +8,22 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ide.CopyPasteManager
 import org.jetbrains.plugins.terminal.exp.CommandBlock
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isAlternateBufferEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
 
-class TerminalCopyAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+class TerminalCopyBlockAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.editor ?: return
-    val selectionController = e.selectionController
-    val selectedText = when {
-      editor.selectionModel.hasSelection() -> editor.selectionModel.selectedText!!
-      selectionController != null -> getBlocksText(editor, selectionController.selectedBlocks).takeIf { it.isNotEmpty() }
-      else -> null
-    }
-    if (selectedText != null) {
+    val selectionController = e.selectionController ?: return
+    val selectedText = getBlocksText(editor, selectionController.selectedBlocks)
+    if (selectedText.isNotEmpty()) {
       CopyPasteManager.copyTextToClipboard(selectedText)
     }
   }
 
   override fun update(e: AnActionEvent) {
-    val editor = e.editor
-    e.presentation.isEnabledAndVisible = editor != null
-                                         && (editor.isOutputEditor || editor.isAlternateBufferEditor)
-                                         && (e.selectionController?.primarySelection != null || editor.selectionModel.hasSelection())
+    e.presentation.isEnabledAndVisible = e.editor?.isOutputEditor == true && e.selectionController?.primarySelection != null
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

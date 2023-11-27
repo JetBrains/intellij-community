@@ -60,7 +60,8 @@
     <action id="Terminal.SwitchFocusToEditor" class="com.intellij.openapi.actionSystem.EmptyAction">
       <keyboard-shortcut first-keystroke="ESCAPE" keymap="$default"/>
     </action>
-    <action id="Terminal.CopySelectedText" class="com.intellij.openapi.actionSystem.EmptyAction">
+    <action id="Terminal.CopySelectedText" class="org.jetbrains.plugins.terminal.action.TerminalCopyTextAction"
+            icon="AllIcons.Actions.Copy">
       <!-- use keyboard-shortcuts of $Copy with Ctrl+Shift+C on Linux  -->
       <keyboard-shortcut first-keystroke="control shift C" keymap="Default for XWin"/>
       <keyboard-shortcut first-keystroke="control C" keymap="Default for XWin"/>
@@ -120,6 +121,8 @@
     <action id="Terminal.ExpandBlockSelectionBelow" class="org.jetbrains.plugins.terminal.exp.TerminalExpandBlockSelectionBelowAction"
             use-shortcut-of="EditorDownWithSelection">
     </action>
+    <action id="Terminal.CopyBlock" class="org.jetbrains.plugins.terminal.action.TerminalCopyBlockAction"
+            use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
 
     <action id="Terminal.CommandCompletion" class="org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction">
       <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
@@ -136,18 +139,17 @@
       <keyboard-shortcut first-keystroke="control D" keymap="Mac OS X" replace-all="true"/>
       <keyboard-shortcut first-keystroke="control D" keymap="Mac OS X 10.5+" replace-all="true"/>
     </action>
-    <action id="Terminal.Copy" class="org.jetbrains.plugins.terminal.action.TerminalCopyAction"
-            use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
 
     <group id="Terminal.OutputContextMenu">
-      <reference ref="Terminal.Copy"/>
+      <reference ref="Terminal.CopyBlock"/>
+      <reference ref="Terminal.CopySelectedText"/>
       <reference ref="Terminal.Paste"/>
     </group>
 
     <group id="Terminal.PromptContextMenu">
       <!-- todo: replace editor actions with dedicated terminal actions -->
       <reference ref="EditorCut"/>
-      <reference ref="EditorCopy"/>
+      <reference ref="Terminal.CopySelectedText"/>
       <reference ref="Terminal.Paste"/>
     </group>
   </actions>
