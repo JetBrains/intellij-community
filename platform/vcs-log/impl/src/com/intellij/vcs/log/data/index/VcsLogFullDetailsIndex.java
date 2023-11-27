@@ -131,7 +131,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     myMapReduceIndex.clearCaches();
   }
 
-  public void flush() throws StorageException {
+  public void flush() throws StorageException, IOException {
     checkDisposed();
     myMapReduceIndex.flush();
   }

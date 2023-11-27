@@ -6,11 +6,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumeratorFactory;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
+import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
+import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
@@ -31,9 +35,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsIndex.ChangeKind>, VcsLogIndexer.CompressedDetails> {
 
@@ -50,10 +57,11 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
                           @Nullable StorageLockContext storageLockContext,
                           @NotNull VcsLogErrorHandler errorHandler,
                           @NotNull PersistentHashMap<int[], int[]> renamesMap,
+                          boolean useDurableEnumerator,
                           @NotNull Disposable disposableParent) throws IOException {
     super(storageId,
           PATHS,
-          new PathIndexer(storage, createPathsEnumerator(roots, storageId, storageLockContext), renamesMap),
+          new PathIndexer(storage, createPathsEnumerator(roots, storageId, storageLockContext, useDurableEnumerator), renamesMap),
           new ChangeKindListKeyDescriptor(),
           storageLockContext,
           errorHandler,
@@ -63,16 +71,21 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     myPathsIndexer.setFatalErrorConsumer(e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
   }
 
-  private static @NotNull PersistentEnumerator<LightFilePath> createPathsEnumerator(@NotNull Collection<VirtualFile> roots,
-                                                                                    @NotNull StorageId.Directory storageId,
-                                                                                    @Nullable StorageLockContext storageLockContext)
+  private static @NotNull DurableDataEnumerator<LightFilePath> createPathsEnumerator(@NotNull Collection<VirtualFile> roots,
+                                                                                     @NotNull StorageId.Directory storageId,
+                                                                                     @Nullable StorageLockContext storageLockContext,
+                                                                                     boolean useDurableEnumerator)
     throws IOException {
     Path storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
+    if (useDurableEnumerator) {
+      return DurableEnumeratorFactory.defaultWithDurableMap(new LightFilePathKeyDescriptorEx(roots)).open(storageFile);
+    }
     return new PersistentEnumerator<>(storageFile, new LightFilePathKeyDescriptor(roots),
                                       AbstractStorage.PAGE_SIZE, storageLockContext, storageId.getVersion());
   }
 
-  @Nullable FilePath getPath(int pathId, boolean isDirectory) {
+  @Nullable
+  FilePath getPath(int pathId, boolean isDirectory) {
     try {
       return toFilePath(getPath(pathId), isDirectory);
     }
@@ -86,12 +99,13 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     return myPathsIndexer.myPathsEnumerator.enumerate(path);
   }
 
-  @Nullable LightFilePath getPath(int pathId) throws IOException {
+  @Nullable
+  LightFilePath getPath(int pathId) throws IOException {
     return myPathsIndexer.myPathsEnumerator.valueOf(pathId);
   }
 
   @Override
-  public void flush() throws StorageException {
+  public void flush() throws StorageException, IOException {
     super.flush();
     myPathsIndexer.myRenamesMap.force();
     myPathsIndexer.myPathsEnumerator.force();
@@ -116,12 +130,12 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
   static final class PathIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
     private final @NotNull VcsLogStorage myStorage;
-    private final @NotNull PersistentEnumerator<LightFilePath> myPathsEnumerator;
+    private final @NotNull DurableDataEnumerator<LightFilePath> myPathsEnumerator;
     private final @NotNull PersistentHashMap<int[], int[]> myRenamesMap;
     private @NotNull Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
     private PathIndexer(@NotNull VcsLogStorage storage,
-                        @NotNull PersistentEnumerator<LightFilePath> pathsEnumerator,
+                        @NotNull DurableDataEnumerator<LightFilePath> pathsEnumerator,
                         @NotNull PersistentHashMap<int[], int[]> renamesMap) {
       myStorage = storage;
       myPathsEnumerator = pathsEnumerator;
@@ -328,6 +342,40 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       if (root == null) throw new IOException("Can not read root for index " + rootIndex + ". All roots " + myRoots);
       String path = IOUtil.readUTF(in);
       return new LightFilePath(root, path);
+    }
+  }
+
+  private static final class LightFilePathKeyDescriptorEx extends LightFilePathEqualityPolicy implements KeyDescriptorEx<LightFilePath> {
+    private LightFilePathKeyDescriptorEx(@NotNull Collection<VirtualFile> roots) {
+      super(roots);
+    }
+
+    @Override
+    public LightFilePath read(@NotNull ByteBuffer input) throws IOException {
+      int rootIndex = input.getInt();
+      VirtualFile root = myRoots.get(rootIndex);
+      if (root == null) throw new IOException("Can not read root for index " + rootIndex + ". All roots " + myRoots);
+
+      byte[] dst = new byte[input.remaining()];
+      input.get(dst);
+      var path = new String(dst, UTF_8);
+
+      return new LightFilePath(root, path);
+    }
+
+    @Override
+    public long saveToLog(@NotNull LightFilePath key, @NotNull AppendOnlyLog log) throws IOException {
+      VirtualFile root = key.getRoot();
+      if (!myRootsReversed.containsKey(root)) {
+        throw new IOException("Unknown root " + root.getPath() + " for path " + key.getRelativePath() + ". All roots " + myRoots);
+      }
+
+      byte[] relativePathBytes = key.getRelativePath().getBytes(UTF_8);
+      return log.append(buffer -> {
+        return buffer
+          .putInt(myRootsReversed.getInt(root))
+          .put(relativePathBytes);
+      }, relativePathBytes.length + 4);
     }
   }
 }

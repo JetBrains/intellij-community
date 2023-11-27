@@ -117,7 +117,7 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
   }
 
   @Override
-  public void flush() throws StorageException {
+  public void flush() throws StorageException, IOException {
     super.flush();
     myUserIndexer.flush();
   }

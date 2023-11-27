@@ -41,6 +41,7 @@ internal class PhmVcsLogStorageBackend(
   roots: Set<VirtualFile>,
   userRegistry: VcsUserRegistry,
   private val errorHandler: VcsLogErrorHandler,
+  useDurableEnumerator: Boolean,
   disposable: Disposable,
 ) : VcsLogStorageBackend, Disposable {
   private val messages: PersistentHashMap<Int, String>
@@ -118,7 +119,7 @@ internal class PhmVcsLogStorageBackend(
                                   /* lockContext = */ storageLockContext)
       Disposer.register(this, Disposable { catchAndWarn(renames::close) })
 
-      paths = VcsLogPathsIndex(storageId, storage, roots, storageLockContext, errorHandler, renames, this)
+      paths = VcsLogPathsIndex(storageId, storage, roots, storageLockContext, errorHandler, renames, useDurableEnumerator, this)
       users = VcsLogUserIndex(storageId, storageLockContext, userRegistry, errorHandler, this)
       trigrams = VcsLogMessagesTrigramIndex(storageId, storageLockContext, errorHandler, this)
 
@@ -171,7 +172,11 @@ internal class PhmVcsLogStorageBackend(
           users.flush()
           paths.flush()
           messages.force()
-        } catch (s: StorageException) {
+        }
+        catch (e: IOException) {
+          errorHandler.handleError(VcsLogErrorHandler.Source.Index, e)
+        }
+        catch (s: StorageException) {
           errorHandler.handleError(VcsLogErrorHandler.Source.Index, s)
         }
       }
@@ -343,7 +348,10 @@ internal class PhmVcsLogStorageBackend(
     fun create(project: Project, storage: VcsLogStorage, indexStorageId: StorageId.Directory, roots: Set<VirtualFile>,
                errorHandler: VcsLogErrorHandler, parent: Disposable): PhmVcsLogStorageBackend {
       val userRegistry = project.getService(VcsUserRegistry::class.java)
-      return IOUtil.openCleanOrResetBroken({ PhmVcsLogStorageBackend(indexStorageId, storage, roots, userRegistry, errorHandler, parent) }) {
+      return IOUtil.openCleanOrResetBroken({
+                                             PhmVcsLogStorageBackend(indexStorageId, storage, roots, userRegistry, errorHandler,
+                                                                     false, parent)
+                                           }) {
         if (!indexStorageId.cleanupAllStorageFiles()) {
           LOG.error("Could not clean up storage files in " + indexStorageId.storagePath)
         }
