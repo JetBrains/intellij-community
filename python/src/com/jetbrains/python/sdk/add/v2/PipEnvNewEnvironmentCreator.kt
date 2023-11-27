@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
@@ -69,8 +70,11 @@ class PipEnvNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
 
   override fun getOrCreateSdk(): Sdk {
     PropertiesComponent.getInstance().pipEnvPath = pipEnvPathField.text.nullize()
-    return setupPipEnvSdkUnderProgress(null, null, state.basePythonSdks.get(), state.projectPath.get(),
-                                       basePythonVersion.get()!!.homePath, false)!!
+    val baseSdk = setupSdkIfDetected(basePythonVersion.get()!!, state.allSdks.get())
+    val newSdk = setupPipEnvSdkUnderProgress(null, null, state.basePythonSdks.get(), state.projectPath.get(),
+                                             baseSdk.homePath, false)!!
+    SdkConfigurationUtil.addSdk(newSdk)
+    return newSdk
   }
 
 

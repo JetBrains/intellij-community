@@ -32,6 +32,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.util.BooleanFunction;
@@ -175,7 +176,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     if (sdk instanceof PyLazySdk) {
       final Sdk createdSdk = ((PyLazySdk)sdk).create();
       settings.setSdk(createdSdk);
-      if (createdSdk != null) {
+      if (createdSdk != null && !Registry.is("python.new.interpreter.creation.ui")) {
         SdkConfigurationUtil.addSdk(createdSdk);
       }
     }

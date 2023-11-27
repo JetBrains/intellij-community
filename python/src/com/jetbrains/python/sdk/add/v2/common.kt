@@ -4,11 +4,14 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
+import com.jetbrains.python.sdk.setup
 import com.jetbrains.python.statistics.InterpreterTarget
 import icons.PythonIcons
 import icons.PythonSdkIcons
@@ -69,4 +72,13 @@ fun PythonInterpreterCreationTargets.toStatisticsField(): InterpreterTarget {
 
 enum class PythonInterpreterSelectionMethod {
   CREATE_NEW, SELECT_EXISTING
+}
+
+internal fun setupSdkIfDetected(sdk: Sdk, existingSdks: List<Sdk>): Sdk = when (sdk) {
+  is PyDetectedSdk -> {
+    val newSdk = sdk.setup(existingSdks)!!
+    SdkConfigurationUtil.addSdk(newSdk)
+    newSdk
+  }
+  else -> sdk
 }
