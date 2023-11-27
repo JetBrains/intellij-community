@@ -15,6 +15,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.IntroduceParameterRefactoring
+import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.introduceField.ElementToWorkOn
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor
 import com.intellij.refactoring.introduceParameter.Util
@@ -71,11 +72,13 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
 
     val fixture: JavaCodeInsightTestFixture get() = myFixture
 
+    protected open fun getIntroduceVariableHandler(): RefactoringActionHandler = K1IntroduceVariableHandler
+
     protected open fun doIntroduceVariableTest(unused: String) {
         doTestIfNotDisabledByFileDirective { file ->
             file as KtFile
 
-            K1IntroduceVariableHandler.invoke(
+            getIntroduceVariableHandler().invoke(
                 fixture.project,
                 fixture.editor,
                 file,
@@ -195,7 +198,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 localVar,
                 true,
                 suggestedNames.first(),
-                IntroduceVariableBase.JavaReplaceChoice.ALL, 
+                IntroduceVariableBase.JavaReplaceChoice.ALL,
                 IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE,
                 false,
                 false,
