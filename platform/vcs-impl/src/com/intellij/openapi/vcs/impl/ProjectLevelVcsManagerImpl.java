@@ -255,7 +255,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public boolean checkVcsIsActive(AbstractVcs vcs) {
+  public boolean checkVcsIsActive(@NotNull AbstractVcs vcs) {
     return checkVcsIsActive(vcs.getName());
   }
 
@@ -501,7 +501,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public List<VirtualFile> getRootsUnderVcsWithoutFiltering(final AbstractVcs vcs) {
+  public List<VirtualFile> getRootsUnderVcsWithoutFiltering(@NotNull AbstractVcs vcs) {
     return myMappings.getMappingsAsFilesUnderVcs(vcs);
   }
 

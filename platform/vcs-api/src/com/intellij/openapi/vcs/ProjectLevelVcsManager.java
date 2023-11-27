@@ -111,7 +111,7 @@ public abstract class ProjectLevelVcsManager {
   /**
    * Checks if the specified VCS is used by any of the modules in the project.
    */
-  public abstract boolean checkVcsIsActive(AbstractVcs vcs);
+  public abstract boolean checkVcsIsActive(@NotNull AbstractVcs vcs);
 
   /**
    * Checks if the VCS with the specified name is used by any of the modules in the project.
@@ -177,7 +177,7 @@ public abstract class ProjectLevelVcsManager {
    */
   public abstract boolean isBackgroundVcsOperationRunning();
 
-  public abstract List<VirtualFile> getRootsUnderVcsWithoutFiltering(final AbstractVcs vcs);
+  public abstract List<VirtualFile> getRootsUnderVcsWithoutFiltering(@NotNull AbstractVcs vcs);
 
   public abstract VirtualFile[] getRootsUnderVcs(@NotNull AbstractVcs vcs);
 
@@ -187,7 +187,7 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated To be removed
    */
   @Deprecated(forRemoval = true)
-  public abstract List<VirtualFile> getDetailedVcsMappings(final AbstractVcs vcs);
+  public abstract List<VirtualFile> getDetailedVcsMappings(@NotNull AbstractVcs vcs);
 
   public abstract VirtualFile[] getAllVersionedRoots();
 
