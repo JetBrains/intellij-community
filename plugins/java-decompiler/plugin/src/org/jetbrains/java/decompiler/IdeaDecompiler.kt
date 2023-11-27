@@ -243,6 +243,8 @@ private fun getOptions(): Map<String, Any> {
     IFernflowerPreferences.INDENT_STRING to indent,
     IFernflowerPreferences.IGNORE_INVALID_BYTECODE to "1",
     IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES to "1",
+    IFernflowerPreferences.CONVERT_PATTERN_SWITCH to "1",
+    IFernflowerPreferences.CONVERT_RECORD_PATTERN to "1",
     //IFernflowerPreferences.UNIT_TEST_MODE to if (ApplicationManager.getApplication().isUnitTestMode) "1" else "0"
   )
 }

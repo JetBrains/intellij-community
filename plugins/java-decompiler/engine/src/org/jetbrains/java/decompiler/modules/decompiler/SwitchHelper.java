@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.ClassNameConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
@@ -52,7 +53,7 @@ public final class SwitchHelper {
     List<SwitchOnCandidate> candidates = new ArrayList<>();
     ArrayList<SwitchRecognizer> recognizers = new ArrayList<>(
       Arrays.asList(new StringSwitchRecognizer.JavacStringRecognizer(), new StringSwitchRecognizer.EcjStringRecognizer()));
-    if (cl.hasRecordPatternSupport()) {
+    if (cl.hasRecordPatternSupport() && DecompilerContext.getOption(IFernflowerPreferences.CONVERT_PATTERN_SWITCH)) {
       recognizers.add(new SwitchPatternHelper.JavacReferenceRecognizer());
     }
     collectSwitchesOn(root, recognizers, candidates, new HashSet<>());

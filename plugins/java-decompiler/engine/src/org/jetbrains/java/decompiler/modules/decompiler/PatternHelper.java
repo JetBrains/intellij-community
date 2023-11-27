@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
@@ -109,7 +110,7 @@ public final class PatternHelper {
       PatternVariableCandidate candidate = findSimpleCandidateFromIfStat(ifElseStat, operand, checkType, topLevelStatement);
       if (candidate == null) return null;
       //check what if it is record patterns
-      if (recordPatternSupport) {
+      if (recordPatternSupport && DecompilerContext.getOption(IFernflowerPreferences.CONVERT_RECORD_PATTERN)) {
         //collect everything from zero to check
         PatternVariableCandidate recordCandidate = findInitRecordPatternCandidate(basicBlockStatement, operand, candidate.getVarExprent());
         if (recordCandidate != null) {
@@ -125,6 +126,7 @@ public final class PatternHelper {
     return null;
   }
 
+  @Nullable
   static PatternVariableCandidate findNextPatternVarCandidate(@NotNull Statement ifBranch,
                                                                       @NotNull VarExprent operand,
                                                                       @NotNull ConstExprent checkType,
@@ -144,7 +146,8 @@ public final class PatternHelper {
         return candidate;
       }
       previousRecord.setVarType(checkType.getConstType());
-      if (!(ifBranch.getParent() instanceof IfStatement)) { //prevent infinite recursion
+      if (!(ifBranch.getParent() instanceof IfStatement) &&  //prevent infinite recursion
+          DecompilerContext.getOption(IFernflowerPreferences.CONVERT_RECORD_PATTERN)) {
         PatternVariableCandidate recordCandidate = findRecordPatternCandidate(ifBranch.getParent(), newVarTracker);
         if (recordCandidate != null) {
           varTracker.putAll(newVarTracker);
