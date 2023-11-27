@@ -4,7 +4,6 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.processing.Generated;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
@@ -24,7 +23,6 @@ import java.util.function.Consumer;
  */
 @Deprecated
 @SuppressWarnings("ALL")
-@Generated("Do not modify, to ease following ports")
 final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
 
   /*
