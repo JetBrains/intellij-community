@@ -766,30 +766,46 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
                          PersistentFSRecordsStorage storage) throws IOException;
   }
 
-  public static final UpdateAPIMethod DEFAULT_API_UPDATE_METHOD = (record, storage) -> {
-    storage.setParent(record.id, record.parentRef);
-    storage.setNameId(record.id, record.nameRef);
-    storage.setFlags(record.id, record.flags);
-    storage.setAttributeRecordId(record.id, record.attributeRef);
-    storage.setContentRecordId(record.id, record.contentRef);
-    storage.setTimestamp(record.id, record.timestamp);
-    storage.setLength(record.id, record.length);
+  public static final UpdateAPIMethod DEFAULT_API_UPDATE_METHOD = new UpdateAPIMethod() {
+    @Override
+    public void updateInStorage(FSRecord record, PersistentFSRecordsStorage storage) throws IOException {
+      storage.setParent(record.id, record.parentRef);
+      storage.setNameId(record.id, record.nameRef);
+      storage.setFlags(record.id, record.flags);
+      storage.setAttributeRecordId(record.id, record.attributeRef);
+      storage.setContentRecordId(record.id, record.contentRef);
+      storage.setTimestamp(record.id, record.timestamp);
+      storage.setLength(record.id, record.length);
+    }
+
+    @Override
+    public String toString() {
+      return "DEFAULT_API_UPDATE_METHOD";
+    }
   };
 
-  public static final UpdateAPIMethod MODERN_API_UPDATE_METHOD = (record, storage) -> {
-    if (!(storage instanceof IPersistentFSRecordsStorage newStorage)) {
-      throw new UnsupportedOperationException(
-        "MODERN API update available only for IPersistentFSRecordsStorage, but " + storage + " doesn't implement that interface");
+  public static final UpdateAPIMethod MODERN_API_UPDATE_METHOD = new UpdateAPIMethod() {
+    @Override
+    public void updateInStorage(FSRecord record, PersistentFSRecordsStorage storage) throws IOException {
+      if (!(storage instanceof IPersistentFSRecordsStorage newStorage)) {
+        throw new UnsupportedOperationException(
+          "MODERN API update available only for IPersistentFSRecordsStorage, but " + storage + " doesn't implement that interface");
+      }
+      newStorage.updateRecord(record.id, updatableRecordView -> {
+        updatableRecordView.setParent(record.parentRef);
+        updatableRecordView.setNameId(record.nameRef);
+        updatableRecordView.setFlags(record.flags);
+        updatableRecordView.setAttributeRecordId(record.attributeRef);
+        updatableRecordView.setContentRecordId(record.contentRef);
+        updatableRecordView.setTimestamp(record.timestamp);
+        updatableRecordView.setLength(record.length);
+        return true;
+      });
     }
-    newStorage.updateRecord(record.id, updatableRecordView -> {
-      updatableRecordView.setParent(record.parentRef);
-      updatableRecordView.setNameId(record.nameRef);
-      updatableRecordView.setFlags(record.flags);
-      updatableRecordView.setAttributeRecordId(record.attributeRef);
-      updatableRecordView.setContentRecordId(record.contentRef);
-      updatableRecordView.setTimestamp(record.timestamp);
-      updatableRecordView.setLength(record.length);
-      return true;
-    });
+
+    @Override
+    public String toString() {
+      return "MODERN_API_UPDATE_METHOD";
+    }
   };
 }
