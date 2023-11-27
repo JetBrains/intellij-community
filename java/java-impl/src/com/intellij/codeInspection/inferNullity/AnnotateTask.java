@@ -13,6 +13,7 @@ class AnnotateTask implements SequentialTask {
   private final UsageInfo[] myInfos;
   private final SequentialModalProgressTask myTask;
   private int myCount;
+  private int myAdded = 0;
   private final int myTotal;
   private final NullableNotNullManager myNotNullManager;
 
@@ -36,8 +37,14 @@ class AnnotateTask implements SequentialTask {
       indicator.setFraction(((double)myCount) / myTotal);
     }
 
-    NullityInferrer.apply(myProject, myNotNullManager, myInfos[myCount++]);
+    if (NullityInferrer.apply(myProject, myNotNullManager, myInfos[myCount++])) {
+      myAdded++;
+    }
 
     return isDone();
+  }
+
+  int getAddedCount() {
+    return myAdded;
   }
 }

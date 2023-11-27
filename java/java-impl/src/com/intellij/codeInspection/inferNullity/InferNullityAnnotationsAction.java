@@ -247,23 +247,31 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
         ReadAction.run(() -> {
           final UsageInfo[] infos = computable.compute();
           if (infos.length > 0) {
-            Runnable command = () -> {
-              final Set<VirtualFile> files =
-                StreamEx.of(infos).map(UsageInfo::getElement).nonNull()
-                  .map(PsiElement::getContainingFile).nonNull()
-                  .map(PsiFile::getVirtualFile).nonNull()
-                  .toCollection(LinkedHashSet::new);
-              if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, files)) return;
+            var command = new Runnable() {
+              private int myCount;
 
-              final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, JavaBundle
-                .message("action.title.infer.nullity.annotations"));
-              progressTask.setMinIterationTime(200);
-              progressTask.setTask(new AnnotateTask(project, progressTask, infos));
-              ProgressManager.getInstance().run(progressTask);
+              @Override
+              public void run() {
+                final Set<VirtualFile> files =
+                  StreamEx.of(infos).map(UsageInfo::getElement).nonNull()
+                    .map(PsiElement::getContainingFile).nonNull()
+                    .map(PsiFile::getVirtualFile).nonNull()
+                    .toCollection(LinkedHashSet::new);
+                if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, files)) return;
+
+                final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, JavaBundle
+                  .message("action.title.infer.nullity.annotations"));
+                progressTask.setMinIterationTime(200);
+                AnnotateTask task = new AnnotateTask(project, progressTask, infos);
+                progressTask.setTask(task);
+                ProgressManager.getInstance().run(progressTask);
+                myCount = task.getAddedCount();
+              }
             };
             CommandProcessor.getInstance()
               .executeCommand(project, command, JavaBundle.message("action.title.infer.nullity.annotations"), null);
-            NOTIFICATION_GROUP.createNotification(JavaBundle.message("notification.content.added.annotations", infos.length), NotificationType.INFORMATION)
+            NOTIFICATION_GROUP.createNotification(JavaBundle.message("notification.content.added.annotations", command.myCount), 
+                                                  NotificationType.INFORMATION)
               .notify(project);
           }
           else {

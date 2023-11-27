@@ -153,21 +153,23 @@ public class NullityInferrer {
                                      JavaBundle.message("dialog.title.infer.nullity.results")));
   }
 
-  private static void annotateNotNull(Project project,
+  private static boolean annotateNotNull(Project project,
                                       NullableNotNullManager manager,
                                       final PsiModifierListOwner element) {
-    if (element != null) {
-      if (element instanceof PsiField && ((PsiField)element).hasInitializer() && element.hasModifierProperty(PsiModifier.FINAL)) return;
-      invoke(project, element, manager.getDefaultNotNull(), manager.getDefaultNullable());
+    if (element == null ||
+        element instanceof PsiField && ((PsiField)element).hasInitializer() && element.hasModifierProperty(PsiModifier.FINAL)) {
+      return false;
     }
+    invoke(project, element, manager.getDefaultNotNull(), manager.getDefaultNullable());
+    return true;
   }
 
-  private static void annotateNullable(Project project,
+  private static boolean annotateNullable(Project project,
                                        NullableNotNullManager manager,
                                        final PsiModifierListOwner element) {
-    if (element != null) {
-      invoke(project, element, manager.getDefaultNullable(), manager.getDefaultNotNull());
-    }
+    if (element == null) return false;
+    invoke(project, element, manager.getDefaultNullable(), manager.getDefaultNotNull());
+    return true;
   }
 
   private static void invoke(final Project project,
@@ -180,12 +182,14 @@ public class NullityInferrer {
     return myNotNullSet.size() + myNullableSet.size();
   }
 
-  public static void apply(Project project, NullableNotNullManager manager, UsageInfo info) {
+  public static boolean apply(Project project, NullableNotNullManager manager, UsageInfo info) {
     if (info instanceof NullableUsageInfo) {
-      annotateNullable(project, manager, (PsiModifierListOwner)info.getElement());
-    } else if (info instanceof NotNullUsageInfo) {
-      annotateNotNull(project, manager, (PsiModifierListOwner)info.getElement());
+      return annotateNullable(project, manager, (PsiModifierListOwner)info.getElement());
     }
+    if (info instanceof NotNullUsageInfo) {
+      return annotateNotNull(project, manager, (PsiModifierListOwner)info.getElement());
+    }
+    return false;
   }
 
   private boolean shouldIgnore(PsiModifierListOwner element) {
