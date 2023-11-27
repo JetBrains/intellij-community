@@ -85,7 +85,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     final Set<Module> modulesWithLL = new HashSet<>();
     final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
     final String defaultNullable = NullableNotNullManager.getInstance(project).getDefaultNullable();
-    final int[] fileCount = new int[] {0};
+    final int[] fileCount = new int[]{0};
     if (!progressManager.runProcessWithProgressSynchronously(() -> scope.accept(new PsiElementVisitor() {
       final private Set<Module> processed = new HashSet<>();
 
@@ -120,7 +120,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     }
     if (!modulesWithoutAnnotations.isEmpty()) {
       addAnnotationsDependency(project, modulesWithoutAnnotations, defaultNullable,
-                                                       JavaBundle.message("action.title.infer.nullity.annotations"))
+                               JavaBundle.message("action.title.infer.nullity.annotations"))
         .onSuccess(__ -> {
           restartAnalysis(project, scope);
         });
@@ -144,7 +144,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
   public static Promise<Void> addAnnotationsDependency(@NotNull final Project project,
                                                        @NotNull final Set<? extends Module> modulesWithoutAnnotations,
-                                                       @NotNull String annoFQN, final @NlsContexts.DialogTitle String title) {
+                                                       @NotNull String annoFQN, final @NlsContexts.DialogTitle @NotNull String title) {
     final Library annotationsLib = LibraryUtil.findLibraryByClass(annoFQN, project);
     if (annotationsLib != null) {
       String message = JavaBundle.message("dialog.message.modules.dont.refer.to.existing.annotations.library",
@@ -173,8 +173,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   @NotNull
-  private static OkCancelDialogBuilder createDependencyDialog(@NlsContexts.DialogTitle String title,
-                                                              @NlsContexts.DialogMessage String message,
+  private static OkCancelDialogBuilder createDependencyDialog(@NlsContexts.DialogTitle @NotNull String title,
+                                                              @NlsContexts.DialogMessage @NotNull String message,
                                                               @NotNull Project project) {
     return MessageDialogBuilder.okCancel(title, message)
       .icon(Messages.getErrorIcon())
@@ -228,7 +228,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
         .message("action.description.infer.nullity.annotations"), true, project)) {
         return null;
       }
-    } else {
+    }
+    else {
       searchForUsages.run();
     }
 
@@ -239,7 +240,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     return myUi.get().getCheckBox().isSelected();
   }
 
-  private static Runnable applyRunnable(final Project project, final Computable<UsageInfo[]> computable) {
+  private static @NotNull Runnable applyRunnable(final @NotNull Project project, final @NotNull Computable<UsageInfo[]> computable) {
     return () -> {
       final LocalHistoryAction action = LocalHistory.getInstance().startAction(
         JavaBundle.message("action.description.infer.nullity.annotations"));
@@ -270,7 +271,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             };
             CommandProcessor.getInstance()
               .executeCommand(project, command, JavaBundle.message("action.title.infer.nullity.annotations"), null);
-            NOTIFICATION_GROUP.createNotification(JavaBundle.message("notification.content.added.annotations", command.myCount), 
+            NOTIFICATION_GROUP.createNotification(JavaBundle.message("notification.content.added.annotations", command.myCount),
                                                   NotificationType.INFORMATION)
               .notify(project);
           }
@@ -285,15 +286,18 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     };
   }
 
-  protected void restartAnalysis(final Project project, final AnalysisScope scope) {
+  protected void restartAnalysis(final @NotNull Project project, final @NotNull AnalysisScope scope) {
     AppUIExecutor.onUiThread().inSmartMode(project).execute(() -> analyze(project, scope));
   }
 
-  private void showUsageView(@NotNull Project project, final UsageInfo[] usageInfos, @NotNull AnalysisScope scope) {
+  private void showUsageView(@NotNull Project project, final UsageInfo @NotNull [] usageInfos, @NotNull AnalysisScope scope) {
     final UsageTarget[] targets = UsageTarget.EMPTY_ARRAY;
     final Ref<Usage[]> convertUsagesRef = new Ref<>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos))),
-                                                                           JavaBundle.message("progress.title.preprocess.usages"), true, project)) return;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ApplicationManager.getApplication().runReadAction(() -> convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos))),
+      JavaBundle.message("progress.title.preprocess.usages"), true, project)) {
+      return;
+    }
 
     if (convertUsagesRef.isNull()) return;
     final Usage[] usages = convertUsagesRef.get();
@@ -304,14 +308,18 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     presentation.setShowCancelButton(true);
     presentation.setUsagesString(RefactoringBundle.message("usageView.usagesText"));
 
-    final UsageView usageView = UsageViewManager.getInstance(project).showUsages(targets, usages, presentation, rerunFactory(project, scope));
+    final UsageView usageView =
+      UsageViewManager.getInstance(project).showUsages(targets, usages, presentation, rerunFactory(project, scope));
 
     final Runnable refactoringRunnable = applyRunnable(project, () -> {
       final Set<UsageInfo> infos = UsageViewUtil.getNotExcludedUsageInfos(usageView);
       return infos.toArray(UsageInfo.EMPTY_ARRAY);
     });
 
-    String canNotMakeString = "Cannot perform operation.\nThere were changes in code after usages have been found.\nPlease perform operation search again.";
+    String canNotMakeString = """
+      Cannot perform operation.
+      There were changes in code after usages have been found.
+      Please perform operation search again.""";
 
     usageView.addPerformOperationAction(refactoringRunnable, JavaBundle.message("action.title.infer.nullity.annotations"), canNotMakeString,
                                         JavaBundle.message("action.title.infer.nullity.annotations"), false);
@@ -322,7 +330,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     return () -> new UsageInfoSearcherAdapter() {
       @Override
       protected UsageInfo @NotNull [] findUsages() {
-        return ObjectUtils.notNull(InferNullityAnnotationsAction.this.findUsages(project, scope, scope.getFileCount()), UsageInfo.EMPTY_ARRAY);
+        return ObjectUtils.notNull(InferNullityAnnotationsAction.this.findUsages(project, scope, scope.getFileCount()),
+                                   UsageInfo.EMPTY_ARRAY);
       }
 
       @Override
@@ -333,7 +342,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected JComponent getAdditionalActionSettings(@NotNull Project project, BaseAnalysisActionDialog dialog) {
+  protected @Nullable JComponent getAdditionalActionSettings(@NotNull Project project, BaseAnalysisActionDialog dialog) {
     InferNullityAdditionalUi ui = myUi.get();
     ui.getCheckBox().setSelected(PropertiesComponent.getInstance().getBoolean(ANNOTATE_LOCAL_VARIABLES));
     return ui.getPanel();
