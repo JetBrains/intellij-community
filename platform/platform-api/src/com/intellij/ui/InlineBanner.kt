@@ -252,7 +252,7 @@ open class InlineBanner(background: Color, private var myBorderColor: Color, ico
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
     val config = GraphicsUtil.setupAAPainting(g)
-    val cornerRadius = JBUI.scale(12)
+    val cornerRadius = JBUI.scale(16)
     g.color = background
     g.fillRoundRect(0, 0, width, height, cornerRadius, cornerRadius)
     g.color = myBorderColor
