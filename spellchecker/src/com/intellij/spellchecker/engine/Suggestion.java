@@ -18,6 +18,8 @@ package com.intellij.spellchecker.engine;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public class Suggestion implements Comparable<Suggestion> {
   private final String word;
   private final int metrics;
@@ -43,7 +45,7 @@ public class Suggestion implements Comparable<Suggestion> {
     Suggestion result = (Suggestion)o;
 
     if (metrics != result.metrics) return false;
-    if (word != null ? !word.equals(result.word) : result.word != null) return false;
+    if (!Objects.equals(word, result.word)) return false;
 
     return true;
   }

@@ -18,7 +18,6 @@ package com.intellij.spellchecker.quickfixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
