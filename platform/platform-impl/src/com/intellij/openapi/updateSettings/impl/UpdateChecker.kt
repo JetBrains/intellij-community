@@ -68,7 +68,7 @@ private val shownNotifications = MultiMap<NotificationKind, Notification>()
 
 @Service
 private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
-  @Suppress("OPT_IN_USAGE")
+  @OptIn(ExperimentalCoroutinesApi::class)
   private val limitedDispatcher = Dispatchers.IO.limitedParallelism(1)
 
   /**
@@ -91,7 +91,6 @@ private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
     }
     return callback
   }
-
 }
 
 /**
