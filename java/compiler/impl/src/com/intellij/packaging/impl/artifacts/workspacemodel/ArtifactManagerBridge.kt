@@ -27,6 +27,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
 import com.intellij.platform.workspace.storage.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -49,36 +50,28 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   }
 
   @RequiresReadLock
-  override fun getArtifacts(): Array<ArtifactBridge> {
-    val start = System.currentTimeMillis()
-
+  override fun getArtifacts(): Array<ArtifactBridge> = getArtifactsMs.addMeasuredTimeMs {
     initBridges()
 
     val store = project.workspaceModel.currentSnapshot
 
-    val artifacts: Array<ArtifactBridge> = store
+    return@addMeasuredTimeMs store
       .entities(ArtifactEntity::class.java)
       .map { store.artifactsMap.getDataByEntity(it) ?: error("All artifact bridges should be already created at this moment") }
       .filter { VALID_ARTIFACT_CONDITION.value(it) }
       .toList().toTypedArray()
-
-    getArtifactsMs.addElapsedTimeMs(start)
-    return artifacts
   }
 
   @RequiresReadLock
-  override fun findArtifact(name: String): Artifact? {
-    val start = System.currentTimeMillis()
+  override fun findArtifact(name: String): Artifact? = findArtifactMs.addMeasuredTimeMs {
     initBridges()
 
     val store = project.workspaceModel.currentSnapshot
 
     val artifactEntity = store.resolve(ArtifactId(name)) ?: return null
 
-    val artifactBridge: ArtifactBridge = store.artifactsMap.getDataByEntity(artifactEntity)
-                                         ?: error("All artifact bridges should be already created at this moment")
-    findArtifactMs.addElapsedTimeMs(start)
-    return artifactBridge
+    return@addMeasuredTimeMs store.artifactsMap.getDataByEntity(artifactEntity)
+                             ?: error("All artifact bridges should be already created at this moment")
   }
 
   override fun getArtifactByOriginal(artifact: Artifact): Artifact = artifact
@@ -86,9 +79,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   override fun getOriginalArtifact(artifact: Artifact): Artifact = artifact
 
   @RequiresReadLock
-  override fun getArtifactsByType(type: ArtifactType): List<ArtifactBridge> {
-    val start = System.currentTimeMillis()
-
+  override fun getArtifactsByType(type: ArtifactType): List<ArtifactBridge> = getArtifactsByTypeMs.addMeasuredTimeMs {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertReadAccessAllowed()
     initBridges()
@@ -96,14 +87,11 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     val store = project.workspaceModel.currentSnapshot
     val typeId = type.id
 
-    val artifacts: List<ArtifactBridge> = store
+    return@addMeasuredTimeMs store
       .entities(ArtifactEntity::class.java)
       .filter { it.artifactType == typeId }
       .map { store.artifactsMap.getDataByEntity(it) ?: error("All artifact bridges should be already created at this moment") }
       .toList()
-
-    getArtifactsByTypeMs.addElapsedTimeMs(start)
-    return artifacts
   }
 
   @RequiresReadLock
@@ -142,9 +130,8 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
   override fun getResolvingContext(): PackagingElementResolvingContext = resolvingContext
 
-  override fun addArtifact(name: String, type: ArtifactType, root: CompositePackagingElement<*>?): Artifact {
-    val start = System.currentTimeMillis()
-    val artifact = WriteAction.compute(ThrowableComputable<ModifiableArtifact, RuntimeException> {
+  override fun addArtifact(name: String, type: ArtifactType, root: CompositePackagingElement<*>?): Artifact = addArtifactMs.addMeasuredTimeMs {
+    return@addMeasuredTimeMs WriteAction.compute(ThrowableComputable<ModifiableArtifact, RuntimeException> {
       val model = createModifiableModel()
       val artifact = model.addArtifact(name, type)
       if (root != null) {
@@ -153,9 +140,6 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
       model.commit()
       artifact
     })
-
-    addArtifactMs.addElapsedTimeMs(start)
-    return artifact
   }
 
   override fun addElementsToDirectory(artifact: Artifact, relativePath: String, elements: Collection<PackagingElement<*>>) {
@@ -174,9 +158,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   }
 
   @RequiresWriteLock
-  fun commit(artifactModel: ArtifactModifiableModelBridge) {
-    val start = System.currentTimeMillis()
-
+  fun commit(artifactModel: ArtifactModifiableModelBridge) = commitMs.addMeasuredTimeMs {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     LOG.trace { "Committing artifact manager bridge. diff: ${artifactModel.diff}" }
@@ -271,8 +253,6 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     if (changes.isNotEmpty()) {
       BuildManager.getInstance().clearState(project)
     }
-
-    commitMs.addElapsedTimeMs(start)
   }
 
   private fun updateCustomElements(diff: MutableEntityStorage) {
@@ -291,9 +271,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
   // Initialize all artifact bridges
   @RequiresReadLock
-  private fun initBridges() {
-    val start = System.currentTimeMillis()
-
+  private fun initBridges() = initBridgesMs.addMeasuredTimeMs {
     // XXX @RequiresReadLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertReadAccessAllowed()
     val workspaceModel = project.workspaceModel
@@ -322,8 +300,6 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
         }
       }
     }
-
-    initBridgesMs.addElapsedTimeMs(start)
   }
 
   companion object {

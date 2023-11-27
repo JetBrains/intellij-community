@@ -19,7 +19,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
@@ -42,8 +42,7 @@ open class ArtifactBridge(
 
   init {
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-      override fun beforeChanged(event: VersionedStorageChange) {
-        val start = System.currentTimeMillis()
+      override fun beforeChanged(event: VersionedStorageChange) = beforeChangedMs.addMeasuredTimeMs {
         event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
           if (it.entity.symbolicId != artifactId) return@forEach
 
@@ -61,8 +60,6 @@ open class ArtifactBridge(
           entityStorage = VersionedEntityStorageOnBuilder(event.storageBefore.toBuilder())
           assert(artifactId in entityStorage.base) { "Cannot resolve artifact $artifactId." }
         }
-
-        beforeChangedMs.addElapsedTimeMs(start)
       }
     })
   }

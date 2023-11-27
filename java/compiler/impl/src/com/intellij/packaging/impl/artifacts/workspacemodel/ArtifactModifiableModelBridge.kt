@@ -18,7 +18,6 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridg
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -47,9 +46,7 @@ class ArtifactModifiableModelBridge(
 
   private val versionedOnBuilder = VersionedEntityStorageOnBuilder(diff)
 
-  override fun getArtifacts(): Array<ArtifactBridge> {
-    val start = System.currentTimeMillis()
-
+  override fun getArtifacts(): Array<ArtifactBridge> = getArtifactsMs.addMeasuredTimeMs {
     val newBridges = mutableListOf<ArtifactBridge>()
     val artifacts = diff
       .entities(ArtifactEntity::class.java)
@@ -62,14 +59,10 @@ class ArtifactModifiableModelBridge(
       .filter { VALID_ARTIFACT_CONDITION.value(it) }
       .toList().toTypedArray()
     addBridgesToDiff(newBridges, diff)
-    val out = artifacts.mapInPlace { modifiableToOriginal.getKeysByValue(it)?.singleOrNull() ?: it }
-    getArtifactsMs.addElapsedTimeMs(start)
-    return out
+    return@addMeasuredTimeMs artifacts.mapInPlace { modifiableToOriginal.getKeysByValue(it)?.singleOrNull() ?: it }
   }
 
-  override fun findArtifact(name: String): Artifact? {
-    val start = System.currentTimeMillis()
-
+  override fun findArtifact(name: String): Artifact? = findArtifactMs.addMeasuredTimeMs {
     val artifactEntity = diff.resolve(ArtifactId(name)) ?: return null
 
     val newBridges = mutableListOf<ArtifactBridge>()
@@ -80,9 +73,7 @@ class ArtifactModifiableModelBridge(
                  }
     addBridgesToDiff(newBridges, diff)
 
-    val artifactBridge: ArtifactBridge = modifiableToOriginal.getKeysByValue(bridge)?.singleOrNull() ?: bridge
-    findArtifactMs.addElapsedTimeMs(start)
-    return artifactBridge
+    return@addMeasuredTimeMs modifiableToOriginal.getKeysByValue(bridge)?.singleOrNull() ?: bridge
   }
 
   override fun getArtifactByOriginal(artifact: Artifact): Artifact {
@@ -93,9 +84,7 @@ class ArtifactModifiableModelBridge(
     return modifiableToOriginal[artifact as ArtifactBridge] ?: artifact
   }
 
-  override fun getArtifactsByType(type: ArtifactType): Collection<Artifact> {
-    val start = System.currentTimeMillis()
-
+  override fun getArtifactsByType(type: ArtifactType): Collection<Artifact> = getArtifactsByTypeMs.addMeasuredTimeMs {
     val typeId = type.id
 
     val newBridges = mutableListOf<ArtifactBridge>()
@@ -111,7 +100,6 @@ class ArtifactModifiableModelBridge(
       .toList()
     addBridgesToDiff(newBridges, diff)
 
-    getArtifactsByTypeMs.addElapsedTimeMs(start)
     return artifacts
   }
 
@@ -133,8 +121,7 @@ class ArtifactModifiableModelBridge(
   override fun addArtifact(name: String,
                            artifactType: ArtifactType,
                            rootElement: CompositePackagingElement<*>,
-                           externalSource: ProjectModelExternalSource?): ModifiableArtifact {
-    val start = System.currentTimeMillis()
+                           externalSource: ProjectModelExternalSource?): ModifiableArtifact = addArtifactMs.addMeasuredTimeMs {
     val uniqueName = generateUniqueName(name)
 
     val outputPath = ArtifactUtil.getDefaultArtifactOutputPath(uniqueName, project)
@@ -164,7 +151,6 @@ class ArtifactModifiableModelBridge(
 
     eventDispatcher.multicaster.artifactAdded(modifiableArtifact)
 
-    addArtifactMs.addElapsedTimeMs(start)
     return modifiableArtifact
   }
 
@@ -221,16 +207,13 @@ class ArtifactModifiableModelBridge(
   }
 
   @RequiresWriteLock
-  override fun commit() {
-    commitMs.addMeasuredTimeMs {
-      // XXX @RequiresReadLock annotation doesn't work for kt now
-      ApplicationManager.getApplication().assertWriteAccessAllowed()
-      manager.commit(this)
-    }
+  override fun commit() = commitMs.addMeasuredTimeMs {
+    // XXX @RequiresReadLock annotation doesn't work for kt now
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    manager.commit(this)
   }
 
-  override fun dispose() {
-    val start = System.currentTimeMillis()
+  override fun dispose() = disposeMs.addMeasuredTimeMs {
     val artifacts: MutableList<Artifact> = ArrayList()
 
     val modifiableToOriginalCopy = BidirectionalMap<ArtifactBridge, ArtifactBridge>()
@@ -281,8 +264,6 @@ class ArtifactModifiableModelBridge(
       bridge.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
       bridge.elementsWithDiff.clear()
     }
-
-    disposeMs.addElapsedTimeMs(start)
   }
 
   companion object {

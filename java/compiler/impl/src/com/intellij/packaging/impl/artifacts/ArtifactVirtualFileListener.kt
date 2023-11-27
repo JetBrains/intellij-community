@@ -22,7 +22,7 @@ import com.intellij.platform.backend.workspace.useNewWorkspaceModelApi
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.flatMap
@@ -47,9 +47,7 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
     }
   }
 
-  private fun filePathChanged(oldPath: String, newPath: String) {
-    val start = System.currentTimeMillis()
-
+  private fun filePathChanged(oldPath: String, newPath: String) = filePathChangedMs.addMeasuredTimeMs {
     val artifactEntities = if (useNewWorkspaceModelApi()) {
       val refs = parentPathToArtifactReferences[oldPath]?.asSequence() ?: return
       val storage = project.workspaceModel.entityStorage.current
@@ -79,8 +77,6 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
       }, artifactManager.resolvingContext, false)
     }
     model.commit()
-
-    filePathChangedMs.addElapsedTimeMs(start)
   }
 
   private val parentPathToArtifactReferences: Map<String, List<EntityReference<ArtifactEntity>>>
@@ -92,9 +88,7 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
   private val parentPathToArtifacts: Map<String, List<ArtifactEntity>>
     get() = getInstance(project).entityStorage.cachedValue(parentPathsToArtifacts)
 
-  private fun propertyChanged(event: VFilePropertyChangeEvent) {
-    val start = System.currentTimeMillis()
-
+  private fun propertyChanged(event: VFilePropertyChangeEvent) = propertyChangedMs.addMeasuredTimeMs {
     if (VirtualFile.PROP_NAME == event.propertyName) {
       val parent = event.file.parent
       if (parent != null) {
@@ -102,8 +96,6 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
         filePathChanged(parentPath + "/" + event.oldValue, parentPath + "/" + event.newValue)
       }
     }
-
-    propertyChangedMs.addElapsedTimeMs(start)
   }
 
   companion object {
