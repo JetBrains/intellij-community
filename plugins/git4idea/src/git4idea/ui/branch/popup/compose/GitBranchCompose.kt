@@ -7,8 +7,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.onClick
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,10 +43,9 @@ internal fun GitBranchCompose(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-      val isFavorite by branchVm.isFavorite.collectAsState()
-      FavoriteBranchIndication(branchVm, isFavorite, selected)
+      FavoriteBranchIndication(branchVm, branchVm.isFavorite.value, selected)
 
-      val rangesToHighlight by branchVm.matchingFragments.collectAsState()
+      val rangesToHighlight = branchVm.matchingFragments.value
       BranchName(branchVm.name, rangesToHighlight)
       IncomingOutgoingIndication(branchVm.hasIncomings, branchVm.hasOutgoings)
 

@@ -87,7 +87,7 @@ private fun createBranchesPopupComposeComponent(
     val branchesVm = remember(coroutineScope, project, repository) {
       GitBranchesComposeVm(project, coroutineScope, repository)
     }
-    val text by branchesVm.text.collectAsState()
+    val text by branchesVm.text
     var textFieldFocused by remember { mutableStateOf(false) }
     var textFieldSelection by remember { mutableStateOf(androidx.compose.ui.text.TextRange.Zero) }
     val textFieldValue by derivedStateOf {
@@ -304,7 +304,7 @@ private fun SelectableLazyListScope.branches(
   ) { index ->
     val branch = branches[index]
     val coroutineScope = rememberCoroutineScope()
-    val branchVm = remember(coroutineScope, branch) { branchesVm.createBranchVm(coroutineScope, branch) }
+    val branchVm = remember(coroutineScope, branch) { branchesVm.createBranchVm(branch) }
     BranchListItem(
       branchVm,
       selected = isSelected,
