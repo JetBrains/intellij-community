@@ -209,7 +209,7 @@ public abstract class PatchAction {
     }
     else {
       if (isCritical()) {
-        options = new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.IGNORE};
+        options = new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
       }
       else {
         options = new ValidationResult.Option[]{ValidationResult.Option.IGNORE};

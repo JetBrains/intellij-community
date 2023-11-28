@@ -723,7 +723,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
                            "plugins/some/lib/plugin.jar",
                            ValidationResult.Action.UPDATE,
                            "Absent",
-                           ValidationResult.Option.REPLACE, ValidationResult.Option.IGNORE)
+                           ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP)
     );
     assertAppliedAndReverted(preparationResult, (original, target) -> {
       original.put("plugins/some/", Digester.DIRECTORY);
