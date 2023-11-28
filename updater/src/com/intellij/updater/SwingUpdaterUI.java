@@ -171,7 +171,7 @@ public class SwingUpdaterUI implements UpdaterUI {
       JTable table = new JTable();
       table.setCellSelectionEnabled(true);
       table.setDefaultEditor(ValidationResult.Option.class, new MyCellEditor());
-      table.setDefaultRenderer(Object.class, new MyCellRenderer());
+      table.setDefaultRenderer(Object.class, new MyTableCellRenderer());
 
       MyTableModel model = new MyTableModel(validationResults);
       table.setModel(model);
@@ -285,41 +285,13 @@ public class SwingUpdaterUI implements UpdaterUI {
         case 0:
           return item.validationResult.path;
         case 1:
-          return getActionName(item.validationResult.action);
+          return item.validationResult.action;
         case 2:
           return item.validationResult.message;
         case OPTIONS_COLUMN_INDEX:
-          return getOptionName(item.option);
+          return item.option;
       }
       return null;
-    }
-
-    private static @Nls String getActionName(ValidationResult.Action action) {
-      switch (action) {
-        case CREATE: return UpdaterUI.message("action.create");
-        case UPDATE: return UpdaterUI.message("action.update");
-        case DELETE: return UpdaterUI.message("action.delete");
-        case VALIDATE: return UpdaterUI.message("action.validate");
-        default: {
-          @SuppressWarnings("HardCodedStringLiteral") var name = action.toString();
-          return name;
-        }
-      }
-    }
-
-    private static @Nls String getOptionName(ValidationResult.Option option) {
-      switch (option) {
-        case NONE: return "-";
-        case IGNORE: return UpdaterUI.message("option.ignore");
-        case KEEP: return UpdaterUI.message("option.keep");
-        case REPLACE: return UpdaterUI.message("option.replace");
-        case DELETE: return UpdaterUI.message("option.delete");
-        case KILL_PROCESS: return UpdaterUI.message("option.kill.process");
-        default: {
-          @SuppressWarnings("HardCodedStringLiteral") var name = option.toString();
-          return name;
-        }
-      }
     }
 
     public ValidationResult.Kind getKind(int rowIndex) {
@@ -363,16 +335,29 @@ public class SwingUpdaterUI implements UpdaterUI {
 
       @SuppressWarnings("unchecked") JComboBox<ValidationResult.Option> comboBox = (JComboBox<ValidationResult.Option>)editorComponent;
       comboBox.setModel(comboModel);
+      comboBox.setRenderer(MyListCellRenderer.INSTANCE);
 
       return super.getTableCellEditorComponent(table, value, isSelected, row, column);
     }
   }
 
-  private static class MyCellRenderer extends DefaultTableCellRenderer {
+  private static class MyListCellRenderer extends DefaultListCellRenderer {
+    private static final MyListCellRenderer INSTANCE = new MyListCellRenderer();
+
+    @Override
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      var result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      if (result instanceof JLabel && value != null) {
+        ((JLabel)result).setText(getOptionName((ValidationResult.Option)value));
+      }
+      return result;
+    }
+  }
+
+  private static class MyTableCellRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      Component result = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
+      var result = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       if (!isSelected) {
         ValidationResult.Kind kind = ((MyTableModel)table.getModel()).getKind(row);
         if (kind == ValidationResult.Kind.ERROR) {
@@ -382,8 +367,43 @@ public class SwingUpdaterUI implements UpdaterUI {
           result.setBackground(VALIDATION_CONFLICT_COLOR);
         }
       }
-
+      if (result instanceof JLabel) {
+        if (value instanceof ValidationResult.Action) {
+          ((JLabel)result).setText(getActionName((ValidationResult.Action)value));
+        }
+        else if (value instanceof ValidationResult.Option) {
+          ((JLabel)result).setText(getOptionName((ValidationResult.Option)value));
+        }
+      }
       return result;
+    }
+  }
+
+  private static @Nls String getActionName(ValidationResult.Action action) {
+    switch (action) {
+      case CREATE: return UpdaterUI.message("action.create");
+      case UPDATE: return UpdaterUI.message("action.update");
+      case DELETE: return UpdaterUI.message("action.delete");
+      case VALIDATE: return UpdaterUI.message("action.validate");
+      default: {
+        @SuppressWarnings("HardCodedStringLiteral") var name = action.toString();
+        return name;
+      }
+    }
+  }
+
+  private static @Nls String getOptionName(ValidationResult.Option option) {
+    switch (option) {
+      case NONE: return "-";
+      case IGNORE: return UpdaterUI.message("option.ignore");
+      case KEEP: return UpdaterUI.message("option.keep");
+      case REPLACE: return UpdaterUI.message("option.replace");
+      case DELETE: return UpdaterUI.message("option.delete");
+      case KILL_PROCESS: return UpdaterUI.message("option.kill.process");
+      default: {
+        @SuppressWarnings("HardCodedStringLiteral") var name = option.toString();
+        return name;
+      }
     }
   }
 }
