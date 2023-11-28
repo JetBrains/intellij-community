@@ -16,7 +16,11 @@
   </projectListeners>
 
   <extensionPoints>
-  <extensionPoint qualifiedName="com.intellij.platform.ml.impl.turboComplete.smartPipelineRunner"
-                  interface="com.intellij.platform.ml.impl.turboComplete.SmartPipelineRunner" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ml.impl.turboComplete.smartPipelineRunner"
+                    interface="com.intellij.platform.ml.impl.turboComplete.SmartPipelineRunner" dynamic="true"/>
+
+    <extensionPoint name="mlCompletionCorrectnessSupporter" beanClass="com.intellij.platform.ml.impl.correctness.MLCompletionCorrectnessSupporterEP" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.platform.ml.impl.correctness.MLCompletionCorrectnessSupporter"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>
