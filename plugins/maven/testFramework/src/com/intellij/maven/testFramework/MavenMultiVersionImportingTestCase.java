@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.RunAll;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -17,9 +18,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
-import org.junit.After;
 import org.junit.Assume;
-import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -54,15 +53,18 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   }
 
   protected void assumeVersionNot(String version) {
-    Assume.assumeTrue("Version " + version + " skipped", VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) != 0);
+    Assume.assumeTrue("Version " + version + " skipped",
+                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) != 0);
   }
 
   protected void assumeVersion(String version) {
-    Assume.assumeTrue("Version " + myMavenVersion + " is not " + version + ", therefore skipped", VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) == 0);
+    Assume.assumeTrue("Version " + myMavenVersion + " is not " + version + ", therefore skipped",
+                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) == 0);
   }
 
-  @Before
-  public void before() throws Exception {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
     if ("bundled".equals(myMavenVersion)) {
       return;
     }
@@ -70,11 +72,15 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     myWrapperTestFixture.setUp();
   }
 
-  @After
-  public void after() throws Exception {
-    if (myWrapperTestFixture != null) {
-      myWrapperTestFixture.tearDown();
-    }
+  @Override
+  protected void tearDown() throws Exception {
+    new RunAll(
+      () -> {
+        if (myWrapperTestFixture != null) {
+          myWrapperTestFixture.tearDown();
+        }
+      },
+      () -> super.tearDown()).run();
   }
 
   protected LanguageLevel getDefaultLanguageLevel() {
