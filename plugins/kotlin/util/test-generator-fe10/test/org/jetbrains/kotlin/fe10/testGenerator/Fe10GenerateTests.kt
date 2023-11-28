@@ -982,10 +982,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("repl/completion")
         }
 
-        testClass<AbstractPostfixTemplateProviderTest> {
-            model("codeInsight/postfix")
-        }
-
         testClass<AbstractKotlinArgumentsHintsProviderTest> {
             model("codeInsight/hints/arguments")
         }
@@ -1415,6 +1411,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractPerformanceCompletionCharFilterTest>(commonSuite = false) {
             model("handlers/charFilter", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
+        }
+    }
+
+    testGroup("idea/tests",  testDataPath = "../../code-insight/postfix-templates/testData") {
+        testClass<AbstractPostfixTemplateProviderTest> {
+            model("expansion/oldTestData", pattern = KT_WITHOUT_DOTS)
         }
     }
 
