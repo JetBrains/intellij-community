@@ -71,7 +71,7 @@ open class InlineBanner(background: Color, private var myBorderColor: Color, ico
       override fun layoutContainer(target: Container) {
         super.layoutContainer(target)
 
-        val y = JBUI.scale(9)
+        val y = JBUI.scale(7)
         var x = target.width - JBUI.scale(7)
 
         if (myCloseButton.isVisible) {
@@ -157,7 +157,7 @@ open class InlineBanner(background: Color, private var myBorderColor: Color, ico
         paintHover(g, if (myClick) JBUI.CurrentTheme.InlineBanner.PRESSED_BACKGROUND else JBUI.CurrentTheme.InlineBanner.HOVER_BACKGROUND)
       }
     }
-    button.preferredSize = JBDimension(22, 22)
+    button.preferredSize = JBDimension(26, 26)
     return button
   }
 
