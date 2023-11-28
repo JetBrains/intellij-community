@@ -30,7 +30,7 @@ class PkgReleaseInstaller : ResourceTypeReleaseInstaller(ResourceType.APPLE_SOFT
  */
 class ExeReleaseInstaller : ResourceTypeReleaseInstaller(ResourceType.MICROSOFT_WINDOWS_EXECUTABLE) {
   override fun buildCommandLine(resource: Resource, path: Path): GeneralCommandLine {
-    return GeneralCommandLine(path.absolutePathString(), "/quiet")
+    return GeneralCommandLine(path.absolutePathString(), "/quiet", "InstallAllUsers=0")
   }
 }
 
@@ -62,7 +62,12 @@ abstract class ResourceTypeReleaseInstaller(private val resourceType: ResourceTy
       throw ExecutionProcessException(commandLine, e)
     }
     processOutput.isCancelled.takeIf { it }?.let { throw CancelledProcessException(commandLine, processOutput) }
-    processOutput.exitCode.takeIf { it != 0 }?.let { throw NonZeroExitCodeProcessException(commandLine, processOutput) }
+    processOutput.exitCode.takeIf { it != 0 }?.let {
+      if (processOutput.stderr.contains("User cancelled", ignoreCase = true)) {
+        throw CancelledProcessException(commandLine, processOutput)
+      }
+      throw NonZeroExitCodeProcessException(commandLine, processOutput)
+    }
     processOutput.isTimeout.takeIf { it }?.let { throw TimeoutProcessException(commandLine, processOutput) }
   }
 

@@ -60,7 +60,9 @@ object PySdkToInstallManager {
     catch (ex: ReleaseInstallerException) {
       LOGGER.info(ex)
       PySdkToInstallCollector.logInstallerException(project, sdk.release, ex)
-      showErrorNotification(sdk.release, ex)
+      if (ex !is PrepareException) {
+        showErrorNotification(sdk.release, ex)
+      }
     }
     return null
   }

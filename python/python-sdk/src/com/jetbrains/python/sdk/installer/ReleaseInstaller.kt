@@ -128,6 +128,9 @@ abstract class DownloadableReleaseInstaller : ReleaseInstaller {
     catch (e: ProcessCanceledException) {
       throw CancelledPrepareException(e)
     }
+    catch (e: PrepareException) {
+      throw e
+    }
     catch (e: Exception) {
       throw PrepareException(e)
     }
