@@ -10,7 +10,8 @@ private class ThemeListProviderImpl : ThemeListProvider {
     val result = mutableListOf<List<UIThemeLookAndFeelInfo>>()
     val uiThemeProviderListManager = UiThemeProviderListManager.getInstance()
     if (ExperimentalUI.isNewUI()) {
-      result.add(uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.NEW).sortedBy { it.name }.toList())
+      result.add(uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.NEW)
+                   .filterNot { it.id == "ExperimentalLight" }.sortedBy { it.name }.toList())
     }
     result.add((uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.CLASSIC).filterNot { it.id == "IntelliJ" }
                 + uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.UNSPECIFIED)).sortedBy { it.name }.toList())
