@@ -50,36 +50,29 @@ import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIf
 
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
-  public static final boolean TRACE_STUB_INDEX_UPDATES = Boolean.getBoolean("idea.trace.stub.index.update");
+  public static final boolean TRACE_STUB_INDEX_UPDATES = SystemProperties.getBooleanProperty("idea.trace.stub.index.update", false) ||
+                                                         SystemProperties.getBooleanProperty("trace.stub.index.update", false);
+  private static final boolean TRACE_INDEX_UPDATES = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);
+  private static final boolean TRACE_SHARED_INDEX_UPDATES = SystemProperties.getBooleanProperty("trace.shared.index.update", false);
+
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Stack<DumbModeAccessType>> ourDumbModeAccessTypeStack =
     ThreadLocal.withInitial(() -> new com.intellij.util.containers.Stack<>());
   private static final RecursionGuard<Object> ourIgnoranceGuard = RecursionManager.createGuard("ignoreDumbMode");
-  private volatile boolean myTraceIndexUpdates;
-  private volatile boolean myTraceStubIndexUpdates;
-  private volatile boolean myTraceSharedIndexUpdates;
 
   @ApiStatus.Internal
   boolean doTraceIndexUpdates() {
-    return myTraceIndexUpdates;
+    return TRACE_INDEX_UPDATES;
   }
 
   @ApiStatus.Internal
   public boolean doTraceStubUpdates(@NotNull ID<?, ?> indexId) {
-    return myTraceStubIndexUpdates && indexId.equals(StubUpdatingIndex.INDEX_ID);
+    return TRACE_STUB_INDEX_UPDATES && indexId.equals(StubUpdatingIndex.INDEX_ID);
   }
 
   @ApiStatus.Internal
   boolean doTraceSharedIndexUpdates() {
-    return myTraceSharedIndexUpdates;
-  }
-
-  @Override
-  @ApiStatus.Internal
-  public void loadIndexes() {
-    myTraceIndexUpdates = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);
-    myTraceStubIndexUpdates = SystemProperties.getBooleanProperty("trace.stub.index.update", false);
-    myTraceSharedIndexUpdates = SystemProperties.getBooleanProperty("trace.shared.index.update", false);
+    return TRACE_SHARED_INDEX_UPDATES;
   }
 
   @ApiStatus.Internal
