@@ -33,6 +33,8 @@ data class Config private constructor(
     }
   }
 
+  val projectName = projectPath.split('/').last()
+
   data class ActionsGeneration internal constructor(
     val evaluationRoots: List<String>
   )

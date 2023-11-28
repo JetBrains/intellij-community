@@ -9,7 +9,7 @@ import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.project.Project
 
 class ActionsInterpretationStep(
-  private val config: Config.ActionsInterpretation,
+  private val config: Config,
   private val language: String,
   private val invokersFactory: InvokersFactory,
   project: Project) : BackgroundEvaluationStep(project) {

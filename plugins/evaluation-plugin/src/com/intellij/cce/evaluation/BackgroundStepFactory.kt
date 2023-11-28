@@ -33,7 +33,7 @@ class BackgroundStepFactory(
   }
 
   override fun interpretActionsStep(): EvaluationStep =
-    ActionsInterpretationStep(config.interpret, config.language, invokersFactory, project)
+    ActionsInterpretationStep(config, config.language, invokersFactory, project)
 
   override fun generateReportStep(): EvaluationStep =
     ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it) },

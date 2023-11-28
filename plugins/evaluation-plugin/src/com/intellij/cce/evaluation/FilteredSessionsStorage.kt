@@ -5,10 +5,12 @@ import com.intellij.cce.workspace.filter.SessionsFilter
 import com.intellij.cce.workspace.info.FileSessionsInfo
 import com.intellij.cce.workspace.storages.SessionsStorage
 
-class FilteredSessionsStorage(private val filter: SessionsFilter, storage: SessionsStorage) : SessionsStorage(storage.storageDir) {
+class FilteredSessionsStorage(private val filter: SessionsFilter, private val storage: SessionsStorage) : SessionsStorage(storage.storageDir) {
   override fun getSessions(path: String): FileSessionsInfo {
-    val sessionsInfo = super.getSessions(path)
+    val sessionsInfo = storage.getSessions(path)
     val filteredSessions = filter.apply(sessionsInfo.sessions)
-    return FileSessionsInfo(sessionsInfo.filePath, sessionsInfo.text, filteredSessions)
+    return FileSessionsInfo(sessionsInfo.projectName, sessionsInfo.filePath, sessionsInfo.text, filteredSessions)
   }
+
+  override fun getSessionFiles(): List<Pair<String, String>> = storage.getSessionFiles()
 }
