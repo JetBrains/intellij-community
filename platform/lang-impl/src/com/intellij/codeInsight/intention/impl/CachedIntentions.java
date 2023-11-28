@@ -218,7 +218,7 @@ public final class CachedIntentions implements IntentionContainer {
     int fileOffset = caretOffset > 0 && caretOffset == myFile.getTextLength() ? caretOffset - 1 : caretOffset;
     PsiElement element;
     PsiElement hostElement;
-    if (myFile instanceof PsiCompiledElement || myFile.getTextLength() == 0) {
+    if (myFile instanceof PsiCompiledElement) {
       hostElement = element = myFile;
     }
     else if (PsiDocumentManager.getInstance(myProject).isUncommited(myEditor.getDocument())) {

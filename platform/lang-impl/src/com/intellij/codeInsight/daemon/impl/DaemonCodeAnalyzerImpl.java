@@ -282,34 +282,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
     infos.removeAll(infosToRemove);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("cleanFileLevelHighlights group:" +group+ "; infosToRemove:" + infosToRemove);
+      LOG.debug("cleanFileLevelHighlights infosToRemove:" + infosToRemove);
     }
   }
 
   @Override
-  void removeFileLevelHighlight(@NotNull PsiFile psiFile, @NotNull HighlightInfo info) {
-    ThreadingAssertions.assertEventDispatchThread();
-    assertMyFile(psiFile.getProject(), psiFile);
-    VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
-    for (FileEditor fileEditor : getFileEditorManager().getAllEditors(vFile)) {
-      List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-      if (infos != null) {
-        infos.remove(info);
-        JComponent component = info.getFileLevelComponent(fileEditor);
-        if (component != null) {
-          getFileEditorManager().removeTopComponent(fileEditor, component);
-          info.removeFileLeverComponent(fileEditor);
-        }
-        RangeHighlighterEx highlighter = info.highlighter;
-        if (highlighter != null) {
-          highlighter.dispose();
-        }
-      }
-    }
-  }
-
-  @Override
-  public void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile, @Nullable RangeHighlighter toReuse) {
+  public void addFileLevelHighlight(int group, @NotNull HighlightInfo info, @NotNull PsiFile psiFile) {
     ThreadingAssertions.assertEventDispatchThread();
     assertMyFile(psiFile.getProject(), psiFile);
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
@@ -329,10 +307,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         if (!ContainerUtil.exists(fileLevelInfos, existing->existing.equalsByActualOffset(info))) {
           Document document = textEditor.getEditor().getDocument();
           MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
-          RangeHighlighter highlighter = toReuse == null ? markupModel.addRangeHighlighter(0, document.getTextLength(), ANY_GROUP, null, HighlighterTargetArea.EXACT_RANGE) : toReuse;
+          RangeHighlighter highlighter = markupModel.addRangeHighlighter(0, document.getTextLength(), ANY_GROUP, null, HighlighterTargetArea.EXACT_RANGE);
           highlighter.setGreedyToLeft(true);
           highlighter.setGreedyToRight(true);
-          highlighter.setErrorStripeTooltip(info);
           // for the condition `existing.equalsByActualOffset(info)` above work correctly,
           // create a fake whole-file highlighter which will track the document size changes
           // and which will make possible to calculate correct `info.getActualEndOffset()`
@@ -479,7 +456,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(() -> {
       VirtualFile virtualFile = textEditor.getFile();
       PsiFile psiFile = PsiManagerEx.getInstanceEx(myProject).findFile(virtualFile); // findCachedFile doesn't work with the temp file system in tests
-      psiFile = psiFile instanceof PsiCompiledFile compiled ? compiled.getDecompiledPsiFile() : psiFile;
+      psiFile = psiFile instanceof PsiCompiledFile ? ((PsiCompiledFile)psiFile).getDecompiledPsiFile() : psiFile;
       LOG.assertTrue(psiFile != null, "PsiFile not found for " + virtualFile);
       HighlightingSession session = queuePassesCreation(textEditor, virtualFile, psiFile, passesToIgnore);
       if (session == null) {
@@ -721,7 +698,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   public @NotNull List<ProgressableTextEditorHighlightingPass> getPassesToShowProgressFor(@NotNull Document document) {
     List<HighlightingPass> allPasses = myPassExecutorService.getAllSubmittedPasses();
     return allPasses.stream()
-      .map(p->p instanceof ProgressableTextEditorHighlightingPass pPass ? pPass : null)
+      .map(p->p instanceof ProgressableTextEditorHighlightingPass ? (ProgressableTextEditorHighlightingPass)p : null)
       .filter(p-> p != null && p.getDocument() == document)
       .sorted(Comparator.comparingInt(p->p.getId()))
       .collect(Collectors.toList());
@@ -1106,7 +1083,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
       highlighter = fileEditor.getBackgroundHighlighter();
     }
-    Editor editor = fileEditor instanceof TextEditor textEditor ? textEditor.getEditor() : null;
+    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     if (highlighter == null) {
       if (PassExecutorService.LOG.isDebugEnabled()) {
         PassExecutorService.log(null, null, "couldn't highlight", virtualFile, "because getBackgroundHighlighter() returned null. fileEditor=",
@@ -1143,7 +1120,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private static PsiFile findFileToHighlight(@NotNull Project project, @Nullable VirtualFile virtualFile) {
     PsiFile psiFile = virtualFile == null || !virtualFile.isValid() ? null : ((FileManagerImpl)PsiManagerEx.getInstanceEx(project)
       .getFileManager()).getFastCachedPsiFile(virtualFile);
-    psiFile = psiFile instanceof PsiCompiledFile compiled ? compiled.getDecompiledPsiFile() : psiFile;
+    psiFile = psiFile instanceof PsiCompiledFile ? ((PsiCompiledFile)psiFile).getDecompiledPsiFile() : psiFile;
     return psiFile;
   }
 
@@ -1182,8 +1159,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           }
           session.additionalSetupFromBackground(psiFile);
           try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
-            HighlightingPass[] r = backgroundEditorHighlighter instanceof TextEditorBackgroundHighlighter textHighlighter ?
-                                   textHighlighter.getPasses(passesToIgnore).toArray(HighlightingPass.EMPTY_ARRAY) :
+            HighlightingPass[] r = backgroundEditorHighlighter instanceof TextEditorBackgroundHighlighter ?
+                                   ((TextEditorBackgroundHighlighter)backgroundEditorHighlighter).getPasses(passesToIgnore).toArray(HighlightingPass.EMPTY_ARRAY) :
                                    backgroundEditorHighlighter.createPassesForEditor();
             if (heavyProcessIsRunning) {
               r = ContainerUtil.findAllAsArray(r, DumbService::isDumbAware);

@@ -87,7 +87,7 @@ class FileNotInSourceRootService(val project: Project) : Disposable {
       .create()
     if (info != null) {
       ApplicationManager.getApplication().invokeLater({
-        DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(GROUP, info, psiFile, null)
+        DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(GROUP, info, psiFile)
       }, project.disposed)
     }
   }

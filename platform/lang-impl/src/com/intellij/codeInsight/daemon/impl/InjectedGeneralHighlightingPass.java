@@ -269,7 +269,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
         new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
                           info.getDescription(), info.getToolTip(), info.getSeverity(), isAfterEndOfLine, null,
-                          false, 0, info.getProblemGroup(), info.toolId, info.getGutterIconRenderer(), info.getGroup(), info.unresolvedReference);
+                          false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer(), info.getGroup(), info.unresolvedReference);
       patched.setHint(info.hasHint());
 
       info.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
