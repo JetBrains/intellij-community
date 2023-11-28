@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view
 
+import com.intellij.coverage.CoverageDataAnnotationsManager
 import com.intellij.coverage.CoverageEditorAnnotatorImpl
 import com.intellij.coverage.CoverageIntegrationBaseTest
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.editor.colors.CodeInsightColors
@@ -17,8 +19,11 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.testFramework.utils.vfs.getPsiFile
 import com.intellij.util.concurrency.ThreadingAssertions
-import kotlinx.coroutines.delay
+import com.intellij.util.io.await
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.Assert
 
 class CoverageGutterTest : CoverageIntegrationBaseTest() {
@@ -30,7 +35,6 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     val suite = loadIJSuite()
     openSuiteAndWait(suite)
 
-    waitAnnotations()
     assertCoveredFiles()
     closeSuite(suite)
     assertNoCoverage()
@@ -44,7 +48,6 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
 
     openFiles()
 
-    waitAnnotations()
     assertCoveredFiles()
     closeSuite(suite)
     assertNoCoverage()
@@ -57,7 +60,6 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     val suite = loadXMLSuite()
     openSuiteAndWait(suite)
 
-    waitAnnotations()
     assertGutterHighlightLines("foo.bar.BarClass",
                                mapOf(3 to LineCoverage.FULL, 5 to LineCoverage.FULL, 9 to LineCoverage.NONE, 13 to LineCoverage.NONE))
     assertGutterHighlightLines("foo.bar.UncoveredClass",
@@ -78,7 +80,6 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     waitSuiteProcessing {
       manager.selectSubCoverage(suite, listOf("foo.bar.BarTest,testMethod3"))
     }
-    waitAnnotations()
     assertGutterHighlightLines("foo.bar.BarClass", mapOf(5 to LineCoverage.FULL, 9 to LineCoverage.NONE, 13 to LineCoverage.NONE))
     assertGutterHighlightLines("foo.bar.UncoveredClass", mapOf())
     assertGutterHighlightLines("foo.FooClass", mapOf())
@@ -86,7 +87,6 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     waitSuiteProcessing {
       manager.selectSubCoverage(suite, listOf("foo.FooTest,testMethod1"))
     }
-    waitAnnotations()
     assertGutterHighlightLines("foo.bar.BarClass", mapOf())
     assertGutterHighlightLines("foo.bar.UncoveredClass", mapOf())
     assertGutterHighlightLines("foo.FooClass", mapOf(5 to LineCoverage.FULL, 9 to LineCoverage.NONE))
@@ -94,7 +94,6 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     waitSuiteProcessing {
       manager.selectSubCoverage(suite, listOf("foo.FooTest,testMethod2"))
     }
-    waitAnnotations()
     assertGutterHighlightLines("foo.bar.BarClass", mapOf())
     assertGutterHighlightLines("foo.bar.UncoveredClass", mapOf())
     assertGutterHighlightLines("foo.FooClass", mapOf(5 to LineCoverage.NONE, 9 to LineCoverage.FULL))
@@ -122,13 +121,17 @@ class CoverageGutterTest : CoverageIntegrationBaseTest() {
     openClass("foo.FooClass")
   }
 
-  private suspend fun waitAnnotations() = delay(500)
-
   private suspend fun assertGutterHighlightLines(className: String, expected: Map<Int, Byte>?) {
-    val editor = findEditor(className)
-    val highlighters = editor.getUserData(CoverageEditorAnnotatorImpl.COVERAGE_HIGHLIGHTERS)
+    val highlighters = getHighlighters(className)
     val lines = highlighters?.associate { it.document.getLineNumber(it.startOffset) + 1 to getCoverage(it) }
     Assert.assertEquals(expected, lines)
+  }
+
+  private suspend fun getHighlighters(className: String): List<RangeHighlighter>? = withTimeout(1000) {
+    CoverageDataAnnotationsManager.getInstance(myProject).allRequestsCompletion.await()
+    withContext(Dispatchers.EDT) {
+      findEditor(className).getUserData(CoverageEditorAnnotatorImpl.COVERAGE_HIGHLIGHTERS)
+    }
   }
 
   private fun getCoverage(it: RangeHighlighter) = when ((it.lineMarkerRenderer as FillingLineMarkerRenderer).getTextAttributesKey()) {
