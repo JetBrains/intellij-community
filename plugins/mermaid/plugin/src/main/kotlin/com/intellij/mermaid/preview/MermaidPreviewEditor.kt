@@ -4,6 +4,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.mermaid.MermaidPlugin
 import com.intellij.mermaid.util.childScope
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -15,12 +16,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.application
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import java.awt.BorderLayout
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.UIManager
@@ -46,7 +49,7 @@ internal class MermaidPreviewEditor(
     coroutineScope.launch(context = Dispatchers.EDT) {
       // debounce to prevent JBCefQuery pool exhaustion
       updateViewRequests.debounce(20.milliseconds).collectLatest {
-        component.update(it)
+        component.diagramComponent().update(it)
       }
     }
     val connection = application.messageBus.connect(this)
@@ -57,6 +60,7 @@ internal class MermaidPreviewEditor(
         if (source.currentLookAndFeel != previousLaf) {
           previousLaf = source.currentLookAndFeel
           coroutineScope.launch(context = Dispatchers.Default) {
+            val component = component.diagramComponent()
             component.load()
             component.update(document.text)
           }
@@ -71,16 +75,40 @@ internal class MermaidPreviewEditor(
     }
   }
 
-  private fun createComponent(): MermaidDiagramPreviewComponent {
+  private fun createComponent(): MermaidPreviewComponentContainer {
+    return MermaidPreviewComponentContainer(
+      parentDisposable = this,
+      coroutineScope = coroutineScope,
+      componentDeferred = createDiagramComponent(parentDisposable = this)
+    )
+  }
+
+  private fun createDiagramComponent(parentDisposable: Disposable): Pair<MermaidDiagramPreviewComponent, Deferred<Unit>> {
     val component = MermaidDiagramPreviewComponent(project)
-    Disposer.register(this, component)
-    runBlocking {
-      coroutineScope.launch(context = Dispatchers.Default) {
-        component.load()
-        component.update(document.text)
-      }
+    Disposer.register(parentDisposable, component)
+    return component to coroutineScope.async(context = Dispatchers.Default) {
+      component.load()
+      component.update(document.text)
     }
-    return component
+  }
+
+  private class MermaidPreviewComponentContainer(
+    parentDisposable: Disposable,
+    coroutineScope: CoroutineScope,
+    componentDeferred: Pair<MermaidDiagramPreviewComponent, Deferred<Unit>>
+  ): JBLoadingPanel(BorderLayout(), parentDisposable) {
+    private val loadDeferred = coroutineScope.async(context = Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+      startLoading()
+      val (component, loadTask) = componentDeferred
+      add(component)
+      loadTask.await()
+      stopLoading()
+      return@async component
+    }
+
+    suspend fun diagramComponent(): MermaidDiagramPreviewComponent {
+      return loadDeferred.await()
+    }
   }
 
   override fun getComponent(): JComponent {
