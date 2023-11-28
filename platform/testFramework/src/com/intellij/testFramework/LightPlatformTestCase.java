@@ -392,13 +392,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       () -> checkEditorsReleased(),
       () -> super.tearDown(),
       () -> {
-        // At migration from MockSDK we faced the situation that light tests don't reuse instance of project if we use
-        // [SimpleLightProjectDescriptor] and its derivatives. The root cause is in SDK dispose thus we need to introduce
-        // the mechanize to compare old disposed SDK and the new one and if they are equal, replace it. To achieve it we need to
-        // save roots before dispose and reassign the SDK for the reused project descriptor
-        if (ourProjectDescriptor instanceof SimpleLightProjectDescriptor) {
-          ((SimpleLightProjectDescriptor)ourProjectDescriptor).dumpSdkRoots();
-        }
         // Disposing the SDK and its roots
         Disposer.dispose(mySdkParentDisposable);
         // Checking for leaked SDKs
@@ -650,6 +643,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       myModuleTypeId = moduleTypeId;
       mySdk = sdk;
       mySdkRoots = new HashMap<>();
+      subscribeToRootsChanges();
     }
 
     @Override
@@ -664,6 +658,16 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
     private void setSdk(@Nullable Sdk sdk) {
       mySdk = sdk;
+      subscribeToRootsChanges();
+    }
+
+    private void subscribeToRootsChanges() {
+      if (mySdk != null) {
+        dumpSdkRoots();
+        mySdk.getRootProvider().addRootSetChangedListener(wrapper -> {
+          dumpSdkRoots();
+        });
+      }
     }
 
     private void dumpSdkRoots() {
