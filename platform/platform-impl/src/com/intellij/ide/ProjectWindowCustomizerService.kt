@@ -364,8 +364,11 @@ class ProjectWindowCustomizerService : Disposable {
     } ?: 150f
 
     if (ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull() == null && !isToolbarInHeader()) return true
-    val saturation = Registry.doubleValue("ide.colorful.toolbar.gradient.saturation", 0.85).coerceIn(0.0, 1.0)
-    val blendedColor = ColorUtil.blendColorsInRgb(parent.background, color, saturation).let { ColorUtil.toAlpha(it, color.alpha) }
+
+    //additional multiplication by color.alpha is done because alpha will be lost after using blendColorsInRgb (sometimes it's not equals to 255)
+    val saturation = Registry.doubleValue("ide.colorful.toolbar.gradient.saturation", 0.85)
+                       .coerceIn(0.0, 1.0) * (color.alpha.toDouble() / 255)
+    val blendedColor = ColorUtil.blendColorsInRgb(parent.background, color, saturation)
     val leftBound = (offset - length).coerceAtLeast(0f).toInt()
     g.paint = leftGradientCache.getTexture(g, (offset - leftBound).toInt(), parent.background, blendedColor, leftBound)
     g.fillRect(leftBound, 0, (offset - leftBound).toInt(), height)
