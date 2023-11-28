@@ -21,13 +21,18 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -49,11 +54,16 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.runners.Parameterized;
 
+import javax.swing.JComponent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Provides a framework for testing the behavior of the editor.
@@ -257,6 +267,32 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         myVFile = myFile.getVirtualFile();
       }
     }
+  }
+
+  protected EditorEx createPsiAwareEditorFromCurrentFile() {
+    int injectionOffset = getEditor().getCaretModel().getOffset();
+    // This call is to obtain injected context in the created editor
+    InjectedLanguageManager.getInstance(getProject()).findInjectedElementAt(getFile(), injectionOffset);
+    VirtualFile vFile = getVFile();
+    PsiAwareTextEditorProvider editorProvider = new PsiAwareTextEditorProvider();
+    FileEditor fileEditor = editorProvider.createEditor(getProject(), vFile);
+
+    EditorEx editor = (EditorEx)((TextEditor)fileEditor).getEditor();
+    editor.getCaretModel().moveToOffset(injectionOffset);
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(
+      FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+        @Override
+        public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+          if (file.equals(vFile)) editorProvider.disposeEditor(fileEditor);
+        }
+      });
+
+    JComponent editorComponent = editor.getContentComponent();
+    JComponent editorParentComponent = (JComponent)editorComponent.getParent();
+    DataManager.registerDataProvider(editorParentComponent, dataId -> {
+      return CommonDataKeys.PROJECT.is(dataId) ? getProject() : null;
+    });
+    return editor;
   }
 
   private void deleteVFile() throws IOException {

@@ -36,7 +36,15 @@ public final class InjectedDataKeys {
 
   @ApiStatus.Internal
   public static @Nullable String uninjectedId(@NotNull String dataId) {
-    return dataId.startsWith(ourInjectedPrefix) ? dataId.substring(ourInjectedPrefix.length()) : null;
+    return isInjected(dataId) ? normalId(dataId) : null;
+  }
+
+  private static @NotNull String normalId(@NotNull String dataId) {
+    return dataId.substring(ourInjectedPrefix.length());
+  }
+
+  private static boolean isInjected(@NotNull String dataId) {
+    return dataId.startsWith(ourInjectedPrefix);
   }
 
   @ApiStatus.Internal
@@ -44,5 +52,29 @@ public final class InjectedDataKeys {
     String injectedId = ourInjectedPrefix + key.getName();
     ourInjectableIds.put(key.getName(), injectedId);
     return DataKey.create(injectedId);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Object getInjectedData(@NotNull String dataId, @NotNull DataProvider dataProvider) {
+    return getInjectedData(dataId, dataProvider, dataProvider);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Object getInjectedData(
+    @NotNull String dataId,
+    @NotNull DataProvider normalDataProvider,
+    @NotNull DataProvider injectedDataProvider
+  ) {
+    @Nullable String injectedId;
+    @NotNull String normalId;
+    if (isInjected(dataId)) {
+      normalId = normalId(dataId);
+      injectedId = dataId;
+    } else {
+      normalId = dataId;
+      injectedId = injectedId(dataId);
+    }
+    Object injected = injectedId == null ? null : injectedDataProvider.getData(injectedId);
+    return injected == null ? normalDataProvider.getData(normalId) : injected;
   }
 }
