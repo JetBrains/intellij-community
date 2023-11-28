@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.application
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.jdom.Element
 
 private const val FIRST_EDITOR = "first_editor"
@@ -124,7 +125,7 @@ private fun createEditorBuilder(
 ): AsyncFileEditorProvider.Builder {
   if (provider is AsyncFileEditorProvider) {
     if (application.isDispatchThread) {
-      return runWithModalProgressBlocking(project, title = "Creating Markdown Editor") {
+      return runWithModalProgressBlocking(project, title = MarkdownBundle.message("markdown.split.editor.creating.progress.text")) {
         provider.createEditorBuilder(project = project, file = file, document = document)
       }
     }
