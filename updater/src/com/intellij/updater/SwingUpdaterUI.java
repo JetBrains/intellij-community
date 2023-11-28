@@ -289,7 +289,7 @@ public class SwingUpdaterUI implements UpdaterUI {
         case 2:
           return item.validationResult.message;
         case OPTIONS_COLUMN_INDEX:
-          return item.option;
+          return getOptionName(item.option);
       }
       return null;
     }
@@ -302,6 +302,21 @@ public class SwingUpdaterUI implements UpdaterUI {
         case VALIDATE: return UpdaterUI.message("action.validate");
         default: {
           @SuppressWarnings("HardCodedStringLiteral") var name = action.toString();
+          return name;
+        }
+      }
+    }
+
+    private static @Nls String getOptionName(ValidationResult.Option option) {
+      switch (option) {
+        case NONE: return "-";
+        case IGNORE: return UpdaterUI.message("option.ignore");
+        case KEEP: return UpdaterUI.message("option.keep");
+        case REPLACE: return UpdaterUI.message("option.replace");
+        case DELETE: return UpdaterUI.message("option.delete");
+        case KILL_PROCESS: return UpdaterUI.message("option.kill.process");
+        default: {
+          @SuppressWarnings("HardCodedStringLiteral") var name = option.toString();
           return name;
         }
       }
