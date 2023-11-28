@@ -40,7 +40,9 @@ public class ExpectedHighlightingDataFunctionalTest extends BasePlatformTestCase
   }
 
   public void testDoNotCheckDoubleMessage() {
-    doTest("<warning descr=\"Magic problem\">just some text</warning>", new MyDoubleInspection());
+    ExpectedHighlightingData.expectedDuplicatedHighlighting(
+      () -> doTest("<warning descr=\"Magic problem\">just some text</warning>", new MyDoubleInspection())
+    );
   }
 
   public void testExpectedDuplicationWasNotFound() {

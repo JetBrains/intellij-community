@@ -5,15 +5,12 @@ import com.intellij.codeInsight.daemon.impl.IntentionsUI;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.AdvertisementAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.codeInsight.intention.impl.AssignShortcutToIntentionAction;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
-import com.intellij.codeInsight.intention.impl.EditIntentionSettingsAction;
-import com.intellij.codeInsight.intention.impl.EnableDisableIntentionAction;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 import java.util.Set;
@@ -32,15 +29,8 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
               return null;
            }}""");
     myFixture.findAllGutters();
-    List<IntentionAction> intentions =
-      myFixture.getAvailableIntentions().stream()
-        .map(IntentionActionDelegate::unwrap)
-        .filter(action -> !(action instanceof AdvertisementAction))
-        .filter(action -> !(action instanceof EditIntentionSettingsAction))
-        .filter(action -> !(action instanceof EnableDisableIntentionAction))
-        .filter(action -> !(action instanceof AssignShortcutToIntentionAction))
-        .toList();
-    assertEmpty(intentions);
+    List<IntentionAction> intentions = myFixture.getAvailableIntentions();
+    assertEmpty(ContainerUtil.filter(intentions, action -> !(action instanceof AdvertisementAction)));
   }
 
   public void testOptions() {

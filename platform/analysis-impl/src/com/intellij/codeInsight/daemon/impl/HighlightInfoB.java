@@ -44,7 +44,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
 
   private GutterIconRenderer gutterIconRenderer;
   private ProblemGroup problemGroup;
-  private Object toolId;
+  private String inspectionToolId;
   private PsiElement psiElement;
   private int group;
   private final List<FixInfo> fixes = new ArrayList<>();
@@ -78,8 +78,8 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder inspectionToolId(@NotNull String inspectionToolId) {
     assertNotCreated();
-    assert this.toolId == null : "inspectionToolId already set";
-    this.toolId = inspectionToolId;
+    assert this.inspectionToolId == null : "inspectionToolId already set";
+    this.inspectionToolId = inspectionToolId;
     return this;
   }
 
@@ -261,7 +261,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
     HighlightInfo info = new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, escapedDescription,
                                            escapedToolTip, severity, isAfterEndOfLine, myNeedsUpdateOnTyping, isFileLevelAnnotation,
                                            navigationShift,
-                                           problemGroup, toolId, gutterIconRenderer, group, unresolvedReference);
+                                           problemGroup, inspectionToolId, gutterIconRenderer, group, unresolvedReference);
     for (FixInfo fix : fixes) {
       info.registerFix(fix.action(), fix.options(), fix.displayName(), fix.fixRange(), fix.key());
     }
