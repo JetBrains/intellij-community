@@ -463,6 +463,16 @@ public class PyIntentionTest extends PyTestCase {
     doTest("Convert to 'from builtins import ...'");
   }
 
+  // PY-45863
+  public void testImportAsToImportFromAll() {
+    doTest("Remove 'b' qualifier");
+  }
+
+  // PY-45863
+  public void testImportFQNToImportFromAll() {
+    doMultiFileTest("Remove 'pkg.mod' qualifier");
+  }
+
   public void testTypeInDocstring() {
     getIndentOptions().INDENT_SIZE = 2;
     doDocParamTypeTest(DocStringFormat.REST);
