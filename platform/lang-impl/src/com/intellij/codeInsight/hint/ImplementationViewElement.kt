@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hint
 
 import com.intellij.navigation.NavigationItem
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
@@ -65,42 +66,33 @@ class PsiImplementationViewElement(val psiElement: PsiElement) : ImplementationV
   override val text: String?
     get() = ImplementationViewComponent.getNewText(psiElement)
 
-  override val presentableText: String
-    get() {
-      val presentation = (psiElement as? NavigationItem)?.presentation
-      val vFile = containingFile ?: return ""
-      val presentableName = vFile.presentableName
-      if (presentation == null) {
-        return presentableName
-      }
-      val elementPresentation  = presentation.presentableText
-      if (elementPresentation == null) {
-        return presentableName
-      }
-      return elementPresentation
-
+  override val presentableText: String = runReadAction {
+    val presentation = (psiElement as? NavigationItem)?.presentation
+    val vFile = containingFile ?: return@runReadAction ""
+    val presentableName = vFile.presentableName
+    if (presentation == null) {
+      return@runReadAction presentableName
     }
-
-  override val containerPresentation: String?
-    get() {
-      val presentation = (psiElement as? NavigationItem)?.presentation ?: return null
-      return presentation.locationString
+    val elementPresentation = presentation.presentableText
+    if (elementPresentation == null) {
+      return@runReadAction presentableName
     }
+    return@runReadAction elementPresentation
+  }
 
-  override val locationText: String?
-    get() = ElementLocationUtil.renderElementLocation(psiElement, Ref())
+  override val containerPresentation: String? = runReadAction { (psiElement as? NavigationItem)?.presentation?.locationString }
 
-  override val locationIcon: Icon?
-    get() = Ref<Icon>().also { ElementLocationUtil.renderElementLocation(psiElement, it) }.get()
+  private val locationIconRef = Ref<Icon>()
+  override val locationText: String? = runReadAction { ElementLocationUtil.renderElementLocation(psiElement, locationIconRef) }
+  override val locationIcon: Icon? = locationIconRef.get()
 
-  override val containingMemberOrSelf: ImplementationViewElement
-    get() {
-      val parent = PsiTreeUtil.getStubOrPsiParent(psiElement)
-      if (parent == null || (parent is PsiFile && parent.virtualFile == containingFile)) {
-        return this
-      }
-      return PsiImplementationViewElement(parent)
+  override val containingMemberOrSelf: ImplementationViewElement = runReadAction {
+    val parent = PsiTreeUtil.getStubOrPsiParent(psiElement)
+    if (parent == null || (parent is PsiFile && parent.virtualFile == containingFile)) {
+      this
     }
+    else PsiImplementationViewElement(parent)
+  }
 
   override fun navigate(focusEditor: Boolean) {
     val navigationElement = psiElement.navigationElement

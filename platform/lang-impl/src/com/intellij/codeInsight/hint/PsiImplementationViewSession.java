@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -75,7 +76,7 @@ public final class PsiImplementationViewSession implements ImplementationViewSes
   @Override
   @NotNull
   public List<ImplementationViewElement> getImplementationElements() {
-    return ContainerUtil.map(myImpls, PsiImplementationViewElement::new);
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ContainerUtil.map(myImpls, PsiImplementationViewElement::new), ImplementationSearcher.getSearchingForImplementations(), true, myProject);
   }
 
   @Override
