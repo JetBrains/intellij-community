@@ -372,7 +372,6 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         }
       });
       myPanel.add(checkbox);
-      myPanel.add(new JLabel(JavaBundle.message("generate.equals.hashcode.accept.sublcasses.explanation")));
 
       final JCheckBox gettersCheckbox = new NonFocusableCheckBox(JavaBundle.message("generate.equals.hashcode.use.getters"));
       gettersCheckbox.setSelected(CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE);
