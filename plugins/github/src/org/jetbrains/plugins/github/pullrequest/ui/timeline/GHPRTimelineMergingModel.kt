@@ -10,6 +10,7 @@ import kotlin.math.max
 import kotlin.time.Duration.Companion.minutes
 
 class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
+  private val unmergedList = mutableListOf<GHPRTimelineItem>()
   private val list = mutableListOf<GHPRTimelineItem>()
 
   override fun getElementAt(index: Int): GHPRTimelineItem = list[index]
@@ -28,6 +29,7 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
     var added = false
     val hideUnknown = ApplicationManager.getApplication().let { !it.isInternal && !it.isEAP }
     for (item in items) {
+      unmergedList.add(item)
       if (item is GHPRTimelineItem.Unknown && (hideUnknown || item.__typename in GHPRTimelineItem.IGNORED_TYPES)) continue
       val merged = mergeIfPossible(lastItem, item)
       if (merged != null) {
@@ -48,16 +50,24 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
     if (added) fireIntervalAdded(this, lastListIdx + 1, list.lastIndex)
   }
 
-  fun update(item: GHPRTimelineItem) {
-    val idx = list.indexOf(item)
-    if (idx >= 0) list[idx] = item
-    fireContentsChanged(this, idx, idx)
+  fun update(idx: Int, newItem: GHPRTimelineItem) {
+    val originalItem = unmergedList.getOrNull(idx) ?: return
+    val mergedIdx = list.indexOf(originalItem)
+    if (mergedIdx >= 0) {
+      unmergedList[idx] = newItem
+      list[mergedIdx] = newItem
+    }
+    fireContentsChanged(this, mergedIdx, mergedIdx)
   }
 
-  fun remove(item: GHPRTimelineItem) {
-    val idx = list.indexOf(item)
-    if (idx >= 0) list.removeAt(idx)
-    fireIntervalRemoved(this, idx, idx)
+  fun remove(idx: Int) {
+    val originalItem = unmergedList.getOrNull(idx) ?: return
+    val mergedIdx = list.indexOf(originalItem)
+    if (mergedIdx >= 0) {
+      unmergedList.removeAt(idx)
+      list.removeAt(mergedIdx)
+    }
+    fireIntervalRemoved(this, mergedIdx, mergedIdx)
   }
 
   fun removeAll() {

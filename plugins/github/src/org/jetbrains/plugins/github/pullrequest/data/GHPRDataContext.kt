@@ -36,7 +36,9 @@ internal class GHPRDataContext(val scope: CoroutineScope,
       override fun onAllDataRemoved() = listUpdatesChecker.stop()
     })
     dataProviderRepository.addDetailsLoadedListener(listenersDisposable) { details: GHPullRequest ->
-      listLoader.updateData(details)
+      listLoader.updateData {
+        if (it.id == details.id) details else null
+      }
       filesManager.updateTimelineFilePresentation(details)
     }
 

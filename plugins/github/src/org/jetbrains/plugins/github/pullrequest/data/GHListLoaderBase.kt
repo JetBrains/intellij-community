@@ -67,19 +67,20 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
 
   protected abstract fun doLoadMore(indicator: ProgressIndicator, update: Boolean): List<T>?
 
-  override fun updateData(item: T) {
-    val index = loadedData.indexOfFirst { it == item }
-    if (index >= 0) {
-      loadedData[index] = item
-      dataEventDispatcher.multicaster.onDataUpdated(index)
+  override fun updateData(updater: (T) -> T?) {
+    for (i in loadedData.indices) {
+      val updatedValue = updater(loadedData[i]) ?: continue
+      loadedData[i] = updatedValue
+      dataEventDispatcher.multicaster.onDataUpdated(i)
+      break
     }
   }
 
   override fun removeData(predicate: (T) -> Boolean) {
-    val (index, data) = loadedData.withIndex().find { predicate(it.value) } ?: return
+    val index = loadedData.indexOfFirst(predicate)
     if (index >= 0) {
       loadedData.removeAt(index)
-      dataEventDispatcher.multicaster.onDataRemoved(data as Any)
+      dataEventDispatcher.multicaster.onDataRemoved(index)
     }
   }
 
