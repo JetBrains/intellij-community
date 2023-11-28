@@ -5,7 +5,6 @@ package git4idea.ui.branch.popup.compose
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
@@ -42,10 +41,10 @@ import com.intellij.util.ui.UIUtil
 import git4idea.GitBranch
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.createDataContext
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.lazy.*
+import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.Icon
@@ -335,14 +334,7 @@ private fun BranchListItem(
   closePopup: () -> Unit
 ) {
   val hoverSource = remember { MutableInteractionSource() }
-  val hovered by hoverSource.collectIsHoveredAsState()
   var showActions by remember { mutableStateOf(false) }
-
-  LaunchedEffect(hoverSource) {
-    snapshotFlow { hovered }.collectLatest { hovered ->
-      onHoverChanged(hovered)
-    }
-  }
 
   Box(modifier = modifier
     .fillMaxWidth()
@@ -356,6 +348,9 @@ private fun BranchListItem(
     }
     .onClick {
       showActions = true
+    }
+    .onHover {
+      onHoverChanged(it)
     }
     .pointerHoverIcon(PointerIcon.Hand)
     .hoverable(hoverSource)
