@@ -172,10 +172,10 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     final StringBuilder result = new StringBuilder("new ");
     result.append(to.getCanonicalText()).append("() {\n");
     if (PsiUtil.isLanguageLevel5OrHigher(context)) {
-      result.append("  @java.lang.Override\n");
+      result.append("  @").append(CommonClassNames.JAVA_LANG_OVERRIDE).append("\n");
     }
     result.append("  protected ")
-      .append(PsiUtil.isLanguageLevel5OrHigher(context) ? to.getParameters()[0].getCanonicalText() : "java.lang.Object")
+      .append(PsiUtil.isLanguageLevel5OrHigher(context) ? to.getParameters()[0].getCanonicalText() : CommonClassNames.JAVA_LANG_OBJECT)
       .append(" initialValue() {\n")
       .append("    return ")
       .append(coerceType("$qualifier$", from, to, context)).append(";\n")

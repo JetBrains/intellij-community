@@ -18,6 +18,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +98,7 @@ public class SimplifiableAssertionInspection extends BaseInspection implements C
 
   private static boolean isInstanceOfMethodExistsWithMatchingParams(@NotNull AssertHint assertHint) {
     final PsiClass clazz = assertHint.getMethod().getContainingClass();
-    if (clazz == null || !"org.junit.jupiter.api.Assertions".equals(clazz.getQualifiedName())) return false;
+    if (clazz == null || !JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(clazz.getQualifiedName())) return false;
     final Module junitModule = ModuleUtilCore.findModuleForPsiElement(assertHint.getOriginalExpression());
     if (junitModule != null) {
       final String version = JavaLibraryUtil.getLibraryVersion(junitModule, "org.junit.jupiter:junit-jupiter-api");

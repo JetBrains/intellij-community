@@ -42,6 +42,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
@@ -876,9 +877,9 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     if (containingClass == null) {
       return false;
     }
-    return InheritanceUtil.isInheritor(containingClass,"org.junit.Assert") ||
-           InheritanceUtil.isInheritor(containingClass,"org.junit.jupiter.api.Assertions") ||
-           InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert");
+    return InheritanceUtil.isInheritor(containingClass,JUnitCommonClassNames.ORG_JUNIT_ASSERT) ||
+           InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS) ||
+           InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT);
   }
 
   private static boolean isArgOfSpecifiedExceptionConstructor(UExpression expression,
