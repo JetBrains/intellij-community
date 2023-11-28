@@ -44,7 +44,7 @@ public class EntityStorageSerializerImpl(
   private val urlRelativizer: UrlRelativizer? = null
 ) : EntityStorageSerializer {
   public companion object {
-    public const val STORAGE_SERIALIZATION_VERSION: String = "version3"
+    public const val STORAGE_SERIALIZATION_VERSION: String = "version4"
 
     private val loadCacheMetadataFromFileTimeMs: AtomicLong = AtomicLong()
 
