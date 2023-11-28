@@ -231,7 +231,7 @@ public class NullityInferrer {
     if (variableNeverAssignedNull(variable)) {
       registerNotNullAnnotation(variable);
     }
-    if (variableSometimesAssignedNull(variable)) {
+    else if (variableSometimesAssignedNull(variable)) {
       registerNullableAnnotation(variable);
     }
   }
