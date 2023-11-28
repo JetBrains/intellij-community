@@ -30,6 +30,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import org.jetbrains.kotlin.asJava.finder.KtLightPackage
@@ -365,6 +366,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                 RenamePsiElementProcessor.forElement(psiElement).substituteElementToRename(psiElement, null)
 
             runRenameProcessor(context.project, newName, substitution, renameParamsObject, true, true)
+            PsiTestUtil.checkFileStructure(ktFile)
         }
     }
 

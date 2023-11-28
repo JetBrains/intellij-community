@@ -1263,6 +1263,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renamePackageWithQuotation/renamePackageWithQuotation.test");
     }
 
+    @TestMetadata("renamePlus1/plus1.test")
+    public void testRenamePlus1_Plus1() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renamePlus1/plus1.test");
+    }
+
     @TestMetadata("renamePlusAssign/plusAssign.test")
     public void testRenamePlusAssign_PlusAssign() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renamePlusAssign/plusAssign.test");

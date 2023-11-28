@@ -209,22 +209,21 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
             }
         }
 
-        val psiFactory = KtPsiFactory(expression)
+        val psiFactory = KtPsiFactory(expression.project)
+        val nameElement = expression.getReferencedNameElement()
+        val elementType = nameElement.node.elementType
+        val opExpression = if (elementType is KtToken && OperatorConventions.getNameForOperationSymbol(elementType) != null) {
+            expression.parent as? KtOperationExpression
+        } else null
         val element = expression.project.extensionArea.getExtensionPoint(SimpleNameReferenceExtension.EP_NAME).extensions
             .asSequence()
             .map { it.handleElementRename(this, psiFactory, newElementName) }
-            .firstOrNull { it != null } ?: psiFactory.createNameIdentifier(newElementName.quoteIfNeeded())
+            .firstOrNull { it != null } ?: if (opExpression != null) psiFactory.createSimpleName(newElementName.quoteIfNeeded()) else psiFactory.createNameIdentifier(newElementName.quoteIfNeeded())
 
-        val nameElement = expression.getReferencedNameElement()
-
-        val elementType = nameElement.node.elementType
-        if (elementType is KtToken && OperatorConventions.getNameForOperationSymbol(elementType) != null) {
-            val opExpression = expression.parent as? KtOperationExpression
-            if (opExpression != null) {
-                val (newExpression, newNameElement) = convertOperatorToFunctionCall(opExpression)
-                newNameElement.replace(element)
-                return newExpression
-            }
+        if (opExpression != null) {
+            val (newExpression, newNameElement) = convertOperatorToFunctionCall(opExpression)
+            newNameElement.replace(psiFactory.createSimpleName(newElementName.quoteIfNeeded()))
+            return newExpression
         }
 
         if (element.node.elementType == KtTokens.IDENTIFIER) {
