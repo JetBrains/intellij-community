@@ -16,6 +16,7 @@ import java.io.InputStream;
  * Provides content deduplication: same content (bytes) stored >1 times actually stored only once, and id of already
  * existing record returned
  */
+@ApiStatus.Internal
 public interface VFSContentStorage extends CleanableStorage, Closeable, Forceable {
 
   int getVersion() throws IOException;
