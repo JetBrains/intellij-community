@@ -40,25 +40,25 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
 
   protected void assumeVersionMoreThan(String version) {
     Assume.assumeTrue("Version should be more than " + version,
-                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), version) > 0);
+                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) > 0);
   }
 
   protected void assumeVersionAtLeast(String version) {
     Assume.assumeTrue("Version should be " + version + " or more",
-                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), version) >= 0);
+                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) >= 0);
   }
 
   protected void assumeVersionLessThan(String version) {
     Assume.assumeTrue("Version should be less than " + version,
-                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), version) < 0);
+                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) < 0);
   }
 
   protected void assumeVersionNot(String version) {
-    Assume.assumeTrue("Version " + version + " skipped", VersionComparatorUtil.compare(getActualVersion(myMavenVersion), version) != 0);
+    Assume.assumeTrue("Version " + version + " skipped", VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) != 0);
   }
 
   protected void assumeVersion(String version) {
-    Assume.assumeTrue("Version " + version + " skipped", VersionComparatorUtil.compare(getActualVersion(myMavenVersion), version) == 0);
+    Assume.assumeTrue("Version " + myMavenVersion + " is not " + version + ", therefore skipped", VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) == 0);
   }
 
   @Before
