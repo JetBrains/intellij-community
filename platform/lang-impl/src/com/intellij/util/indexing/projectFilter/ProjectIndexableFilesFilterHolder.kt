@@ -13,14 +13,14 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-internal enum class FileAddStatus {
-  ADDED, PRESENT, SKIPPED
-}
+@JvmField
+val USE_CACHING_FILTER = SystemProperties.getBooleanProperty("idea.index.use.caching.indexable.files.filter", true)
 
 internal sealed class ProjectIndexableFilesFilterHolder {
   abstract fun getProjectIndexableFiles(project: Project): IdFilter?
@@ -42,7 +42,7 @@ internal sealed class ProjectIndexableFilesFilterHolder {
 }
 
 internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder() {
-  private val myProjectFilters: ConcurrentMap<Project, IncrementalProjectIndexableFilesFilter> = ConcurrentHashMap()
+  private val myProjectFilters: ConcurrentMap<Project, ProjectIndexableFilesFilter> = ConcurrentHashMap()
 
   init {
     ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
@@ -66,7 +66,9 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   private fun getFilter(project: Project) = myProjectFilters.computeIfAbsent(project) {
-    if (it.isDisposed) null else IncrementalProjectIndexableFilesFilter()
+    if (it.isDisposed) null
+    else if (USE_CACHING_FILTER) CachingProjectIndexableFilesFilter(project)
+    else IncrementalProjectIndexableFilesFilter()
   }
 
   override fun ensureFileIdPresent(fileId: Int, projects: () -> Set<Project>): Boolean {
@@ -131,7 +133,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     }
   }
 
-  private fun runHealthCheck(project: Project, filter: IncrementalProjectIndexableFilesFilter): List<HealthCheckError> {
+  private fun runHealthCheck(project: Project, filter: ProjectIndexableFilesFilter): List<HealthCheckError> {
     return filter.runAndCheckThatNoChangesHappened {
       val errors = mutableListOf<HealthCheckError>()
       val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
@@ -151,7 +153,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   private class HealthCheckError(private val project: Project,
                                  private val virtualFile: VirtualFile,
                                  private val fileId: Int,
-                                 private val filter: IncrementalProjectIndexableFilesFilter) {
+                                 private val filter: ProjectIndexableFilesFilter) {
     val presentableText: String
       get() = "file ${virtualFile.path} not found in ${project.name}"
 
