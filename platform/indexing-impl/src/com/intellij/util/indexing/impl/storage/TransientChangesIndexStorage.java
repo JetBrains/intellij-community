@@ -90,7 +90,7 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
     try {
       if (myMap.isEmpty()) return;
 
-      if (IndexDebugProperties.DEBUG || FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
+      if (IndexDebugProperties.DEBUG || FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
         String message = "Dropping caches for " + myIndexId + ", number of items:" + myMap.size();
         ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().info(message);
       }

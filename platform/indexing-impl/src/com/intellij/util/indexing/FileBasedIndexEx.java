@@ -50,7 +50,7 @@ import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIf
 
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
-  public static final boolean DO_TRACE_STUB_INDEX_UPDATE = Boolean.getBoolean("idea.trace.stub.index.update");
+  public static final boolean TRACE_STUB_INDEX_UPDATES = Boolean.getBoolean("idea.trace.stub.index.update");
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Stack<DumbModeAccessType>> ourDumbModeAccessTypeStack =
     ThreadLocal.withInitial(() -> new com.intellij.util.containers.Stack<>());
