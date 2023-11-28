@@ -6,16 +6,15 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RollingFileHandler;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexEx;
-import com.intellij.util.indexing.FileContentImpl;
-import com.intellij.util.indexing.IndexedFile;
+import com.intellij.util.indexing.*;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -226,10 +225,17 @@ public final class VfsEventsMerger {
     VirtualFile file = indexedFile.getFile();
 
     tryLog(eventName, file, () -> {
-      String extra = "";
+      String extra = "indexedFile@" + System.identityHashCode(indexedFile);
+
       if (indexedFile instanceof FileContentImpl fileContentImpl) {
-        extra += "transient=" + fileContentImpl.isTransientContent();
-        extra += ",contentLen(bytes)=" + fileContentImpl.getContent().length;
+        extra += ",transient=" + fileContentImpl.isTransientContent();
+      }
+
+      if (indexedFile instanceof FileContent fileContent) {
+        extra += ",contentLen(bytes)=" + fileContent.getContent().length;
+        FileType fileType = fileContent.getFileType();
+        extra += ",psiLen=" + (fileType instanceof LanguageFileType ? fileContent.getPsiFile().getTextLength() : -1);
+        extra += ",binary=" + fileType.isBinary();
       }
 
       if (additionalMessage != null) {
