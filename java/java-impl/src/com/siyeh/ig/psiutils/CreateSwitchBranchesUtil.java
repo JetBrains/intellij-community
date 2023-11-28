@@ -129,7 +129,7 @@ public final class CreateSwitchBranchesUtil {
         addedLabels.add(addSwitchLabelStatementBefore(missingElement, lastChild, switchBlock, isRuleBasedFormat, isPatternsGenerated));
       }
     }
-    addedLabels.forEach(label -> javaCodeStyleManager.shortenClassReferences(label));
+    addedLabels.replaceAll(label -> (PsiSwitchLabelStatementBase)javaCodeStyleManager.shortenClassReferences(label));
     return addedLabels;
   }
 
