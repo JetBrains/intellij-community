@@ -681,7 +681,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    */
   public final @NotNull InetAddress getWslIpAddress() {
     if (Registry.is("wsl.proxy.connect.localhost")) {
-      return InetAddress.getLoopbackAddress();
+      return InetAddresses.forString(DEFAULT_WSL_IP);
     }
     return InetAddresses.forString(coalesce(getValueWithLogging(myLazyWslIp, "WSL IP"), DEFAULT_WSL_IP));
   }
