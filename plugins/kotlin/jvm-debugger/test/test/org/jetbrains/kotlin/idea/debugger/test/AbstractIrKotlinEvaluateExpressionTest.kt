@@ -16,9 +16,12 @@ import com.intellij.debugger.memory.utils.InstanceJavaValue
 import com.intellij.debugger.memory.utils.InstanceValueDescriptor
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
 import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.registerExtension
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
@@ -26,7 +29,9 @@ import com.sun.jdi.ObjectReference
 import org.jetbrains.eval4j.ObjectValue
 import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationEnabledChecker
 import org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner
 import org.jetbrains.kotlin.idea.debugger.evaluate.DebugContextProvider
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
@@ -69,6 +74,9 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
     override fun setUp() {
         super.setUp()
         allowEvaluationInJavaContext()
+        // Serialization compiler plugin may completely break IR evaluator (happened twice),
+        // having it enabled in tests will help prevent the problem
+        enableSerializationChecker()
         atDebuggerTearDown { exceptions.clear() }
         atDebuggerTearDown { restoreEvaluationInJavaContext() }
     }
@@ -83,6 +91,20 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
     private fun restoreEvaluationInJavaContext() {
         Registry.get("debugger.enable.kotlin.evaluator.in.java.context")
           .setValue(originalEnableKotlinEvaluatorInJavaContext)
+    }
+
+    private fun enableSerializationChecker() {
+        ApplicationManager.getApplication().apply {
+            if (!extensionArea.hasExtensionPoint(KotlinSerializationEnabledChecker.EP_NAME.name)) {
+                extensionArea.registerExtensionPoint(
+                    KotlinSerializationEnabledChecker.EP_NAME.name,
+                    KotlinSerializationEnabledChecker::class.java.name,
+                    ExtensionPoint.Kind.INTERFACE,
+                    false
+                )
+            }
+            registerExtension(KotlinSerializationEnabledChecker.EP_NAME, AlwaysYesForEvaluator, project)
+        }
     }
 
     override fun fragmentCompilerBackend() =
@@ -340,6 +362,12 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
                 debugProcess.xdebugProcess?.nodeManager
             )
             XDebuggerTestUtil.markValue(valueMarkers, instanceValue, ValueMarkup(name, null, name))
+        }
+    }
+
+    private object AlwaysYesForEvaluator : KotlinSerializationEnabledChecker {
+        override fun isEnabledFor(moduleDescriptor: ModuleDescriptor): Boolean {
+            return true
         }
     }
 }
