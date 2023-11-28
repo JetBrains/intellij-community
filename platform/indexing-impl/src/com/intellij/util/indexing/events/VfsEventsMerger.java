@@ -271,7 +271,8 @@ public final class VfsEventsMerger {
         @Override
         public String format(LogRecord record) {
           ZonedDateTime zdt = ZonedDateTime.ofInstant(record.getInstant(), ZoneId.systemDefault());
-          return String.format("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS.%1$tL %2$s%n", zdt, record.getMessage());
+          return String.format("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS.%1$tL [%3$d] %2$s%n", zdt, record.getMessage(),
+                               record.getLongThreadID());
         }
       });
     }
