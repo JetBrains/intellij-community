@@ -68,7 +68,7 @@ class PEP669CallbackBase:
         return additional_info
 
     @staticmethod
-    def _get_filename(frame):
+    def _get_abs_path_real_path_and_base_from_frame(frame):
         try:
             abs_path_real_path_and_base = NORM_PATHS_AND_BASE_CONTAINER[
                 frame.f_code.co_filename]
@@ -76,7 +76,7 @@ class PEP669CallbackBase:
             abs_path_real_path_and_base \
                 = get_abs_path_real_path_and_base_from_frame(frame)
 
-        return abs_path_real_path_and_base[1]
+        return abs_path_real_path_and_base
 
     @staticmethod
     def clear_run_state(info):
@@ -134,8 +134,11 @@ class PyStartCallback(PEP669CallbackBase):
                 # print('skipped: PY_START (cache hit)', frame_cache_key, frame.f_lineno, code.co_name)
                 return
 
-            filename = self._get_filename(frame)
-            file_type = get_file_type(filename)
+            abs_path_real_path_and_base = \
+                self._get_abs_path_real_path_and_base_from_frame(frame)
+
+            filename = abs_path_real_path_and_base[1]
+            file_type = get_file_type(abs_path_real_path_and_base[-1])
 
             if file_type is not None:
                 if file_type == 1:  # inlining LIB_FILE = 1
@@ -320,7 +323,7 @@ class PyLineCallback(PEP669CallbackBase):
             stop_frame = info.pydev_step_stop
             step_cmd = info.pydev_step_cmd
 
-            filename = self._get_filename(frame)
+            filename = self._get_abs_path_real_path_and_base_from_frame(frame)[1]
             breakpoints_for_file = self.py_db.breakpoints.get(filename)
 
             frame_cache_key = self._make_frame_cache_key(code)
@@ -512,8 +515,10 @@ class PyRaiseCallback(PEP669CallbackBase):
                                          or self.py_db.stop_on_failed_tests)
             if has_exception_breakpoints:
                 args = (
-                    self.py_db, self._get_filename(frame),
-                    self._get_additional_info(self.thread), self.thread, global_cache_skips,
+                    self.py_db,
+                    self._get_abs_path_real_path_and_base_from_frame(frame)[1],
+                    self._get_additional_info(self.thread), self.thread,
+                    global_cache_skips,
                     global_cache_frame_skips
                 )
                 should_stop, frame = should_stop_on_exception(
