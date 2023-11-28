@@ -3,17 +3,12 @@ package org.jetbrains.plugins.terminal.exp.completion
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.completion.ShellEnvironment
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalSession
 import org.jetbrains.plugins.terminal.util.ShellType
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.coroutines.resume
 
 class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRuntimeDataProvider {
   override suspend fun getFilesFromDirectory(path: String): List<String> {
@@ -27,30 +22,14 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
 
   private suspend fun <T> executeCommand(command: DataProviderCommand<T>): T {
     return if (command.isAvailable(session)) {
-      val requestId = CUR_ID.getAndIncrement()
-      val commandText = "${command.functionName} $requestId ${command.parameters.joinToString(" ")}"
-      val rawResult: String = executeCommandBlocking(requestId, commandText)
+      val rawResult: String = executeCommandBlocking(command)
       command.parseResult(rawResult)
     }
     else command.defaultResult
   }
 
-  private suspend fun executeCommandBlocking(reqId: Int, command: String): String {
-    return suspendCancellableCoroutine { continuation ->
-      val disposable = Disposer.newDisposable()
-      continuation.invokeOnCancellation {
-        Disposer.dispose(disposable)
-      }
-      session.addCommandListener(object : ShellCommandListener {
-        override fun generatorFinished(requestId: Int, result: String) {
-          if (requestId == reqId) {
-            Disposer.dispose(disposable)
-            continuation.resume(result)
-          }
-        }
-      }, disposable)
-      session.sendCommandToExecute(command)
-    }
+  private suspend fun executeCommandBlocking(command: DataProviderCommand<*>): String {
+    return session.commandManager.runGeneratorAsync(command.functionName, command.parameters).await()
   }
 
   private interface DataProviderCommand<T> {
@@ -113,7 +92,6 @@ class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRu
   }
 
   companion object {
-    private val CUR_ID = AtomicInteger(0)
     private val LOG: Logger = logger<IJShellRuntimeDataProvider>()
 
     private fun TerminalSession.isBashOrZsh(): Boolean {

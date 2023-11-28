@@ -4,15 +4,21 @@ package org.jetbrains.plugins.terminal.block
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.terminal.completion.ShellEnvironment
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
+import com.intellij.util.TimeoutUtil
 import com.jediterm.core.util.TermSize
+import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
 import org.jetbrains.plugins.terminal.exp.*
+import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
+import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.Assert
+import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,6 +28,8 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(Parameterized::class)
 class BlockTerminalTest(private val shellPath: String) {
@@ -75,6 +83,30 @@ class BlockTerminalTest(private val shellPath: String) {
     }.attempts(1).assertTiming()
   }
 
+  @Test
+  fun `concurrent command and generator execution`() {
+    val session = startBlockTerminalSession()
+    // ShellType.FISH doesn't support generators yet
+    Assume.assumeTrue(setOf(ShellType.ZSH, ShellType.BASH).contains(session.shellIntegration?.shellType))
+    runBlocking {
+      for (stepId in 1..100) {
+        val startNano = System.nanoTime()
+        val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
+        val envListDeferred: Deferred<ShellEnvironment?> = this.async(Dispatchers.Default) {
+          val provider = IJShellRuntimeDataProvider(session)
+          provider.getShellEnvironment()
+        }
+        session.commandManager.commandExecutionManager.awaitGeneratorCommandSent()
+        delay((1..50).random().milliseconds) // wait a little to start generator
+        session.sendCommandToExecute("echo foo")
+        val env: ShellEnvironment? = withTimeout(20.seconds) { envListDeferred.await() }
+        Assert.assertTrue(env != null && env.envs.isNotEmpty())
+        assertCommandResult(0, "foo\n", outputFuture)
+        println("#$stepId Done in " + TimeoutUtil.getDurationMillis(startNano) + "ms")
+      }
+    }
+  }
+
   private fun setTerminalBufferMaxLines(maxBufferLines: Int) {
     val terminalBufferMaxLinesCount = "terminal.buffer.max.lines.count"
     val prevValue = AdvancedSettings.getInt(terminalBufferMaxLinesCount)
@@ -84,7 +116,7 @@ class BlockTerminalTest(private val shellPath: String) {
     }
   }
 
-  private fun startBlockTerminalSession(termSize: TermSize) =
+  private fun startBlockTerminalSession(termSize: TermSize = TermSize(80, 24)) =
     TerminalSessionTestUtil.startBlockTerminalSession(projectRule.project, shellPath, disposableRule.disposable, termSize)
 
   private fun TerminalSession.sendCommandToExecuteWithoutAddingToHistory(shellCommand: String) {

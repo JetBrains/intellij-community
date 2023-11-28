@@ -3,21 +3,22 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
-import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.TerminalCustomCommandListener
+import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.plugins.terminal.TerminalUtil
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
-class ShellCommandManager(terminal: Terminal) {
+class ShellCommandManager(session: TerminalSession) {
   private val listeners: CopyOnWriteArrayList<ShellCommandListener> = CopyOnWriteArrayList()
 
   @Volatile
   private var startedCommand: StartedCommand? = null
+  internal val commandExecutionManager: ShellCommandExecutionManager = ShellCommandExecutionManager(session, this)
 
   init {
-    terminal.addCustomCommandListener(TerminalCustomCommandListener {
+    session.controller.addCustomCommandListener(TerminalCustomCommandListener {
       try {
         when (it.getOrNull(0)) {
           "initialized" -> processInitialized(it)
@@ -150,8 +151,14 @@ class ShellCommandManager(terminal: Terminal) {
     TerminalUtil.addItem(listeners, listener, parentDisposable)
   }
 
+  fun sendCommandToExecute(shellCommand: String) = commandExecutionManager.sendCommandToExecute(shellCommand)
+
+  fun runGeneratorAsync(generatorName: String, generatorParameters: List<String>): CompletableDeferred<String> {
+    return commandExecutionManager.runGeneratorAsync(generatorName, generatorParameters)
+  }
+
   companion object {
-    private val LOG = logger<ShellCommandManager>()
+    internal val LOG = logger<ShellCommandManager>()
 
     @Throws(IllegalArgumentException::class)
     private fun decodeHex(hexStr: String): String {

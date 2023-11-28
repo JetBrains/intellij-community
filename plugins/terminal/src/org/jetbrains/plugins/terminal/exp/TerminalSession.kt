@@ -3,8 +3,8 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
@@ -41,7 +41,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
     model = TerminalModel(textBuffer)
     controller = JediTerminal(ModelUpdatingTerminalDisplay(model, settings), textBuffer, styleState)
 
-    commandManager = ShellCommandManager(controller)
+    commandManager = ShellCommandManager(this)
 
     val typeAheadTerminalModel = JediTermTypeAheadModel(controller, textBuffer, settings)
     typeAheadManager = TerminalTypeAheadManager(typeAheadTerminalModel)
@@ -81,13 +81,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase,
   }
 
   fun sendCommandToExecute(shellCommand: String) {
-    // Simulate pressing Ctrl+U in the terminal to clear all typings in the prompt
-    val fullCommand = "\u0015" + shellCommand
-    terminalStarterFuture.thenAccept {
-      if (it != null) {
-        TerminalUtil.sendCommandToExecute(fullCommand, it)
-      }
-    }
+    commandManager.sendCommandToExecute(shellCommand)
   }
 
   fun postResize(newSize: TermSize) {
