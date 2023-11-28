@@ -329,6 +329,11 @@ class ActionMenu constructor(private val context: DataContext?,
     }
 
     private fun menuSelected() {
+      if (!isShowing) {
+        // Not needed for hidden menu and leads to disposable leak for detached menu items
+        return
+      }
+
       val startMs = System.currentTimeMillis()
       val helper = UsabilityHelper(this@ActionMenu)
       if (disposable == null) {

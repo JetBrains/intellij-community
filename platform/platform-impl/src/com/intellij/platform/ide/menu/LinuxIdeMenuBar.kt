@@ -3,7 +3,6 @@ package com.intellij.platform.ide.menu
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.impl.IdeRootPane
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import java.awt.event.WindowAdapter
@@ -44,7 +43,7 @@ internal class LinuxIdeMenuBar(coroutineScope: CoroutineScope, frame: JFrame, cu
   }
 
   override fun doInstallAppMenuIfNeeded(frame: JFrame) {
-    if (globalMenu != null || IdeRootPane.isMenuButtonInToolbar || !GlobalMenuLinux.isAvailable()) {
+    if (globalMenu != null || !GlobalMenuLinux.isAvailable()) {
       return
     }
 

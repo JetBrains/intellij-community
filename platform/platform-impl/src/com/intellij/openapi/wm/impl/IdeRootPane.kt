@@ -329,12 +329,14 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     /**
      * Returns true if a menu should be placed in toolbar instead of menu bar
      */
-    internal val isMenuButtonInToolbar: Boolean
+    @JvmStatic
+    val isMenuButtonInToolbar: Boolean
       get() = ExperimentalUI.isNewUI() &&
               (SystemInfoRt.isUnix && !SystemInfoRt.isMac && !UISettings.shadowInstance.separateMainMenu && !hideNativeLinuxTitle
                || SystemInfo.isMac && !Menu.isJbScreenMenuEnabled())
 
-    internal val hideNativeLinuxTitle: Boolean
+    @JvmStatic
+    val hideNativeLinuxTitle: Boolean
       get() = hideNativeLinuxTitleAvailable && hideNativeLinuxTitleSupported && UISettings.shadowInstance.mergeMainMenuWithWindowTitle
 
     internal val hideNativeLinuxTitleSupported: Boolean

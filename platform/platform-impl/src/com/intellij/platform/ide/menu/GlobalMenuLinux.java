@@ -26,8 +26,11 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.LinuxGlobalMenuEventHandler;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.ImageUtil;
 import com.sun.jna.Callback;
@@ -36,7 +39,6 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
@@ -195,17 +197,11 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         // exec at glib-thread
         LOG.info("Closed dbus-service 'com.canonical.AppMenu.Registrar'");
         isServiceAvailable = false;
-        boolean isMainMenuVisible = UISettings.getInstance().getShowMainMenu();
         for (GlobalMenuLinux menuLinux : instances) {
           menuLinux.windowHandle = null;
-          if (isMainMenuVisible) {
-            EventQueue.invokeLater(() -> {
-              JMenuBar menuBar = getMenuBar(menuLinux.frame);
-              if (menuBar != null) {
-                menuBar.setVisible(true);
-              }
-            });
-          }
+          EventQueue.invokeLater(() -> {
+            setIdeMenuVisible(menuLinux.frame, true);
+          });
         }
       };
 
@@ -213,11 +209,6 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       new Thread(() -> ourLib.runMainLoop(ourGLogger, onAppmenuServiceAppeared, onAppmenuServiceVanished), threadName).start();
       LOG.info("Start glib main loop in thread: " + threadName);
     }
-  }
-
-  private static @Nullable JMenuBar getMenuBar(@NotNull JFrame menuBar) {
-    JRootPane rootPane = menuBar.getRootPane();
-    return rootPane == null ? null : rootPane.getJMenuBar();
   }
 
   private final @NotNull JFrame frame;
@@ -392,6 +383,19 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     ourLib.execOnMainLoop(updateAllRoots);
   }
 
+  @RequiresEdt
+  private static void setIdeMenuVisible(@NotNull JFrame frame, boolean visible) {
+    ThreadingAssertions.assertEventDispatchThread();
+    JRootPane rootPane = frame.getRootPane();
+
+    boolean mainMenuApplicable = ExperimentalUI.isNewUI()
+                                 ? !IdeRootPane.getHideNativeLinuxTitle() && !IdeRootPane.isMenuButtonInToolbar()
+                                 : UISettings.getInstance().getShowMainMenu();
+    if (rootPane != null && mainMenuApplicable) {
+      rootPane.getJMenuBar().setVisible(visible);
+    }
+  }
+
   private void _updateRoots() {
     // exec at glib-thread
     if (!isEnabled || myIsDisposed) {
@@ -425,10 +429,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     if (!SHOW_SWING_MENU) {
       EventQueue.invokeLater(() -> {
         if (isEnabled) {
-          JMenuBar menuBar = getMenuBar(frame);
-          if (menuBar != null) {
-            menuBar.setVisible(false);
-          }
+          setIdeMenuVisible(frame, false);
         }
       });
     }
@@ -460,12 +461,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         ourLib.releaseWindowOnMainLoop(windowHandle, onWindowReleased);
       }
 
-      if (UISettings.getInstance().getShowMainMenu()) {
-        JMenuBar frameMenu = getMenuBar(frame);
-        if (frameMenu != null) {
-          frameMenu.setVisible(true);
-        }
-      }
+      setIdeMenuVisible(frame, true);
     }
   }
 
@@ -1335,7 +1331,6 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     boolean check(int uid, int eventType, @NotNull MenuItemInternal mi) {
       // exec at glib-main-thread
-      final boolean isFillEvent = _isFillEvent(eventType);
       final long timeMs = System.currentTimeMillis();
 
       if (_isClosed()) {
