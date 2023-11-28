@@ -241,7 +241,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun loadState(element: Element) {
-    replaceThemeIfSelected(element)
     autodetect = element.getAttributeBooleanValue(ATTRIBUTE_AUTODETECT)
     preferredLightThemeId = element.getChild(ELEMENT_PREFERRED_LIGHT_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)
     preferredDarkThemeId = element.getChild(ELEMENT_PREFERRED_DARK_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)
@@ -343,22 +342,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
 
     return element
-  }
-
-  //IDEA-331405 Hide IntelliJ Light from new UI
-  private fun replaceThemeIfSelected(element: Element) {
-    val replacementThemeId = "ExperimentalLight"
-    val newThemeId = "ExperimentalLightWithLightHeader"
-    val prefLightThemeElement = element.getChild(ELEMENT_PREFERRED_LIGHT_LAF)
-    val preferredLightTheme = prefLightThemeElement?.getAttributeValue(ATTRIBUTE_THEME_NAME)
-    if (preferredLightTheme == replacementThemeId) {
-      prefLightThemeElement.setAttribute(ATTRIBUTE_THEME_NAME, newThemeId)
-    }
-    val currentThemeElement = element.getChild(ELEMENT_LAF)
-    val currentTheme = currentThemeElement?.getAttributeValue(ATTRIBUTE_THEME_NAME)
-    if (currentTheme == replacementThemeId) {
-      currentThemeElement.setAttribute(ATTRIBUTE_THEME_NAME, newThemeId)
-    }
   }
 
   override fun getInstalledLookAndFeels(): Array<UIManager.LookAndFeelInfo> {
