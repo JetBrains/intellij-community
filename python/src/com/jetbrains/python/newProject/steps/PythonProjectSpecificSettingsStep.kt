@@ -186,6 +186,11 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
     return interpreterPanel!!.createStatisticsInfo()
   }
 
+  override fun registerValidators() {
+    if (myProjectGenerator is PythonProjectGenerator<*>) {
+      projectName.afterChange { (myProjectGenerator as PythonProjectGenerator<*>).locationChanged(it) }
+    }
+  }
 
   companion object {
     @JvmStatic
