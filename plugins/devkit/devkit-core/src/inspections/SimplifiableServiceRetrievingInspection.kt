@@ -137,5 +137,8 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
 }
 
 private fun getRetrievingExpression(call: UCallExpression): UExpression? {
-  return call.uastParent as? UQualifiedReferenceExpression ?: call as? UCallExpression
+  val qualifiedCall = call.uastParent as? UQualifiedReferenceExpression
+  return if (qualifiedCall != null) {
+    return qualifiedCall.takeIf { qualifiedCall.accessType == UastQualifiedExpressionAccessType.SIMPLE }
+  } else call
 }
