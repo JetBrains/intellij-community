@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
@@ -83,7 +84,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     val project = e.project
     val projectName = project?.name ?: ""
     e.presentation.setText(projectName, false)
-    e.presentation.description = projectName
+    e.presentation.description = FileUtil.getLocationRelativeToUserHome(project?.guessProjectDir()?.path) ?: projectName
     e.presentation.putClientProperty(projectKey, project)
   }
 
