@@ -3,7 +3,6 @@ package ${PACKAGE_NAME};
 
 #end
 #parse("File Header.java")
-
 //TIP ${RunComment1}
 // ${RunComment2}
 public class Main {
