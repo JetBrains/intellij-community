@@ -271,9 +271,13 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             };
             CommandProcessor.getInstance()
               .executeCommand(project, command, JavaBundle.message("action.title.infer.nullity.annotations"), null);
-            NOTIFICATION_GROUP.createNotification(JavaBundle.message("notification.content.added.annotations", command.myCount),
-                                                  NotificationType.INFORMATION)
-              .notify(project);
+            if (command.myCount == 0) {
+              NullityInferrer.nothingFoundMessage(project);
+            } else {
+              NOTIFICATION_GROUP.createNotification(JavaBundle.message("notification.content.added.annotations", command.myCount),
+                                                    NotificationType.INFORMATION)
+                .notify(project);
+            }
           }
           else {
             NullityInferrer.nothingFoundMessage(project);
