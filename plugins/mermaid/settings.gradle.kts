@@ -20,7 +20,7 @@ pluginManagement {
     maven("https://oss.sonatype.org/content/repositories/snapshots/")
   }
   plugins {
-    val kotlinVersion = "1.7.20"
+    val kotlinVersion = "1.9.21"
     kotlin("jvm") version kotlinVersion apply false
     kotlin("js") version kotlinVersion apply false
     id("com.github.ben-manes.versions") version "0.41.0"
