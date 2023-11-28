@@ -174,7 +174,7 @@ public final class VfsEventsMerger {
       builder.append("file: ").append(file.getPath()).append("; ")
         .append("operation: ");
       if ((eventMask & FILE_TRANSIENT_STATE_CHANGED) != 0) builder.append("TRANSIENT_STATE_CHANGE ");
-      if ((eventMask & FILE_CONTENT_CHANGED) != 0) builder.append("UPDATE ");
+      if ((eventMask & FILE_CONTENT_CHANGED) != 0) builder.append("CONTENT_CHANGE ");
       if ((eventMask & FILE_REMOVED) != 0) builder.append("REMOVE ");
       if ((eventMask & FILE_ADDED) != 0) builder.append("ADD ");
       return builder.toString().trim();

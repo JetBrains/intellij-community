@@ -849,7 +849,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     String fileName = "test.txt";
     final VirtualFile testFile = myFixture.addFileToProject(fileName, "test").getVirtualFile();
 
-    assertEquals(("file: " + fileName + "; operation: UPDATE ADD"), listener.indexingOperation(testFile));
+    assertEquals(("file: " + fileName + "; operation: CONTENT_CHANGE ADD"), listener.indexingOperation(testFile));
 
     FileContentUtilCore.reparseFiles(Collections.singletonList(testFile));
 
@@ -858,7 +858,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     WriteAction.run(() -> VfsUtil.saveText(testFile, "foo"));
     WriteAction.run(() -> VfsUtil.saveText(testFile, "bar"));
 
-    assertEquals(("file: " + fileName + "; operation: UPDATE"), listener.indexingOperation(testFile));
+    assertEquals(("file: " + fileName + "; operation: CONTENT_CHANGE"), listener.indexingOperation(testFile));
 
     WriteAction.run(() -> VfsUtil.saveText(testFile, "baz"));
     WriteAction.run(() -> testFile.delete(null));
