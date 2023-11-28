@@ -14,6 +14,7 @@ import org.jetbrains.jps.dependency.impl.Containers;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -187,6 +188,30 @@ public final class Utils {
     );
   }
 
+  public static final class OverloadDescriptor {
+    final JVMFlags accessScope;
+    final JvmMethod overloadMethod;
+    final JvmClass owner;
+
+    OverloadDescriptor(JVMFlags accessScope, JvmMethod overloadMethod, JvmClass owner) {
+      this.accessScope = accessScope;
+      this.overloadMethod = overloadMethod;
+      this.owner = owner;
+    }
+  }
+
+  public Iterable<OverloadDescriptor> findAllOverloads(final JvmClass cls, Function<? super JvmMethod, JVMFlags> correspondenceFinder) {
+    Function<JvmClass, Iterable<OverloadDescriptor>> mapper = c -> filter(map(c.getMethods(), m -> {
+      JVMFlags accessScope = correspondenceFinder.apply(m);
+      return accessScope != null? new OverloadDescriptor(accessScope, m, c) : null;
+    }), notNullFilter());
+
+    return flat(
+      flat(map(recurse(cls, cl -> flat(map(cl.getSuperTypes(), st -> getClassesByName(st))), true), cl -> mapper.apply(cl))),
+      flat(map(allSubclasses(cls.getReferenceID()), id -> flat(map(getNodes(id, JvmClass.class), cl -> mapper.apply(cl)))))
+    );
+  }
+
    /*
    Traverse nodes starting from the given node and collect node-related data fetched with the given dataGetter.
    Further traversal for the current "subtree" stops, if the continuationCon predicate is 'false' for the dataGetter's result obtained on the subtree's root.
@@ -308,9 +333,19 @@ public final class Utils {
   }
 
 
-  private static <K, V> Function<K, V> cachingFunction(Function<K, V> f) {
+  public static <K, V> Function<K, V> cachingFunction(Function<K, V> f) {
     return new Function<>() {
       private final Map<K, V> cache = new HashMap<>();
+      @Override
+      public V apply(K k) {
+        return cache.computeIfAbsent(k, f);
+      }
+    };
+  }
+
+  public static <K, V> Function<K, V> cachingFunction(Function<K, V> f, final BiFunction<? super K, ? super K, Boolean> keyEqualsImpl, final Function<? super K, Integer> keyHashImpl) {
+    return new Function<>() {
+      private final Map<K, V> cache = Containers.createCustomPolicyMap(keyEqualsImpl, keyHashImpl);
       @Override
       public V apply(K k) {
         return cache.computeIfAbsent(k, f);
@@ -329,4 +364,5 @@ public final class Utils {
       }
     };
   }
+
 }

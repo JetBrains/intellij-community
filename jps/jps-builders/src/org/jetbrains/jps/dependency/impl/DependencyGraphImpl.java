@@ -6,20 +6,19 @@ import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.ClassShortNameIndex;
+import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
-import org.jetbrains.jps.dependency.kotlin.KotlinAwareJavaDifferentiateStrategy;
+import org.jetbrains.jps.dependency.java.Utils;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public final class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
-  // todo: some API to configure the set of strategies suitable for the particular environment. E.g. if some languages are not present in a project, there is no need to run rules specific to these languages
-  private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(
-    new KotlinAwareJavaDifferentiateStrategy()
-  );
+  private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(new GeneralJvmDifferentiateStrategy());
   private final Set<String> myRegisteredIndices;
 
   public DependencyGraphImpl(MapletFactory containerFactory) throws IOException {
@@ -164,20 +163,33 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
         affectedSources.add(src);
       }
     }
-    
+
     Iterable<ReferenceID> changedScopeNodes = Iterators.unique(Iterators.flat(Iterators.map(nodesAfter, n -> n.getReferenceID()), Iterators.map(diffContext.affectedUsages.keySet(), u -> u.getElementOwner())));
     for (ReferenceID dependent : Iterators.unique(Iterators.filter(Iterators.flat(Iterators.map(changedScopeNodes, id -> getDependingNodes(id))), id -> !dependingOnDeleted.contains(id)))) {
+
+      Function<Node<?, ?>, Boolean> checkAffected = Utils.cachingFunction(n -> {
+        if (!diffContext.isNodeAffected(n)) {
+          return Boolean.FALSE;
+        }
+        for (DifferentiateStrategy strategy : ourDifferentiateStrategies) {
+          if (!strategy.isIncremental(diffContext, n)) {
+            return null;
+          }
+        }
+        return Boolean.TRUE;
+      }, DiffCapable::isSame, DiffCapable::diffHashCode);
+
       for (NodeSource depSrc : getSources(dependent)) {
         if (!affectedSources.contains(depSrc)) {
           boolean affectSource = false;
           for (var depNode : getNodes(depSrc)) {
-            if (diffContext.isNodeAffected(depNode)) {
+            Boolean isAffected = checkAffected.apply(depNode);
+            if (isAffected == null) {
+              // non-incremental
+              return DifferentiateResult.createNonIncremental("", delta, deletedNodes);
+            }
+            if (isAffected) {
               affectSource = true;
-              for (DifferentiateStrategy strategy : ourDifferentiateStrategies) {
-                if (!strategy.isIncremental(diffContext, depNode)) {
-                  return DifferentiateResult.createNonIncremental("", delta, deletedNodes);
-                }
-              }
             }
           }
           if (affectSource) {

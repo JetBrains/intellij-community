@@ -17,13 +17,10 @@ import static org.jetbrains.jps.javac.Iterators.*;
 /**
  * This strategy augments Java strategy with some Kotlin-specific rules. Should be used in projects containing both Java and Kotlin code.
  */
-public final class KotlinAwareJavaDifferentiateStrategy extends JavaDifferentiateStrategy {
+public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
 
   @Override
-  protected boolean processChangedClass(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Utils future, Utils present) {
-    if (!super.processChangedClass(context, change, future, present)) {
-      return false;
-    }
+  public boolean processChangedClass(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Utils future, Utils present) {
     JvmClass changedClass = change.getPast();
     Iterable<JvmMethod> removedMethods = change.getDiff().methods().removed();
     Iterable<JvmField> addedNonPrivateFields = filter(change.getDiff().fields().added(), f -> !f.isPrivate());
@@ -53,34 +50,33 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JavaDifferentiat
             break;
           }
         }
-
       }
     }
+
+    if (!present.isLambdaTarget(change.getPast()) && future.isLambdaTarget(change.getNow())) {
+      // should affect lambda instantiations on overloads, because some calls may have become ambiguous
+      TypeRepr.ClassType samType = new TypeRepr.ClassType(changedClass.getName());
+      for (JvmClass depClass : flat(map(context.getGraph().getDependingNodes(changedClass.getReferenceID()), dep -> present.getNodes(dep, JvmClass.class)))) {
+        JvmMethod methodWithSAMType = find(depClass.getMethods(), m -> contains(m.getArgTypes(), samType));
+        if (methodWithSAMType != null) {
+          affectConflictingExtensionMethods(context, depClass, methodWithSAMType, samType, future);
+        }
+      }
+    }
+
     return true;
   }
 
   @Override
-  protected boolean processMethodArgumentBecameLambdaTarget(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, TypeRepr.ClassType argSAMType, Utils future, Utils present) {
-    if (!super.processMethodArgumentBecameLambdaTarget(context, cls, clsMethod, argSAMType, future, present)) {
-      return false;
-    }
-    affectConflictingExtensionMethods(context, cls, clsMethod, future);
-    return true;
-  }
-
-  @Override
-  protected boolean processAddedMethod(DifferentiateContext context, JvmClass changedClass, JvmMethod addedMethod, Utils future, Utils present) {
-    if (!super.processAddedMethod(context, changedClass, addedMethod, future, present)) {
-      return false;
-    }
+  public boolean processAddedMethod(DifferentiateContext context, JvmClass changedClass, JvmMethod addedMethod, Utils future, Utils present) {
     // any added method may conflict with an extension method to this class, defined elsewhere
     if (!addedMethod.isPrivate()) {
-      affectConflictingExtensionMethods(context, changedClass, addedMethod, future);
+      affectConflictingExtensionMethods(context, changedClass, addedMethod, null, future);
     }
     return true;
   }
 
-  private static void affectConflictingExtensionMethods(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, Utils utils) {
+  private static void affectConflictingExtensionMethods(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, @Nullable TypeRepr.ClassType samType, Utils utils) {
     // the first arg is always the class being extended
     Set<String> firstArgTypes = collect(
       map(flat(utils.allSupertypes(cls.getReferenceID()), utils.collectSubclassesWithoutMethod(cls.getReferenceID(), clsMethod)), id -> id.getNodeName()), new HashSet<>()
@@ -102,24 +98,24 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JavaDifferentiat
       if (!Objects.equals(clsMethod.getType(), TypeRepr.getType(calledMethodType.getReturnType()))) {
         return false;
       }
-      Iterator<TypeRepr> args = map(Arrays.asList(calledMethodType.getArgumentTypes()), TypeRepr::getType).iterator();
-      if (!args.hasNext()) {
+      Iterator<TypeRepr> usageArgTypes = map(Arrays.asList(calledMethodType.getArgumentTypes()), TypeRepr::getType).iterator();
+      if (!usageArgTypes.hasNext()) {
         return false;
       }
-      TypeRepr firstArgType = args.next();
-      if (!(firstArgType instanceof TypeRepr.ClassType) || !firstArgTypes.contains(((TypeRepr.ClassType)firstArgType).getJvmName())) {
+      TypeRepr firstUsageArgType = usageArgTypes.next();
+      if (!(firstUsageArgType instanceof TypeRepr.ClassType) || !firstArgTypes.contains(((TypeRepr.ClassType)firstUsageArgType).getJvmName())) {
         return false;
       }
-      for (TypeRepr expectedArgType : clsMethod.getArgTypes()) {
-        if (!args.hasNext()) {
+      for (TypeRepr methodArgType : clsMethod.getArgTypes()) {
+        if (!usageArgTypes.hasNext()) {
           return false;
         }
-        TypeRepr argType = args.next();
-        if (Boolean.FALSE.equals(utils.isSubtypeOf(argType, expectedArgType)) && Boolean.FALSE.equals(utils.isSubtypeOf(expectedArgType, argType))) {
+        TypeRepr usageArgType = usageArgTypes.next();
+        if (samType != null && samType.equals(methodArgType) && !(usageArgType instanceof TypeRepr.ClassType)) {
           return false;
         }
       }
-      if (args.hasNext()) {
+      if (usageArgTypes.hasNext()) {
         return false;
       }
       return utils.isVisibleIn(cls, clsMethod, contextCls);
@@ -182,8 +178,8 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JavaDifferentiat
       return true;
     }
     if (name.length() > 2 && name.startsWith("is")) {
-      String returnType = method.getType().getDescriptor();
-      return "Z".equals(returnType) || "Ljava/lang/Boolean;".equals(returnType);
+      TypeRepr returnType = method.getType();
+      return TypeRepr.PrimitiveType.BOOLEAN.equals(returnType) || TypeRepr.ClassType.BOOLEAN.equals(returnType);
     }
     return false;
   }

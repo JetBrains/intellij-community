@@ -11,12 +11,11 @@ import org.jetbrains.jps.javac.Iterators;
 
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
-public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
+public class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
 
   private static final Iterable<AnnotationChangesTracker> ourAnnotationChangeTrackers = collect(
     ServiceLoader.load(AnnotationChangesTracker.class, JavaDifferentiateStrategy.class.getClassLoader()),
@@ -35,14 +34,14 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
   }
 
   @Override
-  protected boolean processRemovedClass(DifferentiateContext context, JvmClass removedClass, Utils future, Utils present) {
-    debug("Adding usages of class ", removedClass.getName());
+  public boolean processRemovedClass(DifferentiateContext context, JvmClass removedClass, Utils future, Utils present) {
+    debug("Adding usages of removed class ", removedClass.getName());
     context.affectUsage(new ClassUsage(removedClass.getReferenceID()));
     return true;
   }
 
   @Override
-  protected boolean processAddedClasses(DifferentiateContext context, Iterable<JvmClass> addedClasses, Utils future, Utils present) {
+  public boolean processAddedClasses(DifferentiateContext context, Iterable<JvmClass> addedClasses, Utils future, Utils present) {
     if (isEmpty(addedClasses)) {
       return true;
     }
@@ -97,10 +96,11 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
   }
 
   @Override
-  protected boolean processChangedClass(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Utils future, Utils present) {
+  public boolean processChangedClass(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Utils future, Utils present) {
     JvmClass changedClass = change.getPast();
     JvmClass.Diff classDiff = change.getDiff();
-
+    debug("Processing changed class ", changedClass.getName());
+    
     if (classDiff.superClassChanged() || classDiff.signatureChanged() || !classDiff.interfaces().unchanged()) {
       boolean extendsChanged = classDiff.superClassChanged() && !classDiff.extendsAdded();
       boolean affectUsages = classDiff.signatureChanged() || extendsChanged || !isEmpty(classDiff.interfaces().removed());
@@ -249,8 +249,40 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
         if (methodWithSAMType == null) {
           continue;
         }
-        if (!processMethodArgumentBecameLambdaTarget(context, depClass, methodWithSAMType, samType, future, present)) {
-          return false;
+        Iterable<Utils.OverloadDescriptor> overloaded = future.findAllOverloads(depClass, m -> {
+          if (!Objects.equals(methodWithSAMType.getName(), m.getName()) || m.isSame(methodWithSAMType)) {
+            return null;
+          }
+          // find methods with the same name and arg count as a pattern method, but different signature.
+          // calls to found method should look like a call to a pattern method
+          Iterator<TypeRepr> patternSignatureTypes = methodWithSAMType.getArgTypes().iterator();
+          for (TypeRepr arg : m.getArgTypes()) {
+            if (!patternSignatureTypes.hasNext()) {
+              return null;
+            }
+            TypeRepr patternArg = patternSignatureTypes.next();
+            if (patternArg.equals(samType)) {
+              if (arg.equals(samType) || !(arg instanceof TypeRepr.ClassType)) {
+                return null;
+              }
+            }
+            else {
+              if (Boolean.FALSE.equals(future.isSubtypeOf(arg, patternArg)) && Boolean.FALSE.equals(future.isSubtypeOf(patternArg, arg))) {
+                return null;
+              }
+            }
+          }
+          return patternSignatureTypes.hasNext()? null : m.getFlags();
+        });
+        for (Utils.OverloadDescriptor descr : overloaded) {
+          debug("Found method ", methodWithSAMType, " that uses SAM interface ", samType.getJvmName(), " in its signature --- affect potential lambda-target usages of overloaded method: ", descr.overloadMethod);
+          affectMemberUsages(
+            context,
+            descr.owner.getReferenceID(),
+            descr.overloadMethod,
+            future.collectSubclassesWithoutMethod(descr.owner.getReferenceID(), descr.overloadMethod),
+            n -> n instanceof JvmClass && future.isVisibleIn(depClass, methodWithSAMType, (JvmClass)n)
+          );
         }
       }
     }
@@ -283,47 +315,8 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
     return true;
   }
 
-  protected boolean processMethodArgumentBecameLambdaTarget(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, TypeRepr.ClassType argSAMType, Utils future, Utils present) {
-    Iterable<OverloadDescriptor> overloaded = findAllOverloads(future, cls, m -> {
-      if (!Objects.equals(clsMethod.getName(), m.getName()) || m.isSame(clsMethod)) {
-        return null;
-      }
-      // find methods with the same name and arg count as a pattern method, but different signature.
-      // calls to found method should look like a call to a pattern method
-      Iterator<TypeRepr> patternSignatureTypes = clsMethod.getArgTypes().iterator();
-      for (TypeRepr arg : m.getArgTypes()) {
-        if (!patternSignatureTypes.hasNext()) {
-          return null;
-        }
-        TypeRepr patternArg = patternSignatureTypes.next();
-        if (patternArg.equals(argSAMType)) {
-          if (arg.equals(argSAMType) || !(arg instanceof TypeRepr.ClassType)) {
-            return null;
-          }
-        }
-        else {
-          if (Boolean.FALSE.equals(future.isSubtypeOf(arg, patternArg)) && Boolean.FALSE.equals(future.isSubtypeOf(patternArg, arg))) {
-            return null;
-          }
-        }
-      }
-      return patternSignatureTypes.hasNext()? null : m.getFlags();
-    });
-    for (OverloadDescriptor descr : overloaded) {
-      debug("Found method ", clsMethod, " that uses SAM interface ", argSAMType.getJvmName(), " in its signature --- affect potential lambda-target usages of overloaded method: ", descr.overloadMethod);
-      affectMemberUsages(
-        context,
-        descr.owner.getReferenceID(),
-        descr.overloadMethod,
-        future.collectSubclassesWithoutMethod(descr.owner.getReferenceID(), descr.overloadMethod),
-        n -> n instanceof JvmClass && future.isVisibleIn(cls, clsMethod, (JvmClass)n)
-      );
-    }
-    return true;
-  }
-
   @Override
-  protected boolean processChangedMethods(DifferentiateContext context, JvmClass changedClass, Iterable<Difference.Change<JvmMethod, JvmMethod.Diff>> changed, Utils future, Utils present) {
+  public boolean processChangedMethods(DifferentiateContext context, JvmClass changedClass, Iterable<Difference.Change<JvmMethod, JvmMethod.Diff>> changed, Utils future, Utils present) {
     debug("Processing changed methods: ");
 
     for (Difference.Change<JvmMethod, JvmMethod.Diff> change : changed) {
@@ -353,7 +346,9 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
         continue;
       }
 
-      Iterable<JvmNodeReferenceID> propagated = lazy(() -> future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), changedMethod));
+      Iterable<JvmNodeReferenceID> propagated = lazy(() -> {
+        return future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), changedMethod);
+      });
 
       if (diff.becamePackageLocal()) {
         debug("Method became package-private, affecting method usages outside the package");
@@ -443,7 +438,7 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
 
     Iterable<Difference.Change<JvmMethod, JvmMethod.Diff>> moreAccessible = collect(filter(changed, ch -> ch.getDiff().accessExpanded()), new SmartList<>());
     if (!isEmpty(moreAccessible)) {
-      Iterable<OverloadDescriptor> overloaded = findAllOverloads(future, changedClass, method -> {
+      Iterable<Utils.OverloadDescriptor> overloaded = future.findAllOverloads(changedClass, method -> {
         JVMFlags mostAccessible = null;
         for (var change : moreAccessible) {
           JvmMethod m = change.getNow();
@@ -455,11 +450,20 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
         }
         return mostAccessible;
       });
-      for (OverloadDescriptor descr : overloaded) {
+      for (Utils.OverloadDescriptor descr : overloaded) {
         debug("Method became more accessible --- affect usages of overloading methods: ", descr.overloadMethod.getName());
-        Predicate<Node<?, ?>> constr =
-          descr.accessScope.isPackageLocal()? new PackageConstraint(changedClass.getPackageName()).negate() :
-          descr.accessScope.isProtected()? new InheritanceConstraint(future, changedClass).negate() : null;
+        Predicate<Node<?, ?>> constr;
+        if (descr.accessScope.isPackageLocal()) {
+          constr = new PackageConstraint(changedClass.getPackageName()).negate();
+        }
+        else {
+          if (descr.accessScope.isProtected()) {
+            constr = new InheritanceConstraint(future, changedClass).negate();
+          }
+          else {
+            constr = null;
+          }
+        }
 
         affectMemberUsages(context, descr.owner.getReferenceID(), descr.overloadMethod, future.collectSubclassesWithoutMethod(descr.owner.getReferenceID(), descr.overloadMethod), constr);
       }
@@ -469,34 +473,12 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
     return true;
   }
 
-  private static Iterable<OverloadDescriptor> findAllOverloads(Utils utils, final JvmClass cls, Function<? super JvmMethod, JVMFlags> correspondenceFinder) {
-    Function<JvmClass, Iterable<OverloadDescriptor>> mapper = c -> filter(map(c.getMethods(), m -> {
-      JVMFlags accessScope = correspondenceFinder.apply(m);
-      return accessScope != null? new OverloadDescriptor(accessScope, m, c) : null;
-    }), notNullFilter());
-
-    return flat(
-      flat(map(recurse(cls, cl -> flat(map(cl.getSuperTypes(), st -> utils.getClassesByName(st))), true), cl -> mapper.apply(cl))),
-      flat(map(utils.allSubclasses(cls.getReferenceID()), id -> flat(map(utils.getNodes(id, JvmClass.class), cl1 -> mapper.apply(cl1)))))
-    );
-  }
-
-  private static final class OverloadDescriptor {
-    final JVMFlags accessScope;
-    final JvmMethod overloadMethod;
-    final JvmClass owner;
-
-    OverloadDescriptor(JVMFlags accessScope, JvmMethod overloadMethod, JvmClass owner) {
-      this.accessScope = accessScope;
-      this.overloadMethod = overloadMethod;
-      this.owner = owner;
-    }
-  }
-
   @Override
-  protected boolean processRemovedMethods(DifferentiateContext context, JvmClass changedClass, Iterable<JvmMethod> removed, Utils future, Utils present) {
+  public boolean processRemovedMethods(DifferentiateContext context, JvmClass changedClass, Iterable<JvmMethod> removed, Utils future, Utils present) {
     debug("Processing removed methods: ");
-    Iterators.Provider<Boolean> extendsLibraryClass = Utils.lazyValue(() -> future.inheritsFromLibraryClass(changedClass));
+    Iterators.Provider<Boolean> extendsLibraryClass = Utils.lazyValue(() -> {
+      return future.inheritsFromLibraryClass(changedClass);
+    });
     for (JvmMethod removedMethod : removed) {
       debug("Method ", removedMethod.getName());
 
@@ -504,7 +486,9 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
         return false;
       }
 
-      Iterable<JvmNodeReferenceID> propagated = lazy(() -> future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), removedMethod));
+      Iterable<JvmNodeReferenceID> propagated = lazy(() -> {
+        return future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), removedMethod);
+      });
 
       if (!removedMethod.isPrivate() && removedMethod.isStatic()) {
         debug("The method was static --- affecting static method import usages");
@@ -520,7 +504,9 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
         affectMemberUsages(context, changedClass.getReferenceID(), removedMethod, propagated);
       }
       else {
-        Iterable<Pair<JvmClass, JvmMethod>> overridden = removedMethod.isConstructor()? Collections.emptyList() : lazy(() -> future.getOverriddenMethods(changedClass, removedMethod::isSameByJavaRules));
+        Iterable<Pair<JvmClass, JvmMethod>> overridden = removedMethod.isConstructor()? Collections.emptyList() : lazy(() -> {
+          return future.getOverriddenMethods(changedClass, removedMethod::isSameByJavaRules);
+        });
         boolean isClearlyOverridden = removedMethod.getSignature().isEmpty() && !extendsLibraryClass.get() && !isEmpty(overridden) && isEmpty(
           filter(overridden, p -> !p.getSecond().getType().equals(removedMethod.getType()) || !p.getSecond().getSignature().isEmpty() || removedMethod.isMoreAccessibleThan(p.getSecond()))
         );
@@ -553,7 +539,7 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
   }
 
   @Override
-  protected boolean processAddedMethods(DifferentiateContext context, JvmClass changedClass, Iterable<JvmMethod> added, Utils future, Utils present) {
+  public boolean processAddedMethods(DifferentiateContext context, JvmClass changedClass, Iterable<JvmMethod> added, Utils future, Utils present) {
     if (changedClass.isAnnotation()) {
       debug("Class is annotation, skipping method analysis for added methods");
       return true;
@@ -580,7 +566,9 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
         continue;
       }
 
-      Iterable<JvmNodeReferenceID> propagated = lazy(() -> future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), addedMethod));
+      Iterable<JvmNodeReferenceID> propagated = lazy(() -> {
+        return future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), addedMethod);
+      });
 
       if (!isEmpty(addedMethod.getArgTypes()) && !present.hasOverriddenMethods(changedClass, addedMethod)) {
         debug("Conservative case on overriding methods, affecting method usages");
@@ -638,7 +626,9 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
       for (ReferenceID subClassId : future.allSubclasses(changedClass.getReferenceID())) {
         Iterable<NodeSource> sources = context.getGraph().getSources(subClassId);
         if (!isEmpty(filter(sources, s -> !context.isCompiled(s)))) { // has non-compiled sources
-          for (JvmClass outerClass : flat(map(future.getNodes(subClassId, JvmClass.class), cl -> future.getNodes(new JvmNodeReferenceID(cl.getOuterFqName()), JvmClass.class)))) {
+          for (JvmClass outerClass : flat(map(future.getNodes(subClassId, JvmClass.class), cl -> {
+            return future.getNodes(new JvmNodeReferenceID(cl.getOuterFqName()), JvmClass.class);
+          }))) {
             if (future.isMethodVisible(outerClass, addedMethod)  || future.inheritsFromLibraryClass(outerClass)) {
               for (NodeSource source : filter(sources, context.getParams().affectionFilter()::test)) {
                 debug("Affecting file due to local overriding: ", source.getPath());
@@ -655,7 +645,15 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
   }
 
   @Override
-  protected boolean processAddedField(DifferentiateContext context, JvmClass changedClass, JvmField addedField, Utils future, Utils present) {
+  public boolean processAddedFields(DifferentiateContext context, JvmClass changedClass, Iterable<JvmField> added, Utils future, Utils present) {
+    if (!isEmpty(added)) {
+      debug("Processing added fields: ");
+    }
+    return super.processAddedFields(context, changedClass, added, future, present);
+  }
+
+  @Override
+  public boolean processAddedField(DifferentiateContext context, JvmClass changedClass, JvmField addedField, Utils future, Utils present) {
     debug("Field: " + addedField.getName());
     Set<JvmNodeReferenceID> changedClassWithSubclasses = future.collectSubclassesWithoutField(changedClass.getReferenceID(), addedField);
     changedClassWithSubclasses.add(changedClass.getReferenceID());
@@ -671,7 +669,9 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
             String outerClassName = cl.getOuterFqName();
             if (!outerClassName.isEmpty()) {
               Iterable<JvmClass> outerClasses = collect(future.getClassesByName(outerClassName), new SmartList<>());
-              if (isEmpty(outerClasses) || !isEmpty(filter(outerClasses, ocl -> future.isFieldVisible(ocl, addedField)))) {
+              if (isEmpty(outerClasses) || !isEmpty(filter(outerClasses, ocl -> {
+                return future.isFieldVisible(ocl, addedField);
+              }))) {
                 affectReason = "Affecting inner subclass (introduced field can potentially hide surrounding class fields): ";
                 break;
               }
@@ -706,7 +706,15 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
   }
 
   @Override
-  protected boolean processRemovedField(DifferentiateContext context, JvmClass changedClass, JvmField removedField, Utils future, Utils present) {
+  public boolean processRemovedFields(DifferentiateContext context, JvmClass changedClass, Iterable<JvmField> removed, Utils future, Utils present) {
+    if (!isEmpty(removed)) {
+      debug("Process removed fields: ");
+    }
+    return super.processRemovedFields(context, changedClass, removed, future, present);
+  }
+
+  @Override
+  public boolean processRemovedField(DifferentiateContext context, JvmClass changedClass, JvmField removedField, Utils future, Utils present) {
     debug("Field: ", removedField.getName());
 
     if (!context.getParams().isProcessConstantsIncrementally() && !removedField.isPrivate() && removedField.isInlinable() && removedField.getValue() != null) {
@@ -727,13 +735,23 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
   }
 
   @Override
-  protected boolean processChangedField(DifferentiateContext context, JvmClass changedClass, Difference.Change<JvmField, JvmField.Diff> change, Utils future, Utils present) {
+  public boolean processChangedFields(DifferentiateContext context, JvmClass changedClass, Iterable<Difference.Change<JvmField, JvmField.Diff>> changed, Utils future, Utils present) {
+    if (!isEmpty(changed)) {
+      debug("Process changed fields: ");
+    }
+    return super.processChangedFields(context, changedClass, changed, future, present);
+  }
+
+  @Override
+  public boolean processChangedField(DifferentiateContext context, JvmClass changedClass, Difference.Change<JvmField, JvmField.Diff> change, Utils future, Utils present) {
     JvmField changedField = change.getPast();
     JvmField.Diff diff = change.getDiff();
 
     debug("Field: ", changedField.getName());
 
-    Iterable<JvmNodeReferenceID> propagated = lazy(() -> future.collectSubclassesWithoutField(changedClass.getReferenceID(), changedField));
+    Iterable<JvmNodeReferenceID> propagated = lazy(() -> {
+      return future.collectSubclassesWithoutField(changedClass.getReferenceID(), changedField);
+    });
     JVMFlags addedFlags = diff.getAddedFlags();
     JVMFlags removedFlags = diff.getRemovedFlags();
 
@@ -779,7 +797,12 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
 
         if (removedFlags.isPublic()) {
           debug("Removed public modifier, affecting field usages with appropriate constraint");
-          constraint = addedFlags.isProtected()? new InheritanceConstraint(future, changedClass) : new PackageConstraint(changedClass.getPackageName());
+          if (addedFlags.isProtected()) {
+            constraint = new InheritanceConstraint(future, changedClass);
+          }
+          else {
+            constraint = new PackageConstraint(changedClass.getPackageName());
+          }
           affectMemberUsages(context, changedClass.getReferenceID(), changedField, propagated, constraint);
         }
         else if (removedFlags.isProtected() && diff.accessRestricted()){
@@ -824,7 +847,7 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
   }
 
   @Override
-  protected boolean processAddedModule(DifferentiateContext context, JvmModule addedModule, Utils future, Utils present) {
+  public boolean processAddedModule(DifferentiateContext context, JvmModule addedModule, Utils future, Utils present) {
     // after module has been added, the whole target should be rebuilt
     // because necessary 'require' directives may be missing from the newly added module-info file
     affectModule(context, future, addedModule);
@@ -832,13 +855,13 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
   }
 
   @Override
-  protected boolean processRemovedModule(DifferentiateContext context, JvmModule removedModule, Utils future, Utils present) {
+  public boolean processRemovedModule(DifferentiateContext context, JvmModule removedModule, Utils future, Utils present) {
     affectDependentModules(context, present, removedModule, true, null);
     return true;
   }
 
   @Override
-  protected boolean processChangedModule(DifferentiateContext context, Difference.Change<JvmModule, JvmModule.Diff> change, Utils future, Utils present) {
+  public boolean processChangedModule(DifferentiateContext context, Difference.Change<JvmModule, JvmModule.Diff> change, Utils future, Utils present) {
     JvmModule changedModule = change.getPast();
     JvmModule.Diff diff = change.getDiff();
     boolean affectSelf = false;
@@ -904,52 +927,6 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
       );
     }
     return true;
-  }
-
-  protected void affectMemberUsages(DifferentiateContext context, JvmNodeReferenceID clsId, ProtoMember member, Iterable<JvmNodeReferenceID> propagated) {
-    affectMemberUsages(context, clsId, member, propagated, null);
-  }
-
-  protected void affectMemberUsages(DifferentiateContext context, JvmNodeReferenceID clsId, ProtoMember member, Iterable<JvmNodeReferenceID> propagated, @Nullable Predicate<Node<?, ?>> constraint) {
-    affectUsages(
-      context,
-      (member instanceof JvmMethod? "method " : member instanceof JvmField? "field " : "member ") + member,
-      flat(asIterable(clsId), propagated),
-      id -> member.createUsage(id),
-      constraint
-    );
-  }
-
-  private void affectStaticMemberOnDemandUsages(DifferentiateContext context, JvmNodeReferenceID clsId, Iterable<JvmNodeReferenceID> propagated) {
-    affectUsages(
-      context,
-      "static member on-demand import usage",
-      flat(asIterable(clsId), propagated),
-      id -> new ImportStaticOnDemandUsage(id),
-      null
-    );
-  }
-
-  private void affectStaticMemberImportUsages(DifferentiateContext context, JvmNodeReferenceID clsId, String memberName, Iterable<JvmNodeReferenceID> propagated) {
-    affectUsages(
-      context,
-      "static member import",
-      flat(asIterable(clsId), propagated),
-      id -> new ImportStaticMemberUsage(id.getNodeName(), memberName),
-      null
-    );
-  }
-
-  private void affectUsages(DifferentiateContext context, String usageKind, Iterable<JvmNodeReferenceID> usageOwners, Function<? super JvmNodeReferenceID, ? extends Usage> usageFactory, @Nullable Predicate<Node<?, ?>> constraint) {
-    for (JvmNodeReferenceID id : usageOwners) {
-      if (constraint != null) {
-        context.affectUsage(usageFactory.apply(id), constraint);
-      }
-      else {
-        context.affectUsage(usageFactory.apply(id));
-      }
-      debug("Affect ", usageKind, " usage referenced of class ", id.getNodeName());
-    }
   }
 
   private void affectSubclasses(DifferentiateContext context, Utils utils, ReferenceID fromClass, boolean affectUsages) {
@@ -1029,6 +1006,13 @@ public class JavaDifferentiateStrategy extends GeneralDifferentiateStrategy {
       else {
         context.affectUsage(usage);
       }
+    }
+  }
+
+  @Override
+  protected void debug(String message) {
+    if (isDebugEnabled()) {
+      super.debug("JavaStrategy: " + message);
     }
   }
 }
