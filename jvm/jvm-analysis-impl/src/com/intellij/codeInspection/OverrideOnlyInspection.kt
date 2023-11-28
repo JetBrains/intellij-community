@@ -58,15 +58,15 @@ class OverrideOnlyInspection : LocalInspectionTool() {
       it.getExpressionType()?.isInheritorOf(methodClassName)
     } ?: false
 
-    private fun isDelegateOrSuperCall(sourceNode: UElement, target: PsiMethod, qualifier: UExpression?): Boolean {
+    private fun isSuperOrDelegateCall(sourceNode: UElement, target: PsiMethod, qualifier: UExpression?): Boolean {
       if (!isInsideOverridenOnlyMethod(sourceNode, target)) return false
 
-      return isDelegateCall(qualifier, target) || isSuperCall(qualifier)
+      return isSuperCall(qualifier) || isDelegateCall(qualifier, target)
     }
 
     override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
       if (target is PsiMethod && isOverrideOnlyMethod(target) && isLibraryElement(target)
-          && !isDelegateOrSuperCall(sourceNode, target, qualifier)) {
+          && !isSuperOrDelegateCall(sourceNode, target, qualifier)) {
         val elementToHighlight = sourceNode.sourcePsi ?: return
         val methodName = HighlightMessageUtil.getSymbolName(target) ?: return
         val description = JvmAnalysisBundle.message("jvm.inspections.api.override.only.description", methodName)
