@@ -30,6 +30,10 @@ class ConcurrentThreeStateBitSetImpl(estimatedSize: Int = 1024) : ConcurrentThre
     }
   }
 
+  override fun size(): Int {
+    return bitSet.size() / 2
+  }
+
   override operator fun get(bitIndex: Int): Boolean? {
     val status = bitSet[statusBit(bitIndex)]
     return if (!status) null else bitSet[valueBit(bitIndex)]

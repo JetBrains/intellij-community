@@ -35,4 +35,9 @@ interface ConcurrentThreeStateBitSet {
   fun compareAndSet(bitIndex: Int, expected: Boolean?, new: Boolean?): Boolean
 
   fun clear()
+
+  /**
+   * @return the number of bits of space actually in use
+   */
+  fun size(): Int
 }

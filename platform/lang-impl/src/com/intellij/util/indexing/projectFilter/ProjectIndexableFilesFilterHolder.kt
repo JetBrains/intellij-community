@@ -4,17 +4,14 @@ package com.intellij.util.indexing.projectFilter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.*
+import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilter.HealthCheckError
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -109,7 +106,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
         var errors: List<HealthCheckError>? = null
         ProgressIndicatorUtils.runInReadActionWithWriteActionPriority {
           if (DumbService.isDumb(project)) return@runInReadActionWithWriteActionPriority
-          errors = runHealthCheck(project, filter)
+          errors = filter.runHealthCheck(project)
         }
 
         if (errors.isNullOrEmpty()) continue
@@ -130,35 +127,6 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
     }
     catch (e: Exception) {
       FileBasedIndexImpl.LOG.error(e)
-    }
-  }
-
-  private fun runHealthCheck(project: Project, filter: ProjectIndexableFilesFilter): List<HealthCheckError> {
-    return filter.runAndCheckThatNoChangesHappened {
-      val errors = mutableListOf<HealthCheckError>()
-      val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
-      index.iterateIndexableFiles(ContentIterator {
-        if (it is VirtualFileWithId) {
-          val fileId = it.id
-          if (!filter.containsFileId(fileId)) {
-            errors.add(HealthCheckError(project, it, fileId, filter))
-          }
-        }
-        true
-      }, project, ProgressManager.getInstance().progressIndicator)
-      errors
-    }
-  }
-
-  private class HealthCheckError(private val project: Project,
-                                 private val virtualFile: VirtualFile,
-                                 private val fileId: Int,
-                                 private val filter: ProjectIndexableFilesFilter) {
-    val presentableText: String
-      get() = "file ${virtualFile.path} not found in ${project.name}"
-
-    fun fix() {
-      filter.ensureFileIdPresent(fileId) { true }
     }
   }
 }

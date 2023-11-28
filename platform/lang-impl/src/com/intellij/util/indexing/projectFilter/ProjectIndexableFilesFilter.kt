@@ -2,10 +2,11 @@
 package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.IdFilter
 import java.util.concurrent.atomic.AtomicReference
 
-abstract class ProjectIndexableFilesFilter : IdFilter() {
+internal abstract class ProjectIndexableFilesFilter : IdFilter() {
   private val parallelUpdatesCounter = AtomicVersionedCounter()
 
   abstract fun ensureFileIdPresent(fileId: Int, add: () -> Boolean): Boolean
@@ -31,6 +32,13 @@ abstract class ProjectIndexableFilesFilter : IdFilter() {
       throw ProcessCanceledException()
     }
     return res
+  }
+
+  abstract fun runHealthCheck(project: Project): List<HealthCheckError>
+
+  interface HealthCheckError {
+    val presentableText: String
+    fun fix()
   }
 }
 
