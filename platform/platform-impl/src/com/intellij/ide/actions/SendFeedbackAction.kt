@@ -2,6 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.FeedbackDescriptionProvider
 import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -9,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -57,7 +59,7 @@ class SendFeedbackAction : AnAction(), DumbAware {
       val projectOrDefaultProject = project ?: ProjectManager.getInstance().defaultProject
       service<ReportFeedbackService>().coroutineScope.launch {
         withBackgroundProgress(projectOrDefaultProject, IdeBundle.message("reportProblemAction.progress.title.submitting"), true) {
-          openFeedbackPageInBrowser(project, getDescription())
+          openFeedbackPageInBrowser(project, getDescription(project))
         }
       }
     }
@@ -92,7 +94,7 @@ class SendFeedbackAction : AnAction(), DumbAware {
       BrowserUtil.browse(url, project)
     }
 
-    fun getDescription(): String {
+    suspend fun getDescription(project: Project?): String {
       val sb: @NonNls StringBuilder = StringBuilder("\n\n")
       sb.append(ApplicationInfoEx.getInstanceEx().getBuild().asString()).append(", ")
       val javaVersion = System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"))
@@ -134,7 +136,14 @@ class SendFeedbackAction : AnAction(), DumbAware {
           sb.append(if (SystemInfo.isMac) "; Retina" else "; HiDPI")
         }
       }
+      for (ext in EP_NAME.extensions) {
+        val pluginDescription = ext.getDescription(project)
+        if (!pluginDescription.isNullOrEmpty()) {
+          sb.append("\n").append(pluginDescription)
+        }
+      }
       return sb.toString()
     }
+    private val EP_NAME = ExtensionPointName<FeedbackDescriptionProvider>("com.intellij.feedbackDescriptionProvider")
   }
 }

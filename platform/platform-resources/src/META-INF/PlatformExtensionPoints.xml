@@ -425,6 +425,8 @@
 
     <extensionPoint name="obsoleteStorage" beanClass="com.intellij.configurationStore.ObsoleteStorageBean" dynamic="true"/>
 
+    <extensionPoint name="feedbackDescriptionProvider" interface="com.intellij.ide.FeedbackDescriptionProvider"/>
+
     <extensionPoint name="aboutPopupDescriptionProvider" interface="com.intellij.ide.AboutPopupDescriptionProvider" dynamic="true"/>
 
     <extensionPoint name="editorFactoryMouseListener" interface="com.intellij.openapi.editor.event.EditorMouseListener" dynamic="true"/>
