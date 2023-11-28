@@ -263,7 +263,7 @@ public abstract class PatchAction {
   @Override
   public int hashCode() {
     int result = Objects.hashCode(myPath);
-    result = 31 * result + (int)(myChecksum ^ (myChecksum >>> 32));
+    result = 31 * result + Long.hashCode(myChecksum);
     return result;
   }
 }
