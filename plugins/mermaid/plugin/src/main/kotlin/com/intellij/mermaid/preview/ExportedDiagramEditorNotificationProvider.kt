@@ -12,11 +12,10 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.application
-import org.intellij.images.editor.impl.jcef.JCefImageViewer
-import org.intellij.images.fileTypes.impl.SvgFileType
 import javax.swing.JComponent
 import java.util.function.Function
 
+// TODO: JCefImageViewer became the default image viewer in 232, so this should be removed after dropping 232 support
 internal class ExportedDiagramEditorNotificationProvider: EditorNotificationProvider {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (!Registry.`is`("mermaid.export.diagram.action.enable", false)) {
@@ -52,7 +51,8 @@ internal class ExportedDiagramEditorNotificationProvider: EditorNotificationProv
   }
 
   private fun wasGeneratedByPlugin(file: VirtualFile): Boolean {
-    if (file.fileType != SvgFileType.INSTANCE) {
+    // Use reflection here, so we won't have to deal with a dependency on com.intellij.platform.images module
+    if (file.fileType::class.java.name != "org.intellij.images.fileTypes.impl.SvgFileType") {
       return false
     }
     val attributeName = "data-ij-mermaid-generated-on-export"
@@ -64,7 +64,7 @@ internal class ExportedDiagramEditorNotificationProvider: EditorNotificationProv
   private fun isAlreadyBrowserBasedSvgViewer(editor: FileEditor): Boolean {
     val editorWithPreview = editor as? TextEditorWithPreview ?: return false
     val preview = editorWithPreview.previewEditor
-    return preview is JCefImageViewer
+    return preview::class.java.name == "org.intellij.images.editor.impl.jcef.JCefImageViewer"
   }
 
   private fun canUseBrowserBasedSvgViewer(): Boolean {
