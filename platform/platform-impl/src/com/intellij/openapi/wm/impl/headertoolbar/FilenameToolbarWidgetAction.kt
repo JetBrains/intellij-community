@@ -118,20 +118,21 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware {
     init {
       isOpaque = false
       hoverBackground = JBColor.namedColor("MainToolbar.Dropdown.background", JBColor.foreground())
-      addMouseListener(object : MouseAdapter() {
-        override fun mouseReleased(e: MouseEvent) {
-          if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
-            val project = ProjectUtil.getProjectForComponent(this@FilenameToolbarWidget)
-            if (project != null) {
-              val files = FileEditorManager.getInstance(project).selectedFiles
-              if (files.isNotEmpty()) {
-                FileEditorManager.getInstance(project).closeFile(files[0])
-                return
-              }
-            }
+    }
+
+    override fun processMouseEvent(e: MouseEvent) {
+      if (e.id == MouseEvent.MOUSE_RELEASED && UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
+        e.consume()
+        val project = ProjectUtil.getProjectForComponent(this@FilenameToolbarWidget)
+        if (project != null) {
+          val files = FileEditorManager.getInstance(project).selectedFiles
+          if (files.isNotEmpty()) {
+            FileEditorManager.getInstance(project).closeFile(files[0])
           }
         }
-      })
+        return
+      }
+      super.processMouseEvent(e)
     }
 
     fun update(presentation: Presentation) {
