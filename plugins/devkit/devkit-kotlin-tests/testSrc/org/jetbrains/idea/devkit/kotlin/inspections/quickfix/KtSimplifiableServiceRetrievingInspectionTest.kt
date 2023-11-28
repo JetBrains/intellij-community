@@ -72,6 +72,10 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
     doTestWithServiceKt()
   }
 
+  fun testSafeCall() {
+    doTestWithServicesKt()
+  }
+
   fun doTestWithServicesKt() {
     @Language("kotlin") val servicesKtFileText = """
       @file:JvmName("ServicesKt")
