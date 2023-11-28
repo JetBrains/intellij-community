@@ -42,4 +42,5 @@ object FeatureUsageStatisticConsts {
   const val FEEDBACK_EXPERIENCED_USER = "feedback_experienced_user"
   const val PROBLEM = "problem"
   const val INTERNAL_PROBLEM = "internal_problem"
+  const val ONBOARDING_BANNER_SWITCHER_EXPANDED = "onboarding.banner.switcher.expanded"
 }

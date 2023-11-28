@@ -14,6 +14,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.DefaultKeymapImpl
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.TimeoutUtil
+import org.jetbrains.annotations.ApiStatus
 import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.course.IftModule
@@ -44,6 +45,7 @@ import training.statistic.FeatureUsageStatisticConsts.NEED_SHOW_NEW_LESSONS_NOTI
 import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_COUNT
 import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_NOTIFICATION_SHOWN
 import training.statistic.FeatureUsageStatisticConsts.NON_LEARNING_PROJECT_OPENED
+import training.statistic.FeatureUsageStatisticConsts.ONBOARDING_BANNER_SWITCHER_EXPANDED
 import training.statistic.FeatureUsageStatisticConsts.ONBOARDING_FEEDBACK_DIALOG_RESULT
 import training.statistic.FeatureUsageStatisticConsts.ONBOARDING_FEEDBACK_NOTIFICATION_SHOWN
 import training.statistic.FeatureUsageStatisticConsts.PASSED
@@ -79,7 +81,8 @@ enum class LearningInternalProblems {
   NO_SDK_CONFIGURED, // Before learning start we are trying to autoconfigure SDK or at least ask about location
 }
 
-internal class StatisticBase : CounterUsagesCollector() {
+@ApiStatus.Internal
+class StatisticBase : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   private data class LessonProgress(val lessonId: String, val taskId: Int)
@@ -170,13 +173,16 @@ internal class StatisticBase : CounterUsagesCollector() {
     private val onboardingFeedbackNotificationShown = GROUP.registerEvent(ONBOARDING_FEEDBACK_NOTIFICATION_SHOWN,
                                                                           feedbackEntryPlace)
 
-    private val onboardingFeedbackDialogResult = GROUP.registerVarargEvent(ONBOARDING_FEEDBACK_DIALOG_RESULT,
-                                                                           feedbackEntryPlace,
-                                                                           feedbackHasBeenSent,
-                                                                           feedbackOpenedViaNotification,
-                                                                           feedbackLikenessAnswer,
-                                                                           feedbackExperiencedUser,
-                                                                           )
+    private val onboardingFeedbackDialogResult = GROUP.registerVarargEvent(
+      ONBOARDING_FEEDBACK_DIALOG_RESULT,
+      feedbackEntryPlace,
+      feedbackHasBeenSent,
+      feedbackOpenedViaNotification,
+      feedbackLikenessAnswer,
+      feedbackExperiencedUser,
+    )
+
+    private val onboardingBannerSwitcherExpanded = GROUP.registerEvent(ONBOARDING_BANNER_SWITCHER_EXPANDED, lessonIdField)
 
     // LOGGING
     fun logLessonStarted(lesson: Lesson, startingWay: LessonStartingWay) {
@@ -279,11 +285,11 @@ internal class StatisticBase : CounterUsagesCollector() {
       helpLinkClicked.log(lessonId, courseLanguage())
     }
 
-    fun logOnboardingFeedbackNotification(place: FeedbackEntryPlace) {
+    internal fun logOnboardingFeedbackNotification(place: FeedbackEntryPlace) {
       onboardingFeedbackNotificationShown.log(place)
     }
 
-    fun logOnboardingFeedbackDialogResult(place: FeedbackEntryPlace,
+    internal fun logOnboardingFeedbackDialogResult(place: FeedbackEntryPlace,
                                           hasBeenSent: Boolean,
                                           openedViaNotification: Boolean,
                                           likenessAnswer: FeedbackLikenessAnswer,
@@ -299,6 +305,10 @@ internal class StatisticBase : CounterUsagesCollector() {
 
     fun logLearningProblem(problem: LearningInternalProblems, lesson: Lesson) {
       internalProblem.log(problem, lesson.id, courseLanguage())
+    }
+
+    fun logOnboardingBannerSwitcherExpanded(lessonId: String) {
+      onboardingBannerSwitcherExpanded.log(lessonId)
     }
 
     private fun courseLanguage() = LangManager.getInstance().getLangSupport()?.primaryLanguage?.toLowerCase() ?: ""
