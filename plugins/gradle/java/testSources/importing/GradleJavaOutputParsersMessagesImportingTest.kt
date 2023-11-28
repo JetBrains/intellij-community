@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.gradle.importing
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.mavenRepository
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 @Suppress("GrUnresolvedAccess")
@@ -98,7 +98,289 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
   }
 
   @Test
+  fun `test compilation view tree`() {
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+    }
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNodeWithDeprecatedGradleWarning()
+      }
+    }
+    compileModules("project.test")
+    assertBuildViewTreeEquals("""
+                              |-
+                              | -successful
+                              |  :compileJava
+                              |  :processResources
+                              |  :classes
+                              |  :compileTestJava
+                              |  :processTestResources
+                              |  :testClasses
+                              """.trimMargin())
+  }
+
+  @Test
+  @TargetVersions("<5.0")
+  fun `test unresolved dependencies errors on Build without repositories for legacy Gradle`() {
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+      addTestImplementationDependency("junit:junit:4.12")
+    }
+    compileModules("project.test")
+    assertBuildViewTreeEquals("""
+                              |-
+                              | -failed
+                              |  :compileJava
+                              |  :processResources
+                              |  :classes
+                              |  :compileTestJava
+                              |  Could not resolve junit:junit:4.12 because no repositories are defined
+                              """.trimMargin())
+    val files = if (currentGradleVersion < GradleVersion.version("4.0")) "dependencies" else "files"
+    val projectName = if (currentGradleVersion < GradleVersion.version("3.1")) ":project:unspecified" else "project :"
+    assertBuildViewSelectedNode("Could not resolve junit:junit:4.12 because no repositories are defined",
+                                """
+                                |Could not resolve all $files for configuration ':testCompileClasspath'.
+                                |> Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
+                                |  Required by:
+                                |      $projectName
+                                |
+                                |Possible solution:
+                                | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+                                |
+                                |
+                                """.trimMargin()
+    )
+  }
+
+  @Test
+  @TargetVersions("5.0+")
+  fun `test unresolved dependencies errors on Build without repositories`() {
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+      addTestImplementationDependency("junit:junit:4.12")
+    }
+    compileModules("project.test")
+    assertBuildViewTreeEquals("""
+                              |-
+                              | -failed
+                              |  :compileJava
+                              |  :processResources
+                              |  :classes
+                              |  -:compileTestJava
+                              |   Could not resolve junit:junit:4.12 because no repositories are defined
+                              """.trimMargin()
+    )
+    assertBuildViewSelectedNode("Could not resolve junit:junit:4.12 because no repositories are defined",
+                                """
+                                |Execution failed for task ':compileTestJava'.
+                                |> Could not resolve all files for configuration ':testCompileClasspath'.
+                                |   > Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
+                                |     Required by:
+                                |         project :
+                                |
+                                |Possible solution:
+                                | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+                                |
+                                |
+                                """.trimMargin())
+  }
+
+  @Test
+  @TargetVersions("<5.0")
+  fun `test unresolved dependencies errors on Build in offline mode for legacy Gradle`() {
+    GradleSettings.getInstance(myProject).isOfflineWork = true
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      addTestImplementationDependency("junit:junit:4.12")
+      addTestImplementationDependency("junit:junit:99.99")
+    }
+    compileModules("project.test")
+    val files = if (currentGradleVersion < GradleVersion.version("4.0")) "dependencies" else "files"
+    val projectName = if (currentGradleVersion < GradleVersion.version("3.1")) ":project:unspecified" else "project :"
+    assertBuildViewTreeEquals("""
+                              | -
+                              | -failed
+                              |  :compileJava
+                              |  :processResources
+                              |  :classes
+                              |  :compileTestJava
+                              |  Could not resolve junit:junit:99.99
+                              """.trimMargin())
+    assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
+                                """|Could not resolve all $files for configuration ':testCompileClasspath'.
+                                   |> Could not resolve junit:junit:99.99.
+                                   |  Required by:
+                                   |      $projectName
+                                   |   > No cached version of junit:junit:99.99 available for offline mode.
+                                   |> Could not resolve junit:junit:99.99.
+                                   |  Required by:
+                                   |      $projectName
+                                   |   > No cached version of junit:junit:99.99 available for offline mode.
+                                   |
+                                   |Possible solution:
+                                   | - Disable offline mode and rerun the build
+                                   |
+                                   |
+                                   """.trimMargin())
+  }
+
+  @Test
+  @TargetVersions("5.0+")
+  fun `test unresolved dependencies errors on Build in offline mode`() {
+    GradleSettings.getInstance(myProject).isOfflineWork = true
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      addTestImplementationDependency("junit:junit:4.12")
+      addTestImplementationDependency("junit:junit:99.99")
+    }
+    compileModules("project.test")
+    assertBuildViewTreeEquals("""
+                              | -
+                              | -failed
+                              |  :compileJava
+                              |  :processResources
+                              |  :classes
+                              |  -:compileTestJava
+                              |   Could not resolve junit:junit:99.99
+                              """.trimMargin())
+    assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
+                                """|Execution failed for task ':compileTestJava'.
+                                   |> Could not resolve all files for configuration ':testCompileClasspath'.
+                                   |   > Could not resolve junit:junit:99.99.
+                                   |     Required by:
+                                   |         project :
+                                   |      > No cached version of junit:junit:99.99 available for offline mode.
+                                   |   > Could not resolve junit:junit:99.99.
+                                   |     Required by:
+                                   |         project :
+                                   |      > No cached version of junit:junit:99.99 available for offline mode.
+                                   |
+                                   |Possible solution:
+                                   | - Disable offline mode and rerun the build
+                                   |
+                                   |
+                                   """.trimMargin())
+  }
+
+  @Test
+  @TargetVersions("<5.0")
+  fun `test unresolved dependencies errors on Build for legacy Gradle`() {
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      addTestImplementationDependency("junit:junit:4.12")
+      addTestImplementationDependency("junit:junit:99.99")
+    }
+    compileModules("project.test")
+    assertBuildViewTreeEquals("""
+                              | -
+                              | -failed
+                              |  :compileJava
+                              |  :processResources
+                              |  :classes
+                              |  :compileTestJava
+                              |  Could not resolve junit:junit:99.99
+                              """.trimMargin()
+    )
+    val files = if (currentGradleVersion < GradleVersion.version("4.0")) "dependencies" else "files"
+    val projectName = if (currentGradleVersion < GradleVersion.version("3.1")) ":project:unspecified" else "project :"
+    val mavenRepositoryAddress = getMavenRepositoryAddress()
+    val repositoryPrefix = if (currentGradleVersion < GradleVersion.version("4.8")) " " else "-"
+    assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
+                                """Could not resolve all $files for configuration ':testCompileClasspath'.
+                                |> Could not find junit:junit:99.99.
+                                |  Searched in the following locations:
+                                |    $repositoryPrefix $mavenRepositoryAddress/junit/junit/99.99/junit-99.99.pom
+                                |    $repositoryPrefix $mavenRepositoryAddress/junit/junit/99.99/junit-99.99.jar
+                                |  Required by:
+                                |      $projectName
+                                |> Could not find junit:junit:99.99.
+                                |  Searched in the following locations:
+                                |    $repositoryPrefix $mavenRepositoryAddress/junit/junit/99.99/junit-99.99.pom
+                                |    $repositoryPrefix $mavenRepositoryAddress/junit/junit/99.99/junit-99.99.jar
+                                |  Required by:
+                                |      $projectName
+                                |
+                                |Possible solution:
+                                | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+                                |
+                                |
+                                """.trimMargin())
+  }
+
+  @Test
+  @TargetVersions("5.0+")
   fun `test unresolved dependencies errors on Build`() {
+    createProjectSources()
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      addTestImplementationDependency("junit:junit:4.12")
+      addTestImplementationDependency("junit:junit:99.99")
+    }
+    compileModules("project.test")
+    assertBuildViewTreeEquals("""
+                              |-
+                              | -failed
+                              |  :compileJava
+                              |  :processResources
+                              |  :classes
+                              |  -:compileTestJava
+                              |   Could not resolve junit:junit:99.99
+                              """.trimMargin())
+    val mavenRepositoryAddress = getMavenRepositoryAddress()
+    val jarPath = when {
+      currentGradleVersion >= GradleVersion.version("6.0") && currentGradleVersion <= GradleVersion.version("8.2") ->
+        "\n     If the artifact you are trying to retrieve can be found in the repository but without metadata in 'Maven POM' format, " +
+        "you need to adjust the 'metadataSources { ... }' of the repository declaration."
+      currentGradleVersion >= GradleVersion.version("8.2") -> ""
+      else -> "\n       - $mavenRepositoryAddress/junit/junit/99.99/junit-99.99.jar"
+    }
+    assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
+                                """Execution failed for task ':compileTestJava'.
+                                |> Could not resolve all files for configuration ':testCompileClasspath'.
+                                |   > Could not find junit:junit:99.99.
+                                |     Searched in the following locations:
+                                |       - $mavenRepositoryAddress/junit/junit/99.99/junit-99.99.pom$jarPath
+                                |     Required by:
+                                |         project :
+                                |   > Could not find junit:junit:99.99.
+                                |     Searched in the following locations:
+                                |       - $mavenRepositoryAddress/junit/junit/99.99/junit-99.99.pom$jarPath
+                                |     Required by:
+                                |         project :
+                                |
+                                |Possible solution:
+                                | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+                                |
+                                |
+                                """.trimMargin()
+    )
+  }
+
+  private fun getMavenRepositoryAddress(): String = if (IS_UNDER_TEAMCITY) {
+    "https://repo.labs.intellij.net/repo1"
+  }
+  else {
+    if (GradleVersion.version("4.10.0") > currentGradleVersion) {
+      "https://repo1.maven.org/maven2"
+    }
+    else {
+      "https://repo.maven.apache.org/maven2"
+    }
+  }
+
+  private fun createProjectSources() {
     createProjectSubFile("src/main/java/my/pack/App.java",
                          "package my.pack;\n" +
                          "public class App {\n" +
@@ -109,168 +391,5 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
                          "public class AppTest {\n" +
                          "  public void testMethod() { }\n" +
                          "}")
-
-    // get successfully imported project
-    importProject {
-      withJavaPlugin()
-    }
-    assertSyncViewTree {
-      assertNode("finished") {
-        assertNodeWithDeprecatedGradleWarning()
-      }
-    }
-    compileModules("project.test")
-    assertBuildViewTreeEquals("-\n" +
-                              " -successful\n" +
-                              "  :compileJava\n" +
-                              "  :processResources\n" +
-                              "  :classes\n" +
-                              "  :compileTestJava\n" +
-                              "  :processTestResources\n" +
-                              "  :testClasses")
-
-    // check unresolved dependency w/o repositories
-    createBuildFile {
-      withJavaPlugin()
-      addTestImplementationDependency("junit:junit:4.12")
-    }
-    compileModules("project.test")
-
-    val testCompileConfiguration = if (currentGradleVersion < GradleVersion.version("2.12")) "testCompile" else "testCompileClasspath"
-    val requiredByProject = if (currentGradleVersion < GradleVersion.version("3.1")) ":project:unspecified" else "project :"
-    val files = if (currentGradleVersion < GradleVersion.version("4.0")) "dependencies" else "files"
-    val commonTreePart = "-\n" +
-                         " -failed\n" +
-                         "  :compileJava\n" +
-                         "  :processResources\n" +
-                         "  :classes\n"
-
-    val usePerTaskError by lazy { currentGradleVersion >= GradleVersion.version("5.0") }
-    assertBuildViewTreeEquals(commonTreePart +
-                              if (usePerTaskError)
-                                "  -:compileTestJava\n" +
-                                "   Could not resolve junit:junit:4.12 because no repositories are defined"
-                              else
-                                "  :compileTestJava\n" +
-                                "  Could not resolve junit:junit:4.12 because no repositories are defined")
-    assertBuildViewSelectedNode("Could not resolve junit:junit:4.12 because no repositories are defined",
-                                if (usePerTaskError)
-                                  "Execution failed for task ':compileTestJava'.\n" +
-                                  "> Could not resolve all files for configuration ':testCompileClasspath'.\n" +
-                                  "   > Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.\n" +
-                                  "     Required by:\n" +
-                                  "         project :\n" +
-                                  "\n" +
-                                  "Possible solution:\n" +
-                                  " - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html\n" +
-                                  "\n"
-                                else
-                                  "Could not resolve all $files for configuration ':$testCompileConfiguration'.\n" +
-                                  "> Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.\n" +
-                                  "  Required by:\n" +
-                                  "      $requiredByProject\n" +
-                                  "\n" +
-                                  "Possible solution:\n" +
-                                  " - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html\n" +
-                                  "\n")
-
-    // check unresolved dependency for offline mode
-    GradleSettings.getInstance(myProject).isOfflineWork = true
-    createBuildFile {
-      withJavaPlugin()
-      withRepository {
-        mavenRepository(MAVEN_REPOSITORY, isGradleNewerOrSameAs("6.0"))
-      }
-      addTestImplementationDependency("junit:junit:4.12")
-      addTestImplementationDependency("junit:junit:99.99")
-    }
-    compileModules("project.test")
-
-    assertBuildViewTreeEquals(commonTreePart +
-                              if (usePerTaskError)
-                                "  -:compileTestJava\n" +
-                                "   Could not resolve junit:junit:99.99"
-                              else
-                                "  :compileTestJava\n" +
-                                "  Could not resolve junit:junit:99.99")
-    assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
-                                if (usePerTaskError)
-                                  "Execution failed for task ':compileTestJava'.\n" +
-                                  "> Could not resolve all files for configuration ':testCompileClasspath'.\n" +
-                                  "   > Could not resolve junit:junit:99.99.\n" +
-                                  "     Required by:\n" +
-                                  "         project :\n" +
-                                  "      > No cached version of junit:junit:99.99 available for offline mode.\n" +
-                                  "   > Could not resolve junit:junit:99.99.\n" +
-                                  "     Required by:\n" +
-                                  "         project :\n" +
-                                  "      > No cached version of junit:junit:99.99 available for offline mode.\n" +
-                                  "\n" +
-                                  "Possible solution:\n" +
-                                  " - Disable offline mode and rerun the build\n" +
-                                  "\n"
-                                else
-                                  "Could not resolve all $files for configuration ':$testCompileConfiguration'.\n" +
-                                  "> Could not resolve junit:junit:99.99.\n" +
-                                  "  Required by:\n" +
-                                  "      $requiredByProject\n" +
-                                  "   > No cached version of junit:junit:99.99 available for offline mode.\n" +
-                                  "> Could not resolve junit:junit:99.99.\n" +
-                                  "  Required by:\n" +
-                                  "      $requiredByProject\n" +
-                                  "   > No cached version of junit:junit:99.99 available for offline mode.\n" +
-                                  "\n" +
-                                  "Possible solution:\n" +
-                                  " - Disable offline mode and rerun the build\n" +
-                                  "\n")
-
-    // check unresolved dependency for disabled offline mode
-    GradleSettings.getInstance(myProject).isOfflineWork = false
-    compileModules("project.test")
-    assertBuildViewTreeEquals(commonTreePart +
-                              if (usePerTaskError)
-                                "  -:compileTestJava\n" +
-                                "   Could not resolve junit:junit:99.99"
-                              else
-                                "  :compileTestJava\n" +
-                                "  Could not resolve junit:junit:99.99")
-    assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
-                                if (usePerTaskError)
-                                  "Execution failed for task ':compileTestJava'.\n" +
-                                  "> Could not resolve all files for configuration ':testCompileClasspath'.\n" +
-                                  "   > Could not find junit:junit:99.99.\n" +
-                                  "     Searched in the following locations:\n" +
-                                  "       - $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom\n" +
-                                  "       - $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar\n" +
-                                  "     Required by:\n" +
-                                  "         project :\n" +
-                                  "   > Could not find junit:junit:99.99.\n" +
-                                  "     Searched in the following locations:\n" +
-                                  "       - $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom\n" +
-                                  "       - $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar\n" +
-                                  "     Required by:\n" +
-                                  "         project :\n" +
-                                  "\n" +
-                                  "Possible solution:\n" +
-                                  " - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html\n" +
-                                  "\n"
-                                else
-                                  "Could not resolve all $files for configuration ':$testCompileConfiguration'.\n" +
-                                  "> Could not find junit:junit:99.99.\n" +
-                                  "  Searched in the following locations:\n" +
-                                  "    $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom\n" +
-                                  "    $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar\n" +
-                                  "  Required by:\n" +
-                                  "      $requiredByProject\n" +
-                                  "> Could not find junit:junit:99.99.\n" +
-                                  "  Searched in the following locations:\n" +
-                                  "    $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom\n" +
-                                  "    $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar\n" +
-                                  "  Required by:\n" +
-                                  "      $requiredByProject\n" +
-                                  "\n" +
-                                  "Possible solution:\n" +
-                                  " - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html\n" +
-                                  "\n")
   }
 }
