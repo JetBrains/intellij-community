@@ -359,13 +359,16 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
   void tearDown() throws IOException {
     if (storage != null) {
       //do storage self-check (full, not fast one):
-      RecordIdIterator iterator = storage.createRecordIdIterator();
-      while (iterator.hasNextId()) {
-        int id = iterator.nextId();
-        storage.checkRecord(id, /*fast: */ false);
+      try {
+        RecordIdIterator iterator = storage.createRecordIdIterator();
+        while (iterator.hasNextId()) {
+          int id = iterator.nextId();
+          storage.checkRecord(id, /*fast: */ false);
+        }
       }
-
-      storage.closeAndClean();
+      finally {
+        storage.closeAndClean();
+      }
     }
   }
 
