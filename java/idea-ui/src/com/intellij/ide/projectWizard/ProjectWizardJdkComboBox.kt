@@ -244,8 +244,8 @@ class ProjectWizardJdkComboBox(): ComboBox<ProjectWizardJdkIntent>() {
         val jdkInstaller = JdkInstaller.getInstance()
         val request = jdkInstaller.prepareJdkInstallation(it, jdkInstaller.defaultInstallDir(it))
         val task = JdkDownloaderBase.newDownloadTask(it, request, null)
-        insertItemAt(DownloadJdk(task), registered.size + 1)
-        if (selectedItem is NoJdk) selectedIndex = 0
+        insertItemAt(DownloadJdk(task), 1)
+        if (selectedItem is NoJdk) selectedIndex = 1
       }
   }
 
