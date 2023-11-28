@@ -17,11 +17,11 @@ interface IjentChildProcess {
   val pid: IjentApi.Pid
 
   /**
-   * Although sending data through this channel may block due to buffer overflows, this method doesn't wait for actual delivery
-   * of the data to the process.
-   * For synchronous delivery [sendStdinWithConfirmation] should be used.
+   * Although data transmission via this channel could potentially stall due to overflow of [kotlinx.coroutines.channels.Channel],
+   * this method does not allow to ensure that a data chunk was actually delivered to the remote process.
+   * For synchronous delivery that reports about delivery result, please use [sendStdinWithConfirmation].
    *
-   * Notice that every data chunk is flushed into the process separately. There's no buffering.
+   * Note that each chunk of data is individually and immediately flushed into the process without any intermediate buffer storage.
    */
   val stdin: SendChannel<ByteArray>
 
