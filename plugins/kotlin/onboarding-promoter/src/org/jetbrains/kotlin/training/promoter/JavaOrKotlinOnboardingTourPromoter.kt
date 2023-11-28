@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBOptionButton
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.training.ift.KotlinLessonsBundle
 import org.jetbrains.kotlin.training.ift.kotlinLanguageId
+import training.statistic.StatisticBase
 import training.ui.welcomeScreen.OnboardingLessonPromoter
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -31,6 +32,7 @@ class JavaOrKotlinOnboardingTourPromoter : OnboardingLessonPromoter(
         val button = JBOptionButton(javaOnboardingAction, arrayOf(javaOnboardingAction, kotlinOnboardingAction)).also {
             it.addSeparator = false
             it.showPopupYOffset = 1 // visually, it will be 4, because of the empty 3px bottom border of the button
+            it.popupHandler = { StatisticBase.logOnboardingBannerSwitcherExpanded(lessonId) }
         }
         return button
     }
