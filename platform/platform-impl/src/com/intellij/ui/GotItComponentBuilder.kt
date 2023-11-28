@@ -23,6 +23,10 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.GotItComponentBuilder.Companion.EXTENDED_MAX_WIDTH
 import com.intellij.ui.GotItComponentBuilder.Companion.MAX_LINES_COUNT
+import com.intellij.ui.InlineCodeExtension.Companion.getStyles
+import com.intellij.ui.InlineCodeExtension.Companion.patchCodeTags
+import com.intellij.ui.ShortcutExtension.Companion.getStyles
+import com.intellij.ui.ShortcutExtension.Companion.patchShortcutTags
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
@@ -818,12 +822,8 @@ class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
     private val arcSize: Float
       get() = JBUIScale.scale(DEFAULT_ARC)
 
-    private var rectangles: List<RoundRectangle2D>? = null
-
     override fun paint(g: Graphics, a: Shape) {
-      if (rectangles == null) {
-        rectangles = calculateRectangles(a)
-      }
+      val rectangles = calculateRectangles(a)
 
       val borderColor = borderColor
       val backgroundColor = background
@@ -852,11 +852,6 @@ class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
       finally {
         background = backgroundColor
       }
-    }
-
-    override fun preferenceChanged(child: View?, width: Boolean, height: Boolean) {
-      super.preferenceChanged(child, width, height)
-      rectangles = null
     }
 
     private fun calculateRectangles(allocation: Shape): List<RoundRectangle2D>? {
