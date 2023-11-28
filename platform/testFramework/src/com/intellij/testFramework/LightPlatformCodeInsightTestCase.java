@@ -596,6 +596,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction(IdeActions.ACTION_EDITOR_DELETE, editor, project);
   }
 
+  protected void textStart() {
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_START);
+  }
+
+  protected void textEnd() {
+    executeAction(IdeActions.ACTION_EDITOR_TEXT_END);
+  }
+
   protected void home() {
     executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
   }

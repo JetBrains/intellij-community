@@ -25,6 +25,8 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actions.CaretStop;
+import com.intellij.openapi.editor.actions.CaretStopPolicy;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -1192,6 +1194,8 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     // ---- Implements CaretListener ----
 
     private int myCaretPos;
+    private int myPreviousCaretPos;
+
 
     @Override
     public void caretPositionChanged(@NotNull CaretEvent e) {
@@ -1205,7 +1209,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         ThreadingAssertions.assertEventDispatchThread();
         firePropertyChange(ACCESSIBLE_CARET_PROPERTY,
                            Integer.valueOf(myCaretPos), Integer.valueOf(dot));
-
+        myPreviousCaretPos = myCaretPos;
         myCaretPos = dot;
       }
 
@@ -1505,12 +1509,8 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         }
 
         case AccessibleText.WORD: {
-          int wordStart = getWordAtOffsetStart(offset, direction);
-          int wordEnd = getWordAtOffsetEnd(offset, direction);
-          if (wordStart == -1 || wordEnd == -1) {
-            return null;
-          }
-          return myEditor.getDocument().getCharsSequence().subSequence(wordStart, wordEnd).toString();
+          var word = getWordOrLexeme(offset, direction);
+          return word == null ? null : word.text;
         }
 
         case AccessibleText.SENTENCE: {
@@ -1567,13 +1567,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
           return charSequence;
         }
         case AccessibleExtendedText.ATTRIBUTE_RUN, AccessibleText.WORD -> {
-          int wordStart = getWordAtOffsetStart(offset, direction);
-          int wordEnd = getWordAtOffsetEnd(offset, direction);
-          if (wordStart == -1 || wordEnd == -1) {
-            return null;
-          }
-          return new AccessibleTextSequence(wordStart, wordEnd,
-                                            document.getCharsSequence().subSequence(wordStart, wordEnd).toString());
+          return getWordOrLexeme(offset, direction);
         }
         case AccessibleExtendedText.LINE, AccessibleText.SENTENCE -> {
           int lineStart = getLineAtOffsetStart(offset, direction);
@@ -1648,81 +1642,79 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       return getLineAtOffsetEnd(offset);
     }
 
-    private int moveWordOffset(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
+    private CaretStopPolicy resolveCaretStopPolicy(@MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
+      var caretStopOptions = EditorSettingsExternalizable.getInstance().getCaretStopOptions();
+      switch (direction) {
+        case AFTER -> {
+          return caretStopOptions.getForwardPolicy();
+        }
+        case BEFORE -> {
+          return caretStopOptions.getBackwardPolicy();
+        }
+        case HERE -> {
+          return myCaretPos - myPreviousCaretPos >= 0 ? caretStopOptions.getForwardPolicy() : caretStopOptions.getBackwardPolicy();
+        }
+      }
+      return caretStopOptions.getForwardPolicy();
+    }
+
+    private AccessibleTextSequence getWordOrLexeme(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
+      boolean isCamel = myEditor.getSettings().isCamelWords();
+      var caretStopPolicy = resolveCaretStopPolicy(direction);
+      offset = moveWordOffset(offset, direction, caretStopPolicy, isCamel);
+      var wordStop = caretStopPolicy.getWordStop();
+      int wordStart = getWordAtOffsetStart(offset, wordStop, isCamel);
+      int wordEnd = getWordAtOffsetEnd(offset, wordStop, isCamel);
+      if (wordStart == -1 || wordEnd == -1 || wordStart > wordEnd) {
+        return null;
+      }
+      return new AccessibleTextSequence(wordStart, wordEnd,
+                                        myEditor.getDocument().getCharsSequence().subSequence(wordStart, wordEnd).toString());
+    }
+
+
+    private int moveWordOffset(int offset,
+                               @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction,
+                               CaretStopPolicy stopPolicy,
+                               boolean isCamel) {
       if (direction == AFTER) {
-        Document document = myEditor.getDocument();
-        CharSequence text = document.getCharsSequence();
-        int maxOffset = document.getTextLength();
-        int newOffset = offset - 1;
-        boolean camel = myEditor.getSettings().isCamelWords();
-        for (; newOffset < maxOffset; newOffset++) {
-          if (EditorActionUtil.isWordEnd(text, newOffset, camel)) {
-            break;
-          }
-        }
-        newOffset++;
-        for (; newOffset < maxOffset; newOffset++) {
-          if (EditorActionUtil.isWordStart(text, newOffset, camel)) {
-            return newOffset;
-          }
-        }
+        return EditorActionUtil.getNextCaretStopOffset(myEditor, stopPolicy, isCamel);
+      }
+      if (direction == BEFORE) {
+        return EditorActionUtil.getPreviousCaretStopOffset(myEditor, stopPolicy, isCamel);
+      }
+      return offset;
+    }
 
-        return -1;
-      } else if (direction == BEFORE) {
-        Document document = myEditor.getDocument();
-        CharSequence text = document.getCharsSequence();
-        int newOffset = offset - 1;
-        boolean camel = myEditor.getSettings().isCamelWords();
-        for (; newOffset >= 0; newOffset--) {
-          if (EditorActionUtil.isWordStart(text, newOffset, camel)) {
-            break;
-          }
+    private int getWordAtOffsetStart(int offset, CaretStop wordStop, boolean isCamel) {
+      if (offset == 0) {
+        return 0;
+      }
+      if (wordStop.isAtEnd() && !wordStop.isAtStart()) {
+        if (EditorActionUtil.isWordOrLexemeEnd(myEditor, offset, isCamel)) {
+          return getWordAtOffsetStart(offset - 1, isCamel);
         }
-        newOffset--;
-        for (; newOffset >= 0; newOffset--) {
-          if (EditorActionUtil.isWordEnd(text, newOffset, camel)) {
-            return newOffset;
-          }
+        if (offset == getLineAtOffsetStart(offset)) {
+          return offset - 1;
         }
-
-        return -1;
-      } else {
-        assert direction == HERE;
+      }
+      if (Character.isWhitespace(myEditor.getDocument().getText().charAt(offset))) {
         return offset;
       }
-    }
-
-    private int getWordAtOffsetStart(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
-      offset = moveWordOffset(offset, direction);
-      if (offset == -1) {
-        return -1;
-      }
-
-      return getWordAtOffsetStart(offset);
-    }
-
-    private int getWordAtOffsetEnd(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
-      offset = moveWordOffset(offset, direction);
-      if (offset == -1) {
-        return -1;
-      }
-
-      return getWordAtOffsetEnd(offset);
+      return getWordAtOffsetStart(offset, isCamel);
     }
 
     // Based on CaretImpl#getWordAtCaretStart
-    private int getWordAtOffsetStart(int offset) {
+    private int getWordAtOffsetStart(int offset, boolean isCamel) {
       Document document = myEditor.getDocument();
       if (offset == 0) {
         return 0;
       }
       int lineNumber = myEditor.offsetToLogicalPosition(offset).line;
-      CharSequence text = document.getCharsSequence();
-      int newOffset = offset - 1;
+      int newOffset = offset;
       int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
-      boolean camel = myEditor.getSettings().isCamelWords();
       for (; newOffset > minOffset; newOffset--) {
-        if (EditorActionUtil.isWordStart(text, newOffset, camel)) {
+        if (EditorActionUtil.isWordOrLexemeStart(myEditor, newOffset, isCamel)) {
           break;
         }
       }
@@ -1730,16 +1722,27 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       return newOffset;
     }
 
-    // Based on CaretImpl#getWordAtCaretEnd
-    private int getWordAtOffsetEnd(int offset) {
-      Document document = myEditor.getDocument();
+    private int getWordAtOffsetEnd(int offset, CaretStop stopWord, boolean isCamel) {
+      if (stopWord.isAtStart()) {
+        if (Character.isWhitespace(myEditor.getDocument().getText().charAt(offset))) {
+          return offset + 1;
+        }
+        return getWordAtOffsetEnd(offset + 1, isCamel);
+      }
+      if (offset == getLineAtOffsetStart(offset)) {
+        return offset;
+      }
+      return getWordAtOffsetEnd(offset, isCamel);
+    }
 
-      CharSequence text = document.getCharsSequence();
+
+    // Based on CaretImpl#getWordAtCaretEnd
+    private int getWordAtOffsetEnd(int offset, boolean isCamel) {
+      Document document = myEditor.getDocument();
       if (offset >= document.getTextLength() - 1 || document.getLineCount() == 0) {
         return offset;
       }
-
-      int newOffset = offset + 1;
+      int newOffset = offset;
       int lineNumber = myEditor.offsetToLogicalPosition(offset).line;
       int maxOffset = document.getLineEndOffset(lineNumber);
       if (newOffset > maxOffset) {
@@ -1748,9 +1751,8 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
         }
         maxOffset = document.getLineEndOffset(lineNumber + 1);
       }
-      boolean camel = myEditor.getSettings().isCamelWords();
       for (; newOffset < maxOffset; newOffset++) {
-        if (EditorActionUtil.isWordEnd(text, newOffset, camel)) {
+        if (EditorActionUtil.isWordOrLexemeEnd(myEditor, newOffset, isCamel)) {
           break;
         }
       }
