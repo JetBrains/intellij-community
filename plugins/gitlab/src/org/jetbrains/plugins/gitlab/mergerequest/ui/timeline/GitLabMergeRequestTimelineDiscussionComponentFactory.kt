@@ -36,7 +36,10 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
-import org.jetbrains.plugins.gitlab.ui.comment.*
+import org.jetbrains.plugins.gitlab.ui.comment.ExistingGitLabNoteEditingViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionComponentFactory
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteAdminActionsViewModel
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory.createEditActionsConfig
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -59,7 +62,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
     val actionsPanel = GitLabNoteComponentFactory.createActions(cs, vm.mainNote,
                                                                 project, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
 
-    val repliesPanel = ComponentListPanelFactory.createVertical(cs, vm.replies, GitLabNoteViewModel::id) { noteVm ->
+    val repliesPanel = ComponentListPanelFactory.createVertical(cs, vm.replies) { noteVm ->
       GitLabNoteComponentFactory.create(ComponentType.FULL_SECONDARY, project, this, avatarIconsProvider, noteVm,
                                         GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
     }.let {

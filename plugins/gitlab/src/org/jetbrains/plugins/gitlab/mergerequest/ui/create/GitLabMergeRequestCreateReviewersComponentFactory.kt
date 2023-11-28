@@ -42,9 +42,8 @@ internal object GitLabMergeRequestCreateReviewersComponentFactory {
       add(editButton)
     }
     val reviewersComponent = ComponentListPanelFactory.createVertical(
-      parentCs = cs,
-      items = createVm.adjustedReviewers,
-      itemKeyExtractor = { reviewer -> reviewer.id },
+      cs,
+      createVm.adjustedReviewers,
       gap = REVIEWERS_GAP,
       componentFactory = { reviewer -> createReviewerComponent(createVm, reviewer) }
     )

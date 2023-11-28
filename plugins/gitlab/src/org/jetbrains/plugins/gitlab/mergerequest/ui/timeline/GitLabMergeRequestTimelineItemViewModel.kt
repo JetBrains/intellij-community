@@ -9,13 +9,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDiscussi
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNote
 
 sealed interface GitLabMergeRequestTimelineItemViewModel {
-  val id: String
-
-  class Immutable(
-    val item: GitLabMergeRequestTimelineItem.Immutable
-  ) : GitLabMergeRequestTimelineItemViewModel {
-    override val id: String = item.id
-  }
+  data class Immutable(val item: GitLabMergeRequestTimelineItem.Immutable) : GitLabMergeRequestTimelineItemViewModel
 
   class Discussion(
     project: Project,
@@ -25,7 +19,18 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     discussion: GitLabMergeRequestDiscussion
   ) : GitLabMergeRequestTimelineDiscussionViewModel
       by GitLabMergeRequestTimelineDiscussionViewModelImpl(project, parentCs, currentUser, mr, discussion) {
-    override val id: String = discussion.id.toString()
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other !is Discussion) return false
+
+      if (id != other.id) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      return id.hashCode()
+    }
   }
 
   class DraftDiscussion(
@@ -36,6 +41,17 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     note: GitLabMergeRequestNote
   ) : GitLabMergeRequestTimelineDiscussionViewModel
       by GitLabMergeRequestTimelineDraftDiscussionViewModel(project, parentCs, currentUser, mr, note) {
-    override val id: String = note.id.toString()
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other !is DraftDiscussion) return false
+
+      if (id != other.id) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      return id.hashCode()
+    }
   }
 }

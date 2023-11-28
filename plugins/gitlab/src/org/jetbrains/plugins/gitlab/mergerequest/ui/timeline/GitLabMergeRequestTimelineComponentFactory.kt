@@ -144,7 +144,6 @@ internal object GitLabMergeRequestTimelineComponentFactory {
 
     val timelineItems = MutableSharedFlow<List<GitLabMergeRequestTimelineItemViewModel>>()
     val timelineItemContent = ComponentListPanelFactory.createVertical(cs, timelineItems,
-                                                                       { it.id },
                                                                        panelInitializer = {
                                                                          add(LoadingLabel().apply {
                                                                            border = Borders.empty(ComponentType.FULL.paddingInsets)

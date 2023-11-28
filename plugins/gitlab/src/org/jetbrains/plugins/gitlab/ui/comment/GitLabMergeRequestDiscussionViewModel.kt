@@ -25,15 +25,8 @@ interface GitLabMergeRequestDiscussionViewModel {
   val position: Flow<GitLabNotePosition?>
 
   sealed interface NoteItem {
-    val id: Any
-
-    class Note(val vm: GitLabNoteViewModel) : NoteItem {
-      override val id: Any = vm.id
-    }
-
-    class Expander(val collapsedCount: Int, val expand: () -> Unit) : NoteItem {
-      override val id: Any = "EXPANDER$collapsedCount"
-    }
+    data class Note(val vm: GitLabNoteViewModel) : NoteItem
+    data class Expander(val collapsedCount: Int, val expand: () -> Unit) : NoteItem
   }
 }
 

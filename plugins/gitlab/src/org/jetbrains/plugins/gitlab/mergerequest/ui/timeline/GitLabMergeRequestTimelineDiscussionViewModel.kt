@@ -20,6 +20,7 @@ import java.net.URL
 interface GitLabMergeRequestTimelineDiscussionViewModel :
   GitLabMergeRequestTimelineItemViewModel,
   CollapsibleTimelineItemViewModel {
+  val id: String
   val serverUrl: URL
 
   val author: Flow<GitLabUserDTO>
@@ -112,6 +113,19 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
       _collapsed.value = false
     }
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is GitLabMergeRequestTimelineDiscussionViewModelImpl) return false
+
+    if (id != other.id) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
+  }
 }
 
 class GitLabMergeRequestTimelineDraftDiscussionViewModel(
@@ -150,4 +164,17 @@ class GitLabMergeRequestTimelineDraftDiscussionViewModel(
   override fun setCollapsed(collapsed: Boolean) = Unit
 
   override fun setRepliesFolded(folded: Boolean) = Unit
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is GitLabMergeRequestTimelineDraftDiscussionViewModel) return false
+
+    if (id != other.id) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
+  }
 }
