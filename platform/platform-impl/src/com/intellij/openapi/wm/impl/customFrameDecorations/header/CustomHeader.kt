@@ -166,6 +166,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
       }
     )
     preferredSize = size
+    minimumSize = size
   }
 
   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
