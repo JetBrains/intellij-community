@@ -208,7 +208,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       // if data was loaded, mark as changed all loaded components
       if (states != null) {
         changedComponentNames.addAll(states.keys())
-        setStates(oldStorageData = states, newStorageData = null)
+        setStates(oldStorageData = states, newStorageData = StateMap.EMPTY)
       }
     }
     else if (states != null) {
