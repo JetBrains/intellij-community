@@ -461,6 +461,13 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         def = refExpr;
       }
       else {
+        if (local instanceof PsiLocalVariable && refExpr instanceof PsiReferenceExpression) {
+          List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, block);
+          // Simple case when variable is not rewritten: avoid getDefs, to make it working in the presence of compilation errors
+          if (!ContainerUtil.exists(refs, ref -> PsiUtil.isAccessedForWriting(ref))) {
+            return local.getInitializer();
+          }
+        }
         final PsiElement[] defs = DefUseUtil.getDefs(block, local, refExpr, rethrow);
         if (defs.length == 1) {
           def = defs[0];

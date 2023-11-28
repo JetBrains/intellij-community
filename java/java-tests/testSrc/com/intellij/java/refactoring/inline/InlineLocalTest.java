@@ -339,6 +339,10 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testCompilationErrorAtRef() {
+    doTest();
+  }
+
   public void testCompilationErrorAssignment() {
     doTest("Cannot perform refactoring.\n" +
            "Code contains syntax errors. Cannot perform necessary analysis.");
