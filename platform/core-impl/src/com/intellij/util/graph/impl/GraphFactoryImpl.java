@@ -5,7 +5,6 @@ import com.google.common.graph.Graphs;
 import com.intellij.util.graph.*;
 import org.jetbrains.annotations.NotNull;
 
-
 public class GraphFactoryImpl extends GraphFactory {
 
   @Override
@@ -20,6 +19,11 @@ public class GraphFactoryImpl extends GraphFactory {
 
   @Override
   public @NotNull <N, E> Network<N, E> emptyNetwork() {
+    return new NetworkBuilderImpl<>(false).build();
+  }
+
+  @Override
+  public @NotNull <N, E> MutableNetwork<N, E> emptyMutableNetwork() {
     return new NetworkBuilderImpl<>(false).build();
   }
 
