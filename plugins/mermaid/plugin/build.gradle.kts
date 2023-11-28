@@ -57,6 +57,8 @@ sourceSets {
 idea {
   module {
     generatedSourceDirs = generatedSourceDirs + generatedGrammarSourcesPath
+    isDownloadJavadoc = true
+    isDownloadSources = true
   }
 }
 
