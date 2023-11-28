@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.registry.Registry
@@ -108,21 +107,11 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
         itemsProvider.includeDisabledActions = myDisabledActions
 
         val standardSearchJob = launch {
-          val descriptorFlow = channelFlow {
-            coroutineToIndicator {
-              defaultFetchElements(pattern, progressIndicator) {
-                val prepareDescriptor = prepareStandardDescriptor(it, knownItems)
-                launch {
-                  send(mutex.withLock { prepareDescriptor() })
-                }
-                true
-              }
-            }
-          }.cancellable()
-
-          descriptorFlow.takeWhile {
-            blockingContext { consumer.process(it) }
-          }.collect {}
+          doFetchItems(this, presentationProvider, pattern) {
+            val prepareDescriptor = prepareStandardDescriptor(it, knownItems)
+            val descriptor = mutex.withLock { prepareDescriptor() }
+            consumer.process(descriptor)
+          }
         }
 
         val searchStart = System.nanoTime()

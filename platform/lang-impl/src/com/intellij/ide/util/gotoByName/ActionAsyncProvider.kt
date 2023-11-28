@@ -13,7 +13,6 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
 import com.intellij.ide.util.gotoByName.GotoActionModel.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
-import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -23,8 +22,6 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.switcher.QuickActionProvider
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.util.*
@@ -41,52 +38,42 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
   private val myActionManager: ActionManager = ActionManager.getInstance()
   private val myIntentions = ConcurrentHashMap<String, ApplyIntentionAction>()
 
-  @RequiresBlockingContext
-  @RequiresBackgroundThread
-  fun processActions(pattern: String, ids: Set<String>, consumer: Predicate<in MatchedValue>): Unit = runBlockingCancellable {
-    runUpdateSessionForActionSearch(myModel.updateSession) { presentationProvider ->
-      myModel.buildGroupMappings()
+  fun processActions(scope: CoroutineScope, presentationProvider: suspend (AnAction) -> Presentation, pattern: String,
+                     ids: Set<String>, consumer: suspend (MatchedValue) -> Boolean) {
 
-      val matchedActionsFlowDeferred = async { matchedActionsAndStubsFlow(pattern, ids, presentationProvider) }
-      val unmatchedStubsFlowDeferred = async { unmatchedStubsFlow(pattern, ids, presentationProvider) }
+    val matchedActionsFlowDeferred = scope.async { matchedActionsAndStubsFlow(pattern, ids, presentationProvider) }
+    val unmatchedStubsFlowDeferred = scope.async { unmatchedStubsFlow(pattern, ids, presentationProvider) }
 
-      launch {
-        sendResults(matchedActionsFlowDeferred.await(), consumer)
-        sendResults(unmatchedStubsFlowDeferred.await(), consumer)
-      }
+    scope.launch {
+      sendResults(matchedActionsFlowDeferred.await(), consumer)
+      sendResults(unmatchedStubsFlowDeferred.await(), consumer)
     }
   }
 
-  @RequiresBlockingContext
-  @RequiresBackgroundThread
-  fun filterElements(pattern: String, consumer: Predicate<in MatchedValue>) {
+  fun filterElements(scope: CoroutineScope, presentationProvider: suspend (AnAction) -> Presentation,
+                     pattern: String, consumer: suspend (MatchedValue) -> Boolean) {
     if (pattern.isEmpty()) return
 
     try {
-      runBlockingCancellable {
-        runUpdateSessionForActionSearch(myModel.updateSession) { presentationProvider ->
-          LOG.debug("Start actions searching ($pattern)")
+      LOG.debug("Start actions searching ($pattern)")
 
-          myModel.buildGroupMappings()
-          val actionIds = (myActionManager as ActionManagerImpl).actionIds
+      val actionIds = (myActionManager as ActionManagerImpl).actionIds
 
-          val comparator: Comparator<MatchedValue> = Comparator { o1, o2 -> o1.compareWeights(o2) }
-          val abbreviationsPromise = async { abbreviationsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
-          val matchedActionsFlowDeferred = async { matchedActionsAndStubsFlow(pattern, actionIds, presentationProvider) }
-          val unmatchedStubsFlowDeferred = async { unmatchedStubsFlow(pattern, actionIds, presentationProvider) }
-          val topHitsPromise = async { topHitsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
-          val intentionsPromise = async { intentionsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
-          val optionsPromise = async { optionsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
+      val comparator: Comparator<MatchedValue> = Comparator { o1, o2 -> o1.compareWeights(o2) }
+      val abbreviationsPromise = scope.async { abbreviationsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
+      val matchedActionsFlowDeferred = scope.async { matchedActionsAndStubsFlow(pattern, actionIds, presentationProvider) }
+      val unmatchedStubsFlowDeferred = scope.async { unmatchedStubsFlow(pattern, actionIds, presentationProvider) }
+      val topHitsPromise = scope.async { topHitsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
+      val intentionsPromise = scope.async { intentionsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
+      val optionsPromise = scope.async { optionsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
 
-          launch {
-            sendResults(abbreviationsPromise.await(), consumer, "abbreviations")
-            sendResults(matchedActionsFlowDeferred.await(), consumer)
-            sendResults(unmatchedStubsFlowDeferred.await(), consumer)
-            sendResults(topHitsPromise.await(), consumer, "topHits")
-            sendResults(intentionsPromise.await(), consumer, "intentions")
-            sendResults(optionsPromise.await(), consumer, "options")
-          }
-        }
+      scope.launch {
+        sendResults(abbreviationsPromise.await(), consumer, "abbreviations")
+        sendResults(matchedActionsFlowDeferred.await(), consumer)
+        sendResults(unmatchedStubsFlowDeferred.await(), consumer)
+        sendResults(topHitsPromise.await(), consumer, "topHits")
+        sendResults(intentionsPromise.await(), consumer, "intentions")
+        sendResults(optionsPromise.await(), consumer, "options")
       }
       LOG.debug("Finish actions processing")
     }
@@ -104,7 +91,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
     return list
   }
 
-  private suspend fun CoroutineScope.sendResults(list: List<MatchedValue>, consumer: Predicate<in MatchedValue>, name: String) {
+  private suspend fun CoroutineScope.sendResults(list: List<MatchedValue>, consumer: suspend (MatchedValue) -> Boolean, name: String) {
     LOG.debug("Sending results ($name)")
     for (value in list) {
       if (!isActive) {
@@ -112,7 +99,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
         return
       }
 
-      if (!consumer.test(value)) {
+      if (!consumer(value)) {
         LOG.debug("Sending results: consumer returned false")
         throw SearchFinishedException()
       }
@@ -120,9 +107,9 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
     LOG.debug("Sending results ($name) - done")
   }
 
-  private suspend fun sendResults(flow: Flow<MatchedValue>, consumer: Predicate<in MatchedValue>) {
+  private suspend fun sendResults(flow: Flow<MatchedValue>, consumer: suspend (MatchedValue) -> Boolean) {
     flow.onEach {
-      if (!consumer.test(it)) {
+      if (!consumer(it)) {
         LOG.debug("Sending results: consumer returned false")
         throw SearchFinishedException()
       }
