@@ -13,9 +13,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
+import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
@@ -27,7 +28,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatusManager
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
@@ -57,10 +57,11 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware {
     if (uiSettings.editorTabPlacement != UISettings.TABS_NONE && !(uiSettings.fullPathsInWindowHeader && isIDEA331002Fixed)) return
     val project = e.project ?: return
     val file = FileEditorManager.getInstance(project).selectedFiles.firstOrNull() ?: return
-    updatePresentationFromFile(project, file, e.presentation)
+    val window = e.getData(EditorWindow.DATA_KEY)
+    updatePresentationFromFile(project, file, e.presentation, window)
   }
 
-  private fun updatePresentationFromFile(project: Project, file: VirtualFile, presentation: Presentation) {
+  private fun updatePresentationFromFile(project: Project, file: VirtualFile, presentation: Presentation, window: EditorWindow?) {
     val status = FileStatusManager.getInstance(project).getStatus(file)
     var fg:Color?
 
@@ -80,9 +81,9 @@ class FilenameToolbarWidgetAction: ExpandableComboAction(), DumbAware {
 
     @Suppress("HardCodedStringLiteral")
     val filename = VfsPresentationUtil.getUniquePresentableNameForUI(project, file)
-    val pathFromProjectRoot = project.guessProjectDir()
-      ?.let { VfsUtilCore.getRelativePath(file, it) }
-      ?.let { FileUtil.toSystemDependentName(it) }
+    val pathFromProjectRoot = window?.let {
+      (FileEditorManager.getInstance(project) as? FileEditorManagerImpl)?.getFileTooltipText(file, it)
+    } ?: FileUtil.toSystemDependentName(file.path)
     presentation.isEnabledAndVisible = true
     presentation.putClientProperty(FILE_COLOR, fg)
     presentation.putClientProperty(FILE_FULL_PATH, if (UISettings.getInstance().fullPathsInWindowHeader) file.path else null)
