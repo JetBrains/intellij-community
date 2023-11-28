@@ -38,7 +38,7 @@ open class ReportProblemAction : DumbAwareAction() {
       val uploadLogs = withContext(Dispatchers.EDT) {
         confirmLogsUploading(project)
       }
-      val description = SendFeedbackAction.getDescription()
+      val description = SendFeedbackAction.getDescription(project)
       val sb: @NonNls StringBuilder = StringBuilder("\n\n")
       sb.append(description)
       if (uploadLogs) {

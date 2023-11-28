@@ -25,7 +25,7 @@ class TechnicalSupportAction : AnAction(), DumbAware {
     if (urlFunction == null) return
     val project = e.project
     service<ReportFeedbackService>().coroutineScope.launch {
-      BrowserUtil.browse(urlFunction.invoke(getDescription()).toExternalForm(), project)
+      BrowserUtil.browse(urlFunction.invoke(getDescription(project)).toExternalForm(), project)
     }
   }
 }
