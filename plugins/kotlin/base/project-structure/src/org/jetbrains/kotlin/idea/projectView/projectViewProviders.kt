@@ -35,16 +35,19 @@ class KotlinExpandNodeProjectViewProvider : TreeStructureProvider, DumbAware {
             val value = child.value
             val ktFile = value?.asKtFile()
 
+            // TODO need to fix KTIJ-11594 without introducing KTIJ-27970
+            val mandatoryChildren = emptyList<AbstractTreeNode<*>>()
+
             if (ktFile != null) {
                 val mainClass = KotlinIconProvider.getSingleClass(ktFile)
                 if (mainClass != null) {
-                    result.add(KtClassOrObjectTreeNode(ktFile.project, mainClass, settings, child.children))
+                    result.add(KtClassOrObjectTreeNode(ktFile.project, mainClass, settings, mandatoryChildren))
                 } else {
-                    result.add(KtFileTreeNode(ktFile.project, ktFile, settings, child.children))
+                    result.add(KtFileTreeNode(ktFile.project, ktFile, settings, mandatoryChildren))
                 }
             } else {
                 if (value is KtLightClass) {
-                    result.add(KtInternalFileTreeNode(value.project, value, settings, child.children))
+                    result.add(KtInternalFileTreeNode(value.project, value, settings, mandatoryChildren))
                 } else {
                     result.add(child)
                 }

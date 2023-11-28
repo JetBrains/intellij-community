@@ -5,7 +5,8 @@ import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRu
 import com.intellij.projectView.NestedFilesInProjectViewTest
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class NestedFilesInProjectViewTest : BasePlatformTestCase() {
+// TODO fix KTIJ-11594 without introducing KTIJ-27970
+abstract class NestedFilesInProjectViewTest : BasePlatformTestCase() {
     private fun doTest(showMembers: Boolean, expectedTree: String) {
         myFixture.addFileToProject("Foo.kt", "class Foo {val foo = 0}")
         myFixture.addFileToProject("Bar.kt", "class Bar1 {val bar1 = 0}\nclass Bar2 {val bar2 = 0}")
