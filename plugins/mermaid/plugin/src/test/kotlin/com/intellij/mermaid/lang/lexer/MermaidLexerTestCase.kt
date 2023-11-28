@@ -15,7 +15,7 @@ abstract class MermaidLexerTestCase : LexerTestCase() {
     return "${MermaidTestingUtil.TEST_DATA_PATH}/lexer"
   }
 
-  override fun getPathToTestDataFile(extension: String?): String {
+  override fun getPathToTestDataFile(extension: String): String {
     return dirPath + "/" + diagramName + "/" + getTestName(true) + extension
   }
 
