@@ -1,11 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.maven.testFramework.assertWithinTimeout
+import com.intellij.openapi.application.appSystemDir
+import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
+import java.nio.file.Files
 
 
 class MavenSetupProjectTest : MavenSetupProjectTestCase() {
@@ -186,6 +190,22 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
       assertTrue(mavenProjectsManager.importingSettings.isWorkspaceImportEnabled)
       // user still chooses legacy import
       mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
+    }
+
+    val projectFileDir = projectInfo.projectFile.parent.toNioPath()
+    val moduleFilePath = appSystemDir
+      .resolve("projects")
+      .resolve(getProjectCacheFileName(projectFileDir))
+      .resolve("external_build_system")
+      .resolve("modules")
+      .resolve("${projectFileDir.fileName}.xml")
+
+    assertWithinTimeout(10) {
+      assertTrue("Module file does not exist", Files.exists(moduleFilePath))
+    }
+
+    assertWithinTimeout(10) {
+      assertTrue("Module file is empty", Files.size(moduleFilePath) > 0)
     }
 
     waitForImport {
