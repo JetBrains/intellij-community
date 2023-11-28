@@ -1,11 +1,6 @@
-import functools
-
-
 def decorator(func):
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        print("using_decorator")
-        return func(42, 42.0)
+    def wrapper(extra: str, *args, **kwargs):
+        return func(*args, **kwargs)
     return wrapper
 
 

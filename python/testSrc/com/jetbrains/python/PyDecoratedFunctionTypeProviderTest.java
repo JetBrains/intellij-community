@@ -11,8 +11,8 @@ import java.util.List;
 
 public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
 
-  public void testMakeConstant() {
-    doTest("int", "int",
+  public void testAnnotatedDecoratorTurnsFunctionIntoConstant() {
+    doTest("Any", "int",
            """
              def dec(fun) -> int:
                  return 12
@@ -21,19 +21,15 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              def func():
                  return 12.1
 
-             value = func
+             value = func()  # __call__ is not defined for int
              dec_func = func""");
   }
 
-  public void testMakeConstantFunction() {
-    doTest("int", "() -> int",
+  public void testNotAnnotatedDecoratorTurningFunctionIntoConstantIsIgnored() {
+    doTest("float", "() -> float",
            """
-             from typing import Callable
-             
-             def dec(fun) -> Callable[[], int]:
-                 def wrapper():
-                     return 12
-                 return wrapper
+             def dec(fun):
+                 return 12
 
              @dec
              def func():
@@ -43,7 +39,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              dec_func = func""");
   }
 
-  public void testMakeConstantWithArg() {
+  public void testAnnotatedDecoratorChangesFunctionSignature() {
     doTest("int", "(str) -> int",
            """
              from typing import Callable
@@ -61,24 +57,25 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              dec_func = func""");
   }
 
-  public void testMakeKnownWithArg() {
-    doTest("str", "(str) -> str",
+  public void testNotAnnotatedDecoratorChangingFunctionSignatureIsIgnored() {
+    doTest("float", "() -> float",
            """
              from typing import Callable
              
-             def dec(fun) -> Callable[[str], str]:
+             def dec(fun):
                  def wrapper(boo: str):
-                     return str(fun())
+                     return 12
                  return wrapper
 
              @dec
              def func():
                  return 12.1
+
              value = func()
              dec_func = func""");
   }
 
-  public void testMakeDecoratorWithArg() {
+  public void testAnnotatedDecoratorWithParameterChangesFunctionSignature() {
     doTest("str", "(str) -> str",
            """
              from typing import Callable
@@ -98,44 +95,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              dec_func = func""");
   }
 
-  public void testReferenceInside() {
-    doTest("str", "(str) -> str",
-           """
-             from typing import Callable
-             
-             def dec(i) -> Callable[[Callable[[], float]], Callable[[str], str]]:
-                 def dec_(fun):
-                     def wrapper(boo: str):
-                         return str(fun())
-                     return wrapper
-                 return dec_
-
-             @dec(3)
-             def func() -> float:
-                 value = func()
-                 dec_func = func
-                 return 12.1""");
-  }
-
-  public void testMakeDecoratorWithHint() {
-    doTest("str", "(int) -> str",
-           """
-             from typing import Callable
-
-             def dec(fun) -> Callable[[int], str]:
-                 def wrapper():
-                     return 1
-                 return wrapper
-
-             @dec
-             def func(ar: str) -> int:
-                 return 1
-
-             value = func()
-             dec_func = func""");
-  }
-
-  public void testMakeDecoratorWithGenericHint() {
+  public void testAnnotatedGenericDecoratorChangesFunctionSignature() {
     doTest("str", "(int) -> str",
            """
              from typing import Callable
@@ -156,7 +116,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              dec_func = func""");
   }
 
-  public void testIgnoreWraps() {
+  public void testFunctoolWrapsIsIgnoredWithExplicitAnnotation() {
     doTest("str", "(str) -> str",
            """
              from functools import wraps
@@ -177,7 +137,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              dec_func = func""");
   }
 
-  public void testMakeDecoratorClass() {
+  public void testDecoratorTurnsFunctionIntoClass() {
     doTest("str", "PZFunc[int, str]",
            """
              from typing import TypeVar, Generic, Callable
@@ -200,7 +160,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              dec_func = func""");
   }
 
-  public void testMakeDecoratorStack() {
+  public void testStackOfAnnotatedDecoratorsChangesFunctionSignature() {
     doTest("int", "(str) -> int",
            """
              from typing import Callable
@@ -229,32 +189,42 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              dec_func = func""");
   }
 
-  public void testDecoratorWithArg() {
-    doTest("float", "(int) -> float",
+  public void testInStackOfDecoratorsChangingFunctionSignatureOnlyAnnotatedAreConsidered() {
+    doTest("tuple[str, tuple[bool, None]]", "(str, bool) -> tuple[str, tuple[bool, None]]",
            """
-             from typing import Callable
-             from typing import TypeVar
-
-             I = TypeVar('I')
+             from typing import Callable, Concatenate, ParamSpec, TypeVar
+             
+             P = ParamSpec('P')
              T = TypeVar('T')
-             W = TypeVar('W')
-
-             def dec(t: T) -> Callable[ [Callable[[I], W]], Callable[[I], T] ]:
-                 def dec_(fun):
-                     def wrapper():
-                         return t
-                     return wrapper
-                 return dec_
-
-             @dec(12.1)
-             def func(i: int) -> int:
-                 return i
-
-             value = func(1)
-             dec_func = func""");
+             
+             
+             def prepend_str(fn: Callable[P, T]) -> Callable[Concatenate[str, P], tuple[str, T]]:
+                 def wrapper(p: str, *args, **kwargs):
+                     return p, fn(*args, **kwargs)
+                 return wrapper
+             
+             def prepend_int(fn):
+                 def wrapper(p: int, *args, **kwargs):
+                     return p, fn(*args, **kwargs)
+                 return wrapper
+             
+             def prepend_bool(fn: Callable[P, T]) -> Callable[Concatenate[bool, P], tuple[bool, T]]:
+                 def wrapper(p: bool, *args, **kwargs):
+                     return p, fn(*args, **kwargs)
+                 return wrapper
+             
+             @prepend_str
+             @prepend_int
+             @prepend_bool
+             def f():
+                 pass
+             
+             value = f('foo', 42, True)
+             dec_func = f
+             """);
   }
 
-  public void testDecorateClass() {
+  public void testDecorateTurnsClassIntoFunction() {
     doTest("str", "(int) -> str",
            """
              from typing import Callable
@@ -272,6 +242,27 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
              dec_func = Func""");
   }
 
+  // PY-60104
+  public void testNotAnnotatedClassDecoratorIsIgnored() {
+    doTest("C", "Type[C]", """
+       from typing import reveal_type
+                                                                                 
+       def changing_interface(cls):
+           cls.new_attr = 42
+           return cls
+       
+       
+       @changing_interface
+       class C:
+           def __init__(self, p: int) -> None:
+               self.attr = p
+       
+       
+       value = C()
+       dec_func = C
+      """);
+  }
+
   public void testImportDecoratedFunctionType() {
     doMultiFileTest("int", "(str) -> int");
   }
@@ -286,64 +277,19 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
     checkMultiFileTest("str", "(int) -> str", Context.USER_INITIATED);
   }
 
-  // PY-48338
-  public void testImportDecoratorNotChangeSignatureWithAnnotation() {
-    doMultiFileTest("int", "(str) -> int");
-  }
-
-  // PY-48338
-  public void testImportDecoratorNotChangeSignatureNoAnnotation() {
-    doMultiFileTest("int", "(name_in_func: str) -> int");
-  }
-
-  // PY-48338
-  public void testImportDecoratorChangeSignatureNoAnnotation() {
+  // PY-60104
+  public void testImportedNotAnnotatedDecoratorChangingFunctionSignatureIsIgnored() {
     doMultiFileTest("int", "(i: str) -> int");
   }
 
-  // PY-48338
-  public void testImportDecoratorChangeSignatureWithAnnotation() {
+  // PY-60104
+  public void testImportedAnnotatedDecoratorChangesFunctionSignature() {
     doMultiFileTest("str", "(int, bool) -> str");
   }
 
-  // PY-48338
-  public void testImportTwoDecoratorsFirstChangeSignatureNoAnnotation() {
-    doMultiFileTest("int", "(i: str) -> int");
-  }
-
-  // PY-48338
-  public void testImportTwoDecoratorsFirstChangeSignatureWithAnnotation() {
-    doMultiFileTest("str", "(int, bool) -> str");
-  }
-
-  // PY-48338
-  public void testImportTwoDecoratorsNotChangeSignatureNoAnnotation() {
-    doMultiFileTest("int", "(i: str) -> int");
-  }
-
-  // PY-48338
-  public void testImportTwoDecoratorsNotChangeSignatureWithAnnotation() {
-    doMultiFileTest("int", "(str) -> int");
-  }
-
-  // PY-48338
-  public void testImportTwoDecoratorsSecondChangeSignatureNoAnnotation() {
-    doMultiFileTest("int", "(i: str) -> int");
-  }
-
-  // PY-48338
-  public void testImportTwoDecoratorsSecondChangeSignatureWithAnnotation() {
-    doMultiFileTest("str", "(int, bool) -> str");
-  }
-
-  // PY-48338
-  public void testImportTwoDecoratorsFirstChangeSignatureWithAnnotationParamSpec() {
-    doMultiFileTest("list[int]", "(int, i: str) -> list[int]");
-  }
-
-  // PY-48338
-  public void testImportTwoDecoratorsSecondChangeSignatureWithAnnotationParamSpec() {
-    doMultiFileTest("list[int]", "(int, i: str) -> list[int]");
+  // PY-60104
+  public void testInStackOfImportedDecoratorsChangingFunctionSignatureOnlyAnnotatedAreConsidered() {
+    doMultiFileTest("tuple[str, tuple[bool, None]]", "(str, bool) -> tuple[str, tuple[bool, None]]");
   }
 
   // PY-49935
