@@ -99,7 +99,7 @@ final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<In
         ContainerUtil.union(oldForwardIndex.keySet(), newForwardIndex.keySet());
 
       StubIndexEx stubIndex = (StubIndexEx)StubIndex.getInstance();
-      if (FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
+      if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
         stubIndex.getLogger()
           .info("stub indexes " + (newTree == null ? "deletion" : "update") + ": file = " + myInputId + " indexes " + affectedIndexes);
       }

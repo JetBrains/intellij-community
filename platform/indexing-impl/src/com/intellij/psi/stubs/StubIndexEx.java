@@ -80,7 +80,7 @@ public abstract class StubIndexEx extends StubIndex {
                               @NotNull Set<? extends K> newKeys) {
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       try {
-        if (FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
+        if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
           getLogger().info("stub index '" + stubIndexKey + "' update: " + fileId +
                            " old = " + Arrays.toString(oldKeys.toArray()) +
                            " new  = " + Arrays.toString(newKeys.toArray()) +
@@ -109,7 +109,7 @@ public abstract class StubIndexEx extends StubIndex {
               }
             }
 
-            if (FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
+            if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
               getLogger().info("keys iteration finished updated_id = " + System.identityHashCode(newKeys) + "; modified = " + modified);
             }
 

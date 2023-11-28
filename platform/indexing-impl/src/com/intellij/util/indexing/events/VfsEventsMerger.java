@@ -33,7 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 public final class VfsEventsMerger {
-  private static final boolean DEBUG = FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE || Boolean.getBoolean("log.index.vfs.events");
+  private static final boolean DEBUG = FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES || Boolean.getBoolean("log.index.vfs.events");
   private static final Logger LOG = MyLoggerFactory.getLoggerInstance();
 
   static {
