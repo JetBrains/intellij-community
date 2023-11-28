@@ -22,6 +22,7 @@ import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
 import training.learn.lesson.LessonState
 import training.learn.lesson.LessonStateManager
+import training.statistic.StatisticBase
 import training.ui.showOnboardingFeedbackNotification
 import training.util.enableLessonsAndPromoters
 import training.util.resetPrimaryLanguage
@@ -97,5 +98,9 @@ open class OnboardingLessonPromoter(@NonNls protected val lessonId: String,
       it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + JBUIScale.scale(-1))
     })
     promoPanel.revalidate()
+  }
+
+  override fun onBannerShown() {
+    StatisticBase.logOnboardingBannerShown(lessonId, languageId)
   }
 }

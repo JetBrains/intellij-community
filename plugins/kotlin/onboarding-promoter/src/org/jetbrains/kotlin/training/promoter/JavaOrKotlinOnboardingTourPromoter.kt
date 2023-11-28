@@ -17,8 +17,12 @@ import javax.swing.AbstractAction
 import javax.swing.Icon
 import javax.swing.JComponent
 
+/**
+ * Use Kotlin language as a language of this promoter, because it will be used only to log [StatisticBase.onboardingBannerShown] event.
+ * And it will be possible to distinguish this promoter shown events from Java onboarding promoter.
+ */
 class JavaOrKotlinOnboardingTourPromoter : OnboardingLessonPromoter(
-    ideaOnboardingLessonId, javaLanguageId, JavaLessonsBundle.message("java.onboarding.lesson.name")
+    ideaOnboardingLessonId, kotlinLanguageId, JavaLessonsBundle.message("java.onboarding.lesson.name")
 ) {
     // show this promoter instead of Java onboarding tour promoter
     override fun getPriorityLevel(): Int = StartPagePromoter.PRIORITY_LEVEL_NORMAL + 10

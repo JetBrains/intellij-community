@@ -45,6 +45,7 @@ import training.statistic.FeatureUsageStatisticConsts.NEED_SHOW_NEW_LESSONS_NOTI
 import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_COUNT
 import training.statistic.FeatureUsageStatisticConsts.NEW_LESSONS_NOTIFICATION_SHOWN
 import training.statistic.FeatureUsageStatisticConsts.NON_LEARNING_PROJECT_OPENED
+import training.statistic.FeatureUsageStatisticConsts.ONBOARDING_BANNER_SHOWN
 import training.statistic.FeatureUsageStatisticConsts.ONBOARDING_BANNER_SWITCHER_EXPANDED
 import training.statistic.FeatureUsageStatisticConsts.ONBOARDING_FEEDBACK_DIALOG_RESULT
 import training.statistic.FeatureUsageStatisticConsts.ONBOARDING_FEEDBACK_NOTIFICATION_SHOWN
@@ -99,7 +100,7 @@ class StatisticBase : CounterUsagesCollector() {
     private val LOG = logger<StatisticBase>()
     private val sessionLessonTimestamp: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
     private var prevRestoreLessonProgress: LessonProgress = LessonProgress("", 0)
-    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 19)
+    private val GROUP: EventLogGroup = EventLogGroup("ideFeaturesTrainer", 20)
 
     var isLearnProjectCloseLogged = false
 
@@ -182,6 +183,7 @@ class StatisticBase : CounterUsagesCollector() {
       feedbackExperiencedUser,
     )
 
+    private val onboardingBannerShown = GROUP.registerEvent(ONBOARDING_BANNER_SHOWN, lessonIdField, languageField)
     private val onboardingBannerSwitcherExpanded = GROUP.registerEvent(ONBOARDING_BANNER_SWITCHER_EXPANDED, lessonIdField)
 
     // LOGGING
@@ -305,6 +307,10 @@ class StatisticBase : CounterUsagesCollector() {
 
     fun logLearningProblem(problem: LearningInternalProblems, lesson: Lesson) {
       internalProblem.log(problem, lesson.id, courseLanguage())
+    }
+
+    fun logOnboardingBannerShown(lessonId: String, languageId: String) {
+      onboardingBannerShown.log(lessonId, languageId.lowercase())
     }
 
     fun logOnboardingBannerSwitcherExpanded(lessonId: String) {

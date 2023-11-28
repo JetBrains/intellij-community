@@ -33,7 +33,12 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     headerPanel.add(createHeader())
     headerPanel.add(Box.createHorizontalGlue())
 
-    val hPanel: JPanel = BackgroundRoundedPanel(JBUI.scale(16))
+    val hPanel: JPanel = object : BackgroundRoundedPanel(JBUI.scale(16)) {
+      override fun addNotify() {
+        super.addNotify()
+        onBannerShown()
+      }
+    }
 
     closeAction?.let { closeAction ->
       val closeIcons = IconButton(null, AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey)
@@ -121,6 +126,8 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
   protected open val closeAction: ((promoPanel: JPanel) -> Unit)? = null
 
   protected abstract fun runAction()
+
+  protected open fun onBannerShown() {}
 
   protected open fun createHeader(): JLabel {
     val result = JLabel(headerLabel)
