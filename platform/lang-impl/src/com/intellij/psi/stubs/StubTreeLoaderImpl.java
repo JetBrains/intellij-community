@@ -160,7 +160,9 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
                                       @Nullable Document document,
                                       boolean saved,
                                       @Nullable PsiFile cachedPsi) {
-    String message = "Outdated stub in index: " + vFile + " " + getIndexingStampInfo(vFile) +
+    String message = "Outdated stub in index: " + vFile +
+                     (vFile instanceof VirtualFileWithId fileWithId? ", vFileId=" + fileWithId.getId() : "") +
+                     ", " + getIndexingStampInfo(vFile) +
                      ", doc=" + document +
                      ", docSaved=" + saved +
                      ", wasIndexedAlready=" + wasIndexedAlready +

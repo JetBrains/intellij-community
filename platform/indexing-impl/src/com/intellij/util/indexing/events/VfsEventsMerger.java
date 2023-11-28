@@ -214,9 +214,8 @@ public final class VfsEventsMerger {
   public static void tryLog(@NotNull String eventName, @NotNull VirtualFile file, @Nullable Supplier<String> additionalMessage) {
     tryLog(() -> {
       return "event=" + eventName +
-             ",f=" + file.getPath() +
+             (file instanceof VirtualFileWithId fileWithId ? (",id=" + fileWithId.getId()) : (",f=" + file.getPath())) +
              ",flen=" + file.getLength() +
-             (file instanceof VirtualFileWithId ? (",id=" + ((VirtualFileWithId)file).getId()) : "") +
              (additionalMessage == null ? "" : ("," + additionalMessage.get()));
     });
   }
