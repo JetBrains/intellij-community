@@ -77,7 +77,7 @@ class ColumnVisualisationType:
 class ColumnVisualisationUtils:
     NUM_BINS = 5
     MAX_UNIQUE_VALUES = 3
-    UNIQUE_VALUES_PERCENT = 50
+    MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS = 50
 
     TABLE_OCCURRENCES_COUNT_NEXT_COLUMN_SEPARATOR = '__pydev_table_occurrences_count_next_column__'
     TABLE_OCCURRENCES_COUNT_NEXT_VALUE_SEPARATOR = '__pydev_table_occurrences_count_next_value__'
@@ -132,18 +132,18 @@ def analyze_categorical_column(column, col_name):
     # Sort in descending order to get values with max percent
     value_counts = value_counts.sort("counts").reverse()
 
-    if len(value_counts) <= 3 or len(value_counts) / all_values * 100 <= ColumnVisualisationUtils.UNIQUE_VALUES_PERCENT:
+    if len(value_counts) <= 3 or len(value_counts) / all_values * 100 <= ColumnVisualisationUtils.MAX_UNIQUE_VALUES_TO_SHOW_IN_VIS:
         column_visualisation_type = ColumnVisualisationType.PERCENTAGE
 
         # If column contains <= 3 unique values no `Other` category is shown, but all of these values and their percentages
-        num_unique_values = ColumnVisualisationUtils.MAX_UNIQUE_VALUES - (0 if len(value_counts) == 3 else 1)
-        counts = value_counts[:num_unique_values]
+        num_unique_values_to_show_in_vis = ColumnVisualisationUtils.MAX_UNIQUE_VALUES - (0 if len(value_counts) == 3 else 1)
+        counts = value_counts[:num_unique_values_to_show_in_vis]
         top_values_counts = counts["counts"].apply(lambda count: round(count / all_values * 100, 1))
         top_values = {label: count for label, count in zip(counts[col_name], top_values_counts)}
         if len(value_counts) == 3:
             top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = -1
         else:
-            others_count = value_counts[ColumnVisualisationUtils.MAX_UNIQUE_VALUES - 1:]["counts"].sum()
+            others_count = value_counts[num_unique_values_to_show_in_vis:]["counts"].sum()
             top_values[ColumnVisualisationUtils.TABLE_OCCURRENCES_COUNT_OTHER] = round(others_count / all_values * 100, 1)
         res = add_custom_key_value_separator(top_values.items())
 
