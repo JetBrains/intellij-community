@@ -1509,7 +1509,13 @@ open class FileEditorManagerImpl(
     return result
   }
 
-  override fun hasOpenFiles(): Boolean = !openedComposites.isEmpty()
+  override fun hasOpenFiles(): Boolean {
+    if (!ClientId.isCurrentlyUnderLocalId) {
+      return clientFileEditorManager?.getAllComposites()?.isNotEmpty() ?: false
+    }
+
+    return !openedComposites.isEmpty()
+  }
 
   override fun getSelectedFiles(): Array<VirtualFile> {
     if (!initJob.isCompleted) {
