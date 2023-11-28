@@ -87,7 +87,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           }
 
           if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
-            String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+            String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
             String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
             var localQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, returnExpr, actual, myTypeEvalContext);
             var globalQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, returnExpr, null, myTypeEvalContext);
@@ -137,7 +137,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
 
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
-        String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+        String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
         String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
         registerProblem(value, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
       }

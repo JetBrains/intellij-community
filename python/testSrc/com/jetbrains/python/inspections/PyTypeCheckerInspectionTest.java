@@ -765,7 +765,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
 
                            f(A, 1)
                            f(B, 2)
-                           f(<warning descr="Expected type 'Type[T]', got 'Type[C]' instead">C</warning>, 3)""")
+                           f(<warning descr="Expected type 'Type[T ≤: Union[A, B]]', got 'Type[C]' instead">C</warning>, 3)""")
     );
   }
 
@@ -779,7 +779,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            F = TypeVar('F', bound=int)
 
                            def deco(func: F) -> F:
-                               return <warning descr="Expected type 'F', got 'str' instead">""</warning>""")
+                               return <warning descr="Expected type 'F ≤: int', got 'str' instead">""</warning>""")
     );
   }
 
@@ -1300,7 +1300,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            def accepts_anything(x: str) -> None:
                                pass
 
-                           func(<warning descr="Expected type '(T) -> None', got '(x: str) -> None' instead">accepts_anything</warning>)
+                           func(<warning descr="Expected type '(T ≤: int) -> None', got '(x: str) -> None' instead">accepts_anything</warning>)
                            """)
     );
   }
@@ -1540,7 +1540,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            def foo[T: str](p: T):
                                return p
                                                       
-                           expr = foo(<warning descr="Expected type 'T', got 'int' instead">42</warning>)
+                           expr = foo(<warning descr="Expected type 'T ≤: str', got 'int' instead">42</warning>)
                            """)
     );
   }
@@ -1553,7 +1553,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            def foo[T: (str, bool)](p: T):
                                return p
                                                       
-                           expr = foo(<warning descr="Expected type 'T', got 'int' instead">42</warning>)
+                           expr = foo(<warning descr="Expected type 'T ≤: str | bool', got 'int' instead">42</warning>)
                            """)
     );
   }
