@@ -351,7 +351,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       setupCombobox(manager, comboBox, psiClass, invalid);
       comboBox.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(@NotNull final ActionEvent M) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           String item = (String)comboBox.getSelectedItem();
           manager.setDefaultTemplate(item);
           updateErrorMessage(item, invalid, manager, comboBox);
@@ -363,12 +363,11 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       myPanel.add(templateChooserPanel);
 
       final JCheckBox checkbox = new NonFocusableCheckBox(JavaBundle.message("generate.equals.hashcode.accept.sublcasses"));
-      boolean isFinal = myClass.hasModifierProperty(PsiModifier.FINAL);
-      checkbox.setSelected(!isFinal && CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER);
-      checkbox.setEnabled(!isFinal);
+      final boolean isAbstract = myClass.hasModifierProperty(PsiModifier.ABSTRACT);
+      checkbox.setSelected(isAbstract || CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER);
       checkbox.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(@NotNull final ActionEvent M) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = checkbox.isSelected();
         }
       });
@@ -379,7 +378,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       gettersCheckbox.setSelected(CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE);
       gettersCheckbox.addActionListener(new ActionListener() {
         @Override
-        public void actionPerformed(@NotNull final ActionEvent M) {
+        public void actionPerformed(@NotNull ActionEvent e) {
           CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE = gettersCheckbox.isSelected();
         }
       });

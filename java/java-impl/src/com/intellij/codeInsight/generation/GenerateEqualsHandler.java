@@ -114,8 +114,7 @@ public class GenerateEqualsHandler extends GenerateMembersHandlerBase {
   @Override
   @NotNull
   protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] originalMembers) {
-    boolean isFinal = aClass.hasModifierProperty(PsiModifier.FINAL);
-    final boolean useInstanceofToCheckParameterType = !isFinal && CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER;
+    final boolean useInstanceofToCheckParameterType = CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER;
     final boolean useAccessors = CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE;
 
     GenerateEqualsHelper helper = new GenerateEqualsHelper(aClass.getProject(), aClass, myEqualsFields, myHashCodeFields, myNonNullFields,
