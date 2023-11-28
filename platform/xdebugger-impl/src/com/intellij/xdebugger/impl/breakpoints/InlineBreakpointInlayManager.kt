@@ -7,10 +7,7 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diff.impl.DiffUtil
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.InlayModel
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
@@ -144,9 +141,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
       else {
         scope.launch {
           writeAction {
-            for (inlay in editor.inlayModel.getInlineElementsInRange(Int.MIN_VALUE, Int.MAX_VALUE, InlineBreakpointInlayRenderer::class.java)) {
-              Disposer.dispose(inlay)
-            }
+            collectAllInlays(editor.inlayModel).forEach { Disposer.dispose(it) }
           }
         }
       }
@@ -197,6 +192,15 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
       }
 
       if (postponeOnChanged()) return@readAndWriteAction value(Unit)
+
+      if (onlyLine != null && inlays.isEmpty() &&
+          allEditorsFor(document).all { collectInlays(it.inlayModel, document, onlyLine).isEmpty() }
+      ) {
+        // It's a fast path: no need to fire write action to remove inlays if there are already no inlays.
+        // It's required to prevent performance degradations due to IDEA-339224,
+        // otherwise fast insertion of twenty new lines could lead to 10 seconds of inlay recalculations.
+        return@readAndWriteAction value(Unit)
+      }
 
       writeAction {
         if (postponeOnChanged()) return@writeAction
@@ -311,7 +315,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
       insertInlays(document, onlyEditor.inlayModel, onlyLine, inlays)
     }
     else {
-      for (editor in EditorFactory.getInstance().getEditors(document, project)) {
+      for (editor in allEditorsFor(document)) {
         if (!isSuitableEditor(editor)) continue
         insertInlays(document, editor.inlayModel, onlyLine, inlays)
       }
@@ -324,11 +328,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
                            onlyLine: Int?,
                            inlays: List<SingleInlayDatum>) {
     // remove previous inlays
-    val startOffset = onlyLine?.let { document.getLineStartOffset(it) } ?: Int.MIN_VALUE
-    val endOffset = onlyLine?.let { document.getLineEndOffset(it) } ?: Int.MAX_VALUE
-    for (oldInlay in inlayModel.getInlineElementsInRange(startOffset, endOffset, InlineBreakpointInlayRenderer::class.java)) {
-      Disposer.dispose(oldInlay)
-    }
+    collectInlays(inlayModel, document, onlyLine).forEach { Disposer.dispose(it) }
 
     // draw new ones
     for ((breakpoint, variant, offset) in inlays) {
@@ -337,6 +337,25 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
       inlay?.let { renderer.inlay = it }
     }
   }
+
+  private fun collectAllInlays(inlayModel: InlayModel): List<Inlay<out InlineBreakpointInlayRenderer>> {
+    return collectInlays(inlayModel, Int.MIN_VALUE, Int.MAX_VALUE)
+  }
+
+  private fun collectInlays(inlayModel: InlayModel, document: Document, onlyLine: Int?): List<Inlay<out InlineBreakpointInlayRenderer>> {
+    if (onlyLine == null) return collectAllInlays(inlayModel)
+
+    return collectInlays(inlayModel,
+                         document.getLineStartOffset(onlyLine),
+                         document.getLineEndOffset(onlyLine))
+  }
+
+  private fun collectInlays(inlayModel: InlayModel, startOffset: Int, endOffset: Int): List<Inlay<out InlineBreakpointInlayRenderer>> {
+    return inlayModel.getInlineElementsInRange(startOffset, endOffset, InlineBreakpointInlayRenderer::class.java)
+  }
+
+  private fun allEditorsFor(document: Document): Array<out Editor> =
+    EditorFactory.getInstance().getEditors(document, project)
 
   companion object {
     @JvmStatic
