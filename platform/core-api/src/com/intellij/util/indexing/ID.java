@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class ID<K, V> extends IndexId<K,V> {
   //    so that old value could be changed along the way. Right now this is 'safe' since method is
   //    called only while shared index initialization, but...
   private static void reloadEnumFile(@NotNull Path enumFile) {
-    if (enumFile.equals(nameToIdRegistry.getFile())) {
+    if (Files.exists(enumFile) && enumFile.equals(nameToIdRegistry.getFile())) {
       return;
     }
 
