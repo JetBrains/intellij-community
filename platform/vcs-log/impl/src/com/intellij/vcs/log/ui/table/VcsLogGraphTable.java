@@ -45,6 +45,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.paint.PositionUtil;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.ui.table.column.*;
@@ -550,6 +551,9 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
           if (i != selectedRows.length - 1) sb.append("\n");
         }
         return sb.toString();
+      })
+      .ifEq(VcsLogInternalDataKeys.VCS_LOG_GRAPH_TABLE).thenGet(() -> {
+        return this;
       })
       .orNull();
   }
