@@ -57,13 +57,13 @@ class UnrenderableSpacesAnnotator : Annotator {
 
     override fun getText() = MermaidBundle.message("fix.change.space.symbol")
 
-    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
+    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
       val prevLeaf = element.prevLeaf() ?: return false
       val nextLeaf = element.nextLeaf() ?: return false
       return prevLeaf.hasType(MermaidTokens.ID) && nextLeaf.hasType(MermaidTokens.ID)
     }
 
-    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+    override fun invoke(project: Project, editor: Editor, element: PsiElement) {
       val prevLeaf = element.prevLeaf() ?: return
       val nextLeaf = element.nextLeaf() ?: return
       val spaceElement = MermaidElementFactory.createSpaceElement(project, element.textLength)
@@ -81,13 +81,13 @@ class UnrenderableSpacesAnnotator : Annotator {
 
     override fun getText() = MermaidBundle.message("fix.remove.space")
 
-    override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
+    override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
       val prevLeaf = element.prevLeaf() ?: return false
       val nextLeaf = element.nextLeaf() ?: return false
       return prevLeaf.hasType(MermaidTokens.ID) && nextLeaf.hasType(MermaidTokens.ID)
     }
 
-    override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+    override fun invoke(project: Project, editor: Editor, element: PsiElement) {
       val prevLeaf = element.prevLeaf() ?: return
       val nextLeaf = element.nextLeaf() ?: return
       val newId = MermaidElementFactory.createIdElement(project, *arrayOf(prevLeaf, nextLeaf)) ?: return

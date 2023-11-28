@@ -20,9 +20,9 @@ abstract class AbstractCreateDeclarationIntention(
 
   override fun getFamilyName() = MermaidBundle.message("fix.create.declaration")
 
-  override fun isAvailable(project: Project, editor: Editor?, element: PsiElement) = true
+  override fun isAvailable(project: Project, editor: Editor, element: PsiElement) = true
 
-  override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
+  override fun invoke(project: Project, editor: Editor, element: PsiElement) {
     createDeclaration(project, element)
   }
 
