@@ -123,13 +123,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     // 2) we dispose FileBasedIndex before PersistentFS disposing
     PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstance();
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    // anonymous class is required to make sure the new instance is created
-    Disposable disposable = new Disposable() {
-      @Override
-      public void dispose() {
-        new FileBasedIndexImpl.MyShutDownTask(false).run();
-      }
-    };
+    Disposable disposable = new ShutdownTaskAsDisposable();
     ApplicationManager.getApplication().addApplicationListener(new MyApplicationListener(fileBasedIndex), disposable);
     Disposer.register(fs, disposable);
     //Generally, Index will be shutdown by Disposer -- but to be sure, we'll register a shutdown task also:
@@ -154,6 +148,14 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     }
 
     return tasks;
+  }
+
+  // a static class is required to make sure a new instance is created and `this` is not leaked
+  private static class ShutdownTaskAsDisposable implements Disposable {
+    @Override
+    public void dispose() {
+      new FileBasedIndexImpl.MyShutDownTask(false).run();
+    }
   }
 
   @Override
