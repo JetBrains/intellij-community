@@ -2,6 +2,8 @@
 package com.intellij.configurationStore.statistic.eventLog
 
 import com.intellij.configurationStore.jdomSerializer
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
@@ -61,6 +63,7 @@ internal class FeatureUsageSettingsEvents private constructor(private val projec
       channel.close()
     }
     else {
+      val printer = FeatureUsageSettingsEventPrinter(recordDefault = false)
       coroutineScope.launch {
         delay(1.minutes)
 
@@ -68,21 +71,39 @@ internal class FeatureUsageSettingsEvents private constructor(private val projec
           channel.close()
           return@launch
         }
-
-        val printer = FeatureUsageSettingsEventPrinter(recordDefault = false)
         for (request in channel) {
-          when (request) {
-            is LogConfigurationState -> {
-              printer.logConfigurationState(request.componentName, request.state, project)
-            }
-            is LogConfigurationStateChanged -> {
-              printer.logConfigurationStateChanged(request.componentName, request.state, project)
-            }
-            is LogDefaultConfigurationState -> {
-              printer.logDefaultConfigurationState(request.componentName, request.aClass, project)
+          synchronized(printer) {
+            logRequest(request, printer)
+          }
+        }
+      }
+
+      (project ?: ApplicationManager.getApplication()).messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+        override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+          if (!FeatureUsageLogger.isEnabled()) return
+          // process all pending requests
+          synchronized(printer) {
+            while (true) {
+              val request = channel.tryReceive().getOrNull() ?: break
+              logRequest(request, printer)
             }
           }
         }
+      })
+    }
+  }
+
+  private fun logRequest(request: LogRequest,
+                        printer: FeatureUsageSettingsEventPrinter) {
+    when (request) {
+      is LogConfigurationState -> {
+        printer.logConfigurationState(request.componentName, request.state, project)
+      }
+      is LogConfigurationStateChanged -> {
+        printer.logConfigurationStateChanged(request.componentName, request.state, project)
+      }
+      is LogDefaultConfigurationState -> {
+        printer.logDefaultConfigurationState(request.componentName, request.aClass, project)
       }
     }
   }
