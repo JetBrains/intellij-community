@@ -21,8 +21,9 @@ import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -47,9 +48,12 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SpinningProgressIcon;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.JavaCoroutines;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.JBUI;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -83,7 +87,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       @Override
       public void extensionAdded(@NotNull Executor extension, @NotNull PluginDescriptor pluginDescriptor) {
         //noinspection TestOnlyProblems
-        initExecutorActions(extension, ActionManager.getInstance());
+        initExecutorActions(extension, ActionManagerEx.getInstanceEx().asActionRuntimeRegistrar());
       }
 
       @Override
@@ -93,17 +97,21 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }, null);
   }
 
-  static final class ExecutorRegistryActionConfigurationTuner implements ActionConfigurationCustomizer {
+  static final class ExecutorRegistryActionConfigurationTuner implements ActionConfigurationCustomizer,
+                                                                         ActionConfigurationCustomizer.LightCustomizeStrategy {
     @Override
-    public void customize(@NotNull ActionManager manager) {
-      if (Executor.EXECUTOR_EXTENSION_NAME.hasAnyExtensions()) {
-        ((ExecutorRegistryImpl)getInstance()).init(manager);
-      }
+    public @Nullable Object customize(@NotNull ActionRuntimeRegistrar actionRegistrar, @NotNull Continuation<? super Unit> $completion) {
+      return JavaCoroutines.suspendJava(jc -> {
+        if (Executor.EXECUTOR_EXTENSION_NAME.hasAnyExtensions()) {
+          ((ExecutorRegistryImpl)getInstance()).init(actionRegistrar);
+        }
+        jc.resume(Unit.INSTANCE);
+      }, $completion);
     }
   }
 
   @TestOnly
-  public synchronized void initExecutorActions(@NotNull Executor executor, @NotNull ActionManager actionManager) {
+  public synchronized void initExecutorActions(@NotNull Executor executor, @NotNull ActionRuntimeRegistrar actionRegistrar) {
     if (myContextActionIdSet.contains(executor.getContextActionId())) {
       LOG.error("Executor with context action id: \"" + executor.getContextActionId() + "\" was already registered!");
     }
@@ -128,28 +136,28 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     Executor.ActionWrapper customizer = executor.runnerActionsGroupExecutorActionCustomizer();
-    registerActionInGroup(actionManager, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RUNNERS_GROUP, myIdToAction);
+    registerActionInGroup(actionRegistrar, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RUNNERS_GROUP, myIdToAction);
 
-    AnAction action = registerAction(actionManager, executor.getContextActionId(), runContextAction, myContextActionIdToAction);
+    AnAction action = registerAction(actionRegistrar, executor.getContextActionId(), runContextAction, myContextActionIdToAction);
     if (isExecutorInMainGroup(executor)) {
-      DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP));
-      ((ActionManagerImpl) actionManager).addToGroup(group, action, new Constraints(Anchor.BEFORE, RUN_CONTEXT_GROUP_MORE));
+      DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionRegistrar.getActionOrStub(RUN_CONTEXT_GROUP));
+      actionRegistrar.addToGroup(group, action, new Constraints(Anchor.BEFORE, RUN_CONTEXT_GROUP_MORE));
     }
     else {
-      DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP_MORE));
-      ((ActionManagerImpl) actionManager).addToGroup(group, action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"));
+      DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionRegistrar.getActionOrStub(RUN_CONTEXT_GROUP_MORE));
+      actionRegistrar.addToGroup(group, action, new Constraints(Anchor.BEFORE, "CreateRunConfiguration"));
     }
 
-    AnAction nonExistingAction = registerAction(actionManager, newConfigurationContextActionId(executor), runNonExistingContextAction, myContextActionIdToAction);
-    DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionManager.getActionOrStub(RUN_CONTEXT_GROUP_MORE));
-    ((ActionManagerImpl) actionManager).addToGroup(group, nonExistingAction, new Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"));
+    AnAction nonExistingAction = registerAction(actionRegistrar, newConfigurationContextActionId(executor), runNonExistingContextAction, myContextActionIdToAction);
+    DefaultActionGroup group = Objects.requireNonNull((DefaultActionGroup)actionRegistrar.getActionOrStub(RUN_CONTEXT_GROUP_MORE));
+    actionRegistrar.addToGroup(group, nonExistingAction, new Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"));
 
-    initRunToolbarExecutorActions(executor, actionManager);
+    initRunToolbarExecutorActions(executor, actionRegistrar);
 
     myContextActionIdSet.add(executor.getContextActionId());
   }
 
-  private synchronized void initRunToolbarExecutorActions(@NotNull Executor executor, @NotNull ActionManager actionManager) {
+  private synchronized void initRunToolbarExecutorActions(@NotNull Executor executor, @NotNull ActionRuntimeRegistrar actionRegistrar) {
     if (ToolbarSettings.getInstance().isAvailable()) {
       RunToolbarProcess.getProcessesByExecutorId(executor.getId()).forEach(process -> {
         if (executor instanceof ExecutorGroup<?> executorGroup) {
@@ -162,16 +170,16 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             presentation.setText(process.getName());
             presentation.setDescription(executor.getDescription());
 
-            registerActionInGroup(actionManager, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
+            registerActionInGroup(actionRegistrar, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
                                   myRunWidgetIdToAction);
           }
           else {
             RunToolbarAdditionActionsHolder holder = new RunToolbarAdditionActionsHolder(executorGroup, process);
 
-            registerActionInGroup(actionManager, RunToolbarAdditionActionsHolder.getAdditionActionId(process), holder.getAdditionAction(),
+            registerActionInGroup(actionRegistrar, RunToolbarAdditionActionsHolder.getAdditionActionId(process), holder.getAdditionAction(),
                                   process.getMoreActionSubGroupName(),
                                   myRunWidgetIdToAction);
-            registerActionInGroup(actionManager, RunToolbarAdditionActionsHolder.getAdditionActionChooserGroupId(process),
+            registerActionInGroup(actionRegistrar, RunToolbarAdditionActionsHolder.getAdditionActionChooserGroupId(process),
                                   holder.getMoreActionChooserGroup(), process.getMoreActionSubGroupName(),
                                   myRunWidgetIdToAction);
           }
@@ -181,10 +189,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             ExecutorAction wrappedAction = new RunToolbarProcessAction(process, executor);
             ExecutorAction wrappedMainAction = new RunToolbarProcessMainAction(process, executor);
 
-            registerActionInGroup(actionManager, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
+            registerActionInGroup(actionRegistrar, process.getActionId(), wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
                                   myRunWidgetIdToAction);
 
-            registerActionInGroup(actionManager, process.getMainActionId(), wrappedMainAction, RunToolbarProcess.RUN_WIDGET_MAIN_GROUP,
+            registerActionInGroup(actionRegistrar, process.getMainActionId(), wrappedMainAction, RunToolbarProcess.RUN_WIDGET_MAIN_GROUP,
                                   myRunWidgetIdToAction);
           }
         }
@@ -201,21 +209,25 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     return id.equals(ToolWindowId.RUN) || id.equals(ToolWindowId.DEBUG) || !Registry.is("executor.actions.submenu", true);
   }
 
-  private static void registerActionInGroup(@NotNull ActionManager actionManager, @NotNull String actionId, @NotNull AnAction anAction, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
-    AnAction action = registerAction(actionManager, actionId, anAction, map);
-    AnAction group = actionManager.getAction(groupId);
+  private static void registerActionInGroup(@NotNull ActionRuntimeRegistrar actionRegistrar,
+                                            @NotNull String actionId,
+                                            @NotNull AnAction anAction,
+                                            @NotNull String groupId,
+                                            @NotNull Map<String, AnAction> map) {
+    AnAction action = registerAction(actionRegistrar, actionId, anAction, map);
+    AnAction group = actionRegistrar.getActionOrStub(groupId);
     if (group != null) {
-      ((ActionManagerImpl) actionManager).addToGroup((DefaultActionGroup) group, action, Constraints.LAST);
+      actionRegistrar.addToGroup(group, action, Constraints.LAST);
     }
   }
 
-  private static @NotNull AnAction registerAction(@NotNull ActionManager actionManager,
+  private static @NotNull AnAction registerAction(@NotNull ActionRuntimeRegistrar actionRegistrar,
                                                   @NotNull String actionId,
                                                   @NotNull AnAction anAction,
                                                   @NotNull Map<String, AnAction> map) {
-    AnAction action = actionManager.getAction(actionId);
+    AnAction action = actionRegistrar.getActionOrStub(actionId);
     if (action == null) {
-      actionManager.registerAction(actionId, anAction);
+      actionRegistrar.registerAction(actionId, anAction);
       map.put(actionId, anAction);
       action = anAction;
     }
@@ -285,16 +297,11 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     return null;
   }
 
-  private void init(@NotNull ActionManager actionManager) {
-    for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
-      try {
-        //noinspection TestOnlyProblems
-        initExecutorActions(executor, actionManager);
-      }
-      catch (Throwable t) {
-        LOG.error("executor initialization failed: " + executor.getClass().getName(), t);
-      }
-    }
+  private void init(@NotNull ActionRuntimeRegistrar actionRegistrar) {
+    Executor.EXECUTOR_EXTENSION_NAME.forEachExtensionSafe(executor -> {
+      //noinspection TestOnlyProblems
+      initExecutorActions(executor, actionRegistrar);
+    });
   }
 
   public static class ExecutorAction extends AnAction implements DumbAware,

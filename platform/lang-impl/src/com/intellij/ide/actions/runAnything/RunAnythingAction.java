@@ -9,6 +9,7 @@ import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
@@ -23,7 +24,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.FontUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.JavaCoroutines;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,11 +54,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   private static boolean ourDoubleCtrlRegistered;
 
-  static final class ShortcutTracker implements ActionConfigurationCustomizer {
+  static final class ShortcutTracker implements ActionConfigurationCustomizer,
+                                                ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
     @Override
-    public void customize(@NotNull ActionManager actionManager) {
-      // don't execute as a part of ActionManager init
-      AppExecutorUtil.getAppExecutorService().execute(() -> initShortcutTracker());
+    public @Nullable Object customize(@NotNull ActionRuntimeRegistrar actionRegistrar, @NotNull Continuation<? super Unit> $completion) {
+      return JavaCoroutines.suspendJava(jc -> {
+        initShortcutTracker();
+        jc.resume(Unit.INSTANCE);
+      }, $completion);
     }
   }
 

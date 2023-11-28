@@ -55,8 +55,8 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * Invokes the given consumer for each extension registered in this extension point. Logs exceptions thrown by the consumer.
    */
   fun forEachExtensionSafe(consumer: Consumer<in T>) {
-    getPointImpl(areaInstance = null).processWithPluginDescriptor(shouldBeSorted = true) { adapter, _ ->
-      consumer.accept(adapter)
+    getPointImpl(areaInstance = null).processWithPluginDescriptor(shouldBeSorted = true) { extension, _ ->
+      consumer.accept(extension)
     }
   }
 

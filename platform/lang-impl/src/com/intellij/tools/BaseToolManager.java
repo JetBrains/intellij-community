@@ -2,8 +2,8 @@
 package com.intellij.tools;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.options.SchemeManager;
@@ -35,13 +35,11 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
 
   protected abstract SchemeProcessor<ToolsGroup<T>, ToolsGroup<T>> createProcessor();
 
-  @Nullable
-  protected ActionManagerEx getActionManager() {
+  protected @Nullable ActionManagerEx getActionManager() {
     return ActionManagerEx.getInstanceEx();
   }
 
-  @Nullable
-  public static String convertString(String s) {
+  public static @Nullable String convertString(String s) {
     return StringUtil.nullize(s, true);
   }
 
@@ -53,8 +51,7 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
     return result;
   }
 
-  @NotNull
-  public List<T> getTools(@NotNull String group) {
+  public @NotNull List<T> getTools(@NotNull String group) {
     ToolsGroup<T> groupByName = mySchemeManager.findSchemeByName(group);
     if (groupByName == null) {
       return Collections.emptyList();
@@ -70,15 +67,14 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
 
   public void setTools(@NotNull List<ToolsGroup<T>> tools) {
     mySchemeManager.setSchemes(tools);
-    registerActions(getActionManager());
+    ActionManagerEx actionManager = getActionManager();
+    if (actionManager != null) {
+      registerActions(actionManager.asActionRuntimeRegistrar());
+    }
   }
 
-  protected final void registerActions(@Nullable ActionManager actionManager) {
-    if (actionManager == null) {
-      return;
-    }
-
-    unregisterActions(actionManager);
+  protected final void registerActions(@NotNull ActionRuntimeRegistrar actionRegistrar) {
+    unregisterActions(actionRegistrar);
 
     // register
     // to prevent exception if 2 or more targets have the same name
@@ -86,26 +82,19 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
     for (T tool : getTools()) {
       String actionId = tool.getActionId();
       if (registeredIds.add(actionId)) {
-        actionManager.registerAction(actionId, createToolAction(tool));
+        actionRegistrar.registerAction(actionId, createToolAction(tool));
       }
     }
   }
 
-  @NotNull
-  protected ToolAction createToolAction(@NotNull T tool) {
+  protected @NotNull ToolAction createToolAction(@NotNull T tool) {
     return new ToolAction(tool);
   }
 
   protected abstract String getActionIdPrefix();
 
-  protected void unregisterActions(@Nullable ActionManager actionManager) {
-    if (actionManager == null) {
-      return;
-    }
-
-    for (String oldId : actionManager.getActionIdList(getActionIdPrefix())) {
-      actionManager.unregisterAction(oldId);
-    }
+  protected void unregisterActions(@NotNull ActionRuntimeRegistrar actionManager) {
+    actionManager.unregisterActionByIdPrefix(getActionIdPrefix());
   }
 
   @Override

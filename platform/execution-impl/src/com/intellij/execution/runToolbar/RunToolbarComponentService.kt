@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.ui.ToolbarSettings
-import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -114,10 +114,10 @@ private class RunToolbarComponentService(private val project: Project, private v
   }
 }
 
-private class MyActionConfigurationCustomizer : ActionConfigurationCustomizer {
-  override fun customize(actionManager: ActionManager) {
+private class MyActionConfigurationCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
+  override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
     if (ExperimentalUI.isNewUI()) {
-      actionManager.unregisterAction("RunToolbarWidgetAction")
+      actionRegistrar.unregisterAction("RunToolbarWidgetAction")
     }
   }
 }
