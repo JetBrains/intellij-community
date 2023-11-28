@@ -93,6 +93,8 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   internal fun getComponents(): Map<String, ComponentInfo> = components
 
+  fun getComponentNames(): Set<String> = HashSet(components.keys)
+
   override fun clearCaches() {
     components.values.forEach(Consumer {
       it.updateModificationCount(-1)

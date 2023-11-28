@@ -89,4 +89,10 @@ public @interface State {
   }
 
   SettingsCategory category() default SettingsCategory.OTHER;
+
+  /**
+   * Indicates whether the component state can be migrated within the same machine (used in import settings on startup)
+   * regardless of RoamingType and SettingsCategory.
+   */
+  boolean canBeMigrated() default true;
 }

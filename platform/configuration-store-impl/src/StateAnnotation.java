@@ -86,6 +86,11 @@ public class StateAnnotation implements State {
   }
 
   @Override
+  public boolean canBeMigrated() {
+    return true;
+  }
+
+  @Override
   public Class<? extends Annotation> annotationType() {
     throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
   }

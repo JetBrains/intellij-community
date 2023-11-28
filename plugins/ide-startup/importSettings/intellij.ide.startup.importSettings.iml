@@ -49,5 +49,6 @@
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" name="sqlite" level="project" />
+    <orderEntry type="library" name="classgraph" level="project" />
   </component>
 </module>
