@@ -389,16 +389,18 @@ object ChangeSignatureFixFactory {
 
 context(KtAnalysisSession)
 internal fun getDeclarationName(functionLikeSymbol: KtFunctionLikeSymbol): String? {
-    return when {
-        functionLikeSymbol is KtConstructorSymbol -> {
+    return when(functionLikeSymbol) {
+        is KtConstructorSymbol -> {
             val constructorSymbol = functionLikeSymbol
             if ((constructorSymbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol)?.isInline == true) {
                 null
             } else constructorSymbol.containingClassIdIfNonLocal?.shortClassName
         }
 
-        else -> {
-            (functionLikeSymbol as KtFunctionSymbol).name
+        is KtFunctionSymbol -> {
+            functionLikeSymbol.name
         }
+
+        else -> null
     }?.asString()
 }
