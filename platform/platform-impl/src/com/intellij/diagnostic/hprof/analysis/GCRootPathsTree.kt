@@ -441,7 +441,7 @@ class GCRootPathsTree(
           "[$pathsCountString/$percentString/$instanceSizeString] $subgraphSizeString $instanceCountString $status $indent$fieldNameString$text$disposedString")
       }
       else {
-        printFunc("$status $indent$text.$fieldNameString$disposedString")
+        printFunc("$status $indent$fieldNameString$text$disposedString")
       }
     }
 
