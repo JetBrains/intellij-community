@@ -65,14 +65,13 @@ internal fun djangoFeatures(source: PromoEventSource): JComponent {
 
 internal fun jupyterFeatures(source: PromoEventSource): JComponent {
   return featurePage(
-    PyCharmCommunityCustomizationBundle.message("feature.jupyter.description",
-                               "https://www.jetbrains.com/help/pycharm/jupyter-notebook-support.html"),
+    PyCharmCommunityCustomizationBundle.message("feature.jupyter.description.html",
+                                                "https://www.jetbrains.com/help/pycharm/jupyter-notebook-support.html"),
     listOf(
       PromoFeatureListItem(AllIcons.Actions.ReformatCode, PyCharmCommunityCustomizationBundle.message("feature.jupyter.code")),
       PromoFeatureListItem(AllIcons.Actions.StartDebugger, PyCharmCommunityCustomizationBundle.message("feature.jupyter.debugger")),
       PromoFeatureListItem(AllIcons.Nodes.DataSchema, PyCharmCommunityCustomizationBundle.message("feature.jupyter.tables")),
       PromoFeatureListItem(AllIcons.Vcs.Branch, PyCharmCommunityCustomizationBundle.message("feature.jupyter.vcs"))
-
     ),
     source,
     PromoTopic.Jupyter
