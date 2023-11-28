@@ -98,7 +98,7 @@ CommentDeletedEvent
   JsonSubTypes.Type(name = "DisconnectedEvent", value = GHPRDisconnectedEvent::class)
 )
 interface GHPRTimelineItem {
-  class Unknown(val __typename: String) : GHPRTimelineItem
+  data class Unknown(val __typename: String) : GHPRTimelineItem
 
   companion object {
     val IGNORED_TYPES = setOf("ReferencedEvent", "MentionedEvent", "CommentDeletedEvent", "LockedEvent", "UnlockedEvent",

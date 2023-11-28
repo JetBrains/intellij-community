@@ -43,7 +43,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsFull
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
@@ -61,31 +60,6 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
   private val uiDisposable = cs.nestedDisposable()
 
-  private val timelineModel = GHPRTimelineMergingModel()
-
-  private val timelineLoader = timelineVm.timelineLoader
-
-  init {
-    timelineLoader.addDataListener(uiDisposable, object : GHListLoader.ListDataListener {
-      override fun onDataAdded(startIdx: Int) {
-        val loadedData = timelineLoader.loadedData
-        timelineModel.add(loadedData.subList(startIdx, loadedData.size))
-      }
-
-      override fun onDataUpdated(idx: Int) {
-        val newItem = timelineLoader.loadedData[idx]
-        timelineModel.update(idx, newItem)
-      }
-
-      override fun onDataRemoved(idx: Int) {
-        timelineModel.remove(idx)
-      }
-
-      override fun onAllDataRemoved() = timelineModel.removeAll()
-    })
-    timelineModel.add(timelineLoader.loadedData)
-  }
-
   fun create(): JComponent {
     val mainPanel = Wrapper()
     val loadedDetails = timelineVm.detailsVm.details
@@ -95,7 +69,7 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     val description = createDescription(loadedDetails)
     val itemComponentFactory = createItemComponentFactory()
 
-    val timeline = ComponentListPanelFactory.createVertical(cs, timelineModel, componentFactory = itemComponentFactory)
+    val timeline = ComponentListPanelFactory.createVertical(cs, timelineVm.timelineItems, componentFactory = itemComponentFactory)
 
     val progressAndErrorPanel = JPanel(ListLayout.vertical(0, ListLayout.Alignment.CENTER)).apply {
       isOpaque = false
@@ -140,22 +114,14 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
         override fun stateChanged(e: ChangeEvent) {
           if (firstScroll && verticalScrollBar.value > 0) firstScroll = false
           if (!firstScroll) {
-            if (timelineLoader.canLoadMore()) {
-              timelineLoader.loadMore()
-            }
+            timelineVm.requestMore()
           }
         }
       })
     }
     UiNotifyConnector.doWhenFirstShown(scrollPane) {
-      timelineLoader.loadMore()
+      timelineVm.requestMore()
     }
-
-    timelineLoader.addDataListener(uiDisposable, object : GHListLoader.ListDataListener {
-      override fun onAllDataRemoved() {
-        if (scrollPane.isShowing) timelineLoader.loadMore()
-      }
-    })
 
     mainPanel.setContent(scrollPane)
 

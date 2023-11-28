@@ -12,10 +12,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
@@ -29,6 +26,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandler
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
+import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
 
 interface GHPRTimelineViewModel {
   val prId: GHPRIdentifier
@@ -42,8 +40,7 @@ interface GHPRTimelineViewModel {
 
   val detailsVm: GHPRDetailsTimelineViewModel
 
-  val timelineLoader: GHListLoader<GHPRTimelineItem>
-
+  val timelineItems: StateFlow<List<GHPRTimelineItem>>
   val isLoading: StateFlow<Boolean>
   val loadingError: StateFlow<Throwable?>
 
@@ -57,6 +54,8 @@ interface GHPRTimelineViewModel {
   fun update()
 
   fun updateAll()
+
+  fun requestMore()
 
   companion object {
     val DATA_KEY: DataKey<GHPRTimelineViewModel> = DataKey.create("GitHub.PullRequest.Timeline.ViewModel")
@@ -85,7 +84,7 @@ internal class GHPRTimelineViewModelImpl(
   override val currentUser: GHUser = securityService.currentUser
 
   override val detailsVm = GHPRDetailsTimelineViewModel(project, parentCs, dataContext, dataProvider)
-  override val timelineLoader = dataProvider.acquireTimelineLoader(cs.nestedDisposable())
+  private val timelineLoader = dataProvider.acquireTimelineLoader(cs.nestedDisposable())
 
   override val loadingErrorHandler: GHLoadingErrorHandler =
     GHApiLoadingErrorHandler(project, securityService.account, timelineLoader::reset)
@@ -98,6 +97,8 @@ internal class GHPRTimelineViewModelImpl(
 
   override val htmlImageLoader = dataContext.htmlImageLoader
   override val avatarIconsProvider = dataContext.avatarIconsProvider
+
+  override val timelineItems: StateFlow<List<GHPRTimelineItem>>
 
   override val isLoading: StateFlow<Boolean> = callbackFlow {
     val disposable = Disposer.newDisposable()
@@ -117,6 +118,42 @@ internal class GHPRTimelineViewModelImpl(
     awaitClose { Disposer.dispose(disposable) }
   }.stateIn(cs, SharingStarted.Eagerly, timelineLoader.error)
 
+
+  init {
+    val timelineModel = GHPRTimelineMergingModel()
+    timelineModel.add(timelineLoader.loadedData)
+    timelineItems = MutableStateFlow(timelineModel.items.toList())
+
+    timelineLoader.addDataListener(cs.nestedDisposable(), object : GHListLoader.ListDataListener {
+      override fun onDataAdded(startIdx: Int) {
+        val loadedData = timelineLoader.loadedData
+        timelineModel.add(loadedData.subList(startIdx, loadedData.size))
+        timelineItems.value = timelineModel.getItemsList()
+      }
+
+      override fun onDataUpdated(idx: Int) {
+        val newItem = timelineLoader.loadedData[idx]
+        timelineModel.update(idx, newItem)
+        timelineItems.value = timelineModel.getItemsList()
+      }
+
+      override fun onDataRemoved(idx: Int) {
+        timelineModel.remove(idx)
+        timelineItems.value = timelineModel.getItemsList()
+      }
+
+      override fun onAllDataRemoved() {
+        timelineModel.removeAll()
+        timelineItems.value = timelineModel.getItemsList()
+        timelineLoader.loadMore()
+      }
+    })
+  }
+
+  override fun requestMore() {
+    timelineLoader.loadMore()
+  }
+
   override fun update() {
     if (timelineLoader.loadedData.isNotEmpty())
       timelineLoader.loadMore(true)
@@ -128,3 +165,10 @@ internal class GHPRTimelineViewModelImpl(
     reviewData.resetReviewThreads()
   }
 }
+
+private fun GHPRTimelineMergingModel.getItemsList(): List<GHPRTimelineItem> =
+  buildList {
+    for (i in 0 until getSize()) {
+      add(getElementAt(i))
+    }
+  }

@@ -5,7 +5,7 @@ import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHLabel
 import java.util.*
 
-class GHPRLabeledEvent(override val actor: GHActor?,
-                       override val createdAt: Date,
-                       val label: GHLabel)
+data class GHPRLabeledEvent(override val actor: GHActor?,
+                            override val createdAt: Date,
+                            val label: GHLabel)
   : GHPRTimelineEvent.Simple

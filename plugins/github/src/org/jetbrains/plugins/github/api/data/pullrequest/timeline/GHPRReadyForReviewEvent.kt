@@ -4,4 +4,4 @@ package org.jetbrains.plugins.github.api.data.pullrequest.timeline
 import org.jetbrains.plugins.github.api.data.GHActor
 import java.util.*
 
-class GHPRReadyForReviewEvent(override val actor: GHActor?, override val createdAt: Date) : GHPRTimelineEvent.Complex
+data class GHPRReadyForReviewEvent(override val actor: GHActor?, override val createdAt: Date) : GHPRTimelineEvent.Complex

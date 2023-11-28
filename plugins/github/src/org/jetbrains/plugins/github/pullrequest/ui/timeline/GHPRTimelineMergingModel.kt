@@ -9,7 +9,7 @@ import javax.swing.AbstractListModel
 import kotlin.math.max
 import kotlin.time.Duration.Companion.minutes
 
-class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
+internal class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
   private val unmergedList = mutableListOf<GHPRTimelineItem>()
   private val list = mutableListOf<GHPRTimelineItem>()
 
