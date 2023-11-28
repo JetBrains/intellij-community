@@ -29,9 +29,9 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
 
     result = super.validate(psiAnnotation, psiClass, problemSink);
 
-    if (!isForceConstructor(psiAnnotation)) {
+    if (result && !isForceConstructor(psiAnnotation)) {
       final String staticConstructorName = getStaticConstructorName(psiAnnotation);
-      result &= validateIsConstructorNotDefined(psiClass, staticConstructorName, Collections.emptyList(), problemSink);
+      result = validateIsConstructorNotDefined(psiClass, staticConstructorName, Collections.emptyList(), problemSink);
 
       if (problemSink.deepValidation()) {
         final Collection<PsiField> requiredFields = getRequiredFields(psiClass, true);

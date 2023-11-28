@@ -49,7 +49,7 @@ public final class UtilityClassProcessor extends AbstractClassProcessor {
     return true;
   }
 
-  public static boolean validateOnRightType(PsiClass psiClass, ProblemSink builder) {
+  public static boolean validateOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     if (checkWrongType(psiClass)) {
       builder.addErrorMessage("inspection.message.utility.class.only.supported.on.class");
       return false;
@@ -85,8 +85,8 @@ public final class UtilityClassProcessor extends AbstractClassProcessor {
     return modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC);
   }
 
-  private static boolean checkWrongType(PsiClass psiClass) {
-    return psiClass != null && (psiClass.isInterface() || psiClass.isEnum() || psiClass.isAnnotationType());
+  private static boolean checkWrongType(@NotNull PsiClass psiClass) {
+    return psiClass.isInterface() || psiClass.isEnum() || psiClass.isAnnotationType() || psiClass.isRecord();
   }
 
   @Override

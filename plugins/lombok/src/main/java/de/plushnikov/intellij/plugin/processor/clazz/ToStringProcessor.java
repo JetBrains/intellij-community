@@ -71,7 +71,7 @@ public final class ToStringProcessor extends AbstractClassProcessor {
   }
 
   private static void validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
-    if (psiClass.isAnnotationType() || psiClass.isInterface()) {
+    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isRecord()) {
       builder.addErrorMessage("inspection.message.to.string.only.supported.on.class.or.enum.type");
       builder.markFailed();
     }

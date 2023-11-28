@@ -143,7 +143,7 @@ public class BuilderHandler {
   }
 
   public boolean validate(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemSink problemSink) {
-    boolean result = validateAnnotationOnRightType(psiClass, psiAnnotation, problemSink);
+    boolean result = validateAnnotationOnRightType(psiClass, problemSink);
     if (result) {
       final Project project = psiAnnotation.getProject();
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation);
@@ -217,7 +217,7 @@ public class BuilderHandler {
 
   public boolean validate(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemSink problemSink) {
     final PsiClass psiClass = psiMethod.getContainingClass();
-    boolean result = null != psiClass;
+    boolean result = null!=psiClass && validateAnnotationOnRightType(psiClass, problemSink);
     if (result) {
       final String builderClassName = getBuilderClassName(psiClass, psiAnnotation, psiMethod);
 
@@ -286,11 +286,9 @@ public class BuilderHandler {
     return true;
   }
 
-  private static boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass,
-                                                       @NotNull PsiAnnotation psiAnnotation,
-                                                       @NotNull ProblemSink builder) {
+  boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addErrorMessage("inspection.message.s.can.be.used.on.classes.only", psiAnnotation.getQualifiedName());
+      builder.addErrorMessage("inspection.message.builder.can.be.used.only");
       return false;
     }
     return true;
