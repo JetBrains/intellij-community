@@ -18,20 +18,15 @@ package org.intellij.images.actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.SVGLoader;
 import org.intellij.images.fileTypes.impl.SvgFileType;
 import org.jetbrains.annotations.NotNull;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author Konstantin Bulenkov
@@ -42,16 +37,10 @@ public class ConvertSvgToPngAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile svgFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
-    try {
-      Image image = SVGLoader.load(new File(svgFile.getPath()).toURI().toURL(), 1f);
-      String path = svgFile.getPath();
-      File outputFile = new File(path + ".png");
-      ImageIO.write((BufferedImage)image, "png", outputFile);
-      VfsUtil.markDirtyAndRefresh(true, false, false, outputFile);
-    }
-    catch (IOException ex) {
-      LOG.error(ex);
-    }
+    String path = svgFile.getPath();
+    File inputFile = new File(svgFile.getPath());
+    File outputFile = new File(path + ".png");
+    ApplicationManager.getApplication().getService(ConvertSvgToPngService.class).convert(inputFile, outputFile);
   }
 
   @Override
