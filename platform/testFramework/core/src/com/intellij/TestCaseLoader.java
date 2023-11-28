@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
-import com.intellij.idea.Bombed;
 import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.idea.IgnoreJUnit3;
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URI;
@@ -450,19 +448,12 @@ public class TestCaseLoader {
     String className = testCaseClass.getName();
 
     return !myTestClassesFilter.matches(className, moduleName) ||
-           isBombed(testCaseClass) ||
            testCaseClass.isAnnotationPresent(IgnoreJUnit3.class) ||
            isExcludeFromTestDiscovery(testCaseClass);
   }
 
   private static boolean isExcludeFromTestDiscovery(Class<?> c) {
     return RUN_WITH_TEST_DISCOVERY && getAnnotationInHierarchy(c, ExcludeFromTestDiscovery.class) != null;
-  }
-
-  public static boolean isBombed(final AnnotatedElement element) {
-    final Bombed bombedAnnotation = element.getAnnotation(Bombed.class);
-    if (bombedAnnotation == null) return false;
-    return !TestFrameworkUtil.bombExplodes(bombedAnnotation);
   }
 
   public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {

@@ -2,7 +2,6 @@
 package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.idea.Bombed;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -79,23 +78,6 @@ public class TestAll implements Test {
     @Override
     public String describe() {
       return "All Except Performance";
-    }
-  };
-
-  private static final Filter NOT_BOMBED = new Filter() {
-    @Override
-    public boolean shouldRun(Description description) {
-      return !isBombed(description);
-    }
-
-    @Override
-    public String describe() {
-      return "Not @Bombed";
-    }
-
-    private static boolean isBombed(Description description) {
-      Bombed bombed = description.getAnnotation(Bombed.class);
-      return bombed != null && !TestFrameworkUtil.bombExplodes(bombed);
     }
   };
 
@@ -360,10 +342,6 @@ public class TestAll implements Test {
       if ((testCaseClass.getModifiers() & Modifier.PUBLIC) == 0) {
         return null;
       }
-      Bombed classBomb = testCaseClass.getAnnotation(Bombed.class);
-      if (classBomb != null && TestFrameworkUtil.bombExplodes(classBomb)) {
-        return new ExplodedBomb(testCaseClass.getName(), classBomb);
-      }
 
       Method suiteMethod = safeFindMethod(testCaseClass, "suite");
       if (suiteMethod != null && !isPerformanceTestsRun()) {
@@ -388,7 +366,7 @@ public class TestAll implements Test {
 
         JUnit4TestAdapter adapter = createJUnit4Adapter(testCaseClass);
         try {
-          adapter.filter(NOT_BOMBED.intersect(NOT_IGNORED).intersect(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE));
+          adapter.filter(NOT_IGNORED.intersect(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE));
         }
         catch (NoTestsRemainException ignored) {
         }
@@ -414,13 +392,7 @@ public class TestAll implements Test {
             if (method != null && method.getAnnotation(IgnoreJUnit3.class) != null) {
               return;
             }
-            Bombed methodBomb = method == null ? null : method.getAnnotation(Bombed.class);
-            if (methodBomb == null) {
-              doAddTest(test);
-            }
-            else if (TestFrameworkUtil.bombExplodes(methodBomb)) {
-              doAddTest(new ExplodedBomb(method.getDeclaringClass().getName() + "." + method.getName(), methodBomb));
-            }
+            doAddTest(test);
           }
         }
 
@@ -488,23 +460,6 @@ public class TestAll implements Test {
 
   private static void log(String message) {
     TeamCityLogger.info(message);
-  }
-
-  @SuppressWarnings({"JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention", "JUnitTestCaseWithNonTrivialConstructors",
-    "UnconstructableJUnitTestCase"})
-  private static class ExplodedBomb extends TestCase {
-    private final Bombed myBombed;
-
-    ExplodedBomb(@NotNull String testName, @NotNull Bombed bombed) {
-      super(testName);
-      myBombed = bombed;
-    }
-
-    @Override
-    protected void runTest() throws Throwable {
-      String description = myBombed.description().isEmpty() ? "" : " (" + myBombed.description() + ")";
-      fail("Bomb created by " + myBombed.user() + description + " now explodes!");
-    }
   }
 
   @Override
