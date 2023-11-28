@@ -205,7 +205,7 @@ public class ID<K, V> extends IndexId<K,V> {
       ID<?, ?> oldID = idObjects.remove(name);
       LOG.assertTrue(id.equals(oldID), "Failed to unload: " + name);
       idToPluginId = idToPluginId.without(id);
-      idToRegistrationStackTrace.without(id);
+      idToRegistrationStackTrace = idToRegistrationStackTrace.without(id);
     }
   }
 }
