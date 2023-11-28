@@ -1,10 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.CommonBundle
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.nestedDisposable
-import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.*
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
@@ -19,7 +17,6 @@ import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFiel
 import com.intellij.collaboration.ui.util.bindTextHtmlIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
-import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
@@ -170,17 +167,11 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
     val textPane = SimpleHtmlPane(customImageLoader = timelineVm.htmlImageLoader).apply {
       bindTextIn(cs, loadedDetailsState.mapState { it.descriptionHtml ?: noDescriptionHtmlText })
     }
-    val detailsVm = timelineVm.detailsVm
-    val contentPane = EditableComponentFactory.create(cs, textPane, detailsVm.descriptionEditVm) { editVm ->
-      val actions = createEditActionsConfig(editVm)
-      val editor = CodeReviewCommentTextFieldFactory.createIn(this, editVm, actions)
-      editVm.requestFocus()
-      editor
-    }
+    val contentPane = EditableComponentFactory.wrapTextComponent(cs, textPane, timelineVm.detailsVm.descriptionEditVm)
 
     val actionsPanel = if (canEdit) HorizontalListPanel(CodeReviewCommentUIUtil.Actions.HORIZONTAL_GAP).apply {
       add(CodeReviewCommentUIUtil.createEditButton {
-        detailsVm.editDescription()
+        timelineVm.detailsVm.editDescription()
       })
     }
     else null
@@ -230,18 +221,6 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
       .wrapWith("i")
       .toString()
   }
-
-  private fun CoroutineScope.createEditActionsConfig(editVm: GHPREditDescriptionViewModel): CommentInputActionsComponentFactory.Config =
-    CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(editVm.submitActionIn(this, CollaborationToolsBundle.message("review.comment.save")) {
-        save()
-      }),
-      cancelAction = MutableStateFlow(swingAction(CommonBundle.getCancelButtonText()) {
-        editVm.cancelEditing()
-      }),
-      submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comment.save.hint",
-                                                                     CommentInputActionsComponentFactory.submitShortcutText))
-    )
 
   private inner class ErrorPresenter : ErrorStatusPresenter<Throwable> {
     override fun getErrorTitle(error: Throwable): String = GithubBundle.message("pull.request.timeline.cannot.load")

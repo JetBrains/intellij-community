@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
 import com.intellij.collaboration.ui.codereview.comment.submitActionIn
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -30,9 +31,10 @@ interface GitLabNoteEditingViewModel : CodeReviewSubmittableTextViewModel {
     internal fun forExistingNote(
       parentCs: CoroutineScope,
       project: Project,
-      note: MutableGitLabNote
-    ): ExistingGitLabNoteEditingViewModel =
-      GitLabNoteEditingViewModelImpl(project, parentCs, note)
+      note: MutableGitLabNote,
+      onStopEditing: () -> Unit
+    ): CodeReviewTextEditingViewModel =
+      GitLabNoteEditingViewModelImpl(project, parentCs, note, onStopEditing)
 
     internal fun forNewNote(
       parentCs: CoroutineScope,
@@ -69,14 +71,19 @@ abstract class AbstractGitLabNoteEditingViewModel(
   override suspend fun destroy() = cs.cancelAndJoinSilently()
 }
 
-interface ExistingGitLabNoteEditingViewModel : GitLabNoteEditingViewModel {
-  fun save()
-}
-
-private class GitLabNoteEditingViewModelImpl(project: Project, parentCs: CoroutineScope, private val note: MutableGitLabNote)
-  : AbstractGitLabNoteEditingViewModel(project, parentCs, note.body.value), ExistingGitLabNoteEditingViewModel {
+private class GitLabNoteEditingViewModelImpl(project: Project, parentCs: CoroutineScope,
+                                             private val note: MutableGitLabNote,
+                                             private val onStopEditing: () -> Unit)
+  : AbstractGitLabNoteEditingViewModel(project, parentCs, note.body.value), CodeReviewTextEditingViewModel {
   override fun save() {
-    submit(note::setBody)
+    submit {
+      note.setBody(it)
+      stopEditing()
+    }
+  }
+
+  override fun stopEditing() {
+    onStopEditing()
   }
 }
 
@@ -160,7 +167,7 @@ private class NewReplyGitLabNoteViewModel(project: Project,
   override suspend fun doSubmitAsDraft(text: String) = discussion.addDraftNote(text)
 }
 
-fun GitLabNoteEditingViewModel.onDoneIn(cs: CoroutineScope, callback: suspend () -> Unit) {
+fun CodeReviewSubmittableTextViewModel.onDoneIn(cs: CoroutineScope, callback: suspend () -> Unit) {
   cs.launch {
     state.filter { state ->
       state?.isSuccess == true
@@ -168,13 +175,6 @@ fun GitLabNoteEditingViewModel.onDoneIn(cs: CoroutineScope, callback: suspend ()
       callback()
     }
   }
-}
-
-internal fun ExistingGitLabNoteEditingViewModel.saveActionIn(cs: CoroutineScope, actionName: @Nls String,
-                                                             project: Project, place: GitLabStatistics.MergeRequestNoteActionPlace)
-  : Action = submitActionIn(cs, actionName) {
-    save()
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE, place)
 }
 
 internal enum class NewGitLabNoteType {

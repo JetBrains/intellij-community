@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
+import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -69,6 +70,8 @@ class GHPRDetailsTimelineViewModel internal constructor(private val project: Pro
         it?.dispose()
         null
       }
+    }.apply {
+      requestFocus()
     }
   }
 }
@@ -78,19 +81,15 @@ class GHPREditDescriptionViewModel(project: Project,
                                    private val detailsData: GHPRDetailsDataProvider,
                                    initialText: String,
                                    private val onDone: () -> Unit)
-  : CodeReviewSubmittableTextViewModelBase(project, parentCs, initialText) {
-  fun save() {
+  : CodeReviewSubmittableTextViewModelBase(project, parentCs, initialText), CodeReviewTextEditingViewModel {
+  override fun save() {
     submit {
       detailsData.updateDetails(EmptyProgressIndicator(), description = it).await()
       onDone()
     }
   }
 
-  fun cancelEditing() {
-    onDone()
-  }
+  override fun stopEditing() = onDone()
 
-  internal fun dispose() {
-    cs.cancel()
-  }
+  internal fun dispose() = cs.cancel()
 }

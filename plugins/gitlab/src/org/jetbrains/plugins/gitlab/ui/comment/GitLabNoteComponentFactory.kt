@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
-import com.intellij.CommonBundle
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.EditableComponentFactory
@@ -9,14 +8,11 @@ import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
-import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
-import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindDisabledIn
 import com.intellij.collaboration.ui.util.bindTextIn
-import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -40,11 +36,8 @@ internal object GitLabNoteComponentFactory {
 
     val actionsVm = vm.actionsVm
     val contentPanel = if (actionsVm != null) {
-      EditableComponentFactory.create(cs, textPanel, actionsVm.editVm) { editVm ->
-        val actions = createEditActionsConfig(actionsVm, editVm, project, place)
-        val editor = CodeReviewCommentTextFieldFactory.createIn(this, editVm, actions)
-        editVm.requestFocus()
-        editor
+      EditableComponentFactory.wrapTextComponent(cs, textPanel, actionsVm.editVm) {
+        GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE, place)
       }
     }
     else {
@@ -136,17 +129,4 @@ internal object GitLabNoteComponentFactory {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       bindTextIn(cs, textFlow)
     }
-
-  fun CoroutineScope.createEditActionsConfig(actionsVm: GitLabNoteAdminActionsViewModel,
-                                             editVm: ExistingGitLabNoteEditingViewModel,
-                                             project: Project,
-                                             place: GitLabStatistics.MergeRequestNoteActionPlace): CommentInputActionsComponentFactory.Config =
-    CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(editVm.saveActionIn(this, CollaborationToolsBundle.message("review.comment.save"), project, place)),
-      cancelAction = MutableStateFlow(swingAction(CommonBundle.getCancelButtonText()) {
-        actionsVm.stopEditing()
-      }),
-      submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comment.save.hint",
-                                                                     CommentInputActionsComponentFactory.submitShortcutText))
-    )
 }

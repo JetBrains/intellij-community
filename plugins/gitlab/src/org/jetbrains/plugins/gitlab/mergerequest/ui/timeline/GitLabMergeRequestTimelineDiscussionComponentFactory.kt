@@ -10,7 +10,6 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies
-import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
@@ -36,11 +35,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
-import org.jetbrains.plugins.gitlab.ui.comment.ExistingGitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionComponentFactory
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteAdminActionsViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory.createEditActionsConfig
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.awt.event.ActionEvent
@@ -68,13 +64,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }.let {
       VerticalListPanel().apply {
         add(it)
-
-        val combinedReplyVms = vm.replyVm
-          .flatMapLatest { replyVm -> replyVm?.newNoteVm?.map { replyVm to it } ?: flowOf(null to null) }
-
-        bindChildIn(cs, combinedReplyVms) { (replyVm, newNoteVm) ->
-          if (replyVm == null) return@bindChildIn null
-
+        bindChildIn(cs, vm.replyVm.flatMapLatest { it?.newNoteVm ?: flowOf(null) }) { newNoteVm ->
           newNoteVm?.let {
             GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, this, it, vm.resolveVm,
                                                               avatarIconsProvider, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
@@ -125,18 +115,10 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }
     val textPanel = createDiscussionTextPane(cs, vm)
 
-    // oh well... probably better to make a suitable API in EditableComponentFactory, but that would look ugly
-    val actionAndEditVmsFlow: Flow<Pair<GitLabNoteAdminActionsViewModel, ExistingGitLabNoteEditingViewModel>?> =
-      mainNoteVm.flatMapLatest { note ->
-        val actionsVm = note.actionsVm
-        actionsVm?.editVm?.map { it?.let { actionsVm to it } } ?: flowOf(null)
-      }
-
-    val textContentPanel = EditableComponentFactory.create(cs, textPanel, actionAndEditVmsFlow) { (actionsVm, editVm) ->
-      val actions = createEditActionsConfig(actionsVm, editVm, project, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
-      val editor = CodeReviewCommentTextFieldFactory.createIn(this, editVm, actions)
-      editVm.requestFocus()
-      editor
+    val editVmFlow = mainNoteVm.flatMapLatest { it.actionsVm?.editVm ?: flowOf(null) }
+    val textContentPanel = EditableComponentFactory.wrapTextComponent(cs, textPanel, editVmFlow) {
+      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE,
+                                           GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
     }.let {
       wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     }
