@@ -87,7 +87,14 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     ): PsiElement {
         val expression = simpleNameReference.expression
         if (fqName.isRoot) return expression
-        val writableFqn = if (fqName.pathSegments().last().asString() == "Companion") fqName.parent() else fqName
+        val parent = expression.parent
+        val writableFqn = if (parent is KtCallableReferenceExpression && parent.callableReference == expression) {
+            FqName.topLevel(fqName.shortName())
+        } else if (fqName.pathSegments().last().asString() == "Companion") {
+            fqName.parent()
+        } else {
+            fqName
+        }
         val importDirective = expression.parentOfType<KtImportDirective>(withSelf = false)
         if (importDirective != null) return importDirective.replaceWith(writableFqn) ?: expression
         val shorten = shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING
