@@ -48,6 +48,11 @@ private fun <T : CommandChain> T.appendRawLine(line: String): T = apply {
   addCommand(line)
 }
 
+fun <T : CommandChain> T.verifyFileEncoding(relativePath: String,
+                                            expectedCharsetName: String): T = apply {
+  addCommand("${CMD_PREFIX}assertEncodingFileCommand", relativePath, expectedCharsetName)
+}
+
 fun <T : CommandChain> T.openFile(relativePath: String,
                                   timeoutInSeconds: Long = 0,
                                   suppressErrors: Boolean = false,
@@ -740,7 +745,8 @@ fun <T : CommandChain> T.stopNameSuggestionBenchmark(reportPath: String): T = ap
 }
 
 fun <T : CommandChain> T.registerCompletionMockResponse(code: String, language: String): T = apply {
-  addCommand("${CMD_PREFIX}registerCompletionMockResponse -code ${code.replace(System.lineSeparator(), "<newLine>")} | -language ${language}")
+  addCommand(
+    "${CMD_PREFIX}registerCompletionMockResponse -code ${code.replace(System.lineSeparator(), "<newLine>")} | -language ${language}")
 }
 
 fun <T : CommandChain> T.waitInlineCompletion(): T = apply {
