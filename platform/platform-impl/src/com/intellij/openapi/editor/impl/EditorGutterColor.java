@@ -3,10 +3,12 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.ui.ExperimentalUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class EditorGutterColor {
   private EditorGutterColor() {
   }
