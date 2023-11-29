@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -9,7 +9,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a property as required in EP declaration.
+ * Marks a property as required in an Extension Point bean declaration.
+ * <p/>
+ * An empty value ({@code attributeName=""}) can be allowed explicitly via {@link #allowEmpty()}.
  *
  * @see Attribute
  */
