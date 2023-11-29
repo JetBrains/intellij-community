@@ -31,7 +31,7 @@ public class GrCopyStringConcatenationContentIntentionTest extends GrIntentionTe
     ModCommandAction action = intention.asModCommandAction();
     assertNotNull(action);
     ModCommand command = action.perform(myFixture.getActionContext());
-    assertEquals(new ModCopyToClipboard("hello world"), command);
+    assertEquals(ModCommand.copyToClipboard("hello world"), command);
   }
 
   public void testCopyLiteral() {
@@ -44,6 +44,6 @@ public class GrCopyStringConcatenationContentIntentionTest extends GrIntentionTe
     ModCommandAction action = intention.asModCommandAction();
     assertNotNull(action);
     ModCommand command = action.perform(myFixture.getActionContext());
-    assertEquals(new ModCopyToClipboard("hello world"), command);
+    assertEquals(ModCommand.copyToClipboard("hello world"), command);
   }
 }

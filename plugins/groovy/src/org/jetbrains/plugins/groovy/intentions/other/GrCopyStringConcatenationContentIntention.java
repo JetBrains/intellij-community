@@ -47,7 +47,7 @@ public class GrCopyStringConcatenationContentIntention extends PsiBasedModComman
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull GrExpression element) {
     final StringBuilder buffer = new StringBuilder();
     getValue(element, buffer);
-    return new ModCopyToClipboard(buffer.toString());
+    return ModCommand.copyToClipboard(buffer.toString());
   }
 
   @Override
