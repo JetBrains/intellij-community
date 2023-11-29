@@ -5,12 +5,10 @@ import com.intellij.application.options.EditorFontsConstants
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.terminal.JBTerminalWidget
-import java.util.function.Supplier
 
-sealed class TerminalChangeFontSizeAction(text: Supplier<String?>, private val myStep: Float) : DumbAwareAction(text), LightEditCompatible {
+sealed class TerminalChangeFontSizeAction(private val myStep: Float) : DumbAwareAction(), LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
     val terminalWidget = getTerminalWidget(e)
     if (terminalWidget != null) {
@@ -29,9 +27,9 @@ sealed class TerminalChangeFontSizeAction(text: Supplier<String?>, private val m
     return ActionUpdateThread.BGT
   }
 
-  class IncreaseEditorFontSize : TerminalChangeFontSizeAction(EditorBundle.messagePointer("increase.editor.font"), 1f)
+  class IncreaseEditorFontSize : TerminalChangeFontSizeAction(1f)
 
-  class DecreaseEditorFontSize : TerminalChangeFontSizeAction(EditorBundle.messagePointer("decrease.editor.font"), -1f)
+  class DecreaseEditorFontSize : TerminalChangeFontSizeAction(-1f)
 
   companion object {
     fun getTerminalWidget(e: AnActionEvent): JBTerminalWidget? {

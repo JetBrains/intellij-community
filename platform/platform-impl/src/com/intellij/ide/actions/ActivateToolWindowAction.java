@@ -53,6 +53,7 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
     AnAction action = actionManager.getAction(actionId);
     if (action == null) {
       actionManager.registerAction(actionId, new ActivateToolWindowAction(toolWindow.getId()));
+      updateToolWindowActionPresentation(toolWindow);
     }
   }
 
