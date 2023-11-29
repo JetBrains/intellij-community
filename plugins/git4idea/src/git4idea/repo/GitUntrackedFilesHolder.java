@@ -133,7 +133,7 @@ public class GitUntrackedFilesHolder implements Disposable {
     synchronized (LOCK) {
       if (myEverythingDirty) return;
       for (FilePath filePath : files) {
-        if (myIgnoredFiles.contains(filePath) ||
+        if (myIgnoredFiles.containsExplicitly(filePath) ||
             !myIgnoredFiles.hasAncestor(filePath)) {
           myDirtyFiles.add(filePath);
         }
