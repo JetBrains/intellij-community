@@ -18,8 +18,6 @@ interface ObjModule : Obj {
 
   val extensions: List<ExtProperty<*, *>>
 
-  val explicitApiEnabled: Boolean
-
   /**
    * Example: `com.intellij.platform.workspace.storage.obj.intellijWs`
    * will be parsed as:
