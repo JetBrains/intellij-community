@@ -14,7 +14,6 @@ import org.jetbrains.jps.dependency.impl.Containers;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -332,25 +331,9 @@ public final class Utils {
     return Boolean.FALSE;
   }
 
-
-  public static <K, V> Function<K, V> cachingFunction(Function<K, V> f) {
-    return new Function<>() {
-      private final Map<K, V> cache = new HashMap<>();
-      @Override
-      public V apply(K k) {
-        return cache.computeIfAbsent(k, f);
-      }
-    };
-  }
-
-  public static <K, V> Function<K, V> cachingFunction(Function<K, V> f, final BiFunction<? super K, ? super K, Boolean> keyEqualsImpl, final Function<? super K, Integer> keyHashImpl) {
-    return new Function<>() {
-      private final Map<K, V> cache = Containers.createCustomPolicyMap(keyEqualsImpl, keyHashImpl);
-      @Override
-      public V apply(K k) {
-        return cache.computeIfAbsent(k, f);
-      }
-    };
+  private static <K, V> Function<K, V> cachingFunction(Function<K, V> f) {
+    Map<K, V> cache = new HashMap<>();
+    return k -> cache.computeIfAbsent(k, f);
   }
 
   public static <V> Iterators.Provider<V> lazyValue(Iterators.Provider<V> provider) {

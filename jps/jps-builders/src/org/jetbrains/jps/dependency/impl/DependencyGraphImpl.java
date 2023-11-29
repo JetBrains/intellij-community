@@ -8,7 +8,6 @@ import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.ClassShortNameIndex;
 import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
-import org.jetbrains.jps.dependency.java.Utils;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
@@ -165,20 +164,21 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     }
 
     Iterable<ReferenceID> changedScopeNodes = Iterators.unique(Iterators.flat(Iterators.map(nodesAfter, n -> n.getReferenceID()), Iterators.map(diffContext.affectedUsages.keySet(), u -> u.getElementOwner())));
+
+    Map<Node<?, ?>, Boolean> affectedNodeCache = Containers.createCustomPolicyMap(DiffCapable::isSame, DiffCapable::diffHashCode);
+    Function<Node<?, ?>, Boolean> checkAffected = k -> affectedNodeCache.computeIfAbsent(k, n -> {
+      if (!diffContext.isNodeAffected(n)) {
+        return Boolean.FALSE;
+      }
+      for (DifferentiateStrategy strategy : ourDifferentiateStrategies) {
+        if (!strategy.isIncremental(diffContext, n)) {
+          return null;
+        }
+      }
+      return Boolean.TRUE;
+    });
+
     for (ReferenceID dependent : Iterators.unique(Iterators.filter(Iterators.flat(Iterators.map(changedScopeNodes, id -> getDependingNodes(id))), id -> !dependingOnDeleted.contains(id)))) {
-
-      Function<Node<?, ?>, Boolean> checkAffected = Utils.cachingFunction(n -> {
-        if (!diffContext.isNodeAffected(n)) {
-          return Boolean.FALSE;
-        }
-        for (DifferentiateStrategy strategy : ourDifferentiateStrategies) {
-          if (!strategy.isIncremental(diffContext, n)) {
-            return null;
-          }
-        }
-        return Boolean.TRUE;
-      }, DiffCapable::isSame, DiffCapable::diffHashCode);
-
       for (NodeSource depSrc : getSources(dependent)) {
         if (!affectedSources.contains(depSrc)) {
           boolean affectSource = false;
