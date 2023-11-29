@@ -123,3 +123,97 @@ class OrdinaryClassWithClassQualifier {
     }
   }
 }
+
+class Outer {
+  public void main(String[] args) {
+    Inner inner = new Inner();
+  }
+  void foo() {
+    System.out.println("Outer");
+  }
+
+  class Inner extends Outer {
+    final String s;
+
+    Inner() {
+      Outer.this.foo();
+      this.s = "hello";
+    }
+
+    @Override
+    void foo() {
+      System.out.println("Inner");
+      System.out.println(s  .trim());
+    }
+  }
+}
+
+class SuperTest {
+  public static void main(String[] args) {
+    new Child();
+  }
+  public SuperTest() {
+    init();
+  }
+
+  protected void init() {
+  }
+
+  static class Child extends SuperTest {
+    String t;
+
+    public Child() {
+      super();
+      check();
+    }
+
+    @Override
+    protected void init() {
+      t = "init";
+    }
+
+    private void check() {
+      System.out.println(t.length());
+    }
+  }
+}
+
+
+class ChainWithOneTarget {
+  private final String t;
+
+  public ChainWithOneTarget() {
+    this("test");
+  }
+
+  public ChainWithOneTarget(String t) {
+    test();
+    this.t = t;
+  }
+
+  private void test() {
+    System.out.println(t.<warning descr="Method invocation 'length' may produce 'NullPointerException'">length</warning>());
+  }
+}
+
+class ChainWithTwoTarget {
+  private final String t;
+
+  public ChainWithTwoTarget() {
+    this("test");
+    test();
+  }
+
+  public ChainWithTwoTarget(String t) {
+    this.t = t;
+  }
+
+  public ChainWithTwoTarget(String t, int i) {
+    this.t = t;
+    test();
+  }
+
+  private void test() {
+    System.out.println(t.length());
+  }
+}
