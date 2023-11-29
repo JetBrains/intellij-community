@@ -3,7 +3,6 @@ package git4idea.rebase.log
 
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
-import com.intellij.openapi.components.service
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.ui.dsl.builder.Panel
 import git4idea.config.GitVcsApplicationSettings
@@ -11,7 +10,7 @@ import git4idea.i18n.GitBundle
 
 class GitLogCommitEditingConfigurable : UiDslUnnamedConfigurable.Simple() {
   override fun Panel.createContent() {
-    val settings = service<GitVcsApplicationSettings>()
+    val settings = GitVcsApplicationSettings.getInstance()
 
     row {
       checkBox(CheckboxDescriptor(

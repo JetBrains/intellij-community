@@ -8,7 +8,6 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -139,6 +138,6 @@ open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable cons
 
     @JvmStatic
     fun getInstanceBase(): ApplicationInspectionProfileManagerBase =
-      service<InspectionProfileManager>() as ApplicationInspectionProfileManagerBase
+      InspectionProfileManager.getInstance() as ApplicationInspectionProfileManagerBase
   }
 }

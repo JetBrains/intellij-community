@@ -3,7 +3,6 @@ package com.intellij.vcs.log.data
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
@@ -96,7 +95,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     }
 
     override fun cancel() {
-      val bigRepositoriesList = service<VcsLogBigRepositoriesList>()
+      val bigRepositoriesList = VcsLogBigRepositoriesList.getInstance()
       roots.forEach { bigRepositoriesList.addRepository(it) }
       text2 = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.cancelling")
       LOG.info("Indexing for ${roots.map { it.presentableUrl }} was cancelled from the status bar.")
