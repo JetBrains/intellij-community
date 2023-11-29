@@ -99,27 +99,40 @@ public final class VfsEventsMerger {
   @VisibleForTesting
   public boolean processChanges(@NotNull VfsEventProcessor eventProcessor) {
     if (!myChangeInfos.isEmpty()) {
-      int[] fileIds = myChangeInfos.keys(); // snapshot of the keys
-      for (int fileId : fileIds) {
-        ProgressManager.checkCanceled();
-        ChangeInfo info = myChangeInfos.remove(fileId);
-        if (info == null) continue;
+      Throwable interruptReason = null;
 
-        try {
-          if (LOG != null) {
-            LOG.info("Processing " + info);
+      try {
+        int[] fileIds = myChangeInfos.keys(); // snapshot of the keys
+        for (int fileId : fileIds) {
+          ProgressManager.checkCanceled();
+          ChangeInfo info = myChangeInfos.remove(fileId);
+          if (info == null) continue;
+
+          try {
+            if (LOG != null) {
+              LOG.info("Processing " + info);
+            }
+            if (!eventProcessor.process(info)) {
+              eventProcessor.endBatch();
+              return false;
+            }
           }
-          if (!eventProcessor.process(info)) {
-            eventProcessor.endBatch();
-            return false;
+          catch (ProcessCanceledException pce) { // todo remove
+            ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(pce);
+            assert false;
           }
         }
-        catch (ProcessCanceledException pce) { // todo remove
-          ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(pce);
-          assert false;
+        eventProcessor.endBatch();
+      }
+      catch (Throwable t) {
+        interruptReason = t;
+        throw t;
+      }
+      finally {
+        if (LOG != null) {
+          LOG.info("Processing " + (interruptReason != null ? "interrupted: " + interruptReason : "finished"));
         }
       }
-      eventProcessor.endBatch();
     }
     return true;
   }
