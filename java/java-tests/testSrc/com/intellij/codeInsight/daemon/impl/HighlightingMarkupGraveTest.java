@@ -120,18 +120,9 @@ public class HighlightingMarkupGraveTest extends DaemonAnalyzerTestCase {
     // (to make sure the DocumentMarkupModel is really recreated and populated with stored highlighters, not preserved since the previous highlighting run)
     FileDocumentManager.getInstance().saveAllDocuments();
     FileEditorManager.getInstance(myProject).closeFile(virtualFile);
-
-    try {
-      // wait markup stored
-      HighlightingMarkupStore.getExecutor().submit(() -> {}).get();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
     getProject().getService(HighlightingMarkupGrave.class).clearResurrectedZombies();
 
     myFile = null;
-
     myEditor = null;
     TestTimeOut t = TestTimeOut.setTimeout(100 * 2, TimeUnit.MILLISECONDS);
     while (!t.isTimedOut()) {

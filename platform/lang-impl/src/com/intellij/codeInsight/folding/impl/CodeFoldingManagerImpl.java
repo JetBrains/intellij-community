@@ -54,7 +54,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   public CodeFoldingManagerImpl(Project project) {
     myProject = project;
-    myFoldingGrave = FoldingModelGrave.Companion.getInstance(project);
+    myFoldingGrave = project.getService(FoldingModelGrave.class);
     myFoldingGrave.subscribeFileClosed();
 
     LanguageFolding.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {

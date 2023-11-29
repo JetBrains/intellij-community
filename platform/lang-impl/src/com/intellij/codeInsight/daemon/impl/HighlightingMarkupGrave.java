@@ -1,14 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector;
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.MarkupGraveEvent;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,6 +19,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorCache;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -29,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.io.IOUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -47,7 +47,7 @@ import static com.intellij.util.io.DataInputOutputUtil.writeINT;
  * to reduce the "opened editor-to-some highlighting shown" perceived interval.
  */
 @Service(Service.Level.PROJECT)
-final class HighlightingMarkupGrave implements Disposable {
+final class HighlightingMarkupGrave {
   private static final Logger LOG = Logger.getInstance(HighlightingMarkupGrave.class);
   private static final Key<Boolean> IS_ZOMBIE = Key.create("IS_ZOMBIE");
 
@@ -55,13 +55,13 @@ final class HighlightingMarkupGrave implements Disposable {
   private final @NotNull ConcurrentIntObjectMap<Boolean> myResurrectedZombies; // fileId -> isMarkupModelPreferable
   private final @NotNull HighlightingMarkupStore myMarkupStore;
 
-  HighlightingMarkupGrave(@NotNull Project project) {
+  HighlightingMarkupGrave(@NotNull Project project, @NotNull CoroutineScope scope) {
     // check that important TextAttributesKeys are initialized
     assert DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey() != null : DefaultLanguageHighlighterColors.INSTANCE_FIELD;
 
     myProject = project;
     myResurrectedZombies = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
-    myMarkupStore = HighlightingMarkupStore.create(project);
+    myMarkupStore = new HighlightingMarkupStore(project, scope);
 
     subscribeDaemonFinished();
     subscribeFileClosed();
@@ -215,7 +215,7 @@ final class HighlightingMarkupGrave implements Disposable {
       return;
     }
     EditorColorsScheme colorsScheme = textEditor.getEditor().getColorsScheme();
-    HighlightingMarkupStore.getExecutor().execute(() -> {
+    myMarkupStore.executeAsync(() -> {
       ReadAction.run(() -> {
         FileMarkupInfo markupFromModel = getMarkupFromModel(document, colorsScheme);
         FileMarkupInfo storedMarkup = myMarkupStore.getMarkup(fileWithId);
@@ -249,12 +249,6 @@ final class HighlightingMarkupGrave implements Disposable {
       contentHash(document),
       HighlighterState.allHighlightersFromMarkup(myProject, document, colorsScheme)
     );
-  }
-
-  @Override
-  public void dispose() {
-    // TODO: it is not allowed to close on EDT
-    myMarkupStore.close(false);
   }
 
   record FileMarkupInfo(int contentHash, @NotNull List<@NotNull HighlighterState> highlighters) {
@@ -468,7 +462,7 @@ final class HighlightingMarkupGrave implements Disposable {
   }
 
   private static int contentHash(@NotNull Document document) {
-    return Hashing.komihash5_0().hashCharsToInt(document.getImmutableCharSequence());
+    return TextEditorCache.Companion.contentHash(document);
   }
 
   private void logFusStatistic(@NotNull VirtualFileWithId file, @NotNull MarkupGraveEvent event) {

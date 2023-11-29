@@ -1649,7 +1649,7 @@
 
     <cachesInvalidator implementation="com.intellij.ide.ui.IconCacheInvalidator"/>
 
-    <cachesInvalidator implementation="com.intellij.openapi.fileEditor.impl.text.foldingGrave.MarkupCacheInvalidator$InvalidationRequest"/>
+    <cachesInvalidator implementation="com.intellij.openapi.fileEditor.impl.text.TextEditorCacheInvalidator$InvalidationRequest"/>
 
     <diagnostic.freezeProfiler implementation="com.intellij.diagnostic.opentelemetry.OTelMetricsFreezeProfiler"/>
 

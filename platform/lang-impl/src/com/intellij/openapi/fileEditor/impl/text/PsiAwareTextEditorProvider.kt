@@ -23,7 +23,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.createAsyncEditorLoader
-import com.intellij.openapi.fileEditor.impl.text.foldingGrave.MarkupCacheInvalidator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
@@ -59,7 +58,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
     return coroutineScope {
       val markupCacheInvalidated = async(CoroutineName("markup cache invalidation")) {
-        serviceAsync<MarkupCacheInvalidator>().cleanCacheIfNeeded()
+        serviceAsync<TextEditorCacheInvalidator>().cleanCacheIfNeeded()
       }
 
       val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
