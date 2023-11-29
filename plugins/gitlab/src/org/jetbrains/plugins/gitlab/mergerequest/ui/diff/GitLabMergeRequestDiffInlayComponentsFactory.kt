@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.ui.comment.*
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.JComponent
 
@@ -50,12 +51,16 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
         onCancel()
       }
     }
+    val primaryAction = vm.primarySubmitActionIn(cs, addAction, addAsDraftAction)
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = vm.primarySubmitActionIn(cs, addAction, addAsDraftAction),
+      primaryAction = primaryAction,
       secondaryActions = vm.secondarySubmitActionIn(cs, addAction, addAsDraftAction),
       cancelAction = MutableStateFlow(cancelAction),
-      submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comment.hint",
-                                                                     CommentInputActionsComponentFactory.submitShortcutText))
+      submitHint = MutableStateFlow(
+        if (primaryAction == addAction)
+          CollaborationToolsBundle.message("review.comment.hint", CommentInputActionsComponentFactory.submitShortcutText)
+        else
+          GitLabBundle.message("merge.request.details.action.draft.comment.hint", CommentInputActionsComponentFactory.submitShortcutText))
     )
 
     val itemType = CodeReviewChatItemUIUtil.ComponentType.COMPACT

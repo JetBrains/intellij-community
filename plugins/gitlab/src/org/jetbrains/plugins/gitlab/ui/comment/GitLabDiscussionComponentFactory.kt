@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.Action
 import javax.swing.JComponent
@@ -97,13 +98,17 @@ internal object GitLabDiscussionComponentFactory {
     val addAsDraftAction = vm.submitAsDraftActionIn(cs, CollaborationToolsBundle.message("review.comments.save-as-draft.action"),
                                                     project, NewGitLabNoteType.REPLY, place)
 
+    val primaryAction = vm.primarySubmitActionIn(cs, addAction, addAsDraftAction)
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = vm.primarySubmitActionIn(cs, addAction, addAsDraftAction),
+      primaryAction = primaryAction,
       secondaryActions = vm.secondarySubmitActionIn(cs, addAction, addAsDraftAction),
       additionalActions = MutableStateFlow(listOfNotNull(resolveAction)),
       cancelAction = MutableStateFlow(cancelAction),
-      submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
-                                                                     CommentInputActionsComponentFactory.submitShortcutText))
+      submitHint = MutableStateFlow(
+        if (primaryAction == addAction)
+          CollaborationToolsBundle.message("review.comments.reply.hint", CommentInputActionsComponentFactory.submitShortcutText)
+        else
+          GitLabBundle.message("merge.request.details.action.draft.reply.hint", CommentInputActionsComponentFactory.submitShortcutText))
     )
     val icon = CommentTextFieldFactory.IconConfig.of(componentType, iconsProvider, vm.currentUser)
 

@@ -29,7 +29,6 @@ import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.StyleSheetUtil
-import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -114,11 +113,15 @@ internal object GitLabMergeRequestTimelineComponentFactory {
                                                         project, NewGitLabNoteType.STANDALONE,
                                                         GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
 
+    val primaryAction = editVm.primarySubmitActionIn(noteCs, addAction, addAsDraftAction)
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = editVm.primarySubmitActionIn(noteCs, addAction, addAsDraftAction),
+      primaryAction = primaryAction,
       secondaryActions = editVm.secondarySubmitActionIn(noteCs, addAction, addAsDraftAction),
-      submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
-                                                                     CommentInputActionsComponentFactory.submitShortcutText))
+      submitHint = MutableStateFlow(
+        if (primaryAction == addAction)
+          CollaborationToolsBundle.message("review.comment.hint", CommentInputActionsComponentFactory.submitShortcutText)
+        else
+          GitLabBundle.message("merge.request.details.action.draft.reply.hint", CommentInputActionsComponentFactory.submitShortcutText))
     )
 
     val itemType = ComponentType.FULL
