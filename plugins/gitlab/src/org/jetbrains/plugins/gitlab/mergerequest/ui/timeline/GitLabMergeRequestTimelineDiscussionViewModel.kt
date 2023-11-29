@@ -33,7 +33,7 @@ interface GitLabMergeRequestTimelineDiscussionViewModel :
   val repliesFolded: Flow<Boolean>
 
   val resolveVm: GitLabDiscussionResolveViewModel?
-  val replyVm: Flow<GitLabDiscussionReplyViewModel?>
+  val replyVm: StateFlow<NewGitLabNoteViewModel?>
 
   fun setRepliesFolded(folded: Boolean)
 }
@@ -77,10 +77,10 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   private val _collapsed: MutableStateFlow<Boolean> = MutableStateFlow(true)
   override val collapsed: Flow<Boolean> = combine(collapsible, _collapsed) { collapsible, collapsed -> collapsible && collapsed }
 
-  override val replyVm: Flow<GitLabDiscussionReplyViewModel?> =
+  override val replyVm: StateFlow<NewGitLabNoteViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
-      GitLabDiscussionReplyViewModelImpl(this, project, currentUser, discussion).takeIf { canAddNotes }
-    }.shareIn(cs, SharingStarted.Eagerly, 1)
+      if (canAddNotes) GitLabNoteEditingViewModel.forReplyNote(this, project, discussion, currentUser) else null
+    }.stateIn(cs, SharingStarted.Eagerly, null)
 
   override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
     discussion.notes
@@ -111,6 +111,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     _repliesFolded.value = folded
     if (!folded) {
       _collapsed.value = false
+      replyVm.value?.requestFocus()
     }
   }
 
@@ -155,7 +156,7 @@ class GitLabMergeRequestTimelineDraftDiscussionViewModel(
   override val collapsible: Flow<Boolean> = flowOf(false)
   override val collapsed: Flow<Boolean> = flowOf(false)
 
-  override val replyVm: Flow<GitLabDiscussionReplyViewModel?> = flowOf(null)
+  override val replyVm: StateFlow<NewGitLabNoteViewModel?> = MutableStateFlow(null)
 
   override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
     draftNote.position.map { pos -> pos?.let { GitLabDiscussionDiffViewModelImpl(cs, mr, it) } }

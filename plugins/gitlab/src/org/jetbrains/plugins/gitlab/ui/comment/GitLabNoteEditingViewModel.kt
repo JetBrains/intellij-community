@@ -116,6 +116,7 @@ private abstract class NewGitLabNoteViewModelBase(
   override fun submit() {
     submit {
       doSubmit(it)
+      text.value = ""
       preferences.usedAsDraftSubmitActionLast = false
     }
   }
@@ -126,6 +127,7 @@ private abstract class NewGitLabNoteViewModelBase(
     require(canSubmitAsDraft) { "Cannot be submitted as draft" }
     submit {
       doSubmitAsDraft(it)
+      text.value = ""
       preferences.usedAsDraftSubmitActionLast = true
     }
   }

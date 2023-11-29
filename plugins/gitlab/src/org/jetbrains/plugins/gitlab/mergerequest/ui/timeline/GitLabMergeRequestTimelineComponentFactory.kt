@@ -190,7 +190,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         }
       }
       is GitLabMergeRequestTimelineDiscussionViewModel -> {
-        GitLabMergeRequestTimelineDiscussionComponentFactory.create(project, this, avatarIconsProvider, item)
+        GitLabMergeRequestTimelineDiscussionComponentFactory.createIn(project, this, item, avatarIconsProvider)
       }
     }
 
