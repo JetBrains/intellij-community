@@ -323,6 +323,308 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/expansion/oldTestData")
+    public abstract static class OldTestData extends AbstractKotlinPostfixTemplateTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/expansion/oldTestData")
+        public static class Uncategorized extends AbstractKotlinPostfixTemplateTest {
+            @TestMetadata("arg.kt")
+            public void testArg() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("argWithReturn.kt")
+            public void testArgWithReturn() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("argWithThrow.kt")
+            public void testArgWithThrow() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("assert.kt")
+            public void testAssert() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("assertNonTopLevel.kt")
+            public void testAssertNonTopLevel() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("doNotProposeWrappingIncrement.kt")
+            public void testDoNotProposeWrappingIncrement() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("else.kt")
+            public void testElse() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("for.kt")
+            public void testFor() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("forIndexed.kt")
+            public void testForIndexed() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("forIndexed2.kt")
+            public void testForIndexed2() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("forNumber.kt")
+            public void testForNumber() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("forNumber2.kt")
+            public void testForNumber2() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("forNumberInverse.kt")
+            public void testForNumberInverse() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("forOnMap.kt")
+            public void testForOnMap() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("forOnString.kt")
+            public void testForOnString() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("forReversed.kt")
+            public void testForReversed() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("if.kt")
+            public void testIf() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("iter.kt")
+            public void testIter() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("noParOnLoop.kt")
+            public void testNoParOnLoop() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("noReturnForNonStatement.kt")
+            public void testNoReturnForNonStatement() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("notBoolean.kt")
+            public void testNotBoolean() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("notString.kt")
+            public void testNotString() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("notnull.kt")
+            public void testNotnull() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("null.kt")
+            public void testNull() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("par.kt")
+            public void testPar() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("parAfterUserType.kt")
+            public void testParAfterUserType() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("parAssignment.kt")
+            public void testParAssignment() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("return.kt")
+            public void testReturn() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("returnFromLoop.kt")
+            public void testReturnFromLoop() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("sout.kt")
+            public void testSout() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("soutCompanionClassLiteral.kt")
+            public void testSoutCompanionClassLiteral() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("soutInIf.kt")
+            public void testSoutInIf() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("soutInLoop.kt")
+            public void testSoutInLoop() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("spread.kt")
+            public void testSpread() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("spreadIntArray.kt")
+            public void testSpreadIntArray() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("try.kt")
+            public void testTry() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("tryInLocalClass.kt")
+            public void testTryInLocalClass() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("tryOnFor.kt")
+            public void testTryOnFor() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("tryOnImportStatement.kt")
+            public void testTryOnImportStatement() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("tryOnStatement.kt")
+            public void testTryOnStatement() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("val.kt")
+            public void testVal() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("valAfterReceiver.kt")
+            public void testValAfterReceiver() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("valAfterSelector.kt")
+            public void testValAfterSelector() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("valAtLamba.kt")
+            public void testValAtLamba() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("valAtLambaArgumentInCall.kt")
+            public void testValAtLambaArgumentInCall() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("var.kt")
+            public void testVar() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("when.kt")
+            public void testWhen() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("whenExpression.kt")
+            public void testWhenExpression() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("whenForEnumClass.kt")
+            public void testWhenForEnumClass() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("whenForSealedClass.kt")
+            public void testWhenForSealedClass() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("whenOnThis.kt")
+            public void testWhenOnThis() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("whenOnThisInExtension.kt")
+            public void testWhenOnThisInExtension() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("while.kt")
+            public void testWhile() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("with.kt")
+            public void testWith() throws Exception {
+                performTest();
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/expansion/oldTestData/wrapWithCall")
+        public static class WrapWithCall extends AbstractKotlinPostfixTemplateTest {
+            @TestMetadata("arrayOfStatement.kt")
+            public void testArrayOfStatement() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("listOf.kt")
+            public void testListOf() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("returnSequenceOf.kt")
+            public void testReturnSequenceOf() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("setOf.kt")
+            public void testSetOf() throws Exception {
+                performTest();
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/par")
     public static class Par extends AbstractKotlinPostfixTemplateTest {
         @TestMetadata("binary.kt")

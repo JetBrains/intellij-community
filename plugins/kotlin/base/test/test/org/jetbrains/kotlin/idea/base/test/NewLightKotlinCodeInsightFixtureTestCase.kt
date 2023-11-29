@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -106,8 +105,8 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         }
     }
 
-    fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String) {
-        val expectedPath = getExpectedPath(expectedSuffix)
+    fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String, addSuffixAfterExtension: Boolean = false) {
+        val expectedPath = getExpectedPath(expectedSuffix, addSuffixAfterExtension)
         try {
             checkResultByFile(expectedPath, /* ignoreTrailingWhitespaces = */ true)
         } catch (e: RuntimeException) {
@@ -133,10 +132,11 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         }
     }
 
-    private fun getExpectedPath(expectedSuffix: String): String = buildString {
+    private fun getExpectedPath(expectedSuffix: String, addSuffixAfterExtension: Boolean = false): String = buildString {
         append(testMethodPath.nameWithoutExtension)
-        append(expectedSuffix)
+        if (!addSuffixAfterExtension) append(expectedSuffix)
         append(".")
         append(testMethodPath.extension)
+        if (addSuffixAfterExtension) append(expectedSuffix)
     }
 }
