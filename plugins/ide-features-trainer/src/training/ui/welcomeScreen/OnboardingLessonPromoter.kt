@@ -33,7 +33,7 @@ private const val PROMO_HIDDEN = "ift.hide.welcome.screen.promo"
 
 /** Do not use lesson itself in the parameters to postpone IFT modules/lessons initialization */
 @ApiStatus.Internal
-open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
+open class OnboardingLessonPromoter(@NonNls protected val lessonId: String,
                                     @NonNls private val languageId: String,
                                     @Nls private val lessonName: String) : BannerStartPagePromoter() {
   override val promoImage: Icon
@@ -55,12 +55,12 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
     get() = LearnBundle.message("welcome.promo.start.tour")
 
   override fun runAction() =
-    startOnboardingLessonWithSdk()
+    startOnboardingLessonWithSdk(lessonId, languageId)
 
   override val description: String
     get() = LearnBundle.message("welcome.promo.description", LessonUtil.productName)
 
-  private fun startOnboardingLessonWithSdk() {
+  protected fun startOnboardingLessonWithSdk(lessonId: String, languageId: String) {
     resetPrimaryLanguage(languageId)
     val lesson = CourseManager.instance.lessonsForModules.find { it.id == lessonId }
     if (lesson == null) {

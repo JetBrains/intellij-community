@@ -840,6 +840,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/intellij.kotlin.devkit/intellij.kotlin.devkit.iml" filepath="$PROJECT_DIR$/plugins/devkit/intellij.kotlin.devkit/intellij.kotlin.devkit.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/multiplatform-tests-k2/intellij.kotlin.gradle.multiplatform-tests-k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/multiplatform-tests-k2/intellij.kotlin.gradle.multiplatform-tests-k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/multiplatform-tests/intellij.kotlin.gradle.multiplatformTests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/multiplatform-tests/intellij.kotlin.gradle.multiplatformTests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/onboarding-promoter/intellij.kotlin.onboarding-promoter.iml" filepath="$PROJECT_DIR$/plugins/kotlin/onboarding-promoter/intellij.kotlin.onboarding-promoter.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/intellij.kotlin.plugin.community.main.iml" filepath="$PROJECT_DIR$/plugins/kotlin/intellij.kotlin.plugin.community.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" filepath="$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" filepath="$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" />

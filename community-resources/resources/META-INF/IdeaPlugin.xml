@@ -15,6 +15,7 @@
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.platform.ml.embeddings"/>
     <module name="intellij.ide.startup.importSettings"/>
+    <module name="intellij.kotlin.onboarding-promoter"/>
   </content>
   
   <extensions defaultExtensionNs="com.intellij">

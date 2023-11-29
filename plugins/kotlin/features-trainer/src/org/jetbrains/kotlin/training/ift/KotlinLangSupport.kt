@@ -15,11 +15,14 @@ import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import java.nio.file.Path
 
+/** should be the same as in the [KotlinLangSupport] bean declaration in the plugin XML */
+const val kotlinLanguageId: String = "kotlin"
+
 class KotlinLangSupport : JavaBasedLangSupport() {
     override val contentRootDirectoryName = "KotlinLearningProject"
 
     override val defaultProductName: String = "IDEA"
-    override val primaryLanguage: String = "kotlin"
+    override val primaryLanguage: String = kotlinLanguageId
     override val scratchFileName: String = "Learning.kt"
 
     override val sampleFilePath: String = "$sourcesDirectoryPath/Sample.kt"

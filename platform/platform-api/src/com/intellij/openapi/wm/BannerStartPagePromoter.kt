@@ -56,18 +56,12 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
       it.foreground = UIUtil.getContextHelpForeground()
     }
     vPanel.add(description)
-    val jButton = JButton()
-    jButton.isOpaque = false
-    jButton.alignmentX = Component.LEFT_ALIGNMENT
-    jButton.action = object : AbstractAction(actionLabel) {
-      override fun actionPerformed(e: ActionEvent?) {
-        runAction()
-      }
-    }
+
+    val button = createButton()
 
     val minSize = JBDimension(0, 8)
     vPanel.add(Box.Filler(minSize, minSize, Dimension(0, Short.MAX_VALUE.toInt())))
-    vPanel.add(buttonPixelHunting(jButton))
+    vPanel.add(buttonPixelHunting(button))
 
     hPanel.background = JBColor.namedColor("WelcomeScreen.SidePanel.background", JBColor(0xF2F2F2, 0x3C3F41))
     hPanel.layout = BoxLayout(hPanel, BoxLayout.X_AXIS)
@@ -81,7 +75,7 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     return hPanel
   }
 
-  private fun buttonPixelHunting(button: JButton): JPanel {
+  private fun buttonPixelHunting(button: JComponent): JPanel {
     val buttonPlace = object: JPanel() {
       override fun updateUI() {
         super.updateUI()
@@ -133,5 +127,17 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     val labelFont = StartupUiUtil.labelFont
     result.font = JBFont.create(labelFont).deriveFont(Font.BOLD).deriveFont(labelFont.size2D + JBUI.scale(2))
     return result
+  }
+
+  protected open fun createButton(): JComponent {
+    val jButton = JButton()
+    jButton.isOpaque = false
+    jButton.alignmentX = Component.LEFT_ALIGNMENT
+    jButton.action = object : AbstractAction(actionLabel) {
+      override fun actionPerformed(e: ActionEvent?) {
+        runAction()
+      }
+    }
+    return jButton
   }
 }
