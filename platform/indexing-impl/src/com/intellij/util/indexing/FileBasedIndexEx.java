@@ -601,7 +601,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Nullable
-  static DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
+  DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
     Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
     if (dumbModeAccessTypeStack.isEmpty()) {
       return null;
