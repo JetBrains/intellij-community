@@ -3,7 +3,7 @@ package com.intellij.tools.ide.metrics.collector.metrics
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-/** Returns median (not average) value of a collection */
+/** Returns median (NOT an average) value of a collection */
 fun Iterable<Long>.median(): Long {
   val size = this.count()
   require(size > 0) { "Cannot calculate median value because collection is empty" }
@@ -19,23 +19,23 @@ fun Iterable<Long>.median(): Long {
   }
 }
 
-/** @see [com.intellij.tools.ide.metrics.collector.metrics.CollectionExtensionKt.median] */
+/** @see median */
 fun Iterable<PerformanceMetrics.Metric>.medianValue(): Long = this.map { it.value }.median()
 
+/**
+ * Calculates the standard deviation (std) - a measure of how spread out numbers are.
+ * A low std indicates that the values tend to be close to the mean, while a high std indicates that the values are spread out over a wider range.
+ *
+ * [Standard Deviation](https://en.wikipedia.org/wiki/Standard_deviation)
+ */
 fun <T : Number> Iterable<T>.standardDeviation(): Long {
   val mean = this.map { it.toDouble() }.average()
   return sqrt(this.map { (it.toDouble() - mean).pow(2) }.average()).toLong()
 }
 
+/** @see standardDeviation */
 fun Iterable<PerformanceMetrics.Metric>.standardDeviationValue(): Long = this.map { it.value }.standardDeviation()
 
-/** Frequency of the value in the collection */
-fun <T : Number> Iterable<T>.mode(): T {
-  return this.groupingBy { it }.eachCount().maxBy { it.value }.key
-}
-
-/** @see [com.intellij.tools.ide.metrics.collector.metrics.CollectionExtensionKt.mode] */
-fun Iterable<PerformanceMetrics.Metric>.modeValue(): Long = this.map { it.value }.mode()
 
 /** Difference between the smallest and the largest values */
 fun Iterable<Long>.range(): Long {
@@ -43,6 +43,6 @@ fun Iterable<Long>.range(): Long {
   return sorted.last() - sorted.first()
 }
 
-/** @see [com.intellij.tools.ide.metrics.collector.metrics.CollectionExtensionKt.range] */
+/** @see range */
 fun Iterable<PerformanceMetrics.Metric>.rangeValue(): Long = this.map { it.value }.range()
 

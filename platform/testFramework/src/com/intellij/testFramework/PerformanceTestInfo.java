@@ -13,6 +13,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.testFramework.diagnostic.MetricsPublisher;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StorageLockContext;
 import kotlin.reflect.KFunction;
 import kotlinx.coroutines.CoroutineScope;
@@ -177,13 +178,11 @@ public class PerformanceTestInfo {
 
     for (StackTraceElement element : stackTraceElements) {
       try {
-        Class<?> aClass = Class.forName(element.getClassName());
-
-        for (Method method : aClass.getDeclaredMethods()) {
-          if (method.getName().equals(element.getMethodName())) {
-            if (methodFilter.apply(method)) return method;
-          }
-        }
+        Method foundMethod = ContainerUtil.find(
+          Class.forName(element.getClassName()).getDeclaredMethods(),
+          method -> method.getName().equals(element.getMethodName()) && methodFilter.apply(method)
+        );
+        if (foundMethod != null) return foundMethod;
       }
       catch (ClassNotFoundException e) {
         // do nothing, continue
@@ -194,21 +193,12 @@ public class PerformanceTestInfo {
 
   private static Method tryToFindCallingTestMethodByJUnitAnnotation() {
     return filterMethodFromStackTrace(
-      method -> {
-        for (Annotation annotation : method.getDeclaredAnnotations()) {
-          if (annotation.annotationType().getName().contains("junit")) {
-            return true;
-          }
-        }
-        return false;
-      });
+      method -> ContainerUtil.exists(method.getDeclaredAnnotations(), annotation -> annotation.annotationType().getName().contains("junit"))
+    );
   }
 
   private static Method tryToFindCallingTestMethodByNamePattern() {
-    return filterMethodFromStackTrace(
-      method -> {
-        return method.getName().toLowerCase(Locale.ROOT).startsWith("test");
-      });
+    return filterMethodFromStackTrace(method -> method.getName().toLowerCase(Locale.ROOT).startsWith("test"));
   }
 
   private static Method getCallingTestMethod() {
@@ -235,10 +225,9 @@ public class PerformanceTestInfo {
     assertTiming(javaTestMethod, "");
   }
 
-  public void assertTiming(@NotNull Method javaTestMethod, @Nullable String subTestName) {
+  public void assertTiming(@NotNull Method javaTestMethod, String subTestName) {
     var fullTestName = String.format("%s.%s", javaTestMethod.getDeclaringClass().getName(), javaTestMethod.getName());
     if (subTestName != null && !subTestName.isEmpty()) {
-      assert !subTestName.isEmpty() : "Sub test name either should be null or NOT empty string";
       fullTestName += " - " + subTestName;
     }
     assertTiming(fullTestName);
@@ -255,16 +244,18 @@ public class PerformanceTestInfo {
 
   /**
    * By default passed test launch name will be used as the subtest name.
+   *
    * @see PerformanceTestInfo#assertTimingAsSubtest(String)
-   * */
+   */
   public void assertTimingAsSubtest() {
     assertTimingAsSubtest(launchName);
   }
 
   /**
    * In case if you want to run many subsequent performance measurements in your JUnit test.
+   *
    * @see PerformanceTestInfo#assertTiming(String)
-   * */
+   */
   public void assertTimingAsSubtest(@Nullable String subTestName) {
     assertTiming(getCallingTestMethod(), subTestName);
   }
@@ -273,9 +264,9 @@ public class PerformanceTestInfo {
    * Asserts expected timing.
    *
    * @param fullQualifiedTestMethodName String representation of full method name.
-   * For Java you can use {@link com.intellij.testFramework.UsefulTestCase#getQualifiedTestMethodName()}
-   * OR
-   * {@link com.intellij.testFramework.fixtures.BareTestFixtureTestCase#getQualifiedTestMethodName()}
+   *                                    For Java you can use {@link com.intellij.testFramework.UsefulTestCase#getQualifiedTestMethodName()}
+   *                                    OR
+   *                                    {@link com.intellij.testFramework.fixtures.BareTestFixtureTestCase#getQualifiedTestMethodName()}
    */
   public void assertTiming(String fullQualifiedTestMethodName) {
     assertTiming(IterationMode.WARMUP, fullQualifiedTestMethodName);
