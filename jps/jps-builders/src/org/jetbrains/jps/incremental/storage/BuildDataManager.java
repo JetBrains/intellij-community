@@ -30,6 +30,8 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 /**
@@ -48,7 +50,7 @@ public final class BuildDataManager {
   private final ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>(16, 0.75f, getConcurrencyLevel());
   private final OneToManyPathsMapping mySrcToFormMap;
   private final Mappings myMappings;
-  private final Object myGraphLock = new Object();
+  private final ReadWriteLock myGraphLock = new ReentrantReadWriteLock();
   private DependencyGraph myDepGraph;
   private final BuildDataPaths myDataPaths;
   private final BuildTargetsState myTargetsState;
@@ -131,8 +133,12 @@ public final class BuildDataManager {
   }
 
   public DependencyGraph getDependencyGraph() {
-    synchronized (myGraphLock) {
+    myGraphLock.readLock().lock();
+    try {
       return myDepGraph;
+    }
+    finally {
+      myGraphLock.readLock().unlock();
     }
   }
 
@@ -193,7 +199,8 @@ public final class BuildDataManager {
   }
 
   public void createDependencyGraph(File mappingsRoot, boolean deleteExisting) throws IOException {
-    synchronized (myGraphLock) {
+    myGraphLock.writeLock().lock();
+    try {
       DependencyGraph depGraph = myDepGraph;
       if (depGraph == null) {
         if (deleteExisting) {
@@ -212,6 +219,9 @@ public final class BuildDataManager {
           myDepGraph = asSynchronizableGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())), myGraphLock);
         }
       }
+    }
+    finally {
+      myGraphLock.writeLock().unlock();
     }
   }
 
@@ -256,7 +266,8 @@ public final class BuildDataManager {
             }
           }
 
-          synchronized (myGraphLock) {
+          myGraphLock.writeLock().lock();
+          try {
             DependencyGraph depGraph = myDepGraph;
             if (depGraph != null) {
               myDepGraph = null;
@@ -267,6 +278,9 @@ public final class BuildDataManager {
                 throw e.getCause();
               }
             }
+          }
+          finally {
+            myGraphLock.writeLock().unlock();
           }
         }
       }
@@ -478,28 +492,40 @@ public final class BuildDataManager {
     };
   }
 
-  private static DependencyGraph asSynchronizableGraph(DependencyGraph graph, Object lock) {
+  private static DependencyGraph asSynchronizableGraph(DependencyGraph graph, ReadWriteLock lock) {
     //noinspection IOResourceOpenedButNotSafelyClosed
     DependencyGraph delegate = new LoggingDependencyGraph(graph, msg -> LOG.info(msg));
     return new DependencyGraph() {
       @Override
       public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources) throws IOException {
-        synchronized (lock) {
+        lock.readLock().lock();
+        try {
           return delegate.createDelta(sourcesToProcess, deletedSources);
+        }
+        finally {
+          lock.readLock().unlock();
         }
       }
 
       @Override
       public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params) {
-        synchronized (lock) {
+        lock.readLock().lock();
+        try {
           return delegate.differentiate(delta, params);
+        }
+        finally {
+          lock.readLock().unlock();
         }
       }
 
       @Override
       public void integrate(@NotNull DifferentiateResult diffResult) {
-        synchronized (lock) {
+        lock.writeLock().lock();
+        try {
           delegate.integrate(diffResult);
+        }
+        finally {
+          lock.writeLock().unlock();
         }
       }
 
@@ -545,8 +571,12 @@ public final class BuildDataManager {
 
       @Override
       public void close() throws IOException {
-        synchronized (lock) {
+        lock.writeLock().lock();
+        try {
           delegate.close();
+        }
+        finally {
+          lock.writeLock().unlock();
         }
       }
     };
