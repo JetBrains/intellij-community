@@ -5,17 +5,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,20 +26,17 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 public final class ModuleWithDependenciesScope extends GlobalSearchScope implements VirtualFileEnumerationAware {
   public static final int COMPILE_ONLY = 0x01;
   public static final int LIBRARIES = 0x02;
   public static final int MODULES = 0x04;
   public static final int TESTS = 0x08;
+  private VirtualFileEnumeration myVirtualFileEnumeration;
+  private long myVFSModificationCount;
 
   @MagicConstant(flags = {COMPILE_ONLY, LIBRARIES, MODULES, TESTS})
   @interface ScopeConstant {}
-
-  private static final Key<CachedValue<ConcurrentMap<Integer, VirtualFileEnumeration>>> CACHED_FILE_ID_ENUMERATIONS_KEY =
-    Key.create("CACHED_FILE_ID_ENUMERATIONS");
 
   private final Module myModule;
   @ScopeConstant
@@ -53,7 +45,6 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
 
   private volatile Set<Module> myModules;
   private final Object2IntMap<VirtualFile> myRoots;
-  private final UserDataHolderBase myUserDataHolderBase = new UserDataHolderBase();
   private final SingleFileSourcesTracker mySingleFileSourcesTracker;
 
   ModuleWithDependenciesScope(@NotNull Module module, @ScopeConstant int options) {
@@ -65,6 +56,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     mySingleFileSourcesTracker = SingleFileSourcesTracker.getInstance(module.getProject());
   }
 
+  @NotNull
   private Object2IntMap<VirtualFile> calcRoots() {
     OrderRootsEnumerator en = getOrderEnumeratorForOptions().roots(entry -> {
       if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
@@ -81,6 +73,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
     return map;
   }
 
+  @NotNull
   private OrderEnumerator getOrderEnumeratorForOptions() {
     OrderEnumerator en = ModuleRootManager.getInstance(myModule).orderEntries();
     en.recursively();
@@ -166,6 +159,7 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   }
 
   @TestOnly
+  @NotNull
   public Collection<VirtualFile> getRoots() {
     List<VirtualFile> result = new ArrayList<>(myRoots.keySet());
     result.sort(Comparator.comparingInt(myRoots::getInt));
@@ -174,26 +168,32 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
 
   @Override
   public @Nullable VirtualFileEnumeration extractFileEnumeration() {
-    // todo might not cheap
-    if (hasOption(MODULES) || hasOption(LIBRARIES)) return null;
-
-    CachedValueProvider<ConcurrentMap<Integer, VirtualFileEnumeration>> provider = () -> {
-      return CachedValueProvider.Result.create(new ConcurrentHashMap<Integer, VirtualFileEnumeration>(),
-                                               VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
-    };
-
-    CachedValuesManager cachedValuesManager = CachedValuesManager.getManager(myModule.getProject());
-    ConcurrentMap<Integer, VirtualFileEnumeration> cacheHolder = cachedValuesManager.getCachedValue(myUserDataHolderBase,
-                                                                                                    CACHED_FILE_ID_ENUMERATIONS_KEY,
-                                                                                                    provider,
-                                                                                                    false);
-
-    return cacheHolder.computeIfAbsent(myOptions, key -> doExtractFilIdEnumeration());
+    VirtualFileEnumeration enumeration = myVirtualFileEnumeration;
+    long currentVFSStamp = VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS.getModificationCount();
+    if (currentVFSStamp != myVFSModificationCount) {
+      myVirtualFileEnumeration = enumeration = doExtractFileEnumeration();
+      myVFSModificationCount = currentVFSStamp;
+    }
+    return enumeration == VirtualFileEnumeration.EMPTY ? null : enumeration;
   }
 
-  private @NotNull VirtualFileEnumeration doExtractFilIdEnumeration() {
+  private @NotNull VirtualFileEnumeration doExtractFileEnumeration() {
+    isSearchInModuleContent(myModule); // init myModules
+    // todo might be not cheap
+    if (myRoots.size() > 1 && (hasOption(MODULES) && myModules.size() > 1 || hasOption(LIBRARIES))) {
+      return VirtualFileEnumeration.EMPTY;
+    }
+
+    return getFileEnumerationUnderRoots(myRoots.keySet());
+  }
+
+  /**
+   * Compute a set of ids of all files under {@code roots}
+   */
+  @NotNull
+  static VirtualFileEnumeration getFileEnumerationUnderRoots(@NotNull Collection<? extends VirtualFile> roots) {
     IntSet result = new IntOpenHashSet();
-    for (VirtualFile file : myRoots.keySet()) {
+    for (VirtualFile file : roots) {
       if (file instanceof VirtualFileWithId) {
         int[] children = VirtualFileManager.getInstance().listAllChildIds(((VirtualFileWithId)file).getId());
         result.addAll(IntList.of(children));
@@ -227,20 +227,20 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   }
 
   private static class MyVirtualFileEnumeration implements VirtualFileEnumeration {
-    private final @NotNull IntSet myResult;
+    private final @NotNull IntSet myIds;
 
-    MyVirtualFileEnumeration(@NotNull IntSet result) {
-      myResult = result;
+    MyVirtualFileEnumeration(@NotNull IntSet ids) {
+      myIds = ids;
     }
 
     @Override
     public boolean contains(int fileId) {
-      return myResult.contains(fileId);
+      return myIds.contains(fileId);
     }
 
     @Override
     public int @NotNull [] asArray() {
-      return myResult.toArray(ArrayUtil.EMPTY_INT_ARRAY);
+      return myIds.toArray(ArrayUtil.EMPTY_INT_ARRAY);
     }
 
     @Override
@@ -248,17 +248,17 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       MyVirtualFileEnumeration that = (MyVirtualFileEnumeration)o;
-      return myResult.equals(that.myResult);
+      return myIds.equals(that.myIds);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myResult);
+      return Objects.hash(myIds);
     }
 
     @Override
     public String toString() {
-      return Arrays.toString(myResult.toIntArray());
+      return Arrays.toString(myIds.toIntArray());
     }
   }
 }
