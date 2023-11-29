@@ -78,6 +78,10 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : P
 
             // KTIJ-27159: to distinguish between libraries with the same content
             is KtSourceModule -> contextualModule
+
+            // KTIJ-27977: a JAR might be shared between several libraries
+            is KtLibraryModule, is KtLibrarySourceModule -> contextualModule
+
             else -> null
         }
 
