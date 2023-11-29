@@ -367,6 +367,31 @@ public final class WelcomeScreenComponentFactory {
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setActionButtonBorder(horizontalGap, 1);
 
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
+      .subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, new WelcomeBalloonLayoutImpl.BalloonNotificationListener() {
+        @Override
+        public void notificationsChanged(List<NotificationType> types) {
+        }
+
+        @Override
+        public void newNotifications() {
+          UIUtil.invokeLaterIfNeeded(() -> {
+            Disposable disposable = Disposer.newDisposable(parentDisposable);
+            toolbar.addListener(new ActionToolbarListener() {
+              @Override
+              public void actionsUpdated() {
+                Disposer.dispose(disposable);
+                BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
+                if (balloonLayout instanceof WelcomeSeparateBalloonLayoutImpl layout) {
+                  layout.autoPopup();
+                }
+              }
+            }, disposable);
+            toolbar.updateActionsAsync();
+          });
+        }
+      });
+
     JComponent result = toolbar.getComponent();
     toolbar.setTargetComponent(result);
     result.setOpaque(false);

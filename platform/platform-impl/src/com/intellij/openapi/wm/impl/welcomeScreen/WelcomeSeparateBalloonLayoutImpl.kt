@@ -80,6 +80,13 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
     }
   }
 
+  fun autoPopup() {
+    val balloonLayout = WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl
+    if (balloonLayout != null && !balloonLayout.myVisible && balloonLayout.locationComponent != null) {
+      showPopup()
+    }
+  }
+
   override fun showPopup() {
     if (myShowState.isRecentlyHidden()) {
       hideListener?.run()
