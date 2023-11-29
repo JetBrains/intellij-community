@@ -2,29 +2,52 @@
 package com.intellij.util.io;
 
 import com.intellij.testFramework.rules.TempDirectory;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /** Test for non-standard parts of {@link SimpleStringPersistentEnumerator} behavior */
 public class SimpleStringPersistentEnumeratorPeculiaritiesTest {
   @Rule
-  public TempDirectory myTempDirectory = new TempDirectory();
+  public TempDirectory tempDirectory = new TempDirectory();
+
+  @Test
+  public void enumeratorCreatesMissedDirectoryAndFiles() {
+    Path enumPath = tempDirectory.newDirectoryPath().resolve("test-dir").resolve("test-enumerator");
+    SimpleStringPersistentEnumerator enumerator = new SimpleStringPersistentEnumerator(enumPath);
+    int id = enumerator.enumerate("anything");//no exceptions
+  }
+
+  @Test
+  public void enumeratorFails_IfFileRemoveUnderTheFeet() throws IOException {
+    Path enumPath = tempDirectory.newDirectoryPath().resolve("test-dir").resolve("test-enumerator");
+    SimpleStringPersistentEnumerator enumerator = new SimpleStringPersistentEnumerator(enumPath);
+    int id = enumerator.enumerate("anything");//no exceptions
+
+    Files.delete(enumPath);
+
+    assertThrows(
+      "Enumerator must throw exception: file was removed during operations, it is exceptional case",
+      UncheckedIOException.class,
+      () -> {
+        enumerator.enumerate("another anything");
+      }
+    );
+  }
 
   @Test
   public void nullValueEnumeratesToValidId() {
     //TODO RC: other enumerators return NULL_ID(=0) for null -- is it really important to return non-NULL_ID
     //         value here?
-    Path enumPath = myTempDirectory.newDirectoryPath().resolve("test.enum");
+    Path enumPath = tempDirectory.newDirectoryPath().resolve("test.enum");
     SimpleStringPersistentEnumerator enumerator = new SimpleStringPersistentEnumerator(enumPath);
     int id = enumerator.enumerate(null);
     assertEquals(1, id);
@@ -32,7 +55,7 @@ public class SimpleStringPersistentEnumeratorPeculiaritiesTest {
 
   @Test
   public void enumeratorRejectsMultilineValues() {
-    Path enumPath = myTempDirectory.newDirectoryPath().resolve("test.enum");
+    Path enumPath = tempDirectory.newDirectoryPath().resolve("test.enum");
     SimpleStringPersistentEnumerator enumerator = new SimpleStringPersistentEnumerator(enumPath);
     try {
       enumerator.enumerate("qwe\nasd");
@@ -47,23 +70,11 @@ public class SimpleStringPersistentEnumeratorPeculiaritiesTest {
   }
 
   @Test
-  public void testSeveralEnumeratedIds() {
-    Path enumPath = myTempDirectory.newDirectoryPath().resolve("test.enum");
-    SimpleStringPersistentEnumerator enumerator = new SimpleStringPersistentEnumerator(enumPath);
-    int id1 = enumerator.enumerate("qwe");
-    int id2 = enumerator.enumerate("asd");
-    int id3 = enumerator.enumerate("qwe");
-    assertEquals(1, id1);
-    assertEquals(2, id2);
-    assertEquals(1, id3);
-  }
-
-  @Test
   public void enumeratorAbleToReadDuplicatedEntriesFrom() throws IOException {
     // `null` is serialized as `"null"`, but `null != "null"`, so we may have several "null" strings in the file.
     // In production.
     // Make sure that even if we have duplicate items in the file, we still can handle them properly
-    Path enumPath = myTempDirectory.newDirectoryPath().resolve("test.enum");
+    Path enumPath = tempDirectory.newDirectoryPath().resolve("test.enum");
     Files.writeString(enumPath, "null\nnull");
     SimpleStringPersistentEnumerator enumerator = new SimpleStringPersistentEnumerator(enumPath);
     //TODO RC: it is quite strange to have size=1 but nextId=3 -- much less surprising if nextId = size+1

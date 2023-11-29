@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.StandardOpenOption.*;
 
 /**
  * Simple string enumerator, for small sets of values (10s-100s):
@@ -40,7 +41,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @ApiStatus.Internal
 public final class SimpleStringPersistentEnumerator implements ScannableDataEnumeratorEx<String>,
                                                                Closeable,
-                                                               CleanableStorage{
+                                                               CleanableStorage {
   private static final Logger LOG = Logger.getInstance(SimpleStringPersistentEnumerator.class);
 
   private final @NotNull Path file;
@@ -71,10 +72,32 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
     this.file = file;
     this.charset = charset;
 
-    Pair<Object2IntMap<String>, String[]> pair = readStorageFromDisk(file, charset, /*fallbackTo: */ Charset.defaultCharset());
-    synchronized (this) {
-      valueToId = pair.getFirst();
-      idToValue = pair.getSecond();
+    try {
+      if (Files.notExists(file)) {
+        Files.createDirectories(file.getParent());
+        Files.createFile(file);
+      }
+
+      Pair<Object2IntMap<String>, String[]> pair;
+      try {
+        pair = readStorageFromDisk(file, charset, /* fallbackTo: */ Charset.defaultCharset());
+      }
+      catch (IOException e) {
+        LOG.warnWithDebug("Can't read [" + file.toAbsolutePath() + "] content", e);
+        //clean the file:
+        Files.write(file, ArrayUtil.EMPTY_BYTE_ARRAY, WRITE, TRUNCATE_EXISTING, CREATE);
+
+        pair = readStorageFromDisk(file, charset, /* fallbackTo: */ Charset.defaultCharset());
+      }
+
+
+      synchronized (this) {
+        valueToId = pair.getFirst();
+        idToValue = pair.getSecond();
+      }
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException("Can't create file [" + file + "]", e);
     }
   }
 
@@ -217,7 +240,7 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
   }
 
   private void checkNotClosed() {
-    if(closed){
+    if (closed) {
       throw new IllegalStateException("Storage already closed");
       //TODO RC: ClosedStorageException would be better, but .enumerate() doesn't declare IOException
     }
@@ -225,57 +248,50 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
 
   private static @NotNull Pair<Object2IntMap<String>, String[]> readStorageFromDisk(@NotNull Path file,
                                                                                     @NotNull Charset charset,
-                                                                                    @NotNull Charset charsetToFallback) {
-    if (Files.notExists(file)) {
-      writeStorageToDisk(ArrayUtil.EMPTY_STRING_ARRAY, file, charset);
-      return Pair.create(new Object2IntOpenHashMap<>(), ArrayUtil.EMPTY_STRING_ARRAY);
-    }
-
+                                                                                    @NotNull Charset charsetToFallback) throws IOException {
     //RC: Why we need charsetToFallback: backward-compatibility reasons. For a long time, SimpleStringPersistentEnumerator
     //    actually used defaultCharset() to read-write data, even though it _promised_ to use UTF-8 -- so now we have
     //    to deal with files in a defaultCharset().
     //MAYBE RC: I think, after 1-2 releases it will be OK to remove 'charsetToFallback' branch, and use only UTF-8
+    List<String> lines;
     try {
-      List<String> lines;
+      lines = Files.readAllLines(file, charset);
+    }
+    catch (IOException exMainCharset) {
+      //maybe it is CharacterCodingException? Try reading with fallback charset
       try {
-        lines = Files.readAllLines(file, charset);
+        lines = Files.readAllLines(file, charsetToFallback);
       }
-      catch (IOException exMainCharset) {
-        //maybe it is CharacterCodingException? Try reading with fallback charset
-        try {
-          lines = Files.readAllLines(file, charsetToFallback);
-        }
-        catch (IOException exFallbackCharset) {
-          exFallbackCharset.addSuppressed(exMainCharset);
-          throw exFallbackCharset;
-        }
+      catch (IOException exFallbackCharset) {
+        exFallbackCharset.addSuppressed(exMainCharset);
+        throw exFallbackCharset;
       }
+    }
 
-      Object2IntMap<String> nameToIdRegistry = new Object2IntOpenHashMap<>(lines.size());
-      String[] idToNameRegistry = lines.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : new String[lines.size()];
-      for (int i = 0; i < lines.size(); i++) {
-        String name = lines.get(i);
-        int id = i + 1;
-        nameToIdRegistry.put(name, id);
-        idToNameRegistry[i] = name;
-      }
-      return Pair.create(nameToIdRegistry, idToNameRegistry);
+    Object2IntMap<String> nameToIdRegistry = new Object2IntOpenHashMap<>(lines.size());
+    String[] idToNameRegistry = lines.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : new String[lines.size()];
+    for (int i = 0; i < lines.size(); i++) {
+      String name = lines.get(i);
+      int id = i + 1;
+      nameToIdRegistry.put(name, id);
+      idToNameRegistry[i] = name;
     }
-    catch (IOException e) {
-      LOG.warnWithDebug("Can't read [" + file.toAbsolutePath() + "] content", e);
-      writeStorageToDisk(ArrayUtil.EMPTY_STRING_ARRAY, file, charset);
-      return Pair.create(new Object2IntOpenHashMap<>(), ArrayUtil.EMPTY_STRING_ARRAY);
-    }
+    return Pair.create(nameToIdRegistry, idToNameRegistry);
   }
 
   private static void writeStorageToDisk(String[] idToName,
                                          @NotNull Path file,
                                          @NotNull Charset charset) {
     try {
-      Files.createDirectories(file.getParent());
-      Files.write(file, Arrays.asList(idToName), charset);
+      //Don't create folder/file here -- create (if not exist) the file only once, in ctor, and
+      // after that -- fail if folder/file doesn't exist, because that means folder/file was removed,
+      // which is very suspicious case and shouldn't be silently 'fixed':
+      Files.write(file, Arrays.asList(idToName), charset, WRITE);
     }
     catch (IOException e) {
+      if (Files.notExists(file)) {
+        throw new UncheckedIOException("Can't store enumerator to " + file + " -- file is removed?", e);
+      }
       throw new UncheckedIOException("Can't store enumerator to " + file, e);
     }
   }
