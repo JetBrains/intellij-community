@@ -16,11 +16,11 @@ public class LoggingDependencyGraph extends LoggingGraph implements DependencyGr
     super(delegate, logger);
   }
 
-  public long getTotalDifferentiateTime() {
+  public synchronized long getTotalDifferentiateTime() {
     return myTotalDifferentiateTime;
   }
 
-  public long getTotalIntegrateTime() {
+  public synchronized long getTotalIntegrateTime() {
     return myTotalIntegrateTime;
   }
 
@@ -42,7 +42,9 @@ public class LoggingDependencyGraph extends LoggingGraph implements DependencyGr
     }
     finally {
       long duration = System.currentTimeMillis() - start;
-      myTotalDifferentiateTime += duration;
+      synchronized (this) {
+        myTotalDifferentiateTime += duration;
+      }
       debug("DependencyGraph differentiate ", params.getSessionName(), " done in ", Utils.formatDuration(duration));
     }
   }
@@ -55,7 +57,9 @@ public class LoggingDependencyGraph extends LoggingGraph implements DependencyGr
     }
     finally {
       long duration = System.currentTimeMillis() - start;
-      myTotalIntegrateTime += duration;
+      synchronized (this) {
+        myTotalIntegrateTime += duration;
+      }
       debug("DependencyGraph integrate ", diffResult.getSessionName(), " done in ", Utils.formatDuration(duration));
     }
   }
@@ -66,8 +70,8 @@ public class LoggingDependencyGraph extends LoggingGraph implements DependencyGr
       getDelegate().close();
     }
     finally {
-      debug("DependencyGraph total differentiate time ", Utils.formatDuration(myTotalDifferentiateTime));
-      debug("DependencyGraph total integrate     time ", Utils.formatDuration(myTotalIntegrateTime));
+      debug("DependencyGraph total differentiate linear time ", Utils.formatDuration(myTotalDifferentiateTime));
+      debug("DependencyGraph total integrate     linear time ", Utils.formatDuration(myTotalIntegrateTime));
     }
   }
 }
