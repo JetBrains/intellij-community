@@ -12,7 +12,6 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -61,7 +60,7 @@ public final class ProductModulesXmlLoader {
           }
           if ("main-root-modules".equals(parentTag)) {
             assert importance != null;
-            rootMainGroupModules.add(new RawIncludedRuntimeModule(RuntimeModuleId.raw(moduleName), importance, Collections.emptySet()));
+            rootMainGroupModules.add(new RawIncludedRuntimeModule(RuntimeModuleId.raw(moduleName), importance));
           }
           else {
             RuntimeModuleDescriptor module = repository.resolveModule(RuntimeModuleId.raw(moduleName)).getResolvedModule();

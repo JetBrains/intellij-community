@@ -69,7 +69,7 @@ public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
     for (RuntimeModuleDescriptor dependency : descriptor.getDependencies()) {
       if (!visited.add(dependency)) continue;
       if (!rootModules.contains(dependency)) {
-        result.add(new IncludedRuntimeModuleImpl(dependency, ModuleImportance.SERVICE, Collections.emptySet()));
+        result.add(new IncludedRuntimeModuleImpl(dependency, ModuleImportance.SERVICE));
       }
       collectDependencies(dependency, rootModules, visited, result);
     }

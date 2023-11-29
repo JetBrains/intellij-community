@@ -22,7 +22,7 @@ public final class PluginXmlReader {
       List<RawIncludedRuntimeModule> modules = new ArrayList<>();
       Set<String> addedModules = new HashSet<>();
       //it's important to have the main module at the beginning of the list for now, ModuleBasedProductLoadingStrategy.loadPluginDescriptorFromRuntimeModule relies on that
-      modules.add(new RawIncludedRuntimeModule(mainModule.getModuleId(), ModuleImportance.FUNCTIONAL, Collections.emptySet()));
+      modules.add(new RawIncludedRuntimeModule(mainModule.getModuleId(), ModuleImportance.FUNCTIONAL));
       addedModules.add(mainModule.getModuleId().getStringId());
       try (InputStream inputStream = mainModule.readFile(PLUGIN_XML_PATH)) {
         if (inputStream == null) {
@@ -44,7 +44,7 @@ public final class PluginXmlReader {
               int moduleNameEnd = moduleAttribute.indexOf('/');
               String moduleName = moduleNameEnd == -1 ? moduleAttribute : moduleAttribute.substring(0, moduleNameEnd);
               if (addedModules.add(moduleName)) {
-                modules.add(new RawIncludedRuntimeModule(RuntimeModuleId.raw(moduleName), ModuleImportance.OPTIONAL, Collections.emptySet()));
+                modules.add(new RawIncludedRuntimeModule(RuntimeModuleId.raw(moduleName), ModuleImportance.OPTIONAL));
               }
             }
           }

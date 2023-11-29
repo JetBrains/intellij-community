@@ -6,18 +6,13 @@ import com.intellij.platform.runtime.repository.impl.IncludedRuntimeModuleImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
-
 public final class RawIncludedRuntimeModule {
   private final RuntimeModuleId myModuleId;
   private final ModuleImportance myImportance;
-  private final Set<RuntimeModuleScope> myScopes;
 
-  public RawIncludedRuntimeModule(@NotNull RuntimeModuleId moduleId, @NotNull ModuleImportance importance,
-                                  @NotNull Set<RuntimeModuleScope> scopes) {
+  public RawIncludedRuntimeModule(@NotNull RuntimeModuleId moduleId, @NotNull ModuleImportance importance) {
     myModuleId = moduleId;
     myImportance = importance;
-    myScopes = scopes;
   }
 
   public @NotNull RuntimeModuleId getModuleId() {
@@ -26,10 +21,6 @@ public final class RawIncludedRuntimeModule {
 
   public @NotNull ModuleImportance getImportance() {
     return myImportance;
-  }
-
-  public @NotNull Set<RuntimeModuleScope> getScopes() {
-    return myScopes;
   }
 
   @Override
@@ -47,7 +38,7 @@ public final class RawIncludedRuntimeModule {
       descriptor = repository.resolveModule(getModuleId()).getResolvedModule();
     }
     if (descriptor != null) {
-      return new IncludedRuntimeModuleImpl(descriptor, myImportance, myScopes);
+      return new IncludedRuntimeModuleImpl(descriptor, myImportance);
     }
     return null;
   }

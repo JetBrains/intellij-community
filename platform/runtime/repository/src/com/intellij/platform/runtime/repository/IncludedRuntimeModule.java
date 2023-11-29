@@ -3,8 +3,6 @@ package com.intellij.platform.runtime.repository;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 /**
  * Describes a module included in the product as part of some {@link RuntimeModuleGroup}.
  */
@@ -15,9 +13,4 @@ public interface IncludedRuntimeModule {
    * Returns instance describing conditions under which the module is loaded. 
    */
   @NotNull ModuleImportance getImportance();
-
-  /**
-   * Returns the set of scopes in which the module is used.
-   */
-  @NotNull Set<RuntimeModuleScope> getScopes();
 }
