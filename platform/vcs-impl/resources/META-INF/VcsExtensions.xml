@@ -192,7 +192,7 @@
 
     <customizableActionGroupProvider implementation="com.intellij.openapi.vcs.ui.VcsCustomizableActionGroupProvider"/>
 
-    <changesGroupingPolicy key="directory" id="directory"
+    <changesGroupingPolicy key="directory" id="directory" weight="10"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
 
     <vcs.changes.changesViewModifier implementation="com.intellij.vcs.commit.EditedCommitChangesViewModifier"/>

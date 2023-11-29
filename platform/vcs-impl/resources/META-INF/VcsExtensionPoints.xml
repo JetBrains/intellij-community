@@ -49,7 +49,7 @@
       <with attribute="preloaderClassName" implements="com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider$Preloader"/>
     </extensionPoint>
 
-    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean" dynamic="true">
+    <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactoryEPBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
     </extensionPoint>
 
