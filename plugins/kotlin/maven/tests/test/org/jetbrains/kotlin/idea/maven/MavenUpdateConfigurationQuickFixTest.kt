@@ -23,13 +23,10 @@ import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.runAll
 import org.junit.Assert
 import org.junit.Test
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KMutableProperty0
 
-@RunWith(JUnit38ClassRunner::class)
 class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
     private lateinit var codeInsightTestFixture: CodeInsightTestFixture
 
