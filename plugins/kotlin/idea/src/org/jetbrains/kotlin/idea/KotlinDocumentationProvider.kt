@@ -337,7 +337,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
 
         @Nls
         private fun getTextImpl(element: PsiElement, originalElement: PsiElement?, quickNavigation: Boolean): String? {
-            element.navigationElement.takeIf { it != element }?.let {
+            (element as? KtElement)?.navigationElement.takeIf { it != element }?.let {
                 return getTextImpl(it, originalElement, quickNavigation)
             }
 
