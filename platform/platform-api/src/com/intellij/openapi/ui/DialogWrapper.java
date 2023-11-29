@@ -80,7 +80,10 @@ public abstract class DialogWrapper {
     public @NotNull Dialog.ModalityType toAwtModality() {
       return switch (this) {
         case IDE -> Dialog.ModalityType.APPLICATION_MODAL;
-        case PROJECT -> Dialog.ModalityType.DOCUMENT_MODAL;
+        case PROJECT -> {
+          LOG.error("Dialog.ModalityType.PROJECT is not supported and may lead to unexpected problems. Use DialogWrapper.IdeModalityType.IDE instead.");
+          yield Dialog.ModalityType.APPLICATION_MODAL;
+        }
         case MODELESS -> Dialog.ModalityType.MODELESS;
       };
     }
