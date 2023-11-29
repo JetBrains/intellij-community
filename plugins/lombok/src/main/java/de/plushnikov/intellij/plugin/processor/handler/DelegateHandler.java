@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.psi.LombokDelegateMethod;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -205,7 +206,7 @@ public final class DelegateHandler {
                                                                                                      @NotNull PsiSubstitutor psiSubstitutor) {
     final PsiType returnType = psiSubstitutor.substitute(psiMethod.getReturnType());
 
-    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiClass.getManager(), psiMethod.getName())
+    final LombokLightMethodBuilder methodBuilder = new LombokDelegateMethod(psiMethod)
       .withModifier(PsiModifier.PUBLIC)
       .withMethodReturnType(returnType)
       .withContainingClass(psiClass)
