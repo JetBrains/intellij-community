@@ -126,7 +126,7 @@ internal class ShellCommandExecutionManager(private val session: TerminalSession
           doSendCommandToExecute(command)
           return@withLock
         }
-        scheduledGenerators.poll()?.let {
+        pollNextGeneratorToRun()?.let {
           runningGenerator = it
           doSendCommandToExecute(it.shellCommand())
           generatorCommandSent.complete(Unit)
@@ -136,9 +136,18 @@ internal class ShellCommandExecutionManager(private val session: TerminalSession
     }
   }
 
+  private fun pollNextGeneratorToRun(): Generator? {
+    var generator: Generator?
+    do {
+      generator = scheduledGenerators.poll()
+    }
+    while (generator != null && !generator.deferred.isActive)
+    return generator
+  }
+
   private fun <T> Queue<T>.drainToList(): List<T> = ArrayList<T>(size).also {
     while (isNotEmpty()) {
-      it.add(poll())
+      it.add(poll()!!)
     }
   }
 
