@@ -156,8 +156,8 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
     try {
       contentStorage.checkRecord(contentId, /* fast: */ false);
     }
-    catch (IOException e) {
-      LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content fails to resolve. " + e.getMessage());
+    catch (Throwable t) {
+      LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content fails to resolve. " + t.getMessage());
       return false;
     }
 
