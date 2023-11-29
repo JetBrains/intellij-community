@@ -2,7 +2,7 @@
 package com.intellij.lang
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.PluginDescriptorTestKt
+import com.intellij.ide.plugins.readDescriptorForTest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -11,79 +11,79 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.ServiceContainerUtil
-import groovy.transform.CompileStatic
-
+import org.junit.Assert
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
-@CompileStatic
-class LanguageExtensionOrderTest extends LightPlatformTestCase {
-  private PluginDescriptor myDescriptor = new DefaultPluginDescriptor(PluginId.getId(""), getClass().classLoader)
-  private ExtensionsAreaImpl area
-  private LanguageExtension myLanguageExtension
+class LanguageExtensionOrderTest : LightPlatformTestCase() {
+  private lateinit var myDescriptor: PluginDescriptor
+  private lateinit var area: ExtensionsAreaImpl
+  private lateinit var myLanguageExtension: LanguageExtension<TestLangExtension>
 
-  void setUp() {
+  override fun setUp() {
     super.setUp()
+    myDescriptor = DefaultPluginDescriptor(PluginId.getId(""))
     area = ApplicationManager.getApplication().getExtensionArea() as ExtensionsAreaImpl
-    myLanguageExtension = new LanguageExtension<TestLangExtension>("langExt")
+    myLanguageExtension = LanguageExtension<TestLangExtension>("langExt")
     registerMetaLanguage()
     registerLanguageEP()
   }
 
-  private void registerMetaLanguage() {
-    ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), MetaLanguage.EP_NAME, MyMetaLanguage.INSTANCE, testRootDisposable)
+  private fun registerMetaLanguage() {
+    ApplicationManager.getApplication().extensionArea.getExtensionPoint(MetaLanguage.EP_NAME).registerExtension(MyMetaLanguage.INSTANCE, testRootDisposable)
   }
 
-  private void registerLanguageEP() {
-    area.registerExtensionPoints(myDescriptor, Collections.singletonList(JDOMUtil.load('''\
+  private fun registerLanguageEP() {
+    area.registerExtensionPoints(myDescriptor, listOf(JDOMUtil.load("""
     <extensionPoint qualifiedName="langExt" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.TestLangExtension"/>
     </extensionPoint>    
-    ''')))
+    """)))
+
     Disposer.register(testRootDisposable) {
       area.unregisterExtensionPoint("langExt")
     }
   }
 
-  private void registerExtensions(String... xmls) {
+  private fun registerExtensions(vararg xmls: String) {
     for (ext in xmls) {
-      String moduleXml = "<idea-plugin><extensions>" + ext + "</extensions></idea-plugin>"
+      val moduleXml = "<idea-plugin><extensions>$ext</extensions></idea-plugin>"
 
-      IdeaPluginDescriptorImpl pluginDescriptor =
-        PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), true, moduleXml.getBytes(StandardCharsets.UTF_8), myDescriptor.pluginId)
-      pluginDescriptor.registerExtensions(area.getNameToPointMap(), pluginDescriptor.appContainerDescriptor, null)
+      val pluginDescriptor: IdeaPluginDescriptorImpl =
+        readDescriptorForTest(Path.of(""), true, moduleXml.toByteArray(StandardCharsets.UTF_8),
+                                                     myDescriptor.pluginId)
+      pluginDescriptor.registerExtensions(area.nameToPointMap, pluginDescriptor.appContainerDescriptor, null)
     }
   }
 
-  private void doTest(Class<?>... classes) {
-    def extensions = myLanguageExtension.allForLanguage(MyTestLanguage.INSTANCE)
-    assert extensions.size() == classes.length
-    def extensionClasses = extensions.collect { it.class }
-    assert extensionClasses == Arrays.asList(classes)
+  private fun doTest(vararg classes: Class<*>) {
+    val extensions = myLanguageExtension.allForLanguage(MyTestLanguage.INSTANCE)
+    Assert.assertEquals(classes.size, extensions.size)
+    val extensionClasses = extensions.map { it::class.java }
+    Assert.assertEquals(classes.toList(), extensionClasses)
   }
 
-  void 'test language before base-language'() {
+  fun testLanguageBeforeBaseLanguage() {
     registerExtensions(
-      '<extension point="langExt" language="LB" implementationClass="com.intellij.lang.MyBaseExtension"/>',
-      '<extension point="langExt" language="L1" implementationClass="com.intellij.lang.MyTestExtension" order="first"/>'
+      """<extension point="langExt" language="LB" implementationClass="com.intellij.lang.MyBaseExtension"/>""",
+      """<extension point="langExt" language="L1" implementationClass="com.intellij.lang.MyTestExtension" order="first"/>"""
     )
-    doTest MyTestExtension, MyBaseExtension
+    doTest(MyTestExtension::class.java, MyBaseExtension::class.java)
   }
 
-  void 'test meta-language before language'() {
+  fun testMetaLanguageBeforeLanguage() {
     registerExtensions(
-      '<extension point="langExt" language="L1" implementationClass="com.intellij.lang.MyTestExtension" id="default"/>',
-      '<extension point="langExt" language="M1" implementationClass="com.intellij.lang.MyMetaExtension" order="before default"/>'
+      """<extension point="langExt" language="L1" implementationClass="com.intellij.lang.MyTestExtension" id="default"/>""",
+      """<extension point="langExt" language="M1" implementationClass="com.intellij.lang.MyMetaExtension" order="before default"/>"""
     )
-    doTest MyMetaExtension, MyTestExtension
+    doTest(MyMetaExtension::class.java, MyTestExtension::class.java)
   }
 
-  void 'test meta-language before base-language'() {
+  fun testMetaLanguageBeforeBaseLanguage() {
     registerExtensions(
-      '<extension point="langExt" language="LB" implementationClass="com.intellij.lang.MyBaseExtension"/>',
-      '<extension point="langExt" language="M1" implementationClass="com.intellij.lang.MyMetaExtension" order="last"/>'
+      """<extension point="langExt" language="LB" implementationClass="com.intellij.lang.MyBaseExtension"/>""",
+      """<extension point="langExt" language="M1" implementationClass="com.intellij.lang.MyMetaExtension" order="last"/>"""
     )
-    doTest MyMetaExtension, MyBaseExtension
+    doTest(MyMetaExtension::class.java, MyBaseExtension::class.java)
   }
 }
