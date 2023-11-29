@@ -119,12 +119,25 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     return wrapper == null ? null : wrapper.getTreePaths();
   }
 
-  private static void doValidDrop(TreePath @NotNull [] sources, @NotNull TreePath target, @NotNull DropHandler handler) {
-    target = getValidTarget(sources, target, handler);
-    if (target != null) {
-      sources = removeRedundant(sources, target, handler);
-      if (sources.length != 0) handler.doDrop(sources, target);
-    }
+  private void doValidDrop(TreePath @NotNull [] sources, @NotNull TreePath target, @NotNull DropHandler handler) {
+    record ValidDropContext(TreePath @Nullable [] sources, @Nullable TreePath target) { }
+    ReadAction.nonBlocking(() -> {
+        TreePath validTarget = getValidTarget(sources, target, handler);
+        TreePath[] validSources = null;
+        if (validTarget != null) {
+          validSources = removeRedundant(sources, validTarget, handler);
+        }
+        return new ValidDropContext(validSources, validTarget);
+      })
+      .expireWith(myProject)
+      .finishOnUiThread(
+        ModalityState.defaultModalityState(),
+        context -> {
+          if (context.sources != null && context.sources.length != 0 && context.target != null) {
+            handler.doDrop(context.sources, context.target);
+          }
+        })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Nullable
