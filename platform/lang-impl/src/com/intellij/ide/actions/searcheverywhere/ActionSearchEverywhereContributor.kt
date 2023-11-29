@@ -15,6 +15,7 @@ import com.intellij.ide.util.gotoByName.ActionAsyncProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.GotoActionListCellRenderer
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
+import com.intellij.ide.util.gotoByName.SearchFinishedException
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
 import com.intellij.openapi.application.ApplicationManager
@@ -93,11 +94,16 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
                                      progressIndicator: ProgressIndicator,
                                      consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
     ProgressManager.getInstance().runProcess({
-      runBlockingCancellable {
-        model.buildGroupMappings()
-        runUpdateSessionForActionSearch(model.getUpdateSession()) { presentationProvider ->
-          doFetchItems(this, presentationProvider, pattern) { consumer.process(it) }
+      try {
+        runBlockingCancellable {
+          model.buildGroupMappings()
+          runUpdateSessionForActionSearch(model.getUpdateSession()) { presentationProvider ->
+            doFetchItems(this, presentationProvider, pattern) { consumer.process(it) }
+          }
         }
+      }
+      catch (e: SearchFinishedException) {
+        LOG.debug("Search finished with reason:", e)
       }
     }, progressIndicator)
   }

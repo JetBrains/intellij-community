@@ -54,31 +54,25 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
                      pattern: String, consumer: suspend (MatchedValue) -> Boolean) {
     if (pattern.isEmpty()) return
 
-    try {
-      LOG.debug("Start actions searching ($pattern)")
+    LOG.debug("Start actions searching ($pattern)")
 
-      val actionIds = (myActionManager as ActionManagerImpl).actionIds
+    val actionIds = (myActionManager as ActionManagerImpl).actionIds
 
-      val comparator: Comparator<MatchedValue> = Comparator { o1, o2 -> o1.compareWeights(o2) }
-      val abbreviationsPromise = scope.async { abbreviationsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
-      val matchedActionsFlowDeferred = scope.async { matchedActionsAndStubsFlow(pattern, actionIds, presentationProvider) }
-      val unmatchedStubsFlowDeferred = scope.async { unmatchedStubsFlow(pattern, actionIds, presentationProvider) }
-      val topHitsPromise = scope.async { topHitsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
-      val intentionsPromise = scope.async { intentionsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
-      val optionsPromise = scope.async { optionsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
+    val comparator: Comparator<MatchedValue> = Comparator { o1, o2 -> o1.compareWeights(o2) }
+    val abbreviationsPromise = scope.async { abbreviationsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
+    val matchedActionsFlowDeferred = scope.async { matchedActionsAndStubsFlow(pattern, actionIds, presentationProvider) }
+    val unmatchedStubsFlowDeferred = scope.async { unmatchedStubsFlow(pattern, actionIds, presentationProvider) }
+    val topHitsPromise = scope.async { topHitsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
+    val intentionsPromise = scope.async { intentionsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
+    val optionsPromise = scope.async { optionsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
 
-      scope.launch {
-        sendResults(abbreviationsPromise.await(), consumer, "abbreviations")
-        sendResults(matchedActionsFlowDeferred.await(), consumer)
-        sendResults(unmatchedStubsFlowDeferred.await(), consumer)
-        sendResults(topHitsPromise.await(), consumer, "topHits")
-        sendResults(intentionsPromise.await(), consumer, "intentions")
-        sendResults(optionsPromise.await(), consumer, "options")
-      }
-      LOG.debug("Finish actions processing")
-    }
-    catch (e: SearchFinishedException) {
-      LOG.debug("Search finished with reason:", e)
+    scope.launch {
+      sendResults(abbreviationsPromise.await(), consumer, "abbreviations")
+      sendResults(matchedActionsFlowDeferred.await(), consumer)
+      sendResults(unmatchedStubsFlowDeferred.await(), consumer)
+      sendResults(topHitsPromise.await(), consumer, "topHits")
+      sendResults(intentionsPromise.await(), consumer, "intentions")
+      sendResults(optionsPromise.await(), consumer, "options")
     }
   }
 
@@ -366,5 +360,5 @@ private fun abbreviationMatchedValue(wrapper: ActionWrapper, pattern: String, de
 
 private data class MatchedAction(val action: AnAction, val mode: MatchMode, val weight: Int?)
 
-private class SearchFinishedException : Exception("Found items limit reached")
+class SearchFinishedException : Exception("Found items limit reached")
 
