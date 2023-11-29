@@ -104,10 +104,6 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
         return;
       }
 
-      //Fail-safe: if following recovery procedures fail to rebuild VFS -- on restart, we'll short-circuit
-      // the detailing checks
-      records.setErrorsAccumulated(accumulatedErrors + totalErrors);
-
       if (namesEnumeratorErrors > 0) {
         loader.problemsRecoveryFailed(notClosedProperlyErrors,
                                       NAME_STORAGE_INCOMPLETE,
