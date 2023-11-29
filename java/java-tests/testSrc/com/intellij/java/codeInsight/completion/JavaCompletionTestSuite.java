@@ -30,7 +30,7 @@ public class JavaCompletionTestSuite extends TestSuite {
     }
     suite.setName("Java completion tests suite");
     System.setProperty("intellij.build.test.groups", "JAVA_TESTS");
-    TestCaseLoader myTestCaseLoader = new TestCaseLoader("tests/testGroups.properties");
+    TestCaseLoader myTestCaseLoader = new TestCaseLoader(TestCaseLoader.COMMON_TEST_GROUPS_RESOURCE_NAME);
     myTestCaseLoader.fillTestCases("", TestAll.getClassRoots());
     for (Class<?> aClass : myTestCaseLoader.getClasses()) {
       if (!aClass.getSimpleName().contains("Completion")) continue;

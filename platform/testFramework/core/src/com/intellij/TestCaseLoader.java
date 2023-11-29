@@ -3,8 +3,8 @@ package com.intellij;
 
 import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.HardwareAgentRequired;
-import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.idea.IJIgnore;
+import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.nastradamus.NastradamusClient;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.teamcity.TeamCityClient;
@@ -92,6 +92,8 @@ public class TestCaseLoader {
   private static final boolean REVERSE_ORDER = SystemProperties.getBooleanProperty("intellij.build.test.reverse.order", false);
 
   private static final String PLATFORM_LITE_FIXTURE_NAME = "com.intellij.testFramework.PlatformLiteFixture";
+
+  public static final String COMMON_TEST_GROUPS_RESOURCE_NAME = "tests/testGroups.properties";
 
   private final HashSet<Class<?>> myClassSet = new HashSet<>();
   private final List<Throwable> myClassLoadingErrors = new ArrayList<>();
@@ -290,7 +292,7 @@ public class TestCaseLoader {
   }
 
   private static List<Class<?>> loadClassesForWarmup() {
-    var groupsTestCaseLoader = new TestCaseLoader("tests/testGroups.properties");
+    var groupsTestCaseLoader = new TestCaseLoader(COMMON_TEST_GROUPS_RESOURCE_NAME);
 
     for (Path classesRoot : TestAll.getClassRoots()) {
       ClassFinder classFinder = new ClassFinder(classesRoot, "", INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
@@ -612,7 +614,7 @@ public class TestCaseLoader {
     }
 
     if (ourFilter == null) {
-      ourFilter = calcTestClassFilter("tests/testGroups.properties");
+      ourFilter = calcTestClassFilter(COMMON_TEST_GROUPS_RESOURCE_NAME);
       TestClassesFilter affectedTestsFilter = affectedTestsFilter();
       if (affectedTestsFilter != null) {
         ourFilter = new TestClassesFilter.And(ourFilter, affectedTestsFilter);
