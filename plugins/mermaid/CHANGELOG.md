@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## 0.0.18
+- Updated Mermaid.js version to `10.6.1`
+- [MERMAID-146](https://youtrack.jetbrains.com/issue/MERMAID-146) Added support for XYChart
+
 ## 0.0.17
 - [MERMAID-149](https://youtrack.jetbrains.com/issue/MERMAID-149) Fixed an issue that prevented the currently opened project from closing properly
 
