@@ -13,6 +13,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
@@ -603,12 +604,17 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   @RequiresBackgroundThread
   protected suspend fun waitForImportWithinTimeout(action: suspend () -> Any?) {
+    waitForImportWithinTimeout(myProject, action)
+  }
+
+  @RequiresBackgroundThread
+  protected suspend fun waitForImportWithinTimeout(project: Project, action: suspend () -> Any?) {
     MavenLog.LOG.warn("waitForImportWithinTimeout started")
     val importStarted = AtomicBoolean(false)
     val importFinished = AtomicBoolean(false)
     val pluginResolutionFinished = AtomicBoolean(true)
     val artifactDownloadingFinished = AtomicBoolean(true)
-    myProject.messageBus.connect(testRootDisposable)
+    project.messageBus.connect(testRootDisposable)
       .subscribe(MavenImportListener.TOPIC, object : MavenImportListener {
         override fun importStarted() {
           importStarted.set(true)

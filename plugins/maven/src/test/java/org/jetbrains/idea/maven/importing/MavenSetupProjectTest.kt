@@ -173,18 +173,19 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
     val projectInfo = generateProject("A")
 
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-    waitForImport {
-      openProjectAsync(projectInfo.projectFile)
-    }.useProjectAsync(true) {
+    val p1 = openProjectAsync(projectInfo.projectFile)
+    p1.useProjectAsync(true) {
       // initial state: workspace import is disabled, has not been forced yet
       val mavenProjectsManager = MavenProjectsManager.getInstance(it)
       mavenProjectsManager.state!!.workspaceImportForciblyTurnedOn = false
-      mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
+      waitForImportWithinTimeout(it) {
+        mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
+        Unit
+      }
     }
 
-    waitForImport {
-      openProjectAsync(projectInfo.projectFile)
-    }.useProjectAsync(true) {
+    val p2 = openProjectAsync(projectInfo.projectFile)
+    p2.useProjectAsync(true) {
       // check that workspace import has been forced
       val mavenProjectsManager = MavenProjectsManager.getInstance(it)
       assertTrue(mavenProjectsManager.importingSettings.isWorkspaceImportEnabled)
@@ -208,9 +209,8 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
       assertTrue("Module file is empty", Files.size(moduleFilePath) > 0)
     }
 
-    waitForImport {
-      openProjectAsync(projectInfo.projectFile)
-    }.useProjectAsync(true) {
+    val p3 = openProjectAsync(projectInfo.projectFile)
+    p3.useProjectAsync(true) {
       // check that workspace import has not been forced twice
       val mavenProjectsManager = MavenProjectsManager.getInstance(it)
       assertFalse(mavenProjectsManager.importingSettings.isWorkspaceImportEnabled)
