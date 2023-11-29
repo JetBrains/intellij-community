@@ -81,7 +81,7 @@ public abstract class DialogWrapper {
       return switch (this) {
         case IDE -> Dialog.ModalityType.APPLICATION_MODAL;
         case PROJECT -> {
-          LOG.error("Dialog.ModalityType.PROJECT is not supported and may lead to unexpected problems. Use DialogWrapper.IdeModalityType.IDE instead.");
+          LOG.error("IdeModalityType.PROJECT is not fully supported and may lead to unexpected problems. Use IdeModalityType.IDE for modal dialogs and IdeModalityType.MODELESS for non-modal ones");
           yield Dialog.ModalityType.APPLICATION_MODAL;
         }
         case MODELESS -> Dialog.ModalityType.MODELESS;
@@ -853,6 +853,7 @@ public abstract class DialogWrapper {
   }
 
   protected @NotNull DialogWrapperPeer createPeer(Window owner, boolean canBeParent, IdeModalityType ideModalityType) {
+    if (ideModalityType == IdeModalityType.PROJECT) LOG.error("IdeModalityType.PROJECT is not fully supported and may lead to unexpected problems. Use IdeModalityType.IDE for modal dialogs and IdeModalityType.MODELESS for non-modal ones");
     return DialogWrapperPeerFactory.getInstance().createPeer(this, owner, canBeParent, ideModalityType);
   }
 
@@ -861,6 +862,7 @@ public abstract class DialogWrapper {
   }
 
   protected @NotNull DialogWrapperPeer createPeer(@Nullable Project project, boolean canBeParent, @NotNull IdeModalityType ideModalityType) {
+    if (ideModalityType == IdeModalityType.PROJECT) LOG.error("IdeModalityType.PROJECT is not fully supported and may lead to unexpected problems. Use IdeModalityType.IDE for modal dialogs and IdeModalityType.MODELESS for non-modal ones");
     return DialogWrapperPeerFactory.getInstance().createPeer(this, project, canBeParent, ideModalityType);
   }
 
