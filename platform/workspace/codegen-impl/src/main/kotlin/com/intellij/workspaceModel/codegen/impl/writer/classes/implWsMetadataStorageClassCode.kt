@@ -12,13 +12,12 @@ import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.MetadataStorage
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.allFinalSubClasses
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.generatedCodeVisibilityModifier
 
 internal fun implWsMetadataStorageCode(module: CompiledObjModule, types: List<ObjClass<*>>,
                                        abstractTypes: List<ValueType.AbstractClass<*>>): String = lines {
   line("package ${module.name}")
   line()
-  section("${module.generatedCodeVisibilityModifier} object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.base}()") {
+  section("$generatedCodeVisibilityModifier object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.base}()") {
     val builtTypes: MutableList<String> = arrayListOf()
     val builtPrimitiveTypes = linkedSetOf<BuiltPrimitiveType>()
 
@@ -99,10 +98,10 @@ private fun ObjClass<*>.collectJvmClasses(jvmClasses: MutableMap<String, ValueTy
 
 private fun ValueType<*>.collectJvmClasses(jvmClasses: MutableMap<String, ValueType.JvmClass<*>>) {
   if (this is ValueType.JvmClass<*> && this !is ValueType.Blob<*>) {
-    if (jvmClasses.containsKey(javaClassName)) {
+    if (jvmClasses.containsKey(name)) {
       return
     }
-    jvmClasses[javaClassName] = this
+    jvmClasses[name] = this
   }
   when (this) {
     is ValueType.AbstractClass -> subclasses.forEach { it.collectJvmClasses(jvmClasses) }

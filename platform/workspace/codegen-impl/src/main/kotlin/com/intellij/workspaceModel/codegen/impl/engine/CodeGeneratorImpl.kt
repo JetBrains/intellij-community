@@ -9,7 +9,9 @@ import com.intellij.workspaceModel.codegen.impl.writer.classes.implWsMetadataSto
 import com.intellij.workspaceModel.codegen.impl.writer.classes.implWsMetadataStorageCode
 
 class CodeGeneratorImpl : CodeGenerator {
-  override fun generateEntitiesImplementation(module: CompiledObjModule): GenerationResult {
+
+  override fun generateEntitiesImplementation(module: CompiledObjModule, settings: GeneratorSettings): GenerationResult {
+    setGeneratorSettings(settings)
     val reporter = ProblemReporterImpl()
 
     checkExtensionFields(module, reporter)
@@ -41,7 +43,9 @@ class CodeGeneratorImpl : CodeGenerator {
     return GenerationResult(generatedCode, reporter.problems)
   }
 
-  override fun generateMetadataStoragesImplementation(modules: List<CompiledObjModule>): GenerationResult {
+  override fun generateMetadataStoragesImplementation(modules: List<CompiledObjModule>, settings: GeneratorSettings): GenerationResult {
+    setGeneratorSettings(settings)
+
     // Filter packages that contain any metadata and then sort them by name to guarantee the predictable order during regeneration
     val notEmptyModules = modules.filter { it.types.isNotEmpty() || it.abstractTypes.isNotEmpty() }.sortedBy { it.name }
 
@@ -86,5 +90,11 @@ class CodeGeneratorImpl : CodeGenerator {
 
   private fun failedGenerationResult(reporter: ProblemReporter): GenerationResult =
     GenerationResult(emptyList(), reporter.problems)
+
+  private fun setGeneratorSettings(settings: GeneratorSettings) {
+    generatorSettings = settings
+  }
 }
+
+internal lateinit var generatorSettings: GeneratorSettings
 
