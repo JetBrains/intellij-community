@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 @TestMetadata("../idea/tests/testData/internal/toolWindow")
 public class K2BytecodeToolWindowTestGenerated extends AbstractK2BytecodeToolWindowTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTestWithIr, this, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("companionObjectJvmField")
