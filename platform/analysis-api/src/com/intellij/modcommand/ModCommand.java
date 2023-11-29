@@ -18,10 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -356,5 +353,15 @@ public sealed interface ModCommand
                                                    @NotNull List<? extends @NotNull MemberChooserElement> defaultSelection,
                                                    @NotNull Function<@NotNull List<? extends @NotNull MemberChooserElement>, ? extends @NotNull ModCommand> nextCommand) {
     return new ModChooseMember(title, elements, defaultSelection, ModChooseMember.SelectionMode.MULTIPLE, nextCommand);
+  }
+
+  /**
+   * Creates a command that displays conflicts during interactive execution and requires user confirmation to proceed to the next step.
+   * Not executed in batch; skipped in preview.
+   *
+   * @param conflicts conflicts to show
+   */
+  static @NotNull ModCommand showConflicts(@NotNull Map<@NotNull PsiElement, ModShowConflicts.@NotNull Conflict> conflicts) {
+    return new ModShowConflicts(conflicts);
   }
 }

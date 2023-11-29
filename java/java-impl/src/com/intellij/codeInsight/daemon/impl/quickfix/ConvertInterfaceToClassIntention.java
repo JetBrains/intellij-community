@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.modcommand.ModCommand.*;
+
 public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<PsiClass> {
   private final boolean myCheckStartPosition;
 
@@ -58,10 +60,8 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
     final Collection<PsiClass> inheritors = ClassInheritorsSearch.search(anInterface, anInterface.getUseScope(), false).findAll();
     final Map<PsiElement, ModShowConflicts.Conflict> conflicts =
       IntentionPreviewUtils.isIntentionPreviewActive() ? Map.of() : getConflicts(anInterface, inheritors);
-    return new ModShowConflicts(conflicts)
-      .andThen(ModCommand.psiUpdate(anInterface,
-                         (writableInterface, updater) ->
-                           convertInterfaceToClass(writableInterface, inheritors, updater)));
+    return showConflicts(conflicts)
+      .andThen(psiUpdate(anInterface, (writableInterface, updater) -> convertInterfaceToClass(writableInterface, inheritors, updater)));
   }
 
   @NotNull

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.modcommand.ModCommand.*;
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 import static com.intellij.psi.PsiModifier.FINAL;
 
@@ -54,7 +55,7 @@ public class MakeClassFinalFix extends ModCommandQuickFix {
     final PsiElement element = descriptor.getPsiElement();
     final PsiClass containingClass = findClassToFix(element);
     if (containingClass == null) {
-      return ModCommand.nop();
+      return nop();
     }
     final PsiModifierList modifierList = containingClass.getModifierList();
     assert modifierList != null;
@@ -69,8 +70,8 @@ public class MakeClassFinalFix extends ModCommandQuickFix {
       });
     }
     ModShowConflicts.Conflict conflict = new ModShowConflicts.Conflict(conflictMessages);
-    return new ModShowConflicts(Map.of(containingClass, conflict))
-      .andThen(ModCommand.psiUpdate(modifierList, list -> doMakeFinal(list)));
+    return showConflicts(Map.of(containingClass, conflict))
+      .andThen(psiUpdate(modifierList, MakeClassFinalFix::doMakeFinal));
   }
 
   private static void doMakeFinal(PsiModifierList modifierList) {
