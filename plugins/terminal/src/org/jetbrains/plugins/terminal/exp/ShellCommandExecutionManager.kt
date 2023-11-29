@@ -151,7 +151,7 @@ internal class ShellCommandExecutionManager(private val session: TerminalSession
 
   private fun doSendCommandToExecute(shellCommand: String) {
     commandSentListeners.forEach { it(shellCommand) }
-    // Simulate pressing Ctrl+U in the terminal to clear all typings in the prompt
+    // Simulate pressing Ctrl+U in the terminal to clear all typings in the prompt (IDEA-337692)
     val fullCommand = "\u0015" + shellCommand
     session.terminalStarterFuture.thenAccept {
       if (it != null) {
