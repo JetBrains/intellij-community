@@ -166,6 +166,7 @@ public final class Runner {
     else if (args.length >= 2 && ("install".equals(args[0]) || "apply".equals(args[0])) ||
              args.length >= 3 && ("batch-install".equals(args[0]))) {
       LOG.info("JRE: " + System.getProperty("java.runtime.version", "unknown") + " @ " + System.getProperty("java.home"));
+      LOG.info("user.language=" + System.getProperty("user.language") + " user.country=" + System.getProperty("user.country"));
 
       String destPath = args[1];
 
