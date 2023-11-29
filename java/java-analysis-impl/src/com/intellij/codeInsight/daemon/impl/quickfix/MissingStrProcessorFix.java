@@ -5,7 +5,10 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTemplateExpression;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +25,9 @@ public final class MissingStrProcessorFix extends PsiUpdateModCommandAction<PsiT
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiTemplateExpression template, @NotNull ModPsiUpdater updater) {
     if (template.getProcessor() == null && template.getTemplate() != null) {
-      new CommentTracker().replaceAndRestoreComments(template, "STR." + template.getText());
+      final PsiElement result = new CommentTracker()
+        .replaceAndRestoreComments(template, CommonClassNames.JAVA_LANG_STRING_TEMPLATE + ".STR." + template.getText());
+      JavaCodeStyleManager.getInstance(result.getProject()).shortenClassReferences(result);
     }
   }
 }

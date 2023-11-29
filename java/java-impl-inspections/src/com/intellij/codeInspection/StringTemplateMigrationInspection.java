@@ -8,6 +8,7 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -121,6 +122,7 @@ public class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInsp
       if (stringTemplate == null) return;
       CommentTracker tracker = new CommentTracker();
       PsiElement result = tracker.replaceAndRestoreComments(polyadicExpression, stringTemplate);
+      result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       if (result instanceof PsiTemplateExpression template) {
         replaceRedundantEmbeddedExpression(template);
       }
@@ -156,7 +158,7 @@ public class StringTemplateMigrationInspection extends AbstractBaseJavaLocalInsp
           toTemplateExpression(content, isStringFound, operand);
         }
       }
-      return textBlock ? "STR.\"\"\"\n" + content + "\"\"\"" : "STR.\"" + content + "\"";
+      return textBlock ? CommonClassNames.JAVA_LANG_STRING_TEMPLATE + ".STR.\"\"\"\n" + content + "\"\"\"" : CommonClassNames.JAVA_LANG_STRING_TEMPLATE + ".STR.\"" + content + "\"";
     }
 
     private static boolean useTextBlockTemplate(PsiPolyadicExpression expression) {

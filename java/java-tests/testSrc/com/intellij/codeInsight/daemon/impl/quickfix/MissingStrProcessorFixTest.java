@@ -2,7 +2,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 
 public class MissingStrProcessorFixTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -13,5 +15,10 @@ public class MissingStrProcessorFixTest extends LightQuickFixParameterizedTestCa
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_21_PREVIEW;
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk21();
   }
 }

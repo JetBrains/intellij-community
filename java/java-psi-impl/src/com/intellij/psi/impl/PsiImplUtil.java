@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.light.LightClassReference;
@@ -221,7 +222,7 @@ public final class PsiImplUtil {
     for (PsiResourceListElement resource : resourceList) {
       if (resource == lastParent) break;
       if (resource instanceof PsiResourceVariable &&
-          !((PsiResourceVariable)resource).isUnnamed() &&     
+          !((PsiResourceVariable)resource).isUnnamed() &&
           !processor.execute(resource, state)) return false;
     }
 
@@ -867,5 +868,29 @@ public final class PsiImplUtil {
       }
       return file;
     }
+  }
+
+  public static PsiImportStaticStatement[] getImplicitStaticImports(@NotNull PsiFile file) {
+    PsiImportStaticStatement[] staticImports = new PsiImportStaticStatement[1];
+    int counter = 0;
+
+    // java.lang.StringTemplate.STR
+    if (PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_21_PREVIEW)) {
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(file.getProject());
+      final PsiClass aClass = psiFacade.findClass(CommonClassNames.JAVA_LANG_STRING_TEMPLATE, file.getResolveScope());
+      if (aClass != null) {
+        final PsiImportStaticStatement stringTemplate = psiFacade.getElementFactory().createImportStaticStatement(aClass, "STR");
+        staticImports[counter++] = stringTemplate;
+      }
+    }
+
+    // preparation of results
+    if (counter < staticImports.length) {
+      staticImports = Arrays.copyOf(staticImports, counter);
+    }
+    for (PsiImportStaticStatement statement : staticImports) {
+      ImportsUtil.markAsImplicitImport(statement);
+    }
+    return staticImports;
   }
 }

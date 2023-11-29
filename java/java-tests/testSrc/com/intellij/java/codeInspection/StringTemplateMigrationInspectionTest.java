@@ -27,6 +27,26 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  public void testOverrideStringProcessor() {
+    doTest("""
+             class StringTemplateMigration {           
+               public static final String STR = "surprise!";
+               void test() {
+                 String name = "World";
+                 String test = "Hello " + na<caret>me  + "!" + "!" + "!";
+               }          
+               private static class StringTemplate {}
+             }""", """
+             class StringTemplateMigration {
+               public static final String STR = "surprise!";
+               void test() {
+                 String name = "World";
+                 String test = java.lang.StringTemplate.STR."Hello \\{name}!!!";
+               }
+               private static class StringTemplate {}
+             }""");
+  }
+
   public void testNumberPlusString() {
     doTest("""
              class StringTemplateMigration {
