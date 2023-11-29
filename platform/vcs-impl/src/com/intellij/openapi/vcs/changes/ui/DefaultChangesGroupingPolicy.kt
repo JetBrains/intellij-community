@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import javax.swing.tree.DefaultTreeModel
@@ -14,29 +13,23 @@ object NoneChangesGroupingPolicy : ChangesGroupingPolicy {
 }
 
 object NoneChangesGroupingFactory : ChangesGroupingPolicyFactory() {
-  override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy {
-    return NoneChangesGroupingPolicy
-  }
+  override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy =
+    NoneChangesGroupingPolicy
 }
 
-class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
-  override fun getParentNodeFor(nodePath: StaticFilePath,
-                                node: ChangesBrowserNode<*>,
-                                subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
+class DefaultChangesGroupingPolicy(val project: Project, model: DefaultTreeModel) : SimpleChangesGroupingPolicy<Any>(model) {
+  override fun getGroupRootValueFor(nodePath: StaticFilePath, node: ChangesBrowserNode<*>): Any? {
     if (isMergeConflict(nodePath, node)) {
-      val cachingRoot = getCachingRoot(subtreeRoot, subtreeRoot)
-      CONFLICTS_NODE_CACHE[cachingRoot]?.let { return it }
-
-      return ChangesBrowserConflictsNode(project).also {
-        it.markAsHelperNode()
-
-        model.insertNodeInto(it, subtreeRoot, subtreeRoot.childCount)
-        CONFLICTS_NODE_CACHE[cachingRoot] = it
-        TreeModelBuilder.IS_CACHING_ROOT.set(it, true)
-      }
+      return CONFLICTS_NODE_FLAG
     }
-
     return null
+  }
+
+  override fun createGroupRootNode(value: Any): ChangesBrowserNode<*> {
+    assert(value == CONFLICTS_NODE_FLAG)
+    val conflictsRoot = ChangesBrowserConflictsNode(project)
+    conflictsRoot.markAsHelperNode()
+    return conflictsRoot
   }
 
   private fun isMergeConflict(nodePath: StaticFilePath, node: ChangesBrowserNode<*>): Boolean {
@@ -59,7 +52,7 @@ class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeM
   }
 
   companion object {
-    val CONFLICTS_NODE_CACHE = Key.create<ChangesBrowserNode<*>>("ChangesTree.ConflictsNodeCache")
+    private val CONFLICTS_NODE_FLAG = Any()
   }
 
   internal class Factory @JvmOverloads constructor(private val forLocalChanges: Boolean = false) : ChangesGroupingPolicyFactory() {

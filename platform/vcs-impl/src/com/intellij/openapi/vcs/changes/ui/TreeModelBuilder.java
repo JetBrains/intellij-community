@@ -42,9 +42,16 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE =
     NotNullLazyKey.createLazyKey("ChangesTree.DirectoryCache", node -> new HashMap<>());
   private static final Key<ChangesGroupingPolicy> GROUPING_POLICY = Key.create("ChangesTree.GroupingPolicy");
-  // This is used in particular for the case when module contains files from different repositories. So there could be several nodes for
-  // the same module in one subtree (for change list), but under different repository nodes. And we should perform node caching not just
-  // in subtree root, but further down the tree.
+
+  /**
+   * Node grouping forms hierarchical structure.
+   * For example, one module may have multiple content roots - and these roots may belong to different git repositories.
+   * In this case, root caching should be performed at the particular repository node instead of a subtreeRoot
+   * (this way each repository node will get its own module group node inside).
+   * <p>
+   * Prefer using {@link BaseChangesGroupingPolicy} methods or implementing {@link SimpleChangesGroupingPolicy} instead of using it directly.
+   */
+  @ApiStatus.Internal
   public static final Key<Boolean> IS_CACHING_ROOT = Key.create("ChangesTree.IsCachingRoot");
 
   @Nullable
