@@ -86,8 +86,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public abstract @NotNull IntPredicate getAccessibleFileIdFilter(@Nullable Project project);
 
   @ApiStatus.Internal
-  public abstract @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope,
-                                                     @Nullable Project project);
+  public abstract @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope, @Nullable Project project);
 
   @ApiStatus.Internal
   public abstract @Nullable IdFilter projectIndexableFiles(@Nullable Project project);
@@ -425,12 +424,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   private boolean processFilesContainingAllKeysInPhysicalFiles(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
                                                                @NotNull GlobalSearchScope filter,
-                                                               Processor<? super VirtualFile> processor,
-                                                               IdFilter filesSet) {
+                                                               @Nullable IdFilter filesSet,
+                                                               @NotNull Processor<? super VirtualFile> processor) {
     IntSet set = null;
-    if (filter instanceof GlobalSearchScope.FilesScope) {
-      VirtualFileEnumeration hint = VirtualFileEnumeration.extract(filter);
-      set = hint != null ? new IntOpenHashSet(hint.asArray()) : IntSet.of();
+    if (filter instanceof GlobalSearchScope.FilesScope filesScope) {
+      set = new IntOpenHashSet(filesScope.asArray());
     }
 
     //noinspection rawtypes
@@ -451,10 +449,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         set = queryResult;
       }
     }
-    if (set == null || !processVirtualFiles(set, filter, processor)) {
-      return false;
-    }
-    return true;
+    return set != null && processVirtualFiles(set, filter, processor);
   }
 
   @Override
@@ -463,11 +458,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                @NotNull Processor<? super VirtualFile> processor) {
     IdFilter filesSet = extractIdFilter(filter, filter.getProject());
 
-    if (!processFilesContainingAllKeysInPhysicalFiles(queries, filter, processor, filesSet)) {
-      return false;
-    }
-
-    return true;
+    return processFilesContainingAllKeysInPhysicalFiles(queries, filter, filesSet, processor);
   }
 
   @Override
@@ -609,7 +600,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return result;
   }
 
-  @Nullable DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
+  @Nullable
+  static DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
     Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
     if (dumbModeAccessTypeStack.isEmpty()) {
       return null;
