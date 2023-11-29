@@ -58,30 +58,42 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   @Override
   public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content)
     throws MapReduceIndexMappingException, ProcessCanceledException {
-    Computable<Boolean> indexUpdateComputable = super.mapInputAndPrepareUpdate(inputId, content);
-    IndexingStampInfo indexingStampInfo = content == null ? null : StubUpdatingIndex.calculateIndexingStamp(content);
+    try {
+      Computable<Boolean> indexUpdateComputable = super.mapInputAndPrepareUpdate(inputId, content);
+      IndexingStampInfo indexingStampInfo = content == null ? null : StubUpdatingIndex.calculateIndexingStamp(content);
 
-    return () -> {
-      try {
-        Boolean result = indexUpdateComputable.compute();
-        if (Boolean.TRUE.equals(result) && !StaleIndexesChecker.isStaleIdDeletion()) {
-          ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId);
-          if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
-            LOG.info("Updating IndexingStampInfo. inputId=" + inputId + ",result=" + result);
+      return () -> {
+        try {
+          Boolean result = indexUpdateComputable.compute();
+          if (Boolean.TRUE.equals(result) && !StaleIndexesChecker.isStaleIdDeletion()) {
+            ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId);
+            if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
+              LOG.info("Updating IndexingStampInfo. inputId=" + inputId + ",result=" + result);
+            }
           }
+          else {
+            // this is valuable information. Log it even without TRACE_STUB_INDEX_UPDATES flag
+            LOG.info("Not updating IndexingStampInfo. inputId=" + inputId + ",result=" + result);
+          }
+          return result;
         }
-        else {
-          // this is valuable information. Log it even without TRACE_STUB_INDEX_UPDATES flag
-          LOG.info("Not updating IndexingStampInfo. inputId=" + inputId + ",result=" + result);
+        catch (Throwable t) {
+          // ProcessCanceledException is not expected here
+          LOG.error("Could not compute indexUpdateComputable", t);
+          throw t;
         }
-        return result;
+      };
+    }
+    catch (ProcessCanceledException pce) {
+      if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
+        LOG.infoWithDebug("mapInputAndPrepareUpdate interrupted,inputId=" + inputId + "," + pce, new RuntimeException(pce));
       }
-      catch (Throwable t) {
-        // ProcessCanceledException is not expected here
-        LOG.error("Could not compute indexUpdateComputable", t);
-        throw t;
-      }
-    };
+      throw pce;
+    }
+    catch (Throwable t) {
+      LOG.warn("mapInputAndPrepareUpdate interrupted,inputId=" + inputId + "," + t, FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES ? t : null);
+      throw t;
+    }
   }
 
   @Override
