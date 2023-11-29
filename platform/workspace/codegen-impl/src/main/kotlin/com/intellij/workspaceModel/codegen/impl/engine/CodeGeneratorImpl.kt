@@ -2,14 +2,14 @@
 package com.intellij.workspaceModel.codegen.impl.engine
 
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
-import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjModule
 import com.intellij.workspaceModel.codegen.engine.*
 import com.intellij.workspaceModel.codegen.impl.writer.*
-import com.intellij.workspaceModel.codegen.impl.writer.classes.implWsMetadataStorageClassCode
+import com.intellij.workspaceModel.codegen.impl.writer.classes.implWsMetadataStorageBridgeCode
+import com.intellij.workspaceModel.codegen.impl.writer.classes.implWsMetadataStorageCode
 
 class CodeGeneratorImpl : CodeGenerator {
-  override fun generate(module: CompiledObjModule): GenerationResult {
+  override fun generateEntitiesImplementation(module: CompiledObjModule): GenerationResult {
     val reporter = ProblemReporterImpl()
 
     checkExtensionFields(module, reporter)
@@ -27,18 +27,8 @@ class CodeGeneratorImpl : CodeGenerator {
       return failedGenerationResult(reporter)
     }
 
-    val metadataStorageImplGeneratedCode = module.implWsMetadataStorageClassCode
 
-    val generatedCode = arrayListOf<GeneratedCode>()
-    addObjClassesCode(generatedCode, objClassToBuilderInterface)
-    addObjModuleCode(generatedCode, module, metadataStorageImplGeneratedCode)
-
-    return GenerationResult(generatedCode, reporter.problems)
-  }
-
-  private fun addObjClassesCode(generatedCode: MutableList<GeneratedCode>,
-                                objClassToBuilderInterface: Map<ObjClass<*>, String>) {
-    generatedCode.addAll(objClassToBuilderInterface.map { (objClass, builderInterface) ->
+    val generatedCode = objClassToBuilderInterface.map { (objClass, builderInterface) ->
       ObjClassGeneratedCode(
         target = objClass,
         builderInterface = builderInterface,
@@ -46,18 +36,52 @@ class CodeGeneratorImpl : CodeGenerator {
         topLevelCode = objClass.generateExtensionCode(),
         implementationClass = objClass.implWsCode()
       )
-    })
+    }
+
+    return GenerationResult(generatedCode, reporter.problems)
   }
 
-  private fun addObjModuleCode(generatedCode: MutableList<GeneratedCode>,
-                               objModule: ObjModule, metadataStorageImplGeneratedCode: String?) {
-    if (metadataStorageImplGeneratedCode != null) {
-      generatedCode.add(ObjModuleFileGeneratedCode(
+  override fun generateMetadataStoragesImplementation(modules: List<CompiledObjModule>): GenerationResult {
+    // Filter packages that contain any metadata and then sort them by name to guarantee the predictable order during regeneration
+    val notEmptyModules = modules.filter { it.types.isNotEmpty() || it.abstractTypes.isNotEmpty() }.sortedBy { it.name }
+
+    if (notEmptyModules.isEmpty()) {
+      return GenerationResult(emptyList(), emptyList())
+    }
+
+    // One of the filtered packages will contain MetadataStorageImpl that stores metadata for the entire module
+    // notEmptyModules are sorted by name, so we take the package with the minimum name
+    val metadataStorageImplModule = notEmptyModules.first()
+    // All other packages will contain MetadataStorageBridge
+    val metadataStorageBridgeModules = notEmptyModules.drop(1)
+
+    val generatedCode = arrayListOf<GeneratedCode>()
+
+    addMetadataStorageCode(
+      generatedCode, metadataStorageImplModule,
+      implWsMetadataStorageCode(metadataStorageImplModule, notEmptyModules.flatMap { it.types }, notEmptyModules.flatMap { it.abstractTypes })
+    )
+
+    val metadataStorageImplFqn = fqn(metadataStorageImplModule.name, MetadataStorage.IMPL_NAME)
+    metadataStorageBridgeModules.forEach {
+      addMetadataStorageCode(
+        generatedCode, it,
+        it.implWsMetadataStorageBridgeCode(metadataStorageImplFqn)
+      )
+    }
+
+    return GenerationResult(generatedCode, emptyList())
+  }
+
+  private fun addMetadataStorageCode(generatedCode: MutableList<GeneratedCode>,
+                                     objModule: ObjModule, metadataStorageGeneratedCode: String) {
+    generatedCode.add(
+      ObjModuleFileGeneratedCode(
         fileName = MetadataStorage.IMPL_NAME,
         objModuleName = objModule.name,
-        generatedCode = metadataStorageImplGeneratedCode
-      ))
-    }
+        generatedCode = metadataStorageGeneratedCode
+      )
+    )
   }
 
   private fun failedGenerationResult(reporter: ProblemReporter): GenerationResult =

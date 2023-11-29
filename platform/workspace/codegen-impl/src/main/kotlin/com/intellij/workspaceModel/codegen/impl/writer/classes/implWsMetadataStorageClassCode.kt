@@ -14,61 +14,62 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.allFinalSubClasses
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.generatedCodeVisibilityModifier
 
-val CompiledObjModule.implWsMetadataStorageClassCode: String?
-  get() {
-    if (abstractTypes.isEmpty() && types.isEmpty()) {
-      return null
+internal fun implWsMetadataStorageCode(module: CompiledObjModule, types: List<ObjClass<*>>,
+                                       abstractTypes: List<ValueType.AbstractClass<*>>): String = lines {
+  line("package ${module.name}")
+  line()
+  section("${module.generatedCodeVisibilityModifier} object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.base}()") {
+    val builtTypesByFqn = linkedMapOf<String, String>()
+    val builtPrimitiveTypes = linkedSetOf<BuiltPrimitiveType>()
+
+    abstractTypes.forEach {
+      buildAbstractTypeMetadata(it, builtTypesByFqn, builtPrimitiveTypes)
     }
 
-    return lines {
-      line("package $name")
+    types.forEach {
+      buildObjClassMetadata(it, builtTypesByFqn, builtPrimitiveTypes)
+    }
+
+    sectionNl("override fun initializeMetadata()") {
+      builtPrimitiveTypes.forEach {
+        line("val ${it.getVariableName()} = ${it.getConstructor()}")
+      }
       line()
-      section("$generatedCodeVisibilityModifier object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.base}()") {
-        val builtTypesByFqn = linkedMapOf<String, String>()
-        val builtPrimitiveTypes = linkedSetOf<BuiltPrimitiveType>()
+      line("var typeMetadata: $StorageTypeMetadata")
+      builtTypesByFqn.forEach {
+        line()
+        line("typeMetadata = ${it.value}")
+        line()
+        line("${MetadataStorage.addMetadata}(typeMetadata)")
+      }
+    }
 
-        abstractTypes.forEach {
-          buildAbstractTypeMetadata(it, builtTypesByFqn, builtPrimitiveTypes)
-        }
+    sectionNl("override fun initializeMetadataHash()") {
+      val jvmClassesToBuild = linkedMapOf<String, ValueType.JvmClass<*>>()
 
-        types.forEach {
-          buildObjClassMetadata(it, builtTypesByFqn, builtPrimitiveTypes)
-        }
+      types.forEach { it.collectJvmClasses(jvmClassesToBuild) }
+      abstractTypes.forEach { it.collectJvmClasses(jvmClassesToBuild) }
 
-        sectionNl("override fun initializeMetadata()") {
-          builtPrimitiveTypes.forEach {
-            line("val ${it.getVariableName()} = ${it.getConstructor()}")
-          }
-          line()
-          line("var typeMetadata: $StorageTypeMetadata")
-          builtTypesByFqn.forEach {
-            line()
-            line("typeMetadata = ${it.value}")
-            line()
-            line("${MetadataStorage.addMetadata}(typeMetadata)")
-          }
-        }
+      val entityHashComputer = EntityMetadataHashComputer(builtTypesByFqn)
+      val classHashComputer = ClassMetadataHashComputer(getClassBuilder(builtPrimitiveTypes))
 
-        sectionNl("override fun initializeMetadataHash()") {
-          val jvmClassesToBuild = linkedMapOf<String, ValueType.JvmClass<*>>()
+      val hashWithTypeFqn = arrayListOf<Pair<String, MetadataHash>>()
+      hashWithTypeFqn.addAll(types.map { it.fullName to entityHashComputer.computeHash(it) })
+      hashWithTypeFqn.addAll(jvmClassesToBuild.map { it.value.name to classHashComputer.computeHash(it.value) })
 
-          types.forEach { it.collectJvmClasses(jvmClassesToBuild) }
-          abstractTypes.forEach { it.collectJvmClasses(jvmClassesToBuild) }
-
-          val entityHashComputer = EntityMetadataHashComputer(builtTypesByFqn)
-          val classHashComputer = ClassMetadataHashComputer(getClassBuilder(builtPrimitiveTypes))
-
-          val hashWithTypeFqn = arrayListOf<Pair<String, MetadataHash>>()
-          hashWithTypeFqn.addAll(types.map { it.fullName to entityHashComputer.computeHash(it) })
-          hashWithTypeFqn.addAll(jvmClassesToBuild.map { it.value.name to classHashComputer.computeHash(it.value) })
-
-          list(hashWithTypeFqn) {
-            "${MetadataStorage.addMetadataHash}(typeFqn = ${this.first}, metadataHash = ${this.second})"
-          }
-        }
+      list(hashWithTypeFqn) {
+        "${MetadataStorage.addMetadataHash}(typeFqn = ${this.first}, metadataHash = ${this.second})"
       }
     }
   }
+}
+
+
+internal fun CompiledObjModule.implWsMetadataStorageBridgeCode(metadataStorageImpl: QualifiedName): String = lines {
+  line("package $name")
+  line()
+  line("$generatedCodeVisibilityModifier object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.bridge}($metadataStorageImpl)")
+}
 
 
 private fun buildObjClassMetadata(

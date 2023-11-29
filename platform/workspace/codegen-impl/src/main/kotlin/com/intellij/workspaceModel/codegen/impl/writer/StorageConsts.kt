@@ -88,9 +88,11 @@ internal object EntityInformation {
 //Storage metamodel classes
 internal object MetadataStorage {
   private const val BASE_NAME = "MetadataStorageBase"
+  private const val BRIDGE_NAME = "MetadataStorageBridge"
   internal const val IMPL_NAME = "MetadataStorageImpl"
 
   internal val base = fqn(workspaceStorageMetadataImplPackageName, BASE_NAME)
+  internal val bridge = fqn(workspaceStorageMetadataPackageName, BRIDGE_NAME)
 
   internal const val addMetadata = "addMetadata"
   internal const val addMetadataHash = "addMetadataHash"
