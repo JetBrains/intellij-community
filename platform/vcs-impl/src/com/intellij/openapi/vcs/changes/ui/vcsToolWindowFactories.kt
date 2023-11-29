@@ -22,11 +22,15 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 
 private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
-
   private val shouldShowWithoutActiveVcs = Registry.get("vcs.empty.toolwindow.show")
 
   override fun init(window: ToolWindow) {
     super.init(window)
+
+    window.stripeTitleProvider = Supplier {
+      window.project.takeIf { !it.isDisposed }?.let { ProjectLevelVcsManager.getInstance(it).allActiveVcss.singleOrNull()?.displayName }
+      ?: IdeBundle.message("toolwindow.stripe.Version_Control")
+    }
 
     window.setAdditionalGearActions(ActionManager.getInstance().getAction("LocalChangesView.GearActions") as ActionGroup)
   }
@@ -49,12 +53,6 @@ private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
 
     if (shouldShowWithoutActiveVcs.asBoolean().not()) {
       toolWindow.isShowStripeButton = showInStripeWithoutActiveVcs(toolWindow.project)
-    }
-
-    toolWindow.stripeTitleProvider = Supplier {
-      val project = toolWindow.project.takeIf { !it.isDisposed }
-      project?.let { ProjectLevelVcsManager.getInstance(it) }?.allActiveVcss?.singleOrNull()?.displayName
-      ?: IdeBundle.message("toolwindow.stripe.Version_Control")
     }
   }
 
