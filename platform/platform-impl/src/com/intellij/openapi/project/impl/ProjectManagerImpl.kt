@@ -728,7 +728,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         throw e
       }
 
-      LOG.error(e)
+      LOG.error("project loading failed", e)
       failedToOpenProject(frameAllocator = frameAllocator, exception = e, options = options)
       return null
     }
