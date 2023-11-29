@@ -1706,6 +1706,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
                 runTest("testData/evaluation/singleBreakpoint/whenEvaluation.kt");
             }
 
+            @TestMetadata("withSerializationPlugin.kt")
+            public void testWithSerializationPlugin() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/withSerializationPlugin.kt");
+            }
+
             @TestMetadata(".kt.kt")
             public void test_kt() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/.kt.kt");
