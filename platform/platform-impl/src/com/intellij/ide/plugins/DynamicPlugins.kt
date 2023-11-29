@@ -502,7 +502,7 @@ object DynamicPlugins {
 
           jdomSerializer.clearSerializationCaches()
           TypeFactory.defaultInstance().clearCache()
-          app.getServiceIfCreated(TopHitCache::class.java)?.clear()
+          TopHitCache.getInstance().clear()
           ActionToolbarImpl.resetAllToolbars()
           PresentationFactory.clearPresentationCaches()
           TouchbarSupport.reloadAllActions()
