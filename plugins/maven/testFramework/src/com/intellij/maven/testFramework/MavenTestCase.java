@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.ide.DataManager;
@@ -45,6 +46,7 @@ import org.jetbrains.idea.maven.server.MavenServerConnector;
 import org.jetbrains.idea.maven.server.MavenServerConnectorImpl;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
@@ -244,7 +246,14 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
 
   private static void checkAllMavenConnectorsDisposed() {
-    assertEmpty("all maven connectors should be disposed", MavenServerManager.getInstance().getAllConnectors());
+    Collection<MavenServerConnector> connectors = MavenServerManager.getInstance().getAllConnectors();
+    if (!connectors.isEmpty()) {
+      MavenLog.LOG.warn("Connectors not empty, printing thread dump");
+      MavenLog.LOG.warn("===============================================");
+      MavenLog.LOG.warn(ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false).getRawDump());
+      MavenLog.LOG.warn("===============================================");
+      fail("all maven connectors should be disposed but got " + connectors);
+    }
   }
 
   private void ensureTempDirCreated() throws IOException {
