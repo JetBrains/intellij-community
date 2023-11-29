@@ -12,7 +12,7 @@ class JavaOnboardingTourPromoter : OnboardingLessonPromoter(
   ideaOnboardingLessonId, "JAVA", JavaLessonsBundle.message("java.onboarding.lesson.name")
 ) {
   override val promoImage: Icon
-    get() = IconLoader.getIcon("img/idea-onboarding-tour.png", JavaOnboardingTourPromoter::class.java.classLoader)
+    get() = IconLoader.getIcon("img/idea-onboarding-tour.png", JavaLessonsBundle::class.java.classLoader)
 
   override fun canCreatePromo(isEmptyState: Boolean): Boolean =
     super.canCreatePromo(isEmptyState) && PlatformUtils.isIntelliJ()
