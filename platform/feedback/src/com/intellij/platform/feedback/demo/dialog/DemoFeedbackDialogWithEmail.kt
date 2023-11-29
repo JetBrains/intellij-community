@@ -61,4 +61,8 @@ class DemoFeedbackDialogWithEmail(
   override fun computeZendeskTicketTags(collectedData: JsonObject): List<String> {
     return listOf("demo_tag_1", "demo_tag_2")
   }
+
+  override fun shouldAutoCloseZendeskTicket(): Boolean {
+    return true
+  }
 }
