@@ -197,8 +197,9 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     super.doLayout()
 
     val height = height
-    if (height != 0) {
-      customTitleBar?.height = height.toFloat()
+    if (height != 0 && customTitleBar != null &&
+        Math.abs(customTitleBar.height - height) > 0.1) {
+      customTitleBar.height = height.toFloat()
     }
   }
 
