@@ -242,7 +242,7 @@ val Module.stableName: Name
         val settingsProvider = KotlinFacetSettingsProvider.getInstance(project)
         val explicitNameFromArguments = when (val arguments = settingsProvider?.getInitializedSettings(this)?.mergedCompilerArguments) {
             is K2JVMCompilerArguments -> arguments.moduleName
-            is K2JSCompilerArguments -> arguments.outputFile?.let { FileUtil.getNameWithoutExtension(File(it)) }
+            is K2JSCompilerArguments -> arguments.moduleName ?: arguments.outputFile?.let { FileUtil.getNameWithoutExtension(File(it)) }
             is K2MetadataCompilerArguments -> arguments.moduleName
             else -> null // Actually, only 'null' possible here
         }
