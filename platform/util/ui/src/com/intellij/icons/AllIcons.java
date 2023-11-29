@@ -333,6 +333,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon KillProcess = load("debugger/killProcess.svg", 1100470732, 2);
     /** 12x12 */ public static final @NotNull Icon LambdaBreakpoint = load("debugger/LambdaBreakpoint.svg", -2130747183, 2);
     /** 12x12 */ public static final @NotNull Icon MultipleBreakpoints = load("debugger/MultipleBreakpoints.svg", -1140485658, 2);
+    /** 14x14 */ public static final @NotNull Icon MultipleBreakpointsDisabled = load("debugger/multipleBreakpointsDisabled.svg", -111597027, 2);
+    /** 14x14 */ public static final @NotNull Icon MultipleBreakpointsMuted = load("debugger/multipleBreakpointsMuted.svg", 1739755214, 2);
     /** 16x16 */ public static final @NotNull Icon MuteBreakpoints = load("debugger/muteBreakpoints.svg", 896463102, 2);
     /** 12x12 */ public static final @NotNull Icon NextStatement = load("debugger/nextStatement.svg", -1096276944, 2);
     /** 16x16 */ public static final @NotNull Icon Overhead = load("debugger/overhead.svg", -837590875, 2);

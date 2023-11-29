@@ -108,6 +108,8 @@ public final class ExpUiIcons {
     /** 14x14 */ public static final @NotNull Icon BreakpointUnsuspendentValid = load("expui/breakpoints/breakpointUnsuspendentValid.svg", 1047349070, 2);
     /** 14x14 */ public static final @NotNull Icon BreakpointValid = load("expui/breakpoints/breakpointValid.svg", -201114417, 2);
     /** 14x14 */ public static final @NotNull Icon MultipleBreakpoints = load("expui/breakpoints/multipleBreakpoints.svg", -1217715084, 2);
+    /** 14x14 */ public static final @NotNull Icon MultipleBreakpointsDisabled = load("expui/breakpoints/multipleBreakpointsDisabled.svg", -111597027, 2);
+    /** 14x14 */ public static final @NotNull Icon MultipleBreakpointsMuted = load("expui/breakpoints/multipleBreakpointsMuted.svg", 1739755214, 2);
     /** 7x10 */ public static final @NotNull Icon QuestionBadge = load("expui/breakpoints/questionBadge.svg", -1949828496, 2);
   }
 
