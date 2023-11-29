@@ -37,6 +37,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -61,25 +62,26 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
 
   private Executor myCurrentExecutor;
   private boolean myEditConfiguration;
-  private final RunListPopup myPopup;
+  private RunListPopup myPopup;
 
-  public ChooseRunConfigurationPopup(@NotNull DataContext dataContext,
+  public ChooseRunConfigurationPopup(@NotNull Project project,
                                      @NotNull String addKey,
                                      @NotNull Executor defaultExecutor,
                                      @Nullable Executor alternativeExecutor) {
-    myProject = CommonDataKeys.PROJECT.getData(dataContext);
-    assert myProject != null;
+    myProject = project;
     myAddKey = addKey;
     myDefaultExecutor = defaultExecutor;
     myAlternativeExecutor = alternativeExecutor;
-
-    List<ChooseRunConfigurationPopup.ItemWrapper<?>> settingsList = createSettingsList(myProject, this, dataContext, true);
-    ConfigurationListPopupStep step = new ConfigurationListPopupStep(this, myProject, myDefaultExecutor.getActionName(), settingsList);
-    myPopup = new RunListPopup(myProject, null, step, null);
   }
 
-  public void show() {
+  @RequiresBackgroundThread
+  @NotNull ListPopupStep<?> buildStep(@NotNull DataContext dataContext) {
+    List<ChooseRunConfigurationPopup.ItemWrapper<?>> settingsList = createSettingsList(myProject, this, dataContext, true);
+    return new ConfigurationListPopupStep(this, myProject, myDefaultExecutor.getActionName(), settingsList);
+  }
 
+  void show(@NotNull ListPopupStep<?> step) {
+    myPopup = new RunListPopup(myProject, null, step, null);
     final String adText = getAdText(myAlternativeExecutor);
     if (adText != null) {
       myPopup.setAdText(adText);
