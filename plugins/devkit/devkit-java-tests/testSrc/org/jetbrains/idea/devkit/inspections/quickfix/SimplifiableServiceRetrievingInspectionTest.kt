@@ -23,4 +23,8 @@ internal class SimplifiableServiceRetrievingInspectionTest : SimplifiableService
   fun testTooGenericGetInstanceReturnType() {
     doTest()
   }
+
+  fun testNullableGetInstanceMethod() {
+    doTest()
+  }
 }

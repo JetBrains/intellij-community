@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin
@@ -73,9 +74,7 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
   }
 
   private fun isGetInstanceProjectLevel(method: UMethod): Boolean {
-    if (!(method.isStaticOrJvmStatic && method.visibility == UastVisibility.PUBLIC && method.uastParameters.size == 1)) {
-      return false
-    }
+    if (!isApplicableForGetInstance(method) || method.uastParameters.size != 1) return false
     val param = method.uastParameters[0]
     if (param.type.canonicalText != Project::class.java.canonicalName) return false
     val qualifiedRef = getReturnExpression(method)?.returnExpression as? UQualifiedReferenceExpression ?: return false
@@ -84,9 +83,7 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
   }
 
   private fun isGetInstanceApplicationLevel(method: UMethod): Boolean {
-    if (!(method.isStaticOrJvmStatic && method.visibility == UastVisibility.PUBLIC && method.uastParameters.isEmpty())) {
-      return false
-    }
+    if (!isApplicableForGetInstance(method) || method.uastParameters.isNotEmpty()) return false
     return when (val returnExpression = getReturnExpression(method)?.returnExpression) {
       is UQualifiedReferenceExpression -> {
         (componentManagerGetServiceMethods.uCallMatches(returnExpression.selector as? UCallExpression)
@@ -95,6 +92,12 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
       is UCallExpression -> serviceKtFileMethods.uCallMatches(returnExpression)
       else -> false
     }
+  }
+
+  private fun isApplicableForGetInstance(method: UMethod): Boolean {
+    return method.isStaticOrJvmStatic &&
+           method.visibility == UastVisibility.PUBLIC &&
+           !method.javaPsi.hasAnnotation(Nullable::class.java.canonicalName)
   }
 
   private val UMethod.isStaticOrJvmStatic: Boolean
