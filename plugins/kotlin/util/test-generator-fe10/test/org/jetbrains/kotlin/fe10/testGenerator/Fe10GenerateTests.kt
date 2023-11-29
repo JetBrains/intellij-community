@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.idea.kdoc.Abstra
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1IntentionTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTest
-import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest
+import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractK1PostfixTemplateTest
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.AbstractSurroundWithTest
 import org.jetbrains.kotlin.idea.codeInsight.unwrap.AbstractUnwrapRemoveTest
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationPluginIdeDiagnosticTest
@@ -1415,8 +1415,8 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
     testGroup("idea/tests",  testDataPath = "../../code-insight/postfix-templates/testData") {
-        testClass<AbstractPostfixTemplateProviderTest> {
-            model("expansion/oldTestData", pattern = KT_WITHOUT_DOTS)
+        testClass<AbstractK1PostfixTemplateTest> {
+            model("expansion/oldTestData", pattern = KT_WITHOUT_DOTS, passTestDataPath = false)
         }
     }
 

@@ -1,6 +1,6 @@
 // IGNORE_K2
 fun bar() = 1
 fun foo() {
-    val <caret>bar = bar()
+    val <selection>bar<caret></selection> = bar()
     val x = bar
 }

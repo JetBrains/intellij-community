@@ -17,10 +17,10 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/expansion")
-public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinPostfixTemplateTest {
+public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTemplateTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/arrayOf")
-    public static class ArrayOf extends AbstractKotlinPostfixTemplateTest {
+    public static class ArrayOf extends AbstractK2PostfixTemplateTest {
         @TestMetadata("boolean.kt")
         public void testBoolean() throws Exception {
             performTest();
@@ -59,7 +59,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/assert")
-    public static class Assert extends AbstractKotlinPostfixTemplateTest {
+    public static class Assert extends AbstractK2PostfixTemplateTest {
         @TestMetadata("binary.kt")
         public void testBinary() throws Exception {
             performTest();
@@ -88,7 +88,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/for")
-    public static class For extends AbstractKotlinPostfixTemplateTest {
+    public static class For extends AbstractK2PostfixTemplateTest {
         @TestMetadata("any.kt")
         public void testAny() throws Exception {
             performTest();
@@ -147,7 +147,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/fori")
-    public static class Fori extends AbstractKotlinPostfixTemplateTest {
+    public static class Fori extends AbstractK2PostfixTemplateTest {
         @TestMetadata("forIndexed.kt")
         public void testForIndexed() throws Exception {
             performTest();
@@ -171,7 +171,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/forr")
-    public static class Forr extends AbstractKotlinPostfixTemplateTest {
+    public static class Forr extends AbstractK2PostfixTemplateTest {
         @TestMetadata("forNumberReverse.kt")
         public void testForNumberReverse() throws Exception {
             performTest();
@@ -185,7 +185,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/if")
-    public static class If extends AbstractKotlinPostfixTemplateTest {
+    public static class If extends AbstractK2PostfixTemplateTest {
         @TestMetadata("call.kt")
         public void testCall() throws Exception {
             performTest();
@@ -219,7 +219,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/iter")
-    public static class Iter extends AbstractKotlinPostfixTemplateTest {
+    public static class Iter extends AbstractK2PostfixTemplateTest {
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             performTest();
@@ -228,7 +228,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/listOf")
-    public static class ListOf extends AbstractKotlinPostfixTemplateTest {
+    public static class ListOf extends AbstractK2PostfixTemplateTest {
         @TestMetadata("classLiteral.kt")
         public void testClassLiteral() throws Exception {
             performTest();
@@ -257,7 +257,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/nn")
-    public static class Nn extends AbstractKotlinPostfixTemplateTest {
+    public static class Nn extends AbstractK2PostfixTemplateTest {
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             performTest();
@@ -266,7 +266,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/not")
-    public static class Not extends AbstractKotlinPostfixTemplateTest {
+    public static class Not extends AbstractK2PostfixTemplateTest {
         @TestMetadata("any.kt")
         public void testAny() throws Exception {
             performTest();
@@ -300,7 +300,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/null")
-    public static class Null extends AbstractKotlinPostfixTemplateTest {
+    public static class Null extends AbstractK2PostfixTemplateTest {
         @TestMetadata("notNull.kt")
         public void testNotNull() throws Exception {
             performTest();
@@ -324,10 +324,10 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/oldTestData")
-    public abstract static class OldTestData extends AbstractKotlinPostfixTemplateTest {
+    public abstract static class OldTestData extends AbstractK2PostfixTemplateTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/expansion/oldTestData")
-        public static class Uncategorized extends AbstractKotlinPostfixTemplateTest {
+        public static class Uncategorized extends AbstractK2PostfixTemplateTest {
             @TestMetadata("arg.kt")
             public void testArg() throws Exception {
                 performTest();
@@ -601,7 +601,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/expansion/oldTestData/wrapWithCall")
-        public static class WrapWithCall extends AbstractKotlinPostfixTemplateTest {
+        public static class WrapWithCall extends AbstractK2PostfixTemplateTest {
             @TestMetadata("arrayOfStatement.kt")
             public void testArrayOfStatement() throws Exception {
                 performTest();
@@ -626,7 +626,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/par")
-    public static class Par extends AbstractKotlinPostfixTemplateTest {
+    public static class Par extends AbstractK2PostfixTemplateTest {
         @TestMetadata("binary.kt")
         public void testBinary() throws Exception {
             performTest();
@@ -670,7 +670,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/return")
-    public static class Return extends AbstractKotlinPostfixTemplateTest {
+    public static class Return extends AbstractK2PostfixTemplateTest {
         @TestMetadata("expressionBody.kt")
         public void testExpressionBody() throws Exception {
             performTest();
@@ -704,7 +704,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/sequenceOf")
-    public static class SequenceOf extends AbstractKotlinPostfixTemplateTest {
+    public static class SequenceOf extends AbstractK2PostfixTemplateTest {
         @TestMetadata("test.kt")
         public void testTest() throws Exception {
             performTest();
@@ -713,7 +713,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/setOf")
-    public static class SetOf extends AbstractKotlinPostfixTemplateTest {
+    public static class SetOf extends AbstractK2PostfixTemplateTest {
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             performTest();
@@ -722,7 +722,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/sout")
-    public static class Sout extends AbstractKotlinPostfixTemplateTest {
+    public static class Sout extends AbstractK2PostfixTemplateTest {
         @TestMetadata("number.kt")
         public void testNumber() throws Exception {
             performTest();
@@ -751,7 +751,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/spread")
-    public static class Spread extends AbstractKotlinPostfixTemplateTest {
+    public static class Spread extends AbstractK2PostfixTemplateTest {
         @TestMetadata("already.kt")
         public void testAlready() throws Exception {
             performTest();
@@ -775,7 +775,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/try")
-    public static class Try extends AbstractKotlinPostfixTemplateTest {
+    public static class Try extends AbstractK2PostfixTemplateTest {
         @TestMetadata("javaException.kt")
         public void testJavaException() throws Exception {
             performTest();
@@ -799,7 +799,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/unless")
-    public static class Unless extends AbstractKotlinPostfixTemplateTest {
+    public static class Unless extends AbstractK2PostfixTemplateTest {
         @TestMetadata("call.kt")
         public void testCall() throws Exception {
             performTest();
@@ -833,7 +833,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/val")
-    public static class Val extends AbstractKotlinPostfixTemplateTest {
+    public static class Val extends AbstractK2PostfixTemplateTest {
         @TestMetadata("package.kt")
         public void testPackage() throws Exception {
             performTest();
@@ -842,7 +842,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/var")
-    public static class Var extends AbstractKotlinPostfixTemplateTest {
+    public static class Var extends AbstractK2PostfixTemplateTest {
         @TestMetadata("package.kt")
         public void testPackage() throws Exception {
             performTest();
@@ -851,7 +851,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/when")
-    public static class When extends AbstractKotlinPostfixTemplateTest {
+    public static class When extends AbstractK2PostfixTemplateTest {
         @TestMetadata("nonSealed.kt")
         public void testNonSealed() throws Exception {
             performTest();
@@ -870,7 +870,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/while")
-    public static class While extends AbstractKotlinPostfixTemplateTest {
+    public static class While extends AbstractK2PostfixTemplateTest {
         @TestMetadata("call.kt")
         public void testCall() throws Exception {
             performTest();
@@ -904,7 +904,7 @@ public abstract class KotlinPostfixTemplateTestGenerated extends AbstractKotlinP
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/with")
-    public static class With extends AbstractKotlinPostfixTemplateTest {
+    public static class With extends AbstractK2PostfixTemplateTest {
         @TestMetadata("call.kt")
         public void testCall() throws Exception {
             performTest();

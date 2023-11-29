@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil.findElementOfClassAtRange
 import com.intellij.util.Function
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
@@ -71,15 +70,6 @@ class KtPostfixTemplateProvider : PostfixTemplateProvider {
     override fun preCheck(copyFile: PsiFile, realEditor: Editor, currentOffset: Int) = copyFile
 
     override fun preExpand(file: PsiFile, editor: Editor) {
-    }
-
-    companion object {
-        /**
-         * In tests only one expression should be suggested, so in case there are many of them, save relevant items
-         */
-        @get:TestOnly
-        @Volatile
-        var previouslySuggestedExpressions = emptyList<String>()
     }
 }
 
@@ -194,7 +184,9 @@ private class KtExpressionPostfixTemplateSelector(
         val result = filteredByOffset.filter(this::filterElement)
 
         if (isUnitTestMode() && result.size > 1) {
-            KtPostfixTemplateProvider.previouslySuggestedExpressions = result.map { it.text }
+            with(KotlinPostfixTemplateInfo) {
+                originalFile.suggestedExpressions = result.map { it.text }
+            }
         }
 
         return result

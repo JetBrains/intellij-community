@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
@@ -25,6 +26,13 @@ fun allExpressions(vararg filters: (KtExpression) -> Boolean): PostfixTemplateEx
     return selector { file, offset ->
         collectExpressions(file, offset).filter { expression ->
             filters.all { it(expression) }
+        }.also { expressions ->
+            if (isUnitTestMode()) {
+                val expressionTexts = expressions.toList().map { it.text }
+                if (expressionTexts.size > 1) {
+                    with(KotlinPostfixTemplateInfo) { file.suggestedExpressions = expressionTexts }
+                }
+            }
         }
     }
 }
@@ -47,7 +55,7 @@ internal object ValuedFilter : (KtExpression) -> Boolean {
     }
 }
 
-internal object StatementFilter: (KtExpression) -> Boolean {
+internal object StatementFilter : (KtExpression) -> Boolean {
     override fun invoke(expression: KtExpression): Boolean {
         return KtPsiUtil.isStatement(expression.getQualifiedExpressionForReceiverOrThis())
     }

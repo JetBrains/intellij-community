@@ -1,6 +1,6 @@
 // IGNORE_K2
 fun foo(list: List<String>) {
-    for ((index, s) in list.withIndex()) {
-        <caret>
+    for ((index, <selection>s<caret></selection>) in list.withIndex()) {
+
     }
 }
