@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.Disposable
 import com.intellij.util.containers.nullize
 import com.intellij.util.execution.ParametersListUtil
 import kotlinx.coroutines.CompletableDeferred
@@ -9,8 +10,8 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.exp.ShellCommandManager.Companion.LOG
 import java.util.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.collections.ArrayList
 
 internal class ShellCommandExecutionManager(private val session: TerminalSession, commandManager: ShellCommandManager) {
 
@@ -22,8 +23,7 @@ internal class ShellCommandExecutionManager(private val session: TerminalSession
   private val scheduledCommands: Queue<String> = LinkedList()
   private var isCommandRunning: Boolean = false
 
-  @Volatile
-  private var generatorCommandSent: CompletableDeferred<Unit> = CompletableDeferred()
+  private val commandSentListeners: MutableList<(String) -> Unit> = CopyOnWriteArrayList()
 
   init {
     commandManager.addListener(object : ShellCommandListener {
@@ -107,8 +107,8 @@ internal class ShellCommandExecutionManager(private val session: TerminalSession
   }
 
   @TestOnly
-  suspend fun awaitGeneratorCommandSent() {
-    generatorCommandSent.await()
+  fun addCommandSentListener(disposable: Disposable, listener: (String) -> Unit) {
+    TerminalUtil.addItem(commandSentListeners, listener, disposable)
   }
 
   // should be called without `lock`
@@ -129,8 +129,6 @@ internal class ShellCommandExecutionManager(private val session: TerminalSession
         pollNextGeneratorToRun()?.let {
           runningGenerator = it
           doSendCommandToExecute(it.shellCommand())
-          generatorCommandSent.complete(Unit)
-          generatorCommandSent = CompletableDeferred()
         }
       }
     }
@@ -152,6 +150,7 @@ internal class ShellCommandExecutionManager(private val session: TerminalSession
   }
 
   private fun doSendCommandToExecute(shellCommand: String) {
+    commandSentListeners.forEach { it(shellCommand) }
     // Simulate pressing Ctrl+U in the terminal to clear all typings in the prompt
     val fullCommand = "\u0015" + shellCommand
     session.terminalStarterFuture.thenAccept {

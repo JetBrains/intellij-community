@@ -9,7 +9,6 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
-import com.intellij.util.TimeoutUtil
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
@@ -30,6 +29,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 @RunWith(Parameterized::class)
 class BlockTerminalTest(private val shellPath: String) {
@@ -90,21 +90,32 @@ class BlockTerminalTest(private val shellPath: String) {
     Assume.assumeTrue(setOf(ShellType.ZSH, ShellType.BASH).contains(session.shellIntegration?.shellType))
     runBlocking {
       for (stepId in 1..100) {
-        val startNano = System.nanoTime()
+        val startTime = TimeSource.Monotonic.markNow()
         val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
+        val generatorCommandSent = createCommandSentDeferred(session)
         val envListDeferred: Deferred<ShellEnvironment?> = this.async(Dispatchers.Default) {
-          val provider = IJShellRuntimeDataProvider(session)
-          provider.getShellEnvironment()
+          IJShellRuntimeDataProvider(session).getShellEnvironment()
         }
-        session.commandManager.commandExecutionManager.awaitGeneratorCommandSent()
+        withTimeout(20.seconds) { generatorCommandSent.await() }
         delay((1..50).random().milliseconds) // wait a little to start generator
         session.sendCommandToExecute("echo foo")
         val env: ShellEnvironment? = withTimeout(20.seconds) { envListDeferred.await() }
         Assert.assertTrue(env != null && env.envs.isNotEmpty())
         assertCommandResult(0, "foo\n", outputFuture)
-        println("#$stepId Done in " + TimeoutUtil.getDurationMillis(startNano) + "ms")
+        println("#$stepId Done in ${startTime.elapsedNow().inWholeMilliseconds}ms")
       }
     }
+  }
+
+  private fun createCommandSentDeferred(session: TerminalSession): CompletableDeferred<Unit> {
+    val generatorCommandSent = CompletableDeferred<Unit>()
+    val generatorCommandSentDisposable = Disposer.newDisposable().also { disposable ->
+      generatorCommandSent.invokeOnCompletion { Disposer.dispose(disposable) }
+    }
+    session.commandManager.commandExecutionManager.addCommandSentListener(generatorCommandSentDisposable) {
+      generatorCommandSent.complete(Unit)
+    }
+    return generatorCommandSent
   }
 
   private fun setTerminalBufferMaxLines(maxBufferLines: Int) {
