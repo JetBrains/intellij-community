@@ -405,6 +405,18 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
     Page page = storage.pageByOffset(recordOffsetInFile);
     int offsetInPage = storage.toOffsetInPage(recordOffsetInFile);
 
+    //FIXME RC: There is a window between .allocateSpaceForRecord() and writing record header (with length) inside .putDataRecord().
+    //          If app crashes during that window, current record is lost -- and not only current, but all records after it,
+    //          even if those records were completely written and commited. This is because without knowing the length of
+    //          current record -- subsequent records become unreachable for recovery.
+    //          This is undesirable, because the subsequent record's ids could already be stored -- i.e. log doesn't provide
+    //          the guarantee 'if append() return the id -- the record is guaranteed to be written and accessible after crash'.
+    //          The window mentioned is narrow, and the guarantee above can't be provided anyway if OS crashes and in-memory
+    //          content of mmapped-file is lost. But still, it is desirable to keep the guarantee at least for scenarios without
+    //          OS crash.
+    //          This could be done by using lock instead of CAS, and doing both 'allocated' cursor update _and_ stamping record
+    //          length into the record header under the lock. Both operations are fast, so lock will be very narrow, and unlikely
+    //          ever contended
     RecordLayout.putDataRecord(page.rawPageBuffer(), offsetInPage, payloadSize, writer);
 
     tryCommitRecord(recordOffsetInFile, totalRecordLength);

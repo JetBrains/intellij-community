@@ -36,6 +36,8 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
       return;
     }
 
+    LOG.info(notClosedProperlyErrors.size() + " not-closed-properly-related issue(s) -> trying to fix");
+
     PersistentFSRecordsStorage records = loader.recordsStorage();
     ScannableDataEnumeratorEx<String> namesEnumerator = loader.namesStorage();
     VFSContentStorage contentStorage = loader.contentsStorage();
@@ -43,9 +45,14 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
     try {
       int accumulatedErrors = records.getErrorsAccumulated();
       if (accumulatedErrors > 0) {
+        //TODO RC: with more detailed recovery we could clear accumulatedErrors -- but current recovery procedures
+        //         are not very strict, they could miss the errors easily, so I don't trust them too much.
+        //         So if there were errors during the regular operations -> safer to fail the recovery, and rebuild VFS
+        LOG.warn(accumulatedErrors + " errors accumulated in previous session -> " +
+                 "stop the recovery because the chances to overlook crucial VFS errors are too big");
         loader.problemsRecoveryFailed(notClosedProperlyErrors,
                                       HAS_ERRORS_IN_PREVIOUS_SESSION,
-                                      accumulatedErrors + " errors accumulated in previous session -- too dangerous to recover");
+                                      accumulatedErrors + " errors accumulated in previous session -- too risky to recover");
       }
 
       int namesEnumeratorErrors = 0;
@@ -97,6 +104,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
       }
 
       if (namesEnumeratorErrors == 0 && attributesStorageErrors == 0 && contentEnumeratorErrors == 0) {
+        LOG.info("No critical errors found -> VFS looks +/- healthy");
         loader.problemsWereRecovered(notClosedProperlyErrors);
         return;
       }
@@ -122,6 +130,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
       }
     }
     catch (Throwable t) {
+      LOG.warn("Unexpected error during VFS consistency scan: " + t.getMessage());
       loader.problemsRecoveryFailed(notClosedProperlyErrors,
                                     UNRECOGNIZED,
                                     "Unexpected error during VFS consistency scan", t);

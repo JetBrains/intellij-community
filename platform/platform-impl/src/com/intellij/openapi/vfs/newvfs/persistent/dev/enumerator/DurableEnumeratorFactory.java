@@ -113,15 +113,19 @@ public class DurableEnumeratorFactory<V> implements StorageFactory<DurableEnumer
             // wasn't properly closed...)' -- then this branch rebuilds such a map, hence provides a recovery even for
             // durable maps
             if (!valuesLog.isEmpty() && valueHashToId.isEmpty()) {
-              LOG.warn("[" + name + "]: .valueToId map is out-of-sync with .valuesLog data -> rebuilding it");
-              //TODO RC: valueHashToId could be loaded async -- to not delay initialization (see DurableStringEnumerator)
+              LOG.warn("[" + name + "]: .valueHashToId map is out-of-sync with .valuesLog data (records count don't match) " +
+                       "-> rebuilding the map");
+              //MAYBE RC: valueHashToId could be build/load async -- to not delay initialization (see DurableStringEnumerator)
               fillValueHashToIdMap(valuesLog, valueDescriptor, valueHashToId);
+              LOG.warn("[" + name + "]: .valueHashToId was rebuilt (" + valueHashToId.size() + " records)");
             }
             //TODO RC: what if valuesLog was recovered? -- could it be the .hashToId map is somehow wasClosedProperly,
-            //         but is inconsistent with valuesLog? It seems like there is a chance that value is appended to
-            //         the log, and inserted into the map -- but one of the previous values in the log wasn't committed,
-            //         and even record header wasn't written -- and because of that whole region after that
-            //         allocated-but-not-yet-started record is lost -- so the id put in the map is now invalid.
+            //         but still is inconsistent with valuesLog? It seems it could: current implementation of append-only-log
+            //         _could_ sometimes lose the written-and-commited record: i.e. one of the previous values in the log
+            //         wasn't committed, and even record header wasn't written -- and because of that whole region after
+            //         that allocated-but-not-yet-started record is lost. So there _is_ a chance that value is appended
+            //         to the log, and valueId is inserted into the map, but value record is lost on crash, so the id
+            //         put in the map is now invalid.
             //         So we should either modify AppendOnlyLog so that it doesn't allow that (e.g. we could not return
             //         from allocateRecord until at least header is written) -- or we should rebuild the map even if
             //         the map itself wasClosedProperly, but AppendOnlyLog was recovered, and recovered region >0

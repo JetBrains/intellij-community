@@ -50,6 +50,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAcces
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
 import static com.intellij.util.io.storage.CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.joining;
 
 /**
  * This class keeps state during initialization.
@@ -881,6 +882,10 @@ public final class PersistentFSLoader {
   public void problemsWereRecovered(@NotNull List<VFSInitException> recovered) {
     problemsDuringLoad.removeAll(recovered);
     problemsRecovered.addAll(recovered);
+    LOG.warn("[VFS load problem]: " +
+             recovered.stream().map(VFSInitException::category).map(Object::toString).collect(joining()) + " recovered, " +
+             problemsDuringLoad.stream() + " remain"
+    );
   }
 
   public void problemsRecoveryFailed(@NotNull List<VFSInitException> triedToRecover,
@@ -899,6 +904,11 @@ public final class PersistentFSLoader {
                                       new VFSInitException(category, message, cause);
     triedToRecover.forEach(recoveryFailed::addSuppressed);
     problemsDuringLoad.add(recoveryFailed);
+
+    LOG.warn("[VFS load problem]: " +
+             triedToRecover.stream().map(VFSInitException::category).map(Object::toString).collect(joining()) +
+             " recovery attempt fails ('" + message + "')"
+    );
   }
 
 
