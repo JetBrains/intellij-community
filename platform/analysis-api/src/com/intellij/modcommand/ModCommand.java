@@ -28,6 +28,8 @@ import java.util.function.Function;
  * or produces a user interaction (displays question, launches browser, etc.).
  * <p>
  * All inheritors are records, so the whole state is declarative and readable.
+ * Instead of creating the commands directly, it's preferred to use static methods in this class to create individual commands.
+ * Especially take a look at {@link #psiUpdate} methods which are helpful in most of the cases.
  */
 public sealed interface ModCommand
   permits ModChooseAction, ModChooseMember, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage,
@@ -151,7 +153,7 @@ public sealed interface ModCommand
   /**
    * @param context context PSI element
    * @param bindId global option locator
-   * @param valueSupplier function that returns a new value of the option taking old value as an input
+   * @param newValue a new value of the option
    * @return a command that updates the given option
    * @see OptionControllerProvider for details
    */
