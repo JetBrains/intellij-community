@@ -156,10 +156,7 @@ public final class JavaDfaValueFactory {
         PsiClass memberClass = ((PsiMember)element).getContainingClass();
         if (memberClass != null && currentClass != null) {
           PsiClass target;
-          PsiElement refName = refExpr.getReferenceNameElement();
-          if (currentClass == memberClass ||
-              (!(refName instanceof PsiKeyword && ((PsiKeyword)refName).getTokenType() == JavaTokenType.SUPER_KEYWORD) &&
-               InheritanceUtil.isInheritorOrSelf(currentClass, memberClass, true))) {
+          if (currentClass == memberClass || InheritanceUtil.isInheritorOrSelf(currentClass, memberClass, true)) {
             target = currentClass;
           }
           else {

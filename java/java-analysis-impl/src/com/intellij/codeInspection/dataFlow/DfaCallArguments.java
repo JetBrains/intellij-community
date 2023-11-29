@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -62,7 +63,13 @@ public final class DfaCallArguments {
       return;
     }
     if (myMutation.isPure()) {
-      if (myQualifier instanceof DfaVariableValue qualifier) {
+      if (myQualifier instanceof DfaVariableValue) {
+        DfaValue qualifier;
+        if (method != null && method.isConstructor()) {
+          qualifier = ThisDescriptor.createThisValue(factory, method.getContainingClass());
+        } else {
+          qualifier = myQualifier;
+        }
         // We assume that even pure call may modify private fields (e.g., to cache something)
         state.flushVariables(v -> v.getQualifier() == qualifier &&
                                   v.getPsiVariable() instanceof PsiMember member &&
