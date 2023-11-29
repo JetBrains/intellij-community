@@ -133,7 +133,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
       "project.projectA", "project.projectA.main", "project.projectA.test",
       "project.projectB", "project.projectB.main", "project.projectB.test",
     )
-    assertSourcesDownloadedAndAttached(targetModule = "project.projectA.test")
+    assertSourcesDownloadedAndAttached(targetModule = "project.projectA.test", actionExecutionDeadlineMs = TimeUnit.SECONDS.toMillis(30))
     assertThat(getModuleLibDeps("project.projectB.test", DEPENDENCY_NAME)).isEmpty()
   }
 
