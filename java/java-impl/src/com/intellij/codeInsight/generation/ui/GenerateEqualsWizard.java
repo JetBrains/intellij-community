@@ -344,6 +344,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
 
       final ComboBox<String> comboBox = new ComboBox<>();
+      comboBox.setSwingPopup(false);
       final ComponentWithBrowseButton<ComboBox<?>> comboBoxWithBrowseButton =
         new ComponentWithBrowseButton<>(comboBox, new MyEditTemplatesListener(psiClass, myPanel, comboBox));
       templateChooserLabel.setLabelFor(comboBox);

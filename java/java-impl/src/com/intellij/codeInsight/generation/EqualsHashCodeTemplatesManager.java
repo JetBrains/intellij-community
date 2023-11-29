@@ -44,10 +44,10 @@ public final class EqualsHashCodeTemplatesManager extends TemplatesManager {
   private static final String HASH_CODE_SUFFIX = "hashCode";
 
   @NonNls public static final String INTELLI_J_DEFAULT = "IntelliJ Default";
-  @NonNls public static final String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG = "Equals/HashCodeBuilder (Apache commons-lang)";
-  @NonNls public static final String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3 = "Equals/HashCodeBuilder (Apache commons-lang 3)";
-  @NonNls public static final String OBJECTS_EQUAL_AND_HASH_CODE_GUAVA = "Objects.equal() and hashCode() (Guava)";
-  @NonNls public static final String JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE = "java.util.Objects.equals() and hash() (java 7+)";
+  @NonNls public static final String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG = "Apache Commons Lang EqualsBuilder and HashCodeBuilder";
+  @NonNls public static final String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3 = "Apache Commons Lang 3 EqualsBuilder and HashCodeBuilder";
+  @NonNls public static final String OBJECTS_EQUAL_AND_HASH_CODE_GUAVA = "Guava Objects.equal() and hashCode()";
+  @NonNls public static final String JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE = "java.util.Objects.equals() and hash() (Java 7 and higher)";
 
   public static EqualsHashCodeTemplatesManager getInstance() {
     return ApplicationManager.getApplication().getService(EqualsHashCodeTemplatesManager.class);
