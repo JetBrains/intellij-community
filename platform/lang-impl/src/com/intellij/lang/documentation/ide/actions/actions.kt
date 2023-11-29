@@ -84,9 +84,7 @@ fun targetsFromEditor(project: Project, editor: Editor, offset: Int): List<Docum
   if (lookup != null) {
     val lookupElement = lookup.currentItem
                         ?: return null
-    val target = ideTargetProvider.documentationTarget(editor, file, lookupElement)
-                 ?: return null
-    return listOf(target)
+    return ideTargetProvider.documentationTargets(editor, file, lookupElement)
   }
   return ContainerUtil.nullize(ideTargetProvider.documentationTargets(editor, file, offset))
 }

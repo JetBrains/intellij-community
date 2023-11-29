@@ -111,7 +111,8 @@ fun CodeInsightTestFixture.checkLookupItems(
       val lookupElement = lookupElements[lookupString]
       assertNotNull("Missing lookup string: $lookupString", lookupElement)
       val doc = IdeDocumentationTargetProvider.getInstance(project)
-        .documentationTarget(editor, file, lookupElement!!)
+        .documentationTargets(editor, file, lookupElement!!)
+        ?.firstOrNull()
         ?.let { computeDocumentationBlocking(it.createPointer()) }
         ?.html
         ?.trim()
