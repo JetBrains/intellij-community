@@ -24,7 +24,6 @@ import com.intellij.platform.workspace.storage.impl.serialization.TypeInfo
 import com.intellij.platform.workspace.storage.impl.serialization.serializer.*
 import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.metadata.model.PropertyMetadata
-import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.SmartList
 import com.intellij.util.containers.BidirectionalMultiMap
@@ -195,6 +194,9 @@ internal class StorageClassesRegistrar(
   }
 
   private fun registerMetadataClasses(kryo: Kryo) {
+    kryo.register(CacheMetadata::class.java)
+    kryo.register(CacheMetadata.SerializableTypeMetadata::class.java)
+
     kryo.register(StorageTypeMetadata::class.java)
 
     kryo.register(EntityMetadata::class.java)
@@ -213,14 +215,12 @@ internal class StorageClassesRegistrar(
     kryo.register(ExtPropertyMetadata::class.java)
 
     kryo.register(ValueTypeMetadata::class.java)
-    kryo.register(ParameterizedType::class.java)
-    kryo.register(SimpleType::class.java)
-    kryo.register(SimpleType.PrimitiveType::class.java)
-    kryo.register(SimpleType.CustomType::class.java)
-    kryo.register(EntityReference::class.java)
+    kryo.register(ValueTypeMetadata.ParameterizedType::class.java)
+    kryo.register(ValueTypeMetadata.SimpleType::class.java)
+    kryo.register(ValueTypeMetadata.SimpleType.PrimitiveType::class.java)
+    kryo.register(ValueTypeMetadata.SimpleType.CustomType::class.java)
+    kryo.register(ValueTypeMetadata.EntityReference::class.java)
     kryo.register(ConnectionId.ConnectionType::class.java)
-
-    kryo.register(CacheMetadata::class.java)
   }
 
   private fun registerFieldSerializers(kryo: Kryo) {

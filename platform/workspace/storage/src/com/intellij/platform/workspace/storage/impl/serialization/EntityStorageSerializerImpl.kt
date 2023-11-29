@@ -22,9 +22,6 @@ import com.intellij.platform.workspace.storage.impl.serialization.registration.S
 import com.intellij.platform.workspace.storage.impl.serialization.registration.StorageRegistrar
 import com.intellij.platform.workspace.storage.impl.serialization.registration.registerEntitiesClasses
 import com.intellij.platform.workspace.storage.impl.serialization.serializer.StorageSerializerUtil
-import com.intellij.platform.workspace.storage.metadata.diff.CacheMetadataComparator
-import com.intellij.platform.workspace.storage.metadata.diff.ComparisonResult
-import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -104,10 +101,11 @@ public class EntityStorageSerializerImpl(
       // Save version
       output.writeString(serializerDataFormatVersion)
 
-      val entitiesMetadata = getCacheMetadata(storage, typesResolver)
-      kryo.writeObject(output, entitiesMetadata)// Serialize all Entities, Entity Source and Symbolic id metadata from the storage
+      val cacheMetadata = getCacheMetadata(storage, typesResolver)
 
-      writeAndRegisterClasses(kryo, output, storage, entitiesMetadata, classCache) // Register entities classes
+      kryo.writeObject(output, cacheMetadata)// Serialize all Entities, Entity Source and Symbolic id metadata from the storage
+
+      writeAndRegisterClasses(kryo, output, storage, cacheMetadata, classCache) // Register entities classes
 
       // Write entity data and references
       kryo.writeClassAndObject(output, storage.entitiesByType)
@@ -151,8 +149,7 @@ public class EntityStorageSerializerImpl(
         val metadataDeserializationStartTimeMs = System.currentTimeMillis()
 
         val cacheMetadata = kryo.readObject(input, CacheMetadata::class.java)
-        val currentMetadata = loadCurrentEntitiesMetadata(cacheMetadata, typesResolver)
-        val comparisonResult = compareMetadata(cacheMetadata, currentMetadata)
+        val comparisonResult = compareWithCurrentEntitiesMetadata(cacheMetadata, typesResolver)
         if (!comparisonResult.areEquals) {
           LOG.info("Cache isn't loaded. Reason:\n${comparisonResult.info}")
           return Result.failure(UnsupportedEntitiesVersionException())
@@ -218,17 +215,6 @@ public class EntityStorageSerializerImpl(
       }
     }
     return Result.success(deserializedCache)
-  }
-
-
-  private fun compareMetadata(cacheMetadata: CacheMetadata, currentMetadata: List<StorageTypeMetadata>?): ComparisonResult {
-    if (currentMetadata == null) {
-      return object : ComparisonResult {
-        override val areEquals: Boolean = false
-        override val info: String = "Failed to load existing metadata"
-      }
-    }
-    return CacheMetadataComparator().areEquals(cacheMetadata.toList(), currentMetadata)
   }
 
 

@@ -1,29 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.metadata.diff
 
-import com.intellij.platform.workspace.storage.metadata.diff.ComparisonUtil.compareAndPrintToLog
 import com.intellij.platform.workspace.storage.metadata.diff.ComparisonUtil.compareMetadata
 import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.metadata.model.FinalClassMetadata.EnumClassMetadata
-import com.intellij.platform.workspace.storage.metadata.utils.MetadataTypesFqnComparator
+import com.intellij.platform.workspace.storage.metadata.utils.collectTypesByFqn
+import org.jetbrains.annotations.TestOnly
 
 internal fun interface MetadataComparator<T> {
   fun areEquals(cache: T, current: T): ComparisonResult
-}
-
-
-/**
- * Used during deserialization to check that cache stores the supported version of entities and thus can be loaded.
- *
- * To check the versions it compares entities metadata from cache and current metadata.
- */
-internal class CacheMetadataComparator: MetadataComparator<Iterable<StorageTypeMetadata>> {
-  override fun areEquals(cache: Iterable<StorageTypeMetadata>, current: Iterable<StorageTypeMetadata>): ComparisonResult {
-    val typesComparator = TypesComparator(cache.associateBy { it.fqName }, current.associateBy { it.fqName })
-    return compareAndPrintToLog("entities versions") {
-      compareSubset("cache metadata", cache, current, typesComparator, classNameAsKey)
-    }
-  }
 }
 
 /**
@@ -38,10 +23,15 @@ internal class CacheMetadataComparator: MetadataComparator<Iterable<StorageTypeM
  *
  * @property propertiesComparator used to compare [StorageTypeMetadata.properties]
  */
-private class TypesComparator(private val cacheTypesByFqn: Map<String, StorageTypeMetadata>,
-                              private val currentTypesByFqn: Map<String, StorageTypeMetadata>): MetadataComparator<StorageTypeMetadata> {
+internal class TypesMetadataComparator private constructor(
+  private val cacheTypesByFqn: Map<String, StorageTypeMetadata>,
+  private val currentTypesByFqn: Map<String, StorageTypeMetadata>
+): MetadataComparator<StorageTypeMetadata> {
   private val propertiesComparator: MetadataComparator<PropertyMetadata> = PropertiesComparator(this)
   private val comparedTypes: MutableSet<Pair<String, String>> = mutableSetOf()
+
+  internal constructor(cache: StorageTypeMetadata, current: StorageTypeMetadata):
+    this(cache.collectTypesByFqn(), current.collectTypesByFqn())
 
   override fun areEquals(cache: StorageTypeMetadata, current: StorageTypeMetadata): ComparisonResult {
     if (comparedTypes.contains(cache.fqName to current.fqName)) {
@@ -57,7 +47,7 @@ private class TypesComparator(private val cacheTypesByFqn: Map<String, StorageTy
     comparedTypes.add(cache.fqName to current.fqName)
     return compareMetadata(cache, cache.fqName, current, current.fqName) {
       compare("name", cache.fqName, current.fqName, fqnsComparator)
-      skipComparison("supertypes")
+      compareAll("supertypes", cache.supertypes, current.supertypes)
 
       if (current is EntityMetadata) {
         cache as EntityMetadata
@@ -74,7 +64,7 @@ private class TypesComparator(private val cacheTypesByFqn: Map<String, StorageTy
 
       if (current is ExtendableClassMetadata) {
         cache as ExtendableClassMetadata
-        compareSubset("subclasses", cache.subclasses, current.subclasses, this@TypesComparator, classNameAsKey)
+        compareAll("subclasses", cache.subclasses, current.subclasses, this@TypesMetadataComparator)
       } else {
         compareAll("properties",
                    notComputableProperties(cache.properties), notComputableProperties(current.properties), propertiesComparator)
@@ -103,16 +93,18 @@ private class PropertiesComparator(typesComparator: MetadataComparator<StorageTy
   override fun areEquals(cache: PropertyMetadata, current: PropertyMetadata): ComparisonResult {
     return compareMetadata(cache, cache.name, current, current.name) {
       compare("name", cache.name, current.name)
-      skipComparison("isOpen")
+      compare("isOpen", cache.isOpen, current.isOpen)
       compare("isComputable", cache.isComputable, current.isComputable)
-      skipComparison("withDefault") // We can deserialize cache in all cases
+      compare("withDefault", cache.withDefault, current.withDefault)
       compare("valueType", cache.valueType, current.valueType, valueTypesComparator)
 
       if (current is ExtPropertyMetadata) {
         cache as ExtPropertyMetadata
         compare("receiver name", cache.receiverFqn, current.receiverFqn, fqnsComparator)
       } else {
-        skipComparison("isKey")
+        cache as OwnPropertyMetadata
+        current as OwnPropertyMetadata
+        compare("isKey", cache.isKey, current.isKey)
       }
     }
   }
@@ -146,7 +138,7 @@ private class ValueTypesComparator(private val typesComparator: MetadataComparat
         is ValueTypeMetadata.SimpleType -> {
           cache as ValueTypeMetadata.SimpleType
           // Cache can not be loaded only when we have nullable type in cache and not nullable type in the current version --> implication logic
-          compare("isNullable", cache.isNullable, current.isNullable, ::implication)
+          compare("isNullable", cache.isNullable, current.isNullable)
           if (current is ValueTypeMetadata.SimpleType.PrimitiveType) {
             cache as ValueTypeMetadata.SimpleType.PrimitiveType
             compare("primitive type", cache.type, current.type)
@@ -163,15 +155,15 @@ private class ValueTypesComparator(private val typesComparator: MetadataComparat
 
 
 /**
- * Implication produces a value of false just in case the first operand is true and the second operand is false.
+ * Used in [MetadataComparator] to compare classes fqns and to resolve type fqn from [StorageTypeMetadata]
  *
- * Returns false if first = true and second = false, otherwise true.
+ * The method [replaceMetadataTypesFqnComparator] is needed to add separate logic during testing.
+ * See [com.intellij.platform.workspace.storage.tests.metadata.serialization.MetadataSerializationTest]
  */
-private fun implication(first: Boolean, second: Boolean) = !first || second
+internal var fqnsComparator: (String, String) -> Boolean = { cache, current -> cache == current }
+  private set
 
-
-private val classNameAsKey: (StorageTypeMetadata) -> String =
-  MetadataTypesFqnComparator.getInstance()::getTypeFqn
-
-private val fqnsComparator: (String, String) -> Boolean =
-  MetadataTypesFqnComparator.getInstance()::compareFqns
+@TestOnly
+internal fun replaceMetadataTypesFqnComparator(comparator: (String, String) -> Boolean) {
+  fqnsComparator = comparator
+}

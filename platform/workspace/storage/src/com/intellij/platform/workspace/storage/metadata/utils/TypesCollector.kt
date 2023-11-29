@@ -4,6 +4,12 @@ package com.intellij.platform.workspace.storage.metadata.utils
 import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata.SimpleType.CustomType
 
+internal fun StorageTypeMetadata.collectTypesByFqn(): Map<String, StorageTypeMetadata> {
+  val typesByFqn: MutableMap<String, StorageTypeMetadata> = hashMapOf()
+  collectTypesByFqn(typesByFqn)
+  return typesByFqn
+}
+
 internal fun StorageTypeMetadata.collectTypesByFqn(types: MutableMap<String, StorageTypeMetadata>) {
   recursiveTypeFinder(this, types) { type ->
     type !is FinalClassMetadata.KnownClass

@@ -14,7 +14,7 @@ import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadat
 
 internal fun registerEntitiesClasses(kryo: Kryo, cacheMetadata: CacheMetadata,
                                      typesResolver: EntityTypesResolver, classCache: Object2IntWithDefaultMap<TypeInfo>) =
-  EntitiesRegistrar(typesResolver, cacheMetadata, classCache).registerClasses(kryo)
+  EntitiesRegistrar(typesResolver, cacheMetadata.getMetadataWithPluginId(), classCache).registerClasses(kryo)
 
 
 private class EntitiesRegistrar(
