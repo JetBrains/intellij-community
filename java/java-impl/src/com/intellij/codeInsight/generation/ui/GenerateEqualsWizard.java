@@ -154,8 +154,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       final ArrayList<MemberInfo> list = new ArrayList<>();
 
       for (MemberInfo equalsMemberInfo : equalsMemberInfos) {
-        PsiField field = (PsiField)equalsMemberInfo.getMember();
-        if (!(field.getType() instanceof PsiPrimitiveType)) {
+        if (mayNeedNullCheck((PsiField)equalsMemberInfo.getMember())) {
           list.add(myFieldsToNonNull.get(equalsMemberInfo.getMember()));
         }
       }
@@ -227,11 +226,8 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     if (step + 1 == getNonNullStepCode()) {
       if (templateDependsOnFieldsNullability()) {
         for (MemberInfo classField : myClassFields) {
-          if (classField.isChecked()) {
-            PsiField field = (PsiField)classField.getMember();
-            if (!(field.getType() instanceof PsiPrimitiveType)) {
-              return getNonNullStepCode();
-            }
+          if (classField.isChecked() && mayNeedNullCheck((PsiField)classField.getMember())) {
+            return getNonNullStepCode();
           }
         }
       }
@@ -239,6 +235,11 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     }
 
     return super.getNextStep(step);
+  }
+
+  private static boolean mayNeedNullCheck(PsiField field) {
+    PsiType type = field.getType();
+    return !(type instanceof PsiPrimitiveType) && !(type instanceof PsiArrayType);
   }
 
   private static boolean templateDependsOnFieldsNullability() {
