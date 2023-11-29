@@ -76,8 +76,9 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
     doTestWithServicesKt()
   }
 
-  fun doTestWithServicesKt() {
+  private fun doTestWithServicesKt() {
     @Language("kotlin") val servicesKtFileText = """
+      @file:Suppress("UnusedReceiverParameter")
       @file:JvmName("ServicesKt")
 
       package com.intellij.openapi.components
@@ -90,7 +91,7 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
     doTest()
   }
 
-  fun doTestWithServiceKt() {
+  private fun doTestWithServiceKt() {
     @Language("kotlin") val serviceKtFileText = """
       @file:JvmName("ServiceKt")
 
