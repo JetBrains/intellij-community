@@ -13,6 +13,7 @@ import com.intellij.webcore.packaging.PackageManagementService
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.installer.*
 import java.util.*
 
@@ -132,7 +133,12 @@ object PySdkToInstallManager {
       .also { sdks ->
         LOGGER.debug { sdks.joinToString(prefix = "Detected system-wide sdks: ") { it.homePath ?: it.name } }
       }
-      .filter { languageLevel?.equals(PySdkUtil.getLanguageLevelForSdk(it)) ?: true }
+      .filter {
+        val detectedLevel = PythonSdkFlavor.getFlavor(it)?.let { flavor ->
+          flavor.getLanguageLevelFromVersionString(flavor.getVersionString(it.homePath!!))
+        }
+        languageLevel?.equals(detectedLevel) ?: true
+      }
       .also {
         PySdkToInstallCollector.logSdkLookup(
           project,

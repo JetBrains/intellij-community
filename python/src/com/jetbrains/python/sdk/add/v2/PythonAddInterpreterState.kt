@@ -13,6 +13,7 @@ class PythonAddInterpreterState(
   val scope: CoroutineScope,
   val basePythonSdks: ObservableMutableProperty<List<Sdk>>,
   val allExistingSdks: ObservableMutableProperty<List<Sdk>>,
+  val installableSdks: ObservableMutableProperty<List<Sdk>>,
   val selectedVenv: ObservableMutableProperty<Sdk?>,
   val condaExecutable: ObservableMutableProperty<String>,
 ) {

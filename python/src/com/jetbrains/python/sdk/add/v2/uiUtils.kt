@@ -18,28 +18,28 @@ import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
-import com.intellij.util.text.nullize
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.util.preferredHeight
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.sdk.PyDetectedSdk
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_NEW
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUALENV
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import icons.PythonIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.SharedFlow
@@ -49,9 +49,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.nio.file.Paths
-import javax.swing.JList
-import javax.swing.JPanel
-import javax.swing.JTextField
+import javax.swing.*
 import javax.swing.plaf.basic.BasicComboBoxEditor
 import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.exists
@@ -125,17 +123,31 @@ class PythonNewEnvironmentDialogNavigator {
   }
 }
 
+internal fun SimpleColoredComponent.customizeForPythonSdk(sdk: Sdk) {
+  when (sdk) {
+    is PyDetectedSdk -> {
+      icon = IconLoader.getTransparentIcon(PythonIcons.Python.Python)
+      append(sdk.homePath!!)
+      append(" " + message("sdk.rendering.detected.grey.text"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+    }
+    is PySdkToInstall -> {
+      icon = AllIcons.Actions.Download
+      append(sdk.name)
+      append(" " + message("sdk.rendering.installable.grey.text"), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+    }
+    else -> {
+      icon = PythonIcons.Python.Python
+      append(sdk.versionString!!)
+      append(" " + sdk.homePath!!, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+    }
+  }
+}
+
 
 class PythonSdkComboBoxListCellRenderer : ColoredListCellRenderer<Any>() {
   override fun customizeCellRenderer(list: JList<out Any>, value: Any?, index: Int, selected: Boolean, hasFocus: Boolean) {
-    when (value) {
-      is PyDetectedSdk -> append(value.homePath!!)
-      is Sdk -> {
-        append(value.versionString!!)
-        append(" " + value.homePath!!, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
-      }
-      else -> append("")
-    }
+    if (value !is Sdk) error("Not an Sdk")
+    customizeForPythonSdk(value)
   }
 }
 
@@ -167,96 +179,47 @@ class PythonEnvironmentComboBoxRenderer : ColoredListCellRenderer<Any>() {
   }
 }
 
-internal fun Row.nonEditablePythonInterpreterComboBox(sdksFlow: StateFlow<List<Sdk>>,
-                                                      scope: CoroutineScope,
-                                                      uiContext: CoroutineContext): Cell<ComboBox<Sdk?>> =
+internal fun Row.pythonInterpreterComboBox(selectedSdkProperty: ObservableMutableProperty<Sdk?>,
+                                           presenter: PythonAddInterpreterPresenter,
+                                           sdksFlow: StateFlow<List<Sdk>>,
+                                           onPathSelected: (String) -> Unit): Cell<ComboBox<Sdk?>> =
   comboBox<Sdk?>(emptyList(), PythonSdkComboBoxListCellRenderer())
-    .withSdkItems(sdksFlow, { it }, scope, uiContext)
+    .bindItem(selectedSdkProperty)
     .applyToComponent {
-      editor = object : BasicComboBoxEditor() {
-        override fun createEditorComponent(): JTextField = ExtendableTextField().apply { border = null }
-      }
-    }
+      preferredHeight = 30
+      isEditable = true
+      editor = PythonSdkComboBoxWithBrowseButtonEditor(this, presenter, onPathSelected)
 
-internal fun Row.pythonBaseInterpreterComboBox(presenter: PythonAddInterpreterPresenter,
-                                               sdksFlow: StateFlow<List<Sdk>>,
-                                               loadingFlow: StateFlow<Boolean>,
-                                               pathToSelectedSdk: ObservableMutableProperty<String?>,
-                                               onSdkChosen: (String) -> Unit): Cell<ComboBox<String?>> =
-  comboBox<String?>(emptyList())
-    .bindItem(pathToSelectedSdk)
-    .withSdkItems(sdksFlow, mapper = { sdk -> sdk.homePath.orEmpty() }, scope = presenter.scope, uiContext = presenter.uiContext)
-    .displayLoaderWhen(loadingFlow, scope = presenter.scope, uiContext = presenter.uiContext)
-    .withBrowsableSdk(presenter, onSdkChosen)
+      presenter.scope.launch(start = CoroutineStart.UNDISPATCHED) {
+        sdksFlow.collectLatest { sdks ->
+          withContext(presenter.uiContext) {
+            removeAllItems()
+            sdks.forEach(this@applyToComponent::addItem)
 
-private fun <T, C : ComboBox<T>> Cell<C>.withSdkItems(sdksFlow: StateFlow<List<Sdk>>,
-                                                      mapper: (Sdk) -> T,
-                                                      scope: CoroutineScope,
-                                                      uiContext: CoroutineContext): Cell<C> =
-  applyToComponent { withSdkItems(sdksFlow, scope, uiContext, mapper) }
-
-private fun <T> ComboBox<T>.withSdkItems(sdksFlow: StateFlow<List<Sdk>>,
-                                         scope: CoroutineScope,
-                                         uiContext: CoroutineContext,
-                                         mapper: (Sdk) -> T) {
-  scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    sdksFlow.collectLatest { sdks ->
-      withContext(uiContext) {
-        val itemToSelectAfterModelUpdate = tryGetAndRemoveItemToSelectAfterModelUpdate() ?: selectedItem
-        removeAllItems()
-        val items = sdks.map(mapper)
-        items.forEach(this@withSdkItems::addItem)
-        if (itemToSelectAfterModelUpdate != null && items.any { it == itemToSelectAfterModelUpdate }) {
-          // restore previously selected item if it (still) presents in the combobox
-          selectedItem = itemToSelectAfterModelUpdate
+            val pathToSelect = tryGetAndRemovePathToSelectAfterModelUpdate() as? String
+            val newValue = if (pathToSelect != null) sdks.find { it.homePath == pathToSelect } else findPrioritySdk(sdks)
+            selectedSdkProperty.set(newValue)
+          }
         }
       }
     }
-  }
+
+private fun findPrioritySdk(sdkList: List<Sdk>): Sdk? {
+  // todo[akniazev] save last used base sdk path to suggest first
+  return sdkList.firstOrNull { it !is PyDetectedSdk && it !is PySdkToInstall }
+         ?: sdkList.firstOrNull { it is PyDetectedSdk }
+         ?: sdkList.firstOrNull { it is PySdkToInstall }
 }
 
-private val KEY_ITEM_TO_SELECT_AFTER_MODEL_UPDATED: Key<Any?> by lazy { Key.create("ITEM_TO_SELECT_AFTER_MODEL_UPDATED") }
+private val KEY_PATH_TO_SELECT_AFTER_MODEL_UPDATED: Key<String> by lazy { Key.create("PATH_TO_SELECT_AFTER_MODEL_UPDATED") }
 
-private fun <T> ComboBox<T>.tryGetAndRemoveItemToSelectAfterModelUpdate(): @NlsSafe Any? =
-  getUserData(KEY_ITEM_TO_SELECT_AFTER_MODEL_UPDATED)?.also {
-    putUserData(KEY_ITEM_TO_SELECT_AFTER_MODEL_UPDATED, null)
+internal fun <T> ComboBox<T>.tryGetAndRemovePathToSelectAfterModelUpdate(): @NlsSafe Any? =
+  getUserData(KEY_PATH_TO_SELECT_AFTER_MODEL_UPDATED)?.also {
+    putUserData(KEY_PATH_TO_SELECT_AFTER_MODEL_UPDATED, null)
   }
 
-private fun ComboBox<String?>.setItemToSelectAfterModelUpdate(targetPath: @NlsSafe Any) {
-  putUserData(KEY_ITEM_TO_SELECT_AFTER_MODEL_UPDATED, targetPath)
-}
-
-internal fun Cell<ComboBox<String?>>.withBrowsableSdk(presenter: PythonAddInterpreterPresenter,
-                                                      onSdkChosen: (String) -> Unit): Cell<ComboBox<String?>> =
-  applyToComponent { withBrowsableSdk(presenter, onSdkChosen) }
-
-private fun ComboBox<String?>.withBrowsableSdk(presenter: PythonAddInterpreterPresenter, onSdkChosen: (String) -> Unit) {
-  val thisComboBox = this@withBrowsableSdk
-  val browseExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk,
-                                                                 AllIcons.General.OpenDiskHover,
-                                                                 message("sdk.create.custom.python.browse.tooltip")) {
-    val currentBaseSdkPathOnTarget = thisComboBox.item.nullize(nullizeSpaces = true)
-    val currentBaseSdkVirtualFile = currentBaseSdkPathOnTarget?.let { presenter.tryGetVirtualFile(it) }
-    FileChooser.chooseFile(PythonSdkType.getInstance().homeChooserDescriptor, null,
-                           currentBaseSdkVirtualFile) { file ->
-      val nioPath = file?.toNioPath() ?: return@chooseFile
-      val targetPath = presenter.getPathOnTarget(nioPath)
-      thisComboBox.setItemToSelectAfterModelUpdate(targetPath)
-      onSdkChosen(targetPath)
-    }
-  }
-
-  isEditable = true
-  editor = object : BasicComboBoxEditor() {
-    override fun createEditorComponent(): JTextField {
-      val field = ExtendableTextField()
-      field.addExtension(browseExtension)
-      field.setBorder(null)
-      field.isEditable = false
-      field.background = JBUI.CurrentTheme.Arrow.backgroundColor(true, true)
-      return field
-    }
-  }
+internal fun ComboBox<*>.setPathToSelectAfterModelUpdate(targetPath: @NlsSafe String) {
+  putUserData(KEY_PATH_TO_SELECT_AFTER_MODEL_UPDATED, targetPath)
 }
 
 /**
