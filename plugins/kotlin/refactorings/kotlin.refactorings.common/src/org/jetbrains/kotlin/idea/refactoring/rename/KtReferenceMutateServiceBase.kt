@@ -209,23 +209,27 @@ abstract class KtReferenceMutateServiceBase : KtReferenceMutateService {
             }
         }
 
-        val psiFactory = KtPsiFactory(expression.project)
+        val project = expression.project
+        val psiFactory = KtPsiFactory(project)
         val nameElement = expression.getReferencedNameElement()
         val elementType = nameElement.node.elementType
         val opExpression = if (elementType is KtToken && OperatorConventions.getNameForOperationSymbol(elementType) != null) {
             expression.parent as? KtOperationExpression
         } else null
-        val element = expression.project.extensionArea.getExtensionPoint(SimpleNameReferenceExtension.EP_NAME).extensions
-            .asSequence()
-            .map { it.handleElementRename(this, psiFactory, newElementName) }
-            .firstOrNull { it != null } ?: if (opExpression != null) psiFactory.createSimpleName(newElementName.quoteIfNeeded()) else psiFactory.createNameIdentifier(newElementName.quoteIfNeeded())
 
+        val quotedNewName = newElementName.quoteIfNeeded()
         if (opExpression != null) {
-            val (newExpression, newNameElement) = convertOperatorToFunctionCall(opExpression)
-            newNameElement.replace(psiFactory.createSimpleName(newElementName.quoteIfNeeded()))
+            val (newExpression: KtExpression, newNameElement: KtSimpleNameExpression) = convertOperatorToFunctionCall(opExpression)
+            //newNameElement is expression here, should be replaced with expression for psi consistency
+            newNameElement.replace(psiFactory.createSimpleName(quotedNewName))
             return newExpression
         }
 
+        val renamedByExtension = project.extensionArea.getExtensionPoint(SimpleNameReferenceExtension.EP_NAME)
+            .extensions
+            .firstNotNullOfOrNull { it.handleElementRename(this, psiFactory, newElementName) }
+
+        val element = renamedByExtension ?: psiFactory.createNameIdentifier(quotedNewName)
         if (element.node.elementType == KtTokens.IDENTIFIER) {
             nameElement.astReplace(element)
         } else {
