@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.coroutines.channel
 
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
@@ -25,8 +23,6 @@ class ChannelInputStream(
   parentCoroutineScope: CoroutineScope,
   channel: ReceiveChannel<ByteArray>,
 ) : InputStream() {
-  private val myScope = parentCoroutineScope.childScope(supervisor = false)
-
   private sealed class Content {
     class Data(val stream: ByteArrayInputStream) : Content()
     class Error(val cause: Throwable) : Content()
@@ -35,27 +31,25 @@ class ChannelInputStream(
 
   private val myBuffer = LinkedBlockingDeque<Content>()
 
-  init {
-    myScope.launch {
-      try {
-        channel.consumeEach { bytes ->
-          myBuffer.offerLast(Content.Data(ByteArrayInputStream(bytes)))
-        }
+  private val transferJob = parentCoroutineScope.launch {
+    try {
+      channel.consumeEach { bytes ->
+        myBuffer.offerLast(Content.Data(ByteArrayInputStream(bytes)))
+      }
+      myBuffer.offerLast(Content.End)
+    }
+    catch (e: Throwable) {
+      if (e is CancellationException) {
         myBuffer.offerLast(Content.End)
       }
-      catch (e: Throwable) {
-        if (e is CancellationException) {
-          myBuffer.offerLast(Content.End)
-        }
-        else {
-          myBuffer.offerLast(Content.Error(e))
-        }
+      else {
+        myBuffer.offerLast(Content.Error(e))
       }
     }
   }
 
   override fun close() {
-    myScope.cancel(CancellationException("ChannelInputStream was closed"))
+    transferJob.cancel(CancellationException("ChannelInputStream was closed"))
   }
 
   override fun read(): Int {
