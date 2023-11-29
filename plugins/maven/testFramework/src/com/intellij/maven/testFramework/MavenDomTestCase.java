@@ -381,7 +381,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
       }
     }
 
-    configTest(myProjectPom);
+    configTest(f);
     MavenLog.LOG.warn("checkHighlighting: test configured");
 
     try {
