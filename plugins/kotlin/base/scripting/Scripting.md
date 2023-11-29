@@ -89,9 +89,50 @@ Modern way to define a script (as a family) is to use so called template class a
 
 # Logs
 
-Help => Diagnostic Tools => Debug Log Settings (available as an action)
+To activate debug messages: `Help => Diagnostic Tools => Debug Log Settings (available as an IDEA action)`\
+Add the following line into the input: `org.jetbrains.kotlin.idea.script`
 
-`#org.jetbrains.kotlin.idea.script`
+### What's inside
+
+All scripting related messages are prefixed with `[KOTLIN_SCRIPTING]`.
+
+###### Definitions loading
+```
+2023-11-29 10:27:38,478 [  81788]   INFO - #o.j.k.i.script - [KOTLIN_SCRIPTING] Loading script definitions: classes = [org.gradle.kotlin.dsl.KotlinBuildScript], classpath = [/Users/klunnyi/.gradle/wrapper/dists/gradle-8.4-bin/1w5dpkrfk8irigvoxmyhowfim/gradle-8.4/lib/gradle-core-api-8.4.jar, /Users/klunnyi/.gradle/wrapper/dists/gradle-8.4-bin/1w5dpkrfk8irigvoxmyhowfim/gradle-8.4/lib/gradle-kotlin-dsl-tooling-models-8.4.jar, /Users/klunnyi/.gradle/wrapper/dists/gradle-8.4-bin/1w5dpkrfk8irigvoxmyhowfim/gradle-8.4/lib/gradle-kotlin-dsl-8.4.jar, /Users/klunnyi/.gradle/wrapper/dists/gradle-8.4-bin/1w5dpkrfk8irigvoxmyhowfim/gradle-8.4/lib/gradle-core-8.4.jar, /Users/klunnyi/.gradle/wrapper/dists/gradle-8.4-bin/1w5dpkrfk8irigvoxmyhowfim/gradle-8.4/lib/kotlin-stdlib-1.9.10.jar, /Users/klunnyi/.gradle/wrapper/dists/gradle-8.4-bin/1w5dpkrfk8irigvoxmyhowfim/gradle-8.4/lib/kotlin-compiler-embeddable-1.9.10.jar]
+2023-11-29 10:27:38,492 [  81802]   INFO - #o.j.k.i.script - [KOTLIN_SCRIPTING] Loaded definitions: classes = [org.gradle.kotlin.dsl.KotlinBuildScript], definitions = [KotlinBuildScript]
+...
+2023-11-29 10:27:38,494 [  81804]   FINE - #o.j.k.i.script - [KOTLIN_SCRIPTING] Loaded definitions: time = 94 ms, source = org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor, definitions = [KotlinInitScript, KotlinSettingsScript, KotlinBuildScript]
+2023-11-29 10:27:38,494 [  81804]   FINE - #o.j.k.i.script - [KOTLIN_SCRIPTING] Loaded definitions: time = 0 ms, source = org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceFromContributor, definitions = [Kotlin Script]
+2023-11-29 10:27:38,495 [  81805]   FINE - #o.j.k.i.script - [KOTLIN_SCRIPTING] Definitions loading total time: 96 ms
+```
+
+###### Gradle import (script dependencies)
+
+Important: `KotlinDslScriptModel` (see its `file` and `classpath`) is a data structure we get from Gradle and use as an insight about script dependencies.  
+
+```
+2023-11-29 10:34:07,617 [ 470927]   FINE - #o.j.k.i.script - [KOTLIN_SCRIPTING] gradle project info after import: KotlinGradleDslSync(workingDir=/Users/klunnyi/jb/tbe-server, gradleVersion=8.4, gradleHome=/Users/klunnyi/.gradle/wrapper/dists/gradle-8.4-bin/1w5dpkrfk8irigvoxmyhowfim/gradle-8.4, javaHome=/Users/klunnyi/Library/Java/JavaVirtualMachines/jbr-17.0.6-1/Contents/Home, projectRoots=[/Users/klunnyi/jb/tbe-server, /Users/klunnyi/jb/tbe-server/tbe-backend, /Users/klunnyi/jb/tbe-server/tbe-backend-docker, /Users/klunnyi/jb/tbe-server/tbe-cli, /Users/klunnyi/jb/tbe-server/tbe-common, /Users/klunnyi/jb/tbe-server/tbe-demo-setup, /Users/klunnyi/jb/tbe-server/tbe-feed, /Users/klunnyi/jb/tbe-server/tbe-filter, /Users/klunnyi/jb/tbe-server/tbe-import-scripts, /Users/klunnyi/jb/tbe-server/tbe-launcher, /Users/klunnyi/jb/tbe-server/tbe-mock-auth, /Users/klunnyi/jb/tbe-server/tbe-test-common, /Users/klunnyi/jb/tbe-server/tbe-test-postgre, /Users/klunnyi/jb/tbe-server/tbe-ui, /Users/klunnyi/jb/tbe-server/tbe-ui-tests, /Users/klunnyi/jb/tbe-server/mods/tbe-cwm, /Users/klunnyi/jb/tbe-server/mods/tbe-license-vault, /Users/klunnyi/jb/tbe-server/mods/tbe-license-vault-wrapper, /Users/klunnyi/jb/tbe-server/mods/tbe-shared-indexes, /Users/klunnyi/jb/tbe-server/tbe-ui-tests/ide, /Users/klunnyi/jb/tbe-server/tbe-ui-tests/tba, /Users/klunnyi/jb/tbe-server/tbe-ui-tests/tools, /Users/klunnyi/jb/tbe-server/buildSrc], failed=false)
+...
+2023-11-29 10:34:07,623 [ 470933]   FINE - #o.j.k.i.script - [KOTLIN_SCRIPTING] save script models after import: [KotlinDslScriptModel(file=/Users/klunnyi/jb/tbe-server/settings.gradle.kts, inputs=GradleKotlinScriptConfigurationInputs(sections=pluginManagement{
+..., buildRoot=/Users/klunnyi/jb/tbe-server), classPath=[/Users/klunnyi/.gradle/caches/8.4/generated-gradle-jars/gradle-api-8.4.jar, ...] ...
+
+```
+
+###### Dependencies resolution: standalone vs in-module
+
+```
+2023-11-29 10:27:39,575 [  82885]   FINE - #o.j.k.i.script - [KOTLIN_SCRIPTING] /Users/klunnyi/jb/tbe-server/mods/tbe-cwm/build.gradle.kts [resolve-scope] language-feature: true, backward-compatibility-flag: false
+2023-11-29 10:27:39,575 [  82885]   FINE - #o.j.k.i.script - [KOTLIN_SCRIPTING] /Users/klunnyi/jb/tbe-server/mods/tbe-cwm/build.gradle.kts [resolve-scope] standalone-by-design: true
+2023-11-29 10:27:39,576 [  82886]   FINE - #o.j.k.i.script - [KOTLIN_SCRIPTING] /Users/klunnyi/jb/tbe-server/mods/tbe-cwm/build.gradle.kts [resolve-scope] under-source-root: false
+2023-11-29 10:27:39,576 [  82886]   FINE - #o.j.k.i.script - [KOTLIN_SCRIPTING] /Users/klunnyi/jb/tbe-server/mods/tbe-cwm/build.gradle.kts [resolve-scope] => standalone
+```
+
+###### Compiler arguments used at resolution
+
+```
+2023-11-29 10:34:08,674 [ 471984]   FINE - #o.j.k.i.script - [KOTLIN_SCRIPTING] /Users/klunnyi/jb/tbe-server/buildSrc/build.gradle.kts compiler options: [-language-version, 1.9, -language-version, 1.8, -api-version, 1.8, -Xjvm-default=all, -Xjsr305=strict, -Xskip-metadata-version-check, -Xskip-prerelease-check, -Xallow-unstable-dependencies, -XXLanguage:+DisableCompatibilityModeForNewInference, -XXLanguage:-TypeEnhancementImprovementsInStrictMode, -P=plugin:org.jetbrains.kotlin.assignment:annotation=org.gradle.api.SupportsKotlinAssignmentOverloading]
+```
+
 
 ## Script Definition
 
