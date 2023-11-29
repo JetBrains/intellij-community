@@ -92,8 +92,13 @@ internal object MetadataStorage {
 
   internal val base = fqn(workspaceStorageMetadataImplPackageName, BASE_NAME)
 
-  internal val addMetadata = "addMetadata"
-  internal val getMetadataByTypeFqn = "getMetadataByTypeFqn"
+  internal const val addMetadata = "addMetadata"
+  internal const val addMetadataHash = "addMetadataHash"
+  internal const val getMetadataByTypeFqn = "getMetadataByTypeFqn"
+
+  override fun toString(): String {
+    return fqn(workspaceStorageMetadataPackageName, "MetadataStorage").toString()
+  }
 }
 
 internal val EntityMetadata = fqn(workspaceStorageMetamodelPackageName, "EntityMetadata")
