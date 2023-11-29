@@ -34,7 +34,7 @@ import java.util.function.Supplier;
  */
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   public static final GlobalSearchScope[] EMPTY_ARRAY = new GlobalSearchScope[0];
-  private final @Nullable Project myProject;
+  private final Project myProject;
 
   protected GlobalSearchScope(@Nullable Project project) {
     myProject = project;
@@ -46,7 +46,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   @ApiStatus.NonExtendable
   @Override
-  public @Nullable Project getProject() {
+  public Project getProject() {
     return myProject;
   }
 
