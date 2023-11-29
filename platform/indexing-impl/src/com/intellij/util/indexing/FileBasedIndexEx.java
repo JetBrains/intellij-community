@@ -61,17 +61,17 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   private static final RecursionGuard<Object> ourIgnoranceGuard = RecursionManager.createGuard("ignoreDumbMode");
 
   @ApiStatus.Internal
-  boolean doTraceIndexUpdates() {
+  static boolean doTraceIndexUpdates() {
     return TRACE_INDEX_UPDATES;
   }
 
   @ApiStatus.Internal
-  public boolean doTraceStubUpdates(@NotNull ID<?, ?> indexId) {
+  public static boolean doTraceStubUpdates(@NotNull IndexId<?, ?> indexId) {
     return TRACE_STUB_INDEX_UPDATES && indexId.equals(StubUpdatingIndex.INDEX_ID);
   }
 
   @ApiStatus.Internal
-  boolean doTraceSharedIndexUpdates() {
+  static boolean doTraceSharedIndexUpdates() {
     return TRACE_SHARED_INDEX_UPDATES;
   }
 

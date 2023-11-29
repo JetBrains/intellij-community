@@ -8,7 +8,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.events.VfsEventsMerger;
 import com.intellij.util.indexing.impl.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,8 +62,8 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
   public boolean clearMemoryMap() {
     boolean modified = !myMap.isEmpty();
     myMap.clear();
-    if (modified) {
-      VfsEventsMerger.tryLog(() -> "Clear memory map: index=" + myIndexId);
+    if (modified && FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+      LOG.info("clearMemoryMap,index=" + myIndexId);
     }
     return modified;
   }
@@ -73,7 +72,9 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
     TransientChangeTrackingValueContainer<Value> container = myMap.get(key);
     if (container != null) {
       container.dropAssociatedValue(fileId);
-      VfsEventsMerger.tryLog(() -> "Clear memory map: fileId" + fileId + ",key=" + key + ",index=" + myIndexId);
+      if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+        LOG.info("clearMemoryMapForId,inputId=" + fileId + ",index=" + myIndexId + ",key=" + key);
+      }
       return true;
     }
     return false;
@@ -90,9 +91,8 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
     try {
       if (myMap.isEmpty()) return;
 
-      if (IndexDebugProperties.DEBUG || FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
-        String message = "Dropping caches for " + myIndexId + ", number of items:" + myMap.size();
-        ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().info(message);
+      if (IndexDebugProperties.DEBUG || FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+        LOG.info("clearCaches,index=" + myIndexId + ",number of items:" + myMap.size());
       }
 
       for (ChangeTrackingValueContainer<Value> v : myMap.values()) {
@@ -149,6 +149,10 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
 
   @Override
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
+    if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+      LOG.info("addValue,inputId=" + inputId + ",index=" + myIndexId + ",inMemory=" + myBufferingEnabled + "," + value);
+    }
+
     if (myBufferingEnabled) {
       getMemValueContainer(key).addValue(inputId, value);
       return;
@@ -163,6 +167,10 @@ public final class TransientChangesIndexStorage<Key, Value> implements VfsAwareI
 
   @Override
   public void removeAllValues(@NotNull Key key, int inputId) throws StorageException {
+    if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
+      LOG.info("removeAllValues,inputId=" + inputId + ",index=" + myIndexId + ",inMemory=" + myBufferingEnabled);
+    }
+
     if (myBufferingEnabled) {
       getMemValueContainer(key).removeAssociatedValue(inputId);
       return;
