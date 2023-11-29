@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -185,9 +186,14 @@ public final class SdkConfigurationUtil {
       sdkModificator.setVersionString(sdkType.getVersionString(homePath));
     }
     sdkModificator.setHomePath(homePath);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      sdkModificator.commitChanges();
-    });
+
+    Application application = ApplicationManager.getApplication();
+    Runnable runnable = () -> sdkModificator.commitChanges();
+    if (application.isDispatchThread()) {
+      application.runWriteAction(runnable);
+    } else {
+      application.invokeAndWait(() -> application.runWriteAction(runnable));
+    }
     return sdk;
   }
 
