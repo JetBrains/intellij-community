@@ -207,7 +207,6 @@ object GHPRReviewThreadComponent {
     }
 
     val submitShortcutText = CommentInputActionsComponentFactory.submitShortcutText
-    val newLineShortcutText = CommentInputActionsComponentFactory.newLineShortcutText
 
     val unResolveAction = object : AbstractAction() {
       override fun actionPerformed(e: ActionEvent?) {
