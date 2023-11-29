@@ -37,6 +37,8 @@ import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -152,7 +154,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   private static final int STAT_CREATED = 0;
   private static final int STAT_DELETED = 1;
   private static final int STAT_UPDATED = 2;
-  private static boolean isServiceAvailable = false;
+  static final MutableStateFlow<Boolean> isPresentedMutable = StateFlowKt.MutableStateFlow(false);
 
   static {
     ourLib = _loadLibrary();
@@ -179,7 +181,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       };
       updateAllRoots = () -> {
         // exec at glib-thread
-        if (!isServiceAvailable) {
+        if (!isPresentedMutable.getValue()) {
           return;
         }
 
@@ -190,13 +192,13 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       onAppmenuServiceAppeared = () -> {
         // exec at glib-thread
         LOG.info("Appeared dbus-service 'com.canonical.AppMenu.Registrar'");
-        isServiceAvailable = true;
+        isPresentedMutable.setValue(true);
         updateAllRoots.run();
       };
       onAppmenuServiceVanished = () -> {
         // exec at glib-thread
         LOG.info("Closed dbus-service 'com.canonical.AppMenu.Registrar'");
-        isServiceAvailable = false;
+        isPresentedMutable.setValue(false);
         for (GlobalMenuLinux menuLinux : instances) {
           menuLinux.windowHandle = null;
           EventQueue.invokeLater(() -> {
@@ -793,7 +795,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
   // return true when corresponding dbus-service is alive
   public static boolean isPresented() {
-    return ourLib != null && isServiceAvailable;
+    return ourLib != null && isPresentedMutable.getValue();
   }
 
   private static GlobalMenuLib _loadLibrary() {
