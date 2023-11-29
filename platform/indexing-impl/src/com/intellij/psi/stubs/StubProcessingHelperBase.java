@@ -3,6 +3,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiElement;
@@ -33,7 +34,8 @@ public abstract class StubProcessingHelperBase {
                                                              @NotNull StubIdList value,
                                                              @NotNull Processor<? super Psi> processor,
                                                              @Nullable GlobalSearchScope scope,
-                                                             @NotNull Class<Psi> requiredClass) {
+                                                             @NotNull Class<Psi> requiredClass,
+                                                             @NotNull Computable<String> debugOperationName) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) {
       LOG.error("Stub index points to a file without PSI: " +
@@ -46,7 +48,7 @@ public abstract class StubProcessingHelperBase {
 
     if (value.size() == 1 && value.get(0) == 0) {
       //noinspection unchecked
-      return !checkType(requiredClass, psiFile, psiFile) || processor.process((Psi)psiFile);
+      return !checkType(requiredClass, psiFile, psiFile, debugOperationName, value) || processor.process((Psi)psiFile);
     }
 
     List<StubbedSpine> spines = getAllSpines(psiFile);
@@ -56,7 +58,7 @@ public abstract class StubProcessingHelperBase {
 
     for (int i = 0, size = value.size(); i < size; i++) {
       PsiElement psi = getStubPsi(spines, value.get(i));
-      if (!checkType(requiredClass, psiFile, psi)) break;
+      if (!checkType(requiredClass, psiFile, psi, debugOperationName, value)) break;
       //noinspection unchecked
       if (!processor.process((Psi)psi)) return false;
     }
@@ -71,13 +73,16 @@ public abstract class StubProcessingHelperBase {
     return ContainerUtil.map(StubTreeBuilder.getStubbedRoots(psiFile.getViewProvider()), t -> ((PsiFileImpl)t.second).getStubbedSpine());
   }
 
-  private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, @Nullable PsiElement psiElement) {
+  private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, @Nullable PsiElement psiElement,
+                                                     @NotNull Computable<String> debugOperationName, @NotNull StubIdList debugStubIdList) {
     if (requiredClass.isInstance(psiElement)) return true;
 
     String extraMessage = "psiElement is not instance of requiredClass.\n" +
                           "psiElement=" + psiElement +
                           (psiElement != null ? ", psiElement.class=" + psiElement.getClass() : "") +
                           ", requiredClass=" + requiredClass +
+                          ", operation=" + debugOperationName.get() +
+                          ", stubIdList=" + debugStubIdList +
                           ".\nref: 50cf572587cf";
 
     StubTree stubTree = ((PsiFileWithStubSupport)psiFile).getStubTree();
