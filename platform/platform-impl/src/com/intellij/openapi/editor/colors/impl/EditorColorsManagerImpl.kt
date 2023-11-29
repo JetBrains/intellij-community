@@ -434,6 +434,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
 
   override fun loadState(state: State) {
     this.state = state
+    hideIntellijLightSchemeIfNeeded()
     val colorSchemeName = state.colorScheme
     var colorScheme = colorSchemeName?.let { getScheme(it) }
     if (colorScheme == null) {
@@ -456,7 +457,6 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
         }
       }
     }
-
     schemeManager.setCurrent(scheme = colorScheme, notify = isInitialConfigurationLoaded)
     isInitialConfigurationLoaded = true
 
@@ -490,6 +490,22 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     schemeManager.setCurrent(scheme = scheme, notify = isInitialConfigurationLoaded)
     isInitialConfigurationLoaded = true
     activity.end()
+  }
+
+  //IDEA-331405 Hide IntelliJ Light from new UI
+  private fun hideIntellijLightSchemeIfNeeded() {
+    if (!ExperimentalUI.isNewUI()) return
+    val themeName = "IntelliJ Light"
+    val intellijLightThemes = schemeManager.allSchemes.filter { it.name.contains(themeName) }
+    val customTheme = intellijLightThemes.find { it.name.startsWith("_@user_") }
+    if (customTheme != null) {
+      val defaultScheme = schemeManager.findSchemeByName(themeName)
+      val isSchemeCustomized = (customTheme as? AbstractColorsScheme)?.settingsEqual(defaultScheme, null, true) != true
+      if (isSchemeCustomized) {
+        return
+      }
+    }
+    intellijLightThemes.forEach { schemeManager.removeScheme(it) }
   }
 
   override fun isDefaultScheme(scheme: EditorColorsScheme): Boolean = scheme is DefaultColorsScheme

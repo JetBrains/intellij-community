@@ -926,6 +926,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   public boolean settingsEqual(Object other, @Nullable Predicate<? super ColorKey> colorKeyFilter) {
+    return settingsEqual(other, colorKeyFilter, false);
+  }
+
+  public boolean settingsEqual(Object other, @Nullable Predicate<? super ColorKey> colorKeyFilter, boolean ignoreMetaInfo) {
     if (!(other instanceof AbstractColorsScheme otherScheme)) {
       return false;
     }
@@ -936,7 +940,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
 
     for (String propertyName : metaInfo.stringPropertyNames()) {
-      if (propertyName.equals(META_INFO_CREATION_TIME) ||
+      if (ignoreMetaInfo ||
+          propertyName.equals(META_INFO_CREATION_TIME) ||
           propertyName.equals(META_INFO_MODIFIED_TIME) ||
           propertyName.equals(META_INFO_IDE) ||
           propertyName.equals(META_INFO_IDE_VERSION) ||
