@@ -2,7 +2,6 @@
 package com.jetbrains.python.requirements
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.MockSdk
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -63,7 +62,10 @@ class RequirementsCompletionTest : BasePlatformTestCase() {
         val sdk: Sdk = PythonMockSdk.create("Mock ${PyNames.PYTHON_SDK_ID_NAME} ${languageLevel.toPythonVersion()}",
                                             "${PythonTestUtil.getTestDataPath()}/MockSdk", PythonSdkType.getInstance(), languageLevel,
                                             *additionalRoots)
-        (sdk as MockSdk).sdkAdditionalData = PythonSdkAdditionalData()
+        sdk.sdkModificator.let {
+          it.sdkAdditionalData = PythonSdkAdditionalData()
+          it.commitChanges()
+        }
         return sdk
       }
     }
