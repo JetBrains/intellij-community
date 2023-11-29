@@ -56,7 +56,7 @@ public class ExtendSealedClassFix extends PsiBasedModCommandAction<PsiClass> {
     int extendsImplements = subclass.isInterface() || !parentClass.isInterface() ? 1 : 2;
     //noinspection DialogTitleCapitalization
     String name = QuickFixBundle.message("extend.sealed.title", subclass.getName(), extendsImplements, parentClass.getName());
-    return new ModChooseAction(name, fixes);
+    return ModCommand.chooseAction(name, fixes);
   }
 
   /**

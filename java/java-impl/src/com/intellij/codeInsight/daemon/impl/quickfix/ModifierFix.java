@@ -237,11 +237,9 @@ public class ModifierFix extends PsiBasedModCommandAction<PsiModifierListOwner> 
         updateModifier(writableMethod);
       });
     } else {
-      return new ModChooseAction(getFamilyName(),
-                                 List.of(
-                                   new ModifierFix(method, myModifier, myShouldHave, myShowContainingClass, ThreeState.YES),
-                                   new ModifierFix(method, myModifier, myShouldHave, myShowContainingClass, ThreeState.NO)
-                                 ));
+      return ModCommand.chooseAction(getFamilyName(),
+                                     new ModifierFix(method, myModifier, myShouldHave, myShowContainingClass, ThreeState.YES),
+                                     new ModifierFix(method, myModifier, myShouldHave, myShowContainingClass, ThreeState.NO));
     }
   }
 }

@@ -91,8 +91,8 @@ public class DeannotateIntentionAction implements ModCommandAction {
     }
     final PsiAnnotation[] externalAnnotations = annotationsManager.findExternalAnnotations(listOwner);
     if (externalAnnotations == null) return ModCommand.nop();
-    return new ModChooseAction(JavaBundle.message("deannotate.intention.chooser.title"),
-                               ContainerUtil.map(externalAnnotations, anno -> new DeannotateIntentionAction(
-                                 Objects.requireNonNull(anno.getQualifiedName()))));
+    return ModCommand.chooseAction(JavaBundle.message("deannotate.intention.chooser.title"),
+                                   ContainerUtil.map(externalAnnotations, anno -> new DeannotateIntentionAction(
+                                     Objects.requireNonNull(anno.getQualifiedName()))));
   }
 }

@@ -73,9 +73,9 @@ public class RemoveUnusedVariableFix extends PsiBasedModCommandAction<PsiVariabl
       return new RemoveVariableSideEffectAware(variable, false).perform(context);
     }
     else {
-      return new ModChooseAction(JavaBundle.message("popup.title.remove.unused.variable"),
-                                 List.of(new RemoveVariableSideEffectAware(variable, true), 
-                                         new RemoveVariableSideEffectAware(variable, false)));
+      return ModCommand.chooseAction(JavaBundle.message("popup.title.remove.unused.variable"),
+                                     new RemoveVariableSideEffectAware(variable, true),
+                                     new RemoveVariableSideEffectAware(variable, false));
     }
   }
 

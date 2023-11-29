@@ -152,23 +152,21 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   }
 
   @NotNull
-  private static ModChooseAction createChooser(@NotNull PsiVariable variable,
+  private static ModCommand createChooser(@NotNull PsiVariable variable,
                                                @Nullable PsiReferenceExpression refExpr,
                                                @NotNull List<? extends PsiElement> allRefs) {
-    List<ModCommandAction> actions = List.of(
-      new InlineLocalStep(variable, refExpr, InlineMode.INLINE_ONE, allRefs),
-      new InlineLocalStep(variable, refExpr, InlineMode.INLINE_ALL_AND_DELETE, allRefs));
-    return new ModChooseAction(getRefactoringName(variable), actions);
+    return ModCommand.chooseAction(getRefactoringName(variable),
+                                   new InlineLocalStep(variable, refExpr, InlineMode.INLINE_ONE, allRefs),
+                                   new InlineLocalStep(variable, refExpr, InlineMode.INLINE_ALL_AND_DELETE, allRefs));
   }
 
 
   private static ModCommand createConflictChooser(PsiLocalVariable variable,
                                                   PsiReferenceExpression refExpr,
                                                   Map<PsiElement, PsiVariable> conflicts) {
-    List<ModCommandAction> actions = List.of(
-      new InlineLocalStep(variable, refExpr, InlineMode.HIGHLIGHT_CONFLICTS, conflicts.keySet()),
-      new InlineLocalStep(variable, refExpr, InlineMode.ASK, List.of()));
-    return new ModChooseAction(JavaRefactoringBundle.message("inline.warning.variables.used.in.initializer.are.updated"), actions);
+    return ModCommand.chooseAction(JavaRefactoringBundle.message("inline.warning.variables.used.in.initializer.are.updated"),
+                                   new InlineLocalStep(variable, refExpr, InlineMode.HIGHLIGHT_CONFLICTS, conflicts.keySet()),
+                                   new InlineLocalStep(variable, refExpr, InlineMode.ASK, List.of()));
   }
 
 

@@ -366,4 +366,32 @@ public sealed interface ModCommand
   static @NotNull ModCommand showConflicts(@NotNull Map<@NotNull PsiElement, ModShowConflicts.@NotNull Conflict> conflicts) {
     return new ModShowConflicts(conflicts);
   }
+
+  /**
+   * Creates a command that displays a UI and allows users to select a subsequent action from the list.
+   * Intention preview assumes that the first available action is selected by default.
+   * In batch mode, the first option is also selected automatically.
+   *
+   * @param title title to display to the user
+   * @param actions actions to select from. If there's only one action, then it could be executed right away without asking the user.
+   * @see #psiUpdateStep(PsiElement, String, BiConsumer) could be useful as a subsequent step
+   */
+  static @NotNull ModCommand chooseAction(@NotNull @NlsContexts.PopupTitle String title,
+                                          @NotNull List<? extends @NotNull ModCommandAction> actions) {
+    return new ModChooseAction(title, actions);
+  }
+
+  /**
+   * Creates a command that displays a UI and allows users to select a subsequent action from the list.
+   * Intention preview assumes that the first available action is selected by default.
+   * In batch mode, the first option is also selected automatically.
+   *
+   * @param title title to display to the user
+   * @param actions actions to select from. If there's only one action, then it could be executed right away without asking the user. 
+   * @see #psiUpdateStep(PsiElement, String, BiConsumer) could be useful as a subsequent step
+   */
+  static @NotNull ModCommand chooseAction(@NotNull @NlsContexts.PopupTitle String title,
+                                          @NotNull ModCommandAction @NotNull ... actions) {
+    return new ModChooseAction(title, List.of(actions));
+  }
 }

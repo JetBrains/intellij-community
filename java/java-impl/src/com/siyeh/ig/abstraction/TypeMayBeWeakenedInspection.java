@@ -163,8 +163,8 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 
     @Override
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      return new ModChooseAction(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.popup"),
-                                 ContainerUtil.map(myCandidates, DoAddStopAction::new));
+      return ModCommand.chooseAction(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.popup"),
+                                     ContainerUtil.map(myCandidates, DoAddStopAction::new));
     }
     
     @Override

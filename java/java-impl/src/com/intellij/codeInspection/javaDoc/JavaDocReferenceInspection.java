@@ -324,7 +324,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
         .nonNull().sorted(new PsiProximityComparator(ref.getElement()))
         .<ModCommandAction>map(cls -> new BindClassAction(ref, cls))
         .toList();
-      return new ModChooseAction(QuickFixBundle.message("add.qualifier.original.class.chooser.title"), actions);
+      return ModCommand.chooseAction(QuickFixBundle.message("add.qualifier.original.class.chooser.title"), actions);
     }
   }
   

@@ -37,7 +37,7 @@ public final class AddExceptionToExistingCatchFix extends PsiBasedModCommandActi
                                              Objects.requireNonNull(c.getCatchType()).getPresentableText(),
                                              (section, updater) -> addTypeToCatch(unhandledExceptions, section, ctx.project()),
                                               section -> Objects.requireNonNull(section.getParameter()).getTextRange()));
-    return new ModChooseAction(QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"), actions);
+    return ModCommand.chooseAction(QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"), actions);
   }
 
   private static List<PsiCatchSection> findSuitableSections(List<? extends PsiCatchSection> sections, @NotNull List<? extends PsiClassType> exceptionTypes, boolean isJava7OrHigher) {

@@ -92,10 +92,8 @@ public class AccessStaticViaInstanceFix extends PsiBasedModCommandAction<PsiRefe
         if (!CodeBlockSurrounder.canSurround(ref)) {
           return ModCommand.psiUpdate(ref, r -> invoke(r, List.of()));
         }
-        return new ModChooseAction(QuickFixBundle.message("access.static.via.class.reference.title"), List.of(
-          new AccessStaticViaInstanceFix(ref, true),
-          new AccessStaticViaInstanceFix(ref, false)
-        ));
+        return ModCommand.chooseAction(QuickFixBundle.message("access.static.via.class.reference.title"), 
+                                       new AccessStaticViaInstanceFix(ref, true), new AccessStaticViaInstanceFix(ref, false));
       }
       return ModCommand.psiUpdate(ref, (r, updater) -> invoke(r, ContainerUtil.map(sideEffects, updater::getWritable)));
     }

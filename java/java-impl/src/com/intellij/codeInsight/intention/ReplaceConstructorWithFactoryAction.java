@@ -61,7 +61,7 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
           PsiIdentifier identifier = cls.getNameIdentifier();
           return identifier == null ? cls.getTextRange() : identifier.getTextRange();
         }));
-    return new ModChooseAction(JavaBundle.message("popup.title.choose.target.class"), options);
+    return ModCommand.chooseAction(JavaBundle.message("popup.title.choose.target.class"), options);
   }
 
   private static void invoke(@NotNull PsiClass cls,

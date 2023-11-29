@@ -101,8 +101,8 @@ public final class FindDfaProblemCauseFix extends ModCommandQuickFix implements 
     if (causes.isEmpty()) {
       return ModCommand.error(JavaAnalysisBundle.message("dfa.find.cause.unable"));
     }
-    return new ModChooseAction(StringUtil.wordsToBeginFromUpperCase(root.toString()),
-                               ContainerUtil.map(causes, NavigateToCauseAction::new));
+    return ModCommand.chooseAction(StringUtil.wordsToBeginFromUpperCase(root.toString()),
+                                   ContainerUtil.map(causes, NavigateToCauseAction::new));
   }
   
   private static final class NavigateToCauseAction implements ModCommandAction {

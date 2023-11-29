@@ -37,7 +37,7 @@ public class MoveMembersIntoClassFix implements ModCommandAction {
 
     List<? extends ModCommandAction> actionsPerClass = Arrays.stream(innerClasses).map(MoveAllMembersToParticularClassAction::new).toList();
 
-    return new ModChooseAction(JavaAnalysisBundle.message("chooser.popup.title.select.class.to.move.members.to"), actionsPerClass);
+    return ModCommand.chooseAction(JavaAnalysisBundle.message("chooser.popup.title.select.class.to.move.members.to"), actionsPerClass);
   }
 
   private static class MoveAllMembersToParticularClassAction extends PsiUpdateModCommandAction<PsiClass> {
