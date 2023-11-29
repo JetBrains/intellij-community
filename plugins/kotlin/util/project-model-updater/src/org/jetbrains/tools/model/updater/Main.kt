@@ -13,7 +13,6 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val kotlincVersion: String by Preference()
     val kotlinGradlePluginVersion: String by Preference()
     val kotlincArtifactsMode: ArtifactMode by Preference(ArtifactMode::valueOf)
-    val bootstrapWithNative: Boolean by Preference(String::toBoolean)
 
     enum class ArtifactMode {
         MAVEN, BOOTSTRAP
