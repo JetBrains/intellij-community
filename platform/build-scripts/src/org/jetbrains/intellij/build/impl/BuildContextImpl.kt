@@ -99,6 +99,7 @@ class BuildContextImpl(
         createContext(communityHome = communityHome,
                       projectHome = projectHome,
                       productProperties = productProperties,
+                      setupTracer = true,
                       proprietaryBuildTools = proprietaryBuildTools,
                       options = options)
       }
@@ -107,8 +108,8 @@ class BuildContextImpl(
     suspend fun createContext(communityHome: BuildDependenciesCommunityRoot,
                               projectHome: Path,
                               productProperties: ProductProperties,
-                              proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
                               setupTracer: Boolean = true,
+                              proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
                               options: BuildOptions = BuildOptions()): BuildContext {
       val compilationContext = CompilationContextImpl.createCompilationContext(
         communityHome = communityHome,

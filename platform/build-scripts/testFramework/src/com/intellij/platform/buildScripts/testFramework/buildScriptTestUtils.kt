@@ -23,6 +23,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
+import org.junit.jupiter.api.TestInfo
 import org.opentest4j.TestAbortedException
 import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
@@ -77,12 +78,14 @@ suspend inline fun createBuildContext(
 // don't expose BuildDependenciesCommunityRoot
 fun runTestBuild(homePath: Path,
                  productProperties: ProductProperties,
+                 traceSpanName: String,
                  buildTools: ProprietaryBuildTools,
                  buildOptionsCustomizer: (BuildOptions) -> Unit = {}) {
   runTestBuild(homePath = homePath,
                productProperties = productProperties,
                buildTools = buildTools,
-               traceSpanName = null,
+               traceSpanName = traceSpanName,
+               isReproducibilityTestAllowed = true,
                buildOptionsCustomizer = buildOptionsCustomizer)
 }
 
@@ -91,14 +94,14 @@ fun runTestBuild(
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: BuildDependenciesCommunityRoot = BuildDependenciesCommunityRoot(homePath.resolve("community")),
-  traceSpanName: String? = null,
+  traceSpanName: String,
   isReproducibilityTestAllowed: Boolean = true,
   build: suspend (context: BuildContext) -> Unit = { buildDistributions(it) },
   onSuccess: suspend (context: BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
 ) {
   runBlocking(Dispatchers.Default) {
-    asSingleTraceFile(productProperties.baseFileName + (traceSpanName?.let { "-$it" } ?: "")) {
+    asSingleTraceFile("${productProperties.baseFileName}-$traceSpanName") {
       if (isReproducibilityTestAllowed) {
         val reproducibilityTest = BuildArtifactsReproducibilityTest()
         repeat(reproducibilityTest.iterations) { iterationNumber ->
@@ -148,11 +151,11 @@ fun runTestBuild(
 // FIXME: test reproducibility
 suspend fun runTestBuild(
   context: BuildContext,
-  traceSpanName: String? = null,
+  traceSpanName: String,
   build: suspend (context: BuildContext) -> Unit = { buildDistributions(it) }
 ) {
-  asSingleTraceFile(context.productProperties.baseFileName + (traceSpanName?.let { "-$it" } ?: "")) {
-    doRunTestBuild(context, traceSpanName, build)
+  asSingleTraceFile("${context.productProperties.baseFileName}-$traceSpanName") {
+    doRunTestBuild(context = context, traceSpanName = traceSpanName, build = build)
   }
 }
 
@@ -263,3 +266,6 @@ private suspend fun publishTraceFile(traceFile: Path) {
     e.printStackTrace(System.err)
   }
 }
+
+val TestInfo.spanName: String
+  get() = "${testClass.get().simpleName}.${testMethod.orElse(null)?.name ?: "unknown"}"

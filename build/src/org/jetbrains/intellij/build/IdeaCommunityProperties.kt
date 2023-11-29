@@ -17,6 +17,7 @@ internal suspend fun createCommunityBuildContext(
   return BuildContextImpl.createContext(communityHome = communityHome,
                                         projectHome = projectHome,
                                         productProperties = IdeaCommunityProperties(communityHome.communityRoot),
+                                        setupTracer = true,
                                         options = options)
 }
 

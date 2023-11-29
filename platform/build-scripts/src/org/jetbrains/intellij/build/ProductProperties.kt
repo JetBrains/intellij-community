@@ -8,7 +8,6 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
@@ -123,7 +122,7 @@ abstract class ProductProperties {
   /**
    * The specified options will be used instead of/in addition to the default JVM memory options for all operating systems.
    */
-  var customJvmMemoryOptions: PersistentMap<String, String> = persistentMapOf()
+  var customJvmMemoryOptions: Map<String, String> = persistentMapOf()
 
   /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name

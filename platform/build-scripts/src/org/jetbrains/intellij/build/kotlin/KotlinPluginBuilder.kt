@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.io.Decompressor
@@ -13,7 +13,6 @@ import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.consumeDataByPrefix
 import org.jetbrains.jps.model.library.JpsOrderRootType
-import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import java.nio.file.Path
 import java.util.regex.Pattern
 
@@ -416,7 +415,10 @@ object KotlinPluginBuilder {
   }
 
   suspend fun build(communityHome: BuildDependenciesCommunityRoot, home: Path, properties: ProductProperties) {
-    val buildContext = BuildContextImpl.createContext(communityHome = communityHome, projectHome = home, productProperties = properties)
+    val buildContext = BuildContextImpl.createContext(communityHome = communityHome,
+                                                      setupTracer = true,
+                                                      projectHome = home,
+                                                      productProperties = properties)
     buildContext.options.enableEmbeddedJetBrainsClient = false
     BuildTasks.create(buildContext).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
   }
