@@ -32,7 +32,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBase {
@@ -90,8 +90,8 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     init();
   }
 
-  public Set<String> getConflictDescriptions() {
-    return Set.of(myConflictDescriptions);
+  public List<String> getConflictDescriptions() {
+    return List.of(myConflictDescriptions);
   }
 
   @Override

@@ -353,7 +353,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
 
   private boolean executeShowConflicts(@NotNull ActionContext context, @NotNull ModShowConflicts conflicts, @Nullable Editor editor,
                                        @NotNull ModCommand tail) {
-    MultiMap<PsiElement, String> conflictData = new MultiMap<>();
+    MultiMap<PsiElement, String> conflictData = new MultiMap<>(new LinkedHashMap<>());
     conflicts.conflicts().forEach((e, c) -> conflictData.put(e, c.messages()));
     if (conflictData.isEmpty()) return true;
     var conflictsDialog =

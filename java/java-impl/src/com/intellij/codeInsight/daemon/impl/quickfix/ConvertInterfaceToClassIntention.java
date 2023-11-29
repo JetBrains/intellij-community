@@ -15,13 +15,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.modcommand.ModCommand.*;
 
@@ -69,8 +67,9 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
                                                                          @NotNull Collection<PsiClass> inheritors) {
     final Map<PsiElement, ModShowConflicts.Conflict> conflicts = new HashMap<>();
     inheritors.forEach(aClass -> {
+      System.out.println("aClass = " + aClass);
       if (aClass.isEnum() || aClass.isRecord() || aClass.isInterface()) {
-        ModShowConflicts.Conflict conflict = new ModShowConflicts.Conflict(List.of(IntentionPowerPackBundle.message(
+        final ModShowConflicts.Conflict conflict = new ModShowConflicts.Conflict(List.of(IntentionPowerPackBundle.message(
           "0.implementing.1.will.not.compile.after.converting.1.to.a.class",
           RefactoringUIUtil.getDescription(aClass, true),
           RefactoringUIUtil.getDescription(anInterface, false))));
@@ -85,7 +84,7 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
       if (referenceElements.length > 0) {
         final PsiElement target = referenceElements[0].resolve();
         if (target instanceof PsiClass targetClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(targetClass.getQualifiedName())) {
-          ModShowConflicts.Conflict conflict = new ModShowConflicts.Conflict(List.of(IntentionPowerPackBundle.message(
+          final ModShowConflicts.Conflict conflict = new ModShowConflicts.Conflict(List.of(IntentionPowerPackBundle.message(
             "0.already.extends.1.and.will.not.compile.after.converting.2.to.a.class",
             RefactoringUIUtil.getDescription(aClass, true),
             RefactoringUIUtil.getDescription(target, true),
@@ -98,13 +97,19 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
     final PsiFunctionalExpression functionalExpression =
       FunctionalExpressionSearch.search(anInterface, anInterface.getUseScope()).findFirst();
     if (functionalExpression != null) {
-      ModShowConflicts.Conflict conflict = new ModShowConflicts.Conflict(List.of(IntentionPowerPackBundle.message(
+      final ModShowConflicts.Conflict conflict = new ModShowConflicts.Conflict(List.of(IntentionPowerPackBundle.message(
         "0.will.not.compile.after.converting.1.to.a.class",
         ClassPresentationUtil.getFunctionalExpressionPresentation(functionalExpression, true),
         RefactoringUIUtil.getDescription(anInterface, false))));
       conflicts.put(functionalExpression, conflict);
     }
-    return conflicts;
+    final PsiElement[] elements = conflicts.keySet().toArray(PsiElement.EMPTY_ARRAY);
+    Arrays.sort(elements, new PsiElementComparator());
+    final Map<PsiElement, ModShowConflicts.Conflict> sortedConflicts = new LinkedHashMap<>();
+    for (PsiElement element : elements) {
+      sortedConflicts.put(element, conflicts.get(element));
+    }
+    return sortedConflicts;
   }
 
   public static boolean canConvertToClass(@NotNull PsiClass aClass) {
@@ -173,7 +178,7 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
   }
 
   private static void convertInterfaceToClass(PsiClass anInterface, Collection<PsiClass> inheritors, @NotNull ModPsiUpdater updater) {
-    List<PsiClass> writableInheritors = ContainerUtil.map(inheritors, updater::getWritable);
+    final List<PsiClass> writableInheritors = ContainerUtil.map(inheritors, updater::getWritable);
     moveSubClassImplementsToExtends(anInterface, writableInheritors);
     changeInterfaceToClass(anInterface);
     moveExtendsToImplements(anInterface);
@@ -222,6 +227,14 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
         }
         implementsReference.delete();
       }
+    }
+  }
+
+  private static class PsiElementComparator implements Comparator<PsiElement> {
+    @Override
+    public int compare(PsiElement e1, PsiElement e2) {
+      final int result = e1.getContainingFile().getVirtualFile().getPath().compareTo(e2.getContainingFile().getVirtualFile().getPath());
+      return result == 0 ? PsiElementOrderComparator.getInstance().compare(e1, e2) : result;
     }
   }
 }
