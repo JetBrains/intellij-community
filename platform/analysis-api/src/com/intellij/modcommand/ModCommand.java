@@ -327,4 +327,34 @@ public sealed interface ModCommand
     }
     return finalCommand.andThen(new ModNavigate(virtualFile, offset, offset, offset));
   }
+
+  /**
+   * Creates a command that allows user to select arbitrary number of members (but at least one).
+   * Initially, all the elements are selected. In batch mode, it's assumed that all the elements are selected.
+   *
+   * @param title user-readable title to display in UI
+   * @param elements all elements to select from
+   * @param nextCommand a function to compute the subsequent command based on the selection; will be executed in read-action
+   */
+  static @NotNull ModCommand chooseMultipleMembers(@NotNull @NlsContexts.PopupTitle String title,
+                                                   @NotNull List<? extends @NotNull MemberChooserElement> elements,
+                                                   @NotNull Function<@NotNull List<? extends @NotNull MemberChooserElement>, ? extends @NotNull ModCommand> nextCommand) {
+    return chooseMultipleMembers(title, elements, elements, nextCommand);
+  }
+
+  /**
+   * Creates a command that allows user to select arbitrary number of members (but at least one). 
+   * In batch mode, it's assumed that default selection is selected.
+   *
+   * @param title user-readable title to display in UI
+   * @param elements all elements to select from
+   * @param defaultSelection default selection
+   * @param nextCommand a function to compute the subsequent command based on the selection; will be executed in read-action
+   */
+  static @NotNull ModCommand chooseMultipleMembers(@NotNull @NlsContexts.PopupTitle String title,
+                                                   @NotNull List<? extends @NotNull MemberChooserElement> elements,
+                                                   @NotNull List<? extends @NotNull MemberChooserElement> defaultSelection,
+                                                   @NotNull Function<@NotNull List<? extends @NotNull MemberChooserElement>, ? extends @NotNull ModCommand> nextCommand) {
+    return new ModChooseMember(title, elements, defaultSelection, ModChooseMember.SelectionMode.MULTIPLE, nextCommand);
+  }
 }

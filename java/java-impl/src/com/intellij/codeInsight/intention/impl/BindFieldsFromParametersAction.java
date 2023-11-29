@@ -124,10 +124,10 @@ public class BindFieldsFromParametersAction implements ModCommandAction {
     List<@NotNull ParameterClassMember> members = sortByParameterIndex(
       ContainerUtil.map(parameters, ParameterClassMember::new), method);
     List<ParameterClassMember> selection = getInitialSelection(method, members);
-    return new ModChooseMember(JavaBundle.message("dialog.title.choose.0.parameters", method.isConstructor() ? "Constructor" : "Method"),
+    return ModCommand.chooseMultipleMembers(
+      JavaBundle.message("dialog.title.choose.0.parameters", method.isConstructor() ? "Constructor" : "Method"),
                                members,
                                selection,
-                               ModChooseMember.SelectionMode.MULTIPLE,
                                function.compose(elements -> ContainerUtil.map(elements, e -> ((ParameterClassMember)e).getParameter())));
   }
 

@@ -57,12 +57,9 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
       return performForConstructors(context, field, filtered);
     }
     List<PsiMethodMember> members = ContainerUtil.map(filtered, PsiMethodMember::new);
-    return new ModChooseMember(QuickFixBundle.message("choose.constructors.to.add.parameter.to"),
-                               members,
-                               members,
-                               ModChooseMember.SelectionMode.MULTIPLE,
-                               selected -> performForConstructors(
-                                 context, field, ContainerUtil.map(selected, member -> ((PsiMethodMember)member).getElement())));
+    return ModCommand.chooseMultipleMembers(QuickFixBundle.message("choose.constructors.to.add.parameter.to"), members,
+                                            selected -> performForConstructors(context, field, ContainerUtil.map(selected,
+                                                                                                                 member -> ((PsiMethodMember)member).getElement())));
   }
 
   @NotNull
@@ -76,12 +73,11 @@ public class CreateConstructorParameterFromFieldFix extends PsiBasedModCommandAc
     if (allFields.isEmpty()) return ModCommand.nop();
     if (allFields.size() == 1) return performForConstructorsAndFields(context, allFields, constructors);
     List<PsiFieldMember> members = ContainerUtil.map(allFields, PsiFieldMember::new);
-    return new ModChooseMember(QuickFixBundle.message("choose.fields.to.generate.constructor.parameters.for"),
-                               members,
-                               members,
-                               ModChooseMember.SelectionMode.MULTIPLE,
-                               selected -> performForConstructorsAndFields(
-                                 context, ContainerUtil.map(selected, member -> ((PsiFieldMember)member).getElement()), constructors));
+    return ModCommand.chooseMultipleMembers(QuickFixBundle.message("choose.fields.to.generate.constructor.parameters.for"),
+                                            members,
+                                            selected -> performForConstructorsAndFields(
+                                              context, ContainerUtil.map(selected, member -> ((PsiFieldMember)member).getElement()),
+                                              constructors));
   }
 
   private static PsiMethod[] getNonSyntheticConstructors(@NotNull PsiClass psiClass) {
