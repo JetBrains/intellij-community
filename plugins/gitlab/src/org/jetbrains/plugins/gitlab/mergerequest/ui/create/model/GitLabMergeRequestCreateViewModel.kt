@@ -40,7 +40,7 @@ internal interface GitLabMergeRequestCreateViewModel {
 
   val isBusy: Flow<Boolean>
 
-  val plan: Deferred<GitLabPlan>
+  val plan: Deferred<GitLabPlan?>
   val branchState: Flow<BranchState?>
 
   val existingMergeRequest: Flow<String?>
@@ -78,7 +78,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
 
-  override val plan: Deferred<GitLabPlan> = projectData.plan
+  override val plan: Deferred<GitLabPlan?> = projectData.plan
 
   private val listenableProgressIndicator = ListenableProgressIndicator()
   override val creatingProgressText: Flow<String?> = callbackFlow {

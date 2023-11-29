@@ -39,7 +39,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabBundle
 internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewModel<GitLabReviewerDTO> {
   val isBusy: Flow<Boolean>
 
-  val plan: Deferred<GitLabPlan>
+  val plan: Deferred<GitLabPlan?>
 
   val currentUser: GitLabUserDTO
   val author: GitLabUserDTO
@@ -105,7 +105,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
 
-  override val plan: Deferred<GitLabPlan> = projectData.plan
+  override val plan: Deferred<GitLabPlan?> = projectData.plan
 
   override val author: GitLabUserDTO = mergeRequest.author
 

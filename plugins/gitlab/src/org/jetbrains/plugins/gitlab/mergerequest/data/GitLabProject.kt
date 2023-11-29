@@ -31,7 +31,7 @@ interface GitLabProject {
   val labels: SharedFlow<Result<List<GitLabLabelDTO>>>
   val members: SharedFlow<Result<List<GitLabUserDTO>>>
   val defaultBranch: Deferred<String>
-  val plan: Deferred<GitLabPlan>
+  val plan: Deferred<GitLabPlan?>
 
   /**
    * Creates a merge request on the GitLab server and returns a DTO containing the merge request
@@ -81,9 +81,11 @@ class GitLabLazyProject(
     projectRepository.rootRef
   }
 
-  override val plan: Deferred<GitLabPlan> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-    val namespace = api.rest.getProjectNamespace(projectMapping.repository.projectPath.owner).body()
-    namespace.plan
+  override val plan: Deferred<GitLabPlan?> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+    runCatchingUser {
+      val namespace = api.rest.getProjectNamespace(projectMapping.repository.projectPath.owner).body()
+      namespace?.plan
+    }.getOrNull()
   }
 
   @Throws(GitLabGraphQLMutationException::class)
