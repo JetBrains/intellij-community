@@ -125,10 +125,14 @@ public abstract class UsefulTestCase extends TestCase {
   private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
 
-  private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
+  private static CodeInsightSettings defaultSettings = new CodeInsightSettings();
 
   static {
     initializeTestEnvironment();
+  }
+
+  protected void setDefaultCodeInsightSettings(@NotNull CodeInsightSettings settings) {
+    defaultSettings = settings;
   }
 
   /**
