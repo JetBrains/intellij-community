@@ -126,7 +126,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
       .buffer(actionIds.size)
   }
 
-  private suspend fun matchedActionsAndStubsFlow(pattern: String, allIds: Collection<String>,
+  private fun matchedActionsAndStubsFlow(pattern: String, allIds: Collection<String>,
                                                  presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
     val matcher = buildMatcher(pattern)
     val weightMatcher = buildWeightMatcher(pattern)
@@ -152,10 +152,11 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
     val comparator = Comparator.comparing<MatchedAction, Int> { it.weight ?: 0 }.reversed()
 
-    val list = collectAndSort(actionsWithWeightsFlow, comparator)
-    LOG.debug("List is collected")
-    return list.asFlow().buffer(list.size)
-      .transform {
+    return flow {
+      val list = collectAndSort(actionsWithWeightsFlow, comparator)
+      LOG.debug("List is collected")
+
+      list.forEach {
         val action = it.action
         if (action is ActionStubBase) {
           myActionManager.getAction(action.id)?.let { loaded -> emit(MatchedAction(loaded, it.mode, it.weight)) }
@@ -164,6 +165,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
           emit(it)
         }
       }
+    }
       .map {
         val presentation = presentationProvider(it.action)
         wrapAnAction(it.action, presentation, it.mode)
