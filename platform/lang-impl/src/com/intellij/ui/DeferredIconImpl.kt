@@ -24,6 +24,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.Graphics
+import java.util.Objects
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.Icon
@@ -379,6 +380,16 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     override fun notifyPaint(c: Component, x: Int, y: Int) {
       original.notifyPaint(c, x, y)
     }
+
+    override fun equals(other: Any?): Boolean = when {
+      this === other -> true
+      other === null -> false
+      else -> (other as? DeferredIconAfterReplace<*>)?.let {
+        original == it.original && replacer == it.replacer
+      } == true
+    }
+
+    override fun hashCode(): Int = Objects.hash(original, replacer)
   }
 }
 

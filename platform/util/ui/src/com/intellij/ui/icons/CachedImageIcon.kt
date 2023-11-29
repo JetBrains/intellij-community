@@ -29,6 +29,7 @@ import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
 import java.net.URL
 import java.nio.file.Path
+import java.util.Objects
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
@@ -366,6 +367,23 @@ open class CachedImageIcon private constructor(
 
   val imageFlags: Int
     get() = loader?.flags ?: 0
+
+  override fun equals(other: Any?): Boolean = when {
+    this === other -> true
+    other === null -> false
+    else -> (other as? CachedImageIcon)?.let {
+      localFilterSupplier == it.localFilterSupplier &&
+      colorPatcher == it.colorPatcher &&
+      toolTip == it.toolTip &&
+      scaleContext == it.scaleContext &&
+      originalLoader == it.originalLoader &&
+      attributes.flags == it.attributes.flags
+    } == true
+  }
+
+  override fun hashCode(): Int = Objects.hash(
+    localFilterSupplier, colorPatcher, toolTip, scaleContext, originalLoader, attributes.flags)
+
 }
 
 @TestOnly
