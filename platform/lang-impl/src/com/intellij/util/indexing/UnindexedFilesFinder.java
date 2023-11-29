@@ -31,7 +31,6 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolderKt.USE_CACHING_FILTER;
 
 final class UnindexedFilesFinder {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
@@ -173,7 +172,7 @@ final class UnindexedFilesFinder {
 
     if (TRUST_INDEXING_FLAG) {
       if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
-        if (!USE_CACHING_FILTER) myIndexableFilesFilterHolder.addFileId(FileBasedIndex.getFileId(file), myProject);
+        myIndexableFilesFilterHolder.addFileId(FileBasedIndex.getFileId(file), myProject);
         return new UnindexedFileStatusBuilder(applicationMode).build();
       }
     }
@@ -190,7 +189,7 @@ final class UnindexedFilesFinder {
 
       IndexedFileImpl indexedFile = new IndexedFileImpl(file, fileType, myProject);
       int inputId = FileBasedIndex.getFileId(file);
-      if (!USE_CACHING_FILTER) myIndexableFilesFilterHolder.addFileId(inputId, myProject);
+      myIndexableFilesFilterHolder.addFileId(inputId, myProject);
 
       if (IndexingFlag.isFileIndexed(file, indexingStamp)) {
         boolean wasInvalidated = false;
