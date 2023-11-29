@@ -96,8 +96,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             fqName
         }
         val importDirective = expression.parentOfType<KtImportDirective>(withSelf = false)
-        if (importDirective != null) return importDirective.replaceWith(writableFqn) ?: expression
-        val shorten = shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING
+        val shorten = shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING && importDirective == null
         val newElement = expression.containingKtFile.withOptimizedImports(shorten) {
             val element = when (val elementToReplace = expression.getQualifiedElement()) {
                 is KtUserType -> elementToReplace.replaceWith(writableFqn)
@@ -109,11 +108,6 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             element
         } ?: expression
         return newElement
-    }
-
-    private fun KtImportDirective.replaceWith(fqName: FqName): KtExpression? {
-        val newImportReferenceExpression = KtPsiFactory(project).createExpression(fqName.asString())
-        return importedReference?.replaced(newImportReferenceExpression)
     }
 
     private fun KtUserType.replaceWith(fqName: FqName): KtUserType {

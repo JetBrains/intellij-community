@@ -663,6 +663,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameJavaClassUsedInCallableReference/renameJavaClassUsedInCallableReference.test");
     }
 
+    @TestMetadata("renameJavaClassUsedInImports/renameJavaClassUsedInImports.test")
+    public void testRenameJavaClassUsedInImports_RenameJavaClassUsedInImports() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameJavaClassUsedInImports/renameJavaClassUsedInImports.test");
+    }
+
     @TestMetadata("renameJavaClassWithKtConstructorDelegation/renameJavaClassWithKtConstructorDelegation.test")
     public void testRenameJavaClassWithKtConstructorDelegation_RenameJavaClassWithKtConstructorDelegation() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameJavaClassWithKtConstructorDelegation/renameJavaClassWithKtConstructorDelegation.test");
