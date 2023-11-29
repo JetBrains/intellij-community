@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.idea.imports.AbstractK2FilteringAutoImportTest
 import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
+import org.jetbrains.kotlin.idea.projectView.AbstractK2ProjectViewTest
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -465,6 +466,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("fir", testDataPath = "../code-insight/testData") {
         testClass<AbstractK2MultiModuleLineMarkerTest> {
             model("linemarkers", isRecursive = false, pattern = DIRECTORY)
+        }
+    }
+
+    testGroup("fir", testDataPath = "../idea/tests/testData") {
+        testClass<AbstractK2ProjectViewTest> {
+            model("projectView", pattern = TEST)
         }
     }
 

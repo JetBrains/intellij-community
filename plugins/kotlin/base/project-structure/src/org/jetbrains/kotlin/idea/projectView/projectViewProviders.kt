@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.asJava.classes.KtExtensibleLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.idea.KotlinIconProvider
@@ -35,9 +36,8 @@ class KotlinExpandNodeProjectViewProvider : TreeStructureProvider, DumbAware {
             val value = child.value
             val ktFile = value?.asKtFile()
 
-            // TODO need to fix KTIJ-11594 without introducing KTIJ-27970
-            val mandatoryChildren = emptyList<AbstractTreeNode<*>>()
-
+            // TODO: drop filter as far as get KTIJ-11594 fixed
+            val mandatoryChildren = child.children.filter { it.value !is KtExtensibleLightClass }
             if (ktFile != null) {
                 val mainClass = KotlinIconProvider.getSingleClass(ktFile)
                 if (mainClass != null) {
