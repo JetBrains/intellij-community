@@ -50,7 +50,7 @@ public final class BuildDataManager {
   private final ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>(16, 0.75f, getConcurrencyLevel());
   private final OneToManyPathsMapping mySrcToFormMap;
   private final Mappings myMappings;
-  private final ReadWriteLock myGraphLock = new ReentrantReadWriteLock();
+  private final Object myGraphManagementLock = new Object();
   private DependencyGraph myDepGraph;
   private final BuildDataPaths myDataPaths;
   private final BuildTargetsState myTargetsState;
@@ -133,12 +133,8 @@ public final class BuildDataManager {
   }
 
   public DependencyGraph getDependencyGraph() {
-    myGraphLock.readLock().lock();
-    try {
+    synchronized (myGraphManagementLock) {
       return myDepGraph;
-    }
-    finally {
-      myGraphLock.readLock().unlock();
     }
   }
 
@@ -199,14 +195,13 @@ public final class BuildDataManager {
   }
 
   public void createDependencyGraph(File mappingsRoot, boolean deleteExisting) throws IOException {
-    myGraphLock.writeLock().lock();
-    try {
+    synchronized (myGraphManagementLock) {
       DependencyGraph depGraph = myDepGraph;
       if (depGraph == null) {
         if (deleteExisting) {
           FileUtil.delete(mappingsRoot);
         }
-        myDepGraph = asSynchronizableGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())), myGraphLock);
+        myDepGraph = asSynchronizableGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())));
       }
       else {
         try {
@@ -216,12 +211,9 @@ public final class BuildDataManager {
           if (deleteExisting) {
             FileUtil.delete(mappingsRoot);
           }
-          myDepGraph = asSynchronizableGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())), myGraphLock);
+          myDepGraph = asSynchronizableGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())));
         }
       }
-    }
-    finally {
-      myGraphLock.writeLock().unlock();
     }
   }
 
@@ -266,8 +258,7 @@ public final class BuildDataManager {
             }
           }
 
-          myGraphLock.writeLock().lock();
-          try {
+          synchronized (myGraphManagementLock) {
             DependencyGraph depGraph = myDepGraph;
             if (depGraph != null) {
               myDepGraph = null;
@@ -278,9 +269,6 @@ public final class BuildDataManager {
                 throw e.getCause();
               }
             }
-          }
-          finally {
-            myGraphLock.writeLock().unlock();
           }
         }
       }
@@ -492,10 +480,12 @@ public final class BuildDataManager {
     };
   }
 
-  private static DependencyGraph asSynchronizableGraph(DependencyGraph graph, ReadWriteLock lock) {
+  private static DependencyGraph asSynchronizableGraph(DependencyGraph graph) {
     //noinspection IOResourceOpenedButNotSafelyClosed
     DependencyGraph delegate = new LoggingDependencyGraph(graph, msg -> LOG.info(msg));
     return new DependencyGraph() {
+      private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
       @Override
       public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources) throws IOException {
         lock.readLock().lock();
