@@ -3,6 +3,10 @@ package com.intellij.util.containers
 
 import org.jetbrains.annotations.Contract
 
+/**
+ * Concurrent bit set with support for null values
+ * based on {@link com.intellij.util.containers.ConcurrentBitSet}
+ */
 interface ConcurrentThreeStateBitSet {
   companion object {
     @Contract("->new")
@@ -22,9 +26,7 @@ interface ConcurrentThreeStateBitSet {
   operator fun set(bitIndex: Int, value: Boolean?)
 
   /**
-   * Returns the value of the bit with the specified index. The value
-   * is `true` if the bit with the index `bitIndex`
-   * is currently set; otherwise, the result is `false`.
+   * Returns the value of the bit with the specified index.
    *
    * @param bitIndex the bit index
    * @return the value of the bit with the specified index
@@ -34,6 +36,9 @@ interface ConcurrentThreeStateBitSet {
 
   fun compareAndSet(bitIndex: Int, expected: Boolean?, new: Boolean?): Boolean
 
+  /**
+   * Set all values of set to null
+   */
   fun clear()
 
   /**
