@@ -2,7 +2,6 @@
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.BlobStorageTestBase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,9 +21,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
 
-  /** (32k records) * (~20Kb avg record size) ~= 700Mb -> must fit a typical heap without OoM */
-
-  private static final int MANY_RECORDS = 32 * 1024;
+  /**
+   * (25k records) * (~20Kb avg record size) ~= 500Mb -> must fit a typical heap without OoM,
+   * (But also big enough to trigger page-cross issues, etc.)
+   */
+  private static final int MANY_RECORDS = 25_000;
 
   private T storage;
   private Path storagePath;
@@ -68,34 +69,34 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
 
   @Test
   public void singleRecordWritten_couldBeReadBackAsIs() throws IOException {
-    String stringToWrite = "any random string";
-    int id = storage.storeRecord(contentOfString(stringToWrite));
+    ByteArraySequence contentToWrite = toContent("any random string");
+    int id = storage.storeRecord(contentToWrite);
 
     assertEquals(1, storage.getRecordsCount(), "Must be 1 record in storage");
     assertFalse(storage.isEmpty(), "Storage is !empty after first record was stored");
 
-    String stringReadBack = readAsString(storage.readStream(id));
+    ByteArraySequence contentReadBack = readContent(storage.readStream(id));
     assertEquals(
-      stringToWrite,
-      stringReadBack,
+      contentToWrite,
+      contentReadBack,
       "Content stored and read back must be the same"
     );
   }
 
   @Test
   public void singleRecordWritten_couldBeReadBackAsIs_afterReopen() throws IOException {
-    String stringToWrite = "any random string";
-    int id = storage.storeRecord(contentOfString(stringToWrite));
+    ByteArraySequence contentToWrite = toContent("any random string");
+    int id = storage.storeRecord(contentToWrite);
 
     reopenStorage();
 
     assertEquals(1, storage.getRecordsCount(), "Must be 1 record in storage");
     assertFalse(storage.isEmpty(), "Storage is !empty after first record was stored");
 
-    String stringReadBack = readAsString(storage.readStream(id));
+    ByteArraySequence contentReadBack = readContent(storage.readStream(id));
     assertEquals(
-      stringToWrite,
-      stringReadBack,
+      contentToWrite,
+      contentReadBack,
       "Content stored and read back must be the same"
     );
   }
@@ -103,8 +104,8 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
   @Test
   public void sameRecordStoredTwice_GetSameId() throws IOException {
     String stringToWrite = "any random string";
-    int id1 = storage.storeRecord(contentOfString(stringToWrite));
-    int id2 = storage.storeRecord(contentOfString(stringToWrite));
+    int id1 = storage.storeRecord(toContent(stringToWrite));
+    int id2 = storage.storeRecord(toContent(stringToWrite));
 
     assertEquals(
       id1,
@@ -120,14 +121,13 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
 
   @Test
   public void manyRecordsWritten_couldBeReadBackAsIs() throws IOException {
-    String[] stringsToWrite = generateContents(MANY_RECORDS);
-    for (String stringToWrite : stringsToWrite) {
-      ByteArraySequence bytes = contentOfString(stringToWrite);
-      int id = storage.storeRecord(bytes);
+    ByteArraySequence[] stringsToWrite = generateContents(MANY_RECORDS);
+    for (ByteArraySequence contentToWrite : stringsToWrite) {
+      int id = storage.storeRecord(contentToWrite);
 
-      String stringReadBack = readAsString(storage.readStream(id));
+      ByteArraySequence stringReadBack = readContent(storage.readStream(id));
       assertEquals(
-        stringToWrite,
+        contentToWrite,
         stringReadBack,
         "Content stored and read back must be the same"
       );
@@ -146,11 +146,11 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
 
   @Test
   public void manyRecordsWritten_couldBeReadBackAsIs_afterReopen() throws IOException {
-    String[] stringsToWrite = generateContents(MANY_RECORDS);
-    int[] recordIds = new int[stringsToWrite.length];
-    for (int i = 0; i < stringsToWrite.length; i++) {
-      String stringToWrite = stringsToWrite[i];
-      int id = storage.storeRecord(contentOfString(stringToWrite));
+    ByteArraySequence[] contentsToWrite = generateContents(MANY_RECORDS);
+    int[] recordIds = new int[contentsToWrite.length];
+    for (int i = 0; i < contentsToWrite.length; i++) {
+      ByteArraySequence contentToWrite = contentsToWrite[i];
+      int id = storage.storeRecord(contentToWrite);
       recordIds[i] = id;
     }
 
@@ -162,18 +162,18 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
     );
 
     assertEquals(
-      stringsToWrite.length,
+      contentsToWrite.length,
       storage.getRecordsCount(),
-      "Must be " + stringsToWrite.length + " record in storage"
+      "Must be " + contentsToWrite.length + " record in storage"
     );
 
     for (int i = 0; i < recordIds.length; i++) {
       int id = recordIds[i];
-      String stringToWrite = stringsToWrite[i];
-      String stringReadBack = readAsString(storage.readStream(id));
+      ByteArraySequence contentToWrite = contentsToWrite[i];
+      ByteArraySequence contentReadBack = readContent(storage.readStream(id));
       assertEquals(
-        stringToWrite,
-        stringReadBack,
+        contentToWrite,
+        contentReadBack,
         "Content stored and read back must be the same"
       );
     }
@@ -181,11 +181,11 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
 
   @Test
   public void manyRecordsWritten_couldBeReadBackAsIs_afterReopen_viaIterator() throws IOException {
-    String[] stringsToWrite = generateContents(MANY_RECORDS);
-    int[] recordIds = new int[stringsToWrite.length];
-    for (int i = 0; i < stringsToWrite.length; i++) {
-      String stringToWrite = stringsToWrite[i];
-      int id = storage.storeRecord(contentOfString(stringToWrite));
+    ByteArraySequence[] contentsToWrite = generateContents(MANY_RECORDS);
+    int[] recordIds = new int[contentsToWrite.length];
+    for (int i = 0; i < contentsToWrite.length; i++) {
+      ByteArraySequence contentToWrite = contentsToWrite[i];
+      int id = storage.storeRecord(contentToWrite);
       recordIds[i] = id;
     }
 
@@ -201,11 +201,11 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
         recordId,
         "id[#" + i + "]: " + recordId + " but id from iterator " + id
       );
-      String stringToWrite = stringsToWrite[i];
-      String stringReadBack = readAsString(storage.readStream(id));
+      ByteArraySequence contentToWrite = contentsToWrite[i];
+      ByteArraySequence contentReadBack = readContent(storage.readStream(id));
       assertEquals(
-        stringToWrite,
-        stringReadBack,
+        contentToWrite,
+        contentReadBack,
         "Content stored and read back must be the same"
       );
     }
@@ -214,22 +214,22 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
 
   @Test
   public void manyRecordsWrittenTwice_storedOnlyOnce() throws IOException {
-    String[] stringsToWrite = generateContents(MANY_RECORDS);
-    int[] recordIds = new int[stringsToWrite.length];
-    for (int i = 0; i < stringsToWrite.length; i++) {
-      String stringToWrite = stringsToWrite[i];
-      int id = storage.storeRecord(contentOfString(stringToWrite));
+    ByteArraySequence[] contentsToWrite = generateContents(MANY_RECORDS);
+    int[] recordIds = new int[contentsToWrite.length];
+    for (int i = 0; i < contentsToWrite.length; i++) {
+      ByteArraySequence contentToWrite = contentsToWrite[i];
+      int id = storage.storeRecord(contentToWrite);
       recordIds[i] = id;
     }
     assertEquals(
-      stringsToWrite.length,
+      contentsToWrite.length,
       storage.getRecordsCount(),
-      "Must be " + stringsToWrite.length + " record in storage"
+      "Must be " + contentsToWrite.length + " record in storage"
     );
 
-    for (int i = 0; i < stringsToWrite.length; i++) {
-      String stringToWrite = stringsToWrite[i];
-      int id = storage.storeRecord(contentOfString(stringToWrite));
+    for (int i = 0; i < contentsToWrite.length; i++) {
+      ByteArraySequence contentToWrite = contentsToWrite[i];
+      int id = storage.storeRecord(contentToWrite);
       assertEquals(
         recordIds[i],
         id,
@@ -237,32 +237,32 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
       );
     }
     assertEquals(
-      stringsToWrite.length,
+      contentsToWrite.length,
       storage.getRecordsCount(),
-      "Must be still " + stringsToWrite.length + " record in storage -- no additional duplicates"
+      "Must be still " + contentsToWrite.length + " record in storage -- no additional duplicates"
     );
   }
 
   @Test
   public void manyRecordsWrittenTwice_storedOnlyOnce_afterReopen() throws IOException {
-    String[] stringsToWrite = generateContents(MANY_RECORDS);
-    int[] recordIds = new int[stringsToWrite.length];
-    for (int i = 0; i < stringsToWrite.length; i++) {
-      String stringToWrite = stringsToWrite[i];
-      int id = storage.storeRecord(contentOfString(stringToWrite));
+    ByteArraySequence[] contentsToWrite = generateContents(MANY_RECORDS);
+    int[] recordIds = new int[contentsToWrite.length];
+    for (int i = 0; i < contentsToWrite.length; i++) {
+      ByteArraySequence contentToWrite = contentsToWrite[i];
+      int id = storage.storeRecord(contentToWrite);
       recordIds[i] = id;
     }
     assertEquals(
-      stringsToWrite.length,
+      contentsToWrite.length,
       storage.getRecordsCount(),
-      "Must be " + stringsToWrite.length + " record in storage"
+      "Must be " + contentsToWrite.length + " record in storage"
     );
 
     reopenStorage();
 
-    for (int i = 0; i < stringsToWrite.length; i++) {
-      String stringToWrite = stringsToWrite[i];
-      int id = storage.storeRecord(contentOfString(stringToWrite));
+    for (int i = 0; i < contentsToWrite.length; i++) {
+      ByteArraySequence contentToWrite = contentsToWrite[i];
+      int id = storage.storeRecord(contentToWrite);
       assertEquals(
         recordIds[i],
         id,
@@ -270,27 +270,27 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
       );
     }
     assertEquals(
-      stringsToWrite.length,
+      contentsToWrite.length,
       storage.getRecordsCount(),
-      "Must be still " + stringsToWrite.length + " record in storage -- no additional duplicates"
+      "Must be still " + contentsToWrite.length + " record in storage -- no additional duplicates"
     );
   }
 
 
   @Test
   public void manyRecordsWrittenTwice_storedOnlyOnce_multiThreaded() throws IOException, InterruptedException {
-    String[] stringsToWrite = generateContents(MANY_RECORDS);
-    int[] recordIds = new int[stringsToWrite.length];
+    ByteArraySequence[] contentsToWrite = generateContents(MANY_RECORDS);
+    int[] recordIds = new int[contentsToWrite.length];
 
     int threads = 8;
     ExecutorService pool = Executors.newFixedThreadPool(threads);
     try {
       List<Callable<Void>> tasks = IntStream.range(0, threads)
         .mapToObj(threadNo -> (Callable<Void>)() -> {
-          for (int i = 0; i < stringsToWrite.length; i++) {
-            String stringToWrite = stringsToWrite[i];
-            int id = storage.storeRecord(contentOfString(stringToWrite));
-            recordIds[i] = id;
+          for (int i = 0; i < contentsToWrite.length; i++) {
+            ByteArraySequence contentToWrite = contentsToWrite[i];
+            int id = storage.storeRecord(contentToWrite);
+            recordIds[i] = id;//all threads must assign same id, so doesn't matter which one wins the race
           }
           return null;
         })
@@ -302,14 +302,14 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
     }
 
     assertEquals(
-      stringsToWrite.length,
+      contentsToWrite.length,
       storage.getRecordsCount(),
-      "Must be " + stringsToWrite.length + " record in storage"
+      "Must be " + contentsToWrite.length + " record in storage"
     );
 
-    for (int i = 0; i < stringsToWrite.length; i++) {
-      String stringToWrite = stringsToWrite[i];
-      int id = storage.storeRecord(contentOfString(stringToWrite));
+    for (int i = 0; i < contentsToWrite.length; i++) {
+      ByteArraySequence contentToWrite = contentsToWrite[i];
+      int id = storage.storeRecord(contentToWrite);
       assertEquals(
         recordIds[i],
         id,
@@ -317,37 +317,14 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
       );
     }
     assertEquals(
-      stringsToWrite.length,
+      contentsToWrite.length,
       storage.getRecordsCount(),
-      "Must be still " + stringsToWrite.length + " record in storage -- no additional duplicates"
+      "Must be still " + contentsToWrite.length + " record in storage -- no additional duplicates"
     );
   }
 
 
   //======================================== infrastructure: ==================================================//
-
-  protected String[] generateContents(int count) {
-    ThreadLocalRandom rnd = ThreadLocalRandom.current();
-    IntSupplier sizeGenerator = () -> {
-      int mediumContentSize = 1 << 10;
-      int hugeContentSize = 1 << 20;
-      //generate 98% of records in [0..mediumSize], but 2% up to the hugeSize
-      //average record size = (1M*0.02+1K*0.98) ~ 20K
-      if (rnd.nextInt(50) == 0) {
-        return rnd.nextInt(hugeContentSize);
-      }
-      else {
-        return rnd.nextInt(mediumContentSize);
-      }
-    };
-    return IntStream.iterate(0, i -> i + 1)
-      .mapToObj(i -> BlobStorageTestBase.randomString(rnd, sizeGenerator.getAsInt()))
-      .distinct()
-      .limit(count)
-      .toArray(String[]::new);
-  }
-
-  protected abstract @NotNull T openStorage(@NotNull Path storagePath) throws IOException;
 
   @BeforeEach
   void setUp(@TempDir Path tempDir) throws IOException {
@@ -372,17 +349,48 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
     }
   }
 
+  protected abstract @NotNull T openStorage(@NotNull Path storagePath) throws IOException;
 
   protected final void reopenStorage() throws IOException {
     storage.close();
     storage = openStorage(storagePath);
   }
 
-  private static @NotNull ByteArraySequence contentOfString(@NotNull String content) {
+  protected ByteArraySequence[] generateContents(int count) {
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    IntSupplier sizeGenerator = () -> {
+      int mediumContentSize = 1 << 10;
+      int hugeContentSize = 1 << 20;
+      //generate 98% of records in [0..mediumSize], but 2% up to the hugeSize
+      //average record size = (1M*0.02+1K*0.98) ~ 20K
+      if (rnd.nextInt(50) == 0) {
+        return rnd.nextInt(hugeContentSize);
+      }
+      else {
+        return rnd.nextInt(mediumContentSize);
+      }
+    };
+    return IntStream.iterate(0, i -> i + 1)
+      .mapToObj(i -> randomContent(rnd, sizeGenerator.getAsInt()))
+      .distinct()
+      .limit(count)
+      .toArray(ByteArraySequence[]::new);
+  }
+
+  private static ByteArraySequence randomContent(@NotNull ThreadLocalRandom rnd,
+                                                 int size) {
+    final byte[] bytes = new byte[size];
+    for (int i = 0; i < bytes.length; i++) {
+      bytes[i] = (byte)rnd.nextInt(Byte.MIN_VALUE, Byte.MAX_VALUE + 1);
+    }
+    return new ByteArraySequence(bytes);
+  }
+
+  private static @NotNull ByteArraySequence toContent(@NotNull String content) {
     return ByteArraySequence.create(content.getBytes(UTF_8));
   }
 
-  private static String readAsString(@NotNull InputStream input) throws IOException {
-    return new String(input.readAllBytes(), UTF_8);
+  private static ByteArraySequence readContent(@NotNull InputStream input) throws IOException {
+    return new ByteArraySequence(input.readAllBytes());
   }
 }
