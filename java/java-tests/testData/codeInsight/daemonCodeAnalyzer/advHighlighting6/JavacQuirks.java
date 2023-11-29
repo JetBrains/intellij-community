@@ -20,7 +20,7 @@ class C {
     int[] value();
   }
 
-  @TestAnnotation({0, 1<warning descr="Trailing comma in annotation array initializer may cause compilation error in some Javac versions (e.g. JDK 5 and JDK 6)">,</warning>})
+  @TestAnnotation({0, 1<warning descr="Trailing comma in annotation array initializers can cause compilation errors when using older javac versions (for example JDK 5 and JDK 6)">,</warning>})
   void m() { }
 
   class A<T> {
@@ -31,7 +31,7 @@ class C {
 
   void m(Object o) {
     if (o instanceof A<?>.B<?>) {
-      final A<?>.B<?> b = (A<warning descr="Generics in qualifier reference may cause compilation error in some Javac versions (e.g. JDK 5 and JDK 6)"><?></warning>.B<?>)o;
+      final A<?>.B<?> b = (A<warning descr="Generics in qualifier references may cause compilation errors when using older javac versions (for example JDK 5 and JDK 6)"><?></warning>.B<?>)o;
       b.m(null, null);
     }
   }
