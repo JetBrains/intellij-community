@@ -275,7 +275,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     return new AnalysisScope(scope, project);
   }
 
-  protected @Nullable SearchScope getSearchScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  public @Nullable SearchScope getSearchScope(@NotNull Project project) throws ExecutionException, InterruptedException {
 
     if (myAnalyzeChanges) {
       return getSearchScopeFromChangedFiles(project);

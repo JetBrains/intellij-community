@@ -57,7 +57,7 @@ public class AnalysisScope {
   protected List<Module> myModules;
   protected Module myModule;
   protected PsiElement myElement;
-  private final SearchScope myScope;
+  protected final SearchScope myScope;
   private boolean mySearchInLibraries;
   private GlobalSearchScope myFilter;
   @Type protected int myType;
