@@ -49,8 +49,7 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
   private val locationValidationFailed = propertyGraph.property(false)
   private val locationValidationMessage = propertyGraph.property("Current location already exists")
   private val basePythonVersion = propertyGraph.property<Sdk?>(initial = null)
-  private val basePythonHomePath = basePythonVersion.transformToHomePathProperty(state.basePythonSdks)
-  private lateinit var versionComboBox: ComboBox<String?>
+  private lateinit var versionComboBox: ComboBox<Sdk?>
   private var locationModified = false
   private var suggestedVenvName: String = ""
   private var suggestedLocation: Path = Path.of("")
@@ -73,9 +72,10 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
 
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
-        versionComboBox =
-          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, basePythonHomePath,
-                                        presenter::addBasePythonInterpreter)
+        versionComboBox = pythonInterpreterComboBox(basePythonVersion,
+                                                    presenter,
+                                                    presenter.basePythonSdksFlow,
+                                                    presenter::addBasePythonInterpreter)
             .align(Align.FILL)
             .component
       }

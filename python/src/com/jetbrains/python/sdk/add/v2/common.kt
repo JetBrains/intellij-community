@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.PyDetectedSdk
+import com.jetbrains.python.sdk.installSdkIfNeeded
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
 import com.jetbrains.python.sdk.poetry.POETRY_ICON
 import com.jetbrains.python.sdk.setup
@@ -72,6 +73,10 @@ fun PythonInterpreterCreationTargets.toStatisticsField(): InterpreterTarget {
 
 enum class PythonInterpreterSelectionMethod {
   CREATE_NEW, SELECT_EXISTING
+}
+
+internal fun setupBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk {
+  return setupSdkIfDetected(installSdkIfNeeded(sdk, null,  existingSdks)!!, existingSdks)
 }
 
 internal fun setupSdkIfDetected(sdk: Sdk, existingSdks: List<Sdk>): Sdk = when (sdk) {

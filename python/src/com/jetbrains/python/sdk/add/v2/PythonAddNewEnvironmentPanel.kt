@@ -19,6 +19,7 @@ import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
+import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
@@ -38,6 +39,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
 
   private val allExistingSdks = propertyGraph.property<List<Sdk>>(emptyList())
   private val basePythonSdks = propertyGraph.property<List<Sdk>>(emptyList())
+  private val installableSdks = propertyGraph.property<List<Sdk>>(emptyList())
   private val pythonBaseVersion = propertyGraph.property<Sdk?>(null)
   private val selectedVenv = propertyGraph.property<Sdk?>(null)
 
@@ -58,6 +60,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
                                         service<PythonAddSdkService>().coroutineScope,
                                         basePythonSdks,
                                         allExistingSdks,
+                                        installableSdks,
                                         selectedVenv,
                                         condaExecutable)
 
@@ -78,11 +81,10 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
       }.topGap(TopGap.MEDIUM)
 
       row(message("sdk.create.python.version")) {
-        pythonBaseVersionComboBox = nonEditablePythonInterpreterComboBox(presenter.basePythonSdksFlow, scope = presenter.state.scope,
-                                                                         uiContext = presenter.uiContext)
-          .bindItem(pythonBaseVersion)
-          .displayLoaderWhen(presenter.detectingSdks, makeTemporaryEditable = true, scope = presenter.scope,
-                             uiContext = presenter.uiContext)
+        pythonBaseVersionComboBox = pythonInterpreterComboBox(pythonBaseVersion,
+                                                              presenter,
+                                                              presenter.basePythonSdksFlow,
+                                                              presenter::addBasePythonInterpreter)
           .align(AlignX.FILL)
           .component
       }.visibleIf(_projectVenv)
@@ -118,6 +120,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
           ProjectSpecificSettingsStep.getValidPythonSdks(existingSdks)
         }
         allExistingSdks.set(allValidSdks)
+        installableSdks.set(getSdksToInstall())
         updateVenvLocationHint()
       }
 
@@ -126,7 +129,7 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>) 
     }
   }
 
-  fun getSdk(): Sdk? {
+  fun getSdk(): Sdk {
     presenter.navigator.saveLastState()
     return when (selectedMode.get()) {
       PROJECT_VENV -> presenter.setupVirtualenv(Path.of(projectPath.get(), ".venv"),

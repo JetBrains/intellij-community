@@ -29,18 +29,18 @@ import kotlinx.coroutines.withContext
 class PipEnvNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
   private val executable = propertyGraph.property(UNKNOWN_EXECUTABLE)
   private val basePythonVersion = propertyGraph.property<Sdk?>(initial = null)
-  private val basePythonHomePath = basePythonVersion.transformToHomePathProperty(state.basePythonSdks)
   private lateinit var pipEnvPathField: TextFieldWithBrowseButton
-  private lateinit var basePythonComboBox: ComboBox<String?>
+  private lateinit var basePythonComboBox: ComboBox<Sdk?>
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
-        basePythonComboBox =
-          pythonBaseInterpreterComboBox(presenter, presenter.basePythonSdksFlow, presenter.detectingSdks, basePythonHomePath,
-                                        presenter::addBasePythonInterpreter)
-            .align(Align.FILL)
-            .component
+        basePythonComboBox = pythonInterpreterComboBox(basePythonVersion,
+                                                       presenter,
+                                                       presenter.basePythonSdksFlow,
+                                                       presenter::addBasePythonInterpreter)
+          .align(Align.FILL)
+          .component
       }
 
       pipEnvPathField = executableSelector(executable,
@@ -70,7 +70,7 @@ class PipEnvNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : Py
 
   override fun getOrCreateSdk(): Sdk {
     PropertiesComponent.getInstance().pipEnvPath = pipEnvPathField.text.nullize()
-    val baseSdk = setupSdkIfDetected(basePythonVersion.get()!!, state.allSdks.get())
+    val baseSdk = setupBaseSdk(basePythonVersion.get()!!, state.allSdks.get())
     val newSdk = setupPipEnvSdkUnderProgress(null, null, state.basePythonSdks.get(), state.projectPath.get(),
                                              baseSdk.homePath, false)!!
     SdkConfigurationUtil.addSdk(newSdk)

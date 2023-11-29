@@ -15,18 +15,17 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.flow.mapStateIn
 import com.intellij.util.text.nullize
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.PyDetectedSdk
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.LocalContext
 import com.jetbrains.python.sdk.add.ProjectLocationContext
 import com.jetbrains.python.sdk.add.ProjectLocationContexts
 import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
 import com.jetbrains.python.sdk.add.target.createDetectedSdk
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
-import com.jetbrains.python.sdk.detectSystemWideSdksSuspended
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.sdk.prepareSdkList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.nio.file.InvalidPathException
@@ -46,7 +45,7 @@ internal fun PythonAddInterpreterPresenter.getPathOnTarget(path: Path): @NlsSafe
 
 internal fun PythonAddInterpreterPresenter.setupVirtualenv(venvPath: Path, projectPath: String, baseSdk: Sdk): Sdk {
   val venvPathOnTarget = getPathOnTarget(venvPath)
-  val savedSdk = setupSdkIfDetected(baseSdk, state.allSdks.get())
+  val savedSdk = setupBaseSdk(baseSdk, state.allSdks.get())
   val sdk = createVirtualEnvSynchronously(savedSdk, state.allSdks.get(), venvPathOnTarget,
                                           projectPath, null, null) ?: error("Failed to create SDK")
   SdkConfigurationUtil.addSdk(sdk)
@@ -79,6 +78,8 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
 
   private val _detectingCondaExecutable = MutableStateFlow(value = false)
   val detectingCondaExecutable: StateFlow<Boolean> = _detectingCondaExecutable.asStateFlow()
+
+  private val _sdksToInstall: MutableStateFlow<List<Sdk>> = MutableStateFlow(emptyList())
 
   val navigator = PythonNewEnvironmentDialogNavigator()
 
@@ -125,15 +126,25 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
       .stateIn(scope + uiContext, started = SharingStarted.Lazily, initialValue = emptyList())
 
   val basePythonSdksFlow: StateFlow<List<Sdk>> =
-    combine(_allExistingSdksFlow, manuallyAddedBaseSdksFlow, detectedSdksFlow) { existingSdks, addedBaseSdks, (context, detectedSdks) ->
+    combine(_allExistingSdksFlow, manuallyAddedBaseSdksFlow, detectedSdksFlow, _sdksToInstall) { existingSdks, addedBaseSdks, (context, detectedSdks), sdkListToInstall ->
       val sdkList = addedBaseSdks + withContext(Dispatchers.IO) {
-        prepareSdkList(detectedSdks, existingSdks, context.targetEnvironmentConfiguration)
+        val baseSdks = prepareSdkList(detectedSdks, existingSdks, context.targetEnvironmentConfiguration)
+        baseSdks + filterInstallableSdks(sdkListToInstall, baseSdks)
       }
       state.basePythonSdks.set(sdkList)
       sdkList
     }
       .logException(LOG)
       .stateIn(scope + uiContext, started = SharingStarted.Lazily, initialValue = emptyList())
+
+  private fun filterInstallableSdks(sdkListToInstall: List<Sdk>, sdkList: List<Sdk>): List<Sdk> {
+    val languageLevels = sdkList.map { PySdkUtil.getLanguageLevelForSdk(it) }
+    return sdkListToInstall
+      .map { LanguageLevel.fromPythonVersion(it.versionString) to it }
+      .filter { it.first !in languageLevels }
+      .sortedByDescending { it.first }
+      .map { it.second }
+  }
 
   val targetEnvironmentConfiguration: TargetEnvironmentConfiguration?
     get() = projectLocationContext.targetEnvironmentConfiguration
@@ -149,6 +160,7 @@ class PythonAddInterpreterPresenter(val state: PythonAddInterpreterState, val ui
     }
 
     state.allExistingSdks.afterChange { _allExistingSdksFlow.tryEmit(it) }
+    state.installableSdks.afterChange { _sdksToInstall.tryEmit(it) }
     state.condaExecutable.afterChange {
       if (!it.startsWith("<")) _currentCondaExecutableFlow.tryEmit(it.tryConvertToPath()) // skip possible <unknown_executable>
     }
