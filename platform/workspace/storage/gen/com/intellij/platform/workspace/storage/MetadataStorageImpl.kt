@@ -8,8 +8,7 @@ import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadat
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
 public object MetadataStorageImpl: MetadataStorageBase() {
-    init {
-
+    override fun initializeMetadata() {
 
         var typeMetadata: StorageTypeMetadata
 
@@ -22,4 +21,12 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
 
         addMetadata(typeMetadata)
     }
+
+    override fun initializeMetadataHash() {
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.WorkspaceEntity", metadataHash = -1093343975)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId", metadataHash = 429186493)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1637225356)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.DummyParentEntitySource", metadataHash = 1210649349)
+    }
+
 }

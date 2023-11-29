@@ -7,8 +7,7 @@ import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadat
 import com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata
 
 object MetadataStorageImpl: MetadataStorageBase() {
-    init {
-
+    override fun initializeMetadata() {
 
         var typeMetadata: StorageTypeMetadata
 
@@ -16,4 +15,10 @@ object MetadataStorageImpl: MetadataStorageBase() {
 
         addMetadata(typeMetadata)
     }
+
+    override fun initializeMetadataHash() {
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 164302154)
+        addMetadataHash(typeFqn = "com.intellij.compiler.artifacts.propertybased.TestEntitySource", metadataHash = 1244580128)
+    }
+
 }
