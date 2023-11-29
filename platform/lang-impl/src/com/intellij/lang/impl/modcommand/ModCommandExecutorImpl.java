@@ -417,6 +417,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       .build();
     PsiElement anchor = namedElement instanceof PsiNameIdentifierOwner owner ? 
                         requireNonNullElse(owner.getNameIdentifier(), namedElement) : namedElement;
+    finalEditor.getSelectionModel().removeSelection();
     finalEditor.getCaretModel().moveToOffset(anchor.getTextOffset());
     Renamer renamer = RenamerFactory.EP_NAME.getExtensionList().stream().flatMap(factory -> factory.createRenamers(finalContext).stream())
       .findFirst().orElse(null);
