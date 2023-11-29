@@ -7,7 +7,8 @@ class Simple {
     sink(<caret>s);
   }
 
-    @Untainted String foo() {
+    @Untainted
+    String foo() {
     return source();
   }
 

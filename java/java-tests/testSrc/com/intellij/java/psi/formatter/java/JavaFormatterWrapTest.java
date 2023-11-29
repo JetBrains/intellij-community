@@ -539,9 +539,12 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
         "}",
 
         prefix + "interface C {\n" +
-        "    @TA(0) String m();\n\n" +
+        "    @TA(0)\n" +
+        "    String m();\n\n" +
         "    @A\n" +
-        "    @TA(1) @TA(2) String m();\n\n" +
+        "    @TA(1)\n" +
+        "    @TA(2)\n" +
+        "    String m();\n\n" +
         "    @A\n" +
         "    public @TA String m();\n" +
         "}");

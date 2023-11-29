@@ -29,7 +29,8 @@ final class R implements F3 {
     @FieldAnno2(1)
     private final @TypeUse(1) int f1;
     @FieldAnno(2)
-    private final @TypeUse(2) @TypeUse2(2) int f2;
+    private final @TypeUse(2)
+    @TypeUse2(2) int f2;
     private final int f3;
     private final int f4;
 
@@ -53,7 +54,8 @@ final class R implements F3 {
         return f1;
     }
 
-    public @TypeUse(2) @TypeUse2(2) int f2() {
+    public @TypeUse(2)
+    @TypeUse2(2) int f2() {
         return f2;
     }
 
