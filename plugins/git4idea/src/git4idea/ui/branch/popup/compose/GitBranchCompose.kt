@@ -84,7 +84,7 @@ private fun BranchName(
   val highlightedBranchName = remember(rangesToHighlight, highlightColor) {
     branchName.highlightRanges(rangesToHighlight, highlightColor)
   }
-  Text(highlightedBranchName, maxLines = 1, overflow = TextOverflow.Clip)
+  Text(highlightedBranchName, maxLines = 1, overflow = TextOverflow.Ellipsis)
 }
 
 @OptIn(ExperimentalFoundationApi::class)
