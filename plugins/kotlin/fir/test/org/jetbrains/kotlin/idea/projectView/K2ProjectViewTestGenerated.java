@@ -73,6 +73,16 @@ public class K2ProjectViewTestGenerated extends AbstractK2ProjectViewTest {
         runTest("../idea/tests/testData/projectView/FacadeInternalWithNameClashAndSources2.test");
     }
 
+    @TestMetadata("FileNestingWithMembers.test")
+    public void testFileNestingWithMembers() throws Exception {
+        runTest("../idea/tests/testData/projectView/FileNestingWithMembers.test");
+    }
+
+    @TestMetadata("FileNestingWithoutMembers.test")
+    public void testFileNestingWithoutMembers() throws Exception {
+        runTest("../idea/tests/testData/projectView/FileNestingWithoutMembers.test");
+    }
+
     @TestMetadata("MultifileFacadeInternalClass.test")
     public void testMultifileFacadeInternalClass() throws Exception {
         runTest("../idea/tests/testData/projectView/MultifileFacadeInternalClass.test");

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.projectView
 import com.intellij.ide.projectView.SelectableTreeStructureProvider
 import com.intellij.ide.projectView.TreeStructureProvider
 import com.intellij.ide.projectView.ViewSettings
+import com.intellij.ide.projectView.impl.nodes.FileNodeWithNestedFileNodes
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -12,7 +13,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.asJava.classes.KtExtensibleLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.idea.KotlinIconProvider
@@ -35,19 +35,18 @@ class KotlinExpandNodeProjectViewProvider : TreeStructureProvider, DumbAware {
         for (child in children) {
             val value = child.value
             val ktFile = value?.asKtFile()
+            val nestedFileNodes = (child as? FileNodeWithNestedFileNodes)?.nestedFileNodes ?: emptyList()
 
-            // TODO: drop filter as far as get KTIJ-11594 fixed
-            val mandatoryChildren = child.children.filter { it.value !is KtExtensibleLightClass }
             if (ktFile != null) {
                 val mainClass = KotlinIconProvider.getSingleClass(ktFile)
                 if (mainClass != null) {
-                    result.add(KtClassOrObjectTreeNode(ktFile.project, mainClass, settings, mandatoryChildren))
+                    result.add(KtClassOrObjectTreeNode(ktFile.project, mainClass, settings, nestedFileNodes))
                 } else {
-                    result.add(KtFileTreeNode(ktFile.project, ktFile, settings, mandatoryChildren))
+                    result.add(KtFileTreeNode(ktFile.project, ktFile, settings, nestedFileNodes))
                 }
             } else {
                 if (value is KtLightClass) {
-                    result.add(KtInternalFileTreeNode(value.project, value, settings, mandatoryChildren))
+                    result.add(KtInternalFileTreeNode(value.project, value, settings, nestedFileNodes))
                 } else {
                     result.add(child)
                 }

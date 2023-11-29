@@ -22,8 +22,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
-  private final Collection<? extends AbstractTreeNode<?>> myMandatoryChildren;
+public class ClassTreeNode extends BasePsiMemberNode<PsiClass> implements FileNodeWithNestedFileNodes {
+  private final Collection<? extends AbstractTreeNode<?>> myNestedFileNodes;
   private boolean isAlwaysExpand;
 
   public ClassTreeNode(Project project, @NotNull PsiClass value, ViewSettings viewSettings) {
@@ -33,25 +33,29 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
   public ClassTreeNode(Project project,
                        @NotNull PsiClass value,
                        ViewSettings viewSettings,
-                       @NotNull Collection<? extends AbstractTreeNode<?>> mandatoryChildren) {
+                       @NotNull Collection<? extends AbstractTreeNode<?>> nestedFileNodes) {
     super(project, value, viewSettings);
-    myMandatoryChildren = mandatoryChildren;
+    myNestedFileNodes = nestedFileNodes;
+  }
+
+  @Override
+  public @NotNull Collection<? extends AbstractTreeNode<?>> getNestedFileNodes() {
+    return myNestedFileNodes;
   }
 
   @Override
   public Collection<AbstractTreeNode<?>> getChildrenImpl() {
-    PsiClass parent = getValue();
-    return computeChildren(parent, this.getSettings(), this.getProject(), this.isShowInnerClasses(), this.myMandatoryChildren);
+    ArrayList<AbstractTreeNode<?>> result = new ArrayList<>(myNestedFileNodes);
+    result.addAll(computeChildren(getValue(), this.getSettings(), this.getProject(), this.isShowInnerClasses()));
+    return result;
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public static List<AbstractTreeNode<?>> computeChildren(PsiClass parent,
-                                                   ViewSettings settings,
-                                                   Project project,
-                                                   boolean showInnerClasses,
-                                                   Collection<? extends AbstractTreeNode<?>> mandatoryChildren) {
-    List<AbstractTreeNode<?>> treeNodes = new ArrayList<>(mandatoryChildren);
+  public static @NotNull List<AbstractTreeNode<?>> computeChildren(PsiClass parent,
+                                                                   ViewSettings settings,
+                                                                   Project project,
+                                                                   boolean showInnerClasses) {
+    List<AbstractTreeNode<?>> treeNodes = new ArrayList<>();
     if (parent != null) {
       try {
         boolean showMembers = settings.isShowMembers();

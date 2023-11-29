@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.projectView
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode
+import com.intellij.ide.projectView.impl.nodes.FileNodeWithNestedFileNodes
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -30,8 +31,8 @@ class KtInternalFileTreeNode(
     project: Project?,
     lightClass: KtLightClass,
     viewSettings: ViewSettings,
-    private val mandatoryChildren: Collection<AbstractTreeNode<*>>
-) : AbstractPsiBasedNode<KtLightClass>(project, lightClass, viewSettings) {
+    private val nestedFileNodes: Collection<AbstractTreeNode<*>>
+) : AbstractPsiBasedNode<KtLightClass>(project, lightClass, viewSettings), FileNodeWithNestedFileNodes {
 
     private val navigatablePsiElement: SmartPsiElementPointer<KtElement>? by lazy {
         val ktClsFile = value?.navigationElement as? KtClsFile
@@ -75,11 +76,13 @@ class KtInternalFileTreeNode(
 
     override fun extractPsiFromValue(): PsiElement? = navigatablePsiElement?.element ?: value
 
+    override fun getNestedFileNodes(): Collection<AbstractTreeNode<*>> = nestedFileNodes
+
     override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
-        if (!settings.isShowMembers) return mandatoryChildren
+        if (!settings.isShowMembers) return nestedFileNodes
 
         val members = (extractPsiFromValue() as? KtFile)?.toDeclarationsNodes(settings)
-        return if (members.isNullOrEmpty()) mandatoryChildren else mandatoryChildren + members
+        return if (members.isNullOrEmpty()) nestedFileNodes else nestedFileNodes + members
     }
 
     override fun canRepresent(element: Any?): Boolean {

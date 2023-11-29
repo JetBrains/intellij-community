@@ -73,6 +73,16 @@ public class KotlinProjectViewTestGenerated extends AbstractKotlinProjectViewTes
         runTest("testData/projectView/FacadeInternalWithNameClashAndSources2.test");
     }
 
+    @TestMetadata("FileNestingWithMembers.test")
+    public void testFileNestingWithMembers() throws Exception {
+        runTest("testData/projectView/FileNestingWithMembers.test");
+    }
+
+    @TestMetadata("FileNestingWithoutMembers.test")
+    public void testFileNestingWithoutMembers() throws Exception {
+        runTest("testData/projectView/FileNestingWithoutMembers.test");
+    }
+
     @TestMetadata("MultifileFacadeInternalClass.test")
     public void testMultifileFacadeInternalClass() throws Exception {
         runTest("testData/projectView/MultifileFacadeInternalClass.test");

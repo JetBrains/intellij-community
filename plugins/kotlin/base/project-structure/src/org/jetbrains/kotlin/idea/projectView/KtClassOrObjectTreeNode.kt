@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.projectView
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode
+import com.intellij.ide.projectView.impl.nodes.FileNodeWithNestedFileNodes
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,8 +17,8 @@ class KtClassOrObjectTreeNode(
     project: Project?,
     ktClassOrObject: KtClassOrObject,
     viewSettings: ViewSettings,
-    private val mandatoryChildren: Collection<AbstractTreeNode<*>>
-) : AbstractPsiBasedNode<KtClassOrObject>(project, ktClassOrObject, viewSettings) {
+    private val nestedFileNodes: Collection<AbstractTreeNode<*>>
+) : AbstractPsiBasedNode<KtClassOrObject>(project, ktClassOrObject, viewSettings), FileNodeWithNestedFileNodes {
 
     // this constructor is kept for plugin API compatibility
     constructor(
@@ -28,11 +29,13 @@ class KtClassOrObjectTreeNode(
 
     override fun extractPsiFromValue(): PsiElement? = value
 
+    override fun getNestedFileNodes(): Collection<AbstractTreeNode<*>> = nestedFileNodes
+
     override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> =
         if (value != null && settings.isShowMembers) {
-            mandatoryChildren + value.getStructureDeclarations().toNodes(settings)
+            nestedFileNodes + value.getStructureDeclarations().toNodes(settings)
         } else {
-            mandatoryChildren
+            nestedFileNodes
         }
 
     override fun updateImpl(data: PresentationData) {
