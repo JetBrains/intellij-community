@@ -63,17 +63,17 @@
     <applicationConfigurable id="promo.django"
                              groupId="language"
                              provider="com.jetbrains.python.promotion.PromoDjangoConfigurableProvider"
-                             bundle="messages.FeaturePromoBundle"
+                             bundle="messages.PyCharmCommunityCustomizationBundle"
                              key="promo.configurable.django"/>
     <applicationConfigurable id="promo.remoteSsh"
                              groupId="tools"
                              provider="com.jetbrains.python.promotion.PromoRemoteSshConfigurableProvider"
-                             bundle="messages.FeaturePromoBundle"
+                             bundle="messages.PyCharmCommunityCustomizationBundle"
                              key="promo.configurable.remoteSsh"/>
     <applicationConfigurable id="promo.jupyter"
                              groupId="language"
                              provider="com.jetbrains.python.promotion.PromoJupyterConfigurableProvider"
-                             bundle="messages.FeaturePromoBundle"
+                             bundle="messages.PyCharmCommunityCustomizationBundle"
                              key="promo.configurable.jupyter"/>
 
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.promotion.PyCharmPromoCollector"/>
