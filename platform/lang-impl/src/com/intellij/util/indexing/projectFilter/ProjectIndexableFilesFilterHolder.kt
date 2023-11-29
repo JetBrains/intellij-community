@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 @JvmField
-val USE_CACHING_FILTER = SystemProperties.getBooleanProperty("idea.index.use.caching.indexable.files.filter", true)
+val USE_CACHING_FILTER = SystemProperties.getBooleanProperty("idea.index.use.caching.indexable.files.filter", false)
 
 internal sealed class ProjectIndexableFilesFilterHolder {
   abstract fun getProjectIndexableFiles(project: Project): IdFilter?
