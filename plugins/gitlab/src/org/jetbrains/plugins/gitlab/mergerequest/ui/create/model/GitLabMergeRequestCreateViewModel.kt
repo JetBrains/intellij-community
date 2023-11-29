@@ -25,7 +25,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
-import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestReviewersUtil
@@ -40,7 +39,7 @@ internal interface GitLabMergeRequestCreateViewModel {
 
   val isBusy: Flow<Boolean>
 
-  val plan: Deferred<GitLabPlan?>
+  val allowsMultipleReviewers: Flow<Boolean>
   val branchState: Flow<BranchState?>
 
   val existingMergeRequest: Flow<String?>
@@ -78,7 +77,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
 
-  override val plan: Deferred<GitLabPlan?> = projectData.plan
+  override val allowsMultipleReviewers: Flow<Boolean> = projectData.allowsMultipleReviewers
 
   private val listenableProgressIndicator = ListenableProgressIndicator()
   override val creatingProgressText: Flow<String?> = callbackFlow {
@@ -168,11 +167,12 @@ internal class GitLabMergeRequestCreateViewModelImpl(
 
   override fun adjustReviewer(point: RelativePoint) {
     cs.launchNow(Dispatchers.Main) {
+      val allowsMultipleReviewers = allowsMultipleReviewers.first()
       val originalReviewersIds = adjustedReviewers.value.mapTo(mutableSetOf<String>(), GitLabUserDTO::id)
-      val updatedReviewers = if (plan.await() == GitLabPlan.FREE)
-        GitLabMergeRequestReviewersUtil.selectReviewer(point, originalReviewersIds, potentialReviewers, avatarIconProvider)
-      else
+      val updatedReviewers = if (allowsMultipleReviewers == true)
         GitLabMergeRequestReviewersUtil.selectReviewers(point, originalReviewersIds, potentialReviewers, avatarIconProvider)
+      else
+        GitLabMergeRequestReviewersUtil.selectReviewer(point, originalReviewersIds, potentialReviewers, avatarIconProvider)
 
       updatedReviewers ?: return@launchNow
       _adjustedReviewers.value = updatedReviewers

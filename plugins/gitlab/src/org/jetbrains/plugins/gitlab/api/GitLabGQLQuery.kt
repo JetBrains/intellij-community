@@ -17,6 +17,8 @@ enum class GitLabGQLQuery(val filePath: String) {
   GET_PROJECT_LABELS("graphql/query/getProjectLabels.graphql"),
   @SinceGitLab("12.0")
   GET_PROJECT_REPOSITORY("graphql/query/getProjectRepository.graphql"),
+  @SinceGitLab("15.2")
+  GET_PROJECT_WORK_ITEMS("graphql/query/getProjectWidgets.graphql"),
   @SinceGitLab("13.0")
   GET_MEMBER_PROJECTS("graphql/query/getMemberProjects.graphql"),
 

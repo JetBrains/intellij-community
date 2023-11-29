@@ -21,7 +21,6 @@ import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
-import org.jetbrains.plugins.gitlab.api.data.GitLabPlan
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCiJobDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabReviewerDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -39,7 +38,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabBundle
 internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewModel<GitLabReviewerDTO> {
   val isBusy: Flow<Boolean>
 
-  val plan: Deferred<GitLabPlan?>
+  val allowsMultipleReviewers: Flow<Boolean>
 
   val currentUser: GitLabUserDTO
   val author: GitLabUserDTO
@@ -105,7 +104,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
 
-  override val plan: Deferred<GitLabPlan?> = projectData.plan
+  override val allowsMultipleReviewers: Flow<Boolean> = projectData.allowsMultipleReviewers
 
   override val author: GitLabUserDTO = mergeRequest.author
 
@@ -251,11 +250,12 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override fun adjustReviewers(point: RelativePoint) {
     scope.launchNow(Dispatchers.Main) {
+      val allowsMultipleReviewers = allowsMultipleReviewers.first()
       val originalReviewersIds = reviewers.value.mapTo(mutableSetOf<String>(), GitLabUserDTO::id)
-      val updatedReviewers = if (plan.await() == GitLabPlan.FREE)
-        GitLabMergeRequestReviewersUtil.selectReviewer(point, originalReviewersIds, potentialReviewers, avatarIconsProvider)
-      else
+      val updatedReviewers = if (allowsMultipleReviewers == true)
         GitLabMergeRequestReviewersUtil.selectReviewers(point, originalReviewersIds, potentialReviewers, avatarIconsProvider)
+      else
+        GitLabMergeRequestReviewersUtil.selectReviewer(point, originalReviewersIds, potentialReviewers, avatarIconsProvider)
 
       updatedReviewers ?: return@launchNow
       setReviewers(updatedReviewers)
@@ -264,11 +264,12 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   @SinceGitLab("13.8")
   override fun setMyselfAsReviewer() = runAction {
-    if (plan.await() == GitLabPlan.FREE) {
-      mergeRequest.setReviewers(listOf(currentUser))
+    val allowsMultipleReviewers = allowsMultipleReviewers.first()
+    if (allowsMultipleReviewers == true) {
+      mergeRequest.setReviewers(listOf(currentUser) + reviewers.value)
     }
     else {
-      mergeRequest.setReviewers(listOf(currentUser) + reviewers.value)
+      mergeRequest.setReviewers(listOf(currentUser))
     }
   }
 

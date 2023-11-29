@@ -17,6 +17,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNamespaceRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabRepositoryDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
@@ -31,6 +32,18 @@ fun GitLabApi.GraphQL.createAllProjectLabelsFlow(project: GitLabProjectCoordinat
     val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT_LABELS, parameters)
     withErrorStats(GitLabGQLQuery.GET_PROJECT_LABELS) {
       loadResponse<LabelConnection>(request, "project", "labels").body()
+    }
+  }.map { it.nodes }
+
+@SinceGitLab("15.2")
+fun GitLabApi.GraphQL.createAllWorkItemsFlow(project: GitLabProjectCoordinates): Flow<List<GitLabWorkItemDTO>> =
+  ApiPageUtil.createGQLPagesFlow { page ->
+    val parameters = page.asParameters() + mapOf(
+      "fullPath" to project.projectPath.fullPath()
+    )
+    val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT_WORK_ITEMS, parameters)
+    withErrorStats(GitLabGQLQuery.GET_PROJECT_WORK_ITEMS) {
+      loadResponse<WorkItemConnection>(request, "project", "workItems").body()
     }
   }.map { it.nodes }
 
@@ -90,6 +103,9 @@ suspend fun GitLabApi.GraphQL.createMergeRequest(
 
 private class LabelConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabLabelDTO>)
   : GraphQLConnectionDTO<GitLabLabelDTO>(pageInfo, nodes)
+
+private class WorkItemConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabWorkItemDTO>)
+  : GraphQLConnectionDTO<GitLabWorkItemDTO>(pageInfo, nodes)
 
 private class GitLabCreateMergeRequestResult(
   mergeRequest: GitLabMergeRequestDTO,
