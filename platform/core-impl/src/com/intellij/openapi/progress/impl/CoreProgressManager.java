@@ -60,7 +60,20 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   private static volatile @NotNull CheckCanceledBehavior ourCheckCanceledBehavior = CheckCanceledBehavior.NONE;
 
-  private enum CheckCanceledBehavior {NONE, ONLY_HOOKS, INDICATOR_PLUS_HOOKS}
+  private enum CheckCanceledBehavior {
+    /**
+     * Nothing to be canceled
+     */
+    NONE,
+    /**
+     * Only hooks can be canceled
+     */
+    ONLY_HOOKS,
+    /**
+     * Progress indicator is in canceled state, the process underneath is to be canceled + hooks
+     */
+    INDICATOR_PLUS_HOOKS
+  }
 
   /**
    * active (i.e., which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators
