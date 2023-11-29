@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -447,12 +446,13 @@ public abstract class StringEnumeratorTestBase<T extends ScannableDataEnumerator
   }
 
   @Test
-  public void ifEnumeratorCloseable_CloseIsSafeToCallTwice() throws IOException {
-    assumeTrue(enumerator instanceof Closeable);
+  public void ifEnumeratorIsAutoCloseable_CloseIsSafeToCallTwice() throws Exception {
+    assumeTrue(enumerator instanceof AutoCloseable);
 
-    ((Closeable)enumerator).close();
-    ((Closeable)enumerator).close();
+    ((AutoCloseable)enumerator).close();
+    ((AutoCloseable)enumerator).close();
   }
+
 
 
   protected void closeEnumerator(DataEnumerator<String> enumerator) throws Exception {

@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
@@ -25,15 +26,20 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * Simple string enumerator, for small sets of values (10s-100s):
  * <p><ul>
  * <li>Strings are stored directly in UTF-8 encoding </li>
- * <li>Always has synchronized state between disk and memory state</li>
+ * <li>Always has synchronized state between disk and memory state -- which is why doesn't have methods
+ * like 'flush' and 'isDirty', and doesn't implement {@link DurableDataEnumerator}</li>
  * <li>Could have >1 id for same value
  * (i.e. it violates general {@link DataEnumerator} contract -- this is to keep backward-compatible behavior)</li>
  * <li>Uses CopyOnWrite for updating state, so {@link #valueOf(int)}/@{@link #enumerate(String)} are wait-free
  * for already existing value/id</li>
  * </ul>
+ * <p>
+ * Enumerator does not NEED to be {@link #close()}-ed -- since it doesn't keep the file opened -- but it supports .close()
+ * method, and fails to do anything if close()-ed.
  */
 @ApiStatus.Internal
 public final class SimpleStringPersistentEnumerator implements ScannableDataEnumeratorEx<String>,
+                                                               Closeable,
                                                                CleanableStorage{
   private static final Logger LOG = Logger.getInstance(SimpleStringPersistentEnumerator.class);
 
@@ -53,6 +59,8 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
    * idToValue.length > valueToId.size()
    */
   private volatile String @NotNull [] idToValue;
+
+  private volatile boolean closed = false;
 
   public SimpleStringPersistentEnumerator(@NotNull Path file) {
     this(file, UTF_8);
@@ -76,11 +84,15 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
 
   @Override
   public int tryEnumerate(@Nullable String value) throws IOException {
+    checkNotClosed();
+
     return valueToId.getInt(value);
   }
 
   @Override
   public int enumerate(@Nullable String value) {
+    checkNotClosed();
+
     Object2IntMap<String> valueToIdLocal = valueToId;
     int id = valueToIdLocal.getInt(value);
     if (id != valueToIdLocal.defaultReturnValue()) {
@@ -124,15 +136,19 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
   }
 
   public @NotNull Collection<String> entries() {
+    checkNotClosed();
     return new ArrayList<>(valueToId.keySet());
   }
 
   public @NotNull Map<String, Integer> getInvertedState() {
+    checkNotClosed();
     return new HashMap<>(valueToId);
   }
 
   @Override
   public @Nullable String valueOf(int id) {
+    checkNotClosed();
+
     String[] idToNameLocal = this.idToValue;
     if (id <= NULL_ID || id > idToNameLocal.length) {
       return null;
@@ -142,6 +158,7 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
 
   @Override
   public boolean forEach(@NotNull ValueReader<? super String> reader) throws IOException {
+    checkNotClosed();
     String[] idToNameLocal = idToValue;
     for (int i = 0; i < idToNameLocal.length; i++) {
       String value = idToNameLocal[i];
@@ -160,6 +177,7 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
   }
 
   public synchronized void forceDiskSync() {
+    checkNotClosed();
     writeStorageToDisk(idToValue, file, charset);
   }
 
@@ -168,6 +186,7 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
   }
 
   public int getSize() {
+    checkNotClosed();
     //TODO RC: better use idToName.length -- which is really shows enumerator size (=number of entries)
     //         Current implementation is checked by tests, but it seems there is no prod-code usages that
     //         rely on current impl
@@ -185,11 +204,23 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
   }
 
   @Override
+  public synchronized void close() throws IOException {
+    this.closed = true;
+  }
+
+  @Override
   public synchronized void closeAndClean() throws IOException {
-    //FIXME RC: there is no way to 'close' this enumerator: the very next update just re-creates the file
+    close();
     valueToId = new Object2IntOpenHashMap<>();
     idToValue = ArrayUtil.EMPTY_STRING_ARRAY;
     FileUtil.delete(file);
+  }
+
+  private void checkNotClosed() {
+    if(closed){
+      throw new IllegalStateException("Storage already closed");
+      //TODO RC: ClosedStorageException would be better, but .enumerate() doesn't declare IOException
+    }
   }
 
   private static @NotNull Pair<Object2IntMap<String>, String[]> readStorageFromDisk(@NotNull Path file,
