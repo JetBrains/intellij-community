@@ -4,7 +4,6 @@
 package git4idea.ui.branch.popup.compose
 
 import androidx.compose.foundation.*
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
@@ -144,7 +143,7 @@ private fun createBranchesPopupComposeComponent(
           })
         Divider(orientation = Orientation.Horizontal, color = UIUtil.getTooltipSeparatorColor().toComposeColor())
 
-        Branches(
+        BranchesWithActions(
           branchesVm,
           modifier = Modifier.focusRequester(branchesFocusRequester),
           dataContextProvider = { branch ->
@@ -190,7 +189,7 @@ private fun SearchTextField(
 }
 
 @Composable
-private fun Branches(
+private fun BranchesWithActions(
   branchesVm: GitBranchesComposeVm,
   modifier: Modifier = Modifier,
   dataContextProvider: (branch: GitBranch) -> DataContext,
@@ -198,6 +197,7 @@ private fun Branches(
 ) {
   val local by branchesVm.localBranches.collectAsState()
   val remote by branchesVm.remoteBranches.collectAsState()
+  val actions = branchesVm.actions
 
   val columnState = rememberSelectableLazyListState()
   val adapter = rememberScrollbarAdapter(columnState.lazyListState)
@@ -209,11 +209,14 @@ private fun Branches(
         selectionMode = SelectionMode.Single,
         modifier = Modifier.padding(end = scrollbarWidth + 6.dp)
       ) {
+        branchesActions(actions, columnState, startingIndex = 0, closePopup)
+        separator("Actions Separator")
         if (local.isNotEmpty()) {
-          group(branchesVm, columnState, startingIndex = 0, "Local", local, dataContextProvider, closePopup)
+          branchesGroup(branchesVm, columnState, startingIndex = actions.size + 1, "Local", local, dataContextProvider, closePopup)
         }
         if (remote.isNotEmpty()) {
-          group(branchesVm, columnState, startingIndex = local.size + 1, "Remote", remote, dataContextProvider, closePopup)
+          branchesGroup(branchesVm, columnState, startingIndex = actions.size + local.size + 2, "Remote", remote, dataContextProvider,
+                        closePopup)
         }
       }
     }
@@ -221,12 +224,12 @@ private fun Branches(
     val preferredBranch by branchesVm.preferredBranch.collectAsState()
     // select default branch
     LaunchedEffect(columnState, local, remote, preferredBranch) {
-      // TODO: write it cleaner
+      // TODO: write it cleaner, since now calculation requires a lot of attention on indexes
       if (local.isNotEmpty()) {
         val selectedIndex = local.indexOfFirst { it == preferredBranch }.takeIf { it != -1 } ?: 0
         columnState.selectedKeys = listOf(local[selectedIndex])
         // select local branch taking header into account
-        columnState.scrollToItem(selectedIndex + 1)
+        columnState.scrollToItem(actions.size + 1 + selectedIndex + 1)
         return@LaunchedEffect
       }
       if (remote.isNotEmpty()) {
@@ -234,10 +237,10 @@ private fun Branches(
         columnState.selectedKeys = listOf(remote[selectedIndex])
         // select remote branch taking local branches and headers into account
         val indexToSelect = if (local.isEmpty()) {
-          selectedIndex + 1
+          actions.size + 1 + selectedIndex + 1
         }
         else {
-          local.size + selectedIndex + 2
+          actions.size + 1 + local.size + selectedIndex + 2
         }
         columnState.scrollToItem(indexToSelect)
         return@LaunchedEffect
@@ -251,7 +254,13 @@ private fun Branches(
   }
 }
 
-private fun SelectableLazyListScope.group(
+private fun SelectableLazyListScope.separator(id: String) {
+  item("#Separator $id", contentType = BranchesPopupItemType.Separator, selectable = false) {
+    Divider(Orientation.Horizontal, modifier = Modifier.padding(5.dp))
+  }
+}
+
+private fun SelectableLazyListScope.branchesGroup(
   branchesVm: GitBranchesComposeVm,
   columnState: SelectableLazyListState,
   startingIndex: Int,
@@ -260,7 +269,7 @@ private fun SelectableLazyListScope.group(
   dataContextProvider: (branch: GitBranch) -> DataContext,
   closePopup: () -> Unit
 ) {
-  stickyHeader(groupName) {
+  stickyHeader(groupName, contentType = { BranchesPopupItemType.Group }) {
     var shouldDrawBorder by remember { mutableStateOf(false) }
     val canDrawBorder by derivedStateOf { !(columnState.firstVisibleItemIndex == 0 && columnState.firstVisibleItemScrollOffset == 0) }
     Column(
@@ -299,27 +308,21 @@ private fun SelectableLazyListScope.branches(
 ) {
   items(
     branches.size,
+    contentType = { BranchesPopupItemType.Branch },
     key = { branches[it] }
   ) { index ->
     val branch = branches[index]
-    val coroutineScope = rememberCoroutineScope()
-    val branchVm = remember(coroutineScope, branch) { branchesVm.createBranchVm(branch) }
-    BranchListItem(
-      branchVm,
-      selected = isSelected,
-      onHoverChanged = { hovered ->
-        if (hovered) {
-          coroutineScope.launch {
-            columnState.selectedKeys = listOf(branch)
-            columnState.lastActiveItemIndex = startingIndex + index
-          }
-        }
-      },
-      dataContextProvider = {
-        dataContextProvider(branch)
-      },
-      closePopup = closePopup
-    )
+    val branchVm = remember(branch) { branchesVm.createBranchVm(branch) }
+    BranchPopupItemBox(branch, columnState, listIndex = startingIndex + index, isSelected) {
+      BranchListItem(
+        branchVm,
+        selected = isSelected,
+        dataContextProvider = {
+          dataContextProvider(branch)
+        },
+        closePopup = closePopup
+      )
+    }
   }
 }
 
@@ -329,16 +332,13 @@ private fun BranchListItem(
   branchVm: GitBranchComposeVm,
   selected: Boolean,
   modifier: Modifier = Modifier,
-  onHoverChanged: (hovered: Boolean) -> Unit,
   dataContextProvider: () -> DataContext,
   closePopup: () -> Unit
 ) {
-  val hoverSource = remember { MutableInteractionSource() }
   var showActions by remember { mutableStateOf(false) }
 
   Box(modifier = modifier
-    .fillMaxWidth()
-    .requiredHeight(24.dp)
+    .fillMaxSize()
     .onHostPreviewKeyEvent(enabled = selected) {
       if (it.type == KeyEventType.KeyDown && (it.key == Key.Enter || it.key == Key.DirectionRight)) {
         showActions = true
@@ -349,20 +349,8 @@ private fun BranchListItem(
     .onClick {
       showActions = true
     }
-    .onHover {
-      onHoverChanged(it)
-    }
-    .pointerHoverIcon(PointerIcon.Hand)
-    .hoverable(hoverSource)
-    .background(
-      if (selected) {
-        UIUtil.getListSelectionBackground(true).toComposeColor()
-      }
-      else {
-        Color.Transparent
-      }, shape = RoundedCornerShape(5.dp))
   ) {
-    GitBranchCompose(branchVm, selected, modifier = Modifier.align(CenterStart).padding(start = 12.dp))
+    GitBranchCompose(branchVm, selected, modifier = Modifier.align(CenterStart))
 
     if (showActions) {
       GitComposeBranchActionsPopup(
@@ -376,4 +364,46 @@ private fun BranchListItem(
       )
     }
   }
+}
+
+@Composable
+internal fun BranchPopupItemBox(
+  key: Any,
+  columnState: SelectableLazyListState,
+  listIndex: Int,
+  selected: Boolean,
+  modifier: Modifier = Modifier,
+  content: @Composable () -> Unit
+) {
+  val coroutineScope = rememberCoroutineScope()
+  Box(modifier = modifier
+    .fillMaxWidth()
+    .requiredHeight(24.dp)
+    .onHover { hovered ->
+      if (hovered) {
+        coroutineScope.launch {
+          columnState.selectedKeys = listOf(key)
+          columnState.lastActiveItemIndex = listIndex
+        }
+      }
+    }
+    .pointerHoverIcon(PointerIcon.Hand)
+    .background(
+      if (selected) {
+        UIUtil.getListSelectionBackground(true).toComposeColor()
+      }
+      else {
+        Color.Transparent
+      }, shape = RoundedCornerShape(5.dp))
+    .padding(start = 12.dp)
+  ) {
+    content()
+  }
+}
+
+internal sealed interface BranchesPopupItemType {
+  data object Action : BranchesPopupItemType
+  data object Separator : BranchesPopupItemType
+  data object Branch : BranchesPopupItemType
+  data object Group : BranchesPopupItemType
 }
