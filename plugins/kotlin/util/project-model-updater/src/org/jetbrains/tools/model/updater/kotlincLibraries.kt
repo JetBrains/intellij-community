@@ -24,16 +24,6 @@ private class ArtifactCoordinates(private val originalVersion: String, val mode:
 private val GeneratorPreferences.kotlincArtifactCoordinates: ArtifactCoordinates
     get() = ArtifactCoordinates(kotlincVersion, kotlincArtifactsMode)
 
-private val GeneratorPreferences.nativeArtifactCoordinates: ArtifactCoordinates
-    get() = when (kotlincArtifactsMode) {
-        ArtifactMode.MAVEN -> kotlincArtifactCoordinates
-        ArtifactMode.BOOTSTRAP ->
-            if (bootstrapWithNative)
-                kotlincArtifactCoordinates
-            else
-                ArtifactCoordinates(originalVersion = kotlincVersion, mode = ArtifactMode.MAVEN)
-    }
-
 private val GeneratorPreferences.jpsArtifactCoordinates: ArtifactCoordinates
     get() = ArtifactCoordinates(jpsPluginVersion, jpsPluginArtifactsMode)
 
@@ -73,7 +63,7 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-common", kotlincCoordinates)
 
         if (!isCommunity) {
-            kotlincForIdeWithStandardNaming("kotlinc.kotlin-backend-native", preferences.nativeArtifactCoordinates)
+            kotlincForIdeWithStandardNaming("kotlinc.kotlin-objcexport-header-generator", kotlincCoordinates)
         }
 
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-common", kotlincCoordinates)

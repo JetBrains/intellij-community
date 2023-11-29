@@ -1255,7 +1255,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.high-level-api-impl-base"),
     jetbrainsLibrary("kotlinc.high-level-api-impl-base-tests"),
     jetbrainsLibrary("kotlinc.incremental-compilation-impl-tests"),
-    jetbrainsLibrary("kotlinc.kotlin-backend-native"),
+    jetbrainsLibrary("kotlinc.kotlin-objcexport-header-generator"),
     jetbrainsLibrary("kotlinc.kotlin-build-common-tests"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-cli"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-common"),
