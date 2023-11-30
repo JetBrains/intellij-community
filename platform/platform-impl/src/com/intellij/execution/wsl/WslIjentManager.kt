@@ -12,7 +12,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.ijent.*
+import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.ijent.IjentChildProcess
+import com.intellij.platform.ijent.IjentSessionProvider
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -23,10 +25,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 
+/**
+ * An entry point for running [IjentApi] over WSL and checking if [IjentApi] even should be used for WSL.
+ */
+@ApiStatus.Experimental
 @Service
 class WslIjentManager private constructor(private val scope: CoroutineScope) {
   private val myCache: MutableMap<String, SuspendingLazy<IjentApi>> = concurrentMapOf()
