@@ -24,8 +24,6 @@ import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import javax.swing.Icon
-import kotlin.math.max
-import kotlin.math.min
 
 internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakpointImpl<*>?,
                                              private val variant: XLineBreakpointType<*>.XLineBreakpointVariant?) : EditorCustomElementRenderer, InputHandler {
@@ -40,17 +38,6 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
   // EditorCustomElementRenderer's methods have inlay as parameter,
   // but InputHandler's methods do not have it.
   lateinit var inlay: Inlay<InlineBreakpointInlayRenderer>
-
-  var hovered = false
-    set(hovered) {
-      val wasHovered = field
-      field = hovered
-      (inlay.editor as? EditorEx)?.setCustomCursor(InlineBreakpointInlayRenderer::class.java,
-                                                   if (hovered) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else null)
-      if (wasHovered != hovered) {
-        inlay.repaint()
-      }
-    }
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
     val colorsScheme = inlay.editor.colorsScheme
@@ -69,22 +56,15 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
     val component = inlay.editor.component
 
     val baseIcon: Icon
-    var alpha: Float
+    val alpha: Float
     if (breakpoint != null) {
       baseIcon = breakpoint.icon
       alpha = 1f
     }
     else {
       baseIcon = variant!!.type.enabledIcon
-
-      // FIXME[inline-bp]: do we need to rename the property?
-      alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f)
-      alpha = max(0f, min(alpha, 1f))
-      if (hovered) {
-        // Slightly increase visibility (e.g. 0.5 -> 0.625).
-        // FIXME[inline-bp]: ask Yulia Zozulya if we really need it?
-        alpha = (3 * alpha + 1) / 4
-      }
+      // We use the same transparency as a breakpoint candidate in gutter.
+      alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f).coerceIn(0f, 1f)
     }
 
     // FIXME[inline-bp]: introduce option to make inline icons slightly smaller than gutter ones
@@ -174,27 +154,19 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
         breakpoint!!.isEnabled = !breakpoint.isEnabled
       }
       ClickAction.REMOVE -> {
-        if (XDebuggerUtilImpl.removeBreakpointWithConfirmation(breakpoint)) {
-          // FIXME[inline-bp]: it's a dirty hack to render inlay as "hovered" just after we clicked on set breakpoint
-          //       The problem is that after breakpoint removal we currently recreate all inlays and new ones would not be "hovered".
-          //       So we manually propagate this property to future inlay at the same position.
-          //       Otherwise there will be flickering:
-          //       transparent -> (move mouse) -> hovered -> (click) -> set -> (click) -> transparent -> (move mouse 1px) -> hovered
-          //                                                                              ^^^^^^^^^^^ this is bad
-          //       One day we would keep old inlays and this hack would gone.
-          for (newInlay in editor.inlayModel.getInlineElementsInRange(offset, offset, InlineBreakpointInlayRenderer::class.java)) {
-            newInlay.renderer.hovered = true
-          }
-        }
+        XDebuggerUtilImpl.removeBreakpointWithConfirmation(breakpoint)
       }
     }
   }
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {
-    hovered = true
+    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
   }
 
   override fun mouseExited() {
-    hovered = false
+    setCursor(null)
   }
+
+  private fun setCursor(cursor: Cursor?) =
+    (inlay.editor as? EditorEx)?.setCustomCursor(InlineBreakpointInlayRenderer::class.java, cursor)
 }
