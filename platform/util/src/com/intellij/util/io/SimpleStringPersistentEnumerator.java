@@ -3,9 +3,9 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -56,8 +56,8 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
    * [id -> value] mapping.
    * Updated with CopyOnWrite under 'this' lock.
    * Since id starts with 1 (0 is reserved as NULL_ID), so index in the array is (id-1)
-   * For backward-compatibility reasons, it could be >1 id for the same value -- i.e. it could be
-   * idToValue.length > valueToId.size()
+   * For backward-compatibility reasons, it could be >1 id for the same value -- i.e., it could be
+   * `idToValue.length > valueToId.size()`
    */
   private volatile String @NotNull [] idToValue;
 
@@ -136,11 +136,11 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
       return id;
     }
 
-    //CopyOnWrite: it is possible to do CoW without lock, with CAS only -- but it is hard to keep consistent
-    //             on-disk representation: it is very possible to have correct version in memory, but outdated
+    //CopyOnWrite: it is possible to do CoW without a lock, with CAS only -- but it is hard to keep consistent
+    //             on-disk representation: it is very possible to have a correct version in memory, but outdated
     //             version stored on disk -- and additional efforts needed to prevent it.
     //             So locking seems to be the simpler choice: this enumerator is aimed for ~small datasets,
-    //             i.e. total number of updates must be very limited.
+    //             i.e., total number of updates must be very limited.
 
     // do not use nameToId.size because enumeration file may have duplicates on different lines
     int newId = idToValue.length + 1;
@@ -235,8 +235,8 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
   public synchronized void closeAndClean() throws IOException {
     close();
     valueToId = new Object2IntOpenHashMap<>();
-    idToValue = ArrayUtil.EMPTY_STRING_ARRAY;
-    FileUtil.delete(file);
+    idToValue = ArrayUtilRt.EMPTY_STRING_ARRAY;
+    NioFiles.deleteRecursively(file);
   }
 
   private void checkNotClosed() {
@@ -269,7 +269,7 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
     }
 
     Object2IntMap<String> nameToIdRegistry = new Object2IntOpenHashMap<>(lines.size());
-    String[] idToNameRegistry = lines.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : new String[lines.size()];
+      String[] idToNameRegistry = lines.isEmpty() ? ArrayUtilRt.EMPTY_STRING_ARRAY : new String[lines.size()];
     for (int i = 0; i < lines.size(); i++) {
       String name = lines.get(i);
       int id = i + 1;

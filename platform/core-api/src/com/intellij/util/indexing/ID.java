@@ -27,14 +27,15 @@ import static com.intellij.util.containers.UtilKt.without;
  */
 public class ID<K, V> extends IndexId<K,V> {
   private static final Logger LOG = Logger.getInstance(ID.class);
+  private static final PluginId CORE_PLUGIN_ID = PluginId.getId("com.intellij");
 
   private static volatile SimpleStringPersistentEnumerator nameToIdRegistry = new SimpleStringPersistentEnumerator(getEnumFile());
 
   private static final Map<String, ID<?, ?>> idObjects = new ConcurrentHashMap<>();
 
   private static final Object lock = new Object();
-  private static volatile Map<ID<?, ?>, PluginId> idToPluginId = Java11Shim.INSTANCE.mapOf();
-  private static volatile Map<ID<?, ?>, Throwable> idToRegistrationStackTrace = Java11Shim.INSTANCE.mapOf();
+  private static volatile Map<@NotNull ID<?, ?>, @NotNull PluginId> idToPluginId = Java11Shim.INSTANCE.mapOf();
+  private static volatile Map<@NotNull ID<?, ?>, @NotNull Throwable> idToRegistrationStackTrace = Java11Shim.INSTANCE.mapOf();
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private volatile int uniqueId;
@@ -96,15 +97,12 @@ public class ID<K, V> extends IndexId<K,V> {
 
     synchronized (lock) {
       PluginId oldPluginId = idToPluginId.get(this);
-      assert oldPluginId == null : "ID with name '" +
-                                   name +
-                                   "' is already registered in " +
-                                   oldPluginId +
-                                   " but current caller is " +
-                                   pluginId;
+      assert oldPluginId == null : "ID with name '" + name +
+                                   "' is already registered in " + oldPluginId +
+                                   " but current caller is " + pluginId;
 
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      idToPluginId = with(idToPluginId, this, pluginId);
+      idToPluginId = with(idToPluginId, this, pluginId == null ? CORE_PLUGIN_ID : pluginId);
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       idToRegistrationStackTrace = with(idToRegistrationStackTrace, this, new Throwable());
     }
@@ -143,17 +141,17 @@ public class ID<K, V> extends IndexId<K,V> {
     if (checkCallerPlugin && id != null) {
       PluginId actualPluginId = idToPluginId.get(id);
 
-      String actualPluginIdStr = actualPluginId == null ? "IJ Core" : actualPluginId.getIdString();
-      String requiredPluginIdStr = requiredPluginId == null ? "IJ Core" : requiredPluginId.getIdString();
+      String actualPluginIdStr = actualPluginId == null ? "" : actualPluginId.getIdString();
+      String requiredPluginIdStr = requiredPluginId == null ? "" : requiredPluginId.getIdString();
 
       if (!Objects.equals(actualPluginIdStr, requiredPluginIdStr)) {
         Throwable registrationStackTrace = idToRegistrationStackTrace.get(id);
         String message = getInvalidIdAccessMessage(name, actualPluginIdStr, requiredPluginIdStr, registrationStackTrace);
-        if (registrationStackTrace != null) {
-          throw new AssertionError(message, registrationStackTrace);
+        if (registrationStackTrace == null) {
+          throw new AssertionError(message);
         }
         else {
-          throw new AssertionError(message);
+          throw new AssertionError(message, registrationStackTrace);
         }
       }
     }
