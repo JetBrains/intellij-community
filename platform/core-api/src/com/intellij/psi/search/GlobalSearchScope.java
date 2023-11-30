@@ -698,7 +698,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public @Nullable VirtualFileEnumeration extractFileEnumeration() {
-      return myBaseScope instanceof VirtualFileEnumeration ? (VirtualFileEnumeration)myBaseScope : null;
+      return VirtualFileEnumeration.extract(myBaseScope);
     }
   }
 
