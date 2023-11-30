@@ -19,15 +19,15 @@ internal fun implWsMetadataStorageCode(module: CompiledObjModule, types: List<Ob
   line("package ${module.name}")
   line()
   section("${module.generatedCodeVisibilityModifier} object ${MetadataStorage.IMPL_NAME}: ${MetadataStorage.base}()") {
-    val builtTypesByFqn = linkedMapOf<String, String>()
+    val builtTypes: MutableList<String> = arrayListOf()
     val builtPrimitiveTypes = linkedSetOf<BuiltPrimitiveType>()
 
     abstractTypes.forEach {
-      buildAbstractTypeMetadata(it, builtTypesByFqn, builtPrimitiveTypes)
+      buildAbstractTypeMetadata(it, builtTypes, builtPrimitiveTypes)
     }
 
     types.forEach {
-      buildObjClassMetadata(it, builtTypesByFqn, builtPrimitiveTypes)
+      buildObjClassMetadata(it, builtTypes, builtPrimitiveTypes)
     }
 
     sectionNl("override fun initializeMetadata()") {
@@ -36,9 +36,9 @@ internal fun implWsMetadataStorageCode(module: CompiledObjModule, types: List<Ob
       }
       line()
       line("var typeMetadata: $StorageTypeMetadata")
-      builtTypesByFqn.forEach {
+      builtTypes.forEach {
         line()
-        line("typeMetadata = ${it.value}")
+        line("typeMetadata = $it")
         line()
         line("${MetadataStorage.addMetadata}(typeMetadata)")
       }
@@ -50,8 +50,8 @@ internal fun implWsMetadataStorageCode(module: CompiledObjModule, types: List<Ob
       types.forEach { it.collectJvmClasses(jvmClassesToBuild) }
       abstractTypes.forEach { it.collectJvmClasses(jvmClassesToBuild) }
 
-      val entityHashComputer = EntityMetadataHashComputer(builtTypesByFqn)
-      val classHashComputer = ClassMetadataHashComputer(getClassBuilder(builtPrimitiveTypes))
+      val entityHashComputer = EntityMetadataHashComputer(builtPrimitiveTypes)
+      val classHashComputer = ClassMetadataHashComputer(builtPrimitiveTypes)
 
       val hashWithTypeFqn = arrayListOf<Pair<String, MetadataHash>>()
       hashWithTypeFqn.addAll(types.map { it.fullName to entityHashComputer.computeHash(it) })
@@ -74,20 +74,20 @@ internal fun CompiledObjModule.implWsMetadataStorageBridgeCode(metadataStorageIm
 
 private fun buildObjClassMetadata(
   objClass: ObjClass<*>,
-  builtTypesByFqn: MutableMap<String, String>,
+  builtTypes: MutableList<String>,
   builtPrimitiveTypes: MutableSet<BuiltPrimitiveType>
 ) {
   val entityMetadataBuilder = EntityMetadataBuilder(builtPrimitiveTypes)
-  builtTypesByFqn[objClass.fullName] = entityMetadataBuilder.buildMetadata(objClass)
+  builtTypes.add(entityMetadataBuilder.buildMetadata(objClass))
 }
 
 private fun buildAbstractTypeMetadata(
   type: ValueType.AbstractClass<*>,
-  builtTypesByFqn: MutableMap<String, String>,
+  builtTypes: MutableList<String>,
   builtPrimitiveTypes: MutableSet<BuiltPrimitiveType>
 ) {
-  val classBuilder = getClassBuilder(builtPrimitiveTypes)
-  type.allFinalSubClasses.forEach { builtTypesByFqn[it.javaClassName] = classBuilder.buildMetadata(it) }
+  val classBuilder = ClassMetadataBuilder.newInstance(builtPrimitiveTypes)
+  builtTypes.addAll(type.allFinalSubClasses.map { classBuilder.buildMetadata(it) })
 }
 
 
@@ -118,7 +118,3 @@ private fun ValueType<*>.collectJvmClasses(jvmClasses: MutableMap<String, ValueT
     else -> return
   }
 }
-
-
-private fun getClassBuilder(builtPrimitiveTypes: MutableSet<BuiltPrimitiveType>): MetadataBuilder<ValueType.JvmClass<*>> =
-  PropertyMetadataBuilder(builtPrimitiveTypes).classBuilder

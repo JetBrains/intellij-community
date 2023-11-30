@@ -11,19 +11,21 @@ internal interface MetadataHashComputer<T> {
 internal typealias MetadataHash = Int
 
 
-internal class EntityMetadataHashComputer(
-  private val builtEntitiesMetadata: MutableMap<String, String>,
-): MetadataHashComputer<ObjClass<*>> {
-  override fun computeHash(obj: ObjClass<*>): MetadataHash {
-    val metadata = builtEntitiesMetadata[obj.fullName] ?: error("Metadata for the entity ${obj.name} was not built")
+internal abstract class BaseMetadataHashComputer<T>(
+  private val metadataBuilder: MetadataBuilder<T>
+): MetadataHashComputer<T> {
+  override fun computeHash(obj: T): MetadataHash {
+    startHashComputing()
+    val metadata = metadataBuilder.buildMetadata(obj)
+    endHashComputing()
     return metadata.hashCode()
   }
 }
 
+internal class EntityMetadataHashComputer(
+  builtPrimitiveTypes: MutableSet<BuiltPrimitiveType>
+): BaseMetadataHashComputer<ObjClass<*>>(EntityMetadataBuilder(builtPrimitiveTypes))
+
 internal class ClassMetadataHashComputer(
-  private val classMetadataBuilder: MetadataBuilder<ValueType.JvmClass<*>>
-): MetadataHashComputer<ValueType.JvmClass<*>> {
-  override fun computeHash(obj: ValueType.JvmClass<*>): MetadataHash {
-    return classMetadataBuilder.buildMetadata(obj).hashCode()
-  }
-}
+  builtPrimitiveTypes: MutableSet<BuiltPrimitiveType>
+): BaseMetadataHashComputer<ValueType.JvmClass<*>>(ClassMetadataBuilder.newInstance(builtPrimitiveTypes))

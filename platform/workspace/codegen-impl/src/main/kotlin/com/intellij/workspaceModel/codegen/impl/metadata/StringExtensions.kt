@@ -25,3 +25,34 @@ internal val ValueType.JvmClass<*>.name: String
 
 internal val ValueType.JvmClass<*>.superClasses: List<String>
   get() = javaSuperClasses.allWithDoubleQuotesAndEscapedDollar()
+
+
+/**
+ * [replaceCacheVersionToCurrentVersion] is needed for the test [com.intellij.platform.workspace.storage.tests.metadata.serialization.MetadataSerializationTest]
+ *
+ * During deserialization we are comparing classes from the package [com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion]
+ * with classes from the package [com.intellij.platform.workspace.storage.testEntities.entities.currentVersion]
+ * But during the comparison we need to ignore the package name.
+ *
+ * So, [processPackageName] replaces [OLD_ENTITIES_VERSION_PACKAGE_NAME] with [NEW_ENTITIES_VERSION_PACKAGE_NAME] in the classes package name.
+ */
+private val replaceCacheVersionToCurrentVersion: Boolean
+  get() = generatorSettings.testModeEnabled && hashIsComputing
+
+private const val OLD_ENTITIES_VERSION_PACKAGE_NAME = "cacheVersion"
+
+private const val NEW_ENTITIES_VERSION_PACKAGE_NAME = "currentVersion"
+
+private fun String.processPackageName(): String =
+  if (replaceCacheVersionToCurrentVersion) replace(OLD_ENTITIES_VERSION_PACKAGE_NAME, NEW_ENTITIES_VERSION_PACKAGE_NAME) else this
+
+
+private var hashIsComputing = false
+
+internal fun startHashComputing() {
+  hashIsComputing = true
+}
+
+internal fun endHashComputing() {
+  hashIsComputing = false
+}
