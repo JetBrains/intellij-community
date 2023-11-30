@@ -29,6 +29,7 @@ import java.util.*;
 
 import static com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION;
 import static com.intellij.rt.execution.junit.ComparisonFailureData.OPENTEST4J_FILE_CONTENT_CHARSET;
+import static com.intellij.rt.execution.junit.ComparisonFailureData.OPENTEST4J_FILE_INFO;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class JUnit5TestExecutionListener implements TestExecutionListener {
@@ -450,7 +451,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   private static AssertionValue getOpentest4jAssertionValue(ValueWrapper valueWrapper) {
     Object value = valueWrapper.getValue();
-    if (value instanceof FileInfo) {
+    if (OPENTEST4J_FILE_INFO.equals(value.getClass().getName())) {
       String valueString = ((FileInfo)value).getContentsAsString(OPENTEST4J_FILE_CONTENT_CHARSET);
       String valuePath = ((FileInfo)value).getPath();
       return new AssertionValue(valueString, valuePath);
