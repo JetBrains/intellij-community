@@ -21,18 +21,18 @@ internal abstract class ServiceRetrievingInspectionBase(
   protected data class ServiceRetrievingInfo(val howServiceRetrieved: Service.Level,
                                              val serviceClass: UClass)
 
-  protected val serviceKtFileMethods = CallMatcher.staticCall(
+  protected val serviceKtFileMethods: CallMatcher.Simple = CallMatcher.staticCall(
     "com.intellij.openapi.components.ServiceKt", "service", *additionalServiceKtFileMethodNames
   ).parameterCount(0)
 
-  protected val componentManagerGetServiceMethods = CallMatcher.anyOf(
+  protected val componentManagerGetServiceMethods: CallMatcher = CallMatcher.anyOf(
     CallMatcher.instanceCall(ComponentManager::class.java.canonicalName, "getService", *additionalComponentManagerMethodNames)
       .parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
     CallMatcher.staticCall("com.intellij.openapi.components.ServicesKt", "service", *additionalServiceKtFileMethodNames)
       .parameterTypes(ComponentManager::class.java.canonicalName),
   )
 
-  protected val allGetServiceMethods = CallMatcher.anyOf(componentManagerGetServiceMethods, serviceKtFileMethods)
+  protected val allGetServiceMethods: CallMatcher = CallMatcher.anyOf(componentManagerGetServiceMethods, serviceKtFileMethods)
 
   protected fun getServiceRetrievingInfo(node: UCallExpression): ServiceRetrievingInfo? {
     if (!allGetServiceMethods.uCallMatches(node)) return null
