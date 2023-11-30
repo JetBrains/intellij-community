@@ -4,7 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.util.containers.UnmodifiableHashMap
+import com.intellij.util.containers.with
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -37,7 +37,7 @@ class BuildContextImpl(
 ) : BuildContext, CompilationContext by compilationContext {
   private val distFiles = ConcurrentLinkedQueue<DistFile>()
 
-  private val extraExecutablePatterns = AtomicReference<UnmodifiableHashMap<OsFamily, PersistentList<String>>>(UnmodifiableHashMap.empty())
+  private val extraExecutablePatterns = AtomicReference<Map<OsFamily, PersistentList<String>>>(java.util.Map.of())
 
   override val fullBuildNumber: String
     get() = "${applicationInfo.productCode}-$buildNumber"
@@ -314,7 +314,7 @@ class BuildContextImpl(
     }
   }
 
-  override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get().get(os) ?: emptyList()
+  override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get().get(os) ?: java.util.List.of()
 
   override suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean) {
     jarCacheManager.computeIfAbsent(
