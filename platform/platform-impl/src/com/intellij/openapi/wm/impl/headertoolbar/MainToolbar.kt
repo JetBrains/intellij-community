@@ -423,9 +423,9 @@ internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, Horizonta
 
 internal fun computeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
   return sequenceOf(
-    GroupInfo("MainToolbarLeft", ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.Group.LEFT),
-    GroupInfo("MainToolbarCenter", ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.Group.CENTER),
-    GroupInfo("MainToolbarRight", ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.Group.RIGHT)
+    GroupInfo(IdeActions.GROUP_MAIN_TOOLBAR_LEFT, ActionsTreeUtil.getMainToolbarLeft(), HorizontalLayout.Group.LEFT),
+    GroupInfo(IdeActions.GROUP_MAIN_TOOLBAR_CENTER, ActionsTreeUtil.getMainToolbarCenter(), HorizontalLayout.Group.CENTER),
+    GroupInfo(IdeActions.GROUP_MAIN_TOOLBAR_RIGHT, ActionsTreeUtil.getMainToolbarRight(), HorizontalLayout.Group.RIGHT)
   )
     .mapNotNull { info ->
       customActionSchema.getCorrectedAction(info.id, info.name)?.let {
