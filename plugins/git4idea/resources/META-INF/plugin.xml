@@ -324,6 +324,20 @@
       <add-to-group group-id="Vcs.Log.PresentationSettings" relative-to-action="Vcs.Log.HighlightersActionGroup" anchor="after"/>
     </group>
 
+    <action id="git4idea.actions.GitUseSharedLogAction" class="git4idea.actions.GitUseSharedLogAction" internal="true"/>
+    <action id="git4idea.actions.GitDumpLogIndexDataAction" class="git4idea.actions.GitDumpLogIndexDataAction" internal="true"/>
+    <group id="git4idea.actions.ShareLogIndexData" internal="true">
+      <reference id="git4idea.actions.GitUseSharedLogAction"/>
+      <reference id="git4idea.actions.GitDumpLogIndexDataAction"/>
+    </group>
+
+    <group id="Git.Log.Internal" internal="true">
+      <reference id="git4idea.actions.ShareLogIndexData"/>
+      <separator/>
+      <reference id="Git.Log.Show.Command"/>
+      <add-to-group group-id="Vcs.Log.Internal" anchor="last"/>
+    </group>
+
     <action id="Git.OpenExcludeFile" class="git4idea.ignore.actions.OpenGitExcludeAction"/>
     <group id="Git.Ignore.File" class="git4idea.ignore.actions.GitIgnoreFileActionGroup">
       <add-to-group group-id="ChangesViewPopupMenu" anchor="after" relative-to-action="ChangesView.AddUnversioned"/>
@@ -471,18 +485,6 @@
       <reference id="Git.Init"/>
       <separator/>
       <reference id="LocalHistory.ShowHistory"/>
-    </group>
-
-    <action id="git4idea.actions.GitUseSharedLogAction"
-            class="git4idea.actions.GitUseSharedLogAction"
-            internal="true"/>
-    <action id="git4idea.actions.GitDumpLogIndexDataAction"
-            class="git4idea.actions.GitDumpLogIndexDataAction"
-            internal="true"/>
-    <group id="git4idea.actions.ShareLogIndexData" internal="true">
-      <reference id="git4idea.actions.GitUseSharedLogAction"/>
-      <reference id="git4idea.actions.GitDumpLogIndexDataAction"/>
-      <add-to-group group-id="Vcs.Log.Internal"/>
     </group>
 
     <group id="MainToolbarVCSGroup">
