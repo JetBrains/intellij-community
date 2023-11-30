@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfoKt;
 import com.intellij.ide.ui.laf.UiThemeProviderListManager;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -38,7 +39,11 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
                                 final EditorColorsScheme current,
                                 final EditorColorsScheme scheme,
                                 final boolean addScheme) {
-    group.add(new DumbAwareAction(scheme.getDisplayName(), "", scheme == current ? AllIcons.Actions.Forward : ourNotCurrentAction) {
+    var name = scheme.getDisplayName();
+    if (UIThemeLookAndFeelInfoKt.isDefaultForTheme(scheme, LafManager.getInstance().getCurrentUIThemeLookAndFeel())) {
+      name += " *";
+    }
+    group.add(new DumbAwareAction(name, "", scheme == current ? AllIcons.Actions.Forward : ourNotCurrentAction) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (addScheme) {
