@@ -167,6 +167,13 @@ final class PsiUpdateImpl {
     }
 
     <E extends PsiElement> @NotNull E getCopy(@NotNull E orig) {
+      if (myDeleted) {
+        throw new IllegalStateException("The file was deleted.");
+      }
+      if (orig == this.myOrigFile) {
+        @SuppressWarnings("unchecked") E file = (E)this.myCopyFile;
+        return file;
+      }
       if (!myFragments.isEmpty()) {
         throw new IllegalStateException("File is already modified. Elements to update must be requested before any modifications");
       }
