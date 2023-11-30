@@ -64,7 +64,7 @@ import java.util.function.Function;
  */
 public class GeneralCommandLine implements UserDataHolder {
   private static final Logger LOG = Logger.getInstance(GeneralCommandLine.class);
-  private Function<ProcessBuilder, Process> myProcessCreator;
+  private @Nullable Function<ProcessBuilder, Process> myProcessCreator;
 
   /**
    * Determines the scope of a parent environment passed to a child process.
@@ -396,11 +396,16 @@ public class GeneralCommandLine implements UserDataHolder {
     }
   }
 
-  protected final Function<ProcessBuilder, Process> getProcessCreator() {
+  protected final @Nullable Function<ProcessBuilder, Process> getProcessCreator() {
     return myProcessCreator;
   }
 
-  public final void setProcessCreator(Function<ProcessBuilder, Process> processCreator) {
+  /**
+   * Allows to specify a handler for creating processes different from {@link ProcessBuilder#start()}.
+   * <p>
+   * See also {@link #withEscapingForLocalRun(boolean)}.
+   */
+  public final void setProcessCreator(@Nullable Function<ProcessBuilder, Process> processCreator) {
     myProcessCreator = processCreator;
   }
 
@@ -503,7 +508,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return builder;
   }
 
-  protected Process createProcess(ProcessBuilder processBuilder) throws IOException {
+  protected @NotNull Process createProcess(ProcessBuilder processBuilder) throws IOException {
     return myProcessCreator != null ? myProcessCreator.apply(processBuilder) : processBuilder.start();
   }
 
