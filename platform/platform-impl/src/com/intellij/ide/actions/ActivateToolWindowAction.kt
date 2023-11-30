@@ -42,13 +42,11 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
       }
     }
 
-    @JvmStatic
-    fun unregister(id: String) {
+    internal fun unregister(id: String) {
       ActionManager.getInstance().unregisterAction(getActionIdForToolWindow(id))
     }
 
-    @JvmStatic
-    fun updateToolWindowActionPresentation(toolWindow: ToolWindow) {
+    internal fun updateToolWindowActionPresentation(toolWindow: ToolWindow) {
       val action = ActionManager.getInstance().getAction(getActionIdForToolWindow(toolWindow.id))
       if (action is ActivateToolWindowAction) {
         updatePresentation(action.getTemplatePresentation(), toolWindow)
@@ -62,17 +60,14 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
      * @param id `id` of tool window to be activated.
      */
     @JvmStatic
-    fun getActionIdForToolWindow(id: String): @NonNls String {
-      return "Activate" + id.replace(" ".toRegex(), "") + "ToolWindow"
-    }
+    fun getActionIdForToolWindow(id: String): @NonNls String = "Activate${id.replace(" ", "")}ToolWindow"
 
     /**
      * @return mnemonic for action if it has Alt+digit/Meta+digit shortcut.
      * Otherwise, the method returns `-1`.
      * Meta-mask is OK for Mac OS X user, because Alt+digit types strange characters into the editor.
      */
-    @JvmStatic
-    fun getMnemonicForToolWindow(toolWindowId: String): Int {
+    internal fun getMnemonicForToolWindow(toolWindowId: String): Int {
       val activeKeymap = KeymapManager.getInstance().activeKeymap
       for (shortcut in activeKeymap.getShortcuts(getActionIdForToolWindow(toolWindowId))) {
         if (shortcut !is KeyboardShortcut) {

@@ -74,7 +74,7 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware, Ac
 
   private static @NotNull Comparator<ActivateToolWindowAction> comparingMnemonic() {
     return comparingInt(it -> {
-      int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(it.getToolWindowId());
+      int mnemonic = ActivateToolWindowAction.Companion.getMnemonicForToolWindow$intellij_platform_ide_impl(it.getToolWindowId());
       return mnemonic != -1 ? mnemonic : Integer.MAX_VALUE;
     });
   }
