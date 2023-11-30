@@ -31,10 +31,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileWithAssignedFileType;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
@@ -42,6 +39,7 @@ import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
@@ -54,6 +52,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -88,7 +87,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final String ATTRIBUTE_DESCRIPTION = "description";
 
   private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
-  private static final ThreadLocal<Pair<VirtualFile, FileType>> FILE_TYPE_FIXED_TEMPORARILY = new ThreadLocal<>();
+  private volatile CachedFileTypes CACHED;
 
   private final Set<FileTypeWithDescriptor> myDefaultTypes = CollectionFactory.createSmallMemoryFootprintSet();
   final FileTypeDetectionService myDetectionService;
@@ -702,29 +701,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public void freezeFileTypeTemporarilyWithProvidedValueIn(@NotNull VirtualFile file,
                                                            @Nullable FileType cachedFileType,
                                                            @NotNull Runnable runnable) {
-    FileType fileType = null;
-    if (!file.isDirectory()) {
-      fileType = cachedFileType != null ? cachedFileType : file.getFileType();
-    }
-    Pair<VirtualFile, FileType> old = FILE_TYPE_FIXED_TEMPORARILY.get();
-    FILE_TYPE_FIXED_TEMPORARILY.set(new Pair<>(file, fileType));
-    if (toLog()) {
-      log("F: freezeFileTypeTemporarilyIn(" + file.getName() + ") to " + fileType +" in "+Thread.currentThread());
-    }
-    try {
+    FileType fileType = file.isDirectory() ? null :
+      cachedFileType == null ? file.getFileType() : cachedFileType;
+    cacheFileTypesInside(() -> {
+      if (fileType != null && file instanceof VirtualFileWithId vfid) {
+        CACHED.fileTypes().put(vfid.getId(), fileType);
+      }
       runnable.run();
-    }
-    finally {
-      if (old == null) {
-        FILE_TYPE_FIXED_TEMPORARILY.remove();
-      }
-      else {
-        FILE_TYPE_FIXED_TEMPORARILY.set(old);
-      }
-      if (toLog()) {
-        log("F: unfreezeFileType(" + file.getName() + ") in "+Thread.currentThread());
-      }
-    }
+    });
   }
 
   @Override
@@ -772,6 +756,30 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return requestedFileType.equals(ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE));
   }
 
+  private record CachedFileTypes(@NotNull ConcurrentIntObjectMap<FileType> fileTypes, @NotNull AtomicInteger useCount) {}
+  @ApiStatus.Internal
+  public void cacheFileTypesInside(@NotNull Runnable runnable) {
+    CachedFileTypes cached;
+    synchronized (this) {
+      cached = CACHED;
+      if (cached == null) {
+        CACHED = cached = new CachedFileTypes(ConcurrentCollectionFactory.createConcurrentIntObjectMap(), new AtomicInteger(1));
+      }
+      else {
+        cached.useCount().incrementAndGet();
+      }
+    }
+    try {
+      runnable.run();
+    }
+    finally {
+      synchronized (this) {
+        if (cached.useCount().decrementAndGet() == 0) {
+          CACHED = null;
+        }
+      }
+    }
+  }
   @Override
   public @NotNull FileType getFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
     FileType temporarilyFixedFileType = getTemporarilyFixedFileType(file);
@@ -791,7 +799,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     else if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
       fileType = internalContinueToDetectFileTypeByFile(file, content, fileType);
     }
-    return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
+    FileType result = ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
+    CachedFileTypes cached = CACHED;
+    if (cached != null && file instanceof VirtualFileWithId vfid) {
+      cached.fileTypes().put(vfid.getId(), result);
+    }
+    return result;
   }
 
   // do not use
@@ -802,14 +815,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private FileType getTemporarilyFixedFileType(@NotNull VirtualFile file) {
-    FileType fileType = null;
-    Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
-    if (fixedType != null && fixedType.getFirst().equals(file)) {
-      fileType = fixedType.getSecond();
-      if (toLog()) {
-        log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName() + " in " + Thread.currentThread());
-      }
-    }
+    CachedFileTypes cached = CACHED;
+    FileType fileType = cached != null && file instanceof VirtualFileWithId vfid ? cached.fileTypes().get(vfid.getId()) : null;
     return fileType;
   }
 
