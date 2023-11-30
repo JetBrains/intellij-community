@@ -5,26 +5,27 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 
 class TerminalCaretModel(
   private val session: TerminalSession,
   private val outputModel: TerminalOutputModel,
   private val editor: EditorEx,
   parentDisposable: Disposable,
-) : TerminalModel.CursorListener, TerminalModel.TerminalListener, Disposable {
+) : TerminalModel.CursorListener, TerminalModel.TerminalListener {
   private val terminalModel: TerminalModel
     get() = session.model
 
   private val listeners: MutableList<CaretListener> = CopyOnWriteArrayList()
 
-  /** Null means, that caret is not showing */
-  @Volatile
-  var caretPosition: LogicalPosition? = LogicalPosition(0, 0)
-    private set
-  @Volatile
-  var isBlinking: Boolean = terminalModel.isCursorBlinking
-    private set
+  private val updateScheduled: AtomicBoolean = AtomicBoolean(false)
+  private val updateAlarm: Alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, parentDisposable)
+
+  val state: CaretState
+    get() = calculateState()
 
   init {
     terminalModel.addTerminalListener(this, parentDisposable)
@@ -39,36 +40,52 @@ class TerminalCaretModel(
   }
 
   override fun onPositionChanged(cursorX: Int, cursorY: Int) {
-    if (terminalModel.isCursorVisible) {
-      updateCaretPosition(cursorX, cursorY)
-    }
-    else updateCaretPosition(null)
+    scheduleUpdate()
   }
 
   override fun onVisibilityChanged(visible: Boolean) {
-    if (visible) {
-      updateCaretPosition(terminalModel.cursorX, terminalModel.cursorY)
-    }
-    else updateCaretPosition(null)
+    scheduleUpdate()
   }
 
   override fun onBlinkingChanged(blinking: Boolean) {
-    isBlinking = blinking
-    listeners.forEach { it.caretBlinkingChanged(blinking) }
+    scheduleUpdate()
   }
 
   override fun onCommandRunningChanged(isRunning: Boolean) {
-    if (isRunning) {
-      // place the caret to the next line after the command
-      val position = calculateCaretPosition(0, 2)
-      updateCaretPosition(position)
+    scheduleUpdate()
+  }
+
+  private fun scheduleUpdate() {
+    if (updateScheduled.compareAndSet(false, true)) {
+      updateAlarm.addRequest(::doUpdate, 50)
     }
-    else updateCaretPosition(newPosition = null)
+  }
+
+  @RequiresEdt
+  private fun doUpdate() {
+    try {
+      val state = calculateState()
+      for (listener in listeners) {
+        listener.caretStateChanged(state)
+      }
+    }
+    finally {
+      updateScheduled.set(false)
+    }
+  }
+
+  private fun calculateState(): CaretState {
+    return session.model.withContentLock {
+      val position = if (terminalModel.isCursorVisible) {
+        calculateCaretPosition(terminalModel.cursorX, terminalModel.cursorY)
+      }
+      else null
+      CaretState(position, terminalModel.isCursorBlinking)
+    }
   }
 
   private fun calculateCaretPosition(cursorX: Int, cursorY: Int): LogicalPosition {
-    // this call can happen before a block is created
-    val outputStartOffset = outputModel.getLastBlock()?.outputStartOffset ?: 0
+    val outputStartOffset = outputModel.getLastBlock()!!.outputStartOffset
     // cursor position in the TextBuffer is relative to the output start
     val blockStartLine = editor.document.getLineNumber(outputStartOffset)
     val historyLines = if (terminalModel.useAlternateBuffer) 0 else terminalModel.historyLinesCount
@@ -76,25 +93,13 @@ class TerminalCaretModel(
     return LogicalPosition(blockStartLine + blockLine, cursorX)
   }
 
-  private fun updateCaretPosition(cursorX: Int, cursorY: Int) {
-    val position = calculateCaretPosition(cursorX, cursorY)
-    updateCaretPosition(position)
-  }
-
-  private fun updateCaretPosition(newPosition: LogicalPosition?) {
-    val oldPosition = caretPosition
-    caretPosition = newPosition
-    if (newPosition != oldPosition) {
-      listeners.forEach {
-        it.caretPositionChanged(oldPosition, newPosition)
-      }
-    }
-  }
-
-  override fun dispose() {}
+  /**
+   * @param [position] null means, that caret is not showing
+   */
+  data class CaretState(val position: LogicalPosition?, val isBlinking: Boolean = true)
 
   interface CaretListener {
-    fun caretPositionChanged(oldPosition: LogicalPosition?, newPosition: LogicalPosition?) {}
-    fun caretBlinkingChanged(isBlinking: Boolean) {}
+    @RequiresEdt
+    fun caretStateChanged(state: CaretState) {}
   }
 }

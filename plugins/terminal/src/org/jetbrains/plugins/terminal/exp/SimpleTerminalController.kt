@@ -138,9 +138,7 @@ class SimpleTerminalController(
 
   private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(session.colorPalette)
 
-  override fun dispose() {
-    Disposer.dispose(caretModel)
-  }
+  override fun dispose() {}
 
   private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
 
