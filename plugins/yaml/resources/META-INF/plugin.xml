@@ -128,11 +128,29 @@
       <bundleName>messages.YAMLBundle</bundleName>
       <categoryKey>yaml.intention.category.name</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <language>yaml</language>
+      <className>org.jetbrains.yaml.refactoring.inlineExpandConversion.YAMLExpandCollectionIntentionAction</className>
+      <bundleName>messages.YAMLBundle</bundleName>
+      <categoryKey>yaml.intention.category.name</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language>yaml</language>
+      <className>org.jetbrains.yaml.refactoring.inlineExpandConversion.YAMLExpandAllCollectionsInsideIntentionAction</className>
+      <bundleName>messages.YAMLBundle</bundleName>
+      <categoryKey>yaml.intention.category.name</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <language>yaml</language>
+      <className>org.jetbrains.yaml.refactoring.inlineExpandConversion.YAMLInlineCollectionIntentionAction</className>
+      <bundleName>messages.YAMLBundle</bundleName>
+      <categoryKey>yaml.intention.category.name</categoryKey>
+    </intentionAction>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.json">
     <jsonLikePsiWalkerFactory implementation="org.jetbrains.yaml.schema.YamlJsonLikePsiWalkerFactory"/>
-    <jsonSchemaEnabler implementation="org.jetbrains.yaml.schema.YamlJsonEnabler" />
+    <jsonSchemaEnabler implementation="org.jetbrains.yaml.schema.YamlJsonEnabler"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
