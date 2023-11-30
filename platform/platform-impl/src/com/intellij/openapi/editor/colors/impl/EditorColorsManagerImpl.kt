@@ -196,6 +196,8 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     for (scheme in to) {
       schemeManager.addScheme(scheme)
     }
+
+    hideIntellijLightSchemeIfNeeded()
   }
 
   private fun resolveLinksToBundledSchemes() {
@@ -434,7 +436,6 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
 
   override fun loadState(state: State) {
     this.state = state
-    hideIntellijLightSchemeIfNeeded()
     val colorSchemeName = state.colorScheme
     var colorScheme = colorSchemeName?.let { getScheme(it) }
     if (colorScheme == null) {
@@ -497,7 +498,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     if (!ExperimentalUI.isNewUI()) return
     val themeName = "IntelliJ Light"
     val intellijLightThemes = schemeManager.allSchemes.filter { it.name.contains(themeName) }
-    val customTheme = intellijLightThemes.find { it.name.startsWith("_@user_") }
+    val customTheme = intellijLightThemes.find { it.name.startsWith(Scheme.EDITABLE_COPY_PREFIX) }
     if (customTheme != null) {
       val defaultScheme = schemeManager.findSchemeByName(themeName)
       val isSchemeCustomized = (customTheme as? AbstractColorsScheme)?.settingsEqual(defaultScheme, null, true) != true

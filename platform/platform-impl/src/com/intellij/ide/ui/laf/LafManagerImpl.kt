@@ -241,10 +241,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun loadState(element: Element) {
-    replaceIntellijLightThemeIfSelected(element)
     autodetect = element.getAttributeBooleanValue(ATTRIBUTE_AUTODETECT)
-    preferredLightThemeId = element.getChild(ELEMENT_PREFERRED_LIGHT_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)
-    preferredDarkThemeId = element.getChild(ELEMENT_PREFERRED_DARK_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)
+    preferredLightThemeId = element.getChild(ELEMENT_PREFERRED_LIGHT_LAF)?.getThemeNameWithReplacingDeprecated()
+    preferredDarkThemeId = element.getChild(ELEMENT_PREFERRED_DARK_LAF)?.getThemeNameWithReplacingDeprecated()
 
     val lafToPreviousScheme = HashMap<String, String>()
     val child = element.getChild(ELEMENT_LAFS_TO_PREVIOUS_SCHEMES)
@@ -281,7 +280,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private fun loadThemeState(element: Element): Supplier<out UIThemeLookAndFeelInfo?> {
     val themeProviderManager = UiThemeProviderListManager.getInstance()
 
-    element.getChild(ELEMENT_LAF)?.getAttributeValue(ATTRIBUTE_THEME_NAME)?.let {
+    element.getChild(ELEMENT_LAF)?.getThemeNameWithReplacingDeprecated()?.let {
       themeProviderManager.findThemeSupplierById(it)
     }?.let {
       return it
@@ -346,20 +345,14 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   //IDEA-331405 Hide IntelliJ Light from new UI
-  private fun replaceIntellijLightThemeIfSelected(element: Element) {
-    if (!ExperimentalUI.isNewUI()) return
-    val replacementThemeId = "JetBrainsLightTheme"
-    val newThemeId = "ExperimentalLightWithLightHeader"
-    val prefLightThemeElement = element.getChild(ELEMENT_PREFERRED_LIGHT_LAF)
-    val preferredLightTheme = prefLightThemeElement?.getAttributeValue(ATTRIBUTE_THEME_NAME)
-    if (preferredLightTheme == replacementThemeId) {
-      prefLightThemeElement.setAttribute(ATTRIBUTE_THEME_NAME, newThemeId)
+  private fun Element.getThemeNameWithReplacingDeprecated(): String {
+    val currentTheme = this.getAttributeValue(ATTRIBUTE_THEME_NAME)
+    if (ExperimentalUI.isNewUI() && currentTheme == "JetBrainsLightTheme") {
+      val newThemeId = "ExperimentalLightWithLightHeader"
+      this.setAttribute(ATTRIBUTE_THEME_NAME, newThemeId)
+      return newThemeId
     }
-    val currentThemeElement = element.getChild(ELEMENT_LAF)
-    val currentTheme = currentThemeElement?.getAttributeValue(ATTRIBUTE_THEME_NAME)
-    if (currentTheme == replacementThemeId) {
-      currentThemeElement.setAttribute(ATTRIBUTE_THEME_NAME, newThemeId)
-    }
+    return currentTheme
   }
 
   override fun getInstalledLookAndFeels(): Array<UIManager.LookAndFeelInfo> {
