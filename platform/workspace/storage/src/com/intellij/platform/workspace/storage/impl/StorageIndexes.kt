@@ -277,10 +277,6 @@ internal class MutableStorageIndexes(
     }
   }
 
-  fun removeExternalMapping(identifier: String) {
-    externalMappings[identifier]?.clearMapping()
-  }
-
   fun toImmutable(): StorageIndexes {
     val copiedLinks = this.softLinks.toImmutable()
     val newVirtualFileIndex = virtualFileIndex.toImmutable()

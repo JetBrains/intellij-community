@@ -53,7 +53,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   internal var indexLogBunches: IndexLog,
 ) : ExternalEntityMappingImpl<T>(index), MutableExternalEntityMapping<T> {
 
-  constructor() : this(PersistentBidirectionalMapImpl<EntityId, T>().builder(), IndexLog(mutableListOf()))
+  constructor() : this(PersistentBidirectionalMapImpl<EntityId, T>().builder(), IndexLog(LinkedHashMap()))
 
   override fun addMapping(entity: WorkspaceEntity, data: T) {
     add((entity as WorkspaceEntityBase).id, data)
@@ -61,7 +61,10 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   internal fun add(id: EntityId, data: T) {
-    index.put(id, data)
+    val removedValue = index.put(id, data)
+    if (removedValue != null) {
+      indexLogBunches.add(id, IndexLogRecord.Remove(id))
+    }
     indexLogBunches.add(id, IndexLogRecord.Add(id, data))
     LOG.trace {
       try {
@@ -96,11 +99,6 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     return removed
   }
 
-  internal fun clearMapping() {
-    index.clear()
-    indexLogBunches.clear()
-  }
-
   internal fun remove(id: EntityId): T? {
     LOG.trace { "Remove $id from external index" }
     val removed = index.remove(id)
@@ -113,27 +111,25 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   fun applyChanges(other: MutableExternalEntityMappingImpl<*>,
                    replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>,
                    target: MutableEntityStorageImpl) {
-    other.indexLogBunches.chain.forEach { operation ->
-      when (operation) {
-        is IndexLogOperation.Changes -> {
-          operation.changes.values.forEach { record ->
-            when (record) {
-              is IndexLogRecord.Add<*> -> {
-                getTargetId(replaceMap, target, record.id)?.let { entityId ->
-                  @Suppress("UNCHECKED_CAST")
-                  add(entityId, record.data as T)
-                }
-              }
-              is IndexLogRecord.Remove -> {
-                getTargetId(replaceMap, target, record.id)?.let { entityId ->
-                  remove(entityId)
-                }
-              }
-            }
-          }
+    other.indexLogBunches.changes.values.forEach { record ->
+      applyChange(replaceMap, target, record.first)
+      record.second?.let { applyChange(replaceMap, target, it) }
+    }
+  }
+
+  private fun applyChange(replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>,
+                          target: MutableEntityStorageImpl,
+                          record: IndexLogRecord) {
+    when (record) {
+      is IndexLogRecord.Add<*> -> {
+        getTargetId(replaceMap, target, record.id)?.let { entityId ->
+          @Suppress("UNCHECKED_CAST")
+          add(entityId, record.data as T)
         }
-        IndexLogOperation.Clear -> {
-          clearMapping()
+      }
+      is IndexLogRecord.Remove -> {
+        getTargetId(replaceMap, target, record.id)?.let { entityId ->
+          remove(entityId)
         }
       }
     }
@@ -165,37 +161,49 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   internal class IndexLog(
-    val chain: MutableList<IndexLogOperation>,
+    // Pair may have one of three allowed states:
+    //  [Added, null], [Removed, null], [Removed, Added]
+    // The last state is used when the value is replaced with the new one
+    val changes: LinkedHashMap<EntityId, Pair<IndexLogRecord, IndexLogRecord?>>,
   ) {
     fun add(id: EntityId, operation: IndexLogRecord) {
-      var lastBunch = chain.lastOrNull()
-      if (lastBunch !is IndexLogOperation.Changes) {
-        chain.add(IndexLogOperation.Changes(LinkedHashMap()))
-        lastBunch = chain.last()
-      }
-      lastBunch as IndexLogOperation.Changes
-      val existing = lastBunch.changes[id]
+      val existing = changes[id]
       if (existing != null) {
         when (operation) {
           is IndexLogRecord.Add<*> -> {
-            lastBunch.changes.remove(id)
-            lastBunch.changes[id] = operation
+            val newValue = if (existing.second == null) {
+              val firstValue = existing.first
+              when(firstValue) {
+                is IndexLogRecord.Add<*> -> existing.copy(first = operation)
+                is IndexLogRecord.Remove -> existing.copy(second = operation)
+              }
+            }
+            else {
+              check(existing.second is IndexLogRecord.Add<*>)
+              check(existing.first is IndexLogRecord.Remove)
+              existing.copy(second = operation)
+            }
+            changes[id] = newValue
           }
           is IndexLogRecord.Remove -> {
-            if (existing is IndexLogRecord.Add<*>) {
-              lastBunch.changes.remove(id)
-            } else {
-              lastBunch.changes[id] = operation
+            val newValue = if (existing.second == null) {
+              val firstValue = existing.first
+              when(firstValue) {
+                is IndexLogRecord.Add<*> -> null
+                is IndexLogRecord.Remove -> existing.copy(first = operation)
+              }
             }
+            else {
+              val firstRemoval = existing.first
+              check(firstRemoval is IndexLogRecord.Remove)
+              existing.copy(second = null)
+            }
+            if (newValue != null) changes[id] = newValue else changes.remove(id)
           }
         }
       } else {
-        lastBunch.changes[id] = operation
+        changes[id] = operation to null
       }
-    }
-
-    fun clear() {
-      chain.add(IndexLogOperation.Clear)
     }
   }
 
@@ -204,7 +212,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
       val result = mutableMapOf<String, MutableExternalEntityMappingImpl<*>>()
       other.forEach { (identifier, index) ->
         if (index is MutableExternalEntityMappingImpl) error("Cannot create mutable index from mutable index")
-        result[identifier] = MutableExternalEntityMappingImpl((index.index as PersistentBidirectionalMap.Immutable).builder(), IndexLog(mutableListOf()))
+        result[identifier] = MutableExternalEntityMappingImpl((index.index as PersistentBidirectionalMap.Immutable).builder(), IndexLog(LinkedHashMap()))
       }
       return result
     }
