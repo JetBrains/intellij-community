@@ -16,22 +16,20 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.switcher.QuickActionProvider
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.flow.*
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
-import java.util.function.Predicate
+import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<ActionAsyncProvider>()
-
-private const val DEFAULT_CHANNEL_CAPACITY = 30
 
 class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
@@ -116,14 +114,14 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
     val actionIds = AbbreviationManager.getInstance().findActions(pattern)
 
     return actionIds.asFlow()
-      .mapNotNull { myActionManager.getAction(it) }
+      .mapNotNull { loadAction(it) }
+      .buffer(RENDEZVOUS)
       .map {
         val presentation = presentationProvider(it)
         val wrapper: ActionWrapper = wrapAnAction(it, presentation)
         val degree = matcher.matchingDegree(pattern)
         abbreviationMatchedValue(wrapper, pattern, degree)
       }
-      .buffer(actionIds.size)
   }
 
   private fun matchedActionsAndStubsFlow(pattern: String, allIds: Collection<String>,
@@ -159,13 +157,14 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
       list.forEach {
         val action = it.action
         if (action is ActionStubBase) {
-          myActionManager.getAction(action.id)?.let { loaded -> emit(MatchedAction(loaded, it.mode, it.weight)) }
+          loadAction(action.id)?.let { loaded -> emit(MatchedAction(loaded, it.mode, it.weight)) }
         }
         else {
           emit(it)
         }
       }
     }
+      .buffer(RENDEZVOUS)
       .map {
         val presentation = presentationProvider(it.action)
         wrapAnAction(it.action, presentation, it.mode)
@@ -178,7 +177,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
     val matcher = buildMatcher(pattern)
     val weightMatcher = buildWeightMatcher(pattern)
 
-    return allIds.asFlow().buffer(allIds.size)
+    return allIds.asFlow()
       .mapNotNull {
         val action = myActionManager.getActionOrStub(it) ?: return@mapNotNull null
         if (action is ActionGroup && !action.isSearchable) return@mapNotNull null
@@ -190,7 +189,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
       }
       .transform {
         runCatching {
-          val action = myActionManager.getAction((it as ActionStubBase).id)
+          val action = loadAction((it as ActionStubBase).id) ?: return@runCatching
           val mode = myModel.actionMatches(pattern, matcher, action)
           if (mode != MatchMode.NONE) {
             val weight = calcElementWeight(action, pattern, weightMatcher)
@@ -198,6 +197,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
           }
         }.getOrLogException(LOG)
       }
+      .buffer(RENDEZVOUS)
       .map {
         val presentation = presentationProvider(it.action)
         wrapAnAction(it.action, presentation, it.mode)
@@ -235,7 +235,6 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
       }
     }
       .map { matchItem(it, matcher, pattern, MatchedValueType.TOP_HIT) }
-      .buffer(DEFAULT_CHANNEL_CAPACITY)
   }
 
   private fun intentionsFlow(pattern: String,
@@ -255,7 +254,6 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
       }
     }
       .map { matchItem(it, weightMatcher, pattern, MatchedValueType.INTENTION) }
-      .buffer(DEFAULT_CHANNEL_CAPACITY)
   }
 
   private suspend fun getIntentionsMap(): Map<String, ApplyIntentionAction> {
@@ -330,8 +328,12 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
           send(description)
         }
       }
-    }.buffer(DEFAULT_CHANNEL_CAPACITY)
+    }
       .map { matchItem(it, weightMatcher, pattern, MatchedValueType.TOP_HIT) }
+  }
+
+  private suspend fun loadAction(id: String): AnAction? = withContext(coroutineContext) {
+     async { myActionManager.getAction(id) }.await()
   }
 
   private fun matchItem(item: Any, matcher: MinusculeMatcher, pattern: String, matchType: MatchedValueType): MatchedValue {
