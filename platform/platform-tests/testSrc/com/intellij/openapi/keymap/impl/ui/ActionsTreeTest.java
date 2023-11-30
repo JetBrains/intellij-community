@@ -58,7 +58,7 @@ public class ActionsTreeTest {
   private AnAction myActionWithUseShortcutOfNonExistent;
   private AnAction myActionWithFixedShortcuts;
 
-  private ActionsTree myActionsTree;
+  private ActionsTree actionTree;
 
   @BeforeEach
   void setUp(@TestDisposable Disposable testDisposable) {
@@ -114,18 +114,18 @@ public class ActionsTreeTest {
                  myActionWithUseShortcutOfNonExistent,
                  myActionWithFixedShortcuts);
     // populate an action tree
-    myActionsTree = new ActionsTree();
+    actionTree = new ActionsTree();
 
     KeyboardShortcut shortcut1 = new KeyboardShortcut(KeyStroke.getKeyStroke('1'), null);
     KeyboardShortcut shortcut2 = new KeyboardShortcut(KeyStroke.getKeyStroke('2'), null);
     KeymapImpl parent = new KeymapImpl();
-    parent.addShortcut(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT, shortcut1);
     parent.setName("parent");
+    parent.addShortcut(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED_IN_PARENT, shortcut1);
     parent.setCanModify(false);
     KeymapImpl child = parent.deriveKeymap("child");
     child.addShortcut(ACTION_WITH_USE_SHORTCUT_OF_EXISTENT_ACTION_REDEFINED, shortcut2);
     child.addShortcut(ACTION_EDITOR_DELETE_WITH_SHORTCUT, shortcut2);
-    myActionsTree.reset(child, new QuickList[0]);
+    actionTree.reset(child, new QuickList[0]);
   }
 
   @AfterEach
@@ -255,16 +255,16 @@ public class ActionsTreeTest {
 
   private void doTest(String filter, List<String> idsThatMustBePresent, List<String> idsThatMustNotBePresent) {
     if (filter != null) {
-      myActionsTree.filter(filter, new QuickList[0]);
+      actionTree.filter(filter, new QuickList[0]);
     }
 
     List<String> missing = new ArrayList<>();
     List<String> present = new ArrayList<>();
     for (String actionId : idsThatMustBePresent) {
-      if (!myActionsTree.getMainGroup().containsId(actionId)) missing.add(actionId);
+      if (!actionTree.getMainGroup().containsId(actionId)) missing.add(actionId);
     }
     for (String actionId : idsThatMustNotBePresent) {
-      if (myActionsTree.getMainGroup().containsId(actionId)) present.add(actionId);
+      if (actionTree.getMainGroup().containsId(actionId)) present.add(actionId);
     }
     assertTrue(missing.isEmpty() && present.isEmpty(),
                "Missing actions: " + missing + "\nWrongly shown: " + present);
