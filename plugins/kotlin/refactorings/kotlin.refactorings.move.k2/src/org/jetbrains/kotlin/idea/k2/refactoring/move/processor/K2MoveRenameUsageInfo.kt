@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
@@ -342,13 +343,34 @@ sealed class K2MoveRenameUsageInfo(
                         if (usageInfo is Qualifiable && result != null) (result to newElement) else null
                     }.filter { it.first.isValid }.toMap() // because `bindToElement` invalidates imports after qualifying every reference
                     if (file !is KtFile) return@forEach
+                    shortenReferences(file, qualifiedElements)
+                }
+            }
+        }
 
-                    // TODO handle bulk usage shortening in a better way, there should be API for this
-                    qualifiedElements.forEach { qualifiedElem ->
-                        analyze(file) {
-                            collectPossibleReferenceShortenings(file, qualifiedElem.textRange).invokeShortening()
-                        }
-                    }
+        /**
+         * Ad-hoc implementation of bulk shortening that should be replaced by some better API in the future.
+         */
+        private fun shortenReferences(file: KtFile, qualifiedElements: Map<PsiElement, KtNamedDeclaration>) {
+            fun FqName.proximityTo(other: FqName): Int {
+                val segments = pathSegments()
+                val otherSegments = other.pathSegments()
+                var proximity = 0
+                for ((name, otherName) in segments.zip(otherSegments)) {
+                    if (name == otherName) proximity++ else break;
+                }
+                return proximity
+            }
+
+            val fileFqn = file.packageFqName
+            val sortedElements = qualifiedElements.keys.sortedByDescending { ref ->
+                val newDecl = qualifiedElements[ref]
+                newDecl?.fqName?.proximityTo(fileFqn)
+            }
+            sortedElements.forEach { qualifiedElem ->
+                analyze(file) {
+                    val shortening = collectPossibleReferenceShortenings(file, qualifiedElem.textRange)
+                    shortening.invokeShortening()
                 }
             }
         }
