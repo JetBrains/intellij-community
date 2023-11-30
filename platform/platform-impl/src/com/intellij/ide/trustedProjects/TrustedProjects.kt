@@ -3,6 +3,7 @@ package com.intellij.ide.trustedProjects
 
 import com.intellij.ide.impl.TrustedPaths
 import com.intellij.ide.impl.TrustedPathsSettings
+import com.intellij.ide.impl.TrustedProjectsStatistics
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.openapi.application.ApplicationManager
@@ -27,7 +28,11 @@ object TrustedProjects {
     if (LightEdit.owns(locatedProject.project)) {
       return ThreeState.YES
     }
-    return TrustedPathsSettings.getInstance().getProjectTrustedState(locatedProject)
+    if (TrustedPathsSettings.getInstance().isProjectTrusted(locatedProject)) {
+      TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log(locatedProject.project)
+      return ThreeState.YES
+    }
+    return ThreeState.UNSURE
   }
 
   fun setProjectTrusted(locatedProject: LocatedProject, isTrusted: Boolean) {

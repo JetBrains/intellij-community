@@ -13,7 +13,7 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 @Suppress("unused") // Used externally
-fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>().isPathTrusted(path)
+fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>().isProjectPathTrusted(path)
 
 @ApiStatus.Internal
 @State(name = "Trusted.Paths.Settings", storages = [Storage(value = "trusted-paths.xml", roamingType = RoamingType.DISABLED)])
@@ -39,8 +39,12 @@ class TrustedPathsSettings : TrustedProjectsStateStorage<TrustedPathsSettings.St
     }
   }
 
-  fun isPathTrusted(path: Path): Boolean {
+  fun isProjectPathTrusted(path: Path): Boolean {
     return getProjectPathTrustedState(path) == ThreeState.YES
+  }
+
+  fun isProjectTrusted(locatedProject: TrustedProjectsLocator.LocatedProject): Boolean {
+    return getProjectTrustedState(locatedProject) == ThreeState.YES
   }
 
   fun getTrustedPaths(): List<String> {
@@ -57,13 +61,5 @@ class TrustedPathsSettings : TrustedProjectsStateStorage<TrustedPathsSettings.St
     updateState {
       State(it.trustedPaths + path)
     }
-  }
-
-  override fun getProjectTrustedState(locatedProject: TrustedProjectsLocator.LocatedProject): ThreeState {
-    val projectTrustedState = super.getProjectTrustedState(locatedProject)
-    if (projectTrustedState == ThreeState.YES) {
-      TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log(locatedProject.project)
-    }
-    return projectTrustedState
   }
 }
