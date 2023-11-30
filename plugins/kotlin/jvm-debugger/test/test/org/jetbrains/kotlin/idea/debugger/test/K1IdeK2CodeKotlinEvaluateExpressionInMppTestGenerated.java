@@ -189,6 +189,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextClassReceiversInMethod.kt");
             }
 
+            @TestMetadata("contextReceiverInsideWithLambda.kt")
+            public void testContextReceiverInsideWithLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextReceiverInsideWithLambda.kt");
+            }
+
             @TestMetadata("contextReceiversInFunction.kt")
             public void testContextReceiversInFunction() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/contextReceivers/contextReceiversInFunction.kt");

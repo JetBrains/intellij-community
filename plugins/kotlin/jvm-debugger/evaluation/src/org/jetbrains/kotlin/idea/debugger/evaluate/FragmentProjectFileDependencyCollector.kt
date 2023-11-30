@@ -54,13 +54,9 @@ private fun analyzeCalls(
             val descriptor = resolvedCall.resultingDescriptor
 
             fun processClassReceiver(receiver: ReceiverValue?) {
-                if (receiver is ContextClassReceiver || receiver is ImplicitClassReceiver && receiver.classDescriptor.visibility == DescriptorVisibilities.LOCAL) {
-                    val declarationDescriptor = (receiver as? ImplicitReceiver)?.declarationDescriptor ?: return
-                    val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
-                        project, declarationDescriptor
-                    ) ?: return
-                    files.add(declaration.containingFile as KtFile)
-                }
+                val declarationDescriptor = (receiver as? ImplicitReceiver)?.declarationDescriptor ?: return
+                val declaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, declarationDescriptor) ?: return
+                files.add(declaration.containingFile as KtFile)
             }
 
             // If the implicit receiver of a call is a context class receiver,
@@ -85,7 +81,9 @@ private fun analyzeCalls(
             //   8: return
 
             with(resolvedCall) {
-                processClassReceiver(dispatchReceiver)
+                dispatchReceiver.takeIf {
+                    it is ContextClassReceiver || it is ImplicitClassReceiver && it.classDescriptor.visibility == DescriptorVisibilities.LOCAL
+                }?.let { processClassReceiver(it) }
                 contextReceivers.forEach(::processClassReceiver)
             }
 
