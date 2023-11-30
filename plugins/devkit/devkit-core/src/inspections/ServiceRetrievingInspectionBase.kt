@@ -42,7 +42,7 @@ internal abstract class ServiceRetrievingInspectionBase(
     return ServiceRetrievingInfo(howServiceRetrieved, serviceClass)
   }
 
-  protected fun howServiceRetrieved(getServiceCandidate: UCallExpression): Service.Level? {
+  private fun howServiceRetrieved(getServiceCandidate: UCallExpression): Service.Level? {
     if (serviceKtFileMethods.uCallMatches(getServiceCandidate)) return Service.Level.APP
     val receiverType = getServiceCandidate.receiver?.getExpressionType() ?: return null
     val aClass = (receiverType as? PsiClassType)?.resolve() ?: return null
