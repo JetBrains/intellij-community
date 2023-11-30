@@ -45,7 +45,7 @@ object TrustedProjects {
   }
 
   /**
-   * Checks that IDEA is loaded in safe mode. In this mode, trusted checks aren't needed at all.
+   * Checks that IDEA is loaded with safe environment. In this mode, trusted checks aren't needed at all.
    */
   fun isTrustedCheckDisabled(): Boolean =
     ApplicationManager.getApplication().isUnitTestMode ||
