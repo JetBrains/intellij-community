@@ -17,6 +17,7 @@ import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,9 +48,9 @@ public final class ModuleWithDependentsScope extends GlobalSearchScope implement
 
     ModuleIndex index = getModuleIndex(project);
 
-    List<Module> walkingQueue = new ArrayList<>(modules);
-    for (int i = 0; i < walkingQueue.size(); i++) {
-      Module current = walkingQueue.get(i);
+    Collection<Module> walkingQueue = new HashSetQueue<>();
+    walkingQueue.addAll(myRootModules);
+    for (Module current : walkingQueue) {
       if (current.getProject() != project) {
         throw new IllegalArgumentException(
           "All modules must belong to " + project + "; but got " + current + " from " + current.getProject());
