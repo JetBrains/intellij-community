@@ -30,6 +30,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
@@ -180,7 +181,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private JComponent myTargetComponent;
   private boolean myReservePlaceAutoPopupIcon = true;
   private boolean myShowSeparatorTitles;
-  private final PopupHandler myPopupHandler;
   private Image myCachedImage;
 
   private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(this);
@@ -202,17 +202,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                            boolean horizontal,
                            boolean decorateButtons,
                            boolean customizable) {
-    this(place, actionGroup, horizontal, decorateButtons, customizable, null, null);
-  }
-
-
-  public ActionToolbarImpl(@NotNull String place,
-                           @NotNull ActionGroup actionGroup,
-                           boolean horizontal,
-                           boolean decorateButtons,
-                           boolean customizable,
-                           @Nullable ActionGroup popupActionGroup,
-                           @Nullable String popupActionId) {
     super(null);
     if (ActionPlaces.UNKNOWN.equals(place) || place.isEmpty()) {
       LOG.warn("Please do not use ActionPlaces.UNKNOWN or the empty place. " +
@@ -269,19 +258,36 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                  AWTEvent.COMPONENT_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
     setMiniModeInner(false);
 
+    installPopupHandler(customizable, null, null);
+  }
+
+  protected void installPopupHandler(boolean customizable,
+                                     @Nullable ActionGroup popupActionGroup,
+                                     @Nullable String popupActionId) {
+    PopupHandler popupHandler;
     if (customizable) {
-      if (popupActionGroup == null) {
-        myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(this);
-      }
-      else {
-        myPopupHandler = CustomizationUtil.installToolbarCustomizationHandler(popupActionGroup, popupActionId, this.getComponent(), place);
-      }
+      popupHandler = popupActionGroup == null
+                     ? CustomizationUtil.installToolbarCustomizationHandler(this)
+                     : CustomizationUtil.installToolbarCustomizationHandler(popupActionGroup, popupActionId, getComponent(), myPlace);
     }
     else {
-      myPopupHandler = popupActionGroup != null
-                       ? PopupHandler.installPopupMenu(this.getComponent(), popupActionGroup, place)
-                       : null;
+      popupHandler = popupActionGroup != null
+                     ? PopupHandler.installPopupMenu(getComponent(), popupActionGroup, myPlace)
+                     : null;
     }
+    if (popupHandler == null) return;
+    new ComponentTreeWatcher(ArrayUtil.EMPTY_CLASS_ARRAY) {
+      @Override
+      protected void processComponent(Component comp) {
+        if (ClientProperty.isTrue(comp, DO_NOT_ADD_CUSTOMIZATION_HANDLER)) return;
+        if (ContainerUtil.exists(comp.getMouseListeners(), listener -> listener instanceof PopupHandler)) return;
+        comp.addMouseListener(popupHandler);
+      }
+
+      @Override
+      protected void unprocessComponent(Component component) {
+      }
+    }.register(this);
   }
 
   @Override
@@ -514,12 +520,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   protected void addImpl(Component comp, Object constraints, int index) {
     super.addImpl(comp, constraints, index);
-    if (myPopupHandler != null && !ContainerUtil.exists(comp.getMouseListeners(), listener -> listener instanceof PopupHandler)) {
-      UIUtil.uiTraverser(comp).traverse().forEach(component -> {
-        if (ClientProperty.isTrue(component, DO_NOT_ADD_CUSTOMIZATION_HANDLER)) return;
-        component.addMouseListener(myPopupHandler);
-      });
-    }
   }
 
   protected final @NotNull JComponent getCustomComponent(@NotNull AnAction action) {

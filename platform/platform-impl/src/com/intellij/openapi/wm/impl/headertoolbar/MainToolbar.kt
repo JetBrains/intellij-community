@@ -292,12 +292,13 @@ private fun addWidget(widget: JComponent, parent: JComponent, position: Horizont
 }
 
 internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
-  : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, true, customizationGroup, MAIN_TOOLBAR_ID) {
+  : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true, false, false) {
   private val iconUpdater = HeaderIconUpdater()
 
   init {
     updateFont()
     ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
+    installPopupHandler(true, customizationGroup, MAIN_TOOLBAR_ID)
   }
 
   override fun updateActionsOnAdd() {
