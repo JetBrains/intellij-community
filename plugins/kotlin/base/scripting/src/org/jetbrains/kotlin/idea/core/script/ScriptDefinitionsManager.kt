@@ -150,7 +150,9 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
         @Volatile
         private var definitions: List<ScriptDefinition>? = null
 
-        private val failedContributorsHashes = ConcurrentHashMap.newKeySet<Int>()
+        private val activatedDefinitionSources: MutableSet<ScriptDefinitionsSource> = ConcurrentHashMap.newKeySet()
+
+        private val failedContributorsHashes: MutableSet<Int> = ConcurrentHashMap.newKeySet()
 
 
         override fun findDefinition(script: SourceCode): ScriptDefinition? {
@@ -216,6 +218,8 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
                 definitions = loadedDefinitions
             }
 
+            activatedDefinitionSources.addAll(sources)
+
             applyDefinitionsUpdate() // <== acquires read-action inside
 
             return loadedDefinitions ?: emptyList()
@@ -227,8 +231,16 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
                 return getOrLoadDefinitions().asSequence().filter { scriptingSettings.isScriptDefinitionEnabled(it) }
             }
 
+        private fun allDefinitionSourcesContributedToCache(): Boolean = activatedDefinitionSources.containsAll(getSources())
+
         private fun getOrLoadDefinitions(): List<ScriptDefinition> {
-            return definitions ?: reloadDefinitionsInternal(getSources())
+            // This is not thread safe, but if the condition changes by the time of the "then do this" it's ok - we just refresh the data.
+            // Taking local lock here is dangerous due to the possible global read-lock acquisition (hence, the deadlock). See KTIJ-27838.
+            return if (definitions == null || !allDefinitionSourcesContributedToCache()) {
+                reloadDefinitionsInternal(getSources())
+            } else {
+                definitions ?: error("'definitions' became null after they weren't")
+            }
         }
 
         override fun reloadScriptDefinitionsIfNeeded(): List<ScriptDefinition> = getOrLoadDefinitions()
@@ -281,6 +293,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
 
             definitionsBySource.clear()
             definitions = null
+            activatedDefinitionSources.clear()
             failedContributorsHashes.clear()
         }
     }

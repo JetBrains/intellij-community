@@ -22,12 +22,18 @@ class ScriptDefinitionsManagerTest {
     private val project = DummyProject.getInstance()
     private val manager = ScriptDefinitionsManagerUnderTest(project)
 
-    private object SourceA : TestSource()
-    private object SourceB : TestSource()
+    private val sourceA = TestSource()
+    private val sourceB = TestSource()
 
-    private object DefinitionA : TestDefinition("A")
-    private object DefinitionB : TestDefinition("B")
-    private object DefinitionC : TestDefinition("C")
+    private val definitionA = TestDefinition("A")
+    private val definitionB = TestDefinition("B")
+    private val definitionC = TestDefinition("C")
+
+    private val script = object : SourceCode {
+        override val locationId: String = "script.kts"
+        override val name: String = ""
+        override val text: String = "println()"
+    }
 
 
     @Test
@@ -35,31 +41,54 @@ class ScriptDefinitionsManagerTest {
         assertTrue(manager.reloadDefinitionsBy(TestSource()).isEmpty())
 
         assertEquals(
-            listOf(DefinitionA, DefinitionB),
-            manager.reloadDefinitionsBy(TestSource().returning(DefinitionA, DefinitionB))
+            listOf(definitionA, definitionB),
+            manager.reloadDefinitionsBy(TestSource().returning(definitionA, definitionB))
         )
+    }
+
+    @Test
+    fun `Search for definition triggers sources not yet contributed to cache`() {
+        val definitionToLoad = TestDefinition("B") { true }
+
+        manager.definitionSources = listOf(
+            sourceA.returning(TestDefinition("A") { false }),
+            sourceB.returning(definitionToLoad)
+        )
+
+        manager.reloadDefinitionsBy(sourceA) // DefinitionA is supposed to be cached, DefinitionB not
+        assertEquals(definitionToLoad, manager.findDefinition(script))
+    }
+
+    @Test
+    fun `Reloading keeps working after all sources contributed nothing`() {
+        manager.definitionSources = listOf(sourceA)
+        assertNull(manager.findDefinition(script))
+
+        val definitionToLoad = TestDefinition("A") { true }
+        manager.definitionSources = listOf(sourceA.returning(definitionToLoad)) // the same sources, but now A can load a definition
+        assertEquals(definitionToLoad, manager.findDefinition(script))
     }
 
     @Test
     fun `Only requested source loads its definitions`() {
         assertEquals(
-            listOf(DefinitionA, DefinitionB),
-            manager.reloadDefinitionsBy(SourceA.returning(DefinitionA, DefinitionB))
+            listOf(definitionA, definitionB),
+            manager.reloadDefinitionsBy(sourceA.returning(definitionA, definitionB))
         )
 
         assertEquals(
-            listOf(DefinitionA, DefinitionB, DefinitionC),
-            manager.reloadDefinitionsBy(SourceB.returning(DefinitionC))
+            listOf(definitionA, definitionB, definitionC),
+            manager.reloadDefinitionsBy(sourceB.returning(definitionC))
         )
 
         assertEquals(
-            listOf(DefinitionB, DefinitionC),
-            manager.reloadDefinitionsBy(SourceA.returning(DefinitionB))
+            listOf(definitionB, definitionC),
+            manager.reloadDefinitionsBy(sourceA.returning(definitionB))
         )
 
         assertEquals(
-            listOf(DefinitionB),
-            manager.reloadDefinitionsBy(SourceB.returning())
+            listOf(definitionB),
+            manager.reloadDefinitionsBy(sourceB.returning())
         )
     }
 
@@ -67,25 +96,25 @@ class ScriptDefinitionsManagerTest {
     fun `Source order is respected`() {
         val managerWithABOrder = ScriptDefinitionsManagerUnderTest(project).apply {
             definitionSources = listOf(
-                SourceA.returning(DefinitionA),
-                SourceB.returning(DefinitionB, DefinitionC),
+                sourceA.returning(definitionA),
+                sourceB.returning(definitionB, definitionC),
             )
         }
 
         assertEquals(
-            listOf(DefinitionA, DefinitionB, DefinitionC),
+            listOf(definitionA, definitionB, definitionC),
             managerWithABOrder.getAllDefinitions()
         )
 
         val managerWithBAOrder = ScriptDefinitionsManagerUnderTest(project).apply {
             definitionSources = listOf(
-                SourceB.returning(DefinitionB, DefinitionC),
-                SourceA.returning(DefinitionA),
+                sourceB.returning(definitionB, definitionC),
+                sourceA.returning(definitionA),
             )
         }
 
         assertEquals(
-            listOf(DefinitionB, DefinitionC, DefinitionA),
+            listOf(definitionB, definitionC, definitionA),
             managerWithBAOrder.reloadScriptDefinitions()
         )
     }
@@ -93,29 +122,29 @@ class ScriptDefinitionsManagerTest {
     @Test
     fun `Cached definitions used until reloaded`() {
         manager.definitionSources = listOf(
-            SourceA.returning(DefinitionA),
-            SourceB.returning(DefinitionB),
+            sourceA.returning(definitionA),
+            sourceB.returning(definitionB),
         )
 
         assertEquals(
-            listOf(DefinitionA, DefinitionB),
+            listOf(definitionA, definitionB),
             manager.getAllDefinitions()
         )
 
         manager.definitionSources = listOf(
-            SourceA.returning(DefinitionA),
-            SourceB.returning(DefinitionB, DefinitionC /* appeared */),
+            sourceA.returning(definitionA),
+            sourceB.returning(definitionB, definitionC /* appeared */),
         )
 
         assertEquals(
-            listOf(DefinitionA, DefinitionB), /* still the same list */
+            listOf(definitionA, definitionB), /* still the same list */
             manager.getAllDefinitions()
         )
 
         manager.reloadScriptDefinitions()
 
         assertEquals(
-            listOf(DefinitionA, DefinitionB, DefinitionC /* now */),
+            listOf(definitionA, definitionB, definitionC /* now */),
             manager.getAllDefinitions()
         )
     }
@@ -123,28 +152,28 @@ class ScriptDefinitionsManagerTest {
     @Test
     fun `Reordering applied after reload`() {
         manager.definitionSources = listOf(
-            SourceA.returning(DefinitionA),
-            SourceB.returning(DefinitionB, DefinitionC),
+            sourceA.returning(definitionA),
+            sourceB.returning(definitionB, definitionC),
         )
 
         assertEquals(
-            listOf(DefinitionA, DefinitionB, DefinitionC),
+            listOf(definitionA, definitionB, definitionC),
             manager.getAllDefinitions()
         )
 
         manager.settings = KotlinScriptingSettings(project).apply {
-            setOrder(DefinitionC, 0)
-            setOrder(DefinitionA, 1)
-            setOrder(DefinitionB, 2)
+            setOrder(definitionC, 0)
+            setOrder(definitionA, 1)
+            setOrder(definitionB, 2)
         }
 
         assertEquals(
-            listOf(DefinitionA, DefinitionB, DefinitionC), /* no effect */
+            listOf(definitionA, definitionB, definitionC), /* no effect */
             manager.getAllDefinitions()
         )
 
         assertEquals(
-            listOf(DefinitionC, DefinitionA, DefinitionB), /* now */
+            listOf(definitionC, definitionA, definitionB), /* now */
             manager.reloadScriptDefinitions()
         )
     }
@@ -153,23 +182,23 @@ class ScriptDefinitionsManagerTest {
     @Test
     fun `Deactivation affects only current definitions`() {
         manager.definitionSources = listOf(
-            SourceA.returning(DefinitionA),
-            SourceB.returning(DefinitionB, DefinitionC),
+            sourceA.returning(definitionA),
+            sourceB.returning(definitionB, definitionC),
         )
 
         manager.settings = KotlinScriptingSettings(project).apply {
-            setEnabled(DefinitionA, true)
-            setEnabled(DefinitionB, false)
-            setEnabled(DefinitionC, true)
+            setEnabled(definitionA, true)
+            setEnabled(definitionB, false)
+            setEnabled(definitionC, true)
         }
 
         assertEquals(
-            listOf(DefinitionA, DefinitionB, DefinitionC),
+            listOf(definitionA, definitionB, definitionC),
             manager.getAllDefinitions()
         )
 
         assertEquals(
-            listOf(DefinitionA, DefinitionC),
+            listOf(definitionA, definitionC),
             manager.currentDefinitions.toList()
         )
     }
@@ -180,12 +209,6 @@ class ScriptDefinitionsManagerTest {
         val definitionB = TestDefinition("B") { false }
         val definitionC = TestDefinition("C") { true }
         val definitionD = TestDefinition("D") { true }
-
-        val script = object : SourceCode {
-            override val locationId: String = "script.kts"
-            override val name: String = ""
-            override val text: String = "println()"
-        }
 
         manager.definitionSources = listOf(
             TestSource().returning(definitionA, definitionB, definitionC, definitionD)
@@ -198,12 +221,6 @@ class ScriptDefinitionsManagerTest {
     fun `None of non-matching definitions is provided at search`() {
         val definitionA = TestDefinition("A") { false }
         val definitionB = TestDefinition("B") { false }
-
-        val script = object : SourceCode {
-            override val locationId: String = "script.kts"
-            override val name: String = ""
-            override val text: String = "println()"
-        }
 
         manager.definitionSources = listOf(
             TestSource().returning(definitionA, definitionB)
@@ -218,16 +235,10 @@ class ScriptDefinitionsManagerTest {
         val definitionA = TestDefinition("A") { true }
         val definitionB = TestDefinition("B") { true }
 
-        val script = object : SourceCode {
-            override val locationId: String = "script.kts"
-            override val name: String = ""
-            override val text: String = "println()"
-        }
-
         manager.definitionSources = listOf(
             /* both match */
-            SourceA.returning(definitionA),
-            SourceB.returning(definitionB),
+            sourceA.returning(definitionA),
+            sourceB.returning(definitionB),
         )
 
         assertTrue(manager.findDefinition(script)?.name == "A")
@@ -255,8 +266,8 @@ class ScriptDefinitionsManagerTest {
     @Test
     fun `Provided file extensions match known definitions`() {
         manager.definitionSources = listOf(
-            SourceA.returning(TestDefinition("A", "a.kts"), TestDefinition("AA", "aa.kts")),
-            SourceB.returning(TestDefinition("B", "b.kts")),
+            sourceA.returning(TestDefinition("A", "a.kts"), TestDefinition("AA", "aa.kts")),
+            sourceB.returning(TestDefinition("B", "b.kts")),
         )
 
         val extensions = manager.getKnownFilenameExtensions()
@@ -268,20 +279,14 @@ class ScriptDefinitionsManagerTest {
     fun `Matching definition defines whether the code is script`() {
 
         manager.definitionSources = listOf(
-            SourceA.returning(TestDefinition("A") { true })
+            sourceA.returning(TestDefinition("A") { true })
         )
-
-        val script = object : SourceCode {
-            override val locationId: String = "script.kts"
-            override val name: String = ""
-            override val text: String = "println()"
-        }
 
         assertTrue(manager.isScript(script))
 
         manager.definitionSources = listOf(
-            SourceA.returning(TestDefinition("A") { false }),
-            SourceB.returning(TestDefinition("B") { false })
+            sourceA.returning(TestDefinition("A") { false }),
+            sourceB.returning(TestDefinition("B") { false })
         )
         manager.reloadScriptDefinitions()
 
