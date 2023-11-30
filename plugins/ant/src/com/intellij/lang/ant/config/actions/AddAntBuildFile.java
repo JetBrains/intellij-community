@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.AntBundle;
@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public final class AddAntBuildFile extends AnAction {
+final class AddAntBuildFile extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
@@ -57,23 +57,23 @@ public final class AddAntBuildFile extends AnAction {
       }
       catch (AntNoFileException ex) {
         String message = ex.getMessage();
-        if (message == null || message.length() == 0) {
+        if (message == null || message.isEmpty()) {
           message = AntBundle.message("cannot.add.build.files.from.excluded.directories.error.message", ex.getFile().getPresentableUrl());
         }
-        if (errors.length() > 0) {
+        if (!errors.isEmpty()) {
           errors.append("\n");
         }
         errors.append(message);
       }
     }
 
-    if (errors.length() > 0) {
+    if (!errors.isEmpty()) {
       Messages.showWarningDialog(project, errors.toString(), AntBundle.message("cannot.add.build.file.dialog.title"));
     }
     if (filesAdded > 0) {
       ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD);
       if (window == null) {
-        window = ActivateAntToolWindowAction.Manager.createToolWindow(project);
+        window = ActivateAntToolWindowAction.Manager.INSTANCE.createToolWindow(project);
       }
       window.activate(null);
     }

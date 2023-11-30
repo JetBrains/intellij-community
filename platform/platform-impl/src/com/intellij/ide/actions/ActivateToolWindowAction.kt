@@ -1,213 +1,187 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actions;
+package com.intellij.ide.actions
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
-import com.intellij.toolWindow.ToolWindowEventSource;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.SizedIcon;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.concurrency.SynchronizedClearableLazy;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.util.function.Supplier;
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.toolWindow.ToolWindowEventSource
+import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import com.intellij.ui.SizedIcon
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.concurrency.SynchronizedClearableLazy
+import org.jetbrains.annotations.NonNls
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import java.lang.ref.Reference
+import java.lang.ref.WeakReference
 
 /**
  * Toggles tool window visibility.
  * Usually shown in View|Tool-windows submenu.
  * Dynamically registered in Settings|Keymap for each newly registered tool window.
  */
-public class ActivateToolWindowAction extends DumbAwareAction implements MainMenuPresentationAware, ActionRemoteBehaviorSpecification.Frontend {
-  private final String myToolWindowId;
+open class ActivateToolWindowAction protected constructor(val toolWindowId: String)
+  : DumbAwareAction(), MainMenuPresentationAware, ActionRemoteBehaviorSpecification.Frontend {
+  companion object {
+    @JvmStatic
+    fun ensureToolWindowActionRegistered(toolWindow: ToolWindow, actionManager: ActionManager) {
+      val actionId = getActionIdForToolWindow(toolWindow.id)
+      var action = actionManager.getAction(actionId)
+      if (action == null) {
+        action = ActivateToolWindowAction(toolWindow.id)
+        actionManager.registerAction(actionId, action)
+        updatePresentation(action.getTemplatePresentation(), toolWindow)
+      }
+    }
 
-  protected ActivateToolWindowAction(@NotNull String toolWindowId) {
-    myToolWindowId = toolWindowId;
-  }
+    @JvmStatic
+    fun unregister(id: String) {
+      ActionManager.getInstance().unregisterAction(getActionIdForToolWindow(id))
+    }
 
-  public @NotNull String getToolWindowId() {
-    return myToolWindowId;
-  }
+    @JvmStatic
+    fun updateToolWindowActionPresentation(toolWindow: ToolWindow) {
+      val action = ActionManager.getInstance().getAction(getActionIdForToolWindow(toolWindow.id))
+      if (action is ActivateToolWindowAction) {
+        updatePresentation(action.getTemplatePresentation(), toolWindow)
+      }
+    }
 
-  @Override
-  public boolean alwaysShowIconInMainMenu() {
-    return true;
-  }
+    /**
+     * This is the "rule" method constructs `ID` of the action for activating tool window
+     * with specified `ID`.
+     *
+     * @param id `id` of tool window to be activated.
+     */
+    @JvmStatic
+    fun getActionIdForToolWindow(id: String): @NonNls String {
+      return "Activate" + id.replace(" ".toRegex(), "") + "ToolWindow"
+    }
 
-  public static void ensureToolWindowActionRegistered(@NotNull ToolWindow toolWindow, @NotNull ActionManager actionManager) {
-    String actionId = getActionIdForToolWindow(toolWindow.getId());
-    AnAction action = actionManager.getAction(actionId);
-    if (action == null) {
-      actionManager.registerAction(actionId, new ActivateToolWindowAction(toolWindow.getId()));
-      updateToolWindowActionPresentation(toolWindow);
+    /**
+     * @return mnemonic for action if it has Alt+digit/Meta+digit shortcut.
+     * Otherwise, the method returns `-1`.
+     * Meta-mask is OK for Mac OS X user, because Alt+digit types strange characters into the editor.
+     */
+    @JvmStatic
+    fun getMnemonicForToolWindow(toolWindowId: String): Int {
+      val activeKeymap = KeymapManager.getInstance().activeKeymap
+      for (shortcut in activeKeymap.getShortcuts(getActionIdForToolWindow(toolWindowId))) {
+        if (shortcut !is KeyboardShortcut) {
+          continue
+        }
+
+        val keyStroke = shortcut.firstKeyStroke
+        val modifiers = keyStroke.modifiers
+        @Suppress("DEPRECATION")
+        if (modifiers == (InputEvent.ALT_DOWN_MASK or InputEvent.ALT_MASK) ||
+            modifiers == InputEvent.ALT_MASK ||
+            modifiers == InputEvent.ALT_DOWN_MASK ||
+            modifiers == InputEvent.META_DOWN_MASK or InputEvent.META_MASK ||
+            modifiers == InputEvent.META_MASK ||
+            modifiers == InputEvent.META_DOWN_MASK) {
+          val keyCode = keyStroke.keyCode
+          if (KeyEvent.VK_0 <= keyCode && keyCode <= KeyEvent.VK_9) {
+            return ('0'.code + keyCode - KeyEvent.VK_0).toChar().code
+          }
+        }
+      }
+      return -1
     }
   }
 
-  public static void unregister(@NotNull String id) {
-    ActionManager.getInstance().unregisterAction(getActionIdForToolWindow(id));
-  }
+  override fun alwaysShowIconInMainMenu(): Boolean = true
 
-  public static void updateToolWindowActionPresentation(@NotNull ToolWindow toolWindow) {
-    AnAction action = ActionManager.getInstance().getAction(getActionIdForToolWindow(toolWindow.getId()));
-    if (action instanceof ActivateToolWindowAction) {
-      updatePresentation(action.getTemplatePresentation(), toolWindow);
-    }
-  }
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    Project project = getEventProject(e);
-    Presentation presentation = e.getPresentation();
-    if (project == null || project.isDisposed()) {
-      presentation.setEnabledAndVisible(false);
-      return;
+  override fun update(e: AnActionEvent) {
+    val project = getEventProject(e)?.takeIf { !it.isDisposed }
+    val presentation = e.presentation
+    if (project == null) {
+      presentation.isEnabledAndVisible = false
+      return
     }
 
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(myToolWindowId);
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)
     if (toolWindow == null) {
-      presentation.setEnabledAndVisible(hasEmptyState(project));
+      presentation.isEnabledAndVisible = hasEmptyState(project)
     }
     else {
-      presentation.setVisible(true);
-      boolean available = toolWindow.isAvailable() || hasEmptyState(project);
-      if (e.getPlace().equals(ActionPlaces.POPUP)) {
-        presentation.setVisible(available);
+      presentation.isVisible = true
+      val available = toolWindow.isAvailable || hasEmptyState(project)
+      if (e.place == ActionPlaces.POPUP) {
+        presentation.isVisible = available
       }
       else {
-        presentation.setEnabled(available);
+        presentation.isEnabled = available
       }
 
-      updatePresentation(presentation, toolWindow);
+      updatePresentation(presentation, toolWindow)
     }
   }
 
-  protected boolean hasEmptyState(@NotNull Project project) {
-    return false;
-  }
+  protected open fun hasEmptyState(project: Project): Boolean = false
 
-  private static void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
-    Supplier<@NlsContexts.TabTitle String> title = toolWindow.getStripeTitleProvider();
-    presentation.setText(title);
-    presentation.setDescription(() -> IdeBundle.message("action.activate.tool.window", title.get()));
-    Icon toolWindowIcon = toolWindow.getIcon();
-    presentation.setIconSupplier(new SynchronizedClearableLazy<>(() -> {
-      Icon icon = toolWindowIcon;
-      if (icon instanceof ScalableIcon && ExperimentalUI.isNewUI()) {
-        icon = ((ScalableIcon)icon).scale(JBUIScale.scale(16f) / icon.getIconWidth());
-        return icon;
-      }
-      return icon == null ? null : new SizedIcon(icon, icon.getIconHeight(), icon.getIconHeight());
-    }));
-  }
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = getEventProject(e) ?: return
 
-  @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
-    Project project = getEventProject(e);
-    if (project == null) {
-      return;
+    val toolWindowManager = ToolWindowManager.getInstance(project)
+    val source = when {
+      e.inputEvent is KeyEvent -> ToolWindowEventSource.ActivateActionKeyboardShortcut
+      ActionPlaces.MAIN_MENU == e.place -> ToolWindowEventSource.ActivateActionMenu
+      ActionPlaces.ACTION_SEARCH == e.place -> ToolWindowEventSource.ActivateActionGotoAction
+      else -> ToolWindowEventSource.ActivateActionOther
     }
 
-    ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
-
-    ToolWindowEventSource source;
-    if (e.getInputEvent() instanceof KeyEvent) {
-      source = ToolWindowEventSource.ActivateActionKeyboardShortcut;
-    }
-    else if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
-      source = ToolWindowEventSource.ActivateActionMenu;
-    }
-    else if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
-      source = ToolWindowEventSource.ActivateActionGotoAction;
-    }
-    else {
-      source = ToolWindowEventSource.ActivateActionOther;
-    }
-    if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId())) {
-      ToolWindow toolWindow = windowManager.getToolWindow(myToolWindowId);
+    if (toolWindowManager.isEditorComponentActive || toolWindowId != toolWindowManager.activeToolWindowId) {
+      val toolWindow = toolWindowManager.getToolWindow(toolWindowId)
       if (toolWindow != null) {
-        if (hasEmptyState(project) && !toolWindow.isAvailable()) {
-          toolWindow.setAvailable(true);
+        if (hasEmptyState(project) && !toolWindow.isAvailable) {
+          toolWindow.isAvailable = true
         }
-        if (windowManager instanceof ToolWindowManagerImpl) {
-          ((ToolWindowManagerImpl)windowManager).activateToolWindow(myToolWindowId, null, true, source);
+        if (toolWindowManager is ToolWindowManagerImpl) {
+          toolWindowManager.activateToolWindow(id = toolWindowId, runnable = null, autoFocusContents = true, source = source)
         }
         else {
-          toolWindow.activate(null);
+          toolWindow.activate(null)
         }
       }
       else if (hasEmptyState(project)) {
-        createEmptyState(project);
+        createEmptyState(project)
       }
     }
-    else if (windowManager instanceof ToolWindowManagerImpl) {
-      ((ToolWindowManagerImpl)windowManager).hideToolWindow(myToolWindowId, false, true, false, source);
+    else if (toolWindowManager is ToolWindowManagerImpl) {
+      toolWindowManager.hideToolWindow(id = toolWindowId, hideSide = false, moveFocus = true, removeFromStripe = false, source = source)
     }
     else {
-      ToolWindow toolWindow = windowManager.getToolWindow(myToolWindowId);
-      if (toolWindow != null) {
-        toolWindow.hide(null);
-      }
+      toolWindowManager.getToolWindow(toolWindowId)?.hide(null)
     }
   }
 
-  protected void createEmptyState(Project project) {
+  protected open fun createEmptyState(project: Project) {
   }
+}
 
-  /**
-   * This is the "rule" method constructs {@code ID} of the action for activating tool window
-   * with specified {@code ID}.
-   *
-   * @param id {@code id} of tool window to be activated.
-   */
-  public static @NonNls @NotNull String getActionIdForToolWindow(@NotNull String id) {
-    return "Activate" + id.replaceAll(" ", "") + "ToolWindow";
-  }
-
-  /**
-   * @return mnemonic for action if it has Alt+digit/Meta+digit shortcut.
-   * Otherwise, the method returns {@code -1}.
-   * Meta-mask is OK for Mac OS X user, because Alt+digit types strange characters into the editor.
-   */
-  public static int getMnemonicForToolWindow(@NotNull String toolWindowId) {
-    Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-    for (Shortcut shortcut : activeKeymap.getShortcuts(getActionIdForToolWindow(toolWindowId))) {
-      if (!(shortcut instanceof KeyboardShortcut)) {
-        continue;
-      }
-
-      KeyStroke keyStroke = ((KeyboardShortcut)shortcut).getFirstKeyStroke();
-      int modifiers = keyStroke.getModifiers();
-      if (modifiers == (InputEvent.ALT_DOWN_MASK | InputEvent.ALT_MASK) ||
-          modifiers == InputEvent.ALT_MASK ||
-          modifiers == InputEvent.ALT_DOWN_MASK ||
-          modifiers == (InputEvent.META_DOWN_MASK | InputEvent.META_MASK) ||
-          modifiers == InputEvent.META_MASK ||
-          modifiers == InputEvent.META_DOWN_MASK) {
-        int keyCode = keyStroke.getKeyCode();
-        if (KeyEvent.VK_0 <= keyCode && keyCode <= KeyEvent.VK_9) {
-          return (char)('0' + keyCode - KeyEvent.VK_0);
-        }
-      }
+private fun updatePresentation(presentation: Presentation, toolWindow: ToolWindow) {
+  val title = toolWindow.stripeTitleProvider
+  presentation.setText(title)
+  presentation.setDescription { IdeBundle.message("action.activate.tool.window", title.get()) }
+  val projectRef: Reference<Project> = WeakReference(toolWindow.project)
+  val toolWindowId = toolWindow.id
+  presentation.iconSupplier = SynchronizedClearableLazy label@{
+    val project = projectRef.get()?.takeIf { !it.isDisposed } ?: return@label null
+    val icon = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)?.icon
+    if (icon is ScalableIcon && isNewUI()) {
+      return@label icon.scale(scale(16f) / icon.getIconWidth())
     }
-    return -1;
+    if (icon == null) null else SizedIcon(icon, icon.iconHeight, icon.iconHeight)
   }
 }

@@ -76,8 +76,7 @@ public abstract class ActionManager {
   public abstract @NonNls @Nullable String getId(@NotNull AnAction action);
 
   /**
-   * Registers the specified action with the specified id. Note that the IDE's keymaps
-   * processing deals only with registered actions.
+   * Registers the specified action with the specified id. Note that the IDE's keymaps processing deals only with registered actions.
    *
    * @param actionId Id to associate with the action
    * @param action   Action to register
