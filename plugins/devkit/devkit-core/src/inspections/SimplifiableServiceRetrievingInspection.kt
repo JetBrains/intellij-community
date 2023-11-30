@@ -55,10 +55,10 @@ internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspec
                               retrievingExpression: UExpression) {
     val qualifiedServiceName = replacementMethod.getContainingUClass()?.qualifiedName ?: return
     val shortServiceName = StringUtil.getShortName(qualifiedServiceName)
-    val message = DevKitBundle.message("inspection.simplifiable.service.retrieving.can.be.replaced.with", shortServiceName,
-                                       replacementMethod.name)
     val methodNameProvider = MethodNameProviders.forLanguage(retrievingExpression.lang)
     val methodName = methodNameProvider?.getName(replacementMethod) ?: replacementMethod.name
+    val message = DevKitBundle.message("inspection.simplifiable.service.retrieving.can.be.replaced.with", shortServiceName,
+                                       methodName)
     val fix = ReplaceWithGetInstanceCallFix(qualifiedServiceName, shortServiceName, methodName, howServiceRetrieved)
     when (retrievingExpression) {
       is UQualifiedReferenceExpression -> holder.registerUProblem(retrievingExpression, message, fixes = arrayOf(fix))
