@@ -38,6 +38,8 @@ import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import kotlinx.coroutines.flow.MutableStateFlow;
 import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.NonNls;
