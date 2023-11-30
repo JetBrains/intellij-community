@@ -23,7 +23,7 @@ abstract class TextEditorCache<T>(private val project: Project, private val scop
   abstract fun useHeapCache(): Boolean
 
   companion object {
-    fun contentHash(document: Document): Int = Hashing.komihash5_0().hashCharsToInt(document.immutableCharSequence)
+    fun Document.contentHash(): Int = Hashing.komihash5_0().hashCharsToInt(this.immutableCharSequence)
     fun cachePath(): Path = PathManager.getSystemDir().resolve("editor")
   }
 

@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY
-import com.intellij.openapi.fileEditor.impl.text.TextEditorCache
+import com.intellij.openapi.fileEditor.impl.text.TextEditorCache.Companion.contentHash
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil.readINT
@@ -59,7 +59,7 @@ internal class FoldingState(private val contentHash: Int, private val regions: L
 
   @RequiresEdt
   fun applyState(document: Document, foldingModel: FoldingModelEx) {
-    if (contentHash == TextEditorCache.contentHash(document)) {
+    if (contentHash == document.contentHash()) {
       foldingModel.runBatchFoldingOperationDoNotCollapseCaret {
         var zombieRaised = false
         for ((start, end, placeholder, neverExpands, isExpanded) in regions) {

@@ -9,6 +9,7 @@ import com.intellij.codeInsight.codeVision.ui.model.PlaceholderCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.grave.CodeVisionGrave
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
@@ -318,7 +319,7 @@ open class CodeVisionHost(val project: Project) {
 
     var recalculateWhenVisible = false
 
-    var previousLenses: List<Pair<TextRange, CodeVisionEntry>> = ArrayList()
+    var previousLenses: List<Pair<TextRange, CodeVisionEntry>> = context.zombies
     val openTime = System.nanoTime()
     editor.putUserData(editorTrackingStart, openTime)
     val mergingQueueFront = MergingUpdateQueue(CodeVisionHost::class.simpleName!!, 100, true, null, editorLifetime.createNestedDisposable(),
@@ -388,7 +389,10 @@ open class CodeVisionHost(val project: Project) {
       }
     }, editorLifetime.createNestedDisposable())
 
-    editorLifetime.onTermination { context.clearLenses() }
+    editorLifetime.onTermination {
+      editor.project?.service<CodeVisionGrave>()?.bury(editor, context.getValidPairResult())
+      context.clearLenses()
+    }
   }
 
   private fun calculateFrontendLenses(calcLifetime: Lifetime,
@@ -436,7 +440,6 @@ open class CodeVisionHost(val project: Project) {
           }
           return@forEach
         }
-        providerWhoWantToUpdate.add(it.id)
         runSafe("computeCodeVision for ${it.id}") {
           val state = it.computeCodeVision(editor, precalculatedUiThings[it.id])
           if (state.isReady.not()) {
@@ -452,7 +455,10 @@ open class CodeVisionHost(val project: Project) {
           }
           else {
             watcher.dropProvider(it.groupId)
-            results.addAll(state.result)
+            if (state.result.isNotEmpty()) {
+              results.addAll(state.result)
+              providerWhoWantToUpdate.add(it.id)
+            }
           }
         }
       }

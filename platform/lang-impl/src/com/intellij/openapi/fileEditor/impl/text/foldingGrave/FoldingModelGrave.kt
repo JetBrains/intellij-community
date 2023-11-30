@@ -83,7 +83,11 @@ internal class FoldingModelGrave(private val project: Project, private val scope
     if (document == null) {
       return
     }
-    val foldingState = FoldingState.create(contentHash(document), model.allFoldRegions)
+    val foldRegions = model.allFoldRegions
+    if (foldRegions.isEmpty()) {
+      return
+    }
+    val foldingState = FoldingState.create(document.contentHash(), foldRegions)
     scope.launch(Dispatchers.IO) {
       cache[file.id] = foldingState
       logger.debug { "stored folding state ${foldingState} for $file" }
