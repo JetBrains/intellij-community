@@ -123,9 +123,13 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
     val importResult = withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
       blockingContext {
-        project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).importStarted()
+        ApplicationManager.getApplication().messageBus.syncPublisher<MavenSyncListener>(MavenSyncListener.TOPIC).importModelStarted(
+          myProject)
         val importResult = runImportProjectActivity(projectsToImport, modelsProvider, parentActivity)
-        project.messageBus.syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImport.keys, importResult.createdModules)
+        ApplicationManager.getApplication().messageBus.syncPublisher<MavenSyncListener>(MavenSyncListener.TOPIC).importFinished(myProject,
+                                                                                                                                projectsToImport.keys,
+                                                                                                                                importResult.createdModules)
+
         importResult
       }
     }
@@ -301,6 +305,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
         val console = syncConsole
         console.startImport(spec)
+        ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).syncStarted(myProject)
         if (MavenUtil.enablePreimport()) {
           val result = console.runTask(MavenProjectBundle.message("maven.project.preimporting")) {
             return@runTask MavenProjectPreImporter.getInstance(myProject).preimport(projectsTree.rootProjectsFiles, modelsProvider,

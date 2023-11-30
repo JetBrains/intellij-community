@@ -872,4 +872,9 @@
   <projectListeners>
     <listener class="org.jetbrains.idea.maven.project.MavenDependencyUpdater" topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
   </projectListeners>
+  <applicationListeners>
+    <listener class="org.jetbrains.idea.maven.project.MavenImportListenerBridge"
+              topic="org.jetbrains.idea.maven.project.MavenSyncListener"
+              activeInTestMode="true" activeInHeadlessMode="true"/>
+  </applicationListeners>
 </idea-plugin>
