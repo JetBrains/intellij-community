@@ -482,7 +482,9 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
   override fun getShortcuts(actionId: String?): Array<Shortcut> {
     val result = getShortcutList(actionId = actionId,
                                  actionIdToShortcuts = actionIdToShortcuts.value,
-                                 actionBinding = { ActionManagerEx.getInstanceEx().getActionBinding(it) })
+                                 actionBinding = {
+                                   (ActionManager.getInstance() as? ActionManagerEx)?.getActionBinding(it)
+                                 })
     return if (result.isEmpty()) Shortcut.EMPTY_ARRAY else result.toTypedArray()
   }
 
