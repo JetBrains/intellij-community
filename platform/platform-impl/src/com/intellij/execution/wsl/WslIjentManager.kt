@@ -35,6 +35,7 @@ import java.io.IOException
  */
 @ApiStatus.Experimental
 @Service
+@Suppress("RAW_RUN_BLOCKING")  // This class is called by different legacy code, a ProgressIndicator is not always available.
 class WslIjentManager private constructor(private val scope: CoroutineScope) {
   private val myCache: MutableMap<String, SuspendingLazy<IjentApi>> = concurrentMapOf()
 
