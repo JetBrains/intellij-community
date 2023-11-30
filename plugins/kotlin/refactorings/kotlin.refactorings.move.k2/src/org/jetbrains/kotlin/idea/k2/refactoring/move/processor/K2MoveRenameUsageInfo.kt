@@ -19,10 +19,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
@@ -199,7 +196,7 @@ sealed class K2MoveRenameUsageInfo(
                     val ref = refExpr.mainReference
                     val declSymbol = ref.resolveToSymbol() as? KtDeclarationSymbol? ?: return@forEachDescendantOfType
                     val declPsi = declSymbol.psi as? KtNamedDeclaration ?: return@forEachDescendantOfType
-                    if (!declSymbol.isImported(refExpr.containingKtFile) && refExpr.isImportable() && declPsi.needsReferenceUpdate) {
+                    if (!declSymbol.isImported(refExpr.containingKtFile) && refExpr.isNonInstance() && declPsi.needsReferenceUpdate) {
                         val usageInfo = ref.createKotlinUsageInfo(declPsi, isInternal = true)
                         usages.add(usageInfo)
                         refExpr.internalUsageInfo = usageInfo
@@ -254,12 +251,16 @@ sealed class K2MoveRenameUsageInfo(
          * * `Foo.bar().fooBar` it will return true for `Foo` but false for `bar` and `fooBar`
          * * `x.bar()` it will return `bar` in case `bar` is an extension function
          */
-        private fun KtSimpleNameExpression.isImportable(): Boolean {
+        private fun KtSimpleNameExpression.isNonInstance(): Boolean {
             if (isUnqualifiable()) return true
             val baseExpression = (parent as? KtCallExpression) ?: this
             val parent = baseExpression.parent
             if (parent !is KtDotQualifiedExpression) return true
-            return parent.selectorExpression != baseExpression // check if this expression is first in qualified chain
+            val receiver = parent.receiverExpression
+            if (this == receiver) return true // if current ref is first in qualified chain the ref can be imported
+            return analyze(receiver) {
+                receiver.mainReference?.resolveToSymbol() is KtPackageSymbol
+            }
         }
 
         private fun KtSimpleNameReference.createKotlinUsageInfo(declaration: KtNamedDeclaration, isInternal: Boolean): K2MoveRenameUsageInfo {
