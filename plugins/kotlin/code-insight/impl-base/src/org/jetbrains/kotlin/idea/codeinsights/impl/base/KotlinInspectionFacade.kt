@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.psi.KtPrefixExpression
 interface KotlinInspectionFacade {
     val simplifyNegatedBinaryExpression: AbstractApplicabilityBasedInspection<KtPrefixExpression>
     val sortModifiers: AbstractApplicabilityBasedInspection<KtModifierList>
-    val removeEmptyClassBody: AbstractApplicabilityBasedInspection<KtClassBody>
 
     companion object {
         val instance: KotlinInspectionFacade

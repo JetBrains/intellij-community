@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 
-@Service
+@Service(Service.Level.PROJECT)
 class JavaFxDisposable(val project: Project) : Disposable {
   override fun dispose() {
   }

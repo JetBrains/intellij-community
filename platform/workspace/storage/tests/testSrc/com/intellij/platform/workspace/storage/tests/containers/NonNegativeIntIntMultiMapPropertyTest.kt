@@ -1,15 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests.containers
 
-import com.intellij.util.containers.MultiMap
 import com.intellij.platform.workspace.storage.impl.containers.MutableNonNegativeIntIntMultiMap
 import com.intellij.platform.workspace.storage.impl.containers.NonNegativeIntIntMultiMap
+import com.intellij.util.containers.MultiMap
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Assert.assertEquals
-import org.junit.Assert.fail
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.fail
 
 class NonNegativeIntIntMultiMapPropertyTest {
   @Test
@@ -30,7 +30,7 @@ class NonNegativeIntIntMultiMapPropertyTest {
     }
   }
 
-  class AddValues(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
+  internal class AddValues(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val amountOfValues = env.generateValue(Generator.integers(0, 10), null)
 
@@ -49,7 +49,7 @@ class NonNegativeIntIntMultiMapPropertyTest {
     }
   }
 
-  class GetValues(val myMap: NonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
+  internal class GetValues(val myMap: NonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectKey(env, workingMap) ?: return
 
@@ -61,7 +61,7 @@ class NonNegativeIntIntMultiMapPropertyTest {
     }
   }
 
-  class RemoveAll(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
+  internal class RemoveAll(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectKey(env, workingMap) ?: return
 
@@ -74,7 +74,7 @@ class NonNegativeIntIntMultiMapPropertyTest {
     }
   }
 
-  class RemoveKeyValue(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
+  internal class RemoveKeyValue(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectKey(env, workingMap) ?: return
       val values = workingMap.get(key).sorted()
@@ -90,7 +90,7 @@ class NonNegativeIntIntMultiMapPropertyTest {
     }
   }
 
-  class ToImmutable(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
+  internal class ToImmutable(val myMap: MutableNonNegativeIntIntMultiMap, val workingMap: MultiMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val immutable = myMap.toImmutable()
 
@@ -106,7 +106,6 @@ private fun assertCorrect(myMap: NonNegativeIntIntMultiMap, workingMap: MultiMap
   myMap.keys().forEach { key ->
     if (!workingMapCopy.containsKey(key) && !myMap[key].isEmpty()) {
       fail("Missing key: $key")
-      return
     }
 
     val actualKeys = myMap[key].toArray().sorted()

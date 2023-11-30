@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
-import org.jetbrains.kotlin.name.JvmNames
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -41,7 +41,7 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
 
         val originalPackageName = ktClsFile.packageFqName
         val filesFromFacade = SmartList<KtFile>()
-        KotlinJvmNameAnnotationIndex.processElements(baseName.substringBefore(JvmNames.MULTIFILE_PART_NAME_DELIMITER), prj, scope) {
+        KotlinJvmNameAnnotationIndex.processElements(baseName.substringBefore(JvmStandardClassIds.MULTIFILE_PART_NAME_DELIMITER), prj, scope) {
             ProgressManager.checkCanceled()
             if (it.parentOfType<KtFileAnnotationList>() != null) {
                 it.containingKtFile.takeIf { ktFile -> ktFile.packageFqName == originalPackageName }?.let(filesFromFacade::add)
@@ -50,8 +50,8 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
             true
         }
 
-        val partShortName = baseName.substringAfter(JvmNames.MULTIFILE_PART_NAME_DELIMITER)
-        if (baseName.contains(JvmNames.MULTIFILE_PART_NAME_DELIMITER)) {
+        val partShortName = baseName.substringAfter(JvmStandardClassIds.MULTIFILE_PART_NAME_DELIMITER)
+        if (baseName.contains(JvmStandardClassIds.MULTIFILE_PART_NAME_DELIMITER)) {
             for (ktFile in filesFromFacade) {
                 if (ktFile.isJvmMultifileClassFile && PackagePartClassUtils.getFilePartShortName(ktFile.name) == partShortName) {
                     return@lazy smartPointerManager.createSmartPsiElementPointer(ktFile)

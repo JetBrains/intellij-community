@@ -224,7 +224,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
 
   @Override
   protected InstancesWindowBase getInstancesWindow(@NotNull TypeInfo ref, XDebugSession debugSession) {
-    return new InstancesWindow(debugSession, limit -> ref.getInstances(limit), ref.name());
+    return new InstancesWindow(debugSession, limit -> ref.getInstances(limit), ((JavaTypeInfo)ref).getReferenceType());
   }
 
   @Override
@@ -323,8 +323,11 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         if (data != null) {
           final List<ObjectReference> newInstances = strategy.getNewInstances();
           data.getTrackedStacks().pinStacks(ref);
-          final InstancesWindow instancesWindow = new InstancesWindow(debugSession,
-                                                                      limit -> ContainerUtil.map(newInstances, JavaReferenceInfo::new), ref.name());
+          final InstancesWindow instancesWindow = new InstancesWindow(
+            debugSession,
+            limit -> ContainerUtil.map(newInstances, JavaReferenceInfo::new),
+            ref
+          );
           Disposer.register(instancesWindow.getDisposable(), () -> data.getTrackedStacks().unpinStacks(ref));
           instancesWindow.show();
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.project
 
@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.*
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.SLRUCache
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analyzer.ModuleInfo
@@ -86,8 +86,8 @@ class ResolveElementCache(
         CachedValuesManager.getManager(project).createCachedValue(
             CachedValueProvider {
                 CachedValueProvider.Result.create(
-                    ContainerUtil.createConcurrentWeakKeySoftValueMap(),
-                    cacheDependencies
+                  CollectionFactory.createConcurrentWeakKeySoftValueMap(),
+                  cacheDependencies
                 )
             },
             false
@@ -116,12 +116,9 @@ class ResolveElementCache(
     private val partialBodyResolveCache: CachedValue<SLRUCache<KtFile, ConcurrentMap<KtExpression, CachedPartialResolve>>> =
         CachedValuesManager.getManager(project).createCachedValue(
             CachedValueProvider {
-                val slruCache: SLRUCache<KtFile, ConcurrentMap<KtExpression, CachedPartialResolve>> =
-                    object : SLRUCache<KtFile, ConcurrentMap<KtExpression, CachedPartialResolve>>(20, 20) {
-                        override fun createValue(file: KtFile): ConcurrentMap<KtExpression, CachedPartialResolve> {
-                            return ContainerUtil.createConcurrentWeakKeySoftValueMap()
-                        }
-                    }
+                val slruCache = SLRUCache.slruCache<KtFile, ConcurrentMap<KtExpression, CachedPartialResolve>>(20, 20) {
+                    CollectionFactory.createConcurrentWeakKeySoftValueMap()
+                }
 
                 CachedValueProvider.Result.create(slruCache, cacheDependencies)
             },

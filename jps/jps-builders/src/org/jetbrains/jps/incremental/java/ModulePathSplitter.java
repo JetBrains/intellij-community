@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.util.Pair;
@@ -156,8 +156,7 @@ public final class ModulePathSplitter {
     return result;
   }
 
-  @NotNull
-  private ModuleInfo getModuleInfo(File f) {
+  private @NotNull ModuleInfo getModuleInfo(File f) {
     ModuleInfo info = myCache.get(f);
     if (info != null) {
       return info;
@@ -215,10 +214,8 @@ public final class ModulePathSplitter {
 
   private static final class ModuleInfo {
     static final ModuleInfo EMPTY = new ModuleInfo(null, false);
-    @Nullable
-    final String name;
-    @NotNull
-    final Collection<String> requires;
+    final @Nullable String name;
+    final @NotNull Collection<String> requires;
     private final boolean isAutomaticExploded;
 
     ModuleInfo(@Nullable String name, boolean isAutomaticExploded) {

@@ -8,8 +8,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.*;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -213,36 +213,74 @@ public interface Application extends ComponentManager {
   }
 
   /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
+   * Annotate the function with {@link RequiresReadLock} (in Java),
+   * or use {@link ThreadingAssertions#assertReadAccess()},
+   * or use {@link ThreadingAssertions#softAssertReadAccess} instead.
+   * </p>
    * Asserts that read access is allowed.
    */
+  @ApiStatus.Obsolete
   void assertReadAccessAllowed();
 
   /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
+   * Annotate the function with {@link RequiresWriteLock} (in Java) or use {@link ThreadingAssertions#assertWriteAccess()} instead.
+   * </p>
    * Asserts that write access is allowed.
    */
+  @ApiStatus.Obsolete
   void assertWriteAccessAllowed();
 
   /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
+   * Annotate the function with {@link RequiresReadLockAbsence} (in Java) or use {@link ThreadingAssertions#assertNoReadAccess()} instead.
+   * </p>
    * Asserts that read access is not allowed.
    */
   @ApiStatus.Experimental
+  @ApiStatus.Obsolete
   void assertReadAccessNotAllowed();
 
   /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
+   * Annotate the function with {@link RequiresEdt} (in Java) or use {@link ThreadingAssertions#assertEventDispatchThread()} instead.
+   * </p>
    * Asserts that the method is being called from the event dispatch thread.
    */
+  @ApiStatus.Obsolete
   void assertIsDispatchThread();
 
   /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
+   * Annotate the function with {@link RequiresBackgroundThread} (in Java) or use {@link ThreadingAssertions#assertBackgroundThread()} instead.
+   * </p>
    * Asserts that the method is being called from any thread outside EDT.
    */
   @ApiStatus.Experimental
+  @ApiStatus.Obsolete
   void assertIsNonDispatchThread();
 
   /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This function is obsolete because the threading assertions should not depend on presence of the {@code Application}.
+   * Use {@link ThreadingAssertions#assertWriteIntentReadAccess()} instead.
+   * </p>
    * Asserts that the method is being called from under the write-intent lock.
    */
   @ApiStatus.Experimental
+  @ApiStatus.Obsolete
   void assertWriteIntentLockAcquired();
 
   /**
@@ -257,7 +295,11 @@ public interface Application extends ComponentManager {
    * Saves all open documents, settings of all open projects, and application settings.
    *
    * @see #saveSettings()
+   * @deprecated Use {@link com.intellij.ide.SaveAndSyncHandler#scheduleSave)}
    */
+  @Deprecated
+  @ApiStatus.Internal
+  @RequiresEdt
   void saveAll();
 
   /**
@@ -618,6 +660,7 @@ public interface Application extends ComponentManager {
   }
 
   /** @deprecated bad name, use {@link #assertWriteIntentLockAcquired()} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @ApiStatus.Experimental
   default void assertIsWriteThread() {

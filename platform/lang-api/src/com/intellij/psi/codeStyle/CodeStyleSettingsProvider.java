@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.IdeLanguageCustomization;
@@ -30,8 +30,7 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
    * @return The custom settings object.
    */
   @Override
-  @Nullable
-  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+  public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return null;
   }
 
@@ -40,8 +39,7 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
    * {@link LanguageCodeStyleSettingsProvider#createConfigurable(CodeStyleSettings, CodeStyleSettings)} for language settings.
    */
   @Deprecated
-  @NotNull
-  public Configurable createSettingsPage(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
+  public @NotNull Configurable createSettingsPage(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     //noinspection ConstantConditions
     return null;
   }
@@ -55,8 +53,7 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
    *
    * @return The created code style configurable.
    */
-  @NotNull
-  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
+  public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     Configurable configurable = createSettingsPage(settings, modelSettings);
     if (configurable instanceof CodeStyleConfigurable) {
       return (CodeStyleConfigurable)configurable;
@@ -71,8 +68,7 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
    *
    * @return the display name of the configurable page.
    */
-  @Nullable
-  public @NlsContexts.ConfigurableName String getConfigurableDisplayName() {
+  public @Nullable @NlsContexts.ConfigurableName String getConfigurableDisplayName() {
     Language lang = getLanguage();
     return lang == null ? null : lang.getDisplayName();
   }
@@ -98,8 +94,7 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
    *
    * @return null by default.
    */
-  @Nullable
-  public Language getLanguage() {
+  public @Nullable Language getLanguage() {
     return null;
   }
 
@@ -108,14 +103,12 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
    *         is a part of a code style group or {@code null} if the configurable must be shown directly under "Code Style" settings node.
    * @see CodeStyleGroup
    */
-  @Nullable
-  public CodeStyleGroup getGroup() {
+  public @Nullable CodeStyleGroup getGroup() {
     return null;
   }
 
   private static final class LegacyConfigurableWrapper implements CodeStyleConfigurable {
-    @NotNull
-    private final Configurable myConfigurable;
+    private final @NotNull Configurable myConfigurable;
 
     private LegacyConfigurableWrapper(@NotNull Configurable configurable) {
       myConfigurable = configurable;
@@ -131,15 +124,13 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
       myConfigurable.apply();
     }
 
-    @Nls(capitalization = Nls.Capitalization.Title)
     @Override
-    public String getDisplayName() {
+    public @Nls(capitalization = Nls.Capitalization.Title) String getDisplayName() {
       return myConfigurable.getDisplayName();
     }
 
-    @Nullable
     @Override
-    public JComponent createComponent() {
+    public @Nullable JComponent createComponent() {
       return myConfigurable.createComponent();
     }
 

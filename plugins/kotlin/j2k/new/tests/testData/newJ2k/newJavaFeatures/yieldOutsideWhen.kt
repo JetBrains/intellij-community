@@ -5,7 +5,7 @@ internal class Test {
             |Cannot convert element: yield is not allowed outside switch expression
             |With text:
             |yield 1;
-            """
-        ).trimMargin()
+            """.trimMargin()
+        )
     }
 }

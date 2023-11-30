@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from markdown.extensions import Extension
@@ -21,20 +22,20 @@ class CodeHilite:
     options: dict[str, Any]
     def __init__(
         self,
-        src: Any | None = ...,
+        src: Incomplete | None = ...,
         *,
-        linenums: Any | None = ...,
+        linenums: Incomplete | None = ...,
         guess_lang: bool = ...,
         css_class: str = ...,
-        lang: Any | None = ...,
+        lang: Incomplete | None = ...,
         style: str = ...,
         noclasses: bool = ...,
         tab_length: int = ...,
-        hl_lines: Any | None = ...,
+        hl_lines: Incomplete | None = ...,
         use_pygments: bool = ...,
         **options: Any,
     ) -> None: ...
-    def hilite(self, shebang: bool = ...) -> str: ...
+    def hilite(self, shebang: bool = True) -> str: ...
 
 class HiliteTreeprocessor(Treeprocessor):
     def code_unescape(self, text): ...

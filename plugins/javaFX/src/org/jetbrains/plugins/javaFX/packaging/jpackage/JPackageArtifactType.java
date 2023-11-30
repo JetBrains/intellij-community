@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.packaging.jpackage;
 
 import com.intellij.icons.AllIcons;
@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * @author Bas Leijdekkers
  */
-public class JPackageArtifactType extends ArtifactType {
+public final class JPackageArtifactType extends ArtifactType {
 
   private JPackageArtifactType() {
     super("jpackage", () -> JavaFXBundle.message("platform.specific.package"));
@@ -83,9 +83,8 @@ public class JPackageArtifactType extends ArtifactType {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<? extends ArtifactTemplate> getNewArtifactTemplates(@NotNull PackagingElementResolvingContext context) {
+  public @NotNull List<? extends ArtifactTemplate> getNewArtifactTemplates(@NotNull PackagingElementResolvingContext context) {
     final List<Module> modules = new ArrayList<>();
     for (Module module : context.getModulesProvider().getModules()) {
       if (ModuleType.get(module) instanceof JavaModuleType) {
@@ -98,7 +97,7 @@ public class JPackageArtifactType extends ArtifactType {
     return Collections.singletonList(new JPackageArtifactType.JPackageArtifactTemplate(modules));
   }
 
-  private class JPackageArtifactTemplate extends ArtifactTemplate {
+  private final class JPackageArtifactTemplate extends ArtifactTemplate {
     private final List<Module> myModules;
 
     JPackageArtifactTemplate(List<Module> modules) {

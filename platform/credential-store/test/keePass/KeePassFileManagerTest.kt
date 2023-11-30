@@ -9,10 +9,10 @@ import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.delete
 import com.intellij.util.io.outputStream
-import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.junit.Test
 import java.util.*
+import kotlin.io.path.readText
 
 internal class KeePassFileManagerTest : BaseKeePassFileManagerTest() {
   @Test

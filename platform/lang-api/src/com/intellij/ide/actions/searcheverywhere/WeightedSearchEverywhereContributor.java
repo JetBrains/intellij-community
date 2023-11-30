@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -21,10 +21,9 @@ public interface WeightedSearchEverywhereContributor<I> extends SearchEverywhere
     fetchWeightedElements(pattern, progressIndicator, descriptor -> consumer.process(descriptor.getItem()));
   }
 
-  @NotNull
-  default ContributorSearchResult<? super FoundItemDescriptor<I>> searchWeightedElements(@NotNull String pattern,
-                                                                                         @NotNull ProgressIndicator progressIndicator,
-                                                                                         int elementsLimit) {
+  default @NotNull ContributorSearchResult<? super FoundItemDescriptor<I>> searchWeightedElements(@NotNull String pattern,
+                                                                                                  @NotNull ProgressIndicator progressIndicator,
+                                                                                                  int elementsLimit) {
     ContributorSearchResult.Builder<? super FoundItemDescriptor<I>> builder = ContributorSearchResult.builder();
     fetchWeightedElements(pattern, progressIndicator, descriptor -> {
       if (elementsLimit < 0 || builder.itemsCount() < elementsLimit) {
@@ -40,9 +39,8 @@ public interface WeightedSearchEverywhereContributor<I> extends SearchEverywhere
     return builder.build();
   }
 
-  @NotNull
-  default List<? super FoundItemDescriptor<I>> searchWeightedElements(@NotNull String pattern,
-                                                                      @NotNull ProgressIndicator progressIndicator) {
+  default @NotNull List<? super FoundItemDescriptor<I>> searchWeightedElements(@NotNull String pattern,
+                                                                               @NotNull ProgressIndicator progressIndicator) {
     List<? super FoundItemDescriptor<I>> res = new ArrayList<>();
     fetchWeightedElements(pattern, progressIndicator, res::add);
     return res;

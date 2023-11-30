@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ui.JreHiDpiUtil;
@@ -69,7 +69,7 @@ public final class ImageUtil {
                                                    double height,
                                                    int type,
                                                    @NotNull PaintUtil.RoundingMode rm) {
-    if (StartupUiUtil.isJreHiDPI(context)) {
+    if (StartupUiUtil.INSTANCE.isJreHiDPI(context)) {
       return new HiDPIImage(context, width, height, type, rm);
     }
     else {
@@ -238,7 +238,7 @@ public final class ImageUtil {
     if (image == null) {
       return null;
     }
-    if (StartupUiUtil.isJreHiDPI(ctx)) {
+    if (StartupUiUtil.INSTANCE.isJreHiDPI(ctx)) {
       return RetinaImage.createFrom(image, ctx.getScale(ScaleType.SYS_SCALE), null);
     }
     return image;
@@ -262,7 +262,7 @@ public final class ImageUtil {
     if (image == null) {
       return null;
     }
-    if (StartupUiUtil.isJreHiDPI(context)) {
+    if (StartupUiUtil.INSTANCE.isJreHiDPI(context)) {
       return new HiDPIImage(image, userWidth, userHeight, BufferedImage.TYPE_INT_ARGB);
     }
     return image;

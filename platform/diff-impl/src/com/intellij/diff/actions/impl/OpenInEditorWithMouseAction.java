@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.actions.impl;
 
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -67,7 +68,7 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
       return;
     }
 
-    if (e.getData(OpenInEditorAction.KEY) == null) {
+    if (e.getData(DiffDataKeys.DIFF_CONTEXT) == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
@@ -103,10 +104,9 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-
     MouseEvent inputEvent = (MouseEvent)e.getInputEvent();
-    OpenInEditorAction openInEditorAction = e.getRequiredData(OpenInEditorAction.KEY);
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Runnable callback = e.getData(OpenInEditorAction.AFTER_NAVIGATE_CALLBACK);
 
     Component component = inputEvent.getComponent();
     Point point = inputEvent.getPoint();
@@ -121,7 +121,7 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
     Navigatable navigatable = getNavigatable(editor, line);
     if (navigatable == null) return;
 
-    openInEditorAction.openEditor(project, navigatable);
+    OpenInEditorAction.openEditor(project, navigatable, callback);
   }
 
   @Nullable

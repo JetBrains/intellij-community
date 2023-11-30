@@ -2,38 +2,37 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalExecutorServiceManagerImpl
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.*
-import com.jediterm.terminal.model.JediTermDebouncerImpl
-import com.jediterm.terminal.model.JediTermTypeAheadModel
-import com.jediterm.terminal.model.StyleState
-import com.jediterm.terminal.model.TerminalTextBuffer
+import com.jediterm.terminal.model.*
+import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.awt.event.KeyEvent
+import java.util.concurrent.CopyOnWriteArrayList
 
-class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposable {
+class TerminalSession(settings: JBTerminalSystemSettingsProviderBase, val shellIntegration: ShellIntegration?) : Disposable {
   val model: TerminalModel
   lateinit var terminalStarter: TerminalStarter
 
   private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 
   private val textBuffer: TerminalTextBuffer
-  val controller: TerminalController
+  internal val controller: JediTerminal
   private val commandManager: ShellCommandManager
   private val typeAheadManager: TerminalTypeAheadManager
-  @Volatile
-  var shellIntegration: ShellIntegration? = null
+  private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
 
   init {
     val styleState = StyleState()
     styleState.setDefaultStyle(settings.defaultStyle)
-    textBuffer = TerminalTextBufferEx(80, 24, styleState)
+    textBuffer = TerminalTextBuffer(80, 24, styleState)
     model = TerminalModel(textBuffer, styleState)
-    controller = TerminalController(model, settings)
+    controller = JediTerminal(ModelUpdatingTerminalDisplay(model, settings), textBuffer, styleState)
 
     commandManager = ShellCommandManager(controller)
 
@@ -47,7 +46,19 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposab
     terminalStarter = TerminalStarter(controller, ttyConnector, TtyBasedArrayDataStream(ttyConnector), typeAheadManager, executorServiceManager)
     executorServiceManager.unboundedExecutorService.submit {
       terminalStarter.start()
+      try {
+        ttyConnector.close()
+      }
+      catch (ignored: Exception) {
+      }
+      for (terminationListener in terminationListeners) {
+        terminationListener.run()
+      }
     }
+  }
+
+  fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
+    TerminalUtil.addItem(terminationListeners, onTerminated, parentDisposable)
   }
 
   fun executeCommand(command: String) {
@@ -80,5 +91,6 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposab
 
   companion object {
     val KEY: Key<TerminalSession> = Key.create("TerminalSession")
+    val DATA_KEY: DataKey<TerminalSession> = DataKey.create("TerminalSession")
   }
 }

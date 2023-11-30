@@ -2,8 +2,10 @@
 
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.locks.LockSupport;
@@ -18,7 +20,9 @@ import java.util.concurrent.locks.LockSupport;
  * @param <V> the type of mapped values
  * @deprecated  Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentLongObjectMap()} instead
  */
-final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
+@ApiStatus.Internal
+@Deprecated
+public final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
 
     /* ---------------- Constants -------------- */
 
@@ -85,12 +89,6 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
   private static final int RESIZE_STAMP_BITS = 16;
 
   /**
-   * The maximum number of threads that can help resize.
-   * Must fit in 32 - RESIZE_STAMP_BITS bits.
-   */
-  private static final int MAX_RESIZERS = (1 << (32 - RESIZE_STAMP_BITS)) - 1;
-
-  /**
    * The bit shift for recording size stamp in sizeCtl.
    */
   private static final int RESIZE_STAMP_SHIFT = 32 - RESIZE_STAMP_BITS;
@@ -100,7 +98,6 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
    */
   static final int MOVED = -1; // hash for forwarding nodes
   static final int TREEBIN = -2; // hash for roots of trees
-  static final int RESERVED = -3; // hash for transient reservations
   static final int HASH_BITS = 0x7fffffff; // usable bits of normal node hash
 
   /**
@@ -241,9 +238,9 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
   }
 
   static <V> boolean casTabAt(Node<V>[] tab, int i,
-                              Node<V> c, Node<V> v) {
+                              Node<V> v) {
     try {
-      return Unsafe.compareAndSwapObject(tab, ((long)i << ASHIFT) + ABASE, c, v);
+      return Unsafe.compareAndSwapObject(tab, ((long)i << ASHIFT) + ABASE, null, v);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
@@ -315,78 +312,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
   /**
    * Creates a new, empty map with the default initial table size (16).
    */
-  ConcurrentLongObjectHashMap() {
-  }
-
-  /**
-   * Creates a new, empty map with an initial table size
-   * accommodating the specified number of elements without the need
-   * to dynamically resize.
-   *
-   * @param initialCapacity The implementation performs internal
-   *                        sizing to accommodate this many elements.
-   * @throws IllegalArgumentException if the initial capacity of
-   *                                  elements is negative
-   */
-  ConcurrentLongObjectHashMap(int initialCapacity) {
-    if (initialCapacity < 0) {
-      throw new IllegalArgumentException();
-    }
-    int cap = ((initialCapacity >= (MAXIMUM_CAPACITY >>> 1)) ?
-               MAXIMUM_CAPACITY :
-               tableSizeFor(initialCapacity + (initialCapacity >>> 1) + 1));
-    sizeCtl = cap;
-  }
-
-
-  /**
-   * Creates a new, empty map with an initial table size based on
-   * the given number of elements ({@code initialCapacity}) and
-   * initial table density ({@code loadFactor}).
-   *
-   * @param initialCapacity the initial capacity. The implementation
-   *                        performs internal sizing to accommodate this many elements,
-   *                        given the specified load factor.
-   * @param loadFactor      the load factor (table density) for
-   *                        establishing the initial table size
-   * @throws IllegalArgumentException if the initial capacity of
-   *                                  elements is negative or the load factor is nonpositive
-   */
-  ConcurrentLongObjectHashMap(int initialCapacity, float loadFactor) {
-    this(initialCapacity, loadFactor, 1);
-  }
-
-  /**
-   * Creates a new, empty map with an initial table size based on
-   * the given number of elements ({@code initialCapacity}), table
-   * density ({@code loadFactor}), and number of concurrently
-   * updating threads ({@code concurrencyLevel}).
-   *
-   * @param initialCapacity  the initial capacity. The implementation
-   *                         performs internal sizing to accommodate this many elements,
-   *                         given the specified load factor.
-   * @param loadFactor       the load factor (table density) for
-   *                         establishing the initial table size
-   * @param concurrencyLevel the estimated number of concurrently
-   *                         updating threads. The implementation may use this value as
-   *                         a sizing hint.
-   * @throws IllegalArgumentException if the initial capacity is
-   *                                  negative or the load factor or concurrencyLevel are
-   *                                  nonpositive
-   */
-  ConcurrentLongObjectHashMap(int initialCapacity,
-                              float loadFactor, int concurrencyLevel) {
-    if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
-      throw new IllegalArgumentException();
-    }
-    if (initialCapacity < concurrencyLevel)   // Use at least as many bins
-    {
-      initialCapacity = concurrencyLevel;   // as estimated threads
-    }
-    long size = (long)(1.0 + (long)initialCapacity / loadFactor);
-    int cap = (size >= (long)MAXIMUM_CAPACITY) ?
-              MAXIMUM_CAPACITY : tableSizeFor((int)size);
-    sizeCtl = cap;
+  public ConcurrentLongObjectHashMap() {
   }
 
   // Original (since JDK1.2) Map methods
@@ -513,7 +439,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
         tab = initTable();
       }
       else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
-        if (casTabAt(tab, i, null,
+        if (casTabAt(tab, i,
                      new Node<>(hash, key, value, null))) {
           break;                   // no lock when adding to empty bin
         }
@@ -944,7 +870,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
    * @see #values()
    */
   @Override
-  public @NotNull Enumeration<V> elements() {
+  public @NotNull Iterator<V> elements() {
     Node<V>[] t;
     int f = (t = table) == null ? 0 : t.length;
     return new ValueIterator<>(t, f, 0, f, this);
@@ -1235,7 +1161,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
         }
       }
       else if ((f = tabAt(tab, i)) == null) {
-        advance = casTabAt(tab, i, null, fwd);
+        advance = casTabAt(tab, i, fwd);
       }
       else if ((fh = f.hash) == MOVED) {
         advance = true; // already processed
@@ -2319,8 +2245,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
   }
 
 
-  static final class ValueIterator<V> extends BaseIterator<V>
-    implements Iterator<V>, Enumeration<V> {
+  static final class ValueIterator<V> extends BaseIterator<V> implements Iterator<V> {
     ValueIterator(Node<V>[] tab, int index, int size, int limit,
                   ConcurrentLongObjectHashMap<V> map) {
       super(tab, index, size, limit, map);
@@ -2336,11 +2261,6 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
       lastReturned = p;
       advance();
       return v;
-    }
-
-    @Override
-    public V nextElement() {
-      return next();
     }
   }
 
@@ -2475,7 +2395,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
       }
       int m = (int)sz;
       T[] r = (a.length >= m) ? a :
-              (T[])java.lang.reflect.Array
+              (T[])Array
                 .newInstance(a.getClass().getComponentType(), m);
       int n = r.length;
       int i = 0;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task.impl;
 
 import com.intellij.lang.LangBundle;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * The task can be used to invoke 'empty' compilation that will by default trigger all configured before- and after- compilation tasks.
  * The interpretation of the 'isIncremental' flag is up to the runner that will actually execute this task.
  */
-public class EmptyCompileScopeBuildTaskImpl extends AbstractBuildTask implements EmptyCompileScopeBuildTask {
+public final class EmptyCompileScopeBuildTaskImpl extends AbstractBuildTask implements EmptyCompileScopeBuildTask {
 
   public EmptyCompileScopeBuildTaskImpl(boolean isIncrementalBuild) {
     super(isIncrementalBuild);

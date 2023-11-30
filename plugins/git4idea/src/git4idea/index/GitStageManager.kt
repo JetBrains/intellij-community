@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.CommitModeManager
 import git4idea.GitVcs
@@ -14,7 +15,7 @@ import git4idea.config.GitVcsApplicationSettings
 
 internal class CommitModeListener(val project: Project) : CommitModeManager.CommitModeListener {
   override fun commitModeChanged() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     if (isStagingAreaAvailable(project)) {
       GitStageTracker.getInstance(project).updateTrackerState()

@@ -8,11 +8,13 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class ShellVariablesRegistryImpl implements ShellVariablesRegistry {
+public final class ShellVariablesRegistryImpl implements ShellVariablesRegistry {
 
   @NotNull private final Map<String, Collection<TextMateShellVariable>> myVariables = new ConcurrentHashMap<>();
 

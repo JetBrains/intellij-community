@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.ide.DataManager;
@@ -15,22 +15,20 @@ import javax.swing.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 
-class TextComponentCaret extends UserDataHolderBase implements Caret {
+final class TextComponentCaret extends UserDataHolderBase implements Caret {
   private final TextComponentEditorImpl myEditor;
 
   TextComponentCaret(TextComponentEditorImpl editor) {
     myEditor = editor;
   }
 
-  @NotNull
   @Override
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
-  @NotNull
   @Override
-  public CaretModel getCaretModel() {
+  public @NotNull CaretModel getCaretModel() {
     return myEditor.getCaretModel();
   }
 
@@ -82,9 +80,8 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     return true;
   }
 
-  @NotNull
   @Override
-  public LogicalPosition getLogicalPosition() {
+  public @NotNull LogicalPosition getLogicalPosition() {
     JTextComponent textComponent = getTextComponent();
     int caretPos = textComponent.getCaretPosition();
     int line;
@@ -105,9 +102,8 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     return new LogicalPosition(line, caretPos - lineStart);
   }
 
-  @NotNull
   @Override
-  public VisualPosition getVisualPosition() {
+  public @NotNull VisualPosition getVisualPosition() {
     LogicalPosition pos = getLogicalPosition();
     return new VisualPosition(pos.line, pos.column);
   }
@@ -132,9 +128,8 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     return getTextComponent().getSelectionStart();
   }
 
-  @NotNull
   @Override
-  public VisualPosition getSelectionStartPosition() {
+  public @NotNull VisualPosition getSelectionStartPosition() {
     return myEditor.offsetToVisualPosition(getSelectionStart());
   }
 
@@ -143,15 +138,13 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     return getTextComponent().getSelectionEnd();
   }
 
-  @NotNull
   @Override
-  public VisualPosition getSelectionEndPosition() {
+  public @NotNull VisualPosition getSelectionEndPosition() {
     return myEditor.offsetToVisualPosition(getSelectionEnd());
   }
 
-  @Nullable
   @Override
-  public String getSelectedText() {
+  public @Nullable String getSelectedText() {
     return getTextComponent().getSelectedText();
   }
 
@@ -164,9 +157,8 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     return caretPosition == start ? end : start;
   }
 
-  @NotNull
   @Override
-  public VisualPosition getLeadSelectionPosition() {
+  public @NotNull VisualPosition getLeadSelectionPosition() {
     return myEditor.offsetToVisualPosition(getLeadSelectionOffset());
   }
 
@@ -232,9 +224,8 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     handler.execute(myEditor, null, DataManager.getInstance().getDataContext(myEditor.getComponent()));
   }
 
-  @Nullable
   @Override
-  public Caret clone(boolean above) {
+  public @Nullable Caret clone(boolean above) {
     return null;
   }
 
@@ -252,9 +243,8 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
     return false;
   }
 
-  @NotNull
   @Override
-  public CaretVisualAttributes getVisualAttributes() {
+  public @NotNull CaretVisualAttributes getVisualAttributes() {
     return CaretVisualAttributes.DEFAULT;
   }
 

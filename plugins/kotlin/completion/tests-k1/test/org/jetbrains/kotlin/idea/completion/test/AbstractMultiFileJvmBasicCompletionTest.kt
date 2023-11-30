@@ -8,27 +8,34 @@ import org.jetbrains.kotlin.idea.test.CompilerTestDirectives
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
+import kotlin.io.path.Path
 
 abstract class AbstractMultiFileJvmBasicCompletionTest : KotlinCompletionTestCase() {
     protected open fun doTest(testPath: String) {
-        configureByFile(getTestName(false) + ".kt", "")
+        val fileName = getTestName(false) + ".kt"
+        val filePath = Path(testDataDirectory.path, fileName)
+        configureByFile(fileName, "")
         val shouldFail = testPath.contains("NoSpecifiedType")
         val fileText = file.text
-        withCustomCompilerOptions(fileText, project, module) {
-            AstAccessControl.testWithControlledAccessToAst(shouldFail, file.virtualFile, project, testRootDisposable) {
-                testCompletion(
-                    fileText = fileText,
-                    platform = JvmPlatforms.unspecifiedJvmPlatform,
-                    complete = { completionType, invocationCount ->
-                        setType(completionType)
-                        complete(invocationCount)
-                        myItems
-                    },
-                    defaultCompletionType = CompletionType.BASIC,
-                    defaultInvocationCount = 0,
-                    additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES,
-                )
+
+        IgnoreTests.runTestIfNotDisabledByFileDirective(filePath, IgnoreTests.DIRECTIVES.IGNORE_K1) {
+            withCustomCompilerOptions(fileText, project, module) {
+                AstAccessControl.testWithControlledAccessToAst(shouldFail, file.virtualFile, project, testRootDisposable) {
+                    testCompletion(
+                      fileText = fileText,
+                      platform = JvmPlatforms.unspecifiedJvmPlatform,
+                      complete = { completionType, invocationCount ->
+                          setType(completionType)
+                          complete(invocationCount)
+                          myItems
+                      },
+                      defaultCompletionType = CompletionType.BASIC,
+                      defaultInvocationCount = 0,
+                      additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES + IgnoreTests.DIRECTIVES.IGNORE_K2,
+                    )
+                }
             }
         }
     }

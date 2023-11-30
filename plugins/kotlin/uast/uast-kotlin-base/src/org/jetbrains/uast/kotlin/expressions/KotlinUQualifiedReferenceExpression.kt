@@ -15,8 +15,32 @@ class KotlinUQualifiedReferenceExpression(
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UQualifiedReferenceExpression, DelegatedMultiResolve,
     KotlinUElementWithType, KotlinEvaluatableUElement {
-    override val receiver by lz { baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.receiverExpression, this) }
-    override val selector by lz { baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.selectorExpression, this) }
+
+    private var receiverPart: Any? = UNINITIALIZED_UAST_PART
+    private var selectorPart: Any? = UNINITIALIZED_UAST_PART
+
+    override val receiver: UExpression
+        get() {
+            if (receiverPart == UNINITIALIZED_UAST_PART) {
+                receiverPart = baseResolveProviderService.baseKotlinConverter.convertOrEmpty(
+                    sourcePsi.receiverExpression,
+                    this
+                )
+            }
+            return receiverPart as UExpression
+        }
+
+    override val selector: UExpression
+        get() {
+            if (selectorPart == UNINITIALIZED_UAST_PART) {
+                selectorPart = baseResolveProviderService.baseKotlinConverter.convertOrEmpty(
+                    sourcePsi.selectorExpression,
+                    this
+                )
+            }
+            return selectorPart as UExpression
+        }
+
     override val accessType = UastQualifiedExpressionAccessType.SIMPLE
 
     override fun resolve(): PsiElement? = sourcePsi.selectorExpression?.let { baseResolveProviderService.resolveToDeclaration(it) }

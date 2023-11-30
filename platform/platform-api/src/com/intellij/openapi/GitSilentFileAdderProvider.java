@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi;
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
@@ -21,8 +21,7 @@ public interface GitSilentFileAdderProvider {
   @NotNull
   GitSilentFileAdder create();
 
-  @NotNull
-  static GitSilentFileAdder create(@NotNull Project project) {
+  static @NotNull GitSilentFileAdder create(@NotNull Project project) {
     return EP_NAME.getExtensions(project).stream().findFirst().map(it -> it.create()).orElse(new GitSilentFileAdder.Empty());
   }
 }

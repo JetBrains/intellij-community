@@ -2,10 +2,10 @@ package org.jetbrains.plugins.notebooks.visualization.outputs.impl
 
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.ui.IdeBorderFactory
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.ResizeHandlebarUpdater.Companion.ensureInstalled
 import java.awt.*
@@ -24,7 +24,7 @@ class ResizeHandlebarUpdater private constructor() : IdeEventQueue.EventDispatch
   companion object {
     @JvmStatic
     fun ensureInstalled() {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       service<ResizeHandlebarUpdater>()
     }
 

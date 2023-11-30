@@ -204,14 +204,10 @@ open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor)
     return true
   }
 
-  override fun visitElement(node: UElement): Boolean {
-    if (node is UNamedExpression) {
-      //IDEA-209279: UAstVisitor lacks a hook for UNamedExpression
-      //KT-30522: Kotlin does not generate UNamedExpression for annotation's parameters.
-      processNamedExpression(node)
-      return true
-    }
-    return super.visitElement(node)
+  override fun visitNamedExpression(node: UNamedExpression): Boolean {
+    //KT-30522: Kotlin does not generate UNamedExpression for annotation's parameters.
+    processNamedExpression(node)
+    return true
   }
 
   override fun visitClass(node: UClass): Boolean {

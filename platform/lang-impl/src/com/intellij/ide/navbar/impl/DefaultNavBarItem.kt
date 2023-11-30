@@ -41,7 +41,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-
+@Internal
 open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
 
   override fun createPointer(): Pointer<out NavBarItem> = hardPointer(this)

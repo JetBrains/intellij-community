@@ -21,6 +21,7 @@ public abstract class MavenExecutionTestCase extends MavenMultiVersionImportingT
 
   @Override
   public void setUp() throws Exception {
+    assumeThisTestCanBeReusedForPreimport();
     edt(() -> {
       myJdkHome = IdeaTestUtil.requireRealJdkHome();
       VfsRootAccess.allowRootAccess(getTestRootDisposable(), myJdkHome);

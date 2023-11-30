@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -50,7 +50,7 @@ internal class KeymapToCsvAction : AnAction() {
     }
 
     val result = buildString {
-      appendln("key," + columns.joinToString(","))
+      appendLine("key," + columns.joinToString(","))
       for ((key, shortcutsForKey) in allShortcuts) {
         append(key)
         for (column in columns) {
@@ -58,7 +58,7 @@ internal class KeymapToCsvAction : AnAction() {
           val actionsForShortcut = shortcutsForKey[column] ?: emptyList()
           append(actionsForShortcut.joinToString("|"))
         }
-        appendln()
+        appendLine()
       }
     }
 

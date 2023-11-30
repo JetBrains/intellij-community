@@ -171,7 +171,7 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                         platform.isCommon() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibCommon, kind = KotlinCommonLibraryKind)
                         platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlib)
                         platform.isJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibJs, kind = KotlinJavaScriptLibraryKind)
-                        platform.isWasm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibWasm, kind = KotlinWasmLibraryKind)
+                        platform.isWasm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibWasmJs, kind = KotlinWasmLibraryKind)
                         else -> error("Unknown platform $this")
                     }
                 }
@@ -219,13 +219,13 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                     pureKotlinSourceFolders = pureKotlinSourceFolders,
                     additionalVisibleModuleNames = additionalVisibleModuleNames
                 )
-                module.enableMultiPlatform()
 
                 modulesById[commonModuleId]?.let { commonModule ->
                     module.addDependency(commonModule)
                 }
             }
         }
+        module.enableMultiPlatform()
     }
 }
 

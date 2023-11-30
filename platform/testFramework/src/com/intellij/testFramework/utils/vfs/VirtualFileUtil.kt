@@ -3,6 +3,7 @@ package com.intellij.testFramework.utils.vfs
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
@@ -28,7 +29,11 @@ fun VirtualFile.getPsiFile(project: Project): PsiFile {
 fun VirtualFile.getFile(relativePath: @SystemIndependent String): VirtualFile {
   val file = findFile(relativePath)
   if (file == null) {
-    throw IOException("File doesn't exist: $path/$relativePath")
+    throw IOException("""
+      |File doesn't exists: ${Path.of(path).getResolvedPath(relativePath)}
+      |  basePath = $path
+      |  relativePath = $relativePath
+    """.trimMargin())
   }
   return file
 }
@@ -37,23 +42,37 @@ fun VirtualFile.getFile(relativePath: @SystemIndependent String): VirtualFile {
 fun VirtualFile.getDirectory(relativePath: @SystemIndependent String): VirtualFile {
   val directory = findDirectory(relativePath)
   if (directory == null) {
-    throw IOException("Directory doesn't exist: $path/$relativePath")
+    throw IOException("""
+      |Directory doesn't exists: ${Path.of(path).getResolvedPath(relativePath)}
+      |  basePath = $path
+      |  relativePath = $relativePath
+    """.trimMargin())
   }
   return directory
 }
 
 @RequiresWriteLock
 fun VirtualFile.createFile(relativePath: @SystemIndependent String): VirtualFile {
-  if (findFile(relativePath) != null) {
-    throw IOException("File already exists: $path/$relativePath")
+  val file = findFile(relativePath)
+  if (file != null) {
+    throw IOException("""
+      |File already exists: $file
+      |  basePath = $path
+      |  relativePath = $relativePath
+    """.trimMargin())
   }
   return findOrCreateFile(relativePath)
 }
 
 @RequiresWriteLock
 fun VirtualFile.createDirectory(relativePath: @SystemIndependent String): VirtualFile {
-  if (findDirectory(relativePath) != null) {
-    throw IOException("Directory already exists: $path/$relativePath")
+  val directory = findDirectory(relativePath)
+  if (directory != null) {
+    throw IOException("""
+      |Directory already exists: $directory
+      |  basePath = $path
+      |  relativePath = $relativePath
+    """.trimMargin())
   }
   return findOrCreateDirectory(relativePath)
 }

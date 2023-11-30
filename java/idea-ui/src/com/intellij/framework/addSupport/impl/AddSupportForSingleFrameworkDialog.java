@@ -132,7 +132,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
 
   @Override
   protected String getHelpId() {
-    return "reference.frameworks.support.dialog";//todo[nik]
+    return "reference.frameworks.support.dialog";
   }
 
   @Override

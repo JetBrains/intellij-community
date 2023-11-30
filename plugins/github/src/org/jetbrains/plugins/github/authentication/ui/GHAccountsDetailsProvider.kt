@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.collaboration.auth.ui.LazyLoadingAccountsDetailsProvider
 import com.intellij.collaboration.auth.ui.cancelOnRemoval
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
@@ -19,7 +20,6 @@ import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import java.awt.Image
 
@@ -45,7 +45,7 @@ internal class GHAccountsDetailsProvider(
     catch (e: Exception) {
       null
     }
-    if (executor == null) return Result.Error(GithubBundle.message("account.token.missing"), true)
+    if (executor == null) return Result.Error(CollaborationToolsBundle.message("account.token.missing"), true)
     return withContext(Dispatchers.IO) {
       coroutineToIndicator {
         doLoadDetails(executor, account)

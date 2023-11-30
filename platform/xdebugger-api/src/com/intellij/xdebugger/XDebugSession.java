@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger;
 
@@ -105,12 +105,12 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void setBreakpointInvalid(@NotNull XLineBreakpoint<?> breakpoint, @Nullable String errorMessage);
 
   /**
-   * Call this method when a breakpoint is reached if its condition ({@link XBreakpoint#getCondition()}) evaluates to {@code true}.
+   * Call this method when a breakpoint is reached if its condition ({@link XBreakpoint#getConditionExpression()}) evaluates to {@code true}.
    * <p>
    * <strong>The underlying debugging process should be suspended only if the method returns {@code true}.</strong>
    *
    * @param breakpoint             reached breakpoint
-   * @param evaluatedLogExpression value of {@link XBreakpoint#getLogExpression()} evaluated in the current context
+   * @param evaluatedLogExpression value of {@link XBreakpoint#getLogExpressionObject()} evaluated in the current context
    * @param suspendContext         context
    * @return {@code true} if the debug process should be suspended
    */

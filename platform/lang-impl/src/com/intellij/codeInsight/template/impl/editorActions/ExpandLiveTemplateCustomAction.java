@@ -19,6 +19,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
@@ -26,7 +27,7 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class ExpandLiveTemplateCustomAction extends EditorAction {
+public class ExpandLiveTemplateCustomAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public ExpandLiveTemplateCustomAction() {
     super(createExpandTemplateHandler(TemplateSettings.CUSTOM_CHAR));
     setInjectedContext(true);

@@ -150,7 +150,7 @@ class MergingQueueGuiExecutorTest {
     )
 
     repeat(10) {
-      executor.startBackgroundProcess()
+      executor.startBackgroundProcess(onFinish = {})
     }
 
     Thread.sleep(10) // give it some time just in case (we don't expect that anything will be started)
@@ -184,11 +184,11 @@ class MergingQueueGuiExecutorTest {
 
     val task = WaitingTask()
     queue.addTask(task)
-    executor.startBackgroundProcess()
+    executor.startBackgroundProcess(onFinish = {})
     task.taskStarted.awaitOrThrow(5, "Wait for background task to start")
 
     repeat(10) {
-      executor.startBackgroundProcess()
+      executor.startBackgroundProcess(onFinish = {})
     }
 
     task.taskLatch.countDown()
@@ -232,7 +232,7 @@ class MergingQueueGuiExecutorTest {
     })
     queue.addTask(LoggingTask(2, performLog, disposeLog))
 
-    executor.startBackgroundProcess()
+    executor.startBackgroundProcess(onFinish = {})
     firstTaskPhaser.arriveAndAwaitAdvanceWithTimeout() // 1 background task started
 
     executor.guiSuspender().suspendAndRun("Suspended in test to check cancellation", Runnable {
@@ -283,7 +283,7 @@ class MergingQueueGuiExecutorTest {
     })
     queue.addTask(LoggingTask(2, performLog, disposeLog))
 
-    executor.startBackgroundProcess()
+    executor.startBackgroundProcess(onFinish = {})
     firstTaskStarted.awaitOrThrow(1, "first task didn't start after 1 second")
 
     queue.cancelAllTasks()
@@ -322,7 +322,7 @@ class MergingQueueGuiExecutorTest {
           }
         }
       })
-      executor.startBackgroundProcess()
+      executor.startBackgroundProcess(onFinish = {})
       TestCase.assertTrue(executor.isRunning.value)
       endTask.countDown()
       TestCase.assertNull(exceptionRef.get())
@@ -358,7 +358,7 @@ class MergingQueueGuiExecutorTest {
             Thread.sleep(0, Random.nextInt(1_000_000))
             queue.addTask(LoggingTask(id.incrementAndGet(), performLog, disposeLog))
             Thread.sleep(0, Random.nextInt(1_000_000))
-            executor.startBackgroundProcess()
+            executor.startBackgroundProcess(onFinish = {})
           }
         }
         catch (t: Throwable) {

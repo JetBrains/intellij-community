@@ -6,25 +6,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.util.Processor
-import org.jetbrains.annotations.ApiStatus
 
 interface ModuleDependencyProviderExtension {
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("Use #processAdditionalDependencyModules", ReplaceWith("processAdditionalDependencyModules(module, processor)"))
-    fun getAdditionalDependencyModules(module: Module): Collection<Module>
-
-    fun processAdditionalDependencyModules(module: Module, processor: Processor<Module>) {
-        @Suppress("DEPRECATION")
-        getAdditionalDependencyModules(module).forEach(processor::process)
-    }
+    fun processAdditionalDependencyModules(module: Module, processor: Processor<Module>)
 
     companion object {
         val Default = object : ModuleDependencyProviderExtension {
-            @Deprecated(
-                "Use #processAdditionalDependencyModules",
-                replaceWith = ReplaceWith("processAdditionalDependencyModules(module, processor)"),
-            )
-            override fun getAdditionalDependencyModules(module: Module): Collection<Module> = emptySet()
+            override fun processAdditionalDependencyModules(module: Module, processor: Processor<Module>) {
+            }
         }
 
         fun getInstance(project: Project): ModuleDependencyProviderExtension = project.service()

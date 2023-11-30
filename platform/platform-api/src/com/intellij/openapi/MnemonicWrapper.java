@@ -145,7 +145,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
   private TextWithMnemonic createTextWithMnemonic() {
     String text = getText();
     if (Strings.isEmpty(text)) return TextWithMnemonic.EMPTY;
-    TextWithMnemonic mnemonic = TextWithMnemonic.fromMnemonicText(text);
+    TextWithMnemonic mnemonic = TextWithMnemonic.fromMnemonicText(text, false);
     if (mnemonic != null) return mnemonic;
     // assume that it is already set
     int index = getMnemonicIndex();
@@ -224,7 +224,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     }
   }
 
-  private static abstract class AbstractButtonWrapper extends MnemonicWrapper<AbstractButton> {
+  private abstract static class AbstractButtonWrapper extends MnemonicWrapper<AbstractButton> {
     private AbstractButtonWrapper(AbstractButton component) {
       super(component, "text", "mnemonic", "displayedMnemonicIndex");
     }

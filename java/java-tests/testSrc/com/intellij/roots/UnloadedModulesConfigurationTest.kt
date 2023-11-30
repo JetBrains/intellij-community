@@ -10,17 +10,17 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.testFramework.JavaModuleTestCase
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.testFramework.JavaModuleTestCase
+import com.intellij.testFramework.PlatformTestUtil
 import java.io.File
 import java.nio.file.Paths
 

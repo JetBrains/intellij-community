@@ -24,11 +24,11 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.ValueArgument
-import org.jetbrains.kotlin.psi.lambdaExpressionVisitor
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.util.getParentCall
 import org.jetbrains.kotlin.resolve.calls.util.getParentResolvedCall
@@ -58,6 +58,16 @@ class SuspiciousCallableReferenceInLambdaInspection : AbstractKotlinInspection()
                     ) return
 
                     if (parentResolvedCall.call.callElement.getParentCall(context) != null) return
+                }
+            }
+
+            (parentResolvedCall?.call?.callElement as? KtExpression ?: lambdaExpression).let { expression ->
+                if (expression.isUsedAsExpression(context)) {
+                    val qualifiedOrThis = expression.getQualifiedExpressionForSelectorOrThis()
+                    val parentDeclaration = qualifiedOrThis.getStrictParentOfType<KtDeclaration>()
+                    val initializer = (parentDeclaration as? KtDeclarationWithInitializer)?.initializer
+                    val typeReference = (parentDeclaration as? KtCallableDeclaration)?.typeReference
+                    if (qualifiedOrThis != initializer || typeReference != null) return
                 }
             }
 

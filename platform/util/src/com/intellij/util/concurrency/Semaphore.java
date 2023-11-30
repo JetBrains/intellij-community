@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -12,7 +12,7 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  * Use {@link Semaphore#up} to return a permit to the semaphore
  * Use {@link Semaphore#waitFor} to request for a vacant permit. If there is no vacant permit, waitFor will be blocked until there is one.
  */
-public class Semaphore {
+public final class Semaphore {
   /**
    * Creates Semaphore in an up state
    */

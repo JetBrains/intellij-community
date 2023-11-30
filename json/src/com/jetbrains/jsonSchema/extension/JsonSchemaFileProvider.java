@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.extension;
 
 
@@ -34,9 +34,7 @@ public interface JsonSchemaFileProvider {
    * Information about the provided API (e.g., an API version or the target platform).
    * This is useful for auto-generated schemas targeting multiple versions of the same config.
    */
-  @Nullable
-  @Nls
-  default String getThirdPartyApiInformation() {
+  default @Nullable @Nls String getThirdPartyApiInformation() {
     return null;
   }
 
@@ -50,9 +48,7 @@ public interface JsonSchemaFileProvider {
   /**
    * Presentable name of the schema shown in the UI.
    */
-  @NotNull
-  @NlsContexts.ListItem
-  default String getPresentableName() { return getName(); }
+  default @NotNull @NlsContexts.ListItem String getPresentableName() { return getName(); }
 
   /**
    * A URL to download an up-to-date schema version.
@@ -61,7 +57,5 @@ public interface JsonSchemaFileProvider {
    * If for some reason you need to have a unique URL for your schema, which is not a schema file (for example, its website),
    * you need to postfix it with '!'.
    */
-  @Nullable
-  @NonNls
-  default String getRemoteSource() { return null; }
+  default @Nullable @NonNls String getRemoteSource() { return null; }
 }

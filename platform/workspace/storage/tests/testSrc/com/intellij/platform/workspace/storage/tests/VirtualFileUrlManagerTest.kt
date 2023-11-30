@@ -3,14 +3,14 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 
 class VirtualFileUrlManagerTest {
   private lateinit var virtualFileManager: VirtualFileUrlManagerImpl
 
-  @Before
+  @BeforeEach
   fun setUp() {
     virtualFileManager = VirtualFileUrlManagerImpl()
   }

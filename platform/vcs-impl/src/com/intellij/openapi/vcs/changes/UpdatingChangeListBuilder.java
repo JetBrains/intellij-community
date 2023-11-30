@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ReadAction;
@@ -18,36 +18,37 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 final class UpdatingChangeListBuilder implements ChangelistBuilder {
   private static final Logger LOG = Logger.getInstance(UpdatingChangeListBuilder.class);
-  private final ChangeListUpdater myChangeListUpdater;
-  private final FileHolderComposite myComposite;
-  private final Supplier<Boolean> myDisposedGetter;
-  private final ProjectLevelVcsManager myVcsManager;
 
-  private VcsDirtyScope myScope;
-  private FoldersCutDownWorker myFoldersCutDownWorker;
+  private final @NotNull VcsDirtyScope myScope;
+  private final @NotNull ChangeListUpdater myChangeListUpdater;
+  private final @NotNull FileHolderComposite myComposite;
+  private final @NotNull Supplier<Boolean> myDisposedGetter;
 
-  private Factory<JComponent> myAdditionalInfo;
+  private final @NotNull ProjectLevelVcsManager myVcsManager;
+  private final @NotNull FoldersCutDownWorker myFoldersCutDownWorker;
 
-  UpdatingChangeListBuilder(ChangeListUpdater changeListUpdater,
-                            FileHolderComposite composite,
-                            Supplier<Boolean> disposedGetter) {
+  private final List<Supplier<@Nullable JComponent>> myAdditionalInfo = new ArrayList<>();
+
+  UpdatingChangeListBuilder(@NotNull VcsDirtyScope scope,
+                            @NotNull ChangeListUpdater changeListUpdater,
+                            @NotNull FileHolderComposite composite,
+                            @NotNull Supplier<Boolean> disposedGetter) {
+    myScope = scope;
     myChangeListUpdater = changeListUpdater;
     myComposite = composite;
     myDisposedGetter = disposedGetter;
     myVcsManager = ProjectLevelVcsManager.getInstance(changeListUpdater.getProject());
+    myFoldersCutDownWorker = new FoldersCutDownWorker();
   }
 
   private void checkIfDisposed() {
     if (myDisposedGetter.get()) throw new ProcessCanceledException();
-  }
-
-  public void setCurrent(VcsDirtyScope scope) {
-    myScope = scope;
-    myFoldersCutDownWorker = new FoldersCutDownWorker();
   }
 
   @Override
@@ -190,13 +191,11 @@ final class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   @Override
-  public void reportAdditionalInfo(Factory<JComponent> infoComponent) {
-    if (myAdditionalInfo == null) {
-      myAdditionalInfo = infoComponent;
-    }
+  public void reportAdditionalInfo(@NotNull Factory<@Nullable JComponent> infoComponent) {
+    myAdditionalInfo.add(infoComponent);
   }
 
-  public Factory<JComponent> getAdditionalInfo() {
+  public @NotNull List<Supplier<@Nullable JComponent>> getAdditionalInfo() {
     return myAdditionalInfo;
   }
 

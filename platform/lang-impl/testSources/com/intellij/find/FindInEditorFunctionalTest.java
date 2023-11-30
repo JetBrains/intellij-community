@@ -6,10 +6,12 @@ import com.intellij.find.editorHeaderActions.RemoveOccurrenceAction;
 import com.intellij.find.editorHeaderActions.ToggleSelectionOnlyAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,7 +51,7 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     }
   }
 
-  public void testFindInSelection() {
+  public <T extends JComponent> void testFindInSelection() {
     String origText = "first foo\n<selection>foo bar baz\nbaz bar foo</selection>\nlast foo";
     init(origText);
     initFind();
@@ -58,6 +60,9 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     SearchReplaceComponent component = session.getComponent();
     Editor editor = getEditor();
     assertSame(editor, session.getEditor());
+    for (ActionToolbarImpl toolbar : UIUtil.findComponentsOfType(component, ActionToolbarImpl.class)) {
+      PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync());
+    }
     Map<Class<?>, ActionButton> actions = StreamEx.of(UIUtil.findComponentsOfType(component, ActionButton.class))
       .toMap(button -> button.getAction().getClass(), Function.identity(), (a, b) -> null);
     model.setGlobal(false);// 'Find' action puts multiline text in search field (in contrast to 'Replace' action)
@@ -69,7 +74,7 @@ public class FindInEditorFunctionalTest extends AbstractFindInEditorTest {
     assertEquals(ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_FIND_IN_SELECTION_ONLY).getShortcutSet(), shortcuts);
 
     model.setStringToFind("foo");
-    assertEquals(ApplicationBundle.message("editorsearch.matches", 2), component.getStatusText());
+    assertEquals(ApplicationBundle.message("editorsearch.current.cursor.position", 1, 2), component.getStatusText());
     checkResultByText(origText);
 
     model.setGlobal(true);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.ide.DataManager;
@@ -6,12 +6,13 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
@@ -29,7 +30,7 @@ import javax.swing.*;
  * <p>The initial visibility is set by {@link #markAsEvaluateExpressionField(JComponent)}
  * Use {@link #isEvaluateExpressionFieldEnabled()} to get current state of the option.</p>
  */
-public class XToggleEvaluateExpressionFieldAction extends DumbAwareToggleAction {
+public class XToggleEvaluateExpressionFieldAction extends DumbAwareToggleAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   private static final Key<String> EVALUATE_EXPRESSION_FIELD = Key.create("Evaluate Expression Field");
   private static final String PROP_KEY = "XToggleEvaluateFieldAction.EvaluateExpressionField.enabled";
@@ -44,7 +45,7 @@ public class XToggleEvaluateExpressionFieldAction extends DumbAwareToggleAction 
    * @param component evaluate expression field
    */
   public static void markAsEvaluateExpressionField(@NotNull JComponent component) {
-    ComponentUtil.putClientProperty(component, EVALUATE_EXPRESSION_FIELD, "EvaluateExpressionField");
+    ClientProperty.put(component, EVALUATE_EXPRESSION_FIELD, "EvaluateExpressionField");
     component.setVisible(isEvaluateExpressionFieldEnabled());
   }
 
@@ -80,7 +81,7 @@ public class XToggleEvaluateExpressionFieldAction extends DumbAwareToggleAction 
     if (view instanceof XWatchesViewImpl) {
       JPanel panel = ((XWatchesViewImpl)view).getPanel();
       UIUtil.uiTraverser(panel)
-        .filter(c -> c instanceof JComponent && ComponentUtil.getClientProperty((JComponent)c, EVALUATE_EXPRESSION_FIELD) != null)
+        .filter(c -> c instanceof JComponent && ClientProperty.get(c, EVALUATE_EXPRESSION_FIELD) != null)
         .forEach(c -> c.setVisible(state));
     }
   }

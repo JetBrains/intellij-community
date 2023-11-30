@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrector
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrectorFactory
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.typos.models.ActionsLanguageModel
@@ -24,11 +25,15 @@ private class SearchEverywhereSpellingCorrectorImpl(private val project: Project
   private fun isAboveMinimumConfidence(suggestedCorrection: SearchEverywhereSpellCheckResult.Correction): Boolean {
     return suggestedCorrection.confidence >= Registry.doubleValue("search.everywhere.ml.typos.min.confidence")
   }
+
+  init {
+    service<ActionsLanguageModel>() // Access the service to start computing the language model
+  }
 }
 
 private class SearchEverywhereSpellingCorrectorFactoryImpl : SearchEverywhereSpellingCorrectorFactory {
   override fun isAvailable(project: Project): Boolean {
-    return isTypoFixingEnabled && (ActionsLanguageModel.getInstance()?.isComputed ?: false)
+    return isTypoFixingEnabled
   }
 
   override fun create(project: Project): SearchEverywhereSpellingCorrector = SearchEverywhereSpellingCorrectorImpl(project)

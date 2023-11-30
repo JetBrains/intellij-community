@@ -56,5 +56,5 @@ class OverloadResolutionChangeFix(element: KtExpression) : KotlinPsiOnlyQuickFix
         return QuickFixBundle.message("add.typecast.text", "Iterable<$typeArgument>")
     }
 
-    override fun getFamilyName(): String = text
+    override fun getFamilyName(): String = QuickFixBundle.message("add.typecast.family")
 }

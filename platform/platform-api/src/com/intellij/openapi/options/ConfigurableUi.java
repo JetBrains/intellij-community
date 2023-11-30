@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import org.jetbrains.annotations.NotNull;
@@ -19,13 +19,11 @@ public interface ConfigurableUi<S> {
   @NotNull
   JComponent getComponent();
 
-  @Nullable
-  default JComponent getPreferredFocusedComponent() {
+  default @Nullable JComponent getPreferredFocusedComponent() {
     return null;
   }
 
-  @Nullable
-  default Runnable enableSearch(String option) {
+  default @Nullable Runnable enableSearch(String option) {
     return null;
   }
 }

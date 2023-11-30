@@ -3,7 +3,7 @@
 package com.intellij.codeInsight.documentation.actions
 
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
-import com.intellij.lang.documentation.ide.impl.DocumentationManager.Companion.instance
+import com.intellij.lang.documentation.ide.impl.DocumentationManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
@@ -29,7 +29,7 @@ open class ShowQuickDocInfoAction : AnAction(),
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.dataContext
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
-    instance(project).actionPerformed(dataContext)
+    DocumentationManager.getInstance(project).actionPerformed(dataContext)
   }
 
   @Suppress("SpellCheckingInspection")

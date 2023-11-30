@@ -26,7 +26,8 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
                   honorExclusion: Boolean,
                   includeContentSets: Boolean,
                   includeExternalSets: Boolean,
-                  includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo
+                  includeExternalSourceSets: Boolean,
+                  includeCustomKindSets: Boolean): WorkspaceFileInternalInfo
 
   /**
    * Holds references to the currently stored data.

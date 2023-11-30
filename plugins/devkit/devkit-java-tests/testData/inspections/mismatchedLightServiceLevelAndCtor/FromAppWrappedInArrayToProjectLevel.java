@@ -1,7 +1,7 @@
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 
-@<warning descr="Light service with a constructor that takes a single parameter of type 'Project' must specify '@Service(Service.Level.PROJECT)'">Service<caret></warning>({Service.Level.APP})
+@<warning descr="Light service with a constructor that takes a parameter of type 'Project' must specify '@Service(Service.Level.PROJECT)'">Service<caret></warning>({Service.Level.APP})
 final class MyService {
   private final Project myProject;
 

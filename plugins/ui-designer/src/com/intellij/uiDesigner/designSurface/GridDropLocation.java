@@ -90,11 +90,10 @@ public class GridDropLocation implements ComponentDropLocation {
     }
     if (feedbackRect != null) {
       final JComponent component = getContainer().getDelegee();
-      StringBuilder feedbackBuilder = new StringBuilder(getContainer().getDisplayName());
-      feedbackBuilder.append(" (").append(myRow + getContainer().getGridLayoutManager().getCellIndexBase());
-      feedbackBuilder.append(", ").append(myColumn + getContainer().getGridLayoutManager().getCellIndexBase());
-      feedbackBuilder.append(")");
-      feedbackLayer.putFeedback(component, feedbackRect, feedbackBuilder.toString());
+      String feedback = getContainer().getDisplayName() + " (" + 
+                        (myRow + getContainer().getGridLayoutManager().getCellIndexBase()) + ", " + 
+                        (myColumn + getContainer().getGridLayoutManager().getCellIndexBase()) + ")";
+      feedbackLayer.putFeedback(component, feedbackRect, feedback);
     }
     else {
       feedbackLayer.removeFeedback();

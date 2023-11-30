@@ -18,7 +18,7 @@ import java.util.List;
  * @author Tomasz Kalkosiński
  * @author Michail Plushnikov
  */
-public class BuilderMethodProcessor extends AbstractMethodProcessor {
+public final class BuilderMethodProcessor extends AbstractMethodProcessor {
 
   public BuilderMethodProcessor() {
     super(PsiMethod.class, LombokClassNames.BUILDER);

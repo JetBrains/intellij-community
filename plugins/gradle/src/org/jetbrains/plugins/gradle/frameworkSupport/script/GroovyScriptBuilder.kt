@@ -18,8 +18,15 @@ class GroovyScriptBuilder(indent: Int = 0) : AbstractScriptBuilder(indent) {
         add(" ", indent, false)
         add(element.arguments, indent)
       }
-      element is StringElement && '$' !in element.value && '\'' !in element.value -> {
-        add("'${element.value}'", indent, isNewLine)
+      element is StringElement -> {
+        val escapedString = element.value
+          .replace("\\", "\\\\")
+          .replace("\n", "\\n")
+        val string = when ('$' in element.value) {
+          true -> "\"" + escapedString.replace("\"", "\\\"") + "\""
+          else -> "\'" + escapedString.replace("\'", "\\\'") + "\'"
+        }
+        add(string, indent, isNewLine)
       }
       element is ListElement -> {
         add("[", indent, isNewLine)

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.add.target
 
+import com.intellij.execution.target.TargetBasedSdkAdditionalData
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
@@ -12,8 +13,10 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
  *
  * This class is meant for use in UI and should be used with caution.
  */
-class PyDetectedSdkAdditionalData(val temporaryConfiguration: TargetEnvironmentConfiguration?,
-                                  flavor: PythonSdkFlavor<*>?) : PythonSdkAdditionalData(flavor), PyRemoteSdkAdditionalDataMarker
+class PyDetectedSdkAdditionalData(override val targetEnvironmentConfiguration: TargetEnvironmentConfiguration?,
+                                  flavor: PythonSdkFlavor<*>?) : PythonSdkAdditionalData(flavor),
+                                                                 TargetBasedSdkAdditionalData,
+                                                                 PyRemoteSdkAdditionalDataMarker
 
 /**
  * Returns new [PyDetectedSdk] with the additional data that corresponds to the local or non-local interpreter based on the provided flag.
@@ -22,7 +25,7 @@ class PyDetectedSdkAdditionalData(val temporaryConfiguration: TargetEnvironmentC
  */
 internal fun createDetectedSdk(name: String, isLocal: Boolean): PyDetectedSdk {
   val sdk = PyDetectedSdk(name)
-  if (!isLocal) sdk.sdkAdditionalData = PyDetectedSdkAdditionalData(temporaryConfiguration = null, flavor = null)
+  if (!isLocal) sdk.sdkAdditionalData = PyDetectedSdkAdditionalData(targetEnvironmentConfiguration = null, flavor = null)
   return sdk
 }
 

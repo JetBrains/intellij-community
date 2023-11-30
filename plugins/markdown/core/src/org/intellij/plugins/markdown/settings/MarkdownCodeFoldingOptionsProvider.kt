@@ -16,27 +16,27 @@ internal class MarkdownCodeFoldingOptionsProvider: BeanConfigurable<MarkdownCode
     checkBox(
       MarkdownBundle.message("markdown.code.folding.configurable.collapse.front.matter"),
       { settings.state.collapseFrontMatter },
-      { value -> settings.update { it.copy(collapseFrontMatter = value) } }
+      { value -> settings.state.collapseFrontMatter = value }
     )
     checkBox(
       MarkdownBundle.message("markdown.code.folding.configurable.collapse.links"),
       { settings.state.collapseLinks },
-      { value -> settings.update { it.copy(collapseLinks = value) } }
+      { value -> settings.state.collapseLinks = value }
     )
     checkBox(
       MarkdownBundle.message("markdown.code.folding.configurable.collapse.tables"),
       { settings.state.collapseTables },
-      { value -> settings.update { it.copy(collapseTables = value) } }
+      { value -> settings.state.collapseTables = value }
     )
     checkBox(
       MarkdownBundle.message("markdown.code.folding.configurable.collapse.code.fences"),
       { settings.state.collapseCodeFences },
-      { value -> settings.update { it.copy(collapseCodeFences = value) } }
+      { value -> settings.state.collapseCodeFences = value }
     )
     checkBox(
       MarkdownBundle.message("markdown.code.folding.configurable.collapse.table.of.contents"),
       { settings.state.collapseTableOfContents },
-      { value -> settings.update { it.copy(collapseTableOfContents = value) } }
+      { value -> settings.state.collapseTableOfContents = value }
     )
   }
 }

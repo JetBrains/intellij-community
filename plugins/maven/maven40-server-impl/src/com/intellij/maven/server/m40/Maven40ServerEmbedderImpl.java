@@ -232,13 +232,15 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       commandLineOptions.addAll(StringUtilRt.splitHonorQuotes(mavenEmbedderCliOptions, ' '));
     }
 
-    if (serverSettings.getGlobalSettingsPath() != null) {
+    String globalSettingsPath = serverSettings.getGlobalSettingsPath();
+    if (globalSettingsPath != null && new File(globalSettingsPath).isFile()) {
       commandLineOptions.add("-gs");
-      commandLineOptions.add(serverSettings.getGlobalSettingsPath());
+      commandLineOptions.add(globalSettingsPath);
     }
-    if (serverSettings.getUserSettingsPath() != null) {
+    String userSettingsPath = serverSettings.getUserSettingsPath();
+    if (userSettingsPath != null && new File(userSettingsPath).isFile()) {
       commandLineOptions.add("-s");
-      commandLineOptions.add(serverSettings.getUserSettingsPath());
+      commandLineOptions.add(userSettingsPath);
     }
 
     if (serverSettings.isOffline()) {
@@ -249,7 +251,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
   @NotNull
   @Override
-  public Collection<MavenServerExecutionResult> resolveProjects(@NotNull String longRunningTaskId,
+  public ArrayList<MavenServerExecutionResult> resolveProjects(@NotNull String longRunningTaskId,
                                                                 @NotNull ProjectResolutionRequest request, MavenToken token) {
     MavenServerUtil.checkToken(token);
     List<File> files = request.getPomFiles();
@@ -264,7 +266,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         myImporterSpy,
         task.getIndicator(),
         workspaceMap,
-        getLocalRepositoryFile()
+        getLocalRepositoryFile(),
+        request.getUserProperties(),
+        canResolveDependenciesInParallel()
       );
       try {
         customizeComponents(workspaceMap);
@@ -274,6 +278,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         resetComponents();
       }
     }
+  }
+
+  private static boolean canResolveDependenciesInParallel() {
+    return true;
   }
 
   private File getLocalRepositoryFile() {
@@ -423,7 +431,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  private MavenId extractIdFromException(Throwable exception) {
+  private static MavenId extractIdFromException(Throwable exception) {
     try {
       Field field = exception.getClass().getDeclaredField("extension");
       field.setAccessible(true);
@@ -435,9 +443,16 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
+  public MavenExecutionRequest createRequest(File file,
+                                             List<String> activeProfiles,
+                                             List<String> inactiveProfiles) {
+    return createRequest(file, activeProfiles, inactiveProfiles, new Properties());
+  }
+
   public MavenExecutionRequest createRequest(@Nullable File file,
                                              @Nullable List<String> activeProfiles,
-                                             @Nullable List<String> inactiveProfiles) {
+                                             @Nullable List<String> inactiveProfiles,
+                                             @NotNull Properties customProperties) {
 
     MavenExecutionRequest result = new DefaultMavenExecutionRequest();
 
@@ -454,8 +469,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       result.setSystemProperties(mySystemProperties);
       Properties userProperties = new Properties();
       if (file != null) {
-        userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigProperties(file.getParentFile()));
+        userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForNestedProjectDir(file.getParentFile()));
       }
+      userProperties.putAll(customProperties);
       result.setUserProperties(userProperties);
 
       result.setActiveProfiles(collectActiveProfiles(result.getActiveProfiles(), activeProfiles, inactiveProfiles));
@@ -631,15 +647,17 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
 
   @Override
-  public List<PluginResolutionResponse> resolvePlugins(@NotNull String longRunningTaskId,
-                                                       @NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
+  public ArrayList<PluginResolutionResponse> resolvePlugins(@NotNull String longRunningTaskId,
+                                                       @NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests,
+                                                       boolean forceUpdateSnapshots,
                                                        MavenToken token) {
     MavenServerUtil.checkToken(token);
 
-    boolean runInParallel = false;//canResolveDependenciesInParallel();
+    boolean runInParallel = canResolveDependenciesInParallel();
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pluginResolutionRequests.size(), myConsoleWrapper)) {
       MavenExecutionRequest request = createRequest(null, null, null);
       request.setTransferListener(new Maven40TransferListenerAdapter(task.getIndicator()));
+      request.setUpdateSnapshots(myAlwaysUpdateSnapshots || forceUpdateSnapshots);
 
       DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
       RepositorySystemSession session = maven.newRepositorySession(request);
@@ -667,7 +685,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       List<PluginResolutionResponse> results = ParallelRunner.execute(runInParallel, resolutions, resolution ->
         resolvePlugin(task, resolution.mavenPluginId, resolution.pluginDependencies, resolution.remoteRepos, session)
       );
-      return results;
+      return new ArrayList<>(results);
     }
   }
 
@@ -691,6 +709,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                  List<Dependency> pluginDependencies,
                                                  List<RemoteRepository> remoteRepos,
                                                  RepositorySystemSession session) {
+    long startTime = System.currentTimeMillis();
     List<MavenArtifact> artifacts = new ArrayList<>();
     if (task.isCanceled()) return new PluginResolutionResponse(mavenPluginId, false, artifacts);
 
@@ -726,6 +745,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     catch (Exception e) {
       MavenServerGlobals.getLogger().warn(e);
       return new PluginResolutionResponse(mavenPluginId, false, artifacts);
+    } finally {
+      long totalTime = System.currentTimeMillis() - startTime;
+      MavenServerGlobals.getLogger().debug("Resolved plugin " + mavenPluginId + " in " + totalTime + " ms");
     }
   }
 
@@ -733,8 +755,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @Nullable
   @Override
   public String evaluateEffectivePom(@NotNull File file,
-                                     @NotNull List<String> activeProfiles,
-                                     @NotNull List<String> inactiveProfiles,
+                                     @NotNull ArrayList<String> activeProfiles,
+                                     @NotNull ArrayList<String> inactiveProfiles,
                                      MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
@@ -748,8 +770,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull
   @Override
-  public List<MavenGoalExecutionResult> executeGoal(@NotNull String longRunningTaskId,
-                                                    @NotNull Collection<MavenGoalExecutionRequest> requests,
+  public ArrayList<MavenGoalExecutionResult> executeGoal(@NotNull String longRunningTaskId,
+                                                    @NotNull ArrayList<MavenGoalExecutionRequest> requests,
                                                     @NotNull String goal,
                                                     MavenToken token) {
     MavenServerUtil.checkToken(token);
@@ -758,11 +780,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     }
   }
 
-  private List<MavenGoalExecutionResult> executeGoal(@NotNull LongRunningTask task,
+  private ArrayList<MavenGoalExecutionResult> executeGoal(@NotNull LongRunningTask task,
                                                      @NotNull Collection<MavenGoalExecutionRequest> requests,
                                                      @NotNull String goal) {
     try {
-      List<MavenGoalExecutionResult> results = new ArrayList<>();
+      ArrayList<MavenGoalExecutionResult> results = new ArrayList<>();
       for (MavenGoalExecutionRequest request : requests) {
         if (task.isCanceled()) break;
         MavenGoalExecutionResult result = doExecute(request, goal);
@@ -882,8 +904,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
   @NotNull
   @Override
-  public List<MavenArtifact> resolveArtifacts(@NotNull String longRunningTaskId,
-                                              @NotNull Collection<MavenArtifactResolutionRequest> requests,
+  public ArrayList<MavenArtifact> resolveArtifacts(@NotNull String longRunningTaskId,
+                                              @NotNull ArrayList<MavenArtifactResolutionRequest> requests,
                                               MavenToken token) {
     MavenServerUtil.checkToken(token);
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size(), myConsoleWrapper)) {
@@ -892,10 +914,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @NotNull
-  private List<MavenArtifact> doResolveArtifacts(@NotNull LongRunningTask task,
+  private ArrayList<MavenArtifact> doResolveArtifacts(@NotNull LongRunningTask task,
                                                  @NotNull Collection<MavenArtifactResolutionRequest> requests) {
     try {
-      List<MavenArtifact> artifacts = new ArrayList<>();
+      ArrayList<MavenArtifact> artifacts = new ArrayList<>();
       for (MavenArtifactResolutionRequest request : requests) {
         if (task.isCanceled()) break;
         MavenArtifact artifact = doResolveArtifact(request.getArtifactInfo(), request.getRemoteRepositories());
@@ -946,7 +968,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return artifact;
   }
 
-  private void initLogging(Maven40ServerConsoleLogger consoleWrapper) {
+  private static void initLogging(Maven40ServerConsoleLogger consoleWrapper) {
     Maven40Sl4jLoggerWrapper.setCurrentWrapper(consoleWrapper);
   }
 
@@ -976,7 +998,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     MavenRepositorySystem repositorySystem = myRepositorySystem;
     RepositorySystemSession session = getComponent(LegacySupport.class).getRepositorySession();
 
-    ArtifactRepository repository = repositorySystem.buildArtifactRepository(repo);
+    ArtifactRepository repository = MavenRepositorySystem.buildArtifactRepository(repo);
 
     if (session != null) {
       repositorySystem.injectMirror(session, Collections.singletonList(repository));
@@ -993,7 +1015,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   }
 
   @Override
-  public Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories, MavenToken token) {
+  public HashSet<MavenRemoteRepository> resolveRepositories(@NotNull ArrayList<MavenRemoteRepository> repositories, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
       return new HashSet<>(
@@ -1008,8 +1030,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   @NotNull
   @Override
   public MavenArtifactResolveResult resolveArtifactsTransitively(
-    @NotNull List<MavenArtifactInfo> artifacts,
-    @NotNull List<MavenRemoteRepository> remoteRepositories,
+    @NotNull ArrayList<MavenArtifactInfo> artifacts,
+    @NotNull ArrayList<MavenRemoteRepository> remoteRepositories,
     MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
@@ -1091,22 +1113,22 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
 
   @Override
-  public Collection<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) {
+  public ArrayList<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) {
     MavenServerUtil.checkToken(token);
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Collection<MavenArchetype> getRemoteArchetypes(MavenToken token, @NotNull String url) {
+  public ArrayList<MavenArchetype> getRemoteArchetypes(MavenToken token, @NotNull String url) {
     MavenServerUtil.checkToken(token);
     throw new UnsupportedOperationException();
   }
 
   @Nullable
   @Override
-  public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
+  public HashMap<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
                                                               @NotNull String version,
-                                                              @NotNull List<MavenRemoteRepository> repositories,
+                                                              @NotNull ArrayList<MavenRemoteRepository> repositories,
                                                               @Nullable String url, MavenToken token) {
     MavenServerUtil.checkToken(token);
     throw new UnsupportedOperationException();

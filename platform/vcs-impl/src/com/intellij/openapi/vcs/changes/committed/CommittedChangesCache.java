@@ -41,12 +41,8 @@ import java.util.concurrent.TimeUnit;
 import static com.intellij.util.MessageBusUtil.invokeLaterIfNeededOnSyncPublisher;
 import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList;
 
-
 @Service(Service.Level.PROJECT)
-@State(
-  name = "CommittedChangesCache",
-  storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
-)
+@State(name = "CommittedChangesCache", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class CommittedChangesCache extends SimplePersistentStateComponent<CommittedChangesCacheState> {
   private static final Logger LOG = Logger.getInstance(CommittedChangesCache.class);
 
@@ -58,7 +54,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   private List<CommittedChangeList> myCachedIncomingChangeLists;
   private final @NotNull Set<CommittedChangeList> myNewIncomingChanges = new LinkedHashSet<>();
 
-  private MyRefreshRunnable myRefresnRunnable;
+  private MyRefreshRunnable refreshRunnable;
 
   private final Map<String, Pair<Long, List<CommittedChangeList>>> myExternallyLoadedChangeLists;
   private final CachesHolder myCachesHolder;
@@ -767,12 +763,10 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   public void refreshIncomingChangesAsync() {
     debug("Refreshing incoming changes in background");
     myRefreshingIncomingChanges = true;
-    final Runnable task = () -> {
+    myTaskQueue.run(() -> {
       refreshIncomingChanges();
-
       refreshIncomingUi();
-    };
-    myTaskQueue.run(task);
+    });
   }
 
   private void refreshIncomingUi() {
@@ -890,10 +884,10 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   private void updateRefreshTimer() {
     cancelRefreshTimer();
     if (getState().isRefreshEnabled()) {
-      myRefresnRunnable = new MyRefreshRunnable(this);
+      refreshRunnable = new MyRefreshRunnable(this);
       // if "schedule with fixed rate" is used, then after waking up from stand-by mode, events are generated for inactive period
       // it does not make sense
-      myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(myRefresnRunnable,
+      myFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(refreshRunnable,
                                                                     getState().getRefreshInterval() * 60L,
                                                                     getState().getRefreshInterval() * 60L,
                                                                     TimeUnit.SECONDS);
@@ -901,9 +895,9 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
   }
 
   private void cancelRefreshTimer() {
-    if (myRefresnRunnable != null) {
-      myRefresnRunnable.cancel();
-      myRefresnRunnable = null;
+    if (refreshRunnable != null) {
+      refreshRunnable.cancel();
+      refreshRunnable = null;
     }
     if (myFuture != null) {
       myFuture.cancel(false);
@@ -925,7 +919,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     return null;
   }
 
-  private long getLatestListForFile(final ChangesCacheFile file) {
+  private static long getLatestListForFile(final ChangesCacheFile file) {
     try {
       if ((file == null) || (file.isEmpty())) {
         return -1;

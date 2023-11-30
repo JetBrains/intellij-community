@@ -1,15 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider;
-import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -63,10 +61,9 @@ public final class ActionsTree {
   private DefaultMutableTreeNode myRoot;
   private final JScrollPane myComponent;
   private Keymap myKeymap;
-  private Group myMainGroup = new Group("", null, null);
+  private Group myMainGroup = new Group("");
 
-  @NonNls
-  private static final String ROOT = "ROOT";
+  private static final @NonNls String ROOT = "ROOT";
 
   private String myFilter = null;
   private Condition<? super AnAction> myBaseFilter;
@@ -144,9 +141,7 @@ public final class ActionsTree {
         ActionMenu.showDescriptionInStatusBar(description != null, myTree, description);
       }
 
-      @Nullable
-      @NlsActions.ActionDescription
-      private String getDescription(@NotNull MouseEvent e) {
+      private @Nullable @NlsActions.ActionDescription String getDescription(@NotNull MouseEvent e) {
         TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
         DefaultMutableTreeNode node = path == null ? null : (DefaultMutableTreeNode)path.getLastPathComponent();
         Object userObject = node == null ? null : node.getUserObject();
@@ -180,15 +175,13 @@ public final class ActionsTree {
     myTree.getSelectionModel().addTreeSelectionListener(l);
   }
 
-  @Nullable
-  private Object getSelectedObject() {
+  private @Nullable Object getSelectedObject() {
     TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath == null) return null;
     return ((DefaultMutableTreeNode)selectionPath.getLastPathComponent()).getUserObject();
   }
 
-  @Nullable
-  public String getSelectedActionId() {
+  public @Nullable String getSelectedActionId() {
     Object userObject = getSelectedObject();
     if (userObject instanceof String) return (String)userObject;
     if (userObject instanceof QuickList) return ((QuickList)userObject).getActionId();
@@ -257,8 +250,8 @@ public final class ActionsTree {
     reset(myKeymap, currentQuickListIds, myFilter, shortcut);
   }
 
-  private class MyModel extends DefaultTreeModel implements TreeTableModel {
-    protected MyModel(DefaultMutableTreeNode root) {
+  private final class MyModel extends DefaultTreeModel implements TreeTableModel {
+    private MyModel(DefaultMutableTreeNode root) {
       super(root);
     }
 
@@ -383,8 +376,7 @@ public final class ActionsTree {
     TreeUtil.selectInTree(node, true, myTree);
   }
 
-  @Nullable
-  private DefaultMutableTreeNode getNodeForPath(String path) {
+  private @Nullable DefaultMutableTreeNode getNodeForPath(String path) {
     Enumeration<TreeNode> enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
@@ -408,8 +400,7 @@ public final class ActionsTree {
     return result;
   }
 
-  @Nullable
-  private String getPath(DefaultMutableTreeNode node, boolean presentable) {
+  private @Nullable String getPath(DefaultMutableTreeNode node, boolean presentable) {
     final Object userObject = node.getUserObject();
     if (userObject instanceof String actionId) {
 
@@ -442,7 +433,7 @@ public final class ActionsTree {
     return layeredIcon;
   }
 
-  private class PathsKeeper {
+  private final class PathsKeeper {
     private ArrayList<String> myPathsToExpand;
     private ArrayList<String> mySelectionPaths;
 
@@ -503,7 +494,7 @@ public final class ActionsTree {
     }
 
 
-    private ArrayList<TreeNode> childrenToArray(DefaultMutableTreeNode node) {
+    private static ArrayList<TreeNode> childrenToArray(DefaultMutableTreeNode node) {
       ArrayList<TreeNode> arrayList = new ArrayList<>();
       for (int i = 0; i < node.getChildCount(); i++) {
         arrayList.add(node.getChildAt(i));
@@ -512,7 +503,7 @@ public final class ActionsTree {
     }
   }
 
-  private class KeymapsRenderer extends ColoredTreeCellRenderer implements UiInspectorTreeRendererContextProvider {
+  private final class KeymapsRenderer extends ColoredTreeCellRenderer implements UiInspectorTreeRendererContextProvider {
 
     private final MyColoredTreeCellRenderer myLink = new MyColoredTreeCellRenderer();
     private boolean myHaveLink;
@@ -649,8 +640,7 @@ public final class ActionsTree {
       return result;
     }
 
-    @NlsActions.ActionText
-    private String getActionText(@Nullable AnAction action, @NlsSafe String actionId, @Nullable String boundSourceId) {
+    private @NlsActions.ActionText String getActionText(@Nullable AnAction action, @NlsSafe String actionId, @Nullable String boundSourceId) {
       String text = action == null ? null : action.getTemplateText();
       if (text == null || text.length() == 0) { //fill dynamic presentation gaps
         if (myBrokenActions.add(actionId)) {
@@ -690,9 +680,8 @@ public final class ActionsTree {
       }
     }
 
-    @NotNull
     @Override
-    public Dimension getPreferredSize() {
+    public @NotNull Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
       if (myHaveLink) {
         size.width += myLinkWidth;
@@ -700,9 +689,8 @@ public final class ActionsTree {
       return size;
     }
 
-    @Nullable
     @Override
-    public Object getFragmentTagAt(int x) {
+    public @Nullable Object getFragmentTagAt(int x) {
       if (myHaveLink) {
         return myLink.getFragmentTagAt(x - myLinkOffset);
       }
@@ -717,7 +705,7 @@ public final class ActionsTree {
       return accessibleContext;
     }
 
-    protected class AccessibleKeymapsRenderer extends AccessibleColoredTreeCellRenderer {
+    protected final class AccessibleKeymapsRenderer extends AccessibleColoredTreeCellRenderer {
       @Override
       public String getAccessibleName() {
         String name = super.getAccessibleName();
@@ -752,7 +740,7 @@ public final class ActionsTree {
       }
     }
 
-    private class SelectActionRunnable implements Runnable {
+    private final class SelectActionRunnable implements Runnable {
       private final String myActionId;
 
       SelectActionRunnable(@NonNls String actionId) {
@@ -766,8 +754,7 @@ public final class ActionsTree {
     }
   }
 
-  @NotNull
-  private RowData extractRowData(Object data) {
+  private @NotNull RowData extractRowData(Object data) {
     String actionId = null;
     if (data instanceof String) {
       actionId = (String)data;
@@ -853,7 +840,7 @@ public final class ActionsTree {
     config.restore();
   }
 
-  private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,

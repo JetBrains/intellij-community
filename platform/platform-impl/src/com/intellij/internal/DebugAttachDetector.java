@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -84,8 +84,7 @@ public final class DebugAttachDetector {
     return property != null && property.isEmpty();
   }
 
-  @Nullable
-  private static final String DEBUG_ARGS = getDebugArgs();
+  private static final @Nullable String DEBUG_ARGS = getDebugArgs();
 
   private static @Nullable String getDebugArgs() {
     for (String value : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
@@ -112,7 +111,8 @@ public final class DebugAttachDetector {
       return true;
     }
     Properties properties = ApplicationManager.getApplication().getService(DebugAttachDetector.class).myAgentProperties;
-    if (properties == null) { // For now return true if can not detect
+    // for now, return true if you can not detect
+    if (properties == null) {
       return true;
     }
     return isAttached(properties);

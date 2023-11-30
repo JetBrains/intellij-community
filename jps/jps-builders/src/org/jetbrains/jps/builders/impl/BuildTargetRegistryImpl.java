@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.util.SmartList;
@@ -43,9 +43,8 @@ public final class BuildTargetRegistryImpl implements BuildTargetRegistry {
     myAllTargets = ContainerUtil.concat(targetsByType);
   }
 
-  @NotNull
   @Override
-  public Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@NotNull JpsModule module, @NotNull BuildTargetRegistry.ModuleTargetSelector selector) {
+  public @NotNull Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@NotNull JpsModule module, @NotNull BuildTargetRegistry.ModuleTargetSelector selector) {
     final List<ModuleBasedTarget> targets = myModuleBasedTargets.get(module);
     if (targets == null || targets.isEmpty()) {
       return Collections.emptyList();
@@ -71,15 +70,13 @@ public final class BuildTargetRegistryImpl implements BuildTargetRegistry {
   }
 
   @Override
-  @NotNull
-  public <T extends BuildTarget<?>> List<T> getAllTargets(@NotNull BuildTargetType<T> type) {
+  public @NotNull <T extends BuildTarget<?>> List<T> getAllTargets(@NotNull BuildTargetType<T> type) {
     //noinspection unchecked
     return (List<T>)myTargets.get(type);
   }
 
-  @NotNull
   @Override
-  public List<BuildTarget<?>> getAllTargets() {
+  public @NotNull List<BuildTarget<?>> getAllTargets() {
     return myAllTargets;
   }
 }

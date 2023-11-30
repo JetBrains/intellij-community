@@ -5,5 +5,6 @@ class Klass: Iterable<String> {
 }
 
 fun main(args: Array<String>) {
+    println(args)
     Klass()
 }

@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.plugins.org.PluginManagerFilters
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -45,13 +44,15 @@ class JBAcademyInteractiveCoursePanel(data: InteractiveCourseData) : Interactive
       isOpaque = false
     }
 
-    cardLayoutPanel.add(createButtonPanel(InstallEduToolsAction()), BUTTON_ID)
+    cardLayoutPanel.add(createButtonPanel(), BUTTON_ID)
 
     progressBarPanel = ProgressBarPanel(CancelPluginActionListener())
     cardLayoutPanel.add(progressBarPanel, PROGRESS_ID)
 
     return cardLayoutPanel
   }
+
+  override fun getButtonAction(): Action = InstallEduToolsAction()
 
   private inner class CancelPluginActionListener : MouseAdapter() {
 
@@ -105,8 +106,8 @@ class JBAcademyInteractiveCoursePanel(data: InteractiveCourseData) : Interactive
         val marketplacePlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(setOf(JB_ACADEMY_PLUGIN_ID))
         val descriptors: MutableList<IdeaPluginDescriptor> = ArrayList(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins,
                                                                                                                      emptyList(), true))
-        PluginManagerCore.getPlugins().filterTo(descriptors) {
-          !it.isEnabled && PluginManagerCore.isCompatible(it) && PluginManagerFilters.getInstance().allowInstallingPlugin(it)
+        PluginManagerCore.plugins.filterTo(descriptors) {
+          !it.isEnabled && PluginManagerCore.isCompatible(it) && PluginManagementPolicy.getInstance().canInstallPlugin(it)
         }
         indicator.checkCanceled()
         progressBarPanel.updateProgressBar(0.2)

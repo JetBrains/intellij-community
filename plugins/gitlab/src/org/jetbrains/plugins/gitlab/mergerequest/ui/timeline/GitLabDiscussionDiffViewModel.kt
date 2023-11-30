@@ -17,8 +17,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNotePositionMapping
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
-import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
-import org.jetbrains.plugins.gitlab.mergerequest.diff.selectedChange
+import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.selectedChange
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabDiscussionDiffViewModel.PatchHunkResult
 
 interface GitLabDiscussionDiffViewModel {
@@ -69,7 +69,7 @@ class GitLabDiscussionDiffViewModelImpl(
             return@combine PatchHunkResult.NotLoaded
           }
 
-          val (hunk, anchor) = findHunkAndAnchor(patch, mapping.change.location) ?: run {
+          val (hunk, anchor) = findHunkAndAnchor(patch, mapping.change.location!!) ?: run {
             LOG.debug("Unable to map location for position $position in patch\n$patch")
             return@combine PatchHunkResult.NotLoaded
           }

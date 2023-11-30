@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.client;
 
 import com.google.protobuf.MessageLite;
@@ -22,8 +22,7 @@ import java.util.concurrent.Executor;
 @ChannelHandler.Sharable
 final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> extends SimpleChannelInboundHandler<MessageLite> {
   private final ConcurrentMap<UUID, RequestFuture<T>> myHandlers = new ConcurrentHashMap<>(16, 0.75f, 1);
-  @NotNull
-  private final UUIDGetter myUuidGetter;
+  private final @NotNull UUIDGetter myUuidGetter;
   private final SimpleProtobufClient myClient;
   private final Executor myAsyncExec;
 

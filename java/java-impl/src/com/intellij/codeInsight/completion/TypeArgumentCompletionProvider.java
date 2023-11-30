@@ -85,7 +85,7 @@ class TypeArgumentCompletionProvider {
                            List<? extends PsiType> expectedArgs,
                            PsiTypeParameterListOwner paramOwner) {
     List<PsiTypeLookupItem> typeItems = ContainerUtil.map(expectedArgs, arg -> PsiTypeLookupItem.createLookupItem(arg, context));
-    TailType globalTail = mySmart ? info.getTailType() : TailType.NONE;
+    TailType globalTail = mySmart ? info.getTailType() : TailTypes.noneType();
     TypeArgsLookupElement element = new TypeArgsLookupElement(typeItems, globalTail, hasParameters(paramOwner, context));
     element.registerSingleClass(mySession);
     resultSet.consume(element);

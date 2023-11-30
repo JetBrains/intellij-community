@@ -7,4 +7,4 @@ fun some() {
     r.foo("")
 }<caret>
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */

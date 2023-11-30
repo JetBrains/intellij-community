@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManagerEx;
@@ -38,8 +38,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 @ApiStatus.Experimental
 public abstract class XmlAttributeDelegate {
-  @NotNull
-  private final XmlAttribute myAttribute;
+  private final @NotNull XmlAttribute myAttribute;
 
   private volatile VolatileState myVolatileState;
 
@@ -58,8 +57,7 @@ public abstract class XmlAttributeDelegate {
     );
   }
 
-  @Nullable
-  private static XmlAttributeDescriptor getDescriptionImpl(@NotNull XmlAttribute attribute) {
+  private static @Nullable XmlAttributeDescriptor getDescriptionImpl(@NotNull XmlAttribute attribute) {
     final XmlTag tag = attribute.getParent();
     // e.g. XmlDecl or PI
     if (tag != null) {
@@ -71,8 +69,7 @@ public abstract class XmlAttributeDelegate {
     return null;
   }
 
-  @NotNull
-  private static ModificationTracker externalResourceModificationTracker(@NotNull XmlAttribute attribute) {
+  private static @NotNull ModificationTracker externalResourceModificationTracker(@NotNull XmlAttribute attribute) {
     Project project = attribute.getProject();
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
     return () -> manager.getModificationCount(project);
@@ -120,12 +117,12 @@ public abstract class XmlAttributeDelegate {
   }
 
   static class VolatileState {
-    @NotNull final String myDisplayText;
+    final @NotNull String myDisplayText;
     final int @NotNull [] myGapDisplayStarts;
     final int @NotNull [] myGapPhysicalStarts;
-    @NotNull final TextRange myValueTextRange; // text inside quotes, if there are any
+    final @NotNull TextRange myValueTextRange; // text inside quotes, if there are any
 
-    VolatileState(@NotNull final String displayText,
+    VolatileState(final @NotNull String displayText,
                   int @NotNull [] gapDisplayStarts,
                   int @NotNull [] gapPhysicalStarts,
                   @NotNull TextRange valueTextRange) {
@@ -150,8 +147,7 @@ public abstract class XmlAttributeDelegate {
     buffer.append(child.getChars());
   }
 
-  @Nullable
-  private XmlAttributeDelegate.VolatileState recalculate() {
+  private @Nullable XmlAttributeDelegate.VolatileState recalculate() {
     XmlAttributeValue value = myAttribute.getValueElement();
     if (value == null) return null;
     PsiElement firstChild = value.getFirstChild();
@@ -205,8 +201,7 @@ public abstract class XmlAttributeDelegate {
     return volatileState;
   }
 
-  @NotNull
-  private static String getEntityValue(@NotNull final XmlEntityRef entityRef) {
+  private static @NotNull String getEntityValue(final @NotNull XmlEntityRef entityRef) {
     final XmlEntityDecl decl = entityRef.resolve(entityRef.getContainingFile());
     if (decl != null) {
       final XmlAttributeValue valueElement = decl.getValueElement();
@@ -278,7 +273,7 @@ public abstract class XmlAttributeDelegate {
   }
 
   @NotNull
-  PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
+  PsiElement setName(final @NotNull String nameText) throws IncorrectOperationException {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(myAttribute.getNode());
     final String oldValue = notNull(myAttribute.getValue(), "");
     final XmlAttribute newAttribute = createAttribute(nameText, oldValue, getPreferredQuoteStyle());

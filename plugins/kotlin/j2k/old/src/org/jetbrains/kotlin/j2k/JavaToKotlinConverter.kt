@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import java.util.*
 
 
 interface PostProcessor {
@@ -403,13 +402,13 @@ open class J2KDelegatingProgressIndicator(indicator: ProgressIndicator) : Wrappe
         delegate.text = text
     }
 
-    override fun getText() = delegate.text
+    override fun getText(): String? = delegate.text
 
     override fun setText2(text: String?) {
         delegate.text2 = text
     }
 
-    override fun getText2() = delegate.text2
+    override fun getText2(): String? = delegate.text2
     override fun getFraction() = delegate.fraction
 
     override fun setFraction(fraction: Double) {

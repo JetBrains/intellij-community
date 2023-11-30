@@ -470,7 +470,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
            : Indent.getIndent(type, 0, false, false);
   }
 
-  public static class IndentCalculatorFactory {
+  public static final class IndentCalculatorFactory {
     private final Project myProject;
     private final Editor myEditor;
 

@@ -3,11 +3,10 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
+import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.builtins.createFunctionType
-import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -30,7 +29,9 @@ import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
 import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.CommonSupertypes
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
@@ -51,10 +52,6 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         replaceWith = ReplaceWith("analyze(element) { }", "org.jetbrains.kotlin.analysis.api.analyze")
     )
     fun getBindingContextIfAny(element: KtElement): BindingContext? = getBindingContext(element)
-
-    @ApiStatus.ScheduledForRemoval
-    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
-    fun getTypeMapper(element: KtElement): KotlinTypeMapper?
 
     fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings
 
@@ -103,13 +100,21 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         }
     }
 
-    override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): KtExpression? {
-        val parameter = ktCallElement.resolveToClassDescriptor()
-            ?.unsubstitutedPrimaryConstructor
+    override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): UExpression? {
+        val classDescriptor = ktCallElement.resolveToClassDescriptor() ?: return null
+        val psiElement = classDescriptor.psiElement
+        if (psiElement is PsiClass) {
+            // a usage Java annotation
+            return findAttributeValueExpression(psiElement, name)
+        }
+        val parameter = classDescriptor
+            .unsubstitutedPrimaryConstructor
             ?.valueParameters
             ?.find { it.name.asString() == name } ?: return null
 
-        return (parameter.source.getPsi() as? KtParameter)?.defaultValue
+        return (parameter.source.getPsi() as? KtParameter)?.defaultValue?.let {
+            languagePlugin.convertWithParent(it)
+        }
     }
 
     override fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression? {
@@ -134,17 +139,6 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             return baseKotlinConverter.convertOrEmpty(argument.getArgumentExpression(), parent)
         }
         return baseKotlinConverter.createVarargsHolder(arguments, parent)
-    }
-
-    override fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
-        val lastExpression = ktLambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return null
-        val context = lastExpression.analyze()
-        if (context[BindingContext.USED_AS_RESULT_OF_LAMBDA, lastExpression] == true) {
-            return KotlinUImplicitReturnExpression(parent).apply {
-                returnExpression = baseKotlinConverter.convertOrEmpty(lastExpression, this)
-            }
-        }
-        return null
     }
 
     override fun getImplicitParameters(
@@ -345,7 +339,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
         val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return null
-        val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return null
+        val receiver = resolvedCall.extensionReceiver ?: resolvedCall.dispatchReceiver ?: return null
         return receiver.type.toPsiType(source, ktCallElement, PsiTypeConversionConfiguration.create(ktCallElement, isBoxed = true))
     }
 
@@ -437,6 +431,22 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         )
     }
 
+    override fun getSuspendContinuationType(
+        suspendFunction: KtFunction,
+        containingLightDeclaration: PsiModifierListOwner?,
+    ): PsiType? {
+        val descriptor = suspendFunction.analyze()[BindingContext.FUNCTION, suspendFunction] ?: return null
+        if (!descriptor.isSuspend) return null
+        val returnType = descriptor.returnType ?: return null
+        val moduleDescriptor = DescriptorUtils.getContainingModule(descriptor)
+        val continuationType = moduleDescriptor.getContinuationOfTypeOrAny(returnType)
+        return continuationType.toPsiType(
+            containingLightDeclaration,
+            suspendFunction,
+            PsiTypeConversionConfiguration.create(suspendFunction)
+        )
+    }
+
     override fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType? {
         if (ktFunction is KtConstructor<*>) return null
         val descriptor = ktFunction.analyze()[BindingContext.FUNCTION, ktFunction] ?: return null
@@ -488,8 +498,8 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             annotatedElement.initializer?.let { it.getType(it.analyze()) }?.let { return it }
             annotatedElement.delegateExpression?.let { it.getType(it.analyze())?.arguments?.firstOrNull()?.type }?.let { return it }
         }
-        annotatedElement.getParentOfType<KtProperty>(false)?.let {
-            it.typeReference?.getType() ?: it.initializer?.let { it.getType(it.analyze()) }
+        annotatedElement.getParentOfType<KtProperty>(false)?.let { property ->
+            property.typeReference?.getType() ?: property.initializer?.let { it.getType(it.analyze()) }
         }?.let { return it }
         return null
     }

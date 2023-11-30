@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -19,6 +20,7 @@ import java.awt.Dimension
 import java.awt.event.ActionListener
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
@@ -33,13 +35,22 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
 
   override fun actionPerformed(e: AnActionEvent) {}
 
-  class ComboboxActionComponent(private val project: Project,
-                                private val mask: AtomicProperty<String?>,
+  override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+    val comboboxComponent = component as ComboboxActionComponent
+    if (FindManager.getInstance(project).findInProjectModel.fileFilter == null
+        && comboboxComponent.selectedItem != emptyText
+        && comboboxComponent.isFocusOwner) {
+      comboboxComponent.selectedItem = emptyText
+    }
+  }
+
+  class ComboboxActionComponent(project: Project,
+                                private val latestMaskProperty: AtomicProperty<String?>,
                                 private val onChanged: () -> Unit) :
     ComboBox<String>(FindSettings.getInstance().recentFileMasks.reversed().toTypedArray()) {
     private val findModel = FindManager.getInstance(project).findInProjectModel
     private val rebuild = {
-      mask.set(getNormalizedText())
+      latestMaskProperty.set(getNormalizedText())
       findModel.fileFilter = getNormalizedText()
       onChanged()
     }
@@ -53,6 +64,12 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
       selectedItem = FindSettings.getInstance().fileMask ?: emptyText
       findModel.fileFilter = FindSettings.getInstance().fileMask
       addActionListener(ActionListener { rebuild() })
+
+      findModel.addObserver {
+        runInEdt {
+          if (findModel.fileFilter == null) selectedItem = emptyText
+        }
+      }
 
       (editor.editorComponent as JTextField).also {
         it.background = JBUI.CurrentTheme.BigPopup.searchFieldBackground()

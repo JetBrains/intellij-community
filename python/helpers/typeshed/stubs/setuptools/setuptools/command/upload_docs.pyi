@@ -1,4 +1,6 @@
+from collections.abc import Callable
 from typing import Any, ClassVar
+from typing_extensions import Self
 
 from .upload import upload
 
@@ -8,7 +10,8 @@ class upload_docs(upload):
     user_options: ClassVar[list[tuple[str, str | None, str]]]
     boolean_options: ClassVar[list[str]]
     def has_sphinx(self): ...
-    sub_commands: Any
+    # The callable parameter is self: Self, but using Self still trips up mypy
+    sub_commands: ClassVar[list[tuple[str, Callable[[Self], bool] | None]]]  # type: ignore[misc, assignment]
     upload_dir: Any
     target_dir: Any
     def initialize_options(self) -> None: ...

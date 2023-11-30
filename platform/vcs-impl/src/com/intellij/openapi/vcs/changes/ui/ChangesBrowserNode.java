@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.treeView.FileNameComparator;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -34,7 +35,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.ToIntFunction;
-import java.util.stream.Stream;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
@@ -293,6 +293,14 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return getTextPresentation();
   }
 
+  @Override
+  public void setUserObject(Object userObject) {
+    if (userObject != getUserObject()) {
+      Logger.getInstance(ChangesBrowserNode.class).error("Should not replace UserObject for ChangesBrowserNode");
+    }
+    super.setUserObject(userObject);
+  }
+
   /**
    * Used by speedsearch, copy-to-clipboard and default renderer.
    */
@@ -467,52 +475,6 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     public final int hashCode() {
       return Objects.hash(value);
     }
-  }
-
-
-  /**
-   * @deprecated Use {@link #iterateFilesUnder()}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public List<VirtualFile> getAllFilesUnder() {
-    return iterateFilesUnder().toList();
-  }
-
-  /**
-   * @deprecated Use {@link #iterateFilesUnder()}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public Stream<VirtualFile> getFilesUnderStream() {
-    return iterateFilesUnder().toStream();
-  }
-
-  /**
-   * @deprecated Use {@link #iterateFilePathsUnder()}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public List<FilePath> getAllFilePathsUnder() {
-    return iterateFilePathsUnder().toList();
-  }
-
-  /**
-   * @deprecated Use {@link #iterateFilePathsUnder()}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public Stream<FilePath> getFilePathsUnderStream() {
-    return iterateFilePathsUnder().toStream();
-  }
-
-  /**
-   * @deprecated Use {@link #traverse()}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public Stream<ChangesBrowserNode<?>> getNodesUnderStream() {
-    return traverse().toStream();
   }
 
   public interface NodeWithFilePath {

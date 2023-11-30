@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PackageVersionComparator implements Comparator<String> {
+public final class PackageVersionComparator implements Comparator<String> {
   public static final Comparator<String> VERSION_COMPARATOR = new PackageVersionComparator();
 
   @Override

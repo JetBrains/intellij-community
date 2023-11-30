@@ -7,7 +7,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.injected.editor.EditorWindow
-import com.intellij.internal.statistic.service.fus.collectors.CtrlMouseHintShown
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.CtrlMouseHintShown
 import com.intellij.lang.documentation.ide.impl.DocumentationManager
 import com.intellij.lang.documentation.ide.impl.injectedThenHost
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -34,7 +34,8 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManagerListener.FILE_EDITOR_MANAGER
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbModeBlockedFunctionality
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -71,7 +72,7 @@ internal class InitCtrlMouseHandlerActivity : ProjectActivity {
 }
 
 @VisibleForTesting
-@Service
+@Service(Service.Level.PROJECT)
 class CtrlMouseHandler2(
   private val project: Project,
   private val cs: CoroutineScope,
@@ -220,8 +221,10 @@ class CtrlMouseHandler2(
       }
     }
     catch (e: IndexNotReadyException) {
-      DumbService.getInstance(project).showDumbModeNotification(
-        CodeInsightBundle.message("notification.element.information.is.not.available.during.index.update")
+      DumbServiceImpl.getInstance(project).showDumbModeNotificationForFunctionalityWithCoalescing(
+        CodeInsightBundle.message("notification.element.information.is.not.available.during.index.update"),
+        DumbModeBlockedFunctionality.CtrlMouseHandler,
+        Pair(request.action, request.editor)
       )
       null
     }
@@ -295,7 +298,7 @@ class CtrlMouseHandler2(
 
   private fun showHint(editor: EditorEx, hostOffset: Int, result: CtrlMouseResult): LightweightHint? {
     val skipHint = EditorMouseHoverPopupManager.getInstance().isHintShown ||
-                   DocumentationManager.instance(project).isPopupVisible ||
+                   DocumentationManager.getInstance(project).isPopupVisible ||
                    ApplicationManager.getApplication().isUnitTestMode
     if (skipHint) {
       return null
@@ -309,6 +312,7 @@ class CtrlMouseHandler2(
     val component = HintUtil.createInformationLabel(text, hyperlinkListener, null, null).also {
       it.border = JBUI.Borders.empty(6, 6, 5, 6)
     }
+    //AppUIUtil.targetToDevice(component, editor.component)
     return showHint(editor, hostOffset, component)
   }
 
@@ -326,7 +330,7 @@ class CtrlMouseHandler2(
         return
       }
       cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
-        val ok = DocumentationManager.instance(project).activateInlineLinkS(
+        val ok = DocumentationManager.getInstance(project).activateInlineLinkS(
           targetPointer::dereference, description, editor, editorPoint(e, editor)
         )
         if (ok) {
@@ -416,7 +420,7 @@ private fun wrapInScrollPaneIfNeeded(component: JComponent, editor: Editor): JCo
   if (preferredSize.width <= maxWidth && preferredSize.height <= maxHeight) {
     return component
   }
-  // We expect documentation providers to exercise good judgement in limiting the displayed information,
+  // We expect documentation providers to exercise good judgment in limiting the displayed information,
   // but in any case, we don't want the hint to cover the whole screen, so we also implement certain limiting here.
   return ScrollPaneFactory.createScrollPane(component, true).also {
     it.preferredSize = Dimension(

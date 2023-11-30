@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.openapi.project.Project;
@@ -13,17 +13,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class JsonSchemaPatternComparator {
-  @NotNull
-  private final Project myProject;
+public final class JsonSchemaPatternComparator {
+  private final @NotNull Project myProject;
 
   public JsonSchemaPatternComparator(@NotNull Project project) {
     myProject = project;
   }
 
-  @NotNull
-  public ThreeState isSimilar(@NotNull UserDefinedJsonSchemaConfiguration.Item itemLeft,
-                              @NotNull UserDefinedJsonSchemaConfiguration.Item itemRight) {
+  public @NotNull ThreeState isSimilar(@NotNull UserDefinedJsonSchemaConfiguration.Item itemLeft,
+                                       @NotNull UserDefinedJsonSchemaConfiguration.Item itemRight) {
     if (itemLeft.isPattern() != itemRight.isPattern()) return ThreeState.NO;
     if (itemLeft.isPattern()) return comparePatterns(itemLeft, itemRight);
     return comparePaths(itemLeft, itemRight);
@@ -48,8 +46,8 @@ public class JsonSchemaPatternComparator {
     return FileUtil.filesEqual(leftFile, rightFile) && left.isDirectory() == right.isDirectory() ? ThreeState.YES : ThreeState.NO;
   }
 
-  private static ThreeState comparePatterns(@NotNull final UserDefinedJsonSchemaConfiguration.Item leftItem,
-                                            @NotNull final UserDefinedJsonSchemaConfiguration.Item rightItem) {
+  private static ThreeState comparePatterns(final @NotNull UserDefinedJsonSchemaConfiguration.Item leftItem,
+                                            final @NotNull UserDefinedJsonSchemaConfiguration.Item rightItem) {
     if (leftItem.getPath().equals(rightItem.getPath())) return ThreeState.YES;
     if (leftItem.getPath().indexOf(File.separatorChar) >= 0 || rightItem.getPath().indexOf(File.separatorChar) >= 0) {
       // todo: better heuristic
@@ -81,8 +79,7 @@ public class JsonSchemaPatternComparator {
     return ThreeState.UNSURE;
   }
 
-  @NotNull
-  private static ThreeState checkOneSideWithoutWildcard(UserDefinedJsonSchemaConfiguration.Item item, BeforeAfter<String> beforeAfter) {
+  private static @NotNull ThreeState checkOneSideWithoutWildcard(UserDefinedJsonSchemaConfiguration.Item item, BeforeAfter<String> beforeAfter) {
     if (!StringUtil.isEmptyOrSpaces(beforeAfter.getBefore()) && item.getPath().startsWith(beforeAfter.getBefore())) {
       return ThreeState.YES;
     }
@@ -92,8 +89,7 @@ public class JsonSchemaPatternComparator {
     return ThreeState.UNSURE;
   }
 
-  @Nullable
-  private static BeforeAfter<String> getBeforeAfterAroundWildCards(@NotNull final String pattern) {
+  private static @Nullable BeforeAfter<String> getBeforeAfterAroundWildCards(final @NotNull String pattern) {
     final int firstIdx = pattern.indexOf('*');
     final int lastIdx = pattern.lastIndexOf('*');
     if (firstIdx < 0 || lastIdx < 0) return null;

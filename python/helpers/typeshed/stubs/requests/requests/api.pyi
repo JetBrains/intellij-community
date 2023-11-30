@@ -1,5 +1,5 @@
+from _typeshed import Incomplete
 from collections.abc import Mapping
-from typing import Any
 from typing_extensions import TypeAlias
 
 from .models import Response
@@ -24,11 +24,11 @@ def request(
     stream: bool | None = ...,
     verify: _Verify | None = ...,
     cert: _Cert | None = ...,
-    json: Any | None = ...,
+    json: Incomplete | None = ...,
 ) -> Response: ...
 def get(
     url: str | bytes,
-    params: _Params | None = ...,
+    params: _Params | None = None,
     *,
     data: _Data | None = ...,
     headers: _HeadersMapping | None = ...,
@@ -42,7 +42,7 @@ def get(
     stream: bool | None = ...,
     verify: _Verify | None = ...,
     cert: _Cert | None = ...,
-    json: Any | None = ...,
+    json: Incomplete | None = ...,
 ) -> Response: ...
 def options(
     url: str | bytes,
@@ -60,7 +60,7 @@ def options(
     stream: bool | None = ...,
     verify: _Verify | None = ...,
     cert: _Cert | None = ...,
-    json: Any | None = ...,
+    json: Incomplete | None = ...,
 ) -> Response: ...
 def head(
     url: str | bytes,
@@ -78,12 +78,12 @@ def head(
     stream: bool | None = ...,
     verify: _Verify | None = ...,
     cert: _Cert | None = ...,
-    json: Any | None = ...,
+    json: Incomplete | None = ...,
 ) -> Response: ...
 def post(
     url: str | bytes,
-    data: _Data | None = ...,
-    json: Any | None = ...,
+    data: _Data | None = None,
+    json: Incomplete | None = None,
     *,
     params: _Params | None = ...,
     headers: _HeadersMapping | None = ...,
@@ -100,7 +100,7 @@ def post(
 ) -> Response: ...
 def put(
     url: str | bytes,
-    data: _Data | None = ...,
+    data: _Data | None = None,
     *,
     params: _Params | None = ...,
     headers: _HeadersMapping | None = ...,
@@ -114,11 +114,11 @@ def put(
     stream: bool | None = ...,
     verify: _Verify | None = ...,
     cert: _Cert | None = ...,
-    json: Any | None = ...,
+    json: Incomplete | None = ...,
 ) -> Response: ...
 def patch(
     url: str | bytes,
-    data: _Data | None = ...,
+    data: _Data | None = None,
     *,
     params: _Params | None = ...,
     headers: _HeadersMapping | None = ...,
@@ -132,7 +132,7 @@ def patch(
     stream: bool | None = ...,
     verify: _Verify | None = ...,
     cert: _Cert | None = ...,
-    json: Any | None = ...,
+    json: Incomplete | None = ...,
 ) -> Response: ...
 def delete(
     url: str | bytes,
@@ -150,5 +150,5 @@ def delete(
     stream: bool | None = ...,
     verify: _Verify | None = ...,
     cert: _Cert | None = ...,
-    json: Any | None = ...,
+    json: Incomplete | None = ...,
 ) -> Response: ...

@@ -66,15 +66,12 @@ class JsPlatformKindResolution : IdePlatformKindResolution {
                 lookupTracker = LookupTracker.DO_NOTHING
             )
     }
-
-    companion object {
-        private val metadataFactories = KlibMetadataFactories({ DefaultBuiltIns.Instance }, DynamicTypeDeserializer)
-
-        private val metadataModuleDescriptorFactory = KlibMetadataModuleDescriptorFactoryImpl(
-            metadataFactories.DefaultDescriptorFactory,
-            metadataFactories.DefaultPackageFragmentsFactory,
-            metadataFactories.flexibleTypeDeserializer,
-            metadataFactories.platformDependentTypeTransformer
-        )
-    }
 }
+
+private val metadataFactories = KlibMetadataFactories({ DefaultBuiltIns.Instance }, DynamicTypeDeserializer)
+
+private val metadataModuleDescriptorFactory = KlibMetadataModuleDescriptorFactoryImpl(
+    metadataFactories.DefaultDescriptorFactory,
+    metadataFactories.DefaultPackageFragmentsFactory,
+    metadataFactories.flexibleTypeDeserializer,
+)

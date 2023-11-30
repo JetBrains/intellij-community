@@ -1,12 +1,10 @@
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.impl.*
-import com.intellij.workspaceModel.codegen.impl.writer.getRefType
-import com.intellij.workspaceModel.codegen.impl.writer.refsFields
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.getRefType
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.refsFields
 
 val ObjProperty<*, *>.refsConnectionId: String
   get() = if (name == "parent") {
@@ -18,69 +16,54 @@ val ObjProperty<*, *>.refsConnectionId: String
 val ObjProperty<*, *>.refsConnectionIdCode: String
   get() = buildString {
     val ref = valueType.getRefType()
-    val isListType = valueType is ValueType.List<*> || ((valueType as? ValueType.Optional<*>)?.type is ValueType.List<*>)
-
-    append("internal val $refsConnectionId: ${ConnectionId::class.fqn} = ConnectionId.create(")
+    append("internal val $refsConnectionId: ${ConnectionId} = ConnectionId.create(")
     if (ref.child) {
       append("${receiver.name}::class.java, ${ref.javaType}::class.java,")
     }
     else {
       append("${ref.javaType}::class.java, ${receiver.name}::class.java,")
     }
-    val isParentNullable = if (ref.child) {
-      if (isListType) {
-        if (ref.target.openness.extendable) {
-          append(" ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,")
-        }
-        else {
-          append(" ConnectionId.ConnectionType.ONE_TO_MANY,")
-        }
-      }
-      else {
-        if (ref.target.openness.extendable) {
-          append(" ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE,")
-        }
-        else {
-          append(" ConnectionId.ConnectionType.ONE_TO_ONE,")
-        }
-      }
-      referencedField.valueType is ValueType.Optional<*>
+    val connectionType = this@refsConnectionIdCode.refsConnectionType(ref)
+    if (connectionType.isNotEmpty()) {
+      append(" $connectionType,")
     }
-    else {
-      val declaredReferenceFromParent = referencedField
-      var valueType = declaredReferenceFromParent.valueType
-      if (valueType is ValueType.Optional<*>) {
-        valueType = valueType.type
-      }
-      if (valueType is ValueType.List<*>) {
-        if (receiver.openness.extendable) {
-          append(" ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY,")
-        }
-        else {
-          append(" ConnectionId.ConnectionType.ONE_TO_MANY,")
-        }
-      }
-      else if (valueType is ValueType.ObjRef<*>) {
-        if (receiver.openness.extendable) {
-          append(" ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE,")
-        }
-        else {
-          append(" ConnectionId.ConnectionType.ONE_TO_ONE,")
-        }
-      }
-      this@refsConnectionIdCode.valueType is ValueType.Optional<*>
-    }
+    val isParentNullable = (ref.child && referencedField.valueType is ValueType.Optional<*>) || (!ref.child && this@refsConnectionIdCode.valueType is ValueType.Optional<*>)
     append(" $isParentNullable)")
   }
+
+fun ObjProperty<*, *>.refsConnectionType(ref: ValueType.ObjRef<*>): String {
+  val isListType = valueType is ValueType.List<*> || ((valueType as? ValueType.Optional<*>)?.type is ValueType.List<*>)
+  if (ref.child) {
+    return "$ConnectionId.ConnectionType.${
+      if (isListType) {
+        if (ref.target.openness.extendable) "ONE_TO_ABSTRACT_MANY" else "ONE_TO_MANY"
+      } else {
+        if (ref.target.openness.extendable) "ABSTRACT_ONE_TO_ONE" else "ONE_TO_ONE"
+      }
+    }"
+  }
+
+  val declaredReferenceFromParent = referencedField
+  var valueType = declaredReferenceFromParent.valueType
+  if (valueType is ValueType.Optional<*>) {
+    valueType = valueType.type
+  }
+  if (valueType is ValueType.List<*>) {
+    return "$ConnectionId.ConnectionType.${if (receiver.openness.extendable) "ONE_TO_ABSTRACT_MANY" else "ONE_TO_MANY"}"
+  } else if (valueType is ValueType.ObjRef<*>) {
+    return "$ConnectionId.ConnectionType.${if (receiver.openness.extendable) "ABSTRACT_ONE_TO_ONE" else "ONE_TO_ONE"}"
+  }
+  return ""
+}
 
 fun ObjProperty<*, *>.refsConnectionMethodCode(genericType: String = ""): String {
   val ref = valueType.getRefType()
   val connectionName = name.uppercase() + "_CONNECTION_ID"
   val getterName = if (ref.child) {
     if (ref.target.openness.extendable)
-      "${fqn1(EntityStorage::extractOneToAbstractOneChild)}$genericType"
+      "${EntityStorage.extractOneToAbstractOneChild}$genericType"
     else
-      "${fqn1(EntityStorage::extractOneToOneChild)}$genericType"
+      "${EntityStorage.extractOneToOneChild}$genericType"
   }
   else {
     var valueType = referencedField.valueType
@@ -89,13 +72,13 @@ fun ObjProperty<*, *>.refsConnectionMethodCode(genericType: String = ""): String
     }
     when (valueType) {
       is ValueType.List<*> -> if (receiver.openness.extendable)
-        "${fqn1(EntityStorage::extractOneToAbstractManyParent)}$genericType"
+        "${EntityStorage.extractOneToAbstractManyParent}$genericType"
       else
-        "${fqn1(EntityStorage::extractOneToManyParent)}$genericType"
+        "${EntityStorage.extractOneToManyParent}$genericType"
       is ValueType.ObjRef<*> -> if (receiver.openness.extendable)
-        "${fqn1(EntityStorage::extractOneToAbstractOneParent)}$genericType"
+        "${EntityStorage.extractOneToAbstractOneParent}$genericType"
       else
-        "${fqn1(EntityStorage::extractOneToOneParent)}$genericType"
+        "${EntityStorage.extractOneToOneParent}$genericType"
       else -> error("Unsupported reference type")
     }
   }

@@ -604,7 +604,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   /**
    * @deprecated do not use
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final TreeNode getRootImmediately() {
     if (!root.isValid()) {
       root.set(getValidRoot());

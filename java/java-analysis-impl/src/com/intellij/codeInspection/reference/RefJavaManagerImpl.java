@@ -459,8 +459,9 @@ public final class RefJavaManagerImpl extends RefJavaManager {
 
       PsiModifierListOwner javaModifiersListOwner = ObjectUtils.tryCast(node.getJavaPsi(), PsiModifierListOwner.class);
       if (javaModifiersListOwner != null) {
-        PsiAnnotation externalAnnotation = myExternalAnnotationsManager.findExternalAnnotation(javaModifiersListOwner,
-                                                                                               BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+        PsiAnnotation externalAnnotation =
+          myExternalAnnotationsManager.findExternalAnnotation(javaModifiersListOwner,
+                                                              BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
         UAnnotation uAnnotation = UastContextKt.toUElement(externalAnnotation, UAnnotation.class);
         if (uAnnotation != null) {
           retrieveSuppressions(uAnnotation, node);
@@ -471,6 +472,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
 
     @Override
     public boolean visitExpression(@NotNull UExpression node) {
+      // for lambda expressions and method references
       RefElement refElement = myRefManager.getReference(node.getSourcePsi());
       if (refElement != null) {
         myRefManager.buildReferences(refElement);
@@ -544,7 +546,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
             }
           }
 
-          if (buf.length() > 0) {
+          if (!buf.isEmpty()) {
             String suppressId = buf.substring(1);
             element.addSuppression(suppressId);
 

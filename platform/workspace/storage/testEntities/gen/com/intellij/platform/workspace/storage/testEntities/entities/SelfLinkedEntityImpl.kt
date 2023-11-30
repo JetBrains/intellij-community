@@ -13,24 +13,24 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class SelfLinkedEntityImpl(val dataSource: SelfLinkedEntityData) : SelfLinkedEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class SelfLinkedEntityImpl(private val dataSource: SelfLinkedEntityData) : SelfLinkedEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(SelfLinkedEntity::class.java, SelfLinkedEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
     )
 
@@ -45,6 +45,7 @@ open class SelfLinkedEntityImpl(val dataSource: SelfLinkedEntityData) : SelfLink
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: SelfLinkedEntityData?) : ModifiableWorkspaceEntityBase<SelfLinkedEntity, SelfLinkedEntityData>(
     result), SelfLinkedEntity.Builder {
@@ -74,7 +75,7 @@ open class SelfLinkedEntityImpl(val dataSource: SelfLinkedEntityData) : SelfLink
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -165,6 +166,11 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
     }
   }
 
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.SelfLinkedEntity") as EntityMetadata
+  }
+
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return SelfLinkedEntity::class.java
   }
@@ -213,9 +219,5 @@ class SelfLinkedEntityData : WorkspaceEntityData<SelfLinkedEntity>() {
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

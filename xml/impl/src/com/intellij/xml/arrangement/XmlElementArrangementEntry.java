@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.arrangement;
 
 import com.intellij.openapi.util.TextRange;
@@ -29,15 +30,13 @@ public class XmlElementArrangementEntry extends DefaultArrangementEntry
     myType = type;
   }
 
-  @Nullable
   @Override
-  public String getName() {
+  public @Nullable String getName() {
     return myName;
   }
 
-  @Nullable
   @Override
-  public String getNamespace() {
+  public @Nullable String getNamespace() {
     return myNamespace;
   }
 

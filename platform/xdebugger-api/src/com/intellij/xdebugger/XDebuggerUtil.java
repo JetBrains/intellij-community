@@ -7,6 +7,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -20,13 +23,20 @@ import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
 import java.util.List;
 
 public abstract class XDebuggerUtil {
+
   public static XDebuggerUtil getInstance() {
     return ApplicationManager.getApplication().getService(XDebuggerUtil.class);
   }
+
+  @Nullable
+  public FileEditor getSelectedEditor(Project project, VirtualFile file) {
+    return FileEditorManager.getInstance(project).getSelectedEditor(file);
+  }
+
+  public abstract Editor openTextEditor(@NotNull OpenFileDescriptor descriptor);
 
   public abstract XLineBreakpointType<?>[] getLineBreakpointTypes();
 
@@ -91,12 +101,6 @@ public abstract class XDebuggerUtil {
   public abstract <B extends XLineBreakpoint<?>> XBreakpointGroupingRule<B, ?> getGroupingByFileRule();
 
   public abstract <B extends XLineBreakpoint<?>> List<XBreakpointGroupingRule<B, ?>> getGroupingByFileRuleAsList();
-
-  /**
-   * @deprecated use {@link XBreakpointType#getBreakpointComparator()}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract <B extends XBreakpoint<?>> Comparator<B> getDefaultBreakpointComparator(XBreakpointType<B, ?> type);
 
   public abstract <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass);
 

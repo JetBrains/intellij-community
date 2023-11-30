@@ -33,6 +33,7 @@
     <httpRequestHandler implementation="org.jetbrains.ide.ToolboxRestService"/>
     <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxUpdateNotificationHandler"/>
     <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxRestartNotificationHandler"/>
+    <toolboxServiceHandler implementation="org.jetbrains.ide.ToolboxIdeExitHandler"/>
 
     <settingsEntryPointActionProvider implementation="org.jetbrains.ide.ToolboxSettingsActionRegistryActionProvider"/>
 

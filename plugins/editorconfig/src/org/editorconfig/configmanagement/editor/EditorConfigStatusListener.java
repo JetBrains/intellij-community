@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -16,7 +16,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.EditorNotifications;
 import org.editorconfig.Utils;
-import org.editorconfig.configmanagement.ConfigEncodingManager;
+import org.editorconfig.configmanagement.ConfigEncodingCharsetUtil;
 import org.editorconfig.configmanagement.EditorConfigEncodingCache;
 import org.editorconfig.language.psi.EditorConfigFlatOptionKey;
 import org.editorconfig.language.psi.EditorConfigOption;
@@ -88,7 +88,7 @@ final class EditorConfigStatusListener implements CodeStyleSettingsListener, Dis
 
   private static boolean containsValidEncodings(@NotNull Set<String> encodings) {
     for (String t : encodings) {
-      if (ConfigEncodingManager.Companion.toCharset(t) == null) {
+      if (ConfigEncodingCharsetUtil.INSTANCE.toCharset(t) == null) {
         return false;
       }
     }
@@ -111,7 +111,7 @@ final class EditorConfigStatusListener implements CodeStyleSettingsListener, Dis
         else if (element instanceof EditorConfigOption) {
           EditorConfigFlatOptionKey obj1 = ((EditorConfigOption)element).getFlatOptionKey();
           String keyName = obj1 == null ? null : obj1.getName();
-          if (ConfigEncodingManager.charsetKey.equals(keyName)) {
+          if (ConfigEncodingCharsetUtil.charsetKey.equals(keyName)) {
             EditorConfigOptionValueIdentifier obj = ((EditorConfigOption)element).getOptionValueIdentifier();
             String charsetStr = obj == null ? null : obj.getName();
             if (charsetStr != null) {

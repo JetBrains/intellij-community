@@ -18,22 +18,28 @@ package org.jetbrains.idea.maven.project.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.actions.MavenAction
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 
 class AddManagedFilesAction : MavenAction() {
   override fun actionPerformed(e: AnActionEvent) {
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(e.project)
+    cs.launch { actionPerformedAsync(e) }
+  }
+
+  suspend fun actionPerformedAsync(e: AnActionEvent) {
     val project = MavenActionUtil.getProject(e.dataContext) ?: return
     val manager = MavenProjectsManager.getInstanceIfCreated(project) ?: return
 
@@ -48,32 +54,25 @@ class AddManagedFilesAction : MavenAction() {
     }
 
     val fileToSelect = e.getData(CommonDataKeys.VIRTUAL_FILE)
-    val files = FileChooser.chooseFiles(singlePomSelection, project, fileToSelect)
+    val files = withContext(Dispatchers.EDT) { FileChooser.chooseFiles(singlePomSelection, project, fileToSelect) }
 
-    if (files.size == 1) {
-      val projectFile = files[0]
-      val cs = CoroutineScope(SupervisorJob())
-      cs.launch { addManagedFiles(projectFile, files, project) }
+    if (files.size != 1) return
+
+    val projectFile = files[0]
+    val selectedFiles = if (projectFile.isDirectory) projectFile.children else files
+    if (selectedFiles.any { MavenActionUtil.isMavenProjectFile(it) }) {
+      val openProjectProvider = MavenOpenProjectProvider()
+      openProjectProvider.linkToExistingProjectAsync(projectFile, project)
     }
-  }
+    else {
+      val projectPath = getPresentablePath(projectFile.path)
 
-  private suspend fun addManagedFiles(projectFile: VirtualFile,
-                                      files: Array<VirtualFile>,
-                                      project: Project) {
-    val selectedFiles = readAction { if (projectFile.isDirectory) projectFile.children else files }
-    withContext(Dispatchers.EDT) {
-      if (selectedFiles.any { MavenActionUtil.isMavenProjectFile(it) }) {
-        val openProjectProvider = MavenOpenProjectProvider()
-        openProjectProvider.linkToExistingProjectAsync(projectFile, project)
-      }
-      else {
-        val projectPath = getPresentablePath(projectFile.path)
+      val message = if (projectFile.isDirectory)
+        MavenProjectBundle.message("maven.AddManagedFiles.warning.message.directory", projectPath)
+      else MavenProjectBundle.message("maven.AddManagedFiles.warning.message.file", projectPath)
 
-        val message = if (projectFile.isDirectory)
-          MavenProjectBundle.message("maven.AddManagedFiles.warning.message.directory", projectPath)
-        else MavenProjectBundle.message("maven.AddManagedFiles.warning.message.file", projectPath)
-
-        val title = MavenProjectBundle.message("maven.AddManagedFiles.warning.title")
+      val title = MavenProjectBundle.message("maven.AddManagedFiles.warning.title")
+      withContext(Dispatchers.EDT) {
         Messages.showWarningDialog(project, message, title)
       }
     }

@@ -8,8 +8,9 @@ import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.*;
+import java.util.Objects;
 
-import static com.intellij.ui.SplashKt.loadSplashImage;
+import static com.intellij.platform.ide.bootstrap.SplashManagerKt.loadSplashImage;
 
 /**
  * @author Konstantin Bulenkov
@@ -17,7 +18,10 @@ import static com.intellij.ui.SplashKt.loadSplashImage;
 public final class ShowSplashAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Splash splash = new Splash(loadSplashImage(ApplicationInfoImpl.getShadowInstance()));
+    Splash splash = new Splash(Objects.requireNonNull(loadSplashImage(ApplicationInfoImpl.getShadowInstance())));
+    splash.setVisible(true);
+    splash.toFront();
+
     SplashListener listener = new SplashListener(splash);
     splash.addFocusListener(listener);
     splash.addKeyListener(listener);

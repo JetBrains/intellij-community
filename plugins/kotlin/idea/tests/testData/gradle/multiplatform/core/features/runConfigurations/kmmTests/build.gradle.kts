@@ -7,18 +7,17 @@ repositories {
 }
 
 kotlin {
-    targetHierarchy.default()
     jvm()
     iosX64()
     iosArm64()
     iosSimulatorArm64()
 
-    sourceSets.commonTest.get().dependencies {
+    sourceSets.commonTest.dependencies {
         implementation(kotlin("test-common"))
         implementation(kotlin("test-annotations-common"))
     }
 
-    sourceSets.getByName("jvmTest").dependencies {
+    sourceSets.jvmTest.dependencies {
         implementation(kotlin("test-junit"))
     }
 }

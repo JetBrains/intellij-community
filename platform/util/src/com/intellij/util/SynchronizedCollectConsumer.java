@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class SynchronizedCollectConsumer<T> extends CollectConsumer<T> {
+public final class SynchronizedCollectConsumer<T> extends CollectConsumer<T> {
   public SynchronizedCollectConsumer(@NotNull Collection<T> result) {
     super(result);
   }

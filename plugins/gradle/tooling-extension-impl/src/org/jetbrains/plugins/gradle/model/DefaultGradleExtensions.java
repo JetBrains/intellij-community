@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -69,19 +69,19 @@ public class DefaultGradleExtensions implements GradleExtensions {
   @NotNull
   @Override
   public List<DefaultGradleExtension> getExtensions() {
-    return extensions == null ? Collections.<DefaultGradleExtension>emptyList() : extensions;
+    return extensions == null ? Collections.emptyList() : extensions;
   }
 
   @Override
   @NotNull
   public List<DefaultGradleConvention> getConventions() {
-    return conventions == null ? Collections.<DefaultGradleConvention>emptyList() : conventions;
+    return conventions == null ? Collections.emptyList() : conventions;
   }
 
   @NotNull
   @Override
   public List<DefaultGradleProperty> getGradleProperties() {
-    return gradleProperties == null ? Collections.<DefaultGradleProperty>emptyList() : gradleProperties;
+    return gradleProperties == null ? Collections.emptyList() : gradleProperties;
   }
 
   @NotNull
@@ -105,7 +105,7 @@ public class DefaultGradleExtensions implements GradleExtensions {
   @NotNull
   @Override
   public List<DefaultGradleConfiguration> getConfigurations() {
-    return configurations == null ? Collections.<DefaultGradleConfiguration>emptyList() : configurations;
+    return configurations == null ? Collections.emptyList() : configurations;
   }
 
   @Override

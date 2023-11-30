@@ -6,6 +6,7 @@ import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
 import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.providers.DefaultImportPerformer
+import com.intellij.ide.customize.transferSettings.providers.TransferSettingsPerformContext
 import com.intellij.ide.customize.transferSettings.providers.TransferSettingsPerformImportTask
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -15,20 +16,22 @@ import com.intellij.util.EventDispatcher
 class TransferSettingsControllerImpl : TransferSettingsController {
   private val eventDispatcher = EventDispatcher.create(TransferSettingsListener::class.java)
   private var previouslySelected: BaseIdeVersion? = null
+  private var timesSwitchedBetweenInstances = -1 // The field will be changed to 0 on the first IDE showing
 
   override fun updateCheckboxes(ideVersion: IdeVersion) {
     eventDispatcher.multicaster.checkboxesUpdated(ideVersion)
   }
 
-  override fun performImport(project: Project?, ideVersion: IdeVersion, withPlugins: Boolean, pi: ProgressIndicator) {
-    TransferSettingsCollector.logImportStarted()
+  override fun performImport(project: Project?, ideVersion: IdeVersion, pi: ProgressIndicator) {
+    TransferSettingsCollector.logImportStarted(ideVersion.settingsCache, timesSwitchedBetweenInstances)
     eventDispatcher.multicaster.importStarted(ideVersion, ideVersion.settingsCache)
     val performer = getImportPerformer()
 
-    val task = object : TransferSettingsPerformImportTask(project, performer, ideVersion.settingsCache, true) {
+    val context = TransferSettingsPerformContext()
+    val task = object : TransferSettingsPerformImportTask(project, performer, ideVersion.settingsCache, true, context) {
       override fun onSuccess() {
         TransferSettingsCollector.logImportSucceeded(ideVersion, ideVersion.settingsCache)
-        eventDispatcher.multicaster.importPerformed(ideVersion, ideVersion.settingsCache)
+        eventDispatcher.multicaster.importPerformed(ideVersion, ideVersion.settingsCache, context)
       }
 
       override fun onThrowable(error: Throwable) {
@@ -56,6 +59,7 @@ class TransferSettingsControllerImpl : TransferSettingsController {
   override fun itemSelected(ideVersion: BaseIdeVersion) {
     eventDispatcher.multicaster.itemSelected(ideVersion)
     previouslySelected = ideVersion
+    timesSwitchedBetweenInstances++
   }
 
   override fun getImportPerformer() = DefaultImportPerformer()

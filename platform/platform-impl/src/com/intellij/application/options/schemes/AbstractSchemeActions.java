@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
 import com.intellij.CommonBundle;
@@ -45,16 +45,14 @@ import java.util.function.BiFunction;
  * @see SchemeExporter
  */
 public abstract class AbstractSchemeActions<T extends Scheme> {
-  @NotNull
-  protected final AbstractSchemesPanel<T, ?> mySchemesPanel;
+  protected final @NotNull AbstractSchemesPanel<T, ?> mySchemesPanel;
 
   protected AbstractSchemeActions(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
   }
   
 
-  @NotNull
-  protected Collection<String> getSchemeImportersNames() {
+  protected @NotNull Collection<String> getSchemeImportersNames() {
     List<String> importersNames = new ArrayList<>();
     for (SchemeImporterEP<T> importerEP : SchemeImporterEP.getExtensions(getSchemeType())) {
       importersNames.add(importerEP.getLocalizedName());
@@ -62,8 +60,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     return importersNames;
   }
 
-  @NotNull
-  private Collection<String> getSchemeExporterNames() {
+  private @NotNull Collection<String> getSchemeExporterNames() {
     List<String> exporterNames = new ArrayList<>();
     for (SchemeExporterEP<T> exporterEP : SchemeExporterEP.getExtensions(getSchemeType())) {
       exporterNames.add(exporterEP.getLocalizedName());
@@ -71,8 +68,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     return exporterNames;
   }
 
-  @NotNull
-  public final Collection<AnAction> getActions() {
+  public final @NotNull Collection<AnAction> getActions() {
     List<AnAction> actions = new ArrayList<>();
     if (mySchemesPanel.supportsProjectSchemes()) {
       actions.add(new CopyToProjectAction());
@@ -102,7 +98,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   protected void addAdditionalActions(@NotNull List<? super AnAction> defaultActions) {}
 
-  private class CopyToProjectAction extends DumbAwareAction {
+  private final class CopyToProjectAction extends DumbAwareAction {
 
     CopyToProjectAction() {
       super(ApplicationBundle.messagePointer("settings.editor.scheme.copy.to.project"));
@@ -130,7 +126,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 }
 
 
-  private class CopyToIDEAction extends DumbAwareAction {
+  private final class CopyToIDEAction extends DumbAwareAction {
 
     CopyToIDEAction() {
       super(ApplicationBundle.messagePointer("settings.editor.scheme.copy.to.ide"));
@@ -157,7 +153,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
 }
   
-  private class ResetAction extends DumbAwareAction {
+  private final class ResetAction extends DumbAwareAction {
     
     ResetAction() {
       super(ApplicationBundle.messagePointer("settings.editor.scheme.reset"));
@@ -192,7 +188,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   }
   
   
-  private class CopyAction extends DumbAwareAction {
+  private final class CopyAction extends DumbAwareAction {
     CopyAction() {
       super(ApplicationBundle.messagePointer("settings.editor.scheme.copy"));
     }
@@ -222,7 +218,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   }
   
   
-  private class RenameAction extends DumbAwareAction {
+  private final class RenameAction extends DumbAwareAction {
     RenameAction() {
       super(ActionsBundle.messagePointer("action.RenameAction.text"));
     }
@@ -246,7 +242,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
   }
   
-  private class DeleteAction extends DumbAwareAction {
+  private final class DeleteAction extends DumbAwareAction {
     DeleteAction() {
       super(ApplicationBundle.messagePointer("settings.editor.scheme.delete"));
     }
@@ -279,17 +275,15 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
   }
 
-  @NotNull
-  private static AnAction createImportExportAction(@NotNull @NlsActions.ActionText String groupName,
-                                                   @NotNull Collection<@NlsActions.ActionText String> actionNames,
-                                                   @NotNull BiFunction<? super String, ? super @NlsActions.ActionText String, ? extends AnAction> createActionByName) {
+  private static @NotNull AnAction createImportExportAction(@NotNull @NlsActions.ActionText String groupName,
+                                                            @NotNull Collection<@NlsActions.ActionText String> actionNames,
+                                                            @NotNull BiFunction<? super String, ? super @NlsActions.ActionText String, ? extends AnAction> createActionByName) {
     if (actionNames.size() == 1) {
       return createActionByName.apply(ContainerUtil.getFirstItem(actionNames), groupName + "...");
     }
     return new ImportExportActionGroup(groupName, actionNames) {
-      @NotNull
       @Override
-      protected AnAction createAction(@NotNull String actionName) {
+      protected @NotNull AnAction createAction(@NotNull String actionName) {
         return createActionByName.apply(actionName, actionName);
       }
     };
@@ -312,11 +306,10 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       return namedActions.toArray(AnAction.EMPTY_ARRAY);
     }
 
-    @NotNull
-    protected abstract AnAction createAction(@NotNull String actionName);
+    protected abstract @NotNull AnAction createAction(@NotNull String actionName);
   }
   
-  private class ImportAction extends DumbAwareAction {
+  private final class ImportAction extends DumbAwareAction {
 
     private final String myImporterName;
 
@@ -332,7 +325,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
   }
   
-  private class ExportAction extends DumbAwareAction {
+  private final class ExportAction extends DumbAwareAction {
     private final String myExporterName;
 
     ExportAction(@NotNull String exporterName, @NotNull @NlsActions.ActionText String exporterText) {
@@ -483,24 +476,20 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   protected void copyToIDE(@NotNull T scheme) {
   }
 
-  @NotNull
-  protected SchemesModel<T> getModel() {
+  protected @NotNull SchemesModel<T> getModel() {
     return mySchemesPanel.getModel();
   }
   
-  @Nullable
-  protected final T getCurrentScheme() {
+  protected final @Nullable T getCurrentScheme() {
     return mySchemesPanel.getSelectedScheme();
   }
 
   /**
    * @return The actual scheme type.
    */
-  @NotNull
-  protected abstract Class<T> getSchemeType();
+  protected abstract @NotNull Class<T> getSchemeType();
 
-  @NotNull
-  public final AbstractSchemesPanel<T, ?> getSchemesPanel() {
+  public final @NotNull AbstractSchemesPanel<T, ?> getSchemesPanel() {
     return mySchemesPanel;
   }
 }

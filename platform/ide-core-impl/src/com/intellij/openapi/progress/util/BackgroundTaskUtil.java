@@ -12,10 +12,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -178,7 +175,7 @@ public final class BackgroundTaskUtil {
     return Pair.create(result, indicator);
   }
 
-  public static class BackgroundTask<T> {
+  public static final class BackgroundTask<T> {
     private final @NotNull Disposable parent;
     private final @NotNull ProgressIndicator indicator;
     private final @NotNull CompletableFuture<T> future;
@@ -265,56 +262,70 @@ public final class BackgroundTaskUtil {
    */
   @CalledInAny
   public static @NotNull BackgroundTask<?> submitTask(@NotNull Executor executor, @NotNull Disposable parent, @NotNull Runnable task) {
-    ProgressIndicator indicator = new EmptyProgressIndicator();
-    indicator.start();
-    CompletableFuture<?> future = CompletableFuture.runAsync(() -> ProgressManager.getInstance().runProcess(task, indicator), executor);
-    return createBackgroundTask(future, task.toString(), indicator, parent);
+    return createBackgroundTask(executor, () -> {
+      task.run();
+      return null;
+    }, task.toString(), parent);
   }
 
   @CalledInAny
   public static @NotNull <T> BackgroundTask<T> submitTask(@NotNull Executor executor,
                                                           @NotNull Disposable parent,
                                                           @NotNull Computable<? extends T> task) {
-    ProgressIndicator indicator = new EmptyProgressIndicator();
-    indicator.start();
-    CompletableFuture<T> future = CompletableFuture.supplyAsync(() -> ProgressManager.getInstance().runProcess(task, indicator),
-                                                                executor);
-    return createBackgroundTask(future, task.toString(), indicator, parent);
+    return createBackgroundTask(executor, task, task.toString(), parent);
   }
 
-  private static @NotNull <T> BackgroundTask<T> createBackgroundTask(@NotNull CompletableFuture<T> future,
-                                                                     @NotNull String taskName,
-                                                                     @NotNull ProgressIndicator indicator,
+  private static @NotNull <T> BackgroundTask<T> createBackgroundTask(@NotNull Executor executor,
+                                                                     @NotNull Computable<? extends T> task,
+                                                                     @NotNull @NlsSafe String taskName,
                                                                      @NotNull Disposable parent) {
+    ProgressIndicator indicator = new EmptyProgressIndicator();
+
+    AtomicReference<Future<?>> futureRef = new AtomicReference<>();
     Disposable disposable = () -> {
-      if (indicator.isRunning()) indicator.cancel();
-      try {
-        future.get(1, TimeUnit.SECONDS);
+      if (indicator.isRunning()) {
+        indicator.cancel();
       }
-      catch (ExecutionException e) {
-        Throwable cause = e.getCause();
-        if (cause instanceof ProcessCanceledException || cause instanceof CancellationException) {
-          // ignore: expected cancellation
-        }
-        else {
-          LOG.error(e);
-        }
-      }
-      catch (CancellationException ignored) {
-      }
-      catch (InterruptedException | TimeoutException e) {
-        LOG.debug("Couldn't await background process on disposal: " + taskName);
+
+      Future<?> future = futureRef.get();
+      if (future != null) {
+        tryAwaitFuture(future, taskName); // give a task chance to finish in sync
       }
     };
 
-    if (!registerIfParentNotDisposed(parent, disposable)) {
-      indicator.cancel();
-    }
-    else {
-      future.whenComplete((o, e) -> Disposer.dispose(disposable));
-    }
+    CompletableFuture<T> future = CompletableFuture.supplyAsync(() -> {
+      return ProgressManager.getInstance().runProcess(() -> {
+        if (!registerIfParentNotDisposed(parent, disposable)) {
+          throw new ProcessCanceledException();
+        }
+
+        return task.compute();
+      }, indicator);
+    }, executor);
+    future.whenComplete((o, e) -> Disposer.dispose(disposable));
+    futureRef.set(future);
 
     return new BackgroundTask<>(parent, indicator, future);
+  }
+
+  private static void tryAwaitFuture(@NotNull Future<?> future, @NotNull @NlsSafe String taskName) {
+    try {
+      future.get(1, TimeUnit.SECONDS);
+    }
+    catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof ProcessCanceledException || cause instanceof CancellationException) {
+        // ignore: expected cancellation
+      }
+      else {
+        LOG.error(e);
+      }
+    }
+    catch (CancellationException ignored) {
+    }
+    catch (InterruptedException | TimeoutException e) {
+      LOG.debug("Couldn't await background process on disposal: " + taskName);
+    }
   }
 
   @CalledInAny
@@ -351,13 +362,14 @@ public final class BackgroundTaskUtil {
       }
     };
 
-    if (!registerIfParentNotDisposed(parent, disposable)) {
-      indicator.cancel();
-      throw new ProcessCanceledException();
-    }
-
     try {
-      ProgressManager.getInstance().runProcess(task, indicator);
+      ProgressManager.getInstance().runProcess(() -> {
+        if (!registerIfParentNotDisposed(parent, disposable)) {
+          throw new ProcessCanceledException();
+        }
+
+        task.run();
+      }, indicator);
     }
     finally {
       Disposer.dispose(disposable);
@@ -404,7 +416,7 @@ public final class BackgroundTaskUtil {
     });
   }
 
-  private static class Helper<T> {
+  private static final class Helper<T> {
     private static final Object INITIAL_STATE = ObjectUtils.sentinel("INITIAL_STATE");
     private static final Object SLOW_OPERATION_STATE = ObjectUtils.sentinel("SLOW_OPERATION_STATE");
 

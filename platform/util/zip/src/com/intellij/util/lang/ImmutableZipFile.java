@@ -4,8 +4,6 @@ package com.intellij.util.lang;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ikv.Ikv;
-import org.jetbrains.xxh3.Xxh3;
 
 import java.io.IOException;
 import java.io.InputStream;

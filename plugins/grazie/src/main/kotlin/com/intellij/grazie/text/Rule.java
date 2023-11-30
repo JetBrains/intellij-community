@@ -73,15 +73,6 @@ public abstract class Rule {
   }
 
   /**
-   * @return the presentable name of the rule's topmost category
-   * @deprecated use {@link #getCategories()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public final String getCategory() {
-    return categories.get(0);
-  }
-
-  /**
    * @return a non-empty list consisting of presentable names of the rule's categories:
    * the nodes it should be placed into in the Rule settings tree, starting from the language node
    */

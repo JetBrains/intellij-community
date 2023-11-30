@@ -6,11 +6,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.indexing.EntityIndexingServiceEx
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleRootListenerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.VersionedStorageChange
 
 internal object ModuleRootListenerBridgeImpl : ModuleRootListenerBridge {
 
@@ -72,12 +71,7 @@ internal object ModuleRootListenerBridgeImpl : ModuleRootListenerBridge {
   private fun shouldFireRootsChanged(events: VersionedStorageChange, project: Project): Boolean {
     val indexingService = EntityIndexingServiceEx.getInstanceEx()
     return events.getAllChanges().any {
-      val entity = when (it) {
-        is EntityChange.Added -> it.entity
-        is EntityChange.Removed -> it.entity
-        is EntityChange.Replaced -> it.newEntity
-      }
-      indexingService.shouldCauseRescan(entity, project)
+      indexingService.shouldCauseRescan(it.oldEntity, it.newEntity, project)
     }
   }
 }

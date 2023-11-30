@@ -174,14 +174,12 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
   }
 
   @Override
-  @Nullable
-  public Component getComponent() {
+  public @Nullable Component getComponent() {
     return myStack.isEmpty() || myStack.peek().isDisposed() ? null : myStack.peek().getContent();
   }
 
-  @NotNull
   @Override
-  public Stream<JBPopup> getPopupStream() {
+  public @NotNull Stream<JBPopup> getPopupStream() {
     return myStack.stream();
   }
 

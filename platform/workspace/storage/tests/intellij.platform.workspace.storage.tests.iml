@@ -16,6 +16,7 @@
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="library" name="Kryo5" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.workspace.storage" />
 </module>

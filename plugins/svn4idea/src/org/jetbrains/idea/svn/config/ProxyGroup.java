@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.Nls;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +35,10 @@ public class ProxyGroup {
 
   public @NlsSafe String getName() {
     return myGroupName;
+  }
+
+  public @Nls String getDisplayName() {
+    return getName();
   }
 
   public String getPort() {

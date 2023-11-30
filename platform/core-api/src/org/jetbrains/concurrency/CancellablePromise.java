@@ -1,11 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.concurrency;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * Please use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-3/Kotlin-Coroutines">Kotlin coroutines</a> instead
+ * </p>
+ */
+@ApiStatus.Obsolete
 public interface CancellablePromise<T> extends Promise<T>, Future<T> {
   @NotNull
   @Override

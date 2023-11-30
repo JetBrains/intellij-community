@@ -261,6 +261,14 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testPredicates6() { doTestAllFile(); }
+
+  public void testPredicatesVarArg1() { doTestAllFile(); }
+
+  public void testPredicatesVarArg2() { doTestAllFile(); }
+
+  public void testPredicatesVarArg3() { doTestAllFile(); }
+
   public void testFluentIterableElementTypeChanged() {
     doTest();
   }

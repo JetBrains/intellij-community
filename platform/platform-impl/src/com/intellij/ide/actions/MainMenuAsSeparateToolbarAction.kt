@@ -8,6 +8,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.DumbAware
@@ -16,7 +17,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ExperimentalUI
 
-class MainMenuAsSeparateToolbarAction : ToggleAction(), DumbAware {
+class MainMenuAsSeparateToolbarAction : ToggleAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   override fun isSelected(e: AnActionEvent): Boolean {
     return UISettings.getInstance().separateMainMenu

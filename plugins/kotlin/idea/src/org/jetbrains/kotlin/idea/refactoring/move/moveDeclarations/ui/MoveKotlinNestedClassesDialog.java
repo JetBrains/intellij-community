@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.idea.completion.CompletionUtilsKt;
 import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject;
 import org.jetbrains.kotlin.idea.core.completion.PackageLookupObject;
 import org.jetbrains.kotlin.idea.projectView.KtClassOrObjectTreeNode;
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringUtilKt;
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionTable;
@@ -156,7 +156,7 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
                         if (!(lookupObject instanceof DescriptorBasedDeclarationLookupObject)) return false;
                         PsiElement psiElement = ((DescriptorBasedDeclarationLookupObject) lookupObject).getPsiElement();
                         if (lookupObject instanceof PackageLookupObject) return true;
-                        return (psiElement instanceof KtClassOrObject) && KotlinRefactoringUtilKt.canRefactor(psiElement);
+                        return (psiElement instanceof KtClassOrObject) && KotlinCommonRefactoringUtilKt.canRefactorElement(psiElement);
                     }
             );
         }
@@ -268,7 +268,7 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
              modelResult = getModel().computeModelResult();
         }
         catch (ConfigurationException e) {
-            setErrorText(e.getMessage());
+            setErrorHtml(e.getMessageHtml());
             return;
         }
 

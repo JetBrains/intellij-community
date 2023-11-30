@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.collaboration.async.combineAndCollect
+import com.intellij.collaboration.async.throwFailure
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
@@ -35,10 +36,10 @@ internal class GitLabMergeRequestRequestReviewAction(
     val parentComponent = event.source as? JComponent ?: return
     val point = RelativePoint.getSouthWestOf(parentComponent)
     scope.launch {
-      val reviewers = reviewFlowVm.reviewers.first()
+      val reviewers = reviewFlowVm.reviewers.value
       val selectedUser = ChooserPopupUtil.showAsyncChooserPopup(
         point,
-        reviewFlowVm::getPotentialReviewers,
+        reviewFlowVm.potentialReviewers.throwFailure(),
         filteringMapper = { user -> user.username },
         renderer = SimpleSelectablePopupItemRenderer.create { reviewer ->
           ChooserPopupUtil.SelectablePopupItemPresentation.Simple(

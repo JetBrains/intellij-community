@@ -7,15 +7,17 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.inspector.components.HierarchyTree;
 import com.intellij.internal.inspector.components.InspectorWindow;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionPromoter;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ExpandedItemListCellRendererWrapper;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
@@ -38,7 +40,6 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.ContainerEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,15 +53,23 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
   public static final Key<Point> CLICK_INFO_POINT = Key.create("CLICK_INFO_POINT");
   public static final Key<Throwable> ADDED_AT_STACKTRACE = Key.create("uiInspector.addedAt");
 
-  private static boolean ourGlobalInstanceInitialized = false;
+  private static boolean ourStacktracesSavingInitialized = false;
+  private static boolean shouldSaveStacktraces = false;
 
-  public static synchronized void initGlobalInspector() {
-    if (!ourGlobalInstanceInitialized) {
-      ourGlobalInstanceInitialized = true;
-      AppUIUtil.invokeOnEdt(() -> {
-        new UiInspector(null);
-      });
+  public static synchronized void initStacktracesSaving() {
+    if (!ourStacktracesSavingInitialized && isSaveStacktraces()) {
+      ourStacktracesSavingInitialized = true;
+      AddedAtStacktracesCollector.init();
     }
+  }
+
+  public static void enableStacktracesSaving() {
+    shouldSaveStacktraces = true;
+    initStacktracesSaving();
+  }
+
+  public static boolean isSaveStacktraces() {
+    return shouldSaveStacktraces || Registry.is("ui.inspector.save.stacktraces", false);
   }
 
   public UiInspectorAction() {
@@ -87,23 +96,22 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
   }
 
   private static void closeAllInspectorWindows() {
-    Arrays.stream(Window.getWindows())
-      .filter(w -> w instanceof InspectorWindow)
-      .forEach(w -> Disposer.dispose(((InspectorWindow)w).getInspector()));
+    for (Window w : Window.getWindows()) {
+      if (w instanceof InspectorWindow) {
+        Disposer.dispose(((InspectorWindow)w).getInspector());
+      }
+    }
   }
 
-  public static class UiInspector implements AWTEventListener, Disposable {
-
+  public static final class UiInspector implements Disposable {
     UiInspector(@Nullable Project project) {
       if (project != null) {
         Disposer.register(project, this);
       }
-      Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.CONTAINER_EVENT_MASK);
     }
 
     @Override
     public void dispose() {
-      Toolkit.getDefaultToolkit().removeAWTEventListener(this);
       for (Window window : Window.getWindows()) {
         if (window instanceof InspectorWindow) {
           ((InspectorWindow)window).close();
@@ -113,19 +121,12 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
 
     public void showInspector(@Nullable Project project, @NotNull Component c) {
       InspectorWindow window = new InspectorWindow(project, c, this);
-      Disposer.register(window, this);
+      Disposer.register(this, window);
       if (DimensionService.getInstance().getSize(InspectorWindow.getDimensionServiceKey(), null) == null) {
         window.pack();
       }
       window.setVisible(true);
       window.toFront();
-    }
-
-    @Override
-    public void eventDispatched(AWTEvent event) {
-      if (event instanceof ContainerEvent) {
-        processContainerEvent((ContainerEvent)event);
-      }
     }
 
     private void processMouseEvent(Project project, MouseEvent me) {
@@ -150,7 +151,6 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
 
     private static DefaultMutableTreeNode getClickInfoNode(MouseEvent me, JComponent component) {
       if (component instanceof UiInspectorPreciseContextProvider contextProvider) {
-        Point targetPoint = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), component);
         MouseEvent componentEvent = MouseEventAdapter.convert(me, component);
         UiInspectorPreciseContextProvider.UiInspectorInfo inspectorInfo = contextProvider.getUiInspectorContext(componentEvent);
         if (inspectorInfo != null) {
@@ -194,6 +194,9 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
           }
           clickInfo.addAll(findActionsFor(value));
 
+          clickInfo.add(new PropertyBean("List Value", value));
+          clickInfo.add(new PropertyBean("List Value Class", UiInspectorUtil.getClassPresentation(value)));
+
           Component rendererComponent = renderer
             .getListCellRendererComponent(list, value, row, list.getSelectionModel().isSelectedIndex(row),
                                           list.hasFocus());
@@ -235,6 +238,9 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
             }
           }
 
+          clickInfo.add(new PropertyBean("Cell Value", value));
+          clickInfo.add(new PropertyBean("Cell Value Class", UiInspectorUtil.getClassPresentation(value)));
+
           Component rendererComponent = renderer
             .getTableCellRendererComponent(table, value, table.getSelectionModel().isSelectedIndex(row),
                                            table.hasFocus(), row, column);
@@ -262,6 +268,9 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
               mutableTreeNode.getUserObject() instanceof UiInspectorContextProvider contextProvider) {
             clickInfo.addAll(contextProvider.getUiInspectorContext());
           }
+
+          clickInfo.add(new PropertyBean("Tree Node", value));
+          clickInfo.add(new PropertyBean("Tree Node Class", UiInspectorUtil.getClassPresentation(value)));
 
           Component rendererComponent = renderer.getTreeCellRendererComponent(
             tree, value, tree.getSelectionModel().isPathSelected(path),
@@ -293,59 +302,30 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
         if (quickFix != null) {
           return findActionsFor(quickFix);
         }
-        return Collections.singletonList(new PropertyBean("intention action", object.getClass().getName(), true));
+        return Collections.singletonList(new PropertyBean("intention action", UiInspectorUtil.getClassPresentation(object), true));
       }
       else if (object instanceof QuickFix) {
-        return Collections.singletonList(new PropertyBean("quick fix", object.getClass().getName(), true));
+        return Collections.singletonList(new PropertyBean("quick fix", UiInspectorUtil.getClassPresentation(object), true));
       }
 
       return Collections.emptyList();
     }
-
-    private static void processContainerEvent(ContainerEvent event) {
-      Component child = event.getID() == ContainerEvent.COMPONENT_ADDED ? event.getChild() : null;
-      if (child instanceof JComponent && !(event.getSource() instanceof CellRendererPane)) {
-        ((JComponent)child).putClientProperty(ADDED_AT_STACKTRACE, new Throwable());
-      }
-    }
   }
 
-  static class ToggleHierarchyTraceAction extends ToggleAction implements AWTEventListener {
+  private static class AddedAtStacktracesCollector implements AWTEventListener {
+    private AddedAtStacktracesCollector() { }
 
-    private boolean myEnabled = false;
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setText(isSelected(e) ?
-                                  ActionsBundle.message("action.ToggleUiInspectorHierarchyTrace.text.disable") :
-                                  ActionsBundle.message("action.ToggleUiInspectorHierarchyTrace.text.enable"));
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return myEnabled;
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      if (state) {
-        Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.CONTAINER_EVENT_MASK);
-      }
-      else {
-        Toolkit.getDefaultToolkit().removeAWTEventListener(this);
-      }
-      myEnabled = state;
+    public static void init() {
+      Toolkit.getDefaultToolkit().addAWTEventListener(new AddedAtStacktracesCollector(), AWTEvent.CONTAINER_EVENT_MASK);
     }
 
     @Override
     public void eventDispatched(AWTEvent event) {
-      if (event instanceof ContainerEvent) {
-        UiInspector.processContainerEvent((ContainerEvent)event);
+      if (event instanceof ContainerEvent containerEvent) {
+        Component child = event.getID() == ContainerEvent.COMPONENT_ADDED ? containerEvent.getChild() : null;
+        if (child instanceof JComponent jComponent && !(event.getSource() instanceof CellRendererPane)) {
+          ClientProperty.put(jComponent, ADDED_AT_STACKTRACE, new Throwable());
+        }
       }
     }
   }

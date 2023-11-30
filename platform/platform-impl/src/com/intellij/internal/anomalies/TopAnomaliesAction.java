@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.anomalies;
 
 import com.intellij.internal.InternalActionsBundle;
@@ -25,7 +25,7 @@ final class TopAnomaliesAction extends ActionGroup {
 
   private static final int LIMIT = 10;
 
-  private static class Holder {
+  private static final class Holder {
     private static final Comparator<Pair<?, Integer>> COMPARATOR = (o1, o2) -> {
       int i = o2.getSecond() - o1.getSecond();
       if (i != 0) {
@@ -67,7 +67,7 @@ final class TopAnomaliesAction extends ActionGroup {
         }
       }
 
-      private void checkParents(JComponent component, Set<Pair<JComponent, Integer>> top, int limit) {
+      private static void checkParents(JComponent component, Set<Pair<JComponent, Integer>> top, int limit) {
         top.add(Pair.create(component, component.getComponentCount()));
 
         trimToLimit(top, limit);
@@ -113,7 +113,7 @@ final class TopAnomaliesAction extends ActionGroup {
         }
       }
 
-      private void checkClientProperties(JComponent component, Set<Pair<JComponent, Integer>> top, int limit) {
+      private static void checkClientProperties(JComponent component, Set<Pair<JComponent, Integer>> top, int limit) {
         try {
           Field clientProperties = JComponent.class.getDeclaredField("clientProperties");
           clientProperties.setAccessible(true);
@@ -191,7 +191,7 @@ final class TopAnomaliesAction extends ActionGroup {
     return "";
   }
 
-  private static abstract class ResettableAction extends AnAction {
+  private abstract static class ResettableAction extends AnAction {
 
     protected ResettableAction(@NotNull Supplier<String> dynamicText) {
       super(dynamicText);

@@ -54,7 +54,7 @@ fun HeavyPlatformTestCase.projectLibrary(
 
 fun moduleLibrary(
     module: Module,
-    libraryName: String = "TestLibrary",
+    libraryName: String? = "TestLibrary",
     classesRoot: VirtualFile? = null,
     sourcesRoot: VirtualFile? = null,
 ): LibraryEx {

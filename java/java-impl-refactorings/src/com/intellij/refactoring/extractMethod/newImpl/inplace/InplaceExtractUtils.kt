@@ -273,7 +273,8 @@ object InplaceExtractUtils {
         logStatisticsOnHide(project, settingsPopup)
       }
     }
-    return TemplateInlayUtil.createNavigatableButtonWithPopup(templateState.editor, offset, presentation, settingsPopup.panel, templateElement)
+    return TemplateInlayUtil.createNavigatableButtonWithPopup(templateState.editor, offset, presentation, settingsPopup.panel,
+                                                              templateElement, isPopupAbove = false)
   }
 
   fun addPreview(preview: EditorCodePreview, editor: Editor, lines: IntRange, navigatableOffset: Int){

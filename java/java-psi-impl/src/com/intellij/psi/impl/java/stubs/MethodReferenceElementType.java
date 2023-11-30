@@ -7,6 +7,7 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
 import com.intellij.psi.tree.IElementType;
@@ -20,7 +21,7 @@ public class MethodReferenceElementType extends FunctionalExpressionElementType<
   });
 
   public MethodReferenceElementType() {
-    super("METHOD_REF_EXPRESSION");
+    super("METHOD_REF_EXPRESSION", BasicJavaElementType.BASIC_METHOD_REF_EXPRESSION);
   }
 
   @Override

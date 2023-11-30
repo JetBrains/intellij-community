@@ -13,7 +13,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTex
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
+import org.intellij.plugins.markdown.lang.isMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
@@ -30,6 +30,9 @@ internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
   private class Collector(editor: Editor): FactoryInlayHintsCollector(editor) {
     override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
       if (editor.getUserData(DISABLE_TABLE_INLAYS) == true) {
+        return true
+      }
+      if (!element.isValid) {
         return true
       }
       if (element is MarkdownTable && element.hasCorrectBorders()) {

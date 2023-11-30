@@ -9,6 +9,8 @@
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.memberInfo.K2MemberInfoSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.K2ReferenceMutateService"
+                        serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"/>
     <lang.refactoringSupport language="kotlin" 
                              implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringSupportProvider"/>
     <refactoring.safeDeleteProcessor

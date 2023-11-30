@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("PackageDirectoryMismatch")
 package com.intellij.ide.passwordSafe.impl
 
@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.serviceContainer.NonInjectable
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -89,6 +90,7 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
     get() = settings.providerType == ProviderType.MEMORY_ONLY
 
   override fun get(attributes: CredentialAttributes): Credentials? {
+    SlowOperations.assertNonCancelableSlowOperationsAreAllowed()
     val value = currentProvider.get(attributes)
     if ((value == null || value.password.isNullOrEmpty()) && memoryHelperProvider.isInitialized()) {
       // if password was set as `memoryOnly`
@@ -100,6 +102,7 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
+    SlowOperations.assertNonCancelableSlowOperationsAreAllowed()
     currentProvider.set(attributes, credentials)
     if (attributes.isPasswordMemoryOnly && !credentials?.password.isNullOrEmpty()) {
       // we must store because otherwise on get will be no password

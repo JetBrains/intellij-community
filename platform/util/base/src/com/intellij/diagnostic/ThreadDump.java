@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,8 @@ public final class ThreadDump {
   private final StackTraceElement[] myEdtStack;
   private final ThreadInfo[] myThreadInfos;
 
-  ThreadDump(@NotNull String rawDump, StackTraceElement @Nullable [] edtStack, ThreadInfo @NotNull [] threadInfos) {
+  @ApiStatus.Internal
+  public ThreadDump(@NotNull String rawDump, StackTraceElement @Nullable [] edtStack, ThreadInfo @NotNull [] threadInfos) {
     myRawDump = rawDump;
     myEdtStack = edtStack;
     myThreadInfos = threadInfos;

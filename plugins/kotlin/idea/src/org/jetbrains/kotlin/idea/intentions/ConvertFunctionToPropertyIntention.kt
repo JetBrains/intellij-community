@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFunInterface
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -176,7 +177,7 @@ class ConvertFunctionToPropertyIntention :
         val funKeyword = element.funKeyword ?: return false
         val identifier = element.nameIdentifier ?: return false
         if (!TextRange(funKeyword.startOffset, identifier.endOffset).containsOffset(caretOffset)) return false
-
+        if (element.containingClass()?.isFunInterface() == true && !element.hasBody()) return false
         if (element.valueParameters.isNotEmpty() || element.isLocal) return false
 
         val name = element.name!!

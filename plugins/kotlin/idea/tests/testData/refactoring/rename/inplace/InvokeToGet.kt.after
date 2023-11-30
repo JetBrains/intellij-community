@@ -1,3 +1,5 @@
+// NEW_NAME: get
+// RENAME: member
 class A {
     operator fun get(n: Int, s: String) = 1
 }

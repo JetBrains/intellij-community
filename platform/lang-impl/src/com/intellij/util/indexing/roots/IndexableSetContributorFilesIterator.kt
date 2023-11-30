@@ -11,7 +11,7 @@ import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.origin.IndexableSetContributorOriginImpl
 
-internal class IndexableSetContributorFilesIterator(private val name: String?,
+class IndexableSetContributorFilesIterator(private val name: String?,
                                                     private val debugName: String,
                                                     private val projectAware: Boolean,
                                                     private val roots: Set<VirtualFile>,
@@ -61,6 +61,13 @@ internal class IndexableSetContributorFilesIterator(private val name: String?,
   }
 
   companion object {
+    @JvmStatic
+    fun createProjectUnAwareIndexableSetContributors(): List<IndexableSetContributorFilesIterator> {
+      return IndexableSetContributor.EP_NAME.extensionList.map {
+        IndexableSetContributorFilesIterator(it)
+       }
+    }
+
     private fun getName(indexableSetContributor: IndexableSetContributor) = (indexableSetContributor as? ItemPresentation)?.presentableText
     private fun getDebugName(indexableSetContributor: IndexableSetContributor): String =
       getName(indexableSetContributor)?.takeUnless { it.isEmpty() } ?: indexableSetContributor.debugName

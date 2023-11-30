@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 class FileTypeInputFilterPredicate : BaseFileTypeInputFilter {
   private val predicate: (filetype: FileType) -> Boolean
 
-  constructor(predicate: (filetype: FileType) -> Boolean) : super() {
+  constructor(predicate: (filetype: FileType) -> Boolean) : super(FileTypeSubstitutionStrategy.AFTER_SUBSTITUTION) {
     this.predicate = predicate
   }
 

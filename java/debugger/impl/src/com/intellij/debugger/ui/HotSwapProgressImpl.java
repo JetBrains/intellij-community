@@ -106,30 +106,9 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
                           NotificationType type) {
     Notification notification = NOTIFICATION_GROUP.createNotification(title, message, type);
     if (SoftReference.dereference(mySessionRef) != null) {
-      notification.addAction(new NotificationAction(JavaDebuggerBundle.message("status.hot.swap.completed.stop")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          XDebugSession session = SoftReference.dereference(mySessionRef);
-          if (session != null) {
-            notification.expire();
-            session.stop();
-          }
-        }
-      });
+      notification.addAction(new StopHotSwapNotificationAction(mySessionRef));
       if (withRestart) {
-        notification.addAction(new NotificationAction(JavaDebuggerBundle.message("status.hot.swap.completed.restart")) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-            XDebugSession session = SoftReference.dereference(mySessionRef);
-            if (session != null) {
-              notification.expire();
-              ExecutionEnvironment environment = ((XDebugSessionImpl)session).getExecutionEnvironment();
-              if (environment != null) {
-                ExecutionUtil.restart(environment);
-              }
-            }
-          }
-        });
+        notification.addAction(new RestartHotSwapNotificationAction(mySessionRef));
       }
     }
     notification.setImportant(false).notify(getProject());
@@ -213,6 +192,51 @@ public final class HotSwapProgressImpl extends HotSwapProgress {
     }
 
     default void onFinish() {
+    }
+  }
+
+  /**
+   * Please do not inline, WeakReference is here for a reason.
+   */
+  private static class StopHotSwapNotificationAction extends NotificationAction {
+    private final WeakReference<XDebugSession> mySessionRef;
+
+    private StopHotSwapNotificationAction(@NotNull WeakReference<XDebugSession> session) {
+      super(JavaDebuggerBundle.message("status.hot.swap.completed.stop"));
+      mySessionRef = session;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+      XDebugSession session = SoftReference.dereference(mySessionRef);
+      if (session != null) {
+        notification.expire();
+        session.stop();
+      }
+    }
+  }
+
+  /**
+   * Please do not inline, WeakReference is here for a reason.
+   */
+  private static class RestartHotSwapNotificationAction extends NotificationAction {
+    private final WeakReference<XDebugSession> mySessionRef;
+
+    private RestartHotSwapNotificationAction(@NotNull WeakReference<XDebugSession> session) {
+      super(JavaDebuggerBundle.message("status.hot.swap.completed.restart"));
+      mySessionRef = session;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+      XDebugSession session = SoftReference.dereference(mySessionRef);
+      if (session != null) {
+        notification.expire();
+        ExecutionEnvironment environment = ((XDebugSessionImpl)session).getExecutionEnvironment();
+        if (environment != null) {
+          ExecutionUtil.restart(environment);
+        }
+      }
     }
   }
 }

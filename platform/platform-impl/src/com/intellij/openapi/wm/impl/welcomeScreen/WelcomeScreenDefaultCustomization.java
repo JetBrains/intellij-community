@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createShowPopupAction;
 
-public class WelcomeScreenDefaultCustomization implements WelcomeScreenCustomization {
+public final class WelcomeScreenDefaultCustomization implements WelcomeScreenCustomization {
 
   @Override
   public @Nullable List<AnAction> createQuickAccessActions(@NotNull Disposable parentDisposable) {

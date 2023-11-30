@@ -179,8 +179,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     s.getManager().setBeforeRunTasks(s.getConfiguration(), getEnabledTasks());
   }
 
-  @NotNull
-  private List<BeforeRunTask<?>> getEnabledTasks() {
+  private @NotNull List<BeforeRunTask<?>> getEnabledTasks() {
     return myTags.stream()
       .filter(button -> button.myTask != null && button.isVisible())
       .map(button -> button.myTask)
@@ -335,7 +334,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
     }
   }
 
-  private class TagAction extends AnAction implements PossiblyDumbAware {
+  private final class TagAction extends AnAction implements PossiblyDumbAware {
     private final BeforeRunTaskProvider<BeforeRunTask<?>> myProvider;
 
     private TagAction(BeforeRunTaskProvider<BeforeRunTask<?>> provider) {

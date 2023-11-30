@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.table;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -30,13 +30,11 @@ public class BaseTableView extends JBTable {
     super(model, columnModel);
   }
 
-  @NonNls
-  private static String orderPropertyName(final int index) {
+  private static @NonNls String orderPropertyName(final int index) {
     return "Order"+index;
   }
 
-  @NonNls
-  private static String widthPropertyName(int index) {
+  private static @NonNls String widthPropertyName(int index) {
     return "Width" + index;
   }
 

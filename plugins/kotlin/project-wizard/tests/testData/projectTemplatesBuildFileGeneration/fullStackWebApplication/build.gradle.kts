@@ -10,6 +10,7 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven("KOTLIN_BOOTSTRAP_REPO")
+    maven("KOTLIN_IDE_PLUGIN_DEPENDENCIES_REPO")
     maven("KOTLIN_REPO")
     maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
 }

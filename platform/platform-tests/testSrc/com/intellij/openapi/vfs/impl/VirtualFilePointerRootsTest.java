@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -118,7 +118,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
       for (int i = 0; i < 100_000; i++) {
         myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(root+"/a/b/c/d/" + i), disposable, listener);
         String name = "xxx" + (i%20);
-        events.add(new VFileCreateEvent(this, temp, name, true, null, null, true, null));
+        events.add(new VFileCreateEvent(this, temp, name, true, null, null, null));
       }
       PlatformTestUtil.startPerformanceTest(getTestName(false), 4_000, () -> {
         for (int i = 0; i < 100; i++) {
@@ -144,8 +144,8 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(dir.getUrl()+"/file.txt", disposable, new VirtualFilePointerListener() {});
     assertTrue(pointer.isValid());
     FileAttributes attributes = new FileAttributes(false, false, false, false, 0, 1, true);
-    List<VFileEvent> createEvents = Collections.singletonList(new VFileCreateEvent(this, dir, "file.txt", false, attributes, null, true, null));
-    List<VFileEvent> deleteEvents = Collections.singletonList(new VFileDeleteEvent(this, f, true));
+    List<VFileEvent> createEvents = Collections.singletonList(new VFileCreateEvent(this, dir, "file.txt", false, attributes, null, null));
+    List<VFileEvent> deleteEvents = Collections.singletonList(new VFileDeleteEvent(this, f));
 
     PersistentFSImpl persistentFS = (PersistentFSImpl)ManagingFS.getInstance();
 

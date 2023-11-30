@@ -11,8 +11,10 @@ import java.nio.file.Path
  * Project warm-up is a set of activities that help to prepare an IDE for being opened in a "ready-to-work" state.
  * This class allows to configure different processes that the IDE needs in order to successfully and completely open the required projects.
  * Typical examples of the clients of this API are build systems (Maven, Gradle) and SDK detectors (Python SDK, JDK).
+ *
+ * Obsolescence notice: A more complete approach would be to use [com.intellij.ide.observation.ActivityInProgressPredicate]
  */
-@ApiStatus.Experimental
+@ApiStatus.Obsolete
 interface WarmupConfigurator {
 
   companion object {

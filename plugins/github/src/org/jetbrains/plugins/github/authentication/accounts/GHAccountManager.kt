@@ -17,7 +17,7 @@ internal val GithubAccount.isGHAccount: Boolean get() = server.isGithubDotCom
  * Handles application-level Github accounts
  */
 @Service
-class GHAccountManager: AccountManagerBase<GithubAccount, String>(logger<GHAccountManager>()), Disposable {
+class GHAccountManager : AccountManagerBase<GithubAccount, String>(logger<GHAccountManager>()), Disposable {
 
   override fun accountsRepository(): AccountsRepository<GithubAccount> = service<GHPersistentAccounts>()
 
@@ -30,4 +30,10 @@ class GHAccountManager: AccountManagerBase<GithubAccount, String>(logger<GHAccou
   }
 
   override fun dispose() = Unit
+
+  fun isAccountUnique(server: GithubServerPath, accountName: String): Boolean {
+    return accountsState.value.none { account: GithubAccount ->
+      account.server.equals(server, true) && account.name == accountName
+    }
+  }
 }

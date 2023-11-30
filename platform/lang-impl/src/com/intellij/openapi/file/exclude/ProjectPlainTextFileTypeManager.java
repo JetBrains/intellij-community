@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.components.State;
@@ -17,7 +17,7 @@ import java.util.LinkedHashMap;
  */
 @Deprecated(forRemoval = true)
 @State(name = "ProjectPlainTextFileTypeManager")
-public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
+public final class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
   public static ProjectPlainTextFileTypeManager getInstance(@NotNull Project project) {
     return project.getService(ProjectPlainTextFileTypeManager.class);
   }
@@ -27,8 +27,7 @@ public class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
   */
   @Deprecated
   @Override
-  @NotNull
-  public Collection<VirtualFile> getFiles() {
+  public @NotNull Collection<VirtualFile> getFiles() {
     return OverrideFileTypeManager.getInstance().getFiles();
   }
 

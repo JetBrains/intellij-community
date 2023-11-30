@@ -1,3 +1,4 @@
+# These are defined as ints, but later are converted to strings via magic:
 colorama.ansi.AnsiBack.BLACK
 colorama.ansi.AnsiBack.BLUE
 colorama.ansi.AnsiBack.CYAN
@@ -36,5 +37,10 @@ colorama.ansi.AnsiStyle.BRIGHT
 colorama.ansi.AnsiStyle.DIM
 colorama.ansi.AnsiStyle.NORMAL
 colorama.ansi.AnsiStyle.RESET_ALL
+
+# These are defined as None, but on initialization are set to correct values:
 colorama.initialise.wrapped_stderr
 colorama.initialise.wrapped_stdout
+
+# Not planning on writing stubs for tests:
+colorama.tests.*

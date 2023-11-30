@@ -10,5 +10,5 @@ class ExperimentKotlinMLRankingProvider : CatBoostJarCompletionModelProvider(
 
   override fun isLanguageSupported(language: Language): Boolean = language.id.compareTo("kotlin", ignoreCase = true) == 0
 
-  override fun experimentGroupNumber(): Int = 13
+  override fun experimentGroupNumber(): Int = 17
 }

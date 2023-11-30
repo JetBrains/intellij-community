@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.ide.DataManager;
@@ -44,7 +44,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-public class LossyEncodingInspection extends LocalInspectionTool {
+public final class LossyEncodingInspection extends LocalInspectionTool {
   @Override
   @Nls
   @NotNull
@@ -275,7 +275,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     return TextRange.from(len, 1);  // let's report only the first diff char
   }
 
-  private static class ReloadInAnotherEncodingFix extends ChangeEncodingFix {
+  private static final class ReloadInAnotherEncodingFix extends ChangeEncodingFix {
     ReloadInAnotherEncodingFix(@NotNull PsiFile file) {
       super(file);
     }

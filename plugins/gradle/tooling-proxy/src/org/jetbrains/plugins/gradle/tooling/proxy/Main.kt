@@ -175,10 +175,12 @@ object Main {
 
   private fun maybeConvert(result: Any?): Any? {
     if (result is BuildEnvironment) {
-      return InternalBuildEnvironment({ InternalBuildIdentifier(result.buildIdentifier.rootDir) },
-                                      { result.java.run { InternalJavaEnvironment(javaHome, jvmArguments) } },
-                                      { result.gradle.gradleUserHome },
-                                      result.gradle.gradleVersion)
+      return InternalBuildEnvironment(
+        { InternalBuildIdentifier(result.buildIdentifier.rootDir) },
+        { result.gradle.gradleUserHome },
+        { result.gradle.gradleVersion },
+        { result.java.run { InternalJavaEnvironment(javaHome, jvmArguments) } }
+      )
     }
     return result
   }

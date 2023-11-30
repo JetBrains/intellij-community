@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package net.sf.cglib.proxy;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -158,7 +158,7 @@ public final class AdvancedProxy {
     throw new AssertionError("Cannot find constructor for arguments: " + Arrays.asList(constructorArgs));
   }
 
-  private static class ProxyDescription {
+  private static final class ProxyDescription {
     private final Class<?> mySuperClass;
     private final Class<?>[] myInterfaces;
     private final int myHashCode;

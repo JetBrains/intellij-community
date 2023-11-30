@@ -121,7 +121,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
         super.visitCodeReferenceElement(refElement);
       }
 
-      private boolean processRef(@NotNull GrReferenceElement<? extends GroovyPsiElement> refElement) {
+      private static boolean processRef(@NotNull GrReferenceElement<? extends GroovyPsiElement> refElement) {
         final PsiElement qualifier = refElement.getQualifier();
         if (qualifier != null) {
           final Boolean preserveQualifier = qualifier.getCopyableUserData(PRESERVE_QUALIFIER);

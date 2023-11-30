@@ -1,12 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization.internal;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
-import org.gradle.internal.impldep.gnu.trove.TObjectHashingStrategy;
 import org.gradle.api.JavaVersion;
+import org.gradle.internal.impldep.gnu.trove.TObjectHashingStrategy;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.consumer.converters.BackwardsCompatibleIdeaModuleDependency;
 import org.gradle.tooling.model.*;
@@ -1108,7 +1108,7 @@ public final class IdeaProjectSerializationService implements SerializationServi
 
   @NotNull
   public static <T> DomainObjectSet<T> notNullize(@Nullable DomainObjectSet<T> set) {
-    return set == null ? GradleContainerUtil.<T>emptyDomainObjectSet() : set;
+    return set == null ? GradleContainerUtil.emptyDomainObjectSet() : set;
   }
 
   private static final class ResourceDirectoriesGetter implements Supplier<DomainObjectSet<? extends IdeaSourceDirectory>> {

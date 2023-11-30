@@ -68,7 +68,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   public boolean DISABLE_JIT;
   public boolean SHOW_ALTERNATIVE_SOURCE = true;
-  public boolean HOTSWAP_IN_BACKGROUND = true;
   public volatile boolean ENABLE_MEMORY_AGENT =
     ApplicationManager.getApplication().isEAP() && !ApplicationManager.getApplication().isUnitTestMode();
   public boolean ALWAYS_SMART_STEP_INTO = true;
@@ -173,7 +172,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       SHOW_ALTERNATIVE_SOURCE == secondSettings.SHOW_ALTERNATIVE_SOURCE &&
       KILL_PROCESS_IMMEDIATELY == secondSettings.KILL_PROCESS_IMMEDIATELY &&
       ALWAYS_DEBUG == secondSettings.ALWAYS_DEBUG &&
-      HOTSWAP_IN_BACKGROUND == secondSettings.HOTSWAP_IN_BACKGROUND &&
       ENABLE_MEMORY_AGENT == secondSettings.ENABLE_MEMORY_AGENT &&
       ALWAYS_SMART_STEP_INTO == secondSettings.ALWAYS_SMART_STEP_INTO &&
       SKIP_SYNTHETIC_METHODS == secondSettings.SKIP_SYNTHETIC_METHODS &&

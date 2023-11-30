@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.json5.codeinsight;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -14,11 +14,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class Json5StandardComplianceInspection extends JsonStandardComplianceInspection {
+public final class Json5StandardComplianceInspection extends JsonStandardComplianceInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!(JsonDialectUtil.getLanguageOrDefaultJson(holder.getFile()) instanceof Json5Language)) return PsiElementVisitor.EMPTY_VISITOR;
     return new StandardJson5ValidatingElementVisitor(holder);
   }
@@ -28,7 +27,7 @@ public class Json5StandardComplianceInspection extends JsonStandardComplianceIns
     return OptPane.EMPTY;
   }
 
-  private class StandardJson5ValidatingElementVisitor extends StandardJsonValidatingElementVisitor {
+  private final class StandardJson5ValidatingElementVisitor extends StandardJsonValidatingElementVisitor {
     StandardJson5ValidatingElementVisitor(ProblemsHolder holder) {
       super(holder);
     }

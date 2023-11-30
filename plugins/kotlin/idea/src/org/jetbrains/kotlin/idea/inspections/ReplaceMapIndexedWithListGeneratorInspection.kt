@@ -23,12 +23,10 @@ import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+private const val MAP_INDEXED_FUNCTION_NAME = "mapIndexed"
+private val MAP_INDEXED_FQ_NAME = FqName("kotlin.collections.mapIndexed")
+
 class ReplaceMapIndexedWithListGeneratorInspection : AbstractKotlinInspection() {
-    private companion object {
-        private const val MAP_INDEXED_FUNCTION_NAME = "mapIndexed"
-        private val MAP_INDEXED_FQ_NAME = FqName("kotlin.collections.mapIndexed")
-    }
-    
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = callExpressionVisitor(fun(callExpression) {
         val callee = callExpression.calleeExpression ?: return
         if (callee.text != MAP_INDEXED_FUNCTION_NAME

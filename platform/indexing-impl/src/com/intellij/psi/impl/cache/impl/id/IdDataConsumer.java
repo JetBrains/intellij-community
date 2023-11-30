@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.id;
 
@@ -9,12 +9,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class IdDataConsumer {
-  @NotNull
-  private final Object2IntMap<IdIndexEntry> myResult = new Object2IntOpenHashMap<>();
+public final class IdDataConsumer {
+  private final @NotNull Object2IntMap<IdIndexEntry> myResult = new Object2IntOpenHashMap<>();
 
-  @NotNull
-  public Map<IdIndexEntry, Integer> getResult() {
+  public @NotNull Map<IdIndexEntry, Integer> getResult() {
     return myResult;
   }
 

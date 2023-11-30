@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -17,7 +18,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class FoldLinesLikeThis extends DumbAwareAction {
+final class FoldLinesLikeThis extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   private static @Nullable String getSingleLineSelection(@NotNull Editor editor) {
     final SelectionModel model = editor.getSelectionModel();

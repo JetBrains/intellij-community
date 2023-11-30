@@ -16,7 +16,7 @@
  */
 package com.intellij.diagnostic.report
 
-enum class MemoryReportReason {
+internal enum class MemoryReportReason {
   None,
   UserInvoked,
   InternalUserInvoked,

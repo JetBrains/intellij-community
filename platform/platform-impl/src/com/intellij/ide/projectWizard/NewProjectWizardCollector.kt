@@ -23,57 +23,56 @@ import java.lang.Integer.min
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged as logAddSampleCodeChangedImpl
 
 @ApiStatus.Internal
-class NewProjectWizardCollector : CounterUsagesCollector() {
+object NewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
+  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 24)
 
-    val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 23)
+  private val LANGUAGES = listOf(
+    NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
+    NewProjectWizardConstants.Language.GROOVY, NewProjectWizardConstants.Language.JAVASCRIPT,
+    NewProjectWizardConstants.Language.HTML, NewProjectWizardConstants.Language.PYTHON,
+    NewProjectWizardConstants.Language.PHP, NewProjectWizardConstants.Language.RUBY,
+    NewProjectWizardConstants.Language.GO, NewProjectWizardConstants.Language.SCALA,
+    NewProjectWizardConstants.Language.RUST, NewProjectWizardConstants.OTHER
+  )
 
-    private val LANGUAGES = listOf(
-      NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
-      NewProjectWizardConstants.Language.GROOVY, NewProjectWizardConstants.Language.JAVASCRIPT,
-      NewProjectWizardConstants.Language.HTML, NewProjectWizardConstants.Language.PYTHON,
-      NewProjectWizardConstants.Language.PHP, NewProjectWizardConstants.Language.RUBY,
-      NewProjectWizardConstants.Language.GO, NewProjectWizardConstants.Language.SCALA,
-      NewProjectWizardConstants.Language.RUST, NewProjectWizardConstants.OTHER
-    )
+  private val BUILD_SYSTEMS = listOf(
+    NewProjectWizardConstants.BuildSystem.INTELLIJ, NewProjectWizardConstants.BuildSystem.GRADLE,
+    NewProjectWizardConstants.BuildSystem.MAVEN, NewProjectWizardConstants.BuildSystem.SBT,
+    NewProjectWizardConstants.OTHER
+  )
 
-    private val BUILD_SYSTEMS = listOf(
-      NewProjectWizardConstants.BuildSystem.INTELLIJ, NewProjectWizardConstants.BuildSystem.GRADLE,
-      NewProjectWizardConstants.BuildSystem.MAVEN, NewProjectWizardConstants.BuildSystem.SBT,
-      NewProjectWizardConstants.OTHER
-    )
+  private val GROOVY_SDKS = listOf(
+    NewProjectWizardConstants.GroovySdk.MAVEN, NewProjectWizardConstants.GroovySdk.LOCAL,
+    NewProjectWizardConstants.GroovySdk.NONE
+  )
 
-    private val GROOVY_SDKS = listOf(
-      NewProjectWizardConstants.GroovySdk.MAVEN, NewProjectWizardConstants.GroovySdk.LOCAL,
-      NewProjectWizardConstants.GroovySdk.NONE
-    )
+  private val sessionIdField = EventFields.Int("wizard_session_id")
+  private val screenNumField = EventFields.Int("screen")
+  private val typedCharField = IntEventField("typed_chars")
+  private val hitField = IntEventField("hits")
+  private val generatorTypeField = GeneratorEventField("generator")
+  private val languageField = EventFields.String("language", LANGUAGES)
+  private val gitField = EventFields.Boolean("git")
+  private val isSucceededField = EventFields.Boolean("project_created")
+  private val inputMaskField = EventFields.Long("input_mask")
+  private val addSampleCodeField = EventFields.Boolean("add_sample_code")
+  private val addSampleOnboardingTipsField = EventFields.Boolean("add_sample_onboarding_tips")
+  private val buildSystemField = EventFields.String("build_system", BUILD_SYSTEMS)
+  private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
+  private val buildSystemParentField = EventFields.Boolean("build_system_parent")
+  private val groovyVersionField = EventFields.Version
+  private val groovySourceTypeField = EventFields.String("groovy_sdk_type", GROOVY_SDKS)
+  private val useCompactProjectStructureField = EventFields.Boolean("use_compact_project_structure")
+  private val pluginField = EventFields.String("plugin_selected", LANGUAGES)
 
-    private val sessionIdField = EventFields.Int("wizard_session_id")
-    private val screenNumField = EventFields.Int("screen")
-    private val typedCharField = IntEventField("typed_chars")
-    private val hitField = IntEventField("hits")
-    private val generatorTypeField = GeneratorEventField("generator")
-    private val languageField = EventFields.String("language", LANGUAGES)
-    private val gitField = EventFields.Boolean("git")
-    private val isSucceededField = EventFields.Boolean("project_created")
-    private val inputMaskField = EventFields.Long("input_mask")
-    private val addSampleCodeField = EventFields.Boolean("add_sample_code")
-    private val addSampleOnboardingTipsField = EventFields.Boolean("add_sample_onboarding_tips")
-    private val buildSystemField = EventFields.String("build_system", BUILD_SYSTEMS)
-    private val buildSystemSdkField = EventFields.Int("build_system_sdk_version")
-    private val buildSystemParentField = EventFields.Boolean("build_system_parent")
-    private val groovyVersionField = EventFields.Version
-    private val groovySourceTypeField = EventFields.String("groovy_sdk_type", GROOVY_SDKS)
-    private val pluginField = EventFields.String("plugin_selected", LANGUAGES)
+  private val baseFields = arrayOf(sessionIdField, screenNumField)
+  private val languageFields = arrayOf(*baseFields, languageField)
+  val buildSystemFields: Array<PrimitiveEventField<out Any?>> = arrayOf(*languageFields, buildSystemField)
 
-    private val baseFields = arrayOf(sessionIdField, screenNumField)
-    private val languageFields = arrayOf(*baseFields, languageField)
-    val buildSystemFields: Array<PrimitiveEventField<out Any?>> = arrayOf(*languageFields, buildSystemField)
-
-    // @formatter:off
+  // @formatter:off
     private val open = GROUP.registerVarargEvent("wizard.dialog.open", *baseFields)
     private val finish = GROUP.registerVarargEvent("wizard.dialog.finish",*baseFields, isSucceededField, EventFields.DurationMs)
     private val next = GROUP.registerVarargEvent("navigate.next", *baseFields, inputMaskField)
@@ -113,83 +112,84 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
 
     private val groovyLibraryChanged = GROUP.registerVarargEvent("groovy.lib.changed", *buildSystemFields, groovySourceTypeField, groovyVersionField)
     private val groovyLibraryFinished = GROUP.registerVarargEvent("groovy.lib.finished", *buildSystemFields, groovySourceTypeField, groovyVersionField)
+
+    private val useCompactProjectStructureChangedEvent = GROUP.registerVarargEvent("build.system.use.compact.project.structure.changed", *buildSystemFields, useCompactProjectStructureField)
     // @formatter:on
 
-    @JvmStatic
-    fun logOpen(context: WizardContext): Unit =
-      open.logBaseEvent(context)
+  @JvmStatic
+  fun logOpen(context: WizardContext): Unit =
+    open.logBaseEvent(context)
 
-    @JvmStatic
-    fun logFinish(context: WizardContext, success: Boolean, duration: Long): Unit =
-      finish.logBaseEvent(context, isSucceededField with success, EventFields.DurationMs with duration)
+  @JvmStatic
+  fun logFinish(context: WizardContext, success: Boolean, duration: Long): Unit =
+    finish.logBaseEvent(context, isSucceededField with success, EventFields.DurationMs with duration)
 
-    @JvmStatic
-    fun logNext(context: WizardContext, inputMask: Long = -1): Unit =
-      next.logBaseEvent(context, inputMaskField with inputMask)
+  @JvmStatic
+  fun logNext(context: WizardContext, inputMask: Long = -1): Unit =
+    next.logBaseEvent(context, inputMaskField with inputMask)
 
-    @JvmStatic
-    fun logPrev(context: WizardContext, inputMask: Long = -1): Unit =
-      prev.logBaseEvent(context, inputMaskField with inputMask)
+  @JvmStatic
+  fun logPrev(context: WizardContext, inputMask: Long = -1): Unit =
+    prev.logBaseEvent(context, inputMaskField with inputMask)
 
-    @JvmStatic
-    fun logProjectCreated(newProject: Project?, context: WizardContext): Unit =
-      projectCreated.logBaseEvent(newProject, context)
+  @JvmStatic
+  fun logProjectCreated(newProject: Project?, context: WizardContext): Unit =
+    projectCreated.logBaseEvent(newProject, context)
 
-    @JvmStatic
-    fun logSearchChanged(context: WizardContext, chars: Int, results: Int): Unit =
-      search.logBaseEvent(context, typedCharField with min(chars, 10), hitField with results)
+  @JvmStatic
+  fun logSearchChanged(context: WizardContext, chars: Int, results: Int): Unit =
+    search.logBaseEvent(context, typedCharField with min(chars, 10), hitField with results)
 
-    @JvmStatic
-    fun logGeneratorSelected(context: WizardContext): Unit =
-      generatorSelected.logBaseEvent(context, generatorTypeField with context.generator)
+  @JvmStatic
+  fun logGeneratorSelected(context: WizardContext): Unit =
+    generatorSelected.logBaseEvent(context, generatorTypeField with context.generator)
 
-    @JvmStatic
-    fun logGeneratorFinished(context: WizardContext): Unit =
-      generatorFinished.logBaseEvent(context, generatorTypeField with context.generator)
+  @JvmStatic
+  fun logGeneratorFinished(context: WizardContext): Unit =
+    generatorFinished.logBaseEvent(context, generatorTypeField with context.generator)
 
-    @JvmStatic
-    fun logCustomTemplateSelected(context: WizardContext): Unit =
-      templateSelected.logBaseEvent(context)
+  @JvmStatic
+  fun logCustomTemplateSelected(context: WizardContext): Unit =
+    templateSelected.logBaseEvent(context)
 
-    @JvmStatic
-    fun logHelpNavigation(context: WizardContext): Unit =
-      helpNavigation.logBaseEvent(context)
+  @JvmStatic
+  fun logHelpNavigation(context: WizardContext): Unit =
+    helpNavigation.logBaseEvent(context)
 
-    private fun VarargEventId.logBaseEvent(context: WizardContext, vararg arguments: EventPair<*>) =
-      logBaseEvent(context.project, context, *arguments)
+  private fun VarargEventId.logBaseEvent(context: WizardContext, vararg arguments: EventPair<*>) =
+    logBaseEvent(context.project, context, *arguments)
 
-    private fun VarargEventId.logBaseEvent(project: Project?, context: WizardContext, vararg arguments: EventPair<*>) =
-      log(project, sessionIdField with context.sessionId.id, screenNumField with context.screen, *arguments)
+  private fun VarargEventId.logBaseEvent(project: Project?, context: WizardContext, vararg arguments: EventPair<*>) =
+    log(project, sessionIdField with context.sessionId.id, screenNumField with context.screen, *arguments)
 
-    private fun VarargEventId.logLanguageEvent(step: NewProjectWizardStep, vararg arguments: EventPair<*>) =
-      logBaseEvent(step.context, languageField with step.language, *arguments)
+  private fun VarargEventId.logLanguageEvent(step: NewProjectWizardStep, vararg arguments: EventPair<*>) =
+    logBaseEvent(step.context, languageField with step.language, *arguments)
 
-    fun VarargEventId.logBuildSystemEvent(step: NewProjectWizardStep, vararg arguments: EventPair<*>): Unit =
-      logLanguageEvent(step, buildSystemField with step.buildSystem, *arguments)
+  fun VarargEventId.logBuildSystemEvent(step: NewProjectWizardStep, vararg arguments: EventPair<*>): Unit =
+    logLanguageEvent(step, buildSystemField with step.buildSystem, *arguments)
 
-    private val Sdk?.featureVersion: Int
-      get() {
-        val sdk = this ?: return -1
-        val versionString = sdk.versionString
-        val version = JavaVersion.tryParse(versionString) ?: return -1
-        return version.feature
-      }
+  private val Sdk?.featureVersion: Int
+    get() {
+      val sdk = this ?: return -1
+      val versionString = sdk.versionString
+      val version = JavaVersion.tryParse(versionString) ?: return -1
+      return version.feature
+    }
 
-    private val WizardContext.generator: ModuleBuilder?
-      get() = projectBuilder as? ModuleBuilder
+  private val WizardContext.generator: ModuleBuilder?
+    get() = projectBuilder as? ModuleBuilder
 
-    private val NewProjectWizardStep.generator: ModuleBuilder?
-      get() = context.generator
+  private val NewProjectWizardStep.generator: ModuleBuilder?
+    get() = context.generator
 
-    private val NewProjectWizardStep.language: String
-      get() = (this as? LanguageNewProjectWizardData)?.language
-              ?: data.getUserData(LanguageNewProjectWizardData.KEY)?.language
-              ?: NewProjectWizardConstants.OTHER
+  private val NewProjectWizardStep.language: String
+    get() = (this as? LanguageNewProjectWizardData)?.language
+            ?: data.getUserData(LanguageNewProjectWizardData.KEY)?.language
+            ?: NewProjectWizardConstants.OTHER
 
-    private val NewProjectWizardStep.buildSystem: String
-      get() = (this as? BuildSystemNewProjectWizardData)?.buildSystem
-              ?: NewProjectWizardConstants.OTHER
-  }
+  private val NewProjectWizardStep.buildSystem: String
+    get() = (this as? BuildSystemNewProjectWizardData)?.buildSystem
+            ?: NewProjectWizardConstants.OTHER
 
   object Base {
 
@@ -288,6 +288,12 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
         groovySourceTypeField with groovyLibrarySource,
         groovyVersionField with groovyLibraryVersion
       )
+  }
+
+  object Kotlin {
+
+    fun NewProjectWizardStep.logUseCompactProjectStructureChanged(isSelected: Boolean): Unit =
+      useCompactProjectStructureChangedEvent.logBuildSystemEvent(this, useCompactProjectStructureField with isSelected)
   }
 
   private class GeneratorEventField(override val name: String) : PrimitiveEventField<ModuleBuilder?>() {

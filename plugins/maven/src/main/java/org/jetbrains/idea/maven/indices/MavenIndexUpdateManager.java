@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -18,15 +17,14 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenRehighlighter;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -40,16 +38,11 @@ import java.util.concurrent.TimeoutException;
 @ApiStatus.Internal
 public final class MavenIndexUpdateManager implements Disposable {
   private final Object myUpdatingIndicesLock = new Object();
-  private final List<String> myWaitingIndicesUrl = new ArrayList<>();
   private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
   private final MergingUpdateQueue myUpdateQueueList = new MergingUpdateQueue(
     getClass().getName(), 1000, true, null, this, null, false
   ).usePassThroughInUnitTestMode();
   private volatile String myCurrentUpdateIndexUrl;
-
-  CompletableFuture<?> scheduleUpdateContent(@NotNull Project project, List<String> indicesUrl) {
-    return scheduleUpdateContent(project, indicesUrl, true);
-  }
 
   @Override
   public void dispose() {
@@ -68,7 +61,7 @@ public final class MavenIndexUpdateManager implements Disposable {
       MavenIndex localIndex = indexHolder.getLocalIndex();
       if (localIndex != null) {
         if (localIndex.getUpdateTimestamp() == -1 && Registry.is("maven.auto.update.local.index")) {
-          scheduleUpdateContent(project, List.of(localIndex.getRepositoryPathOrUrl()));
+          scheduleUpdateContent(project, IndicesContentUpdateRequest.background(List.of(localIndex.getRepository())));
         }
       }
       if (consumer != null) {
@@ -77,29 +70,39 @@ public final class MavenIndexUpdateManager implements Disposable {
     }));
   }
 
-  CompletableFuture<?> scheduleUpdateContent(@NotNull Project project, List<String> indicesUrls, final boolean fullUpdate) {
+  CompletableFuture<?> scheduleUpdateContent(@NotNull Project project, IndicesContentUpdateRequest request) {
     SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL);
-    final List<String> toSchedule = new ArrayList<>();
 
-    synchronized (myUpdatingIndicesLock) {
-      for (String each : indicesUrls) {
-        if (myWaitingIndicesUrl.contains(each)) continue;
-        toSchedule.add(each);
-      }
-
-      myWaitingIndicesUrl.addAll(toSchedule);
+    if (request.getShowProgress()) {
+      return runIndexUpdateWithProgress(project, request);
     }
-    if (toSchedule.isEmpty()) {
-      return CompletableFuture.completedFuture(null);
+    else {
+      return runIndexUpdateInBackgroundWithoutProgress(project, request);
     }
+  }
 
+  private static CompletableFuture<?> runIndexUpdateInBackgroundWithoutProgress(Project project,
+                                                                                IndicesContentUpdateRequest request) {
+    MavenProgressIndicator indicator =
+      new MavenProgressIndicator(null, null);
+    try {
+      doUpdateIndicesContent(project, request, indicator);
+    }
+    catch (MavenProcessCanceledException e) {
+      return CompletableFuture.failedFuture(e);
+    }
+    return CompletableFuture.completedFuture(null);
+  }
+
+  private CompletableFuture<?> runIndexUpdateWithProgress(@NotNull Project project,
+                                                          IndicesContentUpdateRequest request) {
     final CompletableFuture<?> promise = new CompletableFuture<>();
     myUpdatingQueue.run(new Task.Backgroundable(project, IndicesBundle.message("maven.indices.updating"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           indicator.setIndeterminate(false);
-          doUpdateIndicesContent(project, toSchedule, fullUpdate, new MavenProgressIndicator(project, indicator, null));
+          doUpdateIndicesContent(project, request, new MavenProgressIndicator(null, indicator, null));
         }
         catch (MavenProcessCanceledException ignore) {
         }
@@ -111,58 +114,24 @@ public final class MavenIndexUpdateManager implements Disposable {
     return promise;
   }
 
-  private void doUpdateIndicesContent(@NotNull Project project,
-                                      @NotNull List<String> indicesUrl,
-                                      boolean fullUpdate,
-                                      @NotNull MavenProgressIndicator indicator)
+  private static void doUpdateIndicesContent(@NotNull Project project,
+                                             @NotNull IndicesContentUpdateRequest request,
+                                             @NotNull MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
 
-    List<MavenIndex> indices = ContainerUtil.filter(
-      MavenIndicesManager.getInstance(project).getIndex().getIndices(),
-      index -> indicesUrl.contains(index.getRepositoryPathOrUrl())
-    );
 
-    List<String> remainingWaitingUrl = new ArrayList<>(indicesUrl);
+    MavenSystemIndicesManager indicesManager = MavenSystemIndicesManager.getInstance();
+    for (MavenRepositoryInfo repo : request.getIndicesToUpdate()) {
+      if (indicator.isCanceled()) return;
+      indicesManager.updateIndexContentSync(repo, request.getFull(), request.getExplicit(), indicator);
 
-    try {
-      for (MavenSearchIndex each : indices) {
-        if (indicator.isCanceled()) return;
-
-        indicator.setText(IndicesBundle.message("maven.indices.updating.index",
-                                                each.getRepositoryId(),
-                                                each.getRepositoryPathOrUrl()));
-
-        synchronized (myUpdatingIndicesLock) {
-          remainingWaitingUrl.remove(each.getRepositoryPathOrUrl());
-          myWaitingIndicesUrl.remove(each.getRepositoryPathOrUrl());
-          myCurrentUpdateIndexUrl = each.getRepositoryPathOrUrl();
-        }
-
-        try {
-          MavenIndices.updateOrRepair(each, fullUpdate, fullUpdate ? getMavenSettings(project, indicator) : null, indicator);
-          MavenRehighlighter.rehighlight(project);
-        }
-        finally {
-          synchronized (myUpdatingIndicesLock) {
-            myCurrentUpdateIndexUrl = null;
-          }
-        }
-      }
+      indicator.setText(IndicesBundle.message("maven.indices.updating.index",
+                                              repo.getId(),
+                                              repo.getUrl()));
     }
-    finally {
-      synchronized (myUpdatingIndicesLock) {
-        myWaitingIndicesUrl.removeAll(remainingWaitingUrl);
-      }
-    }
+    MavenRehighlighter.rehighlight(project);
   }
 
-  IndexUpdatingState getUpdatingState(@NotNull MavenSearchIndex index) {
-    synchronized (myUpdatingIndicesLock) {
-      if (Objects.equals(myCurrentUpdateIndexUrl, index.getRepositoryPathOrUrl())) return IndexUpdatingState.UPDATING;
-      if (myWaitingIndicesUrl.contains(index.getRepositoryPathOrUrl())) return IndexUpdatingState.WAITING;
-      return IndexUpdatingState.IDLE;
-    }
-  }
 
   @TestOnly
   void waitForBackgroundTasksInTests() {

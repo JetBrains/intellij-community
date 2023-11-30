@@ -8,12 +8,12 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 
 internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: LibrarySynchronizationQueue,
                                                           private val disposable: Disposable)
@@ -58,7 +58,15 @@ internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: Lib
 
 internal class ChangedRepositoryLibrarySynchronizer(private val project: Project,
                                                     private val queue: LibrarySynchronizationQueue) : WorkspaceModelChangeListener {
+  /**
+   * This is a flag indicating that the [beforeChanged] method was called. Due to the fact that we subscribe using the code, this
+   *   may lead to IDEA-324532.
+   * With this flag we skip the "after" event if the before event wasn't called.
+   */
+  private var beforeCalled = false
+
   override fun beforeChanged(event: VersionedStorageChange) {
+    beforeCalled = true
     for (change in event.getChanges(LibraryEntity::class.java)) {
       val removed = change as? EntityChange.Removed ?: continue
       val library = findLibrary(removed.entity.symbolicId, event.storageBefore)
@@ -82,6 +90,8 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
   }
 
   override fun changed(event: VersionedStorageChange) {
+    if (!beforeCalled) return
+    beforeCalled = false
     var libraryReloadRequested = false
 
     for (change in event.getChanges(LibraryEntity::class.java)) {

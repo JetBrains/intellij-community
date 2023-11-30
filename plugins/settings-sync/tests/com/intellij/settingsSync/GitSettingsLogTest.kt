@@ -2,14 +2,13 @@ package com.intellij.settingsSync
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.ui.JBAccountInfoService
-import com.intellij.util.io.createDirectories
-import com.intellij.util.io.createFile
-import com.intellij.util.io.readText
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
@@ -24,11 +23,11 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.FileAttribute
+import java.nio.file.attribute.FileTime
 import java.time.Instant
 import java.util.*
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.div
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 
 
 @RunWith(JUnit4::class)
@@ -58,9 +57,10 @@ internal class GitSettingsLogTest {
   fun `copy files initially`() {
     val keymapContent = "keymapContent"
     val keymapsFolder = configDir / "keymaps"
-    (keymapsFolder / "mykeymap.xml").createFile().writeText(keymapContent)
+    (keymapsFolder / "mykeymap.xml").createParentDirectories().createFile().writeText(keymapContent)
     val editorContent = "editorContent"
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    arrayOf<FileAttribute<*>>()
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
     editorXml.writeText(editorContent)
 
     val settingsLog = initializeGitSettingsLog(keymapsFolder, editorXml)
@@ -73,7 +73,8 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `merge conflict should be resolved as last modified`() {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    arrayOf<FileAttribute<*>>()
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
 
@@ -96,7 +97,8 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `delete-modify merge conflict should be resolved as last modified`() {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    arrayOf<FileAttribute<*>>()
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
 
@@ -119,7 +121,8 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `modify-delete merge conflict should be resolved as last modified`() {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    arrayOf<FileAttribute<*>>()
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
 
@@ -141,7 +144,8 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `date of the snapshot`() {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    arrayOf<FileAttribute<*>>()
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
 
@@ -159,7 +163,8 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `setBranchPosition should reset the working tree as well`() {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    arrayOf<FileAttribute<*>>()
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
 
@@ -180,7 +185,8 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `collectCurrentSnapshot should take the master content`() {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    arrayOf<FileAttribute<*>>()
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
 
@@ -198,7 +204,8 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `do not fail if commit signature is requested in global config`() {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    arrayOf<FileAttribute<*>>()
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
 
@@ -216,7 +223,8 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `do not fail on merge if commit signature is requested in global config`() {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    arrayOf<FileAttribute<*>>()
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
 
@@ -255,7 +263,8 @@ internal class GitSettingsLogTest {
       val userHome = Files.createTempDirectory("gitSettingsLogTest")
       System.setProperty("user.home", userHome.absolutePathString())
 
-      val editorXml = (configDir / "options" / "editor.xml").createFile()
+      arrayOf<FileAttribute<*>>()
+      val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
       editorXml.writeText("editorContent")
       (userHome / ".gitconfig").writeText("""
       [commit]
@@ -284,7 +293,8 @@ internal class GitSettingsLogTest {
 
   @Test
   fun `plugins state is written to the settings log`() {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    arrayOf<FileAttribute<*>>()
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
 
@@ -404,8 +414,38 @@ internal class GitSettingsLogTest {
     checkUsernameEmail("", "")
   }
 
+  @Test
+  @TestFor(issues = ["IDEA-305967"])
+  fun `unlock git if locked`() {
+    val gitSettingsLog = initializeGitSettingsLog()
+    Disposer.dispose(gitSettingsLog)
+    val indexLock  = settingsSyncStorage / ".git" / "index.lock"
+    indexLock.createFile()
+    val headLock  = settingsSyncStorage / ".git" / "HEAD.lock"
+    headLock.createFile()
+    try {
+      val newGitSettingsLog = initializeGitSettingsLog()
+      fail("Should have failed")
+    } catch (ex: Exception) {
+
+    }
+    indexLock.setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis() - 7000L))
+    try {
+      val newGitSettingsLog = initializeGitSettingsLog()
+      fail("Should have failed")
+    } catch (ex: Exception) {
+
+    }
+    assertFalse(indexLock.exists())
+
+    headLock.setLastModifiedTime(FileTime.fromMillis(System.currentTimeMillis() - 7000L))
+    val newGitSettingsLog = initializeGitSettingsLog()
+    assertFalse(headLock.exists())
+  }
+
   private fun checkUsernameEmail(expectedName: String, expectedEmail: String) {
-    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    arrayOf<FileAttribute<*>>()
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
     editorXml.writeText("editorContent")
     val settingsLog = initializeGitSettingsLog(editorXml)
     (settingsSyncStorage / ".git" / "config").writeText("""

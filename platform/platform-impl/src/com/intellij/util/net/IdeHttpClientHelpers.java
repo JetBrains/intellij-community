@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,8 +19,7 @@ public final class IdeHttpClientHelpers {
   private IdeHttpClientHelpers() {
   }
 
-  @NotNull
-  private static HttpConfigurable getHttpConfigurable() {
+  private static @NotNull HttpConfigurable getHttpConfigurable() {
     return HttpConfigurable.getInstance();
   }
 
@@ -32,8 +31,7 @@ public final class IdeHttpClientHelpers {
     return getHttpConfigurable().PROXY_AUTHENTICATION;
   }
 
-  @NotNull
-  private static String getProxyHost() {
+  private static @NotNull String getProxyHost() {
     return StringUtil.notNullize(getHttpConfigurable().PROXY_HOST);
   }
 
@@ -41,13 +39,11 @@ public final class IdeHttpClientHelpers {
     return getHttpConfigurable().PROXY_PORT;
   }
 
-  @NotNull
-  private static String getProxyLogin() {
+  private static @NotNull String getProxyLogin() {
     return StringUtil.notNullize(getHttpConfigurable().getProxyLogin());
   }
 
-  @NotNull
-  private static String getProxyPassword() {
+  private static @NotNull String getProxyPassword() {
     return StringUtil.notNullize(getHttpConfigurable().getPlainProxyPassword());
   }
 

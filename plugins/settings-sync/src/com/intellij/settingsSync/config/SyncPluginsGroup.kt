@@ -15,7 +15,7 @@ internal class SyncPluginsGroup : SyncSubcategoryGroup {
     val descriptors = ArrayList<SettingsSyncSubcategoryDescriptor>()
     val bundledPluginsDescriptor = getOrCreateDescriptor(message("plugins.bundled"), BUNDLED_PLUGINS_ID)
     descriptors.add(bundledPluginsDescriptor)
-    PluginManagerCore.getPlugins().forEach {
+    PluginManagerCore.plugins.forEach {
       if (!it.isBundled && SettingsSyncPluginCategoryFinder.getPluginCategory(it) == SettingsCategory.PLUGINS) {
         bundledPluginsDescriptor.isSubGroupEnd = true
         descriptors.add(getOrCreateDescriptor(it.name, it.pluginId.idString))

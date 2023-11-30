@@ -13,7 +13,7 @@ import javax.swing.JComboBox
 import kotlin.reflect.KMutableProperty0
 import com.intellij.openapi.observable.util.whenItemSelectedFromUi as whenItemSelectedFromUiImpl
 
-@Deprecated("Use overloaded method")
+@Deprecated("Use overloaded method", level = DeprecationLevel.HIDDEN)
 @ScheduledForRemoval
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(binding: PropertyBinding<T?>): Cell<C> {
   return bindItem(MutableProperty(binding.get, binding.set))
@@ -39,7 +39,7 @@ fun <T, C : ComboBox<T>> Cell<C>.bindItem(prop: KMutableProperty0<T?>): Cell<C> 
 }
 
 @ScheduledForRemoval
-@Deprecated("Use bindItem instead with the same functionality")
+@Deprecated("Use bindItem instead with the same functionality", level = DeprecationLevel.HIDDEN)
 fun <T, C : ComboBox<T>> Cell<C>.bindItemNullable(prop: KMutableProperty0<T?>): Cell<C> {
   return bindItem(prop.toMutableProperty())
 }

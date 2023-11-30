@@ -1,4 +1,5 @@
 // "Add missing actual declarations" "true"
+// IGNORE_K2
 
 expect class <caret>My {
     fun foo(param: String): Int

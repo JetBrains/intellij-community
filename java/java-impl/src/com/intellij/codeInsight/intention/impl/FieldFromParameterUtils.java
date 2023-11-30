@@ -29,7 +29,11 @@ public final class FieldFromParameterUtils {
 
   @Nullable
   public static PsiParameter findParameterAtCursor(@NotNull PsiFile file, @NotNull Editor editor) {
-    int offset = editor.getCaretModel().getOffset();
+    return findParameterAtOffset(file, editor.getCaretModel().getOffset());
+  }
+
+  @Nullable
+  public static PsiParameter findParameterAtOffset(@NotNull PsiFile file, int offset) {
     PsiParameterList parameterList = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiParameterList.class, false);
     if (parameterList == null) return null;
     PsiParameter[] parameters = parameterList.getParameters();

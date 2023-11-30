@@ -6,8 +6,6 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.kotlin.asJava.toLightAnnotation
-import org.jetbrains.kotlin.codegen.ClassBuilderMode
-import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -15,7 +13,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.resolveCandidates
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
-import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -40,16 +37,7 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
     override fun getBindingContextIfAny(element: KtElement): BindingContext? =
         element.actionUnderSafeAnalyzeBlock({ getBindingContext(element) }, { null })
 
-    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
-    override fun getTypeMapper(element: KtElement): KotlinTypeMapper {
-        return KotlinTypeMapper(
-            getBindingContext(element), ClassBuilderMode.LIGHT_CLASSES,
-            JvmProtoBufUtil.DEFAULT_MODULE_NAME, element.languageVersionSettings,
-            useOldInlineClassesManglingScheme = false
-        )
-    }
-
-    override fun isJvmElement(psiElement: PsiElement): Boolean = psiElement.isJvmElement
+  override fun isJvmElement(psiElement: PsiElement): Boolean = psiElement.isJvmElement
 
     override fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings = element.languageVersionSettings
 

@@ -4,6 +4,7 @@ package com.intellij.platform.runtime.repository;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Describes a group of modules which can be enabled or disabled together.
@@ -12,4 +13,9 @@ import java.util.List;
  */
 public interface RuntimeModuleGroup {
   @NotNull List<@NotNull IncludedRuntimeModule> getIncludedModules();
+
+  /**
+   * Returns IDs of modules with {@link ModuleImportance#OPTIONAL} importance, including unresolved ones.
+   */
+  @NotNull Set<@NotNull RuntimeModuleId> getOptionalModuleIds();
 }

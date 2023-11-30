@@ -96,7 +96,7 @@ final class KeyHashLog<Key> implements Closeable {
     if (hashMaskSet == null) {
       if (useCachedHashIds && myLastScannedId != 0) {
         try {
-          Files.delete(sessionProjectCacheFile);
+          FileUtil.delete(sessionProjectCacheFile);
         }
         catch (NoSuchFileException ignored) {
 
@@ -380,7 +380,7 @@ final class KeyHashLog<Key> implements Closeable {
     return myBaseStorageFile.resolveSibling(myBaseStorageFile.getFileName() + ".project");
   }
 
-  private static class IntPairInArrayKeyDescriptor implements DataExternalizer<int[]> {
+  private static final class IntPairInArrayKeyDescriptor implements DataExternalizer<int[]> {
     private static final IntPairInArrayKeyDescriptor INSTANCE = new IntPairInArrayKeyDescriptor();
     @Override
     public void save(@NotNull DataOutput out, int[] value) throws IOException {

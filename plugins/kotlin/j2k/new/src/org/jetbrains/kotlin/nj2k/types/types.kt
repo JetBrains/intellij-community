@@ -70,7 +70,7 @@ sealed class JKJavaPrimitiveTypeBase : JKType {
     abstract val jvmPrimitiveType: JvmPrimitiveType?
 }
 
-private object JKJavaNullPrimitiveType : JKJavaPrimitiveTypeBase() {
+private data object JKJavaNullPrimitiveType : JKJavaPrimitiveTypeBase() {
     override val jvmPrimitiveType: JvmPrimitiveType? = null
     override val nullability: Nullability = Nullability.Nullable
 }

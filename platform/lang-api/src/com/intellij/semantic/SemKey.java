@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.semantic;
 
 import com.intellij.util.ArrayUtil;
@@ -62,8 +62,7 @@ public final class SemKey<T extends SemElement> {
   }
 
   @SafeVarargs
-  @NotNull
-  public static <T extends SemElement> SemKey<T> createKey(String debugName, SemKey<? super T> @NotNull ... supers) {
+  public static @NotNull <T extends SemElement> SemKey<T> createKey(String debugName, SemKey<? super T> @NotNull ... supers) {
     return new SemKey<>(debugName, supers);
   }
 
@@ -77,8 +76,7 @@ public final class SemKey<T extends SemElement> {
   }
 
   @SafeVarargs
-  @NotNull
-  public final <K extends T> SemKey<K> subKey(@NonNls String debugName, SemKey<? super K> @NotNull ... otherSupers) {
+  public final @NotNull <K extends T> SemKey<K> subKey(@NonNls String debugName, SemKey<? super K> @NotNull ... otherSupers) {
     if (otherSupers.length == 0) {
       return new SemKey<>(debugName, this);
     }

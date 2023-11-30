@@ -189,3 +189,5 @@ public class FieldsGetters {
         public abstract String getFoo();
     }
 }
+
+// IGNORE_K2

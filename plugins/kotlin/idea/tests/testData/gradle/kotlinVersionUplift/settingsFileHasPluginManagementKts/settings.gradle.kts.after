@@ -1,0 +1,15 @@
+pluginManagement {
+    plugins {
+        kotlin("multiplatform") version "1.8.21"
+        kotlin("jvm") version "1.8.0"
+    }
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
+    }
+}
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.5.0"
+}
+rootProject.name = "project"

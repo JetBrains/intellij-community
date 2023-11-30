@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,14 +13,12 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class HyperlinkInfoFactory {
-  @NotNull
-  public static HyperlinkInfoFactory getInstance() {
+  public static @NotNull HyperlinkInfoFactory getInstance() {
     return ApplicationManager.getApplication().getService(HyperlinkInfoFactory.class);
   }
 
-  @NotNull
-  public abstract HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<? extends VirtualFile> files,
-                                                                 int line, @NotNull Project project);
+  public abstract @NotNull HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<? extends VirtualFile> files,
+                                                                          int line, @NotNull Project project);
 
   /**
    * Creates a hyperlink which points to several files with ability to calculate a position inside line
@@ -30,8 +28,7 @@ public abstract class HyperlinkInfoFactory {
    * @param action an action to be performed once editor is opened
    * @return newly created HyperlinkInfo which navigates to given line and column
    */
-  @NotNull
-  public abstract HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<? extends VirtualFile> files,
+  public abstract @NotNull HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<? extends VirtualFile> files,
                                                                  int line,
                                                                  @NotNull Project project,
                                                                  @Nullable HyperlinkHandler action);
@@ -42,8 +39,7 @@ public abstract class HyperlinkInfoFactory {
    * @param elements elements list
    * @return newly create HyperlinkInfo that navigates to given psi elements
    */
-  @NotNull
-  public abstract HyperlinkInfo createMultiplePsiElementHyperlinkInfo(@NotNull Collection<? extends PsiElement> elements);
+  public abstract @NotNull HyperlinkInfo createMultiplePsiElementHyperlinkInfo(@NotNull Collection<? extends PsiElement> elements);
 
   public interface HyperlinkHandler {
     void onLinkFollowed(@NotNull Project project, @NotNull VirtualFile psiFile, @NotNull Editor targetEditor, @Nullable Editor originalEditor);

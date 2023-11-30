@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.execution.ui.TagButton;
@@ -219,8 +219,7 @@ public class ComponentValidator {
     validationInfo = null;
   }
 
-  @Nullable
-  public ValidationInfo getValidationInfo() {
+  public @Nullable ValidationInfo getValidationInfo() {
     return validationInfo;
   }
 
@@ -284,8 +283,7 @@ public class ComponentValidator {
     }
   }
 
-  @NotNull
-  private static ComponentPopupBuilder createPopupBuilder(boolean isWarning, @Nullable Consumer<? super JEditorPane> configurator) {
+  private static @NotNull ComponentPopupBuilder createPopupBuilder(boolean isWarning, @Nullable Consumer<? super JEditorPane> configurator) {
     JEditorPane tipComponent = new JEditorPane();
     tipComponent.setContentType("text/html");
     tipComponent.setEditable(false);
@@ -325,8 +323,7 @@ public class ComponentValidator {
   /**
    * @return true if message is multiline.
    */
-  @NlsSafe
-  private static boolean convertMessage(@Nls String message, @NotNull JEditorPane component) {
+  private static @NlsSafe boolean convertMessage(@Nls String message, @NotNull JEditorPane component) {
     View v = BasicHTML.createHTMLView(component, String.format("<html>%s</html>", message));
     boolean widerText = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get();
     HtmlChunk.Element div =  widerText ?
@@ -336,8 +333,7 @@ public class ComponentValidator {
     return widerText;
   }
 
-  @NotNull
-  public static ComponentPopupBuilder createPopupBuilder(@NotNull ValidationInfo info, @Nullable Consumer<? super JEditorPane> configurator) {
+  public static @NotNull ComponentPopupBuilder createPopupBuilder(@NotNull ValidationInfo info, @Nullable Consumer<? super JEditorPane> configurator) {
     return createPopupBuilder(info.warning, tipComponent -> {
       convertMessage(info.message, tipComponent);
       if (configurator != null) {

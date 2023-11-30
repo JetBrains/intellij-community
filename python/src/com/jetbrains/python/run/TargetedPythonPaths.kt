@@ -161,7 +161,7 @@ private fun addToPythonPath(context: Context,
       addIfNeeded(context, realFile, pathList)
     }
   }
-  else {
+  else if (file.isDirectory()) {
     addIfNeeded(context, file, pathList)
   }
 }

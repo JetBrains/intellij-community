@@ -62,7 +62,7 @@ public class MultipleRootEditorWithSplitter extends JPanel {
 
     myList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    myList.setCellRenderer(BuilderKt.simpleListCellRenderer(o -> {
+    myList.setCellRenderer(BuilderKt.textListCellRenderer(o -> {
       VcsPathPresenter presenter = VcsPathPresenter.getInstance(project);
       VirtualFile file = o.getVirtualFile();
       return file != null

@@ -33,7 +33,7 @@ public final class PathUtilEx {
    * @deprecated the meaning of this method is unclear, choose a JDK using explicit criteria instead
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static Sdk chooseJdk(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
@@ -46,7 +46,7 @@ public final class PathUtilEx {
   /**
    * @deprecated the meaning of this method is unclear, choose a JDK using explicit criteria instead 
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public static Sdk chooseJdk(@NotNull Collection<? extends Module> modules) {
     List<Sdk> jdks = ContainerUtil.mapNotNull(modules, module -> {

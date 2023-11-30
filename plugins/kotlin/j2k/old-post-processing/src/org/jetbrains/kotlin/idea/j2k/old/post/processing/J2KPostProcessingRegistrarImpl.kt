@@ -281,12 +281,12 @@ internal class J2KPostProcessingRegistrarImpl : J2KPostProcessingRegistrar {
         override fun createAction(element: KtElement, diagnostics: Diagnostics): (() -> Unit)? {
             if (element !is KtCallExpression) return null
 
-            val expressions = RedundantSamConstructorInspection.samConstructorCallsToBeConverted(element)
+            val expressions = RedundantSamConstructorInspection.Util.samConstructorCallsToBeConverted(element)
             if (expressions.isEmpty()) return null
 
             return {
-                RedundantSamConstructorInspection.samConstructorCallsToBeConverted(element)
-                    .forEach { RedundantSamConstructorInspection.replaceSamConstructorCall(it) }
+                RedundantSamConstructorInspection.Util.samConstructorCallsToBeConverted(element)
+                    .forEach { RedundantSamConstructorInspection.Util.replaceSamConstructorCall(it) }
             }
         }
     }

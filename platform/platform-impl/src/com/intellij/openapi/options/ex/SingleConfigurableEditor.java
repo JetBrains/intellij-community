@@ -137,9 +137,8 @@ public class SingleConfigurableEditor extends DialogWrapper {
     return actions.toArray(new Action[0]);
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return myConfigurable.getHelpTopic();
   }
 

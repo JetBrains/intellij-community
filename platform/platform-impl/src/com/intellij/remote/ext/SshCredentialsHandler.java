@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote.ext;
 
 import com.intellij.remote.RemoteCredentials;
@@ -7,7 +7,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SshCredentialsHandler extends RemoteCredentialsHandlerBase<RemoteCredentialsHolder> {
+public final class SshCredentialsHandler extends RemoteCredentialsHandlerBase<RemoteCredentialsHolder> {
 
   public SshCredentialsHandler(RemoteCredentialsHolder credentials) {
     super(credentials);
@@ -35,8 +35,7 @@ public class SshCredentialsHandler extends RemoteCredentialsHandlerBase<RemoteCr
     }
   }
 
-  @NotNull
-  private String constructSshCredentialsFullPath() {
+  private @NotNull String constructSshCredentialsFullPath() {
     RemoteCredentials cred = getCredentials();
     return RemoteCredentialsHolder.SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getLiteralPort();
   }

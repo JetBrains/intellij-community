@@ -27,12 +27,6 @@ public class CantRunException extends ExecutionException {
     return new CantRunException(ExecutionBundle.message("no.jdk.for.module.error.message", module.getName()));
   }
 
-  /** @deprecated please use {@link #jdkMisconfigured(Sdk)} instead */
-  @Deprecated(forRemoval = true)
-  public static CantRunException jdkMisconfigured(@NotNull Sdk jdk, @NotNull Module module) {
-    return jdkMisconfigured(jdk);
-  }
-
   public static CantRunException jdkMisconfigured(@NotNull Sdk jdk) {
     return new CantRunException(ExecutionBundle.message("jdk.is.bad.configured.error.message", jdk.getName()));
   }

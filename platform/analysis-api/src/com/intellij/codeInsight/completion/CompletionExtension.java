@@ -4,11 +4,11 @@ package com.intellij.codeInsight.completion;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.MetaLanguage;
+import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @ApiStatus.Internal
@@ -18,13 +18,14 @@ public final class CompletionExtension<T> extends LanguageExtension<T> {
   }
 
   @Override
-  protected @NotNull List<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
+  protected @NotNull PersistentList<T> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
     return buildExtensions(getAllBaseLanguageIdsWithAny(key));
   }
 
   @Override
   public void invalidateCacheForExtension(String key) {
     super.invalidateCacheForExtension(key);
+
     // clear the entire cache because, if languages are unloaded, we won't be able to find cache keys for unloaded dialects of
     // a given language
     clearCache();
@@ -41,8 +42,9 @@ public final class CompletionExtension<T> extends LanguageExtension<T> {
     while (key != null) {
       allowed.add(keyToString(key));
       for (MetaLanguage metaLanguage : MetaLanguage.all()) {
-        if (metaLanguage.matchesLanguage(key))
+        if (metaLanguage.matchesLanguage(key)) {
           allowed.add(metaLanguage.getID());
+        }
       }
       key = key.getBaseLanguage();
     }

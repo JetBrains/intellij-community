@@ -96,9 +96,8 @@ public final class CompletionInitializationUtil {
     return context;
   }
 
-  @NotNull
-  public static CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
-                                                                CompletionProcess indicator, OffsetsInFile finalOffsets) {
+  public static @NotNull CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
+                                                                         CompletionProcess indicator, OffsetsInFile finalOffsets) {
     int offset = finalOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
     PsiFile fileCopy = finalOffsets.getFile();
     PsiFile originalFile = fileCopy.getOriginalFile();
@@ -238,8 +237,7 @@ public final class CompletionInitializationUtil {
     }
   }
 
-  @NotNull
-  private static PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
+  private static @NotNull PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
     PsiElement insertedElement = offsets.getFile().findElementAt(offset);
     if (insertedElement == null && offsets.getFile().getTextLength() == offset) {
       insertedElement = PsiTreeUtil.getDeepestLast(offsets.getFile());

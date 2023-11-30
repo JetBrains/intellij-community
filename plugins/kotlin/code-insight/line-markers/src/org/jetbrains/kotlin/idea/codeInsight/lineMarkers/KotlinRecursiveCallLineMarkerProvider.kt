@@ -53,7 +53,8 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
         }
     }
 
-    private fun KtAnalysisSession.isRecursiveCall(target: CallTarget, targetDeclaration: PsiElement): Boolean {
+    context(KtAnalysisSession)
+    private fun isRecursiveCall(target: CallTarget, targetDeclaration: PsiElement): Boolean {
         for (parent in target.caller.parents) {
             when (parent) {
                 targetDeclaration -> return checkDispatchReceiver(target)
@@ -70,7 +71,8 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
         return false
     }
 
-    private fun KtAnalysisSession.checkDispatchReceiver(target: CallTarget): Boolean {
+    context(KtAnalysisSession)
+private fun checkDispatchReceiver(target: CallTarget): Boolean {
         var dispatchReceiver = target.partiallyAppliedSymbol.dispatchReceiver ?: return true
         while (dispatchReceiver is KtSmartCastedReceiverValue) {
             dispatchReceiver = dispatchReceiver.original

@@ -64,7 +64,7 @@ public final class WideSelectionListUI extends BasicListUI {
     try {
       super.paintCell(g, row, rowBounds, renderer, model, selectionModel, leadSelectionIndex);
     }
-    catch (ArrayIndexOutOfBoundsException exception) {
+    catch (IndexOutOfBoundsException exception) {
       LOG.error("model asynchronously modified: " + model.getClass() + " in " + list, exception);
     }
     if (!isMac && g instanceof Graphics2D && row == leadSelectionIndex && list.hasFocus()) {

@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.util.PlatformUtils
@@ -56,8 +55,7 @@ internal class CopySettingsPathAction : AnAction(pathActionName, ActionsBundle.m
         return null
       }
 
-      val prefix = if (isMac) CommonBundle.message("action.settings.path.mac") else CommonBundle.message("action.settings.path")
-      val sb = StringBuilder(prefix)
+      val sb = StringBuilder(CommonBundle.settingsActionPath())
       for (name in names) {
         sb.append(SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR).append(name)
       }

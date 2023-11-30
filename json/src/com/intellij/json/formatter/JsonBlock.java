@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.formatter;
 
 import com.intellij.formatting.*;
@@ -27,7 +27,7 @@ import static com.intellij.json.psi.JsonPsiUtil.hasElementType;
 /**
  * @author Mikhail Golubev
  */
-public class JsonBlock implements ASTBlock {
+public final class JsonBlock implements ASTBlock {
   private static final TokenSet JSON_OPEN_BRACES = TokenSet.create(L_BRACKET, L_CURLY);
   private static final TokenSet JSON_CLOSE_BRACES = TokenSet.create(R_BRACKET, R_CURLY);
   private static final TokenSet JSON_ALL_BRACES = TokenSet.orSet(JSON_OPEN_BRACES, JSON_CLOSE_BRACES);
@@ -81,15 +81,13 @@ public class JsonBlock implements ASTBlock {
     return myNode;
   }
 
-  @NotNull
   @Override
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return myNode.getTextRange();
   }
 
-  @NotNull
   @Override
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
       int propertyAlignment = myCustomSettings.PROPERTY_ALIGNMENT;
       ASTNode[] children = myNode.getChildren(null);
@@ -139,33 +137,28 @@ public class JsonBlock implements ASTBlock {
     return new JsonBlock(this, childNode, myCustomSettings, alignment, indent, wrap, mySpacingBuilder);
   }
 
-  @Nullable
   @Override
-  public Wrap getWrap() {
+  public @Nullable Wrap getWrap() {
     return myWrap;
   }
 
-  @Nullable
   @Override
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     return myIndent;
   }
 
-  @Nullable
   @Override
-  public Alignment getAlignment() {
+  public @Nullable Alignment getAlignment() {
     return myAlignment;
   }
 
-  @Nullable
   @Override
-  public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+  public @Nullable Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
     return mySpacingBuilder.getSpacing(this, child1, child2);
   }
 
-  @NotNull
   @Override
-  public ChildAttributes getChildAttributes(int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(int newChildIndex) {
     if (hasElementType(myNode, JSON_CONTAINERS)) {
       // WEB-13675: For some reason including alignment in child attributes causes
       // indents to consist solely of spaces when both USE_TABS and SMART_TAB

@@ -138,7 +138,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
     width -= (insets.left + insets.right);
     height -= (insets.top + insets.bottom);
 
-    p.paint(g, x, y, width, height, p.animator.myValue);
+    p.paint(g, x, y, width, height, p.animator.value);
   }
 
   protected @NotNull Insets getInsets(boolean small) {

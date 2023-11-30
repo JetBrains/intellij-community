@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.KOTLIN_REFLECT_FQ_NAME
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
@@ -110,7 +111,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
 
             val lambdaExpression = if (valueArgumentParent != null &&
                 lambdaParameterNamesAndTypes.size == 1 &&
-                receiverExpression?.text != "it"
+                receiverExpression?.text != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
             ) {
                 val body = if (acceptsReceiverAsParameter) {
                     if (targetDescriptor is PropertyDescriptor) "it.$targetName"

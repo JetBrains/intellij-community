@@ -5,7 +5,7 @@ import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.PathKt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.util.PersistentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +34,7 @@ public final class VcsLogCachesInvalidator extends CachesInvalidator {
         // if we could not delete caches, ensure that corruption marker is still there
         Path corruptionMarkerFile = PersistentUtil.getCorruptionMarkerFile();
         try {
-          PathKt.createFile(corruptionMarkerFile);
+          Files.createFile(NioFiles.createParentDirectories(corruptionMarkerFile));
         }
         catch (Exception e) {
           LOG.warn(e);
@@ -53,20 +53,17 @@ public final class VcsLogCachesInvalidator extends CachesInvalidator {
     boolean isEmpty = true;
 
     if (Files.exists(PersistentUtil.LOG_CACHE)) {
-      try {
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(PersistentUtil.LOG_CACHE)) {
-          if (stream.iterator().hasNext()) {
-            isEmpty = false;
-          }
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(PersistentUtil.LOG_CACHE)) {
+        if (stream.iterator().hasNext()) {
+          isEmpty = false;
         }
       }
-      catch (IOException ignored) {
-      }
+      catch (IOException ignored) { }
     }
 
     if (!isEmpty) {
       try {
-        PathKt.createFile(PersistentUtil.getCorruptionMarkerFile());
+        Files.createFile(NioFiles.createParentDirectories(PersistentUtil.getCorruptionMarkerFile()));
       }
       catch (Exception e) {
         LOG.error(e);

@@ -16,12 +16,14 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
+import com.intellij.psi.PsiElement;
+import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 
 public class DeprecatedSkipper extends CompletionPreselectSkipper {
 
   @Override
   public boolean skipElement(LookupElement element, CompletionLocation location) {
-    return JavaElementLookupRenderer.isDeprecated(element.getPsiElement());
+    PsiElement e = element.getPsiElement();
+    return e != null && JavaDeprecationUtils.isDeprecated(e, location.getCompletionParameters().getPosition());
   }
 }

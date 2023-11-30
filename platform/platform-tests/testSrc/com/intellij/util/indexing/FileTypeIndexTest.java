@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileType;
@@ -15,6 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.FileTypeIndexImpl;
+import com.intellij.psi.search.FileTypeIndexImplBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -23,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Dmitry Avdeev
@@ -74,6 +77,85 @@ public class FileTypeIndexTest extends BasePlatformTestCase {
     assertOneElement(FileTypeIndex.getFiles(smth2, GlobalSearchScope.allScope(getProject())));
     Disposer.dispose(disposable);
     assertEquals(PlainTextFileType.INSTANCE, FileTypeIndex.getIndexedFileType(file, getProject()));
+  }
+
+  public void testChangeNotificationsWork() throws IOException {
+    Disposable disposable = Disposer.newDisposable();
+    var testFiletype = registerFakeFileType("test filetype", "smth", disposable);
+    var notifications = setupNotificationsCounter();
+
+    ensureUpToDate();
+    flushNotifications();
+    assertEquals(0, (int)notifications.getOrDefault(testFiletype, 0));
+
+    var file = WriteAction.compute(() -> {
+      var f = LightPlatformTestCase.getSourceRoot().findOrCreateChildData(this, "filename.smth");
+      VfsUtil.saveText(f, "text");
+      return f;
+    });
+    ensureUpToDate();
+    flushNotifications();
+    assertEquals(1, (int)notifications.getOrDefault(testFiletype, 0));
+
+    WriteAction.compute(() -> {
+      file.rename(this, "filename.notsmth");
+      return null;
+    });
+    ensureUpToDate();
+    flushNotifications();
+    assertEquals(2, (int)notifications.getOrDefault(testFiletype, 0));
+  }
+
+  public void testEventualNotificationReceipt() throws IOException, InterruptedException {
+    var testFiletype = registerFakeFileType("test filetype", "smth", getTestRootDisposable());
+    var notifications = setupNotificationsCounter();
+
+    ensureUpToDate();
+    assertEquals(0, (int)notifications.getOrDefault(testFiletype, 0));
+
+    WriteAction.compute(() -> {
+      var f = LightPlatformTestCase.getSourceRoot().findOrCreateChildData(this, "filename.smth");
+      VfsUtil.saveText(f, "text");
+      return f;
+    });
+    ensureUpToDate();
+
+    for (int i = 0; i < 10; i++) {
+      if (notifications.getOrDefault(testFiletype, 0) != 1) {
+        Thread.sleep(1);
+      }
+    }
+    assertEquals(1, (int)notifications.getOrDefault(testFiletype, 0));
+  }
+
+  private void ensureUpToDate() {
+    FileBasedIndex.getInstance().ensureUpToDate(FileTypeIndex.NAME, getProject(), GlobalSearchScope.allScope(getProject()));
+  }
+
+  private void flushNotifications() {
+    var index = ((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndex(FileTypeIndex.NAME);
+    ((FileTypeIndexImplBase)index).processPendingNotifications();
+  }
+
+  private ConcurrentHashMap<FileType, Integer> setupNotificationsCounter() {
+    var notifications = new ConcurrentHashMap<FileType, Integer>();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(
+      FileTypeIndex.INDEX_CHANGE_TOPIC,
+      new FileTypeIndex.IndexChangeListener() {
+        @Override
+        public void onChangedForFileType(@NotNull FileType fileType) {
+          notifications.compute(fileType, (__, val) -> {
+            if (val == null) {
+              return 1;
+            }
+            else {
+              return val + 1;
+            }
+          });
+        }
+      }
+    );
+    return notifications;
   }
 
   /**

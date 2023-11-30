@@ -24,7 +24,9 @@ import org.editorconfig.language.filetype.EditorConfigFileConstants
 import java.util.function.Function
 import javax.swing.JComponent
 
-class EditorConfigWrongFileEncodingNotificationProvider : EditorNotificationProvider, DumbAware {
+private const val DISABLE_KEY = "editorconfig.wrong.encoding.notification.disabled"
+
+internal class EditorConfigWrongFileEncodingNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) return null
     if (file.extension != EditorConfigFileConstants.FILE_EXTENSION) return null
@@ -125,8 +127,5 @@ class EditorConfigWrongFileEncodingNotificationProvider : EditorNotificationProv
     EncodingUtil.Magic8.NO_WAY
   }
 
-  private companion object {
-    private val HIDDEN_KEY = Key.create<Boolean>("editorconfig.wrong.encoding.notification.hidden")
-    private const val DISABLE_KEY = "editorconfig.wrong.encoding.notification.disabled"
-  }
+  private val HIDDEN_KEY = Key.create<Boolean>("editorconfig.wrong.encoding.notification.hidden")
 }

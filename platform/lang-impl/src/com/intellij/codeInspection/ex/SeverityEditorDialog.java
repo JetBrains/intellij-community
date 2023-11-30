@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -354,7 +354,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
     return selection != null ? selection.getType() : null;
   }
 
-  private static class MyTextAttributesDescription extends TextAttributesDescription {
+  private static final class MyTextAttributesDescription extends TextAttributesDescription {
     MyTextAttributesDescription(final String name,
                                        final String group,
                                        final TextAttributes attributes,

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,26 +14,22 @@ public class DefaultJBDateTimeFormatter extends JBDateTimeFormatter {
   }
 
   @Override
-  @NotNull
-  public String formatTime(long time) {
+  public @NotNull String formatTime(long time) {
     return DateFormatUtil.formatTime(time);
   }
 
   @Override
-  @NotNull
-  public String formatTimeWithSeconds(long time) {
+  public @NotNull String formatTimeWithSeconds(long time) {
     return DateFormatUtil.formatTimeWithSeconds(time);
   }
 
   @Override
-  @NotNull
-  public String formatDate(long time) {
+  public @NotNull String formatDate(long time) {
     return DateFormatUtil.formatDate(time);
   }
 
   @Override
-  @NotNull
-  public String formatPrettyDateTime(long time) {
+  public @NotNull String formatPrettyDateTime(long time) {
     if (isPrettyFormattingSupported()) {
       return DateFormatUtil.formatPrettyDateTime(time);
     }
@@ -41,8 +37,7 @@ public class DefaultJBDateTimeFormatter extends JBDateTimeFormatter {
   }
 
   @Override
-  @NotNull
-  public String formatPrettyDate(long time) {
+  public @NotNull String formatPrettyDate(long time) {
     if (isPrettyFormattingSupported()) {
       return DateFormatUtil.formatPrettyDate(time);
     }

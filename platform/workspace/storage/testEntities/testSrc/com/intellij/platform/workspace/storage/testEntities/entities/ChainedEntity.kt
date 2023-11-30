@@ -34,7 +34,8 @@ interface ChainedParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChainedParentEntity, modification: ChainedParentEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ChainedParentEntity,
+                                      modification: ChainedParentEntity.Builder.() -> Unit): ChainedParentEntity = modifyEntity(
   ChainedParentEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -70,6 +71,6 @@ interface ChainedEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChainedEntity, modification: ChainedEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ChainedEntity, modification: ChainedEntity.Builder.() -> Unit): ChainedEntity = modifyEntity(
   ChainedEntity.Builder::class.java, entity, modification)
 //endregion

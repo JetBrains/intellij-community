@@ -83,7 +83,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   }
 
   public static void disposeInvalidEditors() {
-    EditorWindowTracker editorWindowTracker = ApplicationManager.getApplication().getServiceIfCreated(EditorWindowTracker.class);
+    InjectedEditorWindowTracker editorWindowTracker = ApplicationManager.getApplication().getServiceIfCreated(InjectedEditorWindowTracker.class);
     if (editorWindowTracker != null) {
       editorWindowTracker.disposeInvalidEditors();
     }
@@ -194,7 +194,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
       if (psiFile != null) {
         for (DocumentWindow document : InjectedLanguageUtilBase.getCachedInjectedDocuments(psiFile)) {
-          EditorWindowTracker.getInstance().disposeEditorFor(document);
+          InjectedEditorWindowTracker.getInstance().disposeEditorFor(document);
         }
         dropFileCaches(psiFile);
       }

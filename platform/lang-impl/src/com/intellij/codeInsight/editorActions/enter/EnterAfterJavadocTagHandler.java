@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
+public final class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
 
   private static final Context NOT_MATCHED_CONTEXT = new Context();
 
@@ -174,7 +174,7 @@ public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
     return new Context(text, startTagEndOffset, endTagStartOffset, startTag, offset);
   }
 
-  static class Context {
+  static final class Context {
 
     public final int startTagEndOffset;
     public final int endTagStartOffset;

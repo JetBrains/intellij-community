@@ -17,11 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class HtmlLabelsHolder {
+public final class HtmlLabelsHolder {
   private static final Key<CachedValue<HtmlLabelsHolder>> htmlLabelsHolderKey = Key.create("html labels holder");
   private final Set<String> myForValuesOfLabels = new HashSet<>();
 
-  private final static UserDataCache<CachedValue<HtmlLabelsHolder>, XmlFile, Object> CACHE =
+  private static final UserDataCache<CachedValue<HtmlLabelsHolder>, XmlFile, Object> CACHE =
     new UserDataCache<>() {
       @Override
       protected CachedValue<HtmlLabelsHolder> compute(final XmlFile file, final Object p) {

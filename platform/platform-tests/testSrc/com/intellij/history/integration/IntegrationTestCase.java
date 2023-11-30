@@ -20,18 +20,20 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
-import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.util.List;
 
 public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
@@ -84,18 +86,18 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     }
   }
 
-  protected @NotNull VirtualFile createFile(@NotNull String name) {
+  protected @NotNull VirtualFile createFile(@NotNull String name) throws IOException {
     return createFile(name, null);
   }
 
   // tests fail if file created via API, so, refreshAndFindFileByNioFile is used
-  protected @NotNull VirtualFile createFile(@NotNull String name, @Nullable String content) {
+  protected @NotNull VirtualFile createFile(@NotNull String name, @Nullable String content) throws IOException {
     Path file = myRoot.toNioPath().resolve(name);
     if (content == null) {
-      PathKt.createFile(file);
+      Files.createFile(NioFiles.createParentDirectories(file));
     }
     else {
-      PathKt.write(file, content);
+      Files.writeString(NioFiles.createParentDirectories(file), content);
     }
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
   }
@@ -112,9 +114,9 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     setBinaryContent(f, content.getBytes(StandardCharsets.UTF_8), -1, timestamp, this);
   }
 
-  protected final @NotNull String createFileExternally(@NotNull String name) {
+  protected final @NotNull String createFileExternally(@NotNull String name) throws IOException {
     Path file = myRoot.toNioPath().resolve(name);
-    PathKt.createFile(file);
+    Files.createFile(NioFiles.createParentDirectories(file));
     return file.toString().replace(File.separatorChar, '/');
   }
 
@@ -124,10 +126,10 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     return FileUtil.toSystemIndependentName(f.getPath());
   }
 
-  protected static void setContentExternally(String path, String content) throws IOException {
-    File f = new File(path);
-    FileUtil.writeToFile(f, content.getBytes(StandardCharsets.UTF_8));
-    assertTrue(f.getPath(), f.setLastModified(f.lastModified() + 2000));
+  protected static void setContentExternally(String path, @SuppressWarnings("SameParameterValue") String content) throws IOException {
+    Path f = Path.of(path);
+    Files.writeString(f, content);
+    Files.setLastModifiedTime(f, FileTime.fromMillis(Files.getLastModifiedTime(f).toMillis() + 2000));
   }
 
   protected static void setDocumentTextFor(VirtualFile f, String text) {

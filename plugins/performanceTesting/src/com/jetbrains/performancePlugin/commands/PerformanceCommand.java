@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PerformanceCommand extends AbstractCommand {
 
   private static final String PREFIX = "%";
-  private final Tracer tracer = isWarmupMode() ? IJNoopTracer.INSTANCE : PerformanceTestSpan.TRACER;
+  private final Tracer tracer = isWarmupMode() ? PerformanceTestSpan.WARMUP_TRACER : PerformanceTestSpan.TRACER;
 
   public PerformanceCommand(@NotNull String text, int line) {
     super(text, line);

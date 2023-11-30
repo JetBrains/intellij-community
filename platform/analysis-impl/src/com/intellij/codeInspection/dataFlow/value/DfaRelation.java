@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.value;
 
@@ -22,36 +8,29 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A condition that represents a relation between two DfaValues
  */
-public final class DfaRelation extends DfaCondition {
-  @NotNull
+public record DfaRelation(@NotNull DfaValue leftOperand, @NotNull DfaValue rightOperand, @NotNull RelationType relationType) implements DfaCondition {
   @Override
-  public DfaRelation negate() {
-    return new DfaRelation(myLeftOperand, myRightOperand, myRelation.getNegated());
+  public @NotNull DfaRelation negate() {
+    return new DfaRelation(leftOperand, rightOperand, relationType.getNegated());
   }
 
-  private @NotNull final DfaValue myLeftOperand;
-  private @NotNull final DfaValue myRightOperand;
-  private @NotNull final RelationType myRelation;
-
-  private DfaRelation(@NotNull DfaValue leftOperand, @NotNull DfaValue rightOperand, @NotNull RelationType relationType) {
-    myLeftOperand = leftOperand;
-    myRightOperand = rightOperand;
-    myRelation = relationType;
+  @Override
+  public DfaCondition correctForRelationResult(boolean result) {
+    DfaValue newLeft = leftOperand;
+    DfaValue newRight = rightOperand;
+    if (newLeft instanceof DfaTypeValue leftTypeValue) {
+      newLeft = newLeft.getFactory().fromDfType(leftTypeValue.getDfType().correctForRelationResult(relationType, result));
+    }
+    if (newRight instanceof DfaTypeValue rightTypeValue) {
+      newRight = newRight.getFactory().fromDfType(rightTypeValue.getDfType().correctForRelationResult(relationType, result));
+    }
+    return newLeft == leftOperand && newRight == rightOperand ? this :
+           DfaCondition.createCondition(newLeft, relationType, newRight);
   }
-
-  @NotNull
-  public DfaValue getLeftOperand() {
-    return myLeftOperand;
-  }
-
-  @NotNull
-  public DfaValue getRightOperand() {
-    return myRightOperand;
-  }
-
+  
   @Override
   public boolean isUnknown() {
-    return myLeftOperand instanceof DfaTypeValue && myRightOperand instanceof DfaTypeValue;
+    return leftOperand instanceof DfaTypeValue && rightOperand instanceof DfaTypeValue;
   }
 
   public static DfaRelation createRelation(@NotNull DfaValue dfaLeft, @NotNull RelationType relationType, @NotNull DfaValue dfaRight) {
@@ -67,37 +46,10 @@ public final class DfaRelation extends DfaCondition {
   }
 
   public boolean isEquality() {
-    return myRelation == RelationType.EQ;
+    return relationType == RelationType.EQ;
   }
 
-  public boolean isNonEquality() {
-    return myRelation == RelationType.NE || myRelation == RelationType.GT || myRelation == RelationType.LT;
-  }
-
-  @NotNull
-  public RelationType getRelation() {
-    return myRelation;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    DfaRelation relation = (DfaRelation)o;
-    return myLeftOperand == relation.myLeftOperand &&
-           myRightOperand == relation.myRightOperand &&
-           myRelation == relation.myRelation;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = 31 + myLeftOperand.hashCode();
-    result = 31 * result + myRightOperand.hashCode();
-    result = 31 * result + myRelation.hashCode();
-    return result;
-  }
-
-  @NonNls public String toString() {
-    return myLeftOperand + " " + myRelation + " " + myRightOperand;
+  public @NonNls String toString() {
+    return leftOperand + " " + relationType + " " + rightOperand;
   }
 }

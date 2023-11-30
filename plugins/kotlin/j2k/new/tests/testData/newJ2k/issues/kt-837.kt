@@ -8,8 +8,9 @@ class Language(protected var code: String) : Serializable {
     }
 
     companion object {
-        var ENGLISH = Language("en")
-        var SWEDISH = Language("sv")
+        var ENGLISH: Language = Language("en")
+        var SWEDISH: Language = Language("sv")
+
         private const val serialVersionUID = -2442762969929206780L
     }
 }

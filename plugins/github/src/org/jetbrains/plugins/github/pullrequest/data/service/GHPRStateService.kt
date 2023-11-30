@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.progress.ProgressIndicator
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.plugins.github.api.data.GHBranchProtectionRules
+import org.jetbrains.plugins.github.api.data.GHRefUpdateRule
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import java.util.concurrent.CompletableFuture
@@ -11,15 +11,11 @@ import java.util.concurrent.CompletableFuture
 interface GHPRStateService {
 
   @CalledInAny
-  fun loadBranchProtectionRules(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, baseBranch: String)
-    : CompletableFuture<GHBranchProtectionRules?>
-
-  @CalledInAny
   fun loadMergeabilityState(progressIndicator: ProgressIndicator,
                             pullRequestId: GHPRIdentifier,
                             headRefOid: String,
                             prHtmlUrl: String,
-                            baseBranchProtectionRules: GHBranchProtectionRules?): CompletableFuture<GHPRMergeabilityState>
+                            baseRefUpdateRule: GHRefUpdateRule?): CompletableFuture<GHPRMergeabilityState>
 
 
   @CalledInAny

@@ -1,0 +1,1 @@
+slugify.__main__

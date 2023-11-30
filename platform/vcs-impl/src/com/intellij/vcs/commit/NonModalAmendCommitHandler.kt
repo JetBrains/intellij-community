@@ -61,9 +61,11 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
 
   private fun loadAmendDetails(amendAware: AmendCommitAware, root: VirtualFile) {
     _isLoading = true
+    setEditedCommit(EditedCommitPresentation.Loading)
     amendDetailsGetter = amendAware.getAmendCommitDetails(root)
     amendDetailsGetter?.run {
       onSuccess { setAmendDetails(it) }
+      onError { setEditedCommit(null) }
       onProcessed {
         _isLoading = false
         amendDetailsGetter = null
@@ -83,10 +85,10 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
   private fun setAmendDetails(amendDetails: EditedCommitDetails) {
     setAmendAuthor(amendDetails.currentUser, amendDetails.commit.author)
     setAmendMessage(workflowHandler.getCommitMessage(), amendDetails.commit.fullMessage)
-    setEditedCommit(amendDetails)
+    setEditedCommit(EditedCommitPresentation.Details(amendDetails))
   }
 
-  private fun setEditedCommit(amendDetails: EditedCommitDetails?) {
+  private fun setEditedCommit(amendDetails: EditedCommitPresentation?) {
     workflowHandler.ui.editedCommit = amendDetails
   }
 

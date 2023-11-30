@@ -1,0 +1,17 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Requirements.txt"
+              implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
+              fieldName="INSTANCE"
+              language="Requirements"
+              fileNamesCaseInsensitive="requirements.txt"/>
+    <lang.parserDefinition
+      language="Requirements"
+      implementationClass="com.jetbrains.python.requirements.RequirementsParserDefinition"/>
+    <lang.syntaxHighlighterFactory
+      language="Requirements"
+      implementationClass="com.jetbrains.python.requirements.RequirementsSyntaxHighlighterFactory"/>
+    <completion.contributor language="Requirements"
+                            implementationClass="com.jetbrains.python.requirements.RequirementsPackageNameCompletionContributor"/>
+  </extensions>
+</idea-plugin>

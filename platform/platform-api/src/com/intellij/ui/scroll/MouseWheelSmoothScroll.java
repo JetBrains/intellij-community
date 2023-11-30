@@ -223,9 +223,8 @@ public final class MouseWheelSmoothScroll {
                : UISettingsStateKt.getDefaultAnimatedScrollingDuration();
       }
 
-      @NotNull
       @Override
-      public Easing getEasing() {
+      public @NotNull Easing getEasing() {
         int points = UISettings.getShadowInstance().getAnimatedScrollingCurvePoints();
         if (points != curvePoints || ourEasing == null) {
           double x1 = (points >> 24 & 0xFF) / 200.0;

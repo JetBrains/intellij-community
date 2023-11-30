@@ -29,10 +29,9 @@ abstract class CachingFileTester {
   private static final int FILE_TEST_TIMEOUT_MS = 30000;
 
   private final ReentrantLock LOCK = new ReentrantLock();
-  @NotNull private final ConcurrentMap<GitExecutable, TestResult> myTestMap = new ConcurrentHashMap<>();
+  private final @NotNull ConcurrentMap<GitExecutable, TestResult> myTestMap = new ConcurrentHashMap<>();
 
-  @NotNull
-  final TestResult getResultFor(@NotNull GitExecutable executable) {
+  final @NotNull TestResult getResultFor(@NotNull GitExecutable executable) {
     return ProgressIndicatorUtils.computeWithLockAndCheckingCanceled(LOCK, 50, TimeUnit.MILLISECONDS, () -> {
       TestResult result = myTestMap.get(executable);
       long currentLastModificationDate = 0L;
@@ -78,8 +77,7 @@ abstract class CachingFileTester {
     return 0;
   }
 
-  @NotNull
-  private GitVersion testOrAbort(@NotNull GitExecutable executable) throws Exception {
+  private @NotNull GitVersion testOrAbort(@NotNull GitExecutable executable) throws Exception {
     int maxAttempts = 1;
 
     // IDEA-248193 Apple Git might hang with timeout after hibernation. Do several attempts.
@@ -98,8 +96,7 @@ abstract class CachingFileTester {
       GitBundle.message("git.executable.validation.error.no.response.in.n.attempts.message", maxAttempts), null);
   }
 
-  @Nullable
-  private GitVersion runTestWithTimeout(@NotNull GitExecutable executable) throws Exception {
+  private @Nullable GitVersion runTestWithTimeout(@NotNull GitExecutable executable) throws Exception {
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
     Ref<Exception> exceptionRef = new Ref<>();
     Ref<GitVersion> resultRef = new Ref<>();
@@ -136,8 +133,7 @@ abstract class CachingFileTester {
     }
   }
 
-  @Nullable
-  public TestResult getCachedResultFor(@NotNull GitExecutable executable) {
+  public @Nullable TestResult getCachedResultFor(@NotNull GitExecutable executable) {
     return myTestMap.get(executable);
   }
 
@@ -145,12 +141,11 @@ abstract class CachingFileTester {
     myTestMap.remove(executable);
   }
 
-  @NotNull
-  protected abstract GitVersion testExecutable(@NotNull GitExecutable executable) throws Exception;
+  protected abstract @NotNull GitVersion testExecutable(@NotNull GitExecutable executable) throws Exception;
 
   public static class TestResult {
-    @Nullable private final GitVersion myResult;
-    @Nullable private final Exception myException;
+    private final @Nullable GitVersion myResult;
+    private final @Nullable Exception myException;
     private final long myFileLastModifiedTimestamp;
 
     TestResult(@NotNull GitVersion result, long timestamp) {
@@ -165,13 +160,11 @@ abstract class CachingFileTester {
       myException = exception;
     }
 
-    @Nullable
-    public GitVersion getResult() {
+    public @Nullable GitVersion getResult() {
       return myResult;
     }
 
-    @Nullable
-    public Exception getException() {
+    public @Nullable Exception getException() {
       return myException;
     }
 

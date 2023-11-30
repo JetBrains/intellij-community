@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
+import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffSelectionModel
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModel
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -16,7 +17,8 @@ internal class GHPRDataProviderImpl(override val id: GHPRIdentifier,
                                     override val reviewData: GHPRReviewDataProvider,
                                     override val viewedStateData: GHPRViewedStateDataProvider,
                                     private val timelineLoaderHolder: DisposalCountingHolder<GHListLoader<GHPRTimelineItem>>,
-                                    override val diffRequestModel: GHPRDiffRequestModel)
+                                    override val diffRequestModel: GHPRDiffRequestModel,
+                                    override val combinedDiffSelectionModel: GHPRCombinedDiffSelectionModel)
   : GHPRDataProvider {
 
   override val timelineLoader get() = timelineLoaderHolder.value

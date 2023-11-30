@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EditorSelectionLocalSearchScope extends RangeBasedLocalSearchScope {
+public final class EditorSelectionLocalSearchScope extends RangeBasedLocalSearchScope {
   private final Editor myEditor;
   private final Project myProject;
   private PsiElement[] myPsiElements;

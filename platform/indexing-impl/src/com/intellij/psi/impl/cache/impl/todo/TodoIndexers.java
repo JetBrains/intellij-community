@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.DataIndexer;
@@ -36,8 +35,13 @@ public final class TodoIndexers extends FileTypeExtension<DataIndexer<TodoIndexE
     }
 
     Project project = file.getProject();
-    if (project != null && ProjectFileIndex.getInstance(project).isInContent(vFile)) {
-      return true;
+    if (project != null) {
+      if (project.isDefault()) {
+        return false;
+      }
+      if (ProjectFileIndex.getInstance(project).isInContent(vFile)) {
+        return true;
+      }
     }
 
     for (ExtraPlaceChecker checker : EP_NAME.getExtensionList()) {

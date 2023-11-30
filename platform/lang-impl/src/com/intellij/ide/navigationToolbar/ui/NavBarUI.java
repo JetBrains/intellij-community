@@ -28,7 +28,7 @@ import java.awt.*;
  * @see AbstractNavBarUI
  * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface NavBarUI {
   /**
    * Returns offset for NavBarPopup

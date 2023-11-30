@@ -6,7 +6,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
-import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
+import com.intellij.collaboration.util.SingleCoroutineLauncher
 
 interface GitLabDiscussionResolveViewModel {
   val canResolve: Boolean

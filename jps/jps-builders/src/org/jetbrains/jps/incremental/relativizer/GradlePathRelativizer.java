@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.relativizer;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-class GradlePathRelativizer extends CommonPathRelativizer {
+final class GradlePathRelativizer extends SubPathRelativizer {
   private static final String IDENTIFIER = "$GRADLE_REPOSITORY$";
   private static final String GRADLE_USER_HOME = "GRADLE_USER_HOME";
 
@@ -15,8 +15,7 @@ class GradlePathRelativizer extends CommonPathRelativizer {
     super(initializeGradleRepositoryPath(), IDENTIFIER);
   }
 
-  @Nullable
-  private static String initializeGradleRepositoryPath() {
+  private static @Nullable String initializeGradleRepositoryPath() {
     String gradleUserHomePath = System.getenv(GRADLE_USER_HOME);
     String gradleUserHome = gradleUserHomePath == null ? SystemProperties.getUserHome() + File.separator + ".gradle" : gradleUserHomePath;
 

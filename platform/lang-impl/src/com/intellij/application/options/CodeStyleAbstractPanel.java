@@ -225,7 +225,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
 
         applySettingsToModel();
         final Ref<PsiFile> formatted = Ref.create();
-        CodeStyle.doWithTemporarySettings(
+        CodeStyle.runWithLocalSettings(
           project,
           mySettings,
           settings -> {
@@ -270,7 +270,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
   private Document collectChangesBeforeCurrentSettingsAppliance(@NotNull Project project) {
     PsiFile psiFile = createFileFromText(project, myTextToReformat);
     prepareForReformat(psiFile);
-    CodeStyle.doWithTemporarySettings(
+    CodeStyle.runWithLocalSettings(
       project,
       mySettings,
       settings -> {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
@@ -22,13 +22,12 @@ public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLin
   @Attribute("handlerClass")
   public String handlerClassName;
 
-  @Nullable
   @Override
-  protected String getImplementationClassName() {
+  protected @Nullable String getImplementationClassName() {
     return handlerClassName;
   }
 
-  public static boolean handleLink(@NotNull final String ref, @NotNull final Editor editor) {
+  public static boolean handleLink(final @NotNull String ref, final @NotNull Editor editor) {
     return EP_NAME.computeSafeIfAny(ep -> {
       if (ref.startsWith(ep.prefix)) {
         String refSuffix = ref.substring(ep.prefix.length());
@@ -38,8 +37,7 @@ public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLin
     }) == Boolean.TRUE;
   }
 
-  @Nullable
-  public static @InspectionMessage String getDescription(@NotNull final String ref, @NotNull final Editor editor) {
+  public static @Nullable @InspectionMessage String getDescription(final @NotNull String ref, final @NotNull Editor editor) {
     return EP_NAME.computeSafeIfAny(ep -> {
       if (ref.startsWith(ep.prefix)) {
         String refSuffix = ref.substring(ep.prefix.length());
@@ -49,8 +47,7 @@ public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLin
     });
   }
 
-  @NotNull
-  public static String getDescriptionTitle(@NotNull String ref, @NotNull Editor editor) {
+  public static @NotNull String getDescriptionTitle(@NotNull String ref, @NotNull Editor editor) {
     return Objects.requireNonNull(EP_NAME.computeSafeIfAny(ep -> {
       if (ref.startsWith(ep.prefix)) {
         String refSuffix = ref.substring(ep.prefix.length());

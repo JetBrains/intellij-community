@@ -68,8 +68,8 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     mySkipExitCodeAssertion = skipExitCodeAssertion;
   }
 
-  protected int getExitCodeForSkippedTests() {
-    return 0;
+  protected void assertExitCodeForSkippedTests(int code) {
+    Assert.assertEquals("Exit code must be 0 if all tests are ignored", 0, code);
   }
 
   @Override
@@ -83,8 +83,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
       Assert.assertEquals("Exit code must be 0 if all tests are passed", 0, code);
     }
     else if (proxy.isIgnored()) {
-      int expectedExitCode = getExitCodeForSkippedTests();
-      Assert.assertEquals("Exit code must be %d if all tests are ignored".formatted(expectedExitCode), expectedExitCode, code);
+      assertExitCodeForSkippedTests(code);
     }
     else {
       Assert.assertNotEquals("Exit code must NOT be 0 if some tests failed", 0, code);

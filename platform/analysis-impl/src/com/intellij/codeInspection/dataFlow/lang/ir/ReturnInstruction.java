@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
@@ -26,14 +26,12 @@ public class ReturnInstruction extends ControlTransferInstruction {
     myAnchor = anchor;
   }
 
-  @NotNull
   @Override
-  public Instruction bindToFactory(@NotNull DfaValueFactory factory) {
+  public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     return new ReturnInstruction(getTransfer().bindToFactory(factory), myAnchor, false);
   }
 
-  @Nullable
-  public PsiElement getAnchor() {
+  public @Nullable PsiElement getAnchor() {
     return myAnchor;
   }
 

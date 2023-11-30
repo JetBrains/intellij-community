@@ -299,7 +299,7 @@ class GCRootPathsTree(
     fun createHotPathReport(treeDisplayOptions: AnalysisConfig.TreeDisplayOptions, rootReasonGetter: (Int) -> String): String {
       val rootList = mutableListOf<Triple<Int, RegularNode, Edge>>()
       val result = StringBuilder()
-      val printFunc = { s: String -> result.appendln(s); Unit }
+      val printFunc = { s: String -> result.appendLine(s); Unit }
 
       for (entry in edges.int2ObjectEntrySet().fastIterator()) {
         rootList.add(Triple(entry.intKey, entry.value.first, entry.value.second))

@@ -20,6 +20,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiProvidesStatement;
 import com.intellij.psi.impl.java.stubs.impl.PsiProvidesStatementStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiProvidesStatementImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -35,7 +36,7 @@ import java.io.IOException;
 
 public class JavaProvidesStatementElementType extends JavaStubElementType<PsiProvidesStatementStub, PsiProvidesStatement> {
   public JavaProvidesStatementElementType() {
-    super("PROVIDES_STATEMENT");
+    super("PROVIDES_STATEMENT", BasicJavaElementType.BASIC_PROVIDES_STATEMENT);
   }
 
   @NotNull

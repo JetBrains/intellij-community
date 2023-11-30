@@ -44,9 +44,9 @@ public final class TabsUtil {
   public static int getDropSideFor(Point point, JComponent component) {
     double r = Math.max(.05, Math.min(.45, Registry.doubleValue("ide.tabbedPane.dragToSplitRatio")));
 
-    Dimension size = component.getSize();
-    double width = size.getWidth();
-    double height = size.getHeight();
+    Rectangle rect = new Rectangle(new Point(0, 0), component.getSize());
+    double width = rect.getWidth();
+    double height = rect.getHeight();
     GeneralPath topShape = new GeneralPath();
     topShape.moveTo(0, 0);
     topShape.lineTo(width, 0);
@@ -79,7 +79,7 @@ public final class TabsUtil {
     if (leftShape.contains(point)) return LEFT;
     if (bottomShape.contains(point)) return BOTTOM;
     if (topShape.contains(point)) return TOP;
-    return component.getBounds().contains(point) ? CENTER : -1;
+    return rect.contains(point) ? CENTER : -1;
   }
 
   public static void updateBoundsWithDropSide(@NotNull Rectangle bounds,

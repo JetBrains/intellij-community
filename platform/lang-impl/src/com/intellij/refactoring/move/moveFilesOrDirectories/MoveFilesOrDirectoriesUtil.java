@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -40,9 +39,7 @@ public final class MoveFilesOrDirectoriesUtil {
   public static void doMoveDirectory(final PsiDirectory aDirectory, final PsiDirectory destDirectory) throws IncorrectOperationException {
     PsiManager manager = aDirectory.getManager();
     doJustMoveDirectory(aDirectory, destDirectory, manager);
-    if (ModelBranch.getPsiBranch(destDirectory) == null) {
-      DumbService.getInstance(manager.getProject()).completeJustSubmittedTasks();
-    }
+    DumbService.getInstance(manager.getProject()).completeJustSubmittedTasks();
   }
 
   private static void doJustMoveDirectory(@NotNull PsiDirectory aDirectory,

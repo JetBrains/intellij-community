@@ -29,7 +29,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
             @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers")
             public static class InaccessibleMembers extends AbstractKotlinEvaluateExpressionInMppTest {
                 private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
 
                 @TestMetadata("inaccessibleMembers.kt")
@@ -117,7 +117,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
             @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator")
             public static class Uncategorized extends AbstractKotlinEvaluateExpressionInMppTest {
                 private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
 
                 @TestMetadata("ceAnonymousObject.kt")
@@ -159,6 +159,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
                 public void testCeSeveralLambdas() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceSeveralLambdas.kt");
                 }
+
+                @TestMetadata("samConstruction.kt")
+                public void testSamConstruction() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/samConstruction.kt");
+                }
             }
         }
 
@@ -166,7 +171,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/contextReceivers")
         public static class ContextReceivers extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("contextClassAndContextReceiversInMethod.kt")
@@ -229,7 +234,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/coroutines")
         public static class Coroutines extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("accessClassPropertyInSuspendFunction.kt")
@@ -265,6 +270,16 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
             @TestMetadata("functionCallWithSuspendFunctionInside.kt")
             public void testFunctionCallWithSuspendFunctionInside() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/coroutines/functionCallWithSuspendFunctionInside.kt");
+            }
+
+            @TestMetadata("infixSuspendCall.kt")
+            public void testInfixSuspendCall() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/infixSuspendCall.kt");
+            }
+
+            @TestMetadata("operatorSuspendCall.kt")
+            public void testOperatorSuspendCall() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/operatorSuspendCall.kt");
             }
 
             @TestMetadata("primitivesCoertion.kt")
@@ -327,7 +342,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/createExpression")
         public static class CreateExpression extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("createExpressionCastToBuiltIn.kt")
@@ -350,7 +365,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/extraVariables")
         public static class ExtraVariables extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("evBreakpointOnPropertyDeclaration.kt")
@@ -413,7 +428,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/frame")
         public static class Frame extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("annotationsAreNotShown.kt")
@@ -711,7 +726,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/funWithDefaultParam")
         public static class FunWithDefaultParam extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("classWithExtensionFun.kt")
@@ -739,7 +754,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/implicitClassReceiver")
         public static class ImplicitClassReceiver extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("localClass.kt")
@@ -782,7 +797,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/javaContext")
         public static class JavaContext extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("jcBlock.kt")
@@ -820,7 +835,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/labels")
         public static class Labels extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("lCallOnLabeledObj.kt")
@@ -853,7 +868,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/lambdas")
         public static class Lambdas extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("destructuringParam.kt")
@@ -956,7 +971,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/renderer")
         public static class Renderer extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("collectionRenderer.kt")
@@ -979,7 +994,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/simpleConstructors")
         public static class SimpleConstructors extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("property.kt")
@@ -992,7 +1007,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/simpleLocals")
         public static class SimpleLocals extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("anonymousObject.kt")
@@ -1070,7 +1085,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint/simpleSmartcasts")
         public static class SimpleSmartcasts extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("downcast.kt")
@@ -1108,7 +1123,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/singleBreakpoint")
         public static class Uncategorized extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("abstractFunCall.kt")
@@ -1456,6 +1471,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
                 runTest("testData/evaluation/singleBreakpoint/ktij21963.kt");
             }
 
+            @TestMetadata("ktij26694.kt")
+            public void testKtij26694() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/ktij26694.kt");
+            }
+
             @TestMetadata("lambdaToString.kt")
             public void testLambdaToString() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdaToString.kt");
@@ -1556,6 +1576,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
                 runTest("testData/evaluation/singleBreakpoint/privateMember.kt");
             }
 
+            @TestMetadata("privateMemberShadowing.kt")
+            public void testPrivateMemberShadowing() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateMemberShadowing.kt");
+            }
+
             @TestMetadata("privatePropertyWithExplicitDefaultGetter.kt")
             public void testPrivatePropertyWithExplicitDefaultGetter() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privatePropertyWithExplicitDefaultGetter.kt");
@@ -1569,6 +1594,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
             @TestMetadata("privateToplevelProperty.kt")
             public void testPrivateToplevelProperty() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privateToplevelProperty.kt");
+            }
+
+            @TestMetadata("properties.kt")
+            public void testProperties() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/properties.kt");
             }
 
             @TestMetadata("protectedMember.kt")
@@ -1636,6 +1666,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
                 runTest("testData/evaluation/singleBreakpoint/unsafeCall.kt");
             }
 
+            @TestMetadata("unsignedArrayOf.kt")
+            public void testUnsignedArrayOf() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/unsignedArrayOf.kt");
+            }
+
             @TestMetadata("unusedTransitiveDependencies.kt")
             public void testUnusedTransitiveDependencies() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/unusedTransitiveDependencies.kt");
@@ -1675,7 +1710,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/multipleBreakpoints/library")
         public static class Library extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("customLibClassName.kt")
@@ -1693,7 +1728,7 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
         @TestMetadata("testData/evaluation/multipleBreakpoints")
         public static class Uncategorized extends AbstractKotlinEvaluateExpressionInMppTest {
             private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
             }
 
             @TestMetadata("clearCache.kt")
@@ -1769,6 +1804,11 @@ public abstract class KotlinEvaluateExpressionInMppTestGenerated extends Abstrac
             @TestMetadata("isInsideInlineLambda.kt")
             public void testIsInsideInlineLambda() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/isInsideInlineLambda.kt");
+            }
+
+            @TestMetadata("isInsideLocalFun.kt")
+            public void testIsInsideLocalFun() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/isInsideLocalFun.kt");
             }
 
             @TestMetadata("lambdaParameters.kt")

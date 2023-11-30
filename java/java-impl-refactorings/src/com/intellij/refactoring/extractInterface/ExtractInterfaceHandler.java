@@ -29,10 +29,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareActionHandler {
 
@@ -70,6 +67,12 @@ public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareAct
               : PsiTreeUtil.getParentOfType(parent, PsiClass.class, false);
     if (myClass == null) {
       String message = RefactoringBundle.message("error.select.class.to.be.refactored");
+      CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.EXTRACT_INTERFACE);
+      return;
+    }
+
+    if (myClass instanceof PsiUnnamedClass) {
+      String message = RefactoringBundle.message("error.interface.cannot.be.extracted.from.unnamed.class");
       CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.EXTRACT_INTERFACE);
       return;
     }

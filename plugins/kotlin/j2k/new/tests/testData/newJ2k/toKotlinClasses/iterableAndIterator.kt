@@ -8,7 +8,8 @@ internal class Test : Iterable<String?> {
     }
 
     fun push(i: Iterator<String>): Iterator<String> {
-        return i
+        val j = i
+        return j
     }
 }
 
@@ -18,6 +19,7 @@ internal class FullTest : Iterable<String?> {
     }
 
     fun push(i: Iterator<String>): Iterator<String> {
-        return i
+        val j = i
+        return j
     }
 }

@@ -1,4 +1,4 @@
-// IGNORE_FE10
+// IGNORE_K1
 // IS_APPLICABLE: false
 
 interface I

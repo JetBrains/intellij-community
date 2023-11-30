@@ -13,11 +13,13 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 @CompileStatic
 class GroovyLexerTest extends LexerTestCase {
 
+  @NotNull
   @Override
   protected Lexer createLexer() {
     new GroovyLexer()
   }
 
+  @NotNull
   @Override
   protected String getDirPath() {
     TestUtils.testDataPath + "lexer"
@@ -35,13 +37,13 @@ class GroovyLexerTest extends LexerTestCase {
   }
 
   @Override
-  protected void doTest(@NonNls String text) {
+  protected void doTest(@NotNull @NonNls String text) {
     super.doTest(text)
     checkCorrectRestart(text)
   }
 
   @Override
-  protected String printTokens(Lexer lexer, CharSequence text, int start) {
+  protected String printTokens(@NotNull Lexer lexer, @NotNull CharSequence text, int start) {
     lexer.start(text, start, text.length())
     def tokens = [["offset", "state", "text", "type"]]
     def tokenType

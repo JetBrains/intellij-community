@@ -126,4 +126,9 @@ public class MockDirtyScope extends VcsModifiableDirtyScope {
 
     return false;
   }
+
+  @Override
+  public boolean wasEveryThingDirty() {
+    return false;
+  }
 }

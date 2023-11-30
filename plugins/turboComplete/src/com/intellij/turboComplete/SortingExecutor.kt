@@ -2,11 +2,12 @@ package com.intellij.turboComplete
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.addingPolicy.ElementsAddingPolicy
+import com.intellij.codeInsight.completion.addingPolicy.PassDirectlyPolicy
 import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import com.intellij.openapi.components.service
 import com.intellij.platform.ml.impl.turboComplete.CompletionKind
 import com.intellij.platform.ml.impl.turboComplete.SuggestionGenerator
-import com.intellij.platform.ml.impl.turboComplete.addingPolicy.PassDirectlyPolicy
+import com.intellij.platform.ml.impl.turboComplete.SuggestionGeneratorExecutor
 import com.intellij.turboComplete.analysis.usage.KindVarietyUsageTracker
 import com.intellij.turboComplete.platform.addingPolicy.BufferingPolicy
 import com.intellij.turboComplete.platform.addingPolicy.ConvertToCompletionKindPolicy
@@ -25,9 +26,11 @@ class SortingExecutor(
   private val mostRelevantKinds: MutableList<CompletionKind> = run {
     val usageTracker = service<KindVarietyUsageTracker>()
     val onceGeneratedKinds = usageTracker.trackedKinds(sorter.kindVariety)
-    sorter.sort(onceGeneratedKinds, parameters).map { it.kind }
-      .take(executionPreferences.executeMostRelevantWhenPassed)
-      .toMutableList()
+    sorter.sort(onceGeneratedKinds, parameters)
+      ?.map { it.kind }
+      ?.take(executionPreferences.executeMostRelevantWhenPassed)
+      ?.toMutableList()
+    ?: mutableListOf()
   }
 
   override fun createNoneKindPolicy() = when (executionPreferences.policyForNoneKind) {
@@ -57,27 +60,30 @@ class SortingExecutor(
       .addingCompletionKind(suggestionGenerator)
   }
 
-  private fun invokeCompletionKind(suggestionGenerator: SuggestionGenerator) {
+  private fun invokeCompletionKind(suggestionGenerator: SuggestionGenerator, removeFromNonExecuted: Boolean) {
     val policy = makeKindPolicy(suggestionGenerator)
     policyController.invokeWithPolicy(policy) {
       suggestionGenerator.generateCompletionVariants()
     }
     executedGenerators.add(suggestionGenerator)
-    nonExecutedGenerators.remove(suggestionGenerator)
+    if (removeFromNonExecuted) {
+      nonExecutedGenerators.remove(suggestionGenerator)
+    }
   }
 
   override fun executeAll() {
     if (nonExecutedGenerators.isEmpty()) return
-    val executionOrder = sorter.sortGenerators(nonExecutedGenerators.toList(), parameters)
+    val executionOrder = sorter.sortGenerators(nonExecutedGenerators.toList(), parameters) ?: nonExecutedGenerators
     executionOrder.forEach {
-      invokeCompletionKind(it)
+      invokeCompletionKind(it, false)
     }
+    nonExecutedGenerators.removeAll(executionOrder)
   }
 
   override fun pass(suggestionGenerator: SuggestionGenerator) {
     nonExecutedGenerators.add(suggestionGenerator)
     if (mostRelevantKinds.getOrNull(0) == suggestionGenerator.kind) {
-      invokeCompletionKind(suggestionGenerator)
+      invokeCompletionKind(suggestionGenerator, true)
       mostRelevantKinds.removeFirst()
     }
   }

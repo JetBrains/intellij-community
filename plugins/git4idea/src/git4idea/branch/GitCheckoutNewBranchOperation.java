@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
@@ -39,7 +25,7 @@ import static git4idea.util.GitUIUtil.code;
  * Create new branch (starting from the current branch) and check it out.
  */
 class GitCheckoutNewBranchOperation extends GitBranchOperation {
-  @NotNull private final String myNewBranchName;
+  private final @NotNull String myNewBranchName;
 
   GitCheckoutNewBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                                 @NotNull Collection<? extends GitRepository> repositories, @NotNull String newBranchName) {
@@ -82,15 +68,13 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
     repository.update();
   }
 
-  @NotNull
   @Override
-  protected String getSuccessMessage() {
+  protected @NotNull String getSuccessMessage() {
     return GitBundle.message("checkout.new.branch.operation.branch.was.created", bold(code(myNewBranchName)));
   }
 
-  @NotNull
   @Override
-  protected String getRollbackProposal() {
+  protected @NotNull String getRollbackProposal() {
     return new HtmlBuilder().append(GitBundle.message("checkout.new.branch.operation.however.checkout.has.succeeded.for.the.following",
                                                       getSuccessfulRepositories().size()))
       .br()
@@ -100,10 +84,8 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
       .toString();
   }
 
-  @NotNull
-  @Nls
   @Override
-  protected String getOperationName() {
+  protected @NotNull @Nls String getOperationName() {
     return GitBundle.message("checkout.operation.name");
   }
 

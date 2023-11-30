@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordAlreadyDeletedException;
+import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.IntPair;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.StorageLockContext;
@@ -268,6 +269,44 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   }
 
   @Test
+  public void singleAttributeInserted_CouldBeDeletedTwice_If_IGNORE_ALREADY_DELETED_ERRORS_Enabled() throws IOException {
+    final AttributeRecord record = newAttributeRecord(ARBITRARY_FILE_ID, ARBITRARY_ATTRIBUTE_ID)
+      .withRandomAttributeBytes(INLINE_ATTRIBUTE_SMALLER_THAN + 1);
+
+    final AttributeRecord insertedRecord = attributes.insertOrUpdateRecord(record, attributesStorage);
+
+    assertTrue("Attribute just inserted must exist",
+               insertedRecord.existsInStorage(attributesStorage)
+    );
+
+    final boolean deleted = attributes.deleteRecord(insertedRecord, attributesStorage);
+    assertTrue("Attribute must be deleted successfully", deleted);
+    final boolean exists = insertedRecord.existsInStorage(attributesStorage);
+    assertFalse("Attribute just deleted must NOT exist", exists);
+
+    if (AttributesStorageOverBlobStorage.IGNORE_ALREADY_DELETED_ERRORS) {
+      final boolean deletedSecondTime = attributesStorage.deleteAttributes(
+        insertedRecord.recordId(),
+        insertedRecord.fileId()
+      );
+      assertFalse("Attribute is already deleted, must not be deleted on second attempt",
+                  deletedSecondTime);
+    }
+    else {
+      try {
+        attributesStorage.deleteAttributes(
+          insertedRecord.recordId(),
+          insertedRecord.fileId()
+        );
+        fail("IGNORE_ALREADY_DELETED_ERRORS=false => must throw error on second attempt to delete already deleted record");
+      }
+      catch (RecordAlreadyDeletedException e) {
+        //OK, it is expected to get an error if IGNORE_ALREADY_DELETED_ERRORS=false
+      }
+    }
+  }
+
+  @Test
   public void manyAttributesInserted_AreAllReportedExistInStorage_AndCouldBeReadBackAsIs() throws IOException {
     final int maxAttributeValueSize = Short.MAX_VALUE / 2;
     final int differentAttributesCount = 1024;
@@ -487,7 +526,6 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
         .withAttributeBytes(attributeValue, attributeValue.length);
 
       recordsReadWithForEach.put(attributeRecord.uniqueId(), attributeRecord);
-
     });
 
     return recordsReadWithForEach;
@@ -527,7 +565,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   //TODO RC: make AttributeRecord inner class of Attributes, hence methods .store() and .delete()
   //         could be invoked through AttributeRecord itself
   //@Immutable
-  public static class AttributeRecord {
+  protected static class AttributeRecord {
     private final int attributesRecordId;
     private final int fileId;
     private final int attributeId;
@@ -642,12 +680,12 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
 
   /**
    * AttributeRecords are logically not independent: in real use-cases attributeRecordId is tiered
-   * to fileId (via FSRecords), hence AttributeRecords with same fileId can't have different attributeRecordIds.
+   * to fileId (via FSRecords), hence AttributeRecords with the same fileId can't have different attributeRecordIds.
    * This class emulates (very small subset of) FSRecords: it keeps fileId -> attributeRecordId mapping,
    * and maintains it during insertions/updates/deletions -- this is why all modifications should go
    * through it
    */
-  public static class Attributes {
+  protected static class Attributes {
     private final Int2IntMap fileIdToAttributeRecordId = new Int2IntOpenHashMap();
 
     public AttributeRecord insertOrUpdateRecord(final AttributeRecord record,

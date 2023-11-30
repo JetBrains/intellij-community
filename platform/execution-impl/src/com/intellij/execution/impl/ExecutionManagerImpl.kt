@@ -30,12 +30,12 @@ import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -108,9 +108,17 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
     internal val TERMINATING_FOR_RERUN = Key.create<Boolean>("TERMINATING_FOR_RERUN")
     internal val REPORT_NEXT_START_AS_RERUN = Key.create<Boolean>("REPORT_NEXT_START_AS_RERUN")
+    internal val PARENT_PROFILE_IDE_ACTIVITY = Key.create<StructuredIdeActivity>("PARENT_PROFILE_IDE_ACTIVITY")
 
     @JvmStatic
-    fun getInstance(project: Project) = project.service<ExecutionManager>() as ExecutionManagerImpl
+    fun getInstance(project: Project): ExecutionManagerImpl {
+      return ExecutionManager.getInstance(project) as ExecutionManagerImpl
+    }
+
+    @JvmStatic
+    fun getInstanceIfCreated(project: Project): ExecutionManagerImpl? {
+      return project.serviceIfCreated<ExecutionManager>() as? ExecutionManagerImpl
+    }
 
     @JvmStatic
     fun isProcessRunning(descriptor: RunContentDescriptor?): Boolean {
@@ -249,6 +257,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     val executor = environment.executor
     inProgress.add(InProgressEntry(executor.id, environment.runner.runnerId))
     project.messageBus.syncPublisher(EXECUTION_TOPIC).processStartScheduled(executor.id, environment)
+    registerRecentExecutor(environment)
 
     val startRunnable = Runnable {
       if (project.isDisposed) {
@@ -333,6 +342,17 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     }
   }
 
+  private fun registerRecentExecutor(environment: ExecutionEnvironment) {
+    environment.runnerAndConfigurationSettings?.let {
+      PropertiesComponent.getInstance(project).setValue(it.uniqueID + ".executor", environment.executor.id)
+    }
+  }
+
+  fun getRecentExecutor(setting: RunnerAndConfigurationSettings): Executor? {
+    val executorId = PropertiesComponent.getInstance(project).getValue(setting.uniqueID + ".executor")
+    return executorId?.let { ExecutorRegistry.getInstance().getExecutorById(it) }
+  }
+
   override fun dispose() {
     for (entry in runningConfigurations) {
       Disposer.dispose(entry.descriptor)
@@ -384,7 +404,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           continue
         }
 
-        val settings = task.settings
+        val settings = task.getSettings()
         if (settings != null) {
           // as side-effect here we setup runners list ( required for com.intellij.execution.impl.RunManagerImpl.canRunConfiguration() )
           var executor = if (Registry.`is`("lock.run.executor.for.before.run.tasks", false)) {
@@ -815,7 +835,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     })
   }
 
-  fun getRunningDescriptors(condition: Condition<in RunnerAndConfigurationSettings>): List<RunContentDescriptor> {
+  override fun getRunningDescriptors(condition: Condition<in RunnerAndConfigurationSettings>): List<RunContentDescriptor> {
     val result = SmartList<RunContentDescriptor>()
     for (entry in runningConfigurations) {
       if (entry.settings != null && condition.value(entry.settings)) {
@@ -838,7 +858,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     return result
   }
 
-  fun getExecutors(descriptor: RunContentDescriptor): Set<Executor> {
+  override fun getExecutors(descriptor: RunContentDescriptor): Set<Executor> {
     val result = HashSet<Executor>()
     for (entry in runningConfigurations) {
       if (descriptor === entry.descriptor) {
@@ -899,9 +919,12 @@ private fun triggerUsage(environment: ExecutionEnvironment): StructuredIdeActivi
   // The 'Rerun' button in the Run tool window will reuse the same ExecutionEnvironment object again.
   // If there are no processes to stop, the REPORT_NEXT_START_AS_RERUN won't be set in restartRunProfile(), so need to set it here.
   if (!isRerun) environment.putUserData(ExecutionManagerImpl.REPORT_NEXT_START_AS_RERUN, true)
-
-  return RunConfigurationUsageTriggerCollector
-    .trigger(environment.project, configurationFactory, environment.executor, runConfiguration, isRerun)
+  return when(val parentIdeActivity = environment.getUserData(ExecutionManagerImpl.PARENT_PROFILE_IDE_ACTIVITY)) {
+    null -> RunConfigurationUsageTriggerCollector
+      .trigger(environment.project, configurationFactory, environment.executor, runConfiguration, isRerun)
+    else -> RunConfigurationUsageTriggerCollector
+      .triggerWithParent(parentIdeActivity, environment.project, configurationFactory, environment.executor, runConfiguration, isRerun)
+  }
 }
 
 private fun createEnvironmentBuilder(project: Project,

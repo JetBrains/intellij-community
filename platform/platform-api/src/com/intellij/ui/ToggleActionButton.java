@@ -38,16 +38,15 @@ public abstract class ToggleActionButton extends AnActionButton implements Toggl
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
-    final boolean state = !isSelected(e);
+    boolean state = !isSelected(e);
     setSelected(e, state);
-    final Presentation presentation = e.getPresentation();
+    Presentation presentation = e.getPresentation();
     Toggleable.setSelected(presentation, state);
   }
 
   @Override
   public final void updateButton(@NotNull AnActionEvent e) {
-    final boolean selected = isSelected(e);
-    final Presentation presentation = e.getPresentation();
-    Toggleable.setSelected(presentation, selected);
+    boolean selected = isSelected(e);
+    Toggleable.setSelected(e.getPresentation(), selected);
   }
 }

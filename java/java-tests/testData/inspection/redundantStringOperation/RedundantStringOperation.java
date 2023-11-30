@@ -13,5 +13,11 @@ class Substring {
     new <warning descr="Can be replaced with 'String.valueOf()'">String</warning>(new char[] { 'c' });
     String s2 = new <warning descr="'new String()' is redundant">String</warning>();
 
+    // incorrect type
+    if (s.substring(0, 1).equals(1)) {
+
+    }
+
+
   }
 }

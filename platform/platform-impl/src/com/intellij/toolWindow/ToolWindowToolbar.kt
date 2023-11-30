@@ -3,6 +3,7 @@
 package com.intellij.toolWindow
 
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindow
@@ -53,9 +54,10 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPanel<ToolW
     add(bottomStripe, BorderLayout.SOUTH)
   }
 
-  fun initMoreButton() {
+  fun initMoreButton(project: Project) {
     if (isPrimary) {
       topStripe.parent?.add(moreButton, BorderLayout.CENTER)
+      moreButton.updateState(project)
     }
   }
 

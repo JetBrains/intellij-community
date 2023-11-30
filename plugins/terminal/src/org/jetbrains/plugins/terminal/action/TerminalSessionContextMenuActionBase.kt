@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.action
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
@@ -11,7 +12,7 @@ import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
-abstract class TerminalSessionContextMenuActionBase : ToolWindowContextMenuActionBase() {
+abstract class TerminalSessionContextMenuActionBase : ToolWindowContextMenuActionBase(), ActionRemoteBehaviorSpecification.Frontend {
   final override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     val project = e.project
     if (project != null && TerminalToolWindowManager.isTerminalToolWindow(toolWindow) && content != null) {

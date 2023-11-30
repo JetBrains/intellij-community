@@ -54,5 +54,6 @@ class Klass {
 }
 
 fun main(args: Array<String>) {
+    println(args)
     Klass().localObject3()
 }

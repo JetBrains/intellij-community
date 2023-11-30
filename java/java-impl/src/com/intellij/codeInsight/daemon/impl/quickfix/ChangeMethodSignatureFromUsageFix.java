@@ -207,6 +207,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       range = header.getTextRangeInParent();
       methodText = header.getParent().getText();
     } else {
+      if (myTargetMethod instanceof SyntheticElement) return IntentionPreviewInfo.EMPTY;
       range = parameterList.getTextRangeInParent();
       methodText = myTargetMethod.getText();
     }

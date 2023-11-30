@@ -8,10 +8,12 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -33,9 +35,9 @@ public abstract class EditorUndoTestCase extends UndoTestCase {
 
     super.setUp();
 
-    myManager.setEditorProvider(new CurrentEditorProvider() {
+    myManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
       @Override
-      public FileEditor getCurrentEditor() {
+      public FileEditor getCurrentEditor(@Nullable Project project) {
         return getFileEditor(mySecondEditorSelected ? getSecondEditor() : getFirstEditor());
       }
     });

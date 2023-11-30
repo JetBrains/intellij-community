@@ -185,7 +185,8 @@ sealed class GithubApiRequestExecutor {
     }
 
     private fun getJsonError(connection: HttpURLConnection, errorText: String): GithubErrorMessage? {
-      if (!connection.contentType.startsWith(GithubApiContentHelper.JSON_MIME_TYPE)) return null
+      val contentType = connection.contentType
+      if (contentType == null || !contentType.startsWith(GithubApiContentHelper.JSON_MIME_TYPE)) return null
       return try {
         return GithubApiContentHelper.fromJson(errorText)
       }

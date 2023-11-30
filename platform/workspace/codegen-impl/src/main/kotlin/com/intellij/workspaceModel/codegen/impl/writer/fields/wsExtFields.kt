@@ -1,17 +1,15 @@
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
 import com.intellij.workspaceModel.codegen.deft.meta.ExtProperty
-import com.intellij.workspaceModel.codegen.impl.writer.getRefType
-import com.intellij.workspaceModel.codegen.impl.writer.javaBuilderName
-import com.intellij.workspaceModel.codegen.impl.writer.fqn
-import com.intellij.workspaceModel.codegen.impl.writer.lines
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.workspaceModel.codegen.impl.writer.*
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 
 val ExtProperty<*, *>.wsCode: String
   get() = lines {
     val isChild = valueType.getRefType().child
-    val annotation = if (isChild) "@${Child::class.fqn} " else ""
-    sectionNoBrackets("var ${receiver.javaBuilderName}.$name: $annotation${valueType.javaType}") {
+    val annotation = if (isChild) "@${Child} " else ""
+    val generic = if (receiver.builderWithTypeParameter) "<out ${receiver.javaFullName}>" else ""
+    sectionNoBrackets("$generatedCodeVisibilityModifier var ${receiver.javaBuilderName}$generic.$name: $annotation${valueType.javaType}") {
       line("by WorkspaceEntity.extension()")
     }
   }

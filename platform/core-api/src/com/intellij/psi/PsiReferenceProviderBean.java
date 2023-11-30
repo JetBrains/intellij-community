@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.diagnostic.PluginException;
@@ -69,8 +69,7 @@ public class PsiReferenceProviderBean implements KeyedLazyInstance<PsiReferenceP
     this.pluginDescriptor = pluginDescriptor;
   }
 
-  @Nullable
-  public ElementPattern<PsiElement> createElementPattern() {
+  public @Nullable ElementPattern<PsiElement> createElementPattern() {
     if (patterns == null || patterns.length == 0) {
       Logger.getInstance(PsiReferenceProviderBean.class)
         .error(new PluginException("At least one pattern should be specified", pluginDescriptor.getPluginId()));
@@ -93,15 +92,13 @@ public class PsiReferenceProviderBean implements KeyedLazyInstance<PsiReferenceP
     }
   }
 
-  @NotNull
   @Override
-  public String getKey() {
+  public @NotNull String getKey() {
     return language;
   }
 
-  @NotNull
   @Override
-  public PsiReferenceProviderBean getInstance() {
+  public @NotNull PsiReferenceProviderBean getInstance() {
     return this;
   }
 }

@@ -59,18 +59,20 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
 
   inner class LoggedInPredicate : ComponentPredicate() {
     override fun addListener(listener: (Boolean) -> Unit) =
-      SettingsSyncAuthService.getInstance().addListener(object : SettingsSyncAuthService.Listener {
-        override fun stateChanged() {
-          listener(invoke())
-        }
-      }, disposable!!)
+      SettingsSyncEvents.getInstance().addListener(
+        object : SettingsSyncEventListener {
+          override fun loginStateChanged() {
+            listener(invoke())
+          }
+        },
+        disposable!!)
 
     override fun invoke() = SettingsSyncAuthService.getInstance().isLoggedIn()
   }
 
   inner class EnabledPredicate : ComponentPredicate() {
     override fun addListener(listener: (Boolean) -> Unit) {
-      SettingsSyncEvents.getInstance().addEnabledStateChangeListener(object : SettingsSyncEnabledStateListener {
+      SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
         override fun enabledStateChanged(syncEnabled: Boolean) {
           listener(invoke())
           configPanel.reset()
@@ -236,13 +238,17 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
         }
       }.visibleIf(LoggedInPredicate().and(EnabledPredicate()))
     }
-    SettingsSyncAuthService.getInstance().addListener(object : SettingsSyncAuthService.Listener {
-      override fun stateChanged() {
-        if (SettingsSyncAuthService.getInstance().isLoggedIn() && !SettingsSyncSettings.getInstance().syncEnabled) {
-          syncEnabler.checkServerState()
+    SettingsSyncEvents.getInstance().addListener(
+      object : SettingsSyncEventListener {
+        override fun loginStateChanged() {
+          if (SettingsSyncAuthService.getInstance().isLoggedIn() && !SettingsSyncSettings.getInstance().syncEnabled) {
+            syncEnabler.checkServerState()
+          }
+          reset()
         }
-      }
-    }, disposable!!)
+      },
+      disposable!!
+    )
     return configPanel
   }
 
@@ -290,6 +296,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
           SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.GET_FROM_SERVER)
         }
         EnableSettingsSyncDialog.Result.PUSH_LOCAL -> {
+          SettingsSyncSettings.getInstance().applyFromState(dialog.syncSettings)
           SettingsSyncSettings.getInstance().syncEnabled = true
           syncEnabler.pushSettingsToServer()
           if (remoteSettings != null) {

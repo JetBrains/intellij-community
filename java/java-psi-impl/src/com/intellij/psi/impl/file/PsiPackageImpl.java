@@ -11,7 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,11 +54,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   protected Collection<PsiDirectory> getAllDirectories(GlobalSearchScope scope) {
-    if (!scope.getModelBranchesAffectingScope().isEmpty()) {
-      return ContainerUtil.mapNotNull(PackageIndex.getInstance(getProject()).getDirsByPackageName(getQualifiedName(), scope).findAll(),
-                                      getManager()::findDirectory);
-    }
-
     if (scope.isForceSearchingInLibrarySources()) {
       if (myDirectoriesWithLibSources == null) {
         myDirectoriesWithLibSources = createCachedDirectories(true);
@@ -175,10 +169,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     DumbService dumbService = DumbService.getInstance(getProject());
     if (dumbService.isAlternativeResolveEnabled()) {
       return getCachedClassesInDumbMode(name, scope);
-    }
-
-    if (!scope.getModelBranchesAffectingScope().isEmpty()) {
-      return findAllClasses(name, scope);
     }
 
     Map<String, PsiClass[]> map = dereference(myClassCache);

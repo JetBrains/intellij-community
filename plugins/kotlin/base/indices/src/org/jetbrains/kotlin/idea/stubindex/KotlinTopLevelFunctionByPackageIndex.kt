@@ -15,6 +15,7 @@ class KotlinTopLevelFunctionByPackageIndex internal constructor() : StringStubIn
 
     override fun getKey(): StubIndexKey<String, KtNamedFunction> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinTopLevelFunctionByPackageIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtNamedFunction> {
         return Helper[key, project, scope]
     }

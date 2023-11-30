@@ -36,6 +36,11 @@ public interface CommandExecutor {
    * @param consoleView console view. If command is executed in console, this parameter is not null.
    *                    Command may use this console to output its result.
    *                    If command executes external process, it should call {@link ConsoleView#attachToProcess(ProcessHandler)}.
+   * @param onExecuted  called when the execution successfully finished.
    */
-  void execute(@NotNull String commandName, @NotNull Module module, @NotNull List<String> parameters, @Nullable ConsoleView consoleView);
+  void execute(@NotNull String commandName,
+               @NotNull Module module,
+               @NotNull List<String> parameters,
+               @Nullable ConsoleView consoleView,
+               @Nullable Runnable onExecuted);
 }

@@ -22,11 +22,8 @@ class MavenArtifactDownloader(private val myProject: Project,
                               artifacts: Collection<MavenArtifact>?,
                               private val myIndicator: ProgressIndicator?,
                               private val syncConsole: MavenSyncConsole?) {
-  private val myArtifacts: Collection<MavenArtifact>?
 
-  init {
-    myArtifacts = if (artifacts == null) null else HashSet(artifacts)
-  }
+  private val myArtifacts: Collection<MavenArtifact>? = if (artifacts == null) null else HashSet(artifacts)
 
   @Throws(MavenProcessCanceledException::class)
   fun downloadSourcesAndJavadocs(mavenProjects: Collection<MavenProject>,
@@ -74,15 +71,13 @@ class MavenArtifactDownloader(private val myProject: Project,
       download(embedder, artifacts, downloadedFiles, console)
     }
     finally {
-      val isAsync = !MavenUtil.isMavenUnitTestModeEnabled()
-
       // We have to refresh parents of downloaded files, because some additional files may have been downloaded
       val filesToRefresh: MutableSet<File> = HashSet()
       for (file in downloadedFiles) {
         filesToRefresh.add(file)
         filesToRefresh.add(file.parentFile)
       }
-      LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh, isAsync, false, null)
+      LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh, true, false, null)
     }
   }
 

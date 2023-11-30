@@ -67,6 +67,7 @@ public final class GrStringUtil {
           case 'b' -> buffer.append('\b');
           case 't' -> buffer.append('\t');
           case 'f' -> buffer.append('\f');
+          case '$' -> buffer.append('$');
           case '\'' -> buffer.append('\'');
           case '\"' -> buffer.append('\"');
           case '\\' -> buffer.append('\\');

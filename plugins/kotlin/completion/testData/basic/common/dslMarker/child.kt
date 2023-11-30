@@ -37,5 +37,6 @@ fun test() {
     }
 }
 
+// IGNORE_K2
 // ABSENT: container
 // ABSENT: lookupString

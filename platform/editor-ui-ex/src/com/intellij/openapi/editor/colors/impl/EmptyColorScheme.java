@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.HighlighterColors;
@@ -19,19 +19,17 @@ public final class EmptyColorScheme extends DefaultColorsScheme {
   public static final EmptyColorScheme INSTANCE = new EmptyColorScheme();
 
   private EmptyColorScheme() {
-    myAttributesMap.put(HighlighterColors.TEXT.getExternalName(), DEFAULT_ATTRS);
+    attributesMap.put(HighlighterColors.TEXT.getExternalName(), DEFAULT_ATTRS);
     initFonts();
   }
 
-  @NotNull
   @Override
-  protected TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
-    return myAttributesMap.get(HighlighterColors.TEXT.getExternalName());
+  protected @NotNull TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
+    return attributesMap.get(HighlighterColors.TEXT.getExternalName());
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return NAME;
   }
 

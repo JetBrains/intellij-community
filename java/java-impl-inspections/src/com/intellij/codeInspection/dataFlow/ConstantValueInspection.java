@@ -17,7 +17,9 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -48,7 +50,6 @@ import static com.intellij.java.JavaBundle.message;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance(ConstantValueInspection.class);
   public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS;
   public boolean IGNORE_ASSERT_STATEMENTS;
   public boolean REPORT_CONSTANT_REFERENCE_VALUES = true;
@@ -100,8 +101,11 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
       public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
         if (condition != null && condition.textMatches(PsiKeyword.FALSE)) {
-          holder.registerProblem(condition, JavaAnalysisBundle.message("dataflow.message.constant.no.ref", 0),
-                                 LocalQuickFix.notNullElements(createSimplifyBooleanExpressionFix(condition, false)));
+          LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, false);
+          if (fix != null) {
+            holder.registerProblem(condition, JavaAnalysisBundle.message("dataflow.message.constant.no.ref", 0),
+                                   LocalQuickFix.notNullElements(fix));
+          }
         }
       }
     };
@@ -203,7 +207,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     if (constant.value() instanceof Boolean) {
       fixes.add(createSimplifyBooleanExpressionFix(ref, (Boolean)constant.value()));
     } else {
-      fixes.add(new ReplaceWithConstantValueFix(presentableName, presentableName));
+      ModCommandAction action = new ReplaceWithConstantValueFix(ref, presentableName, presentableName);
+      fixes.add(LocalQuickFix.from(action));
     }
     Object value = constant.value();
     boolean isAssertion = isAssertionEffectively(ref, constant);
@@ -213,13 +218,16 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     }
     if (reporter.isOnTheFly()) {
       if (ref instanceof PsiReferenceExpression) {
-        fixes.add(new SetInspectionOptionFix(this, "REPORT_CONSTANT_REFERENCE_VALUES",
-                                             JavaAnalysisBundle.message("inspection.data.flow.turn.off.constant.references.quickfix"),
-                                             false));
+        fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(this, "REPORT_CONSTANT_REFERENCE_VALUES",
+                                                                   JavaAnalysisBundle.message(
+                                                                     "inspection.data.flow.turn.off.constant.references.quickfix"),
+                                                                   false)));
       }
       if (isAssertion) {
-        fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
-                                             JavaAnalysisBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
+        fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
+                                                                   JavaAnalysisBundle.message(
+                                                                     "inspection.data.flow.turn.off.true.asserts.quickfix"),
+                                                                   true)));
       }
     }
     ContainerUtil.addIfNotNull(fixes, new FindDfaProblemCauseFix(IGNORE_ASSERT_STATEMENTS, ref, new TrackingRunner.ValueDfaProblemType(value)));
@@ -303,6 +311,11 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
         }
       }
     }
+
+    //it can be done deliberately, because it is expected to throw exception
+    if (expression instanceof PsiSwitchExpression switchExpression && containsImmediateThrowStatement(switchExpression)) {
+      return true;
+    }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     // Don't report "x" in "x == null" as will be anyway reported as "always true"
     if (parent instanceof PsiBinaryExpression binOp && ExpressionUtils.getValueComparedWithNull(binOp) != null) return true;
@@ -350,6 +363,19 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     // Avoid double reporting
     return expression instanceof PsiMethodCallExpression call && EqualsWithItselfInspection.isEqualsWithItself(call) ||
            expression instanceof PsiBinaryExpression binOp && ComparisonToNaNInspection.extractNaNFromComparison(binOp) != null;
+  }
+
+  private static boolean containsImmediateThrowStatement(PsiSwitchExpression expression) {
+    Ref<Boolean> ref = Ref.create();
+    ref.set(false);
+    ControlFlowUtils.processElementsInCurrentScope(expression, element -> {
+      if (element instanceof PsiThrowStatement) {
+        ref.set(true);
+        return false;
+      }
+      return true;
+    });
+    return ref.get();
   }
 
   private static boolean isDereferenceContext(PsiExpression ref) {
@@ -450,8 +476,10 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     if (!isCoveredBySurroundingFix(psiAnchor, evaluatesToTrue)) {
       ContainerUtil.addIfNotNull(fixes, createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue));
       if (isAssertion && reporter.isOnTheFly()) {
-        fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
-                                             JavaAnalysisBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
+        fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
+                                                                   JavaAnalysisBundle.message(
+                                                                     "inspection.data.flow.turn.off.true.asserts.quickfix"),
+                                                                   true)));
       }
       ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(psiAnchor, evaluatesToTrue));
     }
@@ -478,9 +506,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static @Nullable LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
-    SimplifyBooleanExpressionFix fix = createSimplifyBooleanFix(element, value);
-    if (fix == null) return null;
-    return fix.asQuickFix();
+    return LocalQuickFix.from(createSimplifyBooleanFix(element, value));
   }
 
   private static LocalQuickFix createReplaceWithNullCheckFix(PsiElement psiAnchor, boolean evaluatesToTrue) {

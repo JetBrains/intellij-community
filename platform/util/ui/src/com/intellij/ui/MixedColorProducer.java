@@ -10,8 +10,8 @@ import java.util.function.Supplier;
 /**
  * This is a color producer that allows dynamically mix two colors.
  */
-public final class MixedColorProducer implements Supplier<Color> {
-  private final Couple<Color> couple;
+public final class MixedColorProducer implements Supplier<@NotNull Color> {
+  private final Couple<@NotNull Color> couple;
   private double mixer;
   private Color cached;
   private int argb0;
@@ -68,10 +68,11 @@ public final class MixedColorProducer implements Supplier<Color> {
     if (mixer >= 1) return couple.second;
     updateFirstARGB();
     updateSecondARGB();
-    if (cached == null) {
+    Color result = cached;
+    if (result == null) {
       //noinspection UseJBColor
-      cached = new Color(mix(16), mix(8), mix(0), mix(24));
+      cached = result = new Color(mix(16), mix(8), mix(0), mix(24));
     }
-    return cached;
+    return result;
   }
 }

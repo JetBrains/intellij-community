@@ -13,16 +13,22 @@ internal enum class BigEnum(name: String) {
 
 internal enum class Formatting {
     A,
+
     B,
+
+
     C,
     D,
     E,
+
     F {
         fun foo() {}
     },
+
     G {
         fun foo() {}
     },
+
     H {
         fun foo() {}
     }
@@ -32,14 +38,16 @@ internal enum class Formatting2(s: String) {
     A(
         "hello"
     ),
+
     B(
         "hello"
     ),
+
     C(
         "hello"
     ),
-    D("hello"),
-    E("hello"),
+    D("hello"), E("hello"),
+
     F(
         "hello"
     ) {

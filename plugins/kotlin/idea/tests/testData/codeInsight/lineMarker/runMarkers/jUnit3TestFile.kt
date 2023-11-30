@@ -1,10 +1,12 @@
 // CONFIGURE_LIBRARY: JUnit3
+// LIBRARY_JAR_FILE: someTestLib.jar
 package testing
 
 import junit.framework.TestCase
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
+import foo.AbstractSomeTestClass
 
 interface <lineMarker descr="Is implemented by NotATest (testing) NotATest2 (testing) NotATest3 (testing) Press ... to navigate">Some</lineMarker>
 
@@ -88,3 +90,8 @@ fun String.foo() {}
 
 class EmptySession
 data class TestUserSession(val userId: String, val cart: List<String>)
+
+// binary class from someTestLib.jar
+class <lineMarker descr="Run Test">SomeTestClassImpl</lineMarker>: AbstractSomeTestClass() {
+
+}

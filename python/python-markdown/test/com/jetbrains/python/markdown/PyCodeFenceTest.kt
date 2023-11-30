@@ -142,7 +142,7 @@ class PyCodeFenceTest : PyTestCase() {
     expect_str("abc")
     
     # Should warn
-    expect_bytes(<warning descr="Expected type 'bytes', got 'LiteralString' instead">"abc"</warning>)
+    expect_bytes(<warning descr="Expected type 'bytes', got 'str' instead">"abc"</warning>)
     ```
     """.trimIndent())
     myFixture.enableInspections(PyTypeCheckerInspection::class.java)

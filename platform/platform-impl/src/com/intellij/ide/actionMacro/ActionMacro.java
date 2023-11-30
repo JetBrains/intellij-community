@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.IdeBundle;
@@ -24,23 +24,15 @@ public final class ActionMacro {
   private String myName;
 
   private final ArrayList<ActionDescriptor> myActions = new ArrayList<>();
-  @NonNls
-  public static final String MACRO_ACTION_PREFIX = "Macro.";
-  @NonNls
-  private static final String ATTRIBUTE_NAME = "name";
-  @NonNls
-  private static final String ELEMENT_TYPING = "typing";
+  public static final @NonNls String MACRO_ACTION_PREFIX = "Macro.";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String ELEMENT_TYPING = "typing";
 
-  @NonNls
-  private static final String ELEMENT_SHORTCUT = "shortuct";
-  @NonNls
-  private static final String ATTRIBUTE_TEXT = "text";
-  @NonNls
-  private static final String ATTRIBUTE_KEY_CODES = "text-keycode";
-  @NonNls
-  private static final String ELEMENT_ACTION = "action";
-  @NonNls
-  private static final String ATTRIBUTE_ID = "id";
+  private static final @NonNls String ELEMENT_SHORTCUT = "shortuct";
+  private static final @NonNls String ATTRIBUTE_TEXT = "text";
+  private static final @NonNls String ATTRIBUTE_KEY_CODES = "text-keycode";
+  private static final @NonNls String ELEMENT_ACTION = "action";
+  private static final @NonNls String ATTRIBUTE_ID = "id";
 
 
   public ActionMacro() {
@@ -50,8 +42,7 @@ public final class ActionMacro {
     myName = name;
   }
 
-  @NlsSafe
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
@@ -194,7 +185,7 @@ public final class ActionMacro {
     void generateTo(StringBuffer script);
   }
 
-  public static class TypedDescriptor implements ActionDescriptor {
+  public static final class TypedDescriptor implements ActionDescriptor {
 
     private String myText;
 
@@ -290,7 +281,7 @@ public final class ActionMacro {
     }
   }
 
-  public static class ShortcutActionDescription implements ActionDescriptor {
+  public static final class ShortcutActionDescription implements ActionDescriptor {
 
     private final String myKeyStroke;
 
@@ -322,7 +313,7 @@ public final class ActionMacro {
     }
   }
 
-  public static class IdActionDescriptor implements ActionDescriptor {
+  public static final class IdActionDescriptor implements ActionDescriptor {
     private final String actionId;
 
     public IdActionDescriptor(String id) {

@@ -2,22 +2,24 @@
 package org.jetbrains.kotlin.idea.test.events.gradle
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderThan
 import org.junit.jupiter.params.ParameterizedTest
 
 class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
 
     @ParameterizedTest
-    @TargetVersions("5.6.2 <=> 7.0")
     @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Junit 5 OLD`(gradleVersion: GradleVersion) {
+        assumeThatGradleIsOlderThan(gradleVersion, "7.0")
         testKotlinJunit5Project(gradleVersion) {
             writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_JUNIT5_TEST)
             writeText("src/test/kotlin/org/example/DisplayNameTestCase.kt", KOTLIN_DISPLAY_NAME_JUNIT5_TEST)
 
             executeTasks(":test", isRunAsTest = true)
-            assertTestTreeView {
+            assertTestViewTree {
                 assertNode("TestCase") {
                     assertPsiLocation("TestCase")
                     assertNode("test") {
@@ -68,15 +70,15 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
     }
 
     @ParameterizedTest
-    @TargetVersions("7.0+")
     @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Junit 5`(gradleVersion: GradleVersion) {
+        assumeThatGradleIsAtLeast(gradleVersion, "7.0")
         testKotlinJunit5Project(gradleVersion) {
             writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_JUNIT5_TEST)
             writeText("src/test/kotlin/org/example/DisplayNameTestCase.kt", KOTLIN_DISPLAY_NAME_JUNIT5_TEST)
 
             executeTasks(":test", isRunAsTest = true)
-            assertTestTreeView {
+            assertTestViewTree {
                 assertNode("TestCase") {
                     assertPsiLocation("TestCase")
                     assertNode("test") {
@@ -145,7 +147,6 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
     }
 
     @ParameterizedTest
-    @TargetVersions("5.6.2+")
     @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Junit 4`(gradleVersion: GradleVersion) {
         testKotlinJunit4Project(gradleVersion) {
@@ -153,7 +154,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
             writeText("src/test/kotlin/org/example/ParametrizedTestCase.kt", KOTLIN_PARAMETRIZED_JUNIT4_TEST)
 
             executeTasks(":test", isRunAsTest = true)
-            assertTestTreeView {
+            assertTestViewTree {
                 assertNode("TestCase") {
                     assertPsiLocation("TestCase")
                     assertNode("test") {
@@ -180,7 +181,6 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
     }
 
     @ParameterizedTest
-    @TargetVersions("5.6.2+")
     @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Test NG`(gradleVersion: GradleVersion) {
         testKotlinTestNGProject(gradleVersion) {
@@ -188,7 +188,7 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
             writeText("src/test/kotlin/org/example/ParametrizedTestCase.kt", KOTLIN_PARAMETRIZED_TESTNG_TEST)
 
             executeTasks(":test", isRunAsTest = true)
-            assertTestTreeView {
+            assertTestViewTree {
                 assertNode("Gradle suite") {
                     assertNode("Gradle test") {
                         assertNode("TestCase") {

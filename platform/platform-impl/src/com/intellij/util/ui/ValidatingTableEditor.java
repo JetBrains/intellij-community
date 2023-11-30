@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -31,12 +30,12 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyText {
-
   private static final Icon WARNING_ICON = UIUtil.getBalloonWarningIcon();
   private static final Icon EMPTY_ICON = IconManager.getInstance().createEmptyIcon(WARNING_ICON);
-  @NonNls private static final String REMOVE_KEY = "REMOVE_SELECTED";
+  private static final @NonNls String REMOVE_KEY = "REMOVE_SELECTED";
 
   public interface RowHeightProvider {
     int getRowHeight();
@@ -46,7 +45,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     @NlsContexts.LinkLabel String getTitle();
   }
 
-  private class ColumnInfoWrapper extends ColumnInfo<Item, Object> {
+  private final class ColumnInfoWrapper extends ColumnInfo<Item, Object> {
     private final ColumnInfo<Item, Object> myDelegate;
 
     ColumnInfoWrapper(ColumnInfo<Item, Object> delegate) {
@@ -102,8 +101,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
   protected abstract Item cloneOf(Item item);
 
-  @Nullable
-  protected Pair<String, Fix> validate(List<? extends Item> current, List<? super String> warnings) {
+  protected @Nullable Pair<String, Fix> validate(List<? extends Item> current, List<? super String> warnings) {
     String error = null;
     for (int i = 0; i < current.size(); i++) {
       Item item = current.get(i);
@@ -116,15 +114,13 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     return error != null ? Pair.create(error, (Fix)null) : null;
   }
 
-  @Nullable
-  protected String validate(Item item) {
+  protected @Nullable String validate(Item item) {
     return null;
   }
 
-  @Nullable
-  protected abstract Item createItem();
+  protected abstract @Nullable Item createItem();
 
-  private class IconColumn extends ColumnInfo<Item, Object> implements RowHeightProvider {
+  private final class IconColumn extends ColumnInfo<Item, Object> implements RowHeightProvider {
     IconColumn() {
       super(" ");
     }
@@ -150,9 +146,8 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     }
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myTable.getEmptyText();
   }
 
@@ -164,9 +159,9 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     myTable = new ChangesTrackingTableView<>() {
       @Override
       protected void onCellValueChanged(int row, int column, Object value) {
-        final Item original = getItems().get(row);
+        Item original = getItems().get(row);
         Item override = cloneOf(original);
-        final ColumnInfo<Item, Object> columnInfo = getTableModel().getColumnInfos()[column];
+        ColumnInfo<Item, Object> columnInfo = getTableModel().getColumnInfos()[column];
         columnInfo.setValue(override, value);
         updateMessage(row, override);
       }
@@ -243,8 +238,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     this(null);
   }
 
-  @Nullable
-  public List<Item> getSelectedItems() {
+  public @Nullable List<Item> getSelectedItems() {
     return myTable.getSelectedObjects();
   }
 
@@ -386,17 +380,17 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   }
 
 
-  private static class WarningIconCellRenderer extends DefaultTableCellRenderer {
-    private final NullableComputable<@NlsContexts.HintText String> myWarningProvider;
+  private static final class WarningIconCellRenderer extends DefaultTableCellRenderer {
+    private final Supplier<@Nullable @NlsContexts.HintText String> warningProvider;
 
-    WarningIconCellRenderer(NullableComputable<@NlsContexts.HintText String> warningProvider) {
-      myWarningProvider = warningProvider;
+    WarningIconCellRenderer(Supplier<@Nullable @NlsContexts.HintText String> warningProvider) {
+      this.warningProvider = warningProvider;
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      String message = myWarningProvider.compute();
+      String message = warningProvider.get();
       label.setIcon(message != null ? WARNING_ICON : null);
       label.setToolTipText(message);
       label.setHorizontalAlignment(CENTER);

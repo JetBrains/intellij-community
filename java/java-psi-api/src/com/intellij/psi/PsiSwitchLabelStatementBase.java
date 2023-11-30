@@ -45,6 +45,7 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
   @Nullable PsiSwitchBlock getEnclosingSwitchBlock();
 
   /** @deprecated doesn't support "switch" expressions; use {@link #getEnclosingSwitchBlock()} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   default PsiSwitchStatement getEnclosingSwitchStatement() {
     PsiSwitchBlock block = getEnclosingSwitchBlock();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.history.LocalHistory;
@@ -34,11 +34,9 @@ public abstract class ElementCreator implements WriteActionAware {
   }
 
   protected abstract PsiElement @NotNull [] create(@NotNull String newName) throws Exception;
-  @NlsContexts.Command
-  @NotNull
-  protected abstract String getActionName(@NotNull String newName);
+  protected abstract @NlsContexts.Command @NotNull String getActionName(@NotNull String newName);
 
-  public @NotNull PsiElement @NotNull [] tryCreate(@NotNull final String inputString) {
+  public @NotNull PsiElement @NotNull [] tryCreate(final @NotNull String inputString) {
     if (inputString.isEmpty()) {
       return PsiElement.EMPTY_ARRAY;
     }
@@ -57,8 +55,7 @@ public abstract class ElementCreator implements WriteActionAware {
     return ContainerUtil.mapNotNull(createdElements.get(), SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private Exception executeCommand(@NotNull @NlsContexts.Command String commandName, @NotNull ThrowableRunnable<? extends Exception> invokeCreate) {
+  private @Nullable Exception executeCommand(@NotNull @NlsContexts.Command String commandName, @NotNull ThrowableRunnable<? extends Exception> invokeCreate) {
     final Exception[] exception = new Exception[1];
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       LocalHistoryAction action = LocalHistory.getInstance().startAction(commandName);

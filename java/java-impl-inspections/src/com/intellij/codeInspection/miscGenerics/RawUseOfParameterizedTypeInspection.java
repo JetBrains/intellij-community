@@ -7,6 +7,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.psi.*;
@@ -114,7 +115,8 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         if (!PsiUtil.isLanguageLevel7OrHigher(parent)) return null;
         if (newExpression.isArrayCreation() || newExpression.getAnonymousClass() != null) return null;
         PsiType expectedType = ExpectedTypeUtils.findExpectedType(newExpression, false);
-        if (expectedType == null || (expectedType instanceof PsiClassType && ((PsiClassType)expectedType).isRaw())) return null;
+        if (expectedType == null || expectedType.equals(PsiTypes.nullType()) || 
+            (expectedType instanceof PsiClassType && ((PsiClassType)expectedType).isRaw())) return null;
         PsiNewExpression copy = (PsiNewExpression)LambdaUtil.copyWithExpectedType(parent, expectedType);
         PsiJavaCodeReferenceElement reference = copy.getClassReference();
         if (reference == null) return null;

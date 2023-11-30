@@ -5,8 +5,6 @@ p.jvmMain
     com.squareup.okio:okio:1.16.0 (COMPILE)
     commonMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-reflect:1.2.71 (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 

@@ -64,8 +64,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   private static final int UPDATE_DIFFS = 1;
   private static final int UPDATE_REVS = UPDATE_DIFFS + 1;
 
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
   protected final IdeaGateway myGateway;
   protected final VirtualFile myFile;
   private Splitter mySplitter;
@@ -94,9 +93,8 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  @Nullable
   @Override
-  protected String getDimensionKey() {
+  protected @Nullable String getDimensionKey() {
     return getClass().getName();
   }
 
@@ -123,7 +121,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     scheduleRevisionsUpdate(null);
   }
 
-  protected void scheduleRevisionsUpdate(@Nullable final Consumer<? super T> configRunnable) {
+  protected void scheduleRevisionsUpdate(final @Nullable Consumer<? super T> configRunnable) {
     doScheduleUpdate(UPDATE_REVS, () -> {
       synchronized (myModel) {
         if (configRunnable != null) configRunnable.consume(myModel);
@@ -233,7 +231,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     return result;
   }
 
-  private void scheduleDiffUpdate(@Nullable final Couple<Integer> toSelect) {
+  private void scheduleDiffUpdate(final @Nullable Couple<Integer> toSelect) {
     doScheduleUpdate(UPDATE_DIFFS, () -> {
       synchronized (myModel) {
         boolean changed = toSelect == null ? myModel.resetSelection() : myModel.selectRevisions(toSelect.first, toSelect.second);
@@ -304,7 +302,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
     new Task.Modal(myProject, message("message.processing.revisions"), false) {
       @Override
-      public void run(@NotNull final ProgressIndicator i) {
+      public void run(final @NotNull ProgressIndicator i) {
         i.setIndeterminate(false);
         ApplicationManager.getApplication().runReadAction(() -> {
           RevisionProcessingProgressAdapter p = new RevisionProcessingProgressAdapter(i);
@@ -497,7 +495,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private class RevertAction extends MyAction {
+  private final class RevertAction extends MyAction {
     RevertAction() {
       super(message("action.revert"), null, AllIcons.Actions.Rollback);
     }
@@ -513,7 +511,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private class CreatePatchAction extends MyAction {
+  private final class CreatePatchAction extends MyAction {
     CreatePatchAction() {
       super(message("action.create.patch"), null, AllIcons.Vcs.Patch);
     }
@@ -529,7 +527,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private static class RevisionProcessingProgressAdapter implements RevisionProcessingProgress {
+  private static final class RevisionProcessingProgressAdapter implements RevisionProcessingProgress {
     private final ProgressIndicator myIndicator;
 
     RevisionProcessingProgressAdapter(ProgressIndicator i) {
@@ -552,31 +550,28 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private static class MyDialogWrapper extends DialogWrapper {
-    @NotNull private final CreatePatchConfigurationPanel myPanel;
+  private static final class MyDialogWrapper extends DialogWrapper {
+    private final @NotNull CreatePatchConfigurationPanel myPanel;
 
-    protected MyDialogWrapper(@Nullable Project project, @NotNull CreatePatchConfigurationPanel centralPanel) {
+    private MyDialogWrapper(@Nullable Project project, @NotNull CreatePatchConfigurationPanel centralPanel) {
       super(project, true);
       myPanel = centralPanel;
       init();
       initValidation();
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       return myPanel.getPanel();
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myPanel.getPanel());
     }
 
-    @Nullable
     @Override
-    protected ValidationInfo doValidate() {
+    protected @Nullable ValidationInfo doValidate() {
       return myPanel.validateFields();
     }
   }

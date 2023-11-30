@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.execution.ui.CommonParameterFragments
 import com.intellij.execution.ui.SettingsEditorFragment
+import com.intellij.ide.macro.MacrosDialog
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.LabeledComponent
@@ -43,6 +44,7 @@ abstract class PyCommonFragmentsBuilder {
       { config: T, component: LabeledComponent<TextFieldWithBrowseButton> -> config.workingDirectory = component.component.text },
       Predicates.alwaysTrue()
     )
+    MacrosDialog.addMacroSupport(workingDirectoryField.textField as ExtendableTextField, MacrosDialog.Filters.ALL) { false }
     workingDirectorySettings.isRemovable = false
     return workingDirectorySettings
   }
@@ -75,5 +77,4 @@ abstract class PyCommonFragmentsBuilder {
     fragment.actionHint = ExecutionBundle.message("set.custom.environment.variables.for.the.process")
     return fragment
   }
-
 }

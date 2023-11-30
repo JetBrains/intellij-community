@@ -12,6 +12,12 @@ interface GradleTestFixtureFactory {
     gradleVersion: GradleVersion
   ): SdkTestFixture
 
+  fun createGradleTestFixture(
+    className: String,
+    methodName: String,
+    gradleVersion: GradleVersion
+  ): GradleTestFixture
+
   @ApiStatus.Experimental
   fun createFileTestFixture(
     relativePath: String,

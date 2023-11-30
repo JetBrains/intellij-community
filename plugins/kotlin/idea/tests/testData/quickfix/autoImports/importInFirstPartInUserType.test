@@ -1,7 +1,6 @@
 // FILE: first.before.kt
 // "Import class 'Some'" "true"
 // ERROR: Unresolved reference: Some
-/* IGNORE_FIR */
 
 package testing
 
@@ -23,7 +22,6 @@ public class Some {
 // FILE: first.after.kt
 // "Import class 'Some'" "true"
 // ERROR: Unresolved reference: Some
-/* IGNORE_FIR */
 
 package testing
 

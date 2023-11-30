@@ -13,12 +13,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.bindText
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.enteredTextSatisfies
-import com.intellij.util.io.isWritable
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.awt.event.ActionEvent
 import java.nio.file.Path
@@ -26,6 +22,7 @@ import java.nio.file.Paths
 import javax.swing.AbstractAction
 import javax.swing.Action
 import kotlin.io.path.exists
+import kotlin.io.path.isWritable
 
 class UpdateFromSourcesDialog(private val project: Project,
                               private val showApplyButton: Boolean) : DialogWrapper(project, true) {
@@ -43,18 +40,7 @@ class UpdateFromSourcesDialog(private val project: Project,
 
   override fun createCenterPanel(): DialogPanel {
     panel = panel {
-      row(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.row.ide.installation")) {
-        pathField = textFieldWithHistoryWithBrowseButton(
-          project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.installation.choose.ide.directory.title"),
-          FileChooserDescriptorFactory.createSingleFolderDescriptor(), { state.workIdePathsHistory })
-        cell(pathField)
-          .align(AlignX.FILL)
-          .bindText({ state.actualIdePath }, { state.workIdePath = it })
-      }
-      row {
-        checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.enabled.plugins.only"))
-          .bindSelected({ !state.buildDisabledPlugins }, { state.buildDisabledPlugins = !it })
-      }
+      pathField = optionsPanel(project, state)
       row {
         checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.restart.automatically"))
           .bindSelected({ state.restartAutomatically }, { state.restartAutomatically = it })
@@ -72,7 +58,7 @@ class UpdateFromSourcesDialog(private val project: Project,
   override fun doValidate(): ValidationInfo? {
     val outputPath = Paths.get(pathField.text)
     val existingParent = generateSequence(outputPath, Path::getParent).firstOrNull { it.exists() }
-    if (existingParent == null || !existingParent.isWritable) {
+    if (existingParent == null || !existingParent.isWritable()) {
       return ValidationInfo(DevKitBundle.message("action.UpdateIdeFromSourcesAction.dialog.message.directory.not.writable", outputPath), pathField.childComponent)
     }
     return null
@@ -100,4 +86,20 @@ class UpdateFromSourcesDialog(private val project: Project,
     panel.apply()
     service<UpdateFromSourcesSettings>().loadState(state)
   }
+}
+
+internal fun Panel.optionsPanel(project: Project, state: UpdateFromSourcesSettingsState): TextFieldWithHistoryWithBrowseButton {
+  val pathField = textFieldWithHistoryWithBrowseButton(
+    project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.installation.choose.ide.directory.title"),
+    FileChooserDescriptorFactory.createSingleFolderDescriptor(), { state.workIdePathsHistory })
+  row(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.row.ide.installation")) {
+    cell(pathField)
+      .align(AlignX.FILL)
+      .bindText({ state.actualIdePath }, { state.workIdePath = it })
+  }
+  row {
+    checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.enabled.plugins.only"))
+      .bindSelected({ !state.buildDisabledPlugins }, { state.buildDisabledPlugins = !it })
+  }
+  return pathField
 }

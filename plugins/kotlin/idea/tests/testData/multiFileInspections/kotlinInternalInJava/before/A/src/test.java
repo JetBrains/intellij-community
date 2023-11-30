@@ -3,7 +3,9 @@ import kotlin.collections.MapsKt;
 import kotlin.internal.PlatformImplementations; // Internal in stdlib, error
 import java.util.function.Consumer;
 
-
+/**
+ * {@link SomeInternalClassInOtherModule}
+ */
 public class SomeClass extends PlatformImplementations { // Internal in stdlib, error
     public static void doSomething() {
         PlatformImplementations a; // Internal in stdlib, error

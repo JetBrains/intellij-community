@@ -2,25 +2,23 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
-import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.descendantsOfType
+import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
-import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
-import org.jetbrains.kotlin.builtins.isSuspendFunctionType
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
-import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.util.getType
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.resolve.calls.checkers.COROUTINE_CONTEXT_FQ_NAME
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 internal class KotlinSuspendFunctionWrapper(
-  val bindingContext: BindingContext,
   private val executionContext: ExecutionContext,
   private val psiContext: PsiElement?,
   isCoroutineScopeAvailable: Boolean
@@ -33,14 +31,33 @@ internal class KotlinSuspendFunctionWrapper(
 
     override fun createWrappedExpressionText(expressionText: String): String {
         checkIfKotlinxCoroutinesIsAvailable()
-        val isCoroutineContextAvailable = runReadAction {
-            psiContext.isCoroutineContextAvailable()
-        }
-
-        return wrapInRunBlocking(expressionText, isCoroutineContextAvailable)
+        return wrapInRunBlocking(expressionText, psiContext?.let { isCoroutineContextAvailable(it) } ?: false)
     }
 
-    override fun isApplicable(expression: KtExpression) = expression.containsSuspendFunctionCall(bindingContext)
+    @RequiresReadLock
+    override fun isApplicable(expression: KtExpression): Boolean {
+        return analyze(expression) {
+            var result = false
+            expression.accept(object : PsiRecursiveElementVisitor() {
+                override fun visitElement(element: PsiElement) {
+                    if (result) return
+                    result = isSuspendCall(element) && !isCoroutineContextAvailable(element)
+                    super.visitElement(element)
+                }
+            })
+            result
+        }
+    }
+
+    private fun isSuspendCall(element: PsiElement): Boolean {
+        var result = false
+        KotlinCallProcessor.process(element) { target ->
+            if (target.symbol.let { it is KtFunctionSymbol && it.isSuspend }) {
+                result = true
+            }
+        }
+        return result
+    }
 
     private fun wrapInRunBlocking(expressionText: String, isCoroutineContextAvailable: Boolean) =
         buildString {
@@ -58,56 +75,15 @@ internal class KotlinSuspendFunctionWrapper(
             append("\n}")
         }
 
-    private fun KtExpression.containsSuspendFunctionCall(bindingContext: BindingContext): Boolean {
-        return runReadAction {
-            descendantsOfType<KtCallExpression>().any { callExpression ->
-                val resolvedCall = callExpression.getResolvedCall(bindingContext)
-                resolvedCall != null
-                        && resolvedCall.resultingDescriptor.isSuspend
-                        && !callExpression.parentsOfType<KtLambdaExpression>().isCoroutineContextAvailableFromLambda(bindingContext)
+    private fun isCoroutineContextAvailable(from: PsiElement): Boolean {
+        return analyze(from.parentOfType<KtElement>(withSelf = true) ?: return false) {
+            from.parentsOfType<KtNamedFunction>().any {
+                (it.getSymbol() as? KtFunctionSymbol)?.isSuspend ?: false
+            } || from.parentsOfType<KtLambdaExpression>().any {
+                (it.getKtType() as? KtFunctionalType)?.isSuspend ?: false
             }
         }
     }
-
-    private fun PsiElement?.isCoroutineContextAvailable() =
-        if (this == null) {
-            false
-        } else {
-            parentsOfType<KtNamedFunction>().isCoroutineContextAvailableFromFunction() ||
-            parentsOfType<KtLambdaExpression>().isCoroutineContextAvailableFromLambda()
-        }
-
-    private fun Sequence<KtNamedFunction>.isCoroutineContextAvailableFromFunction(): Boolean {
-        for (item in this) {
-            val descriptor = item.descriptor as? CallableDescriptor ?: continue
-            if (descriptor.isSuspend) {
-                return true
-            }
-        }
-
-        return false
-    }
-
-    private fun Sequence<KtLambdaExpression>.isCoroutineContextAvailableFromLambda(
-        bindingContext: BindingContext
-    ): Boolean {
-        for (item in this) {
-            val type = item.getType(bindingContext) ?: continue
-            if (type.isSuspendFunctionType) {
-                return true
-            }
-        }
-
-        return false
-    }
-
-    private fun Sequence<KtLambdaExpression>.isCoroutineContextAvailableFromLambda() =
-        if (none()) {
-            false
-        } else {
-            val bindingContext = last().analyze(BodyResolveMode.PARTIAL)
-            isCoroutineContextAvailableFromLambda(bindingContext)
-        }
 
     private fun checkIfKotlinxCoroutinesIsAvailable() {
         val debugProcess = executionContext.debugProcess

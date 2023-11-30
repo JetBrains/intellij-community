@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class BackspaceHandler extends EditorActionHandler {
+public final class BackspaceHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
 
   public BackspaceHandler(EditorActionHandler originalHandler){

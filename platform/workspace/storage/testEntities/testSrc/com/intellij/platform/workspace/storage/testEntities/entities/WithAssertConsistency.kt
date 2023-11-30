@@ -44,7 +44,7 @@ interface AssertConsistencyEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: AssertConsistencyEntity,
-                                      modification: AssertConsistencyEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: AssertConsistencyEntity.Builder.() -> Unit): AssertConsistencyEntity = modifyEntity(
   AssertConsistencyEntity.Builder::class.java, entity, modification)
 //endregion
 

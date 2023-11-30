@@ -83,6 +83,12 @@ public interface ActionToolbar {
   @NotNull JComponent getComponent();
 
   /**
+   * Returns the "action place" of this toolbar.
+   * @see ActionManager#createActionToolbar
+   * */
+  @NotNull String getPlace();
+
+  /**
    * @return the current layout policy
    * @see #NOWRAP_LAYOUT_POLICY
    * @see #WRAP_LAYOUT_POLICY
@@ -114,6 +120,12 @@ public interface ActionToolbar {
    * @see SwingConstants#VERTICAL
    */
   void setOrientation(@MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL}) int orientation);
+
+  /**
+   * Returns the toolbar orientation.
+   * */
+  @MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL})
+  int getOrientation();
 
   /**
    * @return the maximum button height

@@ -63,6 +63,8 @@ public final class PyKnownDecoratorUtil {
     UNITTEST_MOCK_PATCH("unittest.mock.patch"),
 
     TYPING_OVERLOAD("typing." + PyNames.OVERLOAD),
+    TYPING_OVERRIDE("typing." + PyNames.OVERRIDE),
+    TYPING_EXTENSIONS_OVERRIDE("typing_extensions." + PyNames.OVERRIDE),
     TYPING_RUNTIME("typing.runtime"),
     TYPING_RUNTIME_EXT("typing_extensions.runtime"),
     TYPING_RUNTIME_CHECKABLE("typing.runtime_checkable"),

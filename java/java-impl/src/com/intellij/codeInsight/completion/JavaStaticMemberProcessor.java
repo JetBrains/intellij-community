@@ -51,7 +51,7 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
     }
 
     if (member instanceof PsiMethod) {
-      return AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new GlobalMethodCallElement((PsiMethod)member, shouldImport, false));
+      return AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(getMethodCallElement(shouldImport, List.of((PsiMethod)member)));
     }
     return AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new VariableLookupItem((PsiField)member, shouldImport) {
       @Override
@@ -74,9 +74,14 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
                                               boolean shouldImport) {
     shouldImport |= myOriginalPosition != null && PsiTreeUtil.isAncestor(containingClass, myOriginalPosition, false);
 
-    final JavaMethodCallElement element = new GlobalMethodCallElement(overloads.get(0), shouldImport, true);
+    final JavaMethodCallElement element = getMethodCallElement(shouldImport, overloads);
     JavaCompletionUtil.putAllMethods(element, overloads);
     return element;
+  }
+
+  @NotNull
+  protected JavaMethodCallElement getMethodCallElement(boolean shouldImport, List<? extends PsiMethod> members) {
+    return new GlobalMethodCallElement(members.get(0), shouldImport, members.size()>1);
   }
 
   private static class GlobalMethodCallElement extends JavaMethodCallElement {

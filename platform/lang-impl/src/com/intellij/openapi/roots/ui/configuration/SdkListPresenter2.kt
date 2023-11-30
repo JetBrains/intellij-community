@@ -7,9 +7,12 @@ import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.roots.ui.SdkAppearanceService
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.IconUtil
+import com.intellij.util.system.CpuArch
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.awt.BorderLayout
 import java.awt.Component
 import java.util.function.Function
@@ -83,6 +86,8 @@ internal class SdkListPresenter2<T>(
 
         item.append(SdkListPresenter.presentDetectedSdkPath(sdkListItem.homePath))
         item.append(" ${sdkListItem.version}", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+
+        archInfo(sdkListItem.homePath)?.let { item.append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES) }
       }
 
       is SdkListItem.ProjectSdkItem -> {
@@ -103,6 +108,8 @@ internal class SdkListPresenter2<T>(
 
         val version = sdkListItem.sdk.versionString ?: (sdkListItem.sdk.sdkType as SdkType).presentableName
         item.append(" $version", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+
+        archInfo(sdkListItem.sdk.homePath)?.let { item.append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES) }
       }
 
       is SdkListItem.GroupItem -> {
@@ -135,6 +142,14 @@ internal class SdkListPresenter2<T>(
       }
 
       else -> SdkAppearanceService.getInstance().forNullSdk(isSelected).customize(item)
+    }
+  }
+
+  private fun archInfo(path: String?): @NlsSafe String? {
+    if (path == null) return null
+    return when (JdkVersionDetector.getInstance().detectJdkVersionInfo(path)?.arch) {
+      CpuArch.ARM64 -> " - aarch64"
+      else -> null
     }
   }
 }

@@ -58,7 +58,7 @@ private fun cancelPopupWhenLookupIsClosed(lookup: Lookup, popup: AbstractPopup) 
   }
 }
 
-internal fun Lookup.elementFlow(): Flow<LookupElement> {
+fun Lookup.elementFlow(): Flow<LookupElement> {
   EDT.assertIsEdt()
   val items = MutableSharedFlow<LookupElement>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   addLookupListener(object : LookupListener {

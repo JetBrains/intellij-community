@@ -1,15 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.jdkEx.JdkEx;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -27,12 +25,16 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
+import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Method;
+
+import static com.intellij.openapi.wm.impl.IdeGlassPaneImplKt.executeOnCancelInEdt;
 
 /**
  * @author Alexander Lobas
@@ -80,22 +82,20 @@ public class MacWinTabsHandler {
     return ExperimentalUI.isNewUI() && Registry.is("ide.mac.os.wintabs.version2", true);
   }
 
-  public MacWinTabsHandler(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {
+  public MacWinTabsHandler(@NotNull IdeFrameImpl frame, @NotNull CoroutineScope coroutineScope) {
     myFrame = frame;
-    myFrameAllowed = initFrame(frame, parentDisposable);
+    myFrameAllowed = initFrame(frame, coroutineScope);
   }
 
-  protected boolean initFrame(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {
+  protected boolean initFrame(@NotNull IdeFrameImpl frame, @NotNull CoroutineScope coroutineScope) {
     boolean allowed = isAllowedFrame(frame) && JdkEx.setTabbingMode(frame, getWindowId(), () -> updateTabBars(null));
 
     if (allowed) {
       Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
 
-      Disposer.register(parentDisposable, new Disposable() { // don't convert to lambda
-        @Override
-        public void dispose() {
-          updateTabBars(null);
-        }
+      executeOnCancelInEdt(coroutineScope, () -> {
+        updateTabBars(null);
+        return Unit.INSTANCE;
       });
     }
 
@@ -177,7 +177,7 @@ public class MacWinTabsHandler {
 
       for (int i = 0; i < frames.length; i++) {
         ProjectFrameHelper helper = (ProjectFrameHelper)frames[i];
-        if (Disposer.isDisposed(helper)) {
+        if (helper.rootPane.isCoroutineScopeCancelled$intellij_platform_ide_impl()) {
           visibleAndHeights[i] = 0;
           continue;
         }
@@ -230,27 +230,30 @@ public class MacWinTabsHandler {
   }
 
   private static void updateTabBar(@NotNull Object frameObject, int height) {
-    JFrame frame = null;
+    JRootPane rootPane;
     if (frameObject instanceof JFrame) {
-      frame = (JFrame)frameObject;
+      rootPane = ((JFrame)frameObject).getRootPane();
     }
-    else if (frameObject instanceof ProjectFrameHelper) {
-      if (Disposer.isDisposed((Disposable)frameObject)) {
-        return;
-      }
-      frame = ((ProjectFrameHelper)frameObject).getFrame();
+    else if (frameObject instanceof ProjectFrameHelper frameHelper) {
+      rootPane = frameHelper.getFrame().getRootPane();
     }
-    if (frame == null) {
+    else {
       return;
     }
 
-    JComponent filler = (JComponent)frame.getRootPane().getClientProperty(WIN_TAB_FILLER);
+    if (rootPane == null) {
+      return;
+    }
+
+    JComponent filler = (JComponent)rootPane.getClientProperty(WIN_TAB_FILLER);
     if (filler == null) {
       return;
     }
+
     if (height > 0) {
       height++;
     }
+
     boolean visible = height > 0;
     boolean oldVisible = filler.isVisible();
     filler.setVisible(visible);
@@ -260,6 +263,7 @@ public class MacWinTabsHandler {
     if (parent == null || oldVisible == visible) {
       return;
     }
+
     parent.doLayout();
     parent.revalidate();
     parent.repaint();

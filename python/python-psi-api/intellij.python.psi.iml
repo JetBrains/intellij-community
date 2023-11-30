@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.python.parser" exported="" />
   </component>
 </module>

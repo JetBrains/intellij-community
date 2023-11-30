@@ -14,10 +14,17 @@ public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsight
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
   }
+  
+  public void testUnnamedClass() {
+    ExtractMethodRecommenderInspection inspection = new ExtractMethodRecommenderInspection();
+    myFixture.enableInspections(inspection);
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
+    return JAVA_21;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-class LocalHistoryEventDispatcher {
+final class LocalHistoryEventDispatcher {
   private static final Key<Boolean> WAS_VERSIONED_KEY =
     Key.create(LocalHistoryEventDispatcher.class.getSimpleName() + ".WAS_VERSIONED_KEY");
 
@@ -199,13 +199,13 @@ class LocalHistoryEventDispatcher {
   static final class LocalHistoryFileManagerListener implements VirtualFileManagerListener {
     @Override
     public void beforeRefreshStart(boolean asynchronous) {
-      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
+      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
       if (dispatcher != null) dispatcher.beginChangeSet();
     }
 
     @Override
     public void afterRefreshFinish(boolean asynchronous) {
-      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
+      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
       if (dispatcher != null) dispatcher.endChangeSet(LocalHistoryBundle.message("system.label.external.change"));
     }
   }
@@ -213,13 +213,13 @@ class LocalHistoryEventDispatcher {
   static final class LocalHistoryCommandListener implements CommandListener {
     @Override
     public void commandStarted(@NotNull CommandEvent e) {
-      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
+      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
       if (dispatcher != null) dispatcher.beginChangeSet();
     }
 
     @Override
     public void commandFinished(@NotNull CommandEvent e) {
-      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
+      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
       if (dispatcher != null) dispatcher.endChangeSet(e.getCommandName());
     }
   }
@@ -227,13 +227,13 @@ class LocalHistoryEventDispatcher {
   static final class LocalHistoryBulkFileListener implements BulkFileListener {
     @Override
     public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
-      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
+      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
       if (dispatcher != null) dispatcher.handleBeforeEvents(events);
     }
 
     @Override
     public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher();
+      LocalHistoryEventDispatcher dispatcher = LocalHistoryImpl.getInstanceImpl().getEventDispatcher$intellij_platform_lvcs_impl();
       if (dispatcher != null) dispatcher.handleAfterEvents(events);
     }
   }

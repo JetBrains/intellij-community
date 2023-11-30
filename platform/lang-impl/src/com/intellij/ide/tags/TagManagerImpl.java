@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.tags;
 
 import com.intellij.ide.bookmarks.Bookmark;
@@ -20,7 +21,7 @@ import java.util.regex.Pattern;
  *
  * @author gregsh
  */
-public class TagManagerImpl extends TagManager {
+public final class TagManagerImpl extends TagManager {
 
   private final Project myProject;
 

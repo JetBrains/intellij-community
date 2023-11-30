@@ -40,7 +40,7 @@ UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifie
     UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
     UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = p) -> Kotlin_Light_Variable: p
-            UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> Kotlin_Light_Method:
+            UReturnExpression -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> Kotlin_Light_Method:
             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A {
 
     operator fun invoke(){

@@ -23,6 +23,7 @@ class KotlinTopLevelExtensionsByReceiverTypeIndex internal constructor() : Strin
 
     override fun getVersion(): Int = super.getVersion() + 1
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinTopLevelExtensionsByReceiverTypeIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtCallableDeclaration> {
         return Helper[key, project, scope]
     }

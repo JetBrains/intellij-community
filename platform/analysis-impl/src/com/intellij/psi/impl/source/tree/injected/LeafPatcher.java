@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -26,8 +26,7 @@ final class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
   private LiteralTextEscaper<?> currentTextEscaper;
   private TextRange rangeInHost;
   private final Map<LeafElement, String> newTexts = new HashMap<>();
-  @NotNull
-  private final List<? extends PlaceInfo> myPlaceInfos;
+  private final @NotNull List<? extends PlaceInfo> myPlaceInfos;
   private final StringBuilder catLeafs;
   private final StringBuilder tempLeafBuffer = new StringBuilder();
 

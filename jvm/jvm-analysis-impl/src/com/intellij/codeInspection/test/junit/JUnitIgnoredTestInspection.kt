@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*
 import com.intellij.codeInspection.options.OptPane.checkbox
 import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.codeInspection.util.InspectionMessage
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -52,7 +53,9 @@ private class JUnitIgnoredTestVisitor(
   private fun checkIgnoreOrDisabled(node: UDeclaration, message: @InspectionMessage String): Boolean {
     val annotations = node.findAnnotations(ORG_JUNIT_IGNORE, ORG_JUNIT_JUPITER_API_DISABLED)
     if (annotations.isEmpty()) return true
-    if (onlyReportWithoutReason && annotations.any { it.findDeclaredAttributeValue("value") != null }) return true
+    if (onlyReportWithoutReason && annotations.any {
+      it.findDeclaredAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME) != null
+    }) return true
     holder.registerUProblem(node, message)
     return true
   }

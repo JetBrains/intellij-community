@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class FileIncludeContextHectorPanel extends HectorComponentPanel {
+public final class FileIncludeContextHectorPanel extends HectorComponentPanel {
   private ComboboxWithBrowseButton myContextFile;
   private JPanel myPanel;
   private final PsiFile myFile;
@@ -58,7 +58,7 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
     myContextFile.setTextFieldPreferredWidth(30);
   }
 
-  private class MyListCellRenderer extends DefaultListCellRenderer {
+  private final class MyListCellRenderer extends DefaultListCellRenderer {
     private final JComboBox myComboBox;
     private int myMaxWidth;
 
@@ -85,7 +85,8 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
       return rendererComponent;
     }
 
-    protected @Nullable @NlsSafe String getPath(Object value) {
+    @Nullable @NlsSafe
+    private String getPath(Object value) {
       VirtualFile file = (VirtualFile)value;
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myFile.getProject()).getFileIndex();
       if (file != null) {

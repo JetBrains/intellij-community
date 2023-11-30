@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons
 
-import com.intellij.diagnostic.StartUpMeasurer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.LongAdder
@@ -11,8 +10,6 @@ object IconLoadMeasurer {
   @JvmField
   val svgDecoding: Counter = Counter("svg-decode")
   private val svgLoading = Counter("svg-load")
-  @JvmField
-  val svgPreBuiltLoad: Counter = Counter("svg-prebuilt")
   @JvmField
   val svgCacheWrite: Counter = Counter("svg-cache-write")
   @JvmField
@@ -41,7 +38,7 @@ object IconLoadMeasurer {
     get() {
       return listOf(findIcon, findIconLoad,
                     loadFromUrl, loadFromResources,
-                    svgLoading, svgDecoding, svgPreBuiltLoad, svgCacheRead, svgCacheWrite,
+                    svgLoading, svgDecoding, svgCacheRead, svgCacheWrite,
                     pngLoading, pngDecoding,
                     actionIcon)
     }
@@ -61,7 +58,7 @@ object IconLoadMeasurer {
 
     fun end(startTime: Long) {
       if (startTime > 0) {
-        val duration = StartUpMeasurer.getCurrentTime() - startTime
+        val duration = System.nanoTime() - startTime
         counter.increment()
         totalDuration.add(duration)
       }

@@ -21,7 +21,7 @@ final class HighlightInfoComposite extends HighlightInfo {
   private HighlightInfoComposite(@NotNull List<? extends HighlightInfo> infos, @NotNull HighlightInfo anchorInfo) {
     super(null, null, anchorInfo.type, anchorInfo.startOffset, anchorInfo.endOffset,
           createCompositeDescription(infos), createCompositeTooltip(infos), anchorInfo.type.getSeverity(null), false, null, false, 0,
-          anchorInfo.getProblemGroup(), null, anchorInfo.getGutterIconRenderer(), anchorInfo.getGroup(), null, anchorInfo.psiElement);
+          anchorInfo.getProblemGroup(), null, anchorInfo.getGutterIconRenderer(), anchorInfo.getGroup(), null);
     highlighter = anchorInfo.getHighlighter();
     List<Pair<IntentionActionDescriptor, RangeMarker>> markers = ContainerUtil.emptyList();
     List<Pair<IntentionActionDescriptor, TextRange>> ranges = ContainerUtil.emptyList();

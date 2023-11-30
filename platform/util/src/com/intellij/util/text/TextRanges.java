@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class TextRanges implements Iterable<TextRange> {
+public final class TextRanges implements Iterable<TextRange> {
   private static final Comparator<TextRange> START_COMP = Comparator.comparingInt(TextRange::getStartOffset);
   private static final Comparator<TextRange> END_COMP = Comparator.comparingInt(TextRange::getEndOffset);
   private final List<TextRange> myRanges = new ArrayList<>();

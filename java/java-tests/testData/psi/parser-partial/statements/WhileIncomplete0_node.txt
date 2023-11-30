@@ -1,0 +1,5 @@
+test.java.file
+  WHILE_STATEMENT
+    WHILE_KEYWORD
+    ERROR_ELEMENT
+      <empty list>

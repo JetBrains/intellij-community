@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.encoding;
 
 import com.intellij.ide.DataManager;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.nio.charset.Charset;
 
-class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
+final class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
 
   private static final Logger logger = Logger.getInstance(ChangeLargeFileEncodingAction.class);
 

@@ -8,4 +8,4 @@ def f(x: int) -> int:
 
 
 def test():
-    return f(<warning descr="Expected type 'int', got 'LiteralString' instead">(yield from a())</warning>)
+    return f(<warning descr="Expected type 'int', got 'str' instead">(yield from a())</warning>)

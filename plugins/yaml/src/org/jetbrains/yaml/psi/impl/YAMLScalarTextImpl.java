@@ -81,7 +81,7 @@ public class YAMLScalarTextImpl extends YAMLBlockScalarImpl implements YAMLScala
         return value;
       }
 
-      private boolean startsWithWhitespace(@NotNull CharSequence text, @NotNull TextRange range) {
+      private static boolean startsWithWhitespace(@NotNull CharSequence text, @NotNull TextRange range) {
         if (range.isEmpty()) {
           return false;
         }

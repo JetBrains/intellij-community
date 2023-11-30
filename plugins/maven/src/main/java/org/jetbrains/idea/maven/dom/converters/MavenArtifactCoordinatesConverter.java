@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
@@ -185,9 +186,8 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
       return MavenUtil.isPomFile(project, file.getVirtualFile())
-             && MavenIndicesManager.getInstance(project).getIndex()
-               .getRemoteIndices().stream()
-               .anyMatch(i -> !"central".equals(i.getRepositoryId()));
+             && ContainerUtil.exists(MavenIndicesManager.getInstance(project).getIndex()
+                                       .getGAVIndices(), i -> i.getRepository() != null && !"central".equals(i.getRepository().getName()));
     }
   }
 
@@ -228,7 +228,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return project == null ? null : context.getPsiManager().findFile(project.getFile());
     }
 
-    private MavenProject resolveMavenProject(MavenId id, MavenProjectsManager projectsManager, ConvertContext context) {
+    private static MavenProject resolveMavenProject(MavenId id, MavenProjectsManager projectsManager, ConvertContext context) {
       if (MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled(context)) {
         return projectsManager.findSingleProjectInReactor(id);
       }
@@ -237,7 +237,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       }
     }
 
-    private PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
+    private static PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
       File file = MavenUtil.getRepositoryFile(psiManager.getProject(), id, "pom", null);
       if (null == file) return null;
       VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
@@ -384,21 +384,29 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
     @Override
     public PsiFile resolve(MavenId id, ConvertContext context) {
+      if (StringUtil.isEmpty(id.getGroupId())) {
+        for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
+          MavenId withGroupId = new MavenId(each, id.getArtifactId(), id.getVersion());
+          PsiFile res = super.resolve(withGroupId, context);
+          if (res != null) return res;
+        }
+      }
+
       PsiFile res = super.resolve(id, context);
       if (res != null) return res;
 
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(context.getProject());
-      VirtualFile file = getMavenProjectFile(context);
 
-      // Try to resolve to imported plugin
-      MavenProject mavenProject = file == null ? null : projectsManager.findProject(file);
-      if (mavenProject != null) {
-        for (MavenPlugin plugin : mavenProject.getPlugins()) {
-          if (MavenArtifactUtil.isPluginIdEquals(id.getGroupId(), id.getArtifactId(), plugin.getGroupId(), plugin.getArtifactId())) {
-            return super.resolve(plugin.getMavenId(), context);
-          }
+      if (StringUtil.isEmpty(id.getGroupId())) {
+        for (String each : MavenArtifactUtil.DEFAULT_GROUPS) {
+          MavenId withGroupId = new MavenId(each, id.getArtifactId(), id.getVersion());
+          res = super.resolve(withGroupId, context);
+          if (res != null) return res;
         }
       }
+
+      res = tryToResolveToImportedPlugins(id, context);
+      if (res != null) return res;
 
       // Try to resolve to plugin with latest version
       PsiManager psiManager = context.getPsiManager();
@@ -411,6 +419,21 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
         return psiManager.findFile(virtualFile);
       }
 
+      return null;
+    }
+
+    private @Nullable PsiFile tryToResolveToImportedPlugins(MavenId id, ConvertContext context) {
+      MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(context.getProject());
+      VirtualFile file = getMavenProjectFile(context);
+
+      MavenProject mavenProject = file == null ? null : projectsManager.findProject(file);
+      if (mavenProject != null) {
+        for (MavenPlugin plugin : mavenProject.getPlugins()) {
+          if (MavenArtifactUtil.isPluginIdEquals(id.getGroupId(), id.getArtifactId(), plugin.getGroupId(), plugin.getArtifactId())) {
+            return super.resolve(plugin.getMavenId(), context);
+          }
+        }
+      }
       return null;
     }
   }

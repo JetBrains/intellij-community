@@ -1,21 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui.project.path
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfoRenderer
+import com.intellij.openapi.externalSystem.service.ui.completion.collector.TextCompletionCollector
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.util.bind
-import com.intellij.openapi.observable.util.trim
-import com.intellij.openapi.observable.util.whenMousePressed
-import com.intellij.openapi.observable.util.whenTextChanged
+import com.intellij.openapi.observable.util.*
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.RecursionGuard
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import javax.swing.plaf.basic.BasicTextUI
 import javax.swing.text.DefaultHighlighter.DefaultHighlightPainter
 import javax.swing.text.Highlighter
@@ -23,7 +31,8 @@ import javax.swing.text.Highlighter
 
 class WorkingDirectoryField(
   project: Project,
-  private val workingDirectoryInfo: WorkingDirectoryInfo
+  workingDirectoryInfo: WorkingDirectoryInfo,
+  parentDisposable: Disposable
 ) : TextCompletionField<TextCompletionInfo>(project) {
 
   private val propertyGraph = PropertyGraph(isBlockPropagation = false)
@@ -36,20 +45,37 @@ class WorkingDirectoryField(
   var projectName by projectNameProperty
 
   private var highlightTag: Any? = null
-  private val highlightRecursionGuard =
-    RecursionManager.createGuard<WorkingDirectoryField>(WorkingDirectoryField::class.java.name)
+  private val highlightRecursionGuard: RecursionGuard<WorkingDirectoryField> =
+    RecursionManager.createGuard(WorkingDirectoryField::class.java.name)
 
-  private val externalProjects = workingDirectoryInfo.externalProjects
+  private val externalProjectModificationTracker: ModificationTracker =
+    workingDirectoryInfo.externalProjectModificationTracker +
+    modeProperty.createPropertyModificationTracker(parentDisposable)
 
-  override fun getCompletionVariants(): List<TextCompletionInfo> {
-    return when (mode) {
+  private val externalProjectCollector = AsyncExternalProjectCollector.create(externalProjectModificationTracker) {
+    workingDirectoryInfo.collectExternalProjects()
+  }
+
+  private fun getExternalProjects(): List<ExternalProject> {
+    val owner = ModalTaskOwner.component(this)
+    val title = ExternalSystemBundle.message("working.directory.filed.projects.collecting")
+    return runWithModalProgressBlocking(owner, title) {
+      externalProjectCollector.getOrCollectExternalProjects()
+    }
+  }
+
+  override val completionCollector = TextCompletionCollector.async(externalProjectModificationTracker, parentDisposable) {
+    val externalProjects = externalProjectCollector.getOrCollectExternalProjects()
+    when (mode) {
       Mode.NAME -> {
         externalProjects
           .map { it.name }
           .map { TextCompletionInfo(it) }
       }
       Mode.PATH -> {
-        val textToComplete = getTextToComplete()
+        val textToComplete = blockingContext {
+          getTextToComplete()
+        }
         val pathToComplete = getCanonicalPath(textToComplete, removeLastSlash = false)
         externalProjects
           .filter { it.path.startsWith(pathToComplete) }
@@ -58,6 +84,12 @@ class WorkingDirectoryField(
           .map { TextCompletionInfo(it) }
       }
     }
+  }
+
+  fun getWorkingDirectoryVirtualFile(): VirtualFile? {
+    val directoryPath = workingDirectory.toNioPathOrNull() ?: return null
+    val directoryOrFile = directoryPath.refreshAndFindVirtualFileOrDirectory() ?: return null
+    return if (directoryOrFile.isFile) null else directoryOrFile
   }
 
   init {
@@ -115,11 +147,13 @@ class WorkingDirectoryField(
     bind(textProperty)
   }
 
-  private fun resolveProjectPathByName(projectName: String) =
-    resolveValueByKey(projectName, externalProjects, { name }, { path })
+  private fun resolveProjectPathByName(projectName: String): String? {
+    return resolveValueByKey(projectName, getExternalProjects(), { name }, { path })
+  }
 
-  private fun resolveProjectNameByPath(workingDirectory: String) =
-    resolveValueByKey(workingDirectory, externalProjects, { path }, { name })
+  private fun resolveProjectNameByPath(workingDirectory: String): String? {
+    return resolveValueByKey(workingDirectory, getExternalProjects(), { path }, { name })
+  }
 
   private fun <E> resolveValueByKey(
     key: String,

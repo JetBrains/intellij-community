@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.idea.completion.ImportableFqNameClassifier
+import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
 import org.jetbrains.kotlin.psi.UserDataProperty
 
 internal object NotImportedWeigher {
@@ -25,7 +25,8 @@ internal object NotImportedWeigher {
         NOT_TO_BE_USED_IN_KOTLIN
     }
 
-    fun KtAnalysisSession.addWeight(context: WeighingContext, element: LookupElement, symbol: KtSymbol, availableWithoutImport: Boolean) {
+    context(KtAnalysisSession)
+fun addWeight(context: WeighingContext, element: LookupElement, symbol: KtSymbol, availableWithoutImport: Boolean) {
         if (availableWithoutImport) return
         val fqName = when (symbol) {
             is KtClassLikeSymbol -> symbol.classIdIfNonLocal?.asSingleFqName()

@@ -30,10 +30,9 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
-public class ResizeableMappedFile implements Forceable, Closeable {
+public final class ResizeableMappedFile implements Forceable, Closeable {
   private static final Logger LOG = Logger.getInstance(ResizeableMappedFile.class);
 
-  private static final boolean truncateOnClose = SystemProperties.getBooleanProperty("idea.resizeable.file.truncate.on.close", false);
   private volatile long myLogicalSize;
   private volatile long myLastWrittenLogicalSize;
   private final PagedFileStorage myStorage;
@@ -254,11 +253,13 @@ public class ResizeableMappedFile implements Forceable, Closeable {
   @Override
   public void close() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
-      new IOException("Failed to close ResizableMappedFile[" + getPagedFileStorage().getFile() + "]"),
+      IOException.class,
+      () -> new IOException("Failed to close ResizableMappedFile[" + getPagedFileStorage().getFile() + "]"),
       () -> {
         ensureLengthWritten();
         assert myLogicalSize == myLastWrittenLogicalSize;
         myStorage.force();
+        boolean truncateOnClose = SystemProperties.getBooleanProperty("idea.resizeable.file.truncate.on.close", false);
         if (truncateOnClose && myLogicalSize < myStorage.length()) {
           myStorage.resize(myLogicalSize);
         }

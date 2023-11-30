@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.openapi.project.Project;
@@ -22,15 +22,15 @@ import java.util.Date;
 
 public class GitFileRevision extends VcsFileRevisionEx implements Comparable<VcsFileRevision> {
 
-  @NotNull private final Project myProject;
-  @NotNull private final FilePath myPath;
-  @NotNull private final GitRevisionNumber myRevision;
-  @Nullable private final Couple<Couple<String>> myAuthorAndCommitter;
-  @Nullable private final String myMessage;
-  @Nullable private final String myBranch;
-  @Nullable private final Date myAuthorTime;
-  @NotNull private final Collection<String> myParents;
-  @Nullable private final VirtualFile myRoot;
+  private final @NotNull Project myProject;
+  private final @NotNull FilePath myPath;
+  private final @NotNull GitRevisionNumber myRevision;
+  private final @Nullable Couple<Couple<String>> myAuthorAndCommitter;
+  private final @Nullable String myMessage;
+  private final @Nullable String myBranch;
+  private final @Nullable Date myAuthorTime;
+  private final @NotNull Collection<String> myParents;
+  private final @Nullable VirtualFile myRoot;
   private final boolean myIsDeleted;
 
   public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision) {
@@ -46,7 +46,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
 
   public GitFileRevision(@NotNull Project project, @Nullable VirtualFile root, @NotNull FilePath path, @NotNull GitRevisionNumber revision,
                          @Nullable Couple<Couple<String>> authorAndCommitter, @Nullable String message,
-                         @Nullable String branch, @Nullable final Date authorTime, @NotNull Collection<String> parents, boolean isDeleted) {
+                         @Nullable String branch, final @Nullable Date authorTime, @NotNull Collection<String> parents, boolean isDeleted) {
     myProject = project;
     myRoot = root;
     myPath = path;
@@ -60,20 +60,17 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   }
 
   @Override
-  @NotNull
-  public FilePath getPath() {
+  public @NotNull FilePath getPath() {
     return myPath;
   }
 
-  @Nullable
   @Override
-  public RepositoryLocation getChangedRepositoryPath() {
+  public @Nullable RepositoryLocation getChangedRepositoryPath() {
     return null;
   }
 
   @Override
-  @NotNull
-  public VcsRevisionNumber getRevisionNumber() {
+  public @NotNull VcsRevisionNumber getRevisionNumber() {
     return myRevision;
   }
 
@@ -83,44 +80,37 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   }
 
   @Override
-  @Nullable
-  public Date getAuthorDate() {
+  public @Nullable Date getAuthorDate() {
     return myAuthorTime;
   }
 
   @Override
-  @Nullable
-  public String getAuthor() {
+  public @Nullable String getAuthor() {
     return Pair.getFirst(Pair.getFirst(myAuthorAndCommitter));
   }
 
-  @Nullable
   @Override
-  public String getAuthorEmail() {
+  public @Nullable String getAuthorEmail() {
     return Pair.getSecond(Pair.getFirst(myAuthorAndCommitter));
   }
 
-  @Nullable
   @Override
-  public String getCommitterName() {
+  public @Nullable String getCommitterName() {
     return Pair.getFirst(Pair.getSecond(myAuthorAndCommitter));
   }
 
-  @Nullable
   @Override
-  public String getCommitterEmail() {
+  public @Nullable String getCommitterEmail() {
     return Pair.getSecond(Pair.getSecond(myAuthorAndCommitter));
   }
 
   @Override
-  @Nullable
-  public String getCommitMessage() {
+  public @Nullable String getCommitMessage() {
     return myMessage;
   }
 
   @Override
-  @Nullable
-  public String getBranchName() {
+  public @Nullable String getBranchName() {
     return myBranch;
   }
 
@@ -146,13 +136,11 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     return myPath.getName() + ":" + myRevision.getShortRev();
   }
 
-  @NotNull
-  public Collection<String> getParents() {
+  public @NotNull Collection<String> getParents() {
     return myParents;
   }
 
-  @NotNull
-  public String getHash() {
+  public @NotNull String getHash() {
     return myRevision.getRev();
   }
 

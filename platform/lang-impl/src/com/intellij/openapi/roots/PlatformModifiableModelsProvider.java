@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.facet.FacetManager;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dennis.Ushakov
  */
-public class PlatformModifiableModelsProvider implements ModifiableModelsProvider {
+public final class PlatformModifiableModelsProvider implements ModifiableModelsProvider {
   @Override
   public ModifiableRootModel getModuleModifiableModel(@NotNull final Module module) {
     return ModuleRootManager.getInstance(module).getModifiableModel();

@@ -12,7 +12,7 @@ import java.nio.file.Path
 internal class DotnetIconClasses(override val homePath: String) : IconClasses() {
   override val modules: List<JpsModule>
     get() = super.modules.filter {
-      it.name == "rider-icons"
+      it.name == "intellij.rider.icons"
     }
 
   override fun generator(home: Path, modules: List<JpsModule>): IconsClassGenerator {

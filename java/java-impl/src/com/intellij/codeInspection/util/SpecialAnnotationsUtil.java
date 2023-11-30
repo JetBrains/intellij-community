@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.util;
 
@@ -48,9 +48,6 @@ import java.util.function.Predicate;
  * @author Gregory.Shrago
  */
 public final class SpecialAnnotationsUtil {
-  public static JPanel createSpecialAnnotationsListControl(final List<String> list, final @NlsContexts.Label String borderTitle) {
-    return createSpecialAnnotationsListControl(list, borderTitle, false);
-  }
 
   public static JPanel createSpecialAnnotationsListControl(final List<String> list,
                                                            final @NlsContexts.Label String borderTitle,

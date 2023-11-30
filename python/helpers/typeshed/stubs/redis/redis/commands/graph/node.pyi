@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 class Node:
@@ -8,10 +9,10 @@ class Node:
     properties: Any
     def __init__(
         self,
-        node_id: Any | None = ...,
-        alias: Any | None = ...,
-        label: str | list[str] | None = ...,
-        properties: Any | None = ...,
+        node_id: Incomplete | None = None,
+        alias: Incomplete | None = None,
+        label: str | list[str] | None = None,
+        properties: Incomplete | None = None,
     ) -> None: ...
     def to_string(self): ...
     def __eq__(self, rhs): ...

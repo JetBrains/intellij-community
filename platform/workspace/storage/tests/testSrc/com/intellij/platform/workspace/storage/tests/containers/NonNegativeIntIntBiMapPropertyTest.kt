@@ -1,15 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests.containers
 
-import com.intellij.util.containers.BidirectionalMap
 import com.intellij.platform.workspace.storage.impl.containers.MutableNonNegativeIntIntBiMap
 import com.intellij.platform.workspace.storage.impl.containers.NonNegativeIntIntBiMap
+import com.intellij.util.containers.BidirectionalMap
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Assert.assertEquals
-import org.junit.Assert.fail
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.fail
 
 class NonNegativeIntIntBiMapPropertyTest {
   @Test
@@ -30,7 +30,7 @@ class NonNegativeIntIntBiMapPropertyTest {
     }
   }
 
-  class AddValues(val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
+  internal class AddValues(private val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val amountOfValues = env.generateValue(Generator.integers(0, 10), null)
 
@@ -51,7 +51,7 @@ class NonNegativeIntIntBiMapPropertyTest {
     }
   }
 
-  class GetValues(val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
+  internal class GetValues(private val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectKey(env, workingMap) ?: return
 
@@ -63,7 +63,7 @@ class NonNegativeIntIntBiMapPropertyTest {
     }
   }
 
-  class RemoveAll(val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
+  internal class RemoveAll(private val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectKey(env, workingMap) ?: return
 
@@ -76,7 +76,7 @@ class NonNegativeIntIntBiMapPropertyTest {
     }
   }
 
-  class RemoveKeyValue(val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
+  internal class RemoveKeyValue(private val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val key = selectKey(env, workingMap) ?: return
       val value = workingMap.get(key)!!
@@ -90,7 +90,7 @@ class NonNegativeIntIntBiMapPropertyTest {
     }
   }
 
-  class ToImmutable(val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
+  internal class ToImmutable(private val myMap: MutableNonNegativeIntIntBiMap, val workingMap: BidirectionalMap<Int, Int>) : ImperativeCommand {
     override fun performCommand(env: ImperativeCommand.Environment) {
       val immutable = myMap.toImmutable()
 
@@ -106,7 +106,6 @@ private fun assertCorrect(myMap: NonNegativeIntIntBiMap, workingMap: Bidirection
   myMap.keys.forEach { key ->
     if (!workingMapCopy.containsKey(key)) {
       fail("Missing key: $key")
-      return
     }
 
     val actualKey = myMap.get(key)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSupplier {
+final class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSupplier {
   private final ServiceViewModel myModel;
   private final Object myRoot = ObjectUtils.sentinel("services root");
 
@@ -51,7 +51,6 @@ class ServiceViewTreeModel extends BaseTreeModel<Object> implements InvokerSuppl
   @Override
   public List<?> getChildren(Object parent) {
     if (parent == myRoot) {
-      myModel.initRootsIfNeeded();
       return myModel.getVisibleRoots();
     }
     return myModel.getChildren(((ServiceViewItem)parent));

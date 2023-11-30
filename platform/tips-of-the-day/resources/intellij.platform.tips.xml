@@ -4,7 +4,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <backgroundPostStartupActivity id="TipOfTheDayActivity" implementation="com.intellij.ide.TipOfTheDayStartupActivity"/>
+    <backgroundPostStartupActivity id="TipOfTheDayActivity"
+                                   implementation="com.intellij.ide.TipOfTheDayStartupActivity"
+                                   order="last"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.TipsOfTheDayUsagesCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.TipsOfTheDayUsagesCollector$TipInfoValidationRule"/>

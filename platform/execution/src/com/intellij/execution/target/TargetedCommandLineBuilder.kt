@@ -11,7 +11,7 @@ import java.nio.charset.Charset
 
 class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDataHolderBase() {
   var exePath: TargetValue<String> = TargetValue.empty()
-  private var workingDirectory = TargetValue.empty<String>()
+  private var workingDirectory = TargetValue.empty<FullPathOnTarget>()
   private var inputFilePath = TargetValue.empty<String>()
   var charset: Charset = CharsetToolkit.getDefaultSystemCharset()
   private val parameters: MutableList<TargetValue<out String?>> = ArrayList()
@@ -29,11 +29,17 @@ class TargetedCommandLineBuilder(val request: TargetEnvironmentRequest) : UserDa
     this.exePath = TargetValue.fixed(exePath)
   }
 
-  fun setWorkingDirectory(workingDirectory: TargetValue<String>) {
+  /**
+   * [workingDirectory] is a path on target
+   */
+  fun setWorkingDirectory(workingDirectory: TargetValue<FullPathOnTarget>) {
     this.workingDirectory = workingDirectory
   }
 
-  fun setWorkingDirectory(workingDirectory: String) {
+  /**
+   * @see setWorkingDirectory
+   */
+  fun setWorkingDirectory(workingDirectory: FullPathOnTarget) {
     this.workingDirectory = TargetValue.fixed(workingDirectory)
   }
 

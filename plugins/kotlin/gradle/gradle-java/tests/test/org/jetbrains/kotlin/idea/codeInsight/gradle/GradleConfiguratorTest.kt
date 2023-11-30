@@ -122,6 +122,32 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("6.0+")
+    fun testProjectWithSubmodule() {
+        importProjectFromTestData()
+        runInEdtAndWait {
+            runWriteAction {
+                val module = ModuleManager.getInstance(myProject).findModuleByName("project.submodule.main")!!
+                val moduleGroup = module.toModuleGroup()
+                assertEquals(ConfigureKotlinStatus.CAN_BE_CONFIGURED, findGradleModuleConfigurator().getStatus(moduleGroup))
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("6.0+")
+    fun testProjectWithSubmoduleKts() {
+        importProjectFromTestData()
+        runInEdtAndWait {
+            runWriteAction {
+                val module = ModuleManager.getInstance(myProject).findModuleByName("project.submodule.main")!!
+                val moduleGroup = module.toModuleGroup()
+                assertEquals(ConfigureKotlinStatus.CAN_BE_CONFIGURED, findGradleModuleConfigurator().getStatus(moduleGroup))
+            }
+        }
+    }
+
+    @Test
     fun testConfigure10() {
         val files = importProjectFromTestData()
 
@@ -130,7 +156,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.0.6"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(module),
+                        IdeKotlinVersion.get("1.0.6"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 checkFiles(files)
             }
@@ -147,7 +180,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.0.6"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(module),
+                        IdeKotlinVersion.get("1.0.6"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 checkFiles(files)
             }
@@ -163,7 +203,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.2.60-dev-286"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(module),
+                        IdeKotlinVersion.get("1.2.60-dev-286"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 checkFiles(files)
             }
@@ -179,7 +226,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.2.60-dev-286"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(module),
+                        IdeKotlinVersion.get("1.2.60-dev-286"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 checkFiles(files)
             }
@@ -196,7 +250,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.2.40"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(module),
+                        IdeKotlinVersion.get("1.2.40"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 checkFiles(files)
             }
@@ -213,7 +274,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.2.40"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(module),
+                        IdeKotlinVersion.get("1.2.40"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 checkFiles(files)
             }
@@ -230,7 +298,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.6.20-M1"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(module),
+                        IdeKotlinVersion.get("1.6.20-M1"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 checkFiles(files)
             }
@@ -247,7 +322,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.6.20-M1"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(module),
+                        IdeKotlinVersion.get("1.6.20-M1"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 checkFiles(files)
             }
@@ -264,7 +346,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.7.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(module),
+                        IdeKotlinVersion.get("1.7.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 checkFiles(files)
             }
@@ -281,7 +370,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.7.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(module),
+                        IdeKotlinVersion.get("1.7.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 checkFiles(files)
             }
@@ -299,7 +395,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(rootModule, subModule), IdeKotlinVersion.get("1.8.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(rootModule, subModule),
+                        IdeKotlinVersion.get("1.8.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 val subModules = listOf("app")
                 checkFilesInMultimoduleProject(files, subModules)
@@ -318,7 +421,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(rootModule, subModule), IdeKotlinVersion.get("1.8.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(rootModule, subModule),
+                        IdeKotlinVersion.get("1.8.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 val subModules = listOf("app")
                 checkFilesInMultimoduleProject(files, subModules)
@@ -336,7 +446,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(rootModule),
+                        IdeKotlinVersion.get("1.8.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 val subModules = listOf("app")
                 checkFilesInMultimoduleProject(files, subModules)
@@ -354,7 +471,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(rootModule),
+                        IdeKotlinVersion.get("1.8.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 val subModules = listOf("app")
                 checkFilesInMultimoduleProject(files, subModules)
@@ -372,7 +496,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(subModule), IdeKotlinVersion.get("1.8.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(subModule),
+                        IdeKotlinVersion.get("1.8.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 val subModules = listOf("app")
                 checkFilesInMultimoduleProject(files, subModules)
@@ -390,7 +521,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val subModule = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(subModule), IdeKotlinVersion.get("1.8.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(subModule),
+                        IdeKotlinVersion.get("1.8.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 val subModules = listOf("app")
                 checkFilesInMultimoduleProject(files, subModules)
@@ -411,7 +549,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.1.2"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(module),
+                        IdeKotlinVersion.get("1.1.2"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 checkFiles(files)
             }
@@ -426,7 +571,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val module = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.8.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(module),
+                        IdeKotlinVersion.get("1.8.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
 
                 checkFiles(files)
             }
@@ -529,6 +681,18 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("7.6+")
     fun testConfigureKotlinJvmToolchainSetterKts() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinVersionPluginManagementGradleProperties() {
+        runJvmToolchainTest()
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testConfigureKotlinVersionPluginManagementGradlePropertiesKts() {
         runJvmToolchainTest()
     }
 
@@ -938,7 +1102,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(rootModule),
+                        IdeKotlinVersion.get("1.8.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
                 checkFiles(files)
             }
         }
@@ -954,7 +1125,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(rootModule),
+                        IdeKotlinVersion.get("1.8.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
                 checkFiles(files)
             }
         }
@@ -970,7 +1148,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(rootModule),
+                        IdeKotlinVersion.get("1.8.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
                 checkFiles(files)
             }
         }
@@ -986,7 +1171,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(rootModule),
+                        IdeKotlinVersion.get("1.8.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
                 checkFiles(files)
             }
         }
@@ -1002,7 +1194,14 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 val rootModule = ModuleManager.getInstance(myProject).findModuleByName("project")!!
                 val configurator = findGradleModuleConfigurator()
                 val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(rootModule), IdeKotlinVersion.get("1.8.0"), collector)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                        myProject,
+                        listOf(rootModule),
+                        IdeKotlinVersion.get("1.8.0"),
+                        collector,
+                        kotlinVersionsAndModules,
+                )
                 checkFiles(files)
             }
         }

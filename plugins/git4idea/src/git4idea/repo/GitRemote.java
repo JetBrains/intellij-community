@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -74,11 +60,11 @@ public final class GitRemote implements Comparable<GitRemote> {
    */
   public static final String ORIGIN = "origin";
 
-  @NotNull private final String myName;
-  @NotNull private final List<String> myUrls;
-  @NotNull private final Collection<String> myPushUrls;
-  @NotNull private final List<String> myFetchRefSpecs;
-  @NotNull private final List<String> myPushRefSpecs;
+  private final @NotNull String myName;
+  private final @NotNull List<String> myUrls;
+  private final @NotNull Collection<String> myPushUrls;
+  private final @NotNull List<String> myFetchRefSpecs;
+  private final @NotNull List<String> myPushRefSpecs;
 
   public GitRemote(@NotNull String name, @NotNull List<String> urls, @NotNull Collection<String> pushUrls,
                    @NotNull List<String> fetchRefSpecs, @NotNull List<String> pushRefSpecs) {
@@ -89,9 +75,7 @@ public final class GitRemote implements Comparable<GitRemote> {
     myPushRefSpecs = pushRefSpecs;
   }
 
-  @NotNull
-  @NlsSafe
-  public String getName() {
+  public @NotNull @NlsSafe String getName() {
     return myName;
   }
 
@@ -100,31 +84,26 @@ public final class GitRemote implements Comparable<GitRemote> {
    * If you need url to fetch, use {@link #getFirstUrl()}, because only the first url is fetched by Git,
    * others are ignored.
    */
-  @NotNull
-  public List<String> getUrls() {
+  public @NotNull List<String> getUrls() {
     return myUrls;
   }
 
   /**
    * @return the first url (to fetch) or null if and only if there are no urls defined for the remote.
    */
-  @Nullable
-  public String getFirstUrl() {
+  public @Nullable String getFirstUrl() {
     return myUrls.isEmpty() ? null : myUrls.get(0);
   }
 
-  @NotNull
-  public Collection<String> getPushUrls() {
+  public @NotNull Collection<String> getPushUrls() {
     return myPushUrls;
   }
 
-  @NotNull
-  public List<String> getFetchRefSpecs() {
+  public @NotNull List<String> getFetchRefSpecs() {
     return myFetchRefSpecs;
   }
 
-  @NotNull
-  public List<String> getPushRefSpecs() {
+  public @NotNull List<String> getPushRefSpecs() {
     return myPushRefSpecs;
   }
 
@@ -145,9 +124,8 @@ public final class GitRemote implements Comparable<GitRemote> {
     return myName.hashCode();
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return String.format("GitRemote{myName='%s', myUrls=%s, myPushUrls=%s, myFetchRefSpec='%s', myPushRefSpec='%s'}",
                          myName, myUrls, myPushUrls, myFetchRefSpecs, myPushRefSpecs);
   }

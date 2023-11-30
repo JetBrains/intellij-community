@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.psi.PsiPackage
-import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinUsageTypeProvider
 import org.jetbrains.kotlin.idea.base.searching.usages.UsageTypeEnum
@@ -46,7 +46,7 @@ internal class KotlinK2UsageTypeProvider : KotlinUsageTypeProvider() {
             }
         }
 
-        return analyzeWithReadAction(refExpr) {
+        return analyze(refExpr) {
             when (val targetElement = reference.resolveToSymbol()) {
                 is KtClassifierSymbol ->
                     when (targetElement) {

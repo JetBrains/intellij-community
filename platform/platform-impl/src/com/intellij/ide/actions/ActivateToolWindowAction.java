@@ -4,10 +4,12 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -16,19 +18,21 @@ import com.intellij.toolWindow.ToolWindowEventSource;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.function.Supplier;
 
 /**
  * Toggles tool window visibility.
  * Usually shown in View|Tool-windows sub-menu.
  * Dynamically registered in Settings|Keymap for each newly-registered tool window.
  */
-public class ActivateToolWindowAction extends DumbAwareAction implements MainMenuPresentationAware {
+public class ActivateToolWindowAction extends DumbAwareAction implements MainMenuPresentationAware, ActionRemoteBehaviorSpecification.Frontend {
   private final String myToolWindowId;
 
   protected ActivateToolWindowAction(@NotNull String toolWindowId) {
@@ -105,16 +109,17 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
   }
 
   private static void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
-    String title = toolWindow.getStripeTitle();
+    Supplier<@NlsContexts.TabTitle String> title = toolWindow.getStripeTitleProvider();
     presentation.setText(title);
-    presentation.setDescription(IdeBundle.messagePointer("action.activate.tool.window", title));
-    Icon icon = toolWindow.getIcon();
-    if (icon instanceof ScalableIcon && ExperimentalUI.isNewUI()) {
-      icon = ((ScalableIcon)icon).scale(JBUIScale.scale(16f) / icon.getIconWidth());
-      presentation.setIcon(icon);
-      return;
-    }
-    presentation.setIcon(icon == null ? null : new SizedIcon(icon, icon.getIconHeight(), icon.getIconHeight()));
+    presentation.setDescription(() -> IdeBundle.message("action.activate.tool.window", title.get()));
+    presentation.setIconSupplier(new SynchronizedClearableLazy<>(() -> {
+      Icon icon = toolWindow.getIcon();
+      if (icon instanceof ScalableIcon && ExperimentalUI.isNewUI()) {
+        icon = ((ScalableIcon)icon).scale(JBUIScale.scale(16f) / icon.getIconWidth());
+        return icon;
+      }
+      return icon == null ? null : new SizedIcon(icon, icon.getIconHeight(), icon.getIconHeight());
+    }));
   }
 
   @Override
@@ -178,8 +183,7 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
    *
    * @param id {@code id} of tool window to be activated.
    */
-  @NonNls
-  public static @NotNull String getActionIdForToolWindow(@NotNull String id) {
+  public static @NonNls @NotNull String getActionIdForToolWindow(@NotNull String id) {
     return "Activate" + id.replaceAll(" ", "") + "ToolWindow";
   }
 

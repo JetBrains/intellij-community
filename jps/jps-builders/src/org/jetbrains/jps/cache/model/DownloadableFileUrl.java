@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.model;
 
 import com.intellij.openapi.util.Condition;
@@ -7,7 +7,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 
-public class DownloadableFileUrl {
+public final class DownloadableFileUrl {
   private final String myFileName;
   private final String myFileExtension;
   private final String myDownloadUrl;
@@ -19,28 +19,23 @@ public class DownloadableFileUrl {
     myDownloadUrl = downloadUrl;
   }
 
-  @NotNull
-  public String getDownloadUrl() {
+  public @NotNull String getDownloadUrl() {
     return myDownloadUrl;
   }
 
-  @NotNull
-  public String getPresentableFileName() {
+  public @NotNull String getPresentableFileName() {
     return myFileName + myFileExtension;
   }
 
-  @NotNull
-  public String getPresentableDownloadUrl() {
+  public @NotNull String getPresentableDownloadUrl() {
     return myDownloadUrl;
   }
 
-  @NotNull
-  public String getDefaultFileName() {
+  public @NotNull String getDefaultFileName() {
     return generateFileName(Conditions.alwaysTrue());
   }
 
-  @NotNull
-  public String generateFileName(@NotNull Condition<? super String> validator) {
+  public @NotNull String generateFileName(@NotNull Condition<? super String> validator) {
     return UniqueNameGenerator.generateUniqueName("", myFileName, myFileExtension, "_", "", validator);
   }
 

@@ -3,7 +3,6 @@ package com.intellij.util.lang;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.xxh3.Xx3UnencodedString;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -87,8 +86,7 @@ final class FileLoader implements Loader {
   @Override
   public void processResources(@NotNull String dir,
                                @NotNull Predicate<? super String> fileNameFilter,
-                               @NotNull BiConsumer<? super String, ? super InputStream> consumer)
-    throws IOException {
+                               @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
     try (DirectoryStream<Path> paths = Files.newDirectoryStream(path.resolve(dir))) {
       for (Path childPath : paths) {
         String name = path.relativize(childPath).toString();
@@ -118,12 +116,13 @@ final class FileLoader implements Loader {
         boolean containsResources = false;
         for (Path file : dirStream) {
           String path = getRelativeResourcePath(file.toString(), rootDirAbsolutePathLength);
+          long nameHash = Xx3UnencodedString.hashUnencodedString(path);
           if (path.endsWith(ClasspathCache.CLASS_EXTENSION)) {
-            nameHashes.add(Xx3UnencodedString.hashUnencodedString(path));
+            nameHashes.add(nameHash);
             containsClasses = true;
           }
           else {
-            nameHashes.add(Xx3UnencodedString.hashUnencodedString(path));
+            nameHashes.add(nameHash);
             containsResources = true;
             if (!path.endsWith(".svg") && !path.endsWith(".png") && !path.endsWith(".xml")) {
               dirCandidates.addLast(file);
@@ -426,7 +425,7 @@ final class FileLoader implements Loader {
 
       int lastIndex = name.length() - 1;
       int end = name.charAt(lastIndex) == '/' ? lastIndex : name.length();
-      return filter.mightContain(Xx3UnencodedString.hashUnencodedStringRange(name, 0, end));
+      return filter.mightContain(Xx3UnencodedString.hashUnencodedStringRange(name, end));
     }
   }
 }

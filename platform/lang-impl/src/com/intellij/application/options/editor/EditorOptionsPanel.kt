@@ -6,8 +6,10 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
+import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.ui.search.SearchUtil.ADDITIONAL_SEARCH_LABELS_KEY
 import com.intellij.lang.LangBundle
@@ -28,11 +30,15 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
+import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
@@ -43,7 +49,9 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
@@ -153,6 +161,8 @@ internal val optionDescriptors: List<OptionDescription>
 
 private val EP_NAME = ExtensionPointName<GeneralEditorOptionsProviderEP>("com.intellij.generalEditorOptionsExtension")
 
+private val screenReaderEnabledProperty = AtomicBooleanProperty(GeneralSettings.getInstance().isSupportScreenReaders)
+
 class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(message("title.editor"), ID), WithEpDependencies {
   companion object {
     const val ID: String = "preferences.editor"
@@ -203,7 +213,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
         }.bind({ editorSettings.isWheelFontChangePersistent }, { editorSettings.isWheelFontChangePersistent = it })
         row {
           checkBox(enableDnD)
-          comment(message("checkbox.enable.drag.n.drop.functionality.in.editor.comment"))
+          comment(message("checkbox.enable.drag.n.drop.functionality.in.editor.comment", UIUtil.getControlKeyName()))
         }
       }
       group(message("group.soft.wraps")) {
@@ -280,10 +290,11 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
           val editorColorsManager = EditorColorsManager.getInstance()
           val schemes = listOf(RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER) +
                         editorColorsManager.allSchemes.map { Scheme.getBaseName(it.name) }
-          comboBox<String>(
-            DefaultComboBoxModel(schemes.toTypedArray()),
-            renderer = SimpleListCellRenderer.create("") {
+          comboBox(
+            schemes,
+            renderer = textListCellRenderer {
               when (it) {
+                null -> ""
                 RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER ->
                   message("combobox.richcopy.color.scheme.active")
                 else -> editorColorsManager.getScheme(it)?.displayName ?: it
@@ -305,7 +316,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
           )
           comboBox(
             model,
-            renderer = SimpleListCellRenderer.create("") {
+            renderer = textListCellRenderer {
               when (it) {
                 EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED -> message("combobox.strip.modified.lines")
                 EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE -> message("combobox.strip.all")
@@ -352,6 +363,12 @@ private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOp
     const val ID = "preferences.editor.code.editing"
   }
 
+  init {
+    ApplicationManager.getApplication().messageBus.connect().subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      screenReaderEnabledProperty.set(GeneralSettings.getInstance().isSupportScreenReaders)
+    })
+  }
+
   override fun createConfigurables() = ConfigurableWrapper.createConfigurables(ErrorOptionsProviderEP.EP_NAME)
   override fun getDependencies() = setOf(ErrorOptionsProviderEP.EP_NAME)
 
@@ -362,9 +379,25 @@ private class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOp
         row { checkBox(highlightScope) }
         row { checkBox(highlightIdentifierUnderCaret) }
       }
-      if (!GeneralSettings.getInstance().isSupportScreenReaders) {
-        group(message("group.quick.documentation")) {
-          row { checkBox(cdShowQuickDocOnMouseMove) }
+      group(message("group.quick.documentation")) {
+        row {
+          val quickDocCheckBox = checkBox(cdShowQuickDocOnMouseMove).enabledIf(screenReaderEnabledProperty.not())
+          screenReaderEnabledProperty.whenPropertyChanged {
+            quickDocCheckBox.selected(editorSettings.isShowQuickDocOnMouseOverElement)
+          }
+        }
+        indent {
+          row {
+            comment(message("editor.options.quick.doc.on.mouse.hover.comment.screen.reader.support")) {
+              DataManager.getInstance().dataContextFromFocusAsync.onSuccess { context ->
+                if (context == null) {
+                  return@onSuccess
+                }
+                val settings = context.getData(Settings.KEY) ?: return@onSuccess
+                settings.select(settings.find("preferences.lookFeel"))
+              }
+            }.visibleIf(screenReaderEnabledProperty)
+          }
         }
       }
       if (!EditorOptionsPageCustomizer.EP_NAME.extensionList.any { it.shouldHideRefactoringsSection() }) {

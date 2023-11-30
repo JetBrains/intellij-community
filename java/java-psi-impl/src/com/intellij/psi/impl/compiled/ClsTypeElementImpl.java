@@ -42,7 +42,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   ClsTypeElementImpl(@Nullable PsiElement parent, @NotNull TypeInfo typeInfo) {
-    this(parent, Objects.requireNonNull(TypeInfo.createTypeText(typeInfo)), VARIANCE_NONE, typeInfo.getTypeAnnotations());
+    this(parent, Objects.requireNonNull(typeInfo.text()), VARIANCE_NONE, typeInfo.getTypeAnnotations());
   }
 
   ClsTypeElementImpl(@Nullable PsiElement parent,
@@ -100,7 +100,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.TYPE);
     PsiTypeElement mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
     setMirrorIfPresent(getInnermostComponentReferenceElement(), mirror.getInnermostComponentReferenceElement());

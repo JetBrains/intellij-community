@@ -5,9 +5,19 @@ package org.jetbrains.kotlin.idea.structuralsearch.search
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
 class KotlinSSTypeAliasTest : KotlinStructuralSearchTest() {
-    override fun getBasePath(): String = "typeAlias"
+    fun testTypeAlias() { doTest("typealias '_ = Int", """
+        package typeAlias
+        
+        <warning descr="SSR">typealias A = Int</warning>
+        
+        typealias B = String
+    """.trimIndent()) }
 
-    fun testTypeAlias() { doTest("typealias '_ = Int") }
+    fun testAnnotated() { doTest("@Ann typealias '_ = '_", """
+        @Target(AnnotationTarget.TYPEALIAS)
+        annotation class Ann
 
-    fun testAnnotated() { doTest("@Ann typealias '_ = '_") }
+        <warning descr="SSR">@Ann typealias aliasOne = List<String></warning>
+        typealias aliasTwo = List<Int>
+    """.trimIndent()) }
 }

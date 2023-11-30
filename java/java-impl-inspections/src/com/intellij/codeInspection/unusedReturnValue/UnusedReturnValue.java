@@ -12,8 +12,8 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.util.VisibilityUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -23,10 +23,12 @@ import java.util.Objects;
 
 public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
   public boolean IGNORE_BUILDER_PATTERN;
-  @PsiModifier.ModifierConstant
-  public static final String DEFAULT_HIGHEST_MODIFIER = PsiModifier.PUBLIC;
-  @PsiModifier.ModifierConstant
-  public String highestModifier = DEFAULT_HIGHEST_MODIFIER;
+  public static final AccessModifier DEFAULT_HIGHEST_MODIFIER = AccessModifier.PUBLIC;
+  public AccessModifier highestModifier = DEFAULT_HIGHEST_MODIFIER;
+  
+  protected @NotNull AccessModifier getHighestModifier() {
+    return Objects.requireNonNullElse(highestModifier, DEFAULT_HIGHEST_MODIFIER);
+  }
 
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
@@ -35,7 +37,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
                                                            @NotNull GlobalInspectionContext globalContext,
                                                            @NotNull ProblemDescriptionsProcessor processor) {
     if (refEntity instanceof RefMethod refMethod) {
-      if (VisibilityUtil.compare(refMethod.getAccessModifier(), highestModifier) < 0 ||
+      if (Objects.requireNonNull(AccessModifier.fromPsiModifier(refMethod.getAccessModifier())).compareTo(getHighestModifier()) < 0 ||
           refMethod.isConstructor() ||
           !refMethod.getSuperMethods().isEmpty() ||
           refMethod.getInReferences().isEmpty() ||
@@ -45,8 +47,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
         return null;
       }
 
-      final PsiMethod psiMethod = (PsiMethod)refMethod.getUastElement().getJavaPsi();
-      if (psiMethod == null) return null;
+      final PsiMethod psiMethod = refMethod.getUastElement().getJavaPsi();
       if (IGNORE_BUILDER_PATTERN && (PropertyUtilBase.isSimplePropertySetter(psiMethod)) || MethodUtils.isChainable(psiMethod)) return null;
       final boolean isNative = psiMethod.hasModifierProperty(PsiModifier.NATIVE);
       if (refMethod.isExternalOverride() && !isNative) return null;
@@ -59,7 +60,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (IGNORE_BUILDER_PATTERN || !Objects.equals(highestModifier, DEFAULT_HIGHEST_MODIFIER)) {
+    if (IGNORE_BUILDER_PATTERN || highestModifier != DEFAULT_HIGHEST_MODIFIER) {
       super.writeSettings(node);
     }
   }
@@ -77,21 +78,17 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
                                                 @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
-              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
-              globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
-                @Override
-                public boolean process(PsiReference psiReference) {
-                  processor.ignoreElement(refMethod);
-                  return false;
-                }
-              });
-            }
-          });
-        }
+      @Override
+      public void visitMethod(@NotNull final RefMethod refMethod) {
+        if (processor.getDescriptions(refMethod) == null) return;
+        if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
+        globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
+          @Override
+          public boolean process(PsiReference psiReference) {
+            processor.ignoreElement(refMethod);
+            return false;
+          }
+        });
       }
     });
 

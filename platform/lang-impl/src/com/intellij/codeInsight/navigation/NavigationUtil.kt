@@ -49,6 +49,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.Processor
+import com.intellij.util.SlowOperations
 import com.intellij.util.TextWithIcon
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
@@ -182,7 +183,12 @@ fun shouldOpenAsNative(virtualFile: VirtualFile): Boolean {
   return type is INativeFileType || type is UnknownFileType
 }
 
-private fun activatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
+private fun activatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean =
+  SlowOperations.knownIssue("IDEA-333908, EA-853156; IDEA-326668, EA-856275; IDEA-326669, EA-831824").use {
+    doActivatePsiElementIfOpen(element, searchForOpen, requestFocus)
+  }
+
+private fun doActivatePsiElementIfOpen(element: PsiElement, searchForOpen: Boolean, requestFocus: Boolean): Boolean {
   @Suppress("NAME_SHADOWING")
   var element = element
   if (!element.isValid) {
@@ -315,7 +321,7 @@ fun getRelatedItemsPopup(items: List<GotoRelatedItem>, title: @NlsContexts.Popup
  */
 fun getRelatedItemsPopup(items: List<GotoRelatedItem>, title: @NlsContexts.PopupTitle String?, showContainingModules: Boolean): JBPopup {
   val elements = ArrayList<Any?>(items.size)
-  //todo[nik] move presentation logic to GotoRelatedItem class
+  //todo move presentation logic to GotoRelatedItem class
   val itemMap = HashMap<PsiElement, GotoRelatedItem>()
   for (item in items) {
     val element = item.element

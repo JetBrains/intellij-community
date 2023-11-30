@@ -10,7 +10,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DependencyRule {
+public final class DependencyRule {
   private NamedScope myFromScope;
   private NamedScope myToScope;
   private final boolean myDenyRule;

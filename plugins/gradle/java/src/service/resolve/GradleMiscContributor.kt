@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.patterns.PsiJavaPatterns.psiElement
@@ -72,7 +72,7 @@ class GradleMiscContributor : GradleMethodContextContributor {
       val methodResult = parent.advancedResolve().asSafely<GroovyMethodResult>() ?: return null
       val closureParameter = methodResult.candidate?.argumentMapping?.expectedType(ExpressionArgument(closure))
       if (closureParameter?.equalsToText(GROOVY_LANG_CLOSURE) == true) {
-        val returnType = methodResult.substitutor.substitute(methodResult.element.returnType).let(::decoratePsiType)
+        val returnType = methodResult.substitutor.substitute(methodResult.element.returnType)
         if (returnType !is PsiPrimitiveType) {
           return DelegatesToInfo(returnType, Closure.DELEGATE_FIRST)
         }

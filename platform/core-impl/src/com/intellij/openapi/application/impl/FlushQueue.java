@@ -6,11 +6,14 @@ import com.intellij.diagnostic.EventWatcher;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.*;
@@ -27,19 +30,19 @@ final class FlushQueue {
   private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //guarded by getQueueLock()
 
   private void flushNow() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (getQueueLock()) {
       FLUSHER_SCHEDULED = false;
     }
-
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     long startTime = System.currentTimeMillis();
     while (true) {
       RunnableInfo info = pollNextEvent();
       if (info == null) {
         break;
       }
-      runNextEvent(info);
-      if (System.currentTimeMillis() - startTime > 5) {
+      runNextEvent(info, app);
+      if (InvocationUtil.priorityEventPending() || System.currentTimeMillis() - startTime > 5) {
         synchronized (getQueueLock()) {
           requestFlush();
         }
@@ -74,9 +77,9 @@ final class FlushQueue {
   }
 
   // Extracted to have a capture point
-  private static void doRun(@Async.Execute @NotNull RunnableInfo info) {
+  private static void doRun(@Async.Execute @NotNull RunnableInfo info, @NotNull ApplicationEx app) {
     try (AccessToken ignored = ClientId.withClientId(info.clientId)) {
-      info.runnable.run();
+      app.runWithImplicitRead(info.runnable);
     }
   }
 
@@ -114,11 +117,11 @@ final class FlushQueue {
     }
   }
 
-  private static void runNextEvent(@NotNull RunnableInfo info) {
+  private static void runNextEvent(@NotNull RunnableInfo info, @NotNull ApplicationEx app) {
     final EventWatcher watcher = EventWatcher.getInstanceOrNull();
     final long waitingFinishedNs = System.nanoTime();
     try {
-      doRun(info);
+      doRun(info, app);
     }
     catch (ProcessCanceledException ignored) {
 
@@ -162,7 +165,7 @@ final class FlushQueue {
   }
 
   void reincludeSkippedItems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (getQueueLock()) {
       int size = mySkippedItems.size();
       if (size != 0) {
@@ -180,7 +183,7 @@ final class FlushQueue {
   }
 
   void purgeExpiredItems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (getQueueLock()) {
       reincludeSkippedItems();
       myQueue.removeAll(info -> info.expired.value(null));

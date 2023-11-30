@@ -17,6 +17,7 @@ import com.intellij.vcs.log.impl.VcsUserImpl
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.cherrypick.GitCherryPicker
 import git4idea.test.*
 import junit.framework.TestCase
 
@@ -195,6 +196,36 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     indexAll()
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(author, setOf(author, defaultUser))))
+
+    TestCase.assertEquals(expected, actual)
+  }
+
+  fun `test author filter with different committer`() {
+    val author = VcsUserImpl("Name", "name@server.com")
+    val expected = mutableSetOf<Int>()
+    var hashToPick = ""
+    build {
+      master {
+        0("a.txt")
+        1("b.txt")
+        expected.addAll(indexAll())
+      }
+      feature(1) {
+        setupUsername(project, author.name, author.email)
+        2("c.txt")
+        3("d.txt")
+        hashToPick = repo.last()
+        setupDefaultUsername(project)
+      }
+      master {
+        //cherry-pick with default user
+        GitCherryPicker(project).cherryPick(readDetails(listOf(hashToPick)))
+      }
+    }
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(defaultUser, setOf(author, defaultUser))))
 
     TestCase.assertEquals(expected, actual)
   }

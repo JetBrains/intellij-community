@@ -18,26 +18,18 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.WritingAccessProvider
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.IconManager
-import com.intellij.ui.LayeredIcon
+import com.intellij.ui.*
 import com.intellij.ui.RowIcon
-import com.intellij.ui.icons.CachedImageIcon
-import com.intellij.ui.icons.CopyableIcon
-import com.intellij.ui.icons.TextIcon
-import com.intellij.ui.icons.copyIcon
+import com.intellij.ui.icons.*
 import com.intellij.ui.scale.JBUIScale.getFontScale
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextAware
 import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.svg.paintIconWithSelection
 import com.intellij.util.IconUtil.ICON_FLAG_IGNORE_MASK
-import com.intellij.util.SVGLoader.paintIconWithSelection
-import com.intellij.util.ui.EmptyIcon
-import com.intellij.util.ui.ImageUtil
-import com.intellij.util.ui.JBImageIcon
-import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.util.ui.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -46,12 +38,10 @@ import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.awt.image.RGBImageFilter
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import java.util.function.ToIntFunction
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.SwingConstants
+import javax.swing.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToLong
@@ -122,7 +112,7 @@ object IconUtil {
 
   @JvmStatic
   fun cropIcon(icon: Icon, area: Rectangle): Icon {
-    return if (!Rectangle(icon.iconWidth, icon.iconHeight).contains(area)) icon else CropIcon(icon, area)
+    return if (Rectangle(icon.iconWidth, icon.iconHeight).contains(area)) CropIcon(icon, area) else icon
   }
 
   @JvmStatic
@@ -155,45 +145,18 @@ object IconUtil {
    * @return a deferred icon for the file, taking into account [FileIconProvider] and [FileIconPatcher] extensions.
    */
   @JvmStatic
-  fun computeFileIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon =
-    computeFileIconImpl(BackedVirtualFile.getOriginFileIfBacked(file), project, flags)
-
-  private fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int): Icon {
-    if (!file.isValid || project != null && (project.isDisposed || !wasEverInitialized(project))) {
-      return AllIcons.FileTypes.Unknown
-    }
-
-    @Suppress("NAME_SHADOWING") val flags = filterFileIconFlags(file, flags)
-    val providerIcon = getProviderIcon(file, flags, project)
-    var icon = providerIcon ?: computeFileTypeIcon(file, false)
-    val dumb = project != null && DumbService.getInstance(project).isDumb
-    for (patcher in FileIconPatcher.EP_NAME.extensionList) {
-      if (dumb && !DumbService.isDumbAware(patcher)) {
-        continue
-      }
-
-      // render without a locked icon patch since we are going to apply it later anyway
-      icon = patcher.patchIcon(icon, file, flags and Iconable.ICON_FLAG_READ_STATUS.inv(), project)
-    }
-    if (file.`is`(VFileProperty.SYMLINK)) {
-      icon = LayeredIcon(icon, PlatformIcons.SYMLINK_ICON)
-    }
-    if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
-        Registry.`is`("ide.locked.icon.enabled", false) &&
-        (!file.isWritable || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
-      icon = LayeredIcon(icon, PlatformIcons.LOCKED_ICON)
-    }
-    LastComputedIconCache.put(file, icon, flags)
-    return icon
+  fun computeFileIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon {
+    return computeFileIconImpl(file = BackedVirtualFile.getOriginFileIfBacked(file), project = project, flags = flags)
   }
 
   /**
    * @return a deferred icon for the file, taking into account [FileIconProvider] and [FileIconPatcher] extensions.
-   * Use [computeFileIcon] where possible (e.g. in background threads) to get a non-deferred icon.
+   * Use [computeFileIcon] where possible (e.g., in background threads) to get a non-deferred icon.
    */
   @JvmStatic
-  fun getIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon =
-    getIconImpl(BackedVirtualFile.getOriginFileIfBacked(file), flags, project)
+  fun getIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon {
+    return getIconImpl(BackedVirtualFile.getOriginFileIfBacked(file), flags, project)
+  }
 
   private fun getIconImpl(file: VirtualFile, flags: Int, project: Project?): Icon {
     val lastIcon = LastComputedIconCache.get(file, flags)
@@ -208,23 +171,6 @@ object IconUtil {
    */
   @JvmStatic
   fun computeBaseFileIcon(vFile: VirtualFile): Icon = computeFileTypeIcon(vFile, true)
-
-  private fun computeFileTypeIcon(vFile: VirtualFile, onlyFastChecks: Boolean): Icon {
-    var icon = TypePresentationService.getService().getIcon(vFile)
-    if (icon != null) {
-      return icon
-    }
-    val fileType = if (onlyFastChecks) FileTypeRegistry.getInstance().getFileTypeByFileName(vFile.name) else vFile.fileType
-    if (vFile.isDirectory && fileType !is DirectoryFileType) {
-      return IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON)
-    }
-    icon = fileType.icon
-    return icon ?: getEmptyIcon(false)
-  }
-
-  private fun getProviderIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon? {
-    return FileIconProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getIcon(file, flags, project) }
-  }
 
   @JvmStatic
   fun getEmptyIcon(showVisibility: Boolean): Icon {
@@ -322,7 +268,7 @@ object IconUtil {
   /**
    * Use it only for icons under selection.
    */
-  @ApiStatus.Internal
+  @Internal
   @Contract("null -> null; !null -> !null")
   @JvmStatic
   fun wrapToSelectionAwareIcon(iconUnderSelection: Icon?): Icon? {
@@ -335,11 +281,11 @@ object IconUtil {
         paintIconWithSelection(icon = iconUnderSelection, c = c, g = g, x = x, y = y)
       }
 
-      override fun getIconWidth(): Int = iconUnderSelection.iconWidth
+      override fun getIconWidth() = iconUnderSelection.iconWidth
 
-      override fun getIconHeight(): Int = iconUnderSelection.iconHeight
+      override fun getIconHeight() = iconUnderSelection.iconHeight
 
-      override fun toString(): String = "IconUtil.wrapToSelectionAwareIcon for $iconUnderSelection"
+      override fun toString() = "IconUtil.wrapToSelectionAwareIcon for $iconUnderSelection"
     }
   }
 
@@ -386,7 +332,6 @@ object IconUtil {
    * Returns a deep copy of the provided icon.
    * @see CopyableIcon
    */
-  @JvmStatic
   fun deepCopy(icon: Icon, ancestor: Component?): Icon = copyIcon(icon = icon, ancestor = ancestor, deepCopy = true)
 
   /**
@@ -419,16 +364,15 @@ object IconUtil {
       return icon.scale(scale = scale, ancestor = ancestor)
     }
 
-    val ctx = if (ancestor == null && icon is ScaleContextAware) {
+    val scaleContext = if (ancestor == null && icon is ScaleContextAware) {
       // in this case, the icon's context should be preserved, except the OBJ_SCALE
-      val usrCtx = icon.scaleContext
-      ScaleContext.create(usrCtx)
+      ScaleContext.create(icon.scaleContext)
     }
     else {
       ScaleContext.create(ancestor)
     }
-    ctx.setScale(ScaleType.OBJ_SCALE.of(scale))
-    return scale(icon = icon, scaleContext = ctx)
+    scaleContext.setScale(ScaleType.OBJ_SCALE.of(scale))
+    return scale(icon = icon, scaleContext = scaleContext)
   }
 
   /**
@@ -482,45 +426,69 @@ object IconUtil {
   fun scaleByFont(icon: Icon, ancestor: Component?, fontSize: Float): Icon {
     var scale = getFontScale(fontSize)
     if (icon is ScaleContextAware) {
-      val ctxIcon = icon as ScaleContextAware
+      val scaleContext = if (ancestor == null) icon.scaleContext else ScaleContext.create(ancestor)
       // take into account the user scale of the icon
-      val usrScale = ctxIcon.scaleContext.getScale(ScaleType.USR_SCALE)
-      scale /= usrScale.toFloat()
+      scale /= scaleContext.getScale(ScaleType.USR_SCALE).toFloat()
     }
     return scale(icon = icon, ancestor = ancestor, scale = scale)
   }
 
   @JvmStatic
   fun scaleByIconWidth(icon: Icon?, ancestor: Component?, defaultIcon: Icon): Icon {
-    return scaleByIcon(icon, ancestor, defaultIcon) { it.iconWidth }
+    return scaleByIcon(icon = icon, ancestor = ancestor, defaultIcon = defaultIcon) { it.iconWidth }
   }
 
   @JvmOverloads
   @JvmStatic
   fun colorize(source: Icon, color: Color, keepGray: Boolean = false): Icon {
-    return filterIcon(icon = source, filterSupplier = { ColorFilter(color, keepGray) })
+    return filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
+      override fun getFilter() = ColorFilter(color = color, keepGray = keepGray)
+    })
   }
 
   @JvmOverloads
   @JvmStatic
   fun colorize(g: Graphics2D?, source: Icon, color: Color, keepGray: Boolean = false): Icon {
-    return filterIcon(g = g, source = source, filter = ColorFilter(color, keepGray))
+    return filterIcon(g = g, source = source, filter = ColorFilter(color = color, keepGray = keepGray))
   }
 
   @JvmStatic
   fun desaturate(source: Icon): Icon {
-    return filterIcon(icon = source, filterSupplier = { DesaturationFilter() })
+    return filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
+      override fun getFilter(): RGBImageFilter = DesaturationFilter()
+    })
   }
 
   @JvmStatic
-  fun brighter(source: Icon, tones: Int): Icon = filterIcon(icon = source, filterSupplier = { BrighterFilter(tones) })
+  fun brighter(source: Icon, tones: Int): Icon = filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
+    override fun getFilter() = BrighterFilter(tones)
+  })
 
   @JvmStatic
-  fun darker(source: Icon, tones: Int): Icon = filterIcon(icon = source, filterSupplier = { DarkerFilter(tones) })
+  fun darker(source: Icon, tones: Int): Icon = filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
+    override fun getFilter() = DarkerFilter(tones)
+  })
+
+  @Internal
+  fun mainColor(source: Icon): Color {
+    val icon = (source as? DeferredIcon)?.evaluate() ?: source
+
+    val iconImage = toBufferedImage(icon)
+    val filter = MainColorFilter()
+
+    for (x in 0 until iconImage.width) {
+      for (y in 0 until iconImage.height) {
+        val color = iconImage.getRGB(x, y)
+        filter.filterRGB(x, y, color)
+      }
+    }
+
+    return filter.mainColor
+  }
 
   @JvmStatic
-  fun createImageIcon(img: Image): JBImageIcon {
-    return object : JBImageIcon(img) {
+  fun createImageIcon(image: Image): JBImageIcon {
+    return object : JBImageIcon(image) {
       override fun getIconWidth(): Int = ImageUtil.getUserWidth(image)
 
       override fun getIconHeight(): Int = ImageUtil.getUserHeight(image)
@@ -541,7 +509,9 @@ object IconUtil {
   @JvmStatic
   @Deprecated("Please use `IconLoader.filterIcon` instead", replaceWith = ReplaceWith("IconLoader.filterIcon", "com.intellij.openapi.util.IconLoader"))
   fun filterIcon(icon: Icon, filterSupplier: Supplier<out RGBImageFilter>, @Suppress("UNUSED_PARAMETER") ancestor: Component?): Icon {
-    return filterIcon(icon = icon, filterSupplier = filterSupplier::get)
+    return filterIcon(icon = icon, filterSupplier = object : RgbImageFilterSupplier {
+      override fun getFilter() = filterSupplier.get()
+    })
   }
 
   /**
@@ -583,6 +553,52 @@ object IconUtil {
   }
 }
 
+private fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int): Icon {
+  if (!file.isValid || project != null && (project.isDisposed || !wasEverInitialized(project))) {
+    return AllIcons.FileTypes.Unknown
+  }
+
+  @Suppress("NAME_SHADOWING") val flags = filterFileIconFlags(file, flags)
+  val providerIcon = getProviderIcon(file, flags, project)
+  var icon = providerIcon ?: computeFileTypeIcon(vFile = file, onlyFastChecks = false)
+  val dumb = project != null && DumbService.getInstance(project).isDumb
+  for (patcher in FileIconPatcher.EP_NAME.extensionList) {
+    if (dumb && !DumbService.isDumbAware(patcher)) {
+      continue
+    }
+
+    // render without a locked icon patch since we are going to apply it later anyway
+    icon = patcher.patchIcon(icon, file, flags and Iconable.ICON_FLAG_READ_STATUS.inv(), project)
+  }
+  if (file.`is`(VFileProperty.SYMLINK)) {
+    icon = LayeredIcon.layeredIcon(arrayOf(icon, PlatformIcons.SYMLINK_ICON))
+  }
+  if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
+      Registry.`is`("ide.locked.icon.enabled", false) &&
+      (!file.isWritable || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
+    icon = LayeredIcon.layeredIcon(arrayOf(icon, PlatformIcons.LOCKED_ICON))
+  }
+  LastComputedIconCache.put(file, icon, flags)
+  return icon
+}
+
+private fun getProviderIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon? {
+  return FileIconProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getIcon(file, flags, project) }
+}
+
+private fun computeFileTypeIcon(vFile: VirtualFile, onlyFastChecks: Boolean): Icon {
+  var icon = TypePresentationService.getService().getIcon(vFile)
+  if (icon != null) {
+    return icon
+  }
+  val fileType = if (onlyFastChecks) FileTypeRegistry.getInstance().getFileTypeByFileName(vFile.name) else vFile.fileType
+  if (vFile.isDirectory && fileType !is DirectoryFileType) {
+    return IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON)
+  }
+  icon = fileType.icon
+  return icon ?: IconUtil.getEmptyIcon(false)
+}
+
 private class IconSizeWrapper(private val icon: Icon?, private val width: Int, private val height: Int) : Icon {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     paintIcon(icon = icon, c = c, g = g, x = x, y = y)
@@ -601,7 +617,7 @@ private class IconSizeWrapper(private val icon: Icon?, private val width: Int, p
   override fun getIconHeight(): Int = height
 }
 
-class CropIcon internal constructor(val mySrc: Icon, val crop: Rectangle) : Icon {
+class CropIcon internal constructor(val sourceIcon: Icon, val crop: Rectangle) : Icon {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     val customG = g.create()
     try {
@@ -611,18 +627,18 @@ class CropIcon internal constructor(val mySrc: Icon, val crop: Rectangle) : Icon
         Rectangle2D.intersect(iconClip, gClip, iconClip)
       }
       customG.clip = iconClip
-      mySrc.paintIcon(c, customG, x - crop.x, y - crop.y)
+      sourceIcon.paintIcon(c, customG, x - crop.x, y - crop.y)
     }
     finally {
       customG.dispose()
     }
   }
 
-  override fun toString(): String = "${javaClass.simpleName} ($mySrc -> $crop)"
+  override fun toString(): String = "${javaClass.simpleName} ($sourceIcon -> $crop)"
   override fun getIconWidth(): Int = crop.width
   override fun getIconHeight(): Int = crop.height
-  override fun equals(other: Any?): Boolean = this === other || other is CropIcon && mySrc == other.mySrc && crop == other.crop
-  override fun hashCode(): Int = Objects.hash(mySrc, crop)
+  override fun equals(other: Any?): Boolean = this === other || other is CropIcon && sourceIcon == other.sourceIcon && crop == other.crop
+  override fun hashCode(): Int = Objects.hash(sourceIcon, crop)
 }
 
 private class ColorFilter(color: Color, private val keepGray: Boolean) : RGBImageFilter() {
@@ -664,6 +680,45 @@ private class DarkerFilter(private val tones: Int) : RGBImageFilter() {
   override fun filterRGB(x: Int, y: Int, rgb: Int): Int {
     val originalColor = Color(rgb, true)
     return ColorUtil.toAlpha(ColorUtil.darker(originalColor, tones), originalColor.alpha).rgb
+  }
+}
+
+private class MainColorFilter : RGBImageFilter() {
+  private val colorsMap = ConcurrentHashMap<Color, Int>()
+
+  @Suppress("UseJBColor")
+  val mainColor: Color get() {
+    var red = 0
+    var green = 0
+    var blue = 0
+    var alpha = 0
+    var count = 0
+
+    colorsMap.forEach {
+      red += it.key.red * it.value
+      green += it.key.green * it.value
+      blue += it.key.blue * it.value
+      alpha += it.key.alpha * it.value
+      count += it.value
+    }
+
+    if (count > 0) {
+      red /= count
+      green /= count
+      blue /= count
+      alpha /= count
+    }
+
+    return Color(red, green, blue, alpha)
+  }
+
+  @Suppress("UseJBColor")
+  override fun filterRGB(x: Int, y: Int, rgb: Int): Int {
+    val originalColor = Color(rgb, true)
+    if (originalColor.alpha > 0) {
+      colorsMap[originalColor] = (colorsMap[originalColor] ?: 0) + 1
+    }
+    return rgb
   }
 }
 
@@ -717,11 +772,11 @@ private fun filterIcon(g: Graphics2D?, source: Icon, filter: ColorFilter): Icon 
   val g2d = src.createGraphics()
   source.paintIcon(null, g2d, 0, 0)
   g2d.dispose()
-  val image = if (g != null) {
-    ImageUtil.createImage(g, source.iconWidth, source.iconHeight, BufferedImage.TYPE_INT_ARGB)
+  val image = if (g == null) {
+    ImageUtil.createImage(source.iconWidth, source.iconHeight, BufferedImage.TYPE_INT_ARGB)
   }
   else {
-    ImageUtil.createImage(source.iconWidth, source.iconHeight, BufferedImage.TYPE_INT_ARGB)
+    ImageUtil.createImage(g, source.iconWidth, source.iconHeight, BufferedImage.TYPE_INT_ARGB)
   }
   var rgba: Int
   for (y in 0 until src.raster.height) {
@@ -732,5 +787,13 @@ private fun filterIcon(g: Graphics2D?, source: Icon, filter: ColorFilter): Icon 
       }
     }
   }
-  return IconUtil.createImageIcon(image as Image)
+  return object : ImageIcon(image) {
+    override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+      drawImage(g = g, image = image, x = x, y = y, observer = imageObserver ?: c)
+    }
+
+    override fun getIconWidth(): Int = ImageUtil.getUserWidth(image)
+
+    override fun getIconHeight(): Int = ImageUtil.getUserHeight(image)
+  }
 }

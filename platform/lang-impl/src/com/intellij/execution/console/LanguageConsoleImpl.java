@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -11,8 +11,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.EmptyAction;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.*;
@@ -53,6 +52,7 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -176,7 +176,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       }
     });
 
-    EmptyAction.registerActionShortcuts(myHistoryViewer.getComponent(), myConsoleExecutionEditor.getComponent());
+    ActionUtil.copyRegisteredShortcuts(myHistoryViewer.getComponent(), myConsoleExecutionEditor.getComponent());
     myHistoryViewer.putUserData(EXECUTION_EDITOR_KEY, myConsoleExecutionEditor);
 
     if (ExperimentalUI.isNewUI()) {
@@ -283,7 +283,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   protected @NotNull String addToHistoryInner(final @NotNull TextRange textRange, final @NotNull EditorEx editor, boolean erase, final boolean preserveMarkup) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     String result = addTextRangeToHistory(textRange, editor, preserveMarkup);
     if (erase) {
@@ -352,8 +352,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       if (!rangeHighlighter.isValid()) {
         continue;
       }
-      Object tooltip = rangeHighlighter.getErrorStripeTooltip();
-      HighlightInfo highlightInfo = tooltip instanceof HighlightInfo? (HighlightInfo)tooltip : null;
+      HighlightInfo highlightInfo = HighlightInfo.fromRangeHighlighter(rangeHighlighter);
       if (highlightInfo != null) {
         if (highlightInfo.getSeverity() != HighlightSeverity.INFORMATION) {
           continue;
@@ -444,7 +443,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       this.getHistoryViewer().getMarkupModel().addRangeHighlighter(null, document.getTextLength(), document.getTextLength(), 0,
                                                                    HighlighterTargetArea.EXACT_RANGE);
     print(prompt, myConsoleExecutionEditor.getPromptAttributes());
-    highlighter.putUserData(ConsoleHistoryCopyHandler.PROMPT_LENGTH_MARKER, prompt.length());
+    highlighter.putUserData(ConsoleHistoryCopyHandlerKt.PROMPT_LENGTH_MARKER, prompt.length());
   }
 
   public static class Helper {
@@ -517,7 +516,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     }
   }
 
-  public static class ConsoleEditorsPanel extends JPanel {
+  public static final class ConsoleEditorsPanel extends JPanel {
     private final LanguageConsoleImpl myConsole;
 
     public ConsoleEditorsPanel(@NotNull LanguageConsoleImpl console) {

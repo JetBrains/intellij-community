@@ -10,14 +10,15 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.future.await
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListQuickFilter.*
 
-@OptIn(FlowPreview::class)
-internal class GHPRSearchPanelViewModel(
+@ApiStatus.Experimental
+class GHPRSearchPanelViewModel internal constructor(
   scope: CoroutineScope,
   private val project: Project,
   private val repositoryDataService: GHPRRepositoryDataService,
@@ -61,6 +62,7 @@ internal class GHPRSearchPanelViewModel(
   }
 
   init {
+    @OptIn(FlowPreview::class)
     scope.launchNow {
       // with debounce to avoid collecting intermediate state
       searchState.drop(1).debounce(5000).collect {
@@ -75,7 +77,8 @@ internal class GHPRSearchPanelViewModel(
   suspend fun getLabels(): List<GHLabel> = repositoryDataService.labels.await()
 }
 
-internal sealed class GHPRListQuickFilter(user: GHUser) : ReviewListQuickFilter<GHPRListSearchValue> {
+@ApiStatus.Experimental
+sealed class GHPRListQuickFilter(user: GHUser) : ReviewListQuickFilter<GHPRListSearchValue> {
   protected val userLogin = user.login
 
   data class Open(val user: GHUser) : GHPRListQuickFilter(user) {

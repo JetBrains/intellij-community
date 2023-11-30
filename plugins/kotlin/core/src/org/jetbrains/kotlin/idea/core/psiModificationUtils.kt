@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core
 
@@ -10,6 +10,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
@@ -21,11 +22,11 @@ import org.jetbrains.kotlin.idea.base.psi.*
 import org.jetbrains.kotlin.idea.base.psi.addTypeParameter
 import org.jetbrains.kotlin.idea.base.psi.appendDeclaration
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
+import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -43,7 +44,6 @@ import org.jetbrains.kotlin.resolve.OverridingUtil
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
 import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentsInParentheses
 import org.jetbrains.kotlin.resolve.calls.util.isFakeElement
 import org.jetbrains.kotlin.resolve.checkers.ExplicitApiDeclarationChecker
 import org.jetbrains.kotlin.resolve.checkers.explicitApiEnabled
@@ -66,11 +66,24 @@ fun KtLambdaArgument.moveInsideParentheses(bindingContext: BindingContext): KtCa
     return moveInsideParenthesesAndReplaceWith(ktExpression, bindingContext)
 }
 
+/**
+ * Moves the lambda argument inside parentheses and replaces it with the specified replacement expression.
+ * If the lambda argument should be named, it retrieves the lambda argument name from the binding context.
+ *
+ * @param replacement The replacement expression to be used.
+ * @param bindingContext The binding context used to retrieve the lambda argument name if necessary.
+ * @return The modified `KtCallExpression` with the lambda argument moved inside parentheses and replaced with
+ * the specified replacement expression.
+ */
 fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
     replacement: KtExpression,
     bindingContext: BindingContext
-): KtCallExpression = moveInsideParenthesesAndReplaceWith(replacement, getLambdaArgumentName(bindingContext))
-
+): KtCallExpression {
+    val lambdaArgumentName = if (shouldLambdaParameterBeNamed(this)) {
+        this.getLambdaArgumentName(bindingContext)
+    } else null
+    return this.moveInsideParenthesesAndReplaceWith(replacement, lambdaArgumentName)
+}
 
 fun KtLambdaArgument.getLambdaArgumentName(bindingContext: BindingContext): Name? {
     val callExpression = parent as KtCallExpression
@@ -78,36 +91,24 @@ fun KtLambdaArgument.getLambdaArgumentName(bindingContext: BindingContext): Name
     return (resolvedCall?.getArgumentMapping(this) as? ArgumentMatch)?.valueParameter?.name
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith(
+        expression = "this.moveInsideParenthesesAndReplaceWith(replacement, if (lambdaArgumentName != null && shouldLambdaParameterBeNamed(this)) lambdaArgumentName else null)",
+        imports = [
+            "org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith",
+            "org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed"
+        ]
+    ), level = DeprecationLevel.ERROR
+)
 fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
     replacement: KtExpression,
-    functionLiteralArgumentName: Name?,
+    lambdaArgumentName: Name?,
     withNameCheck: Boolean = true,
-): KtCallExpression {
-    val oldCallExpression = parent as KtCallExpression
-    val newCallExpression = oldCallExpression.copy() as KtCallExpression
-
-    val psiFactory = KtPsiFactory(project)
-
-    val argument =
-        if (withNameCheck && shouldLambdaParameterBeNamed(newCallExpression.getValueArgumentsInParentheses(), oldCallExpression)) {
-            psiFactory.createArgument(replacement, functionLiteralArgumentName)
-        } else {
-            psiFactory.createArgument(replacement)
-        }
-
-    val functionLiteralArgument = newCallExpression.lambdaArguments.firstOrNull()!!
-    val valueArgumentList = newCallExpression.valueArgumentList ?: psiFactory.createCallArguments("()")
-
-    valueArgumentList.addArgument(argument)
-
-    (functionLiteralArgument.prevSibling as? PsiWhiteSpace)?.delete()
-    if (newCallExpression.valueArgumentList != null) {
-        functionLiteralArgument.delete()
-    } else {
-        functionLiteralArgument.replace(valueArgumentList)
-    }
-    return oldCallExpression.replace(newCallExpression) as KtCallExpression
-}
+): KtCallExpression = this.moveInsideParenthesesAndReplaceWith(
+    replacement, if (lambdaArgumentName != null && shouldLambdaParameterBeNamed(this)) lambdaArgumentName else null
+)
 
 fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     val valueArgument = parentOfType<KtValueArgument>()?.takeIf {
@@ -120,64 +121,64 @@ fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
     }
 }
 
-private fun shouldLambdaParameterBeNamed(args: List<ValueArgument>, callExpr: KtCallExpression): Boolean {
-    if (args.any { it.isNamed() }) return true
-    val callee = (callExpr.calleeExpression?.mainReference?.resolve() as? KtFunction) ?: return false
-    return if (callee.valueParameters.any { it.isVarArg }) true else callee.valueParameters.size - 1 > args.size
-}
-
 fun KtCallExpression.getLastLambdaExpression(): KtLambdaExpression? {
     if (lambdaArguments.isNotEmpty()) return null
     return valueArguments.lastOrNull()?.getArgumentExpression()?.unpackFunctionLiteral()
 }
 
+fun KtCallExpression.isComplexCallWithLambdaArgument(): Boolean = when {
+    valueArguments.lastOrNull()?.isNamed() == true -> true
+    valueArguments.count { it.getArgumentExpression()?.unpackFunctionLiteral() != null } > 1 -> true
+    else -> false
+}
+
 @OptIn(FrontendInternals::class)
-fun KtCallExpression.canMoveLambdaOutsideParentheses(): Boolean {
+fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean = true): Boolean {
+    if (skipComplexCalls && isComplexCallWithLambdaArgument()) return false
+
     if (getStrictParentOfType<KtDelegatedSuperTypeEntry>() != null) return false
     val lastLambdaExpression = getLastLambdaExpression() ?: return false
     if (lastLambdaExpression.parentLabeledExpression()?.parentLabeledExpression() != null) return false
 
     val callee = calleeExpression
-    if (callee is KtNameReferenceExpression) {
-        val resolutionFacade = getResolutionFacade()
-        val samConversionTransformer = resolutionFacade.frontendService<SamConversionResolver>()
-        val samConversionOracle = resolutionFacade.frontendService<SamConversionOracle>()
-        val languageVersionSettings = resolutionFacade.languageVersionSettings
-        val newInferenceEnabled = languageVersionSettings.supportsFeature(LanguageFeature.NewInference)
+    if (callee !is KtNameReferenceExpression) return true
 
-        val bindingContext = safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
-        if (bindingContext.diagnostics.forElement(lastLambdaExpression).none { it.severity == Severity.ERROR }) {
-            val resolvedCall = getResolvedCall(bindingContext)
-            if (resolvedCall != null) {
-                val parameter = resolvedCall.getParameterForArgument(valueArguments.last()) ?: return false
-                val functionDescriptor = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return false
-                if (parameter != functionDescriptor.valueParameters.lastOrNull()) return false
-                return parameter.type.allowsMoveOutsideParentheses(samConversionTransformer, samConversionOracle, newInferenceEnabled)
-            }
+    val resolutionFacade = getResolutionFacade()
+    val samConversionTransformer = resolutionFacade.frontendService<SamConversionResolver>()
+    val samConversionOracle = resolutionFacade.frontendService<SamConversionOracle>()
+    val languageVersionSettings = resolutionFacade.languageVersionSettings
+    val newInferenceEnabled = languageVersionSettings.supportsFeature(LanguageFeature.NewInference)
+
+    val bindingContext = safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
+    if (bindingContext.diagnostics.forElement(lastLambdaExpression).none { it.severity == Severity.ERROR }) {
+        val resolvedCall = getResolvedCall(bindingContext)
+        if (resolvedCall != null) {
+            val parameter = resolvedCall.getParameterForArgument(valueArguments.last()) ?: return false
+            val functionDescriptor = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return false
+            if (parameter != functionDescriptor.valueParameters.lastOrNull()) return false
+            return parameter.type.allowsMoveOutsideParentheses(samConversionTransformer, samConversionOracle, newInferenceEnabled)
         }
-
-        val targets = bindingContext[BindingContext.REFERENCE_TARGET, callee]?.let { listOf(it) }
-            ?: bindingContext[BindingContext.AMBIGUOUS_REFERENCE_TARGET, callee]
-            ?: listOf()
-        val candidates = targets.filterIsInstance<FunctionDescriptor>()
-
-        val lambdaArgumentCount = valueArguments.count { it.getArgumentExpression()?.unpackFunctionLiteral() != null }
-        val referenceArgumentCount = valueArguments.count { it.getArgumentExpression() is KtCallableReferenceExpression }
-
-        // if there are functions among candidates but none of them have last function parameter then not show the intention
-        val areAllCandidatesWithoutLastFunctionParameter = candidates.none {
-            it.allowsMoveOfLastParameterOutsideParentheses(
-                lambdaArgumentCount + referenceArgumentCount,
-                samConversionTransformer,
-                samConversionOracle,
-                newInferenceEnabled
-            )
-        }
-
-        if (candidates.isNotEmpty() && areAllCandidatesWithoutLastFunctionParameter) return false
     }
 
-    return true
+    val targets = bindingContext[BindingContext.REFERENCE_TARGET, callee]?.let { listOf(it) }
+        ?: bindingContext[BindingContext.AMBIGUOUS_REFERENCE_TARGET, callee]
+        ?: listOf()
+    val candidates = targets.filterIsInstance<FunctionDescriptor>()
+
+    val lambdaArgumentCount = valueArguments.count { it.getArgumentExpression()?.unpackFunctionLiteral() != null }
+    val referenceArgumentCount = valueArguments.count { it.getArgumentExpression() is KtCallableReferenceExpression }
+
+    // if there are functions among candidates but none of them have last function parameter then not show the intention
+    val areAllCandidatesWithoutLastFunctionParameter = candidates.none {
+        it.allowsMoveOfLastParameterOutsideParentheses(
+            lambdaArgumentCount + referenceArgumentCount,
+            samConversionTransformer,
+            samConversionOracle,
+            newInferenceEnabled
+        )
+    }
+
+    return candidates.isEmpty() || !areAllCandidatesWithoutLastFunctionParameter
 }
 
 private fun KtExpression.parentLabeledExpression(): KtLabeledExpression? {

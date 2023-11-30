@@ -24,7 +24,7 @@ import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +111,7 @@ public final class HTMLTextPainter {
     myFirstLineNumber = firstLineNumber;
   }
 
-  public void paint(@Nullable Int2ObjectSortedMap<PsiReference> refMap, @NotNull Writer writer, boolean isStandalone) throws IOException {
+  public void paint(@Nullable Int2ObjectMap<? extends PsiReference> refMap, @NotNull Writer writer, boolean isStandalone) throws IOException {
     HighlighterIterator hIterator = myHighlighter.createIterator(myOffset);
     if (hIterator.atEnd()) {
       return;
@@ -382,17 +382,13 @@ public final class HTMLTextPainter {
     if (!Comparing.equal(attributes1.getBackgroundColor(), attributes2.getBackgroundColor())) {
       return false;
     }
-    if (!Comparing.equal(attributes1.getEffectColor(), attributes2.getEffectColor())) {
-      return false;
-    }
-    return true;
+    return Comparing.equal(attributes1.getEffectColor(), attributes2.getEffectColor());
   }
 
   /**
    * Converts the code fragment to HTML with in-line styles.
    * The information about language, project and markup settings is getting
    * from {@code context} parameter.
-   *
    * The code tokens in HTML are highlighted by lexer-based highlighter.
    * There is no formatting activity in this call.
    *

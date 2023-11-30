@@ -6,6 +6,7 @@ import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING
 import com.intellij.collaboration.api.httpclient.HttpClientUtil.CONTENT_ENCODING_HEADER
 import com.intellij.collaboration.api.logName
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
@@ -14,6 +15,7 @@ import java.io.Reader
 import java.io.StringReader
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import java.net.http.HttpResponse.BodyHandler
 import java.net.http.HttpResponse.ResponseInfo
 import java.nio.ByteBuffer
 import java.util.concurrent.Flow
@@ -75,12 +77,34 @@ object HttpClientUtil {
   }
 
   /**
+   * Shorthand for creating a body handler that inflates the incoming response body if it is zipped, checks that
+   * the status code is OK (throws [HttpStatusErrorException] otherwise), and applies the given function to read
+   * the result body and map it to some value.
+   *
+   * @param logger The logger to log non-OK status codes in.
+   * @param request The request performed, for logging purposes.
+   * @param mapToResult Maps a response to a result value. Exceptions thrown from this function are not logged by
+   * [inflateAndReadWithErrorHandlingAndLogging].
+   */
+  fun <T> inflateAndReadWithErrorHandlingAndLogging(
+    logger: Logger,
+    request: HttpRequest,
+    mapToResult: (Reader, ResponseInfo) -> T
+  ): BodyHandler<T> = InflatedStreamReadingBodyHandler { responseInfo, bodyStream ->
+    readSuccessResponseWithLogging(logger, request, responseInfo, bodyStream) { reader ->
+      mapToResult(reader, responseInfo)
+    }
+  }
+
+  /**
    * Build the User-Agent header value for the [agentName]
    * Append product, java and OS data
    */
   fun getUserAgentValue(agentName: String): String {
     val ideName = ApplicationNamesInfo.getInstance().fullProductName.replace(' ', '-')
-    val ideBuild = ApplicationInfo.getInstance().build.asString()
+    val ideBuild =
+      if (ApplicationManager.getApplication().isUnitTestMode) "test"
+      else ApplicationInfo.getInstance().build.asString()
     val java = "JRE " + SystemInfo.JAVA_RUNTIME_VERSION
     val os = SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION
     val arch = SystemInfo.OS_ARCH

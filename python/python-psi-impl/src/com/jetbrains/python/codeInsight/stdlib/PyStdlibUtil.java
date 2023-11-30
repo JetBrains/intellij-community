@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.LazyInitializer;
 import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,14 +16,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class PyStdlibUtil {
-  @Nullable private static final Set<String> PACKAGES = loadStdlibPackagesList();
+  private static final LazyInitializer.LazyValue<@Nullable Set<String>> PACKAGES = new LazyInitializer.LazyValue<>(
+    PyStdlibUtil::loadStdlibPackagesList);
 
   private PyStdlibUtil() {
   }
 
   @Nullable
   public static Collection<String> getPackages() {
-    return PACKAGES;
+    return PACKAGES.get();
   }
 
   @Nullable

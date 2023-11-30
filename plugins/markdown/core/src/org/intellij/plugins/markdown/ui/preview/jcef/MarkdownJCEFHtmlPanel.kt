@@ -106,17 +106,23 @@ class MarkdownJCEFHtmlPanel(
     Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(resourceProvider))
     Disposer.register(this, PreviewStaticServer.instance.registerResourceProvider(fileSchemeResourcesProcessor))
     jbCefClient.addRequestHandler(MyFilteringRequestHandler(), cefBrowser, this)
-    browserPipe.subscribe(JcefBrowserPipeImpl.WINDOW_READY_EVENT) {
-      delayedContent?.let {
-        cefBrowser.executeJavaScript(it, null, 0)
-        delayedContent = null
+    browserPipe.subscribe(JcefBrowserPipeImpl.WINDOW_READY_EVENT, object : BrowserPipe.Handler {
+      override fun processMessageReceived(data: String): Boolean {
+        delayedContent?.let {
+          cefBrowser.executeJavaScript(it, null, 0)
+          delayedContent = null
+        }
+        return false
       }
-    }
-    browserPipe.subscribe(SET_SCROLL_EVENT) { data ->
-      data.toIntOrNull()?.let { offset ->
-        scrollListeners.forEach { it.onScroll(offset) }
+    })
+
+    browserPipe.subscribe(SET_SCROLL_EVENT, object : BrowserPipe.Handler {
+      override fun processMessageReceived(data: String): Boolean {
+        data.toIntOrNull()?.let { offset -> scrollListeners.forEach { it.onScroll(offset) } }
+        return false
       }
-    }
+    })
+
     loadIndexContent()
   }
 

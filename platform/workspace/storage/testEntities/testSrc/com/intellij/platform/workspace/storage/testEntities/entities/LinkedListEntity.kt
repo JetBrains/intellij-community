@@ -56,7 +56,8 @@ interface LinkedListEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: LinkedListEntity, modification: LinkedListEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: LinkedListEntity,
+                                      modification: LinkedListEntity.Builder.() -> Unit): LinkedListEntity = modifyEntity(
   LinkedListEntity.Builder::class.java, entity, modification)
 //endregion
 

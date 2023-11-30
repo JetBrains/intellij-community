@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation
 
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
@@ -94,6 +92,20 @@ class Impl extends Intf {
 
     assert impl.findMethodsByName('xxx3', false)[0] in elements
     assert !(impl.findMethodsByName('xxx1', false)[0] in elements)
+  }
+  
+  void "test goto symbol inner class dollar sign"() {
+    def method = myFixture.addClass('''
+package pkg;
+class Cls {
+  class Inner {
+    void paint() {}
+  }
+}
+''').innerClasses[0].methods
+    assert gotoSymbol('pkg.Cls.Inner.paint') == [method]
+    assert gotoSymbol('pkg.Cls$Inner.paint') == [method]
+    assert gotoSymbol('pkg.Cls$Inner#paint') == [method]
   }
 
   void "test goto symbol by Copy Reference result"() {

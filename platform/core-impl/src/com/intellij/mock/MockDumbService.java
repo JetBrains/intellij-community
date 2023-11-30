@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public class MockDumbService extends DumbService {
   private final Project myProject;
@@ -78,7 +80,20 @@ public class MockDumbService extends DumbService {
   }
 
   @Override
-  public void showDumbModeActionBalloon(@NotNull String balloonText, @NotNull Runnable runWhenSmartAndBalloonUnhidden) {
+  public void showDumbModeNotificationForFunctionality(@NotNull @NlsContexts.PopupContent String message,
+                                                       @NotNull DumbModeBlockedFunctionality functionality) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void showDumbModeNotificationForAction(@NotNull @NlsContexts.PopupContent String message, @Nullable String actionId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void showDumbModeActionBalloon(@NotNull @NlsContexts.PopupContent String balloonText,
+                                        @NotNull Runnable runWhenSmartAndBalloonStillShowing,
+                                        @NotNull List<String> actionIds) {
     throw new UnsupportedOperationException();
   }
 

@@ -10,17 +10,13 @@ import com.intellij.psi.util.nextLeaf
 import com.intellij.psi.util.prevLeaf
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
-import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
@@ -33,7 +29,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
 
-internal fun KtAnalysisSession.withClassifierSymbolInfo(
+context(KtAnalysisSession)
+internal fun withClassifierSymbolInfo(
     symbol: KtClassifierSymbol,
     elementBuilder: LookupElementBuilder
 ): LookupElementBuilder = elementBuilder
@@ -41,7 +38,8 @@ internal fun KtAnalysisSession.withClassifierSymbolInfo(
     .withIcon(getIconFor(symbol))
     .withTypeText(getTypeTextForClassifier(symbol))
 
-internal fun KtAnalysisSession.withCallableSignatureInfo(
+context(KtAnalysisSession)
+internal fun withCallableSignatureInfo(
     signature: KtCallableSignature<*>,
     elementBuilder: LookupElementBuilder
 ): LookupElementBuilder = elementBuilder
@@ -53,7 +51,10 @@ internal fun KtAnalysisSession.withCallableSignatureInfo(
 // FIXME: This is a hack, we should think how we can get rid of it
 @OptIn(KtAllowAnalysisOnEdt::class)
 internal inline fun <T> withAllowedResolve(action: () -> T): T {
-    return allowAnalysisOnEdt(action)
+    @OptIn(KtAllowAnalysisFromWriteAction::class)
+    allowAnalysisFromWriteAction {
+        return allowAnalysisOnEdt(action)
+    }
 }
 
 internal fun CharSequence.skipSpaces(index: Int): Int =
@@ -98,30 +99,3 @@ private fun getSuperTypeQualifierRange(typeReference: KtTypeReference): TextRang
     (typeReference.prevLeaf { it.elementType == KtTokens.LT } ?: typeReference).startOffset,
     (typeReference.nextLeaf { it.elementType == KtTokens.GT } ?: typeReference).endOffset
 )
-
-/**
- * Checks whether [this] is possibly a subtype of [superType] by replacing all type arguments in [superType] with star projections and
- * checking subtyping relation between [this] and obtained type. For example, `MutableList<List<T>>` is possibly a subtype of
- * `List<List<String>>`, because MutableList<List<T>>` is a subtype of `List<*>`.
- *
- * This check only approximates the possibility of the subtyping relation.
- * An accurate estimation requires the use of the constraint system, which can lead to a loss in performance.
- */
-context(KtAnalysisSession)
-internal infix fun KtType.isPossiblySubTypeOf(superType: KtType): Boolean {
-    if (this is KtTypeParameterType) return this.hasCommonSubTypeWith(superType)
-
-    if (superType is KtTypeParameterType) return superType.symbol.upperBounds.all { this isPossiblySubTypeOf it }
-
-    val superTypeWithReplacedTypeArguments = superType.expandedClassSymbol?.let { symbol ->
-        buildClassTypeWithStarProjections(symbol, superType.nullability)
-    }
-    return superTypeWithReplacedTypeArguments != null && this isSubTypeOf superTypeWithReplacedTypeArguments
-}
-
-private fun KtAnalysisSession.buildClassTypeWithStarProjections(symbol: KtClassOrObjectSymbol, nullability: KtTypeNullability): KtType =
-    buildClassType(symbol) {
-        repeat(symbol.typeParameters.size) {
-            argument(KtStarTypeProjection(token))
-        }
-    }.withNullability(nullability)

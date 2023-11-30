@@ -20,10 +20,38 @@ fun catchNotificationText(project: Project, groupId: String, action: () -> Unit)
     return notifications.single().content
 }
 
+suspend fun catchNotificationTextAsync(project: Project, groupId: String, action: suspend () -> Unit): String? {
+    val notifications = catchNotificationsAsync(project, groupId, action).ifEmpty { return null }
+    return notifications.single().content
+}
+
 fun catchNotifications(project: Project, groupId: String, action: () -> Unit) =
     catchNotifications(project, action).filter { it.groupId == groupId }
 
+suspend fun catchNotificationsAsync(project: Project, groupId: String, action: suspend () -> Unit) =
+    catchNotificationsAsync(project, action).filter { it.groupId == groupId }
+
 fun catchNotifications(project: Project, action: () -> Unit): List<Notification> {
+    val myDisposable = Disposer.newDisposable()
+    try {
+        val notifications = mutableListOf<Notification>()
+        val connection = project.messageBus.connect(myDisposable)
+        connection.subscribe(Notifications.TOPIC, object : Notifications {
+            override fun notify(notification: Notification) {
+                notifications += notification
+            }
+        })
+
+        action()
+        connection.deliverImmediately()
+        ApplicationManager.getApplication().invokeAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
+        return notifications
+    } finally {
+        Disposer.dispose(myDisposable)
+    }
+}
+
+suspend fun catchNotificationsAsync(project: Project, action: suspend () -> Unit): List<Notification> {
     val myDisposable = Disposer.newDisposable()
     try {
         val notifications = mutableListOf<Notification>()

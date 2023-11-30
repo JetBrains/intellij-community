@@ -1,0 +1,3 @@
+from netaddr import *
+
+def main() -> None: ...

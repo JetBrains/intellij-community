@@ -1,0 +1,15 @@
+test.java.file
+  POSTFIX_EXPRESSION
+    REFERENCE_EXPRESSION
+      PARENTH_EXPRESSION
+        LPARENTH
+        THIS_EXPRESSION
+          REFERENCE_PARAMETER_LIST
+            <empty list>
+          THIS_KEYWORD
+        RPARENTH
+      DOT
+      REFERENCE_PARAMETER_LIST
+        <empty list>
+      IDENTIFIER
+    MINUSMINUS

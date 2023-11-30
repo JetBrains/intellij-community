@@ -24,10 +24,13 @@ data class FieldDescriptor(val path: String,
 data class EventDescriptor(val event: String,
                            val fields: Set<FieldDescriptor>)
 
+data class PluginSchemeDescriptor(val id: String,
+                                  val version: String)
+
 data class GroupDescriptor(val id: String,
                            val type: String,
                            val version: Int,
                            val schema: Set<EventDescriptor>,
                            val className: String,
                            val recorder: String,
-                           val pluginId: String)
+                           val plugin: PluginSchemeDescriptor)

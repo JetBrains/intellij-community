@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -268,7 +268,7 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   protected static Icon dressIcon(final VirtualFile file, final Icon baseIcon) {
-    return file.isValid() && file.is(VFileProperty.SYMLINK) ? new LayeredIcon(baseIcon, PlatformIcons.SYMLINK_ICON) : baseIcon;
+    return file.isValid() && file.is(VFileProperty.SYMLINK) ? LayeredIcon.layeredIcon(new Icon[]{baseIcon, PlatformIcons.SYMLINK_ICON}) : baseIcon;
   }
 
   public String getName(final VirtualFile file) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -37,9 +37,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class JavaFxAnnotator implements Annotator {
+public final class JavaFxAnnotator implements Annotator {
   @Override
-  public void annotate(@NotNull final PsiElement element, @NotNull AnnotationHolder holder) {
+  public void annotate(final @NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     final PsiFile containingFile = holder.getCurrentAnnotationSession().getFile();
     if (!JavaFxFileTypeFactory.isFxml(containingFile)) return;
     if (element instanceof XmlAttributeValue) {
@@ -132,7 +132,7 @@ public class JavaFxAnnotator implements Annotator {
     }
   }
 
-  private static class ColorIconRenderer extends GutterIconRenderer implements DumbAware {
+  private static final class ColorIconRenderer extends GutterIconRenderer implements DumbAware {
     private final ColorIcon myIcon;
     private final PsiElement myElement;
 
@@ -141,9 +141,8 @@ public class JavaFxAnnotator implements Annotator {
       myElement = element;
     }
 
-    @NotNull
     @Override
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return myIcon;
     }
 

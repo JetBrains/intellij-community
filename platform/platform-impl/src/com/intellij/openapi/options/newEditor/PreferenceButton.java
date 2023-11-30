@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -14,7 +14,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class PreferenceButton extends JComponent {
+public final class PreferenceButton extends JComponent {
   private final String myLabel;
   private final Icon myIcon;
 

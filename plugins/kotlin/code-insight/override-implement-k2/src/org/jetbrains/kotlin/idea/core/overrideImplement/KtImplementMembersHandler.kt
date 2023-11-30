@@ -37,7 +37,8 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
     }
 
     companion object {
-        fun KtAnalysisSession.getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
+        context(KtAnalysisSession)
+fun getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
             classWithUnimplementedMembers.getClassOrObjectSymbol()?.let { getUnimplementedMemberSymbols(it) }.orEmpty()
                 .map { unimplementedMemberSymbol ->
                     val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
@@ -52,7 +53,8 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
                     )
                 }
 
-        private fun KtAnalysisSession.getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClassOrObjectSymbol): List<KtCallableSymbol> {
+        context(KtAnalysisSession)
+private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClassOrObjectSymbol): List<KtCallableSymbol> {
             return buildList {
                 classWithUnimplementedMembers.getMemberScope().getCallableSymbols().forEach { symbol ->
                     if (!symbol.isVisibleInClass(classWithUnimplementedMembers)) return@forEach
@@ -129,7 +131,8 @@ object MemberNotImplementedQuickfixFactories {
             getUnimplementedMemberFixes(diagnostic.psi, false)
         }
 
-    private fun KtAnalysisSession.getUnimplementedMemberFixes(
+    context(KtAnalysisSession)
+private fun getUnimplementedMemberFixes(
         classWithUnimplementedMembers: KtClassOrObject,
         includeImplementAsConstructorParameterQuickfix: Boolean = true
     ): List<IntentionAction> {

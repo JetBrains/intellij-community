@@ -79,17 +79,41 @@ is because the purpose of this folder is to test the implications of typeshed
 changes for end users, who will mainly be using `.py` files rather than `.pyi`
 files.
 
-Another difference to the rest of typeshed is that the test cases in this
-directory cannot always use modern syntax for type hints.
+Another difference to the rest of typeshed
+(which stems from the fact that the test-case files are all `.py` files
+rather than `.pyi` files)
+is that the test cases cannot always use modern syntax for type hints.
+While we can use `from __future__ import annotations` to enable the use of
+modern typing syntax wherever possible,
+type checkers may (correctly) emit errors if PEP 604 syntax or PEP 585 syntax
+is used in a runtime context on lower versions of Python. For example:
 
-For example, PEP 604
-syntax (unions with a pipe `|` operator) is new in Python 3.10. While this
-syntax can be used on older Python versions in a `.pyi` file, code using this
-syntax will fail at runtime on Python <=3.9. Since the test cases all use `.py`
-extensions, and since the tests need to pass on all Python versions >=3.7, PEP
-604 syntax cannot be used in a test case. Use `typing.Union` and
-`typing.Optional` instead.
+```python
+from __future__ import annotations
 
-PEP 585 syntax can also not be used in the `test_cases` directory. Use
-`typing.Tuple` instead of `tuple`, `typing.Callable` instead of
-`collections.abc.Callable`, and `typing.Match` instead of `re.Match` (etc.).
+from typing_extensions import assert_type
+
+x: str | int  # PEP 604 syntax: okay on Python >=3.7, due to __future__ annotations
+assert_type(x, str | int)  # Will fail at runtime on Python <3.10 (use typing.Union instead)
+
+y: dict[str, int]  # PEP 585 syntax: okay on Python >= 3.7, due to __future__ annotations
+assert_type(y, dict[str, int])  # Will fail at runtime on Python <3.9 (use typing.Dict instead)
+```
+
+### Version-dependent tests
+
+Some tests will only pass on mypy
+with a specific Python version passed on the command line to the `tests/regr_test.py` script.
+To mark a test-case file as being skippable on lower versions of Python,
+append `-py3*` to the filename.
+For example, if `foo` is a stdlib feature that's new in Python 3.9,
+test cases for `foo` should be put in a file named `test_cases/stdlib/check_foo-py39.py`.
+This means that mypy will only run the test case
+if `--python-version 3.9`, `--python-version 3.10` or `--python-version 3.11`
+is passed on the command line to `tests/regr_test.py`,
+but it *won't* run the test case if `--python-version 3.7` or `--python-version 3.8`
+is passed on the command line.
+
+However, `if sys.version_info >= (3, target):` is still required for `pyright`
+in the test file itself.
+Example: [`check_exception_group-py311.py`](https://github.com/python/typeshed/blob/main/test_cases/stdlib/builtins/check_exception_group-py311.py)

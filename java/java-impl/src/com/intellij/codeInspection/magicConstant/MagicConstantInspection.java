@@ -8,7 +8,10 @@ import com.intellij.codeInspection.magicConstant.MagicConstantUtils.AllowedValue
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -100,6 +103,14 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
             ref.resolve() instanceof PsiModifierListOwner owner) {
           PsiType type = expression.getType();
           checkExpression(r, owner, type, holder);
+        }
+      }
+
+      @Override
+      public void visitVariable(@NotNull PsiVariable variable) {
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer != null) {
+            checkExpression(initializer, variable, variable.getType(), holder);
         }
       }
 
@@ -331,7 +342,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         if (value instanceof PsiExpression expression) {
           Object constantValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
           if (argumentValue.equals(constantValue)) {
-            return new ReplaceWithMagicConstantFix(argument, value).asQuickFix();
+            return LocalQuickFix.from(new ReplaceWithMagicConstantFix(argument, value));
           }
         }
       }
@@ -368,7 +379,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
           }
         }
         if (!flags.isEmpty()) {
-          return new ReplaceWithMagicConstantFix(argument, flags.toArray(PsiAnnotationMemberValue.EMPTY_ARRAY)).asQuickFix();
+          return LocalQuickFix.from(new ReplaceWithMagicConstantFix(argument, flags.toArray(PsiAnnotationMemberValue.EMPTY_ARRAY)));
         }
       }
     }

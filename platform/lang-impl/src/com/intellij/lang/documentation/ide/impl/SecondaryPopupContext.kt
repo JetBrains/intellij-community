@@ -70,7 +70,7 @@ private fun CoroutineScope.updateFromRequests(requests: Flow<DocumentationReques
   }
 }
 
-internal class AdjusterPopupBoundsHandler(
+class AdjusterPopupBoundsHandler(
   private val referenceComponent: Component,
 ) : PopupBoundsHandler {
 

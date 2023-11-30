@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings
 
 import com.intellij.ide.IdeBundle
@@ -5,13 +6,13 @@ import com.intellij.ide.customize.transferSettings.controllers.TransferSettingsL
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.customize.transferSettings.models.TransferSettingsModel
+import com.intellij.ide.customize.transferSettings.providers.TransferSettingsPerformContext
 import com.intellij.ide.customize.transferSettings.ui.TransferSettingsProgressIndicatorBase
 import com.intellij.ide.customize.transferSettings.ui.TransferSettingsView
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.ClientProperty
-import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -34,7 +35,7 @@ class TransferSettingsDialog(val project: Project,
         close(13)
       }
       val selectedIde = view.selectedIde as? IdeVersion ?: error("Selected ide is null or not IdeVersion")
-      config.controller.performImport(project, selectedIde, true, progressBase)
+      config.controller.performImport(project, selectedIde, progressBase)
     }
   }
 
@@ -54,7 +55,7 @@ class TransferSettingsDialog(val project: Project,
         updateImportButton()
       }
 
-      override fun importPerformed(ideVersion: IdeVersion, settings: Settings) {
+      override fun importPerformed(ideVersion: IdeVersion, settings: Settings, context: TransferSettingsPerformContext) {
         progressBar.isVisible = false
         updateImportButton()
         neverShowTransferSettingsBalloonAgain()

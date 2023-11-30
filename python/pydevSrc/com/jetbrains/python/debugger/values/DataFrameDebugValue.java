@@ -6,6 +6,7 @@ import com.intellij.xdebugger.frame.XValueNode;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyFrameAccessor;
+import com.jetbrains.python.debugger.ValuesPolicy;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

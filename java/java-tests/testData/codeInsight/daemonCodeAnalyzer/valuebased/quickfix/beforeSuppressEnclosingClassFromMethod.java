@@ -3,7 +3,7 @@
 class Main {
   final OpenValueBased vb = new OpenValueBased();
 
-  void f{
+  void f(){
     synchronized(<caret>vb){ }
   }
 }

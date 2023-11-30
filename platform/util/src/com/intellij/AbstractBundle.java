@@ -2,7 +2,7 @@
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
@@ -77,7 +77,8 @@ public class AbstractBundle {
   }
 
   public @NotNull Supplier<@Nls String> getLazyMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-    Object[] actualParams = params.length == 0 ? ArrayUtil.EMPTY_OBJECT_ARRAY : params; // do not capture new empty Object[] arrays here
+    // do not capture new empty Object[] arrays here
+    Object[] actualParams = params.length == 0 ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : params;
     return () -> getMessage(key, actualParams);
   }
 

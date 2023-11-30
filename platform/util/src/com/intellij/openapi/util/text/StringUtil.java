@@ -2537,7 +2537,6 @@ public class StringUtil extends StringUtilRt {
   public static String @NotNull [] splitByLinesKeepSeparators(@NotNull String string) {
     return Splitters.EOL_SPLIT_KEEP_SEPARATORS.split(string);
   }
-
   @Contract(pure = true)
   public static @NotNull List<Pair<String, Integer>> getWordsWithOffset(@NotNull String s) {
     List<Pair<String, Integer>> res = new ArrayList<>();
@@ -3041,10 +3040,27 @@ public class StringUtil extends StringUtilRt {
     }
     for (int i = 0; i < str.length(); i++) {
       char c = str.charAt(i);
-      if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || Character.isDigit(c)) {
-        continue;
+      if ((c < 'A' || c > 'Z') && (c < 'a' || c > 'z') && !Character.isDigit(c)) {
+        return false;
       }
+    }
+    return true;
+  }
+
+  /**
+   * @return {@code true} if the passed string is not {@code null} and not empty
+   * and contains only digits; {@code false} otherwise.
+   */
+  @Contract(pure = true)
+  public static boolean isNumeric(@Nullable CharSequence str) {
+    if (isEmpty(str)) {
       return false;
+    }
+
+    for (int i = 0; i < str.length(); i++) {
+      if (!Character.isDigit(str.charAt(i))) {
+        return false;
+      }
     }
     return true;
   }
@@ -3122,19 +3138,5 @@ public class StringUtil extends StringUtilRt {
 
   private static boolean isWhitespaceTabOrNewLine(char c) {
     return c == ' ' || c == '\t' || c == '\n';
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatAndList(java.util.Collection)} instead to get properly localized concatenation
-   */
-  @SuppressWarnings("HardCodedStringLiteral")
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static @Nls @NotNull String naturalJoin(List<String> strings) {
-    if (strings.isEmpty()) return "";
-    if (strings.size() == 1) return strings.get(0);
-    String lastWord = strings.get(strings.size() - 1);
-    String leadingWords = join(strings.subList(0, strings.size() - 1), ", ");
-    return leadingWords + " and " + lastWord;
   }
 }

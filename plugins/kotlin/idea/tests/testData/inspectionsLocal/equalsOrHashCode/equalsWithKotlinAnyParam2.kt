@@ -10,4 +10,4 @@ class With<caret>Constructor(x: Int, s: String) {
     override fun hashCode(): Int = 1
 }
 
-// IGNORE_FIR
+// IGNORE_K2

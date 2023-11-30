@@ -12,16 +12,14 @@ import org.jetbrains.annotations.NotNull;
 public abstract class DfaValue {
   public static final DfaValue[] EMPTY_ARRAY = new DfaValue[0];
   private final int myID;
-  @NotNull
-  protected final DfaValueFactory myFactory;
+  protected final @NotNull DfaValueFactory myFactory;
 
-  protected DfaValue(@NotNull final DfaValueFactory factory) {
+  protected DfaValue(final @NotNull DfaValueFactory factory) {
     myFactory = factory;
     myID = factory.registerValue(this);
   }
 
-  @NotNull
-  public DfaValueFactory getFactory() {
+  public @NotNull DfaValueFactory getFactory() {
     return myFactory;
   }
 
@@ -38,8 +36,7 @@ public abstract class DfaValue {
   /**
    * @return a DfType this value belongs under any possible memory state
    */
-  @NotNull
-  public DfType getDfType() {
+  public @NotNull DfType getDfType() {
     return DfType.TOP;
   }
 
@@ -84,8 +81,7 @@ public abstract class DfaValue {
    * @param other        other condition operand
    * @return resulting condition between this value and other operand
    */
-  @NotNull
-  public final DfaCondition cond(@NotNull RelationType relationType, @NotNull DfaValue other) {
+  public final @NotNull DfaCondition cond(@NotNull RelationType relationType, @NotNull DfaValue other) {
     return DfaCondition.createCondition(this, relationType, other);
   }
 
@@ -97,8 +93,7 @@ public abstract class DfaValue {
    * @param other        other condition operand
    * @return resulting condition between this value and other operand
    */
-  @NotNull
-  public DfaCondition cond(@NotNull RelationType relationType, @NotNull DfType other) {
+  public @NotNull DfaCondition cond(@NotNull RelationType relationType, @NotNull DfType other) {
     DfaCondition.Exact result = DfaCondition.tryEvaluate(getDfType(), relationType, other);
     if (result != null) return result;
     return DfaCondition.createCondition(this, relationType, myFactory.fromDfType(other));

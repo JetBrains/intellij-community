@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection;
 
 import com.intellij.framework.FrameworkType;
@@ -50,15 +50,13 @@ public abstract class FrameworkDetector {
   /**
    * @return type of files which are considered by the detector
    */
-  @NotNull
-  public abstract FileType getFileType();
+  public abstract @NotNull FileType getFileType();
 
   /**
    * Provides a filter for files which are specific for the frameworks. Use {@link FileContentPattern} class to create the filter.
    * @return filter for files
    */
-  @NotNull
-  public abstract ElementPattern<FileContent> createSuitableFilePattern();
+  public abstract @NotNull ElementPattern<FileContent> createSuitableFilePattern();
 
   /**
    * This method is called when some files of type specified by {@link #getFileType()} and accepted by filter returned
@@ -78,13 +76,11 @@ public abstract class FrameworkDetector {
   /**
    * @return {@link FrameworkType} instance describing framework which is required for this framework.
    */
-  @Nullable
-  public FrameworkType getUnderlyingFrameworkType() {
+  public @Nullable FrameworkType getUnderlyingFrameworkType() {
     return null;
   }
 
-  @NotNull
-  public final String getDetectorId() {
+  public final @NotNull String getDetectorId() {
     return myDetectorId;
   }
 

@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.FoldRegion;
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -436,10 +438,12 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     }
   }
 
-  public int getNominalLineHeight() {
+  public int getCaretHeight() {
     synchronized (myLock) {
       initMetricsIfNeeded();
-      return myLineHeight + myTopOverhang + myBottomOverhang;
+      return myEditor.getSettings().isFullLineHeightCursor()
+        ? myLineHeight
+        : myLineHeight + myTopOverhang + myBottomOverhang;
     }
   }
 
@@ -666,9 +670,11 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   private void invalidateFoldRegionLayouts() {
-    for (FoldRegion region : myEditor.getFoldingModel().getAllFoldRegions()) {
-      invalidateFoldRegionLayout(region);
-    }
+    ReadAction.run(() -> {
+      for (FoldRegion region : myEditor.getFoldingModel().getAllFoldRegions()) {
+        invalidateFoldRegionLayout(region);
+      }
+    });
   }
 
   public void invalidateFoldRegionLayout(FoldRegion region) {
@@ -688,7 +694,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   private static void assertIsDispatchThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
   }
   
   private static void assertIsReadAccess() {

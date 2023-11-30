@@ -16,6 +16,7 @@ class KotlinOverridableInternalMembersShortNameIndex internal constructor() : St
 
     override fun getKey() = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinOverridableInternalMembersShortNameIndex[name, project, scope]"))
     override fun get(name: String, project: Project, scope: GlobalSearchScope): Collection<KtCallableDeclaration> {
         return Helper[name, project, scope]
     }

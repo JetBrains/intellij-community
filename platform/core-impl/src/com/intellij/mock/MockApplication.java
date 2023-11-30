@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
+import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -381,5 +382,13 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public void setSaveAllowed(boolean value) {
+  }
+
+  @Override
+  public void dispose() {
+    // A mock application may cause incorrect caching during tests. It does not fire extension point removed events.
+    // Ensure that we have cached against correct application.
+    MetaLanguage.clearAllMatchingMetaLanguagesCache();
+    super.dispose();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.screenmenu;
 
 import com.intellij.openapi.Disposable;
@@ -42,12 +42,12 @@ public class MenuItem implements Disposable, PropertyChangeListener {
   @Override
   public void propertyChange(PropertyChangeEvent e) {}
 
-  public void listenPresentationChanges(Presentation newPresentation) {
-    if (presentation != null) presentation.removePropertyChangeListener(this);
-    if (newPresentation != null) {
-      newPresentation.addPropertyChangeListener(this);
-      setEnabled(newPresentation.isEnabled());
+  public void listenPresentationChanges(@NotNull Presentation newPresentation) {
+    if (presentation != null) {
+      presentation.removePropertyChangeListener(this);
     }
+    newPresentation.addPropertyChangeListener(this);
+    setEnabled(newPresentation.isEnabled());
     presentation = newPresentation;
   }
 
@@ -143,8 +143,7 @@ public class MenuItem implements Disposable, PropertyChangeListener {
   }
 
   @Override
-  synchronized
-  public void dispose() {
+  public synchronized void dispose() {
     if (presentation != null) presentation.removePropertyChangeListener(this);
     presentation = null;
 
@@ -171,7 +170,7 @@ public class MenuItem implements Disposable, PropertyChangeListener {
   // Dealloc native peer (performs on AppKit).
   native void nativeDispose(long nativePeer);
 
-  // If item was created but wasn't added into any parent menu then all setters can be invoked from any thread.
+  // If an item was created but wasn't added into any parent menu, then all setters can be invoked from any thread.
   private native void nativeSetTitleAndAccelerator(long nativePeer, String label, char keyChar, int keyCode, int modifiers, boolean onAppKit);
   private native void nativeSetTitle(long nativePeer, String title, boolean onAppKit);
   private native void nativeSetImage(long nativePeer, int[] buffer, int pointsWidth, int pointsHeight, int pixelsWidth, int pixelsHeight, boolean onAppKit);

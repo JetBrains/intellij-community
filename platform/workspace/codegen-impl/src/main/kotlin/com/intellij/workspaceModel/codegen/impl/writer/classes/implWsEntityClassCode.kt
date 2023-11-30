@@ -5,22 +5,19 @@ import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsEntityFieldCode
 import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionId
 import com.intellij.workspaceModel.codegen.impl.writer.fields.refsConnectionIdCode
-import com.intellij.platform.workspace.storage.CodeGeneratorVersions
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.impl.ConnectionId
-import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.codegen.impl.CodeGeneratorVersionCalculator
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 
 fun ObjClass<*>.implWsEntityCode(): String {
   return """
 package ${module.name}    
 
-@${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersions.API_VERSION})
-@${GeneratedCodeImplVersion::class.fqn}(${CodeGeneratorVersions.IMPL_VERSION})
-${if (openness.instantiatable) "open" else "abstract"} class $javaImplName(val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase::class.fqn}() {
+@${GeneratedCodeApiVersion}(${CodeGeneratorVersionCalculator.apiVersion})
+@${GeneratedCodeImplVersion}(${CodeGeneratorVersionCalculator.implementationMajorVersion})
+$generatedCodeVisibilityModifier ${if (openness.instantiatable) "open" else "abstract"} class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
     ${
     """
-    companion object {
+    private companion object {
         ${allRefsFields.lines("        ") { refsConnectionIdCode }.trimEnd()}
         
 ${getLinksOfConnectionIds(this)}
@@ -32,9 +29,10 @@ ${getLinksOfConnectionIds(this)}
     override val entitySource: EntitySource
         get() = dataSource.entitySource
     
-    override fun connectionIdList(): List<${ConnectionId::class.fqn}> {
+    override fun connectionIdList(): List<${ConnectionId}> {
         return connections
     }
+  
 
     ${implWsEntityBuilderCode().indentRestOnly("    ")}
 }
@@ -43,7 +41,7 @@ ${getLinksOfConnectionIds(this)}
 
 private fun getLinksOfConnectionIds(type: ObjClass<*>): String {
   return lines(2) {
-    line("val connections = listOf<${ConnectionId::class.fqn}>(")
+    line("private val connections = listOf<$ConnectionId>(")
     type.allRefsFields.forEach {
       line("    " + it.refsConnectionId + ",")
     }

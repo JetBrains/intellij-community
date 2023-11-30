@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 
@@ -34,7 +34,7 @@ public final class BegBorders {
     return ourScrollPaneBorder;
   }
 
-  public static class TextFieldBorder extends LineBorder implements UIResource {
+  public static final class TextFieldBorder extends LineBorder implements UIResource {
     public TextFieldBorder() {
       super(null, 1);
     }

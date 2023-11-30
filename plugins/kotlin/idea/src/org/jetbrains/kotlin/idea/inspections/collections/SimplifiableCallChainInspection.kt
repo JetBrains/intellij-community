@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.AssociateFunction
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionFix
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionInspection
+import org.jetbrains.kotlin.idea.inspections.collections.AbstractCallChainChecker.Conversion
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -165,118 +166,121 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
         if (conversion.replacement != "associate" && !isAssociateTo) return null
         if (expression !is KtDotQualifiedExpression) return null
         val (associateFunction, problemHighlightType) =
-            ReplaceAssociateFunctionInspection.getAssociateFunctionAndProblemHighlightType(expression) ?: return null
+            ReplaceAssociateFunctionInspection.Util.getAssociateFunctionAndProblemHighlightType(expression) ?: return null
         if (problemHighlightType == ProblemHighlightType.INFORMATION) return null
         if (associateFunction != AssociateFunction.ASSOCIATE_WITH && associateFunction != AssociateFunction.ASSOCIATE_BY) return null
         return associateFunction to associateFunction.name(isAssociateTo)
     }
 
     private val conversionGroups = conversions.group()
-
-    companion object {
-
-        private val conversions = listOf(
-            Conversion("kotlin.collections.filter", "kotlin.collections.first", "first"),
-            Conversion("kotlin.collections.filter", "kotlin.collections.firstOrNull", "firstOrNull"),
-            Conversion("kotlin.collections.filter", "kotlin.collections.last", "last"),
-            Conversion("kotlin.collections.filter", "kotlin.collections.lastOrNull", "lastOrNull"),
-            Conversion("kotlin.collections.filter", "kotlin.collections.single", "single"),
-            Conversion("kotlin.collections.filter", "kotlin.collections.singleOrNull", "singleOrNull"),
-            Conversion("kotlin.collections.filter", "kotlin.collections.isNotEmpty", "any"),
-            Conversion("kotlin.collections.filter", "kotlin.collections.List.isEmpty", "none"),
-            Conversion("kotlin.collections.filter", "kotlin.collections.count", "count"),
-            Conversion("kotlin.collections.filter", "kotlin.collections.any", "any"),
-            Conversion("kotlin.collections.filter", "kotlin.collections.none", "none"),
-            Conversion("kotlin.collections.sorted", "kotlin.collections.firstOrNull", "min"),
-            Conversion("kotlin.collections.sorted", "kotlin.collections.lastOrNull", "max"),
-            Conversion("kotlin.collections.sortedDescending", "kotlin.collections.firstOrNull", "max"),
-            Conversion("kotlin.collections.sortedDescending", "kotlin.collections.lastOrNull", "min"),
-            Conversion("kotlin.collections.sortedBy", "kotlin.collections.firstOrNull", "minBy"),
-            Conversion("kotlin.collections.sortedBy", "kotlin.collections.lastOrNull", "maxBy"),
-            Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.firstOrNull", "maxBy"),
-            Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.lastOrNull", "minBy"),
-            Conversion("kotlin.collections.sorted", "kotlin.collections.first", "min", addNotNullAssertion = true),
-            Conversion("kotlin.collections.sorted", "kotlin.collections.last", "max", addNotNullAssertion = true),
-            Conversion("kotlin.collections.sortedDescending", "kotlin.collections.first", "max", addNotNullAssertion = true),
-            Conversion("kotlin.collections.sortedDescending", "kotlin.collections.last", "min", addNotNullAssertion = true),
-            Conversion("kotlin.collections.sortedBy", "kotlin.collections.first", "minBy", addNotNullAssertion = true),
-            Conversion("kotlin.collections.sortedBy", "kotlin.collections.last", "maxBy", addNotNullAssertion = true),
-            Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.first", "maxBy", addNotNullAssertion = true),
-            Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.last", "minBy", addNotNullAssertion = true),
-
-            Conversion("kotlin.text.filter", "kotlin.text.first", "first"),
-            Conversion("kotlin.text.filter", "kotlin.text.firstOrNull", "firstOrNull"),
-            Conversion("kotlin.text.filter", "kotlin.text.last", "last"),
-            Conversion("kotlin.text.filter", "kotlin.text.lastOrNull", "lastOrNull"),
-            Conversion("kotlin.text.filter", "kotlin.text.single", "single"),
-            Conversion("kotlin.text.filter", "kotlin.text.singleOrNull", "singleOrNull"),
-            Conversion("kotlin.text.filter", "kotlin.text.isNotEmpty", "any"),
-            Conversion("kotlin.text.filter", "kotlin.text.isEmpty", "none"),
-            Conversion("kotlin.text.filter", "kotlin.text.count", "count"),
-            Conversion("kotlin.text.filter", "kotlin.text.any", "any"),
-            Conversion("kotlin.text.filter", "kotlin.text.none", "none"),
-
-            Conversion("kotlin.collections.map", "kotlin.collections.joinTo", "joinTo", enableSuspendFunctionCall = false),
-            Conversion("kotlin.collections.map", "kotlin.collections.joinToString", "joinToString", enableSuspendFunctionCall = false),
-            Conversion("kotlin.collections.map", "kotlin.collections.filterNotNull", "mapNotNull"),
-            Conversion("kotlin.collections.map", "kotlin.collections.toMap", "associate"),
-            Conversion("kotlin.collections.map", "kotlin.collections.toMap", "associateTo"),
-            Conversion(
-                "kotlin.collections.map", "kotlin.collections.sum", "sumOf", replaceableApiVersion = ApiVersion.KOTLIN_1_4
-            ),
-            Conversion(
-                "kotlin.collections.map", "kotlin.collections.max", "maxOf",
-                removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
-            ),
-            Conversion(
-                "kotlin.collections.map", "kotlin.collections.max", "maxOfOrNull",
-                replaceableApiVersion = ApiVersion.KOTLIN_1_4,
-            ),
-            Conversion(
-                "kotlin.collections.map", "kotlin.collections.maxOrNull", "maxOf",
-                removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
-            ),
-            Conversion(
-                "kotlin.collections.map", "kotlin.collections.maxOrNull", "maxOfOrNull",
-                replaceableApiVersion = ApiVersion.KOTLIN_1_4,
-            ),
-            Conversion(
-                "kotlin.collections.map", "kotlin.collections.min", "minOf",
-                removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
-            ),
-            Conversion(
-                "kotlin.collections.map", "kotlin.collections.min", "minOfOrNull",
-                replaceableApiVersion = ApiVersion.KOTLIN_1_4,
-            ),
-            Conversion(
-                "kotlin.collections.map", "kotlin.collections.minOrNull", "minOf",
-                removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
-            ),
-            Conversion(
-                "kotlin.collections.map", "kotlin.collections.minOrNull", "minOfOrNull",
-                replaceableApiVersion = ApiVersion.KOTLIN_1_4,
-            ),
-            Conversion(
-                "kotlin.collections.mapNotNull", "kotlin.collections.first", "firstNotNullOf",
-                replaceableApiVersion = ApiVersion.KOTLIN_1_5
-            ),
-            Conversion(
-                "kotlin.collections.mapNotNull", "kotlin.collections.firstOrNull", "firstNotNullOfOrNull",
-                replaceableApiVersion = ApiVersion.KOTLIN_1_5
-            ),
-            Conversion("kotlin.collections.listOf", "kotlin.collections.filterNotNull", "listOfNotNull")
-        ).map {
-            when (val replacement = it.replacement) {
-                "min", "max", "minBy", "maxBy" -> {
-                    val additionalConversion = if ((replacement == "min" || replacement == "max") && it.addNotNullAssertion) {
-                        it.copy(replacement = "${replacement}Of", replaceableApiVersion = ApiVersion.KOTLIN_1_4, addNotNullAssertion = false, additionalArgument = "{ it }")
-                    } else {
-                        it.copy(replacement = "${replacement}OrNull", replaceableApiVersion = ApiVersion.KOTLIN_1_4)
-                    }
-                    listOf(additionalConversion, it)
-                }
-                else -> listOf(it)
-            }
-        }.flatten()
-    }
 }
+
+private val conversions: List<Conversion> = listOf(
+    Conversion("kotlin.collections.filter", "kotlin.collections.first", "first"),
+    Conversion("kotlin.collections.filter", "kotlin.collections.firstOrNull", "firstOrNull"),
+    Conversion("kotlin.collections.filter", "kotlin.collections.last", "last"),
+    Conversion("kotlin.collections.filter", "kotlin.collections.lastOrNull", "lastOrNull"),
+    Conversion("kotlin.collections.filter", "kotlin.collections.single", "single"),
+    Conversion("kotlin.collections.filter", "kotlin.collections.singleOrNull", "singleOrNull"),
+    Conversion("kotlin.collections.filter", "kotlin.collections.isNotEmpty", "any"),
+    Conversion("kotlin.collections.filter", "kotlin.collections.List.isEmpty", "none"),
+    Conversion("kotlin.collections.filter", "kotlin.collections.count", "count"),
+    Conversion("kotlin.collections.filter", "kotlin.collections.any", "any"),
+    Conversion("kotlin.collections.filter", "kotlin.collections.none", "none"),
+    Conversion("kotlin.collections.sorted", "kotlin.collections.firstOrNull", "min"),
+    Conversion("kotlin.collections.sorted", "kotlin.collections.lastOrNull", "max"),
+    Conversion("kotlin.collections.sortedDescending", "kotlin.collections.firstOrNull", "max"),
+    Conversion("kotlin.collections.sortedDescending", "kotlin.collections.lastOrNull", "min"),
+    Conversion("kotlin.collections.sortedBy", "kotlin.collections.firstOrNull", "minBy"),
+    Conversion("kotlin.collections.sortedBy", "kotlin.collections.lastOrNull", "maxBy"),
+    Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.firstOrNull", "maxBy"),
+    Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.lastOrNull", "minBy"),
+    Conversion("kotlin.collections.sorted", "kotlin.collections.first", "min", addNotNullAssertion = true),
+    Conversion("kotlin.collections.sorted", "kotlin.collections.last", "max", addNotNullAssertion = true),
+    Conversion("kotlin.collections.sortedDescending", "kotlin.collections.first", "max", addNotNullAssertion = true),
+    Conversion("kotlin.collections.sortedDescending", "kotlin.collections.last", "min", addNotNullAssertion = true),
+    Conversion("kotlin.collections.sortedBy", "kotlin.collections.first", "minBy", addNotNullAssertion = true),
+    Conversion("kotlin.collections.sortedBy", "kotlin.collections.last", "maxBy", addNotNullAssertion = true),
+    Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.first", "maxBy", addNotNullAssertion = true),
+    Conversion("kotlin.collections.sortedByDescending", "kotlin.collections.last", "minBy", addNotNullAssertion = true),
+
+    Conversion("kotlin.text.filter", "kotlin.text.first", "first"),
+    Conversion("kotlin.text.filter", "kotlin.text.firstOrNull", "firstOrNull"),
+    Conversion("kotlin.text.filter", "kotlin.text.last", "last"),
+    Conversion("kotlin.text.filter", "kotlin.text.lastOrNull", "lastOrNull"),
+    Conversion("kotlin.text.filter", "kotlin.text.single", "single"),
+    Conversion("kotlin.text.filter", "kotlin.text.singleOrNull", "singleOrNull"),
+    Conversion("kotlin.text.filter", "kotlin.text.isNotEmpty", "any"),
+    Conversion("kotlin.text.filter", "kotlin.text.isEmpty", "none"),
+    Conversion("kotlin.text.filter", "kotlin.text.count", "count"),
+    Conversion("kotlin.text.filter", "kotlin.text.any", "any"),
+    Conversion("kotlin.text.filter", "kotlin.text.none", "none"),
+
+    Conversion("kotlin.collections.map", "kotlin.collections.joinTo", "joinTo", enableSuspendFunctionCall = false),
+    Conversion("kotlin.collections.map", "kotlin.collections.joinToString", "joinToString", enableSuspendFunctionCall = false),
+    Conversion("kotlin.collections.map", "kotlin.collections.filterNotNull", "mapNotNull"),
+    Conversion("kotlin.collections.map", "kotlin.collections.toMap", "associate"),
+    Conversion("kotlin.collections.map", "kotlin.collections.toMap", "associateTo"),
+    Conversion(
+        "kotlin.collections.map", "kotlin.collections.sum", "sumOf", replaceableApiVersion = ApiVersion.KOTLIN_1_4
+    ),
+    Conversion(
+        "kotlin.collections.map", "kotlin.collections.max", "maxOf",
+        removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
+    ),
+    Conversion(
+        "kotlin.collections.map", "kotlin.collections.max", "maxOfOrNull",
+        replaceableApiVersion = ApiVersion.KOTLIN_1_4,
+    ),
+    Conversion(
+        "kotlin.collections.map", "kotlin.collections.maxOrNull", "maxOf",
+        removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
+    ),
+    Conversion(
+        "kotlin.collections.map", "kotlin.collections.maxOrNull", "maxOfOrNull",
+        replaceableApiVersion = ApiVersion.KOTLIN_1_4,
+    ),
+    Conversion(
+        "kotlin.collections.map", "kotlin.collections.min", "minOf",
+        removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
+    ),
+    Conversion(
+        "kotlin.collections.map", "kotlin.collections.min", "minOfOrNull",
+        replaceableApiVersion = ApiVersion.KOTLIN_1_4,
+    ),
+    Conversion(
+        "kotlin.collections.map", "kotlin.collections.minOrNull", "minOf",
+        removeNotNullAssertion = true, replaceableApiVersion = ApiVersion.KOTLIN_1_4
+    ),
+    Conversion(
+        "kotlin.collections.map", "kotlin.collections.minOrNull", "minOfOrNull",
+        replaceableApiVersion = ApiVersion.KOTLIN_1_4,
+    ),
+    Conversion(
+        "kotlin.collections.mapNotNull", "kotlin.collections.first", "firstNotNullOf",
+        replaceableApiVersion = ApiVersion.KOTLIN_1_5
+    ),
+    Conversion(
+        "kotlin.collections.mapNotNull", "kotlin.collections.firstOrNull", "firstNotNullOfOrNull",
+        replaceableApiVersion = ApiVersion.KOTLIN_1_5
+    ),
+    Conversion("kotlin.collections.listOf", "kotlin.collections.filterNotNull", "listOfNotNull")
+).map {
+    when (val replacement = it.replacement) {
+        "min", "max", "minBy", "maxBy" -> {
+            val additionalConversion = if ((replacement == "min" || replacement == "max") && it.addNotNullAssertion) {
+                it.copy(
+                    replacement = "${replacement}Of",
+                    replaceableApiVersion = ApiVersion.KOTLIN_1_4,
+                    addNotNullAssertion = false,
+                    additionalArgument = "{ it }"
+                )
+            } else {
+                it.copy(replacement = "${replacement}OrNull", replaceableApiVersion = ApiVersion.KOTLIN_1_4)
+            }
+            listOf(additionalConversion, it)
+        }
+
+        else -> listOf(it)
+    }
+}.flatten()

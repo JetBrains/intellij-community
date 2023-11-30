@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -41,22 +41,17 @@ public abstract class PatchTestCase extends UpdaterTestCase {
     FileUtil.delete(new File(myNewerDir, "lib/bootstrap.jar"));
     FileUtil.rename(new File(myNewerDir, "lib/bootstrap_deleted.jar"),
                     new File(myNewerDir, "lib/bootstrap.jar"));
-
-    FileUtil.delete(new File(myOlderDir, "lib/boot2_changed_with_unchanged_content.jar"));
-    FileUtil.delete(new File(myNewerDir, "lib/boot2.jar"));
-    FileUtil.rename(new File(myNewerDir, "lib/boot2_changed_with_unchanged_content.jar"),
-                    new File(myNewerDir, "lib/boot2.jar"));
   }
 
   protected Patch createPatch() throws IOException {
     return createPatch(Function.identity());
   }
 
-  protected Patch createPatch(Function<? super PatchSpec, ? extends PatchSpec> tuner) throws IOException {
-    PatchSpec spec = tuner.apply(new PatchSpec()
+  protected Patch createPatch(Function<PatchSpec, PatchSpec> tuner) throws IOException {
+    PatchSpec spec = new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
-      .setNewFolder(myNewerDir.getAbsolutePath()));
-    return new Patch(spec, TEST_UI);
+      .setNewFolder(myNewerDir.getAbsolutePath());
+    return new Patch(tuner.apply(spec), TEST_UI);
   }
 
   protected void resetNewerDir() throws IOException {
@@ -65,7 +60,7 @@ public abstract class PatchTestCase extends UpdaterTestCase {
   }
 
   protected static Map<String, Long> digest(Patch patch, File dir) throws IOException {
-    return new TreeMap<>(patch.digestFiles(dir, Collections.emptySet(), false));
+    return new TreeMap<>(patch.digestFiles(dir, Collections.emptySet()));
   }
 
   protected static List<PatchAction> sortActions(List<PatchAction> actions) {
@@ -76,7 +71,7 @@ public abstract class PatchTestCase extends UpdaterTestCase {
     return sort(results, r -> r.action, Comparator.comparing(r -> r.path));
   }
 
-  private static <T> List<T> sort(List<T> list, Function<? super T, ?> classifier, Comparator<? super T> sorter) {
+  private static <T> List<T> sort(List<T> list, Function<T, ?> classifier, Comparator<T> sorter) {
     // splits the list into groups
     Collection<List<T>> groups = list.stream().collect(groupingBy(classifier, LinkedHashMap::new, toList())).values();
     // verifies the list is monotonic

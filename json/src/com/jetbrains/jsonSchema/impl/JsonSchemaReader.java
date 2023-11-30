@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.json.JsonBundle;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
@@ -26,13 +28,15 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class JsonSchemaReader {
+public final class JsonSchemaReader {
   private static final int MAX_SCHEMA_LENGTH = FileUtilRt.LARGE_FOR_CONTENT_LOADING;
+  private static final ObjectMapper jsonObjectMapper = new ObjectMapper(new JsonFactory());
   public static final Logger LOG = Logger.getInstance(JsonSchemaReader.class);
   public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroupManager.getInstance().getNotificationGroup("JSON Schema");
 
@@ -44,15 +48,14 @@ public class JsonSchemaReader {
     fillMap();
   }
 
-  @NotNull private final VirtualFile myFile;
+  private final @NotNull VirtualFile myFile;
 
   public JsonSchemaReader(@NotNull VirtualFile file) {
     myFile = file;
     myQueue = new ArrayDeque<>();
   }
 
-  @NotNull
-  public static JsonSchemaObject readFromFile(@NotNull Project project, @NotNull VirtualFile file) throws Exception {
+  public static @NotNull JsonSchemaObject readFromFile(@NotNull Project project, @NotNull VirtualFile file) throws Exception {
     if (!file.isValid()) {
       throw new Exception(JsonBundle.message("schema.reader.cant.load.file", file.getName()));
     }
@@ -65,8 +68,7 @@ public class JsonSchemaReader {
     return object;
   }
 
-  @Nullable
-  public static @DialogMessage String checkIfValidJsonSchema(@NotNull Project project, @NotNull VirtualFile file) {
+  public static @Nullable @DialogMessage String checkIfValidJsonSchema(@NotNull Project project, @NotNull VirtualFile file) {
     final long length = file.getLength();
     final String fileName = file.getName();
     if (length > MAX_SCHEMA_LENGTH) {
@@ -92,8 +94,7 @@ public class JsonSchemaReader {
     return schemaObject;
   }
 
-  @Nullable
-  public JsonSchemaObject read(@NotNull PsiFile file) {
+  public @Nullable JsonSchemaObject read(@NotNull PsiFile file) {
     JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(file, JsonSchemaObject.NULL_OBJ);
     if (walker == null) return null;
     PsiElement root = AstLoadingFilter.forceAllowTreeLoading(file, () -> ContainerUtil.getFirstItem(walker.getRoots(file)));
@@ -157,8 +158,7 @@ public class JsonSchemaReader {
     definitions.put(name, defined);
   }
 
-  @NotNull
-  private static String getNewPointer(@NotNull String name, String oldPointer) {
+  private static @NotNull String getNewPointer(@NotNull String name, String oldPointer) {
     return oldPointer.equals("/") ? oldPointer + name : oldPointer + "/" + name;
   }
 
@@ -186,6 +186,7 @@ public class JsonSchemaReader {
       if (element.isBooleanLiteral()) object.setRecursiveAnchor(true);
     });
     READERS_MAP.put("default", createDefault());
+    READERS_MAP.put("example", createExampleConsumer());
     READERS_MAP.put("format", createFromStringValue((object, s) -> object.setFormat(s)));
     READERS_MAP.put(JsonSchemaObject.DEFINITIONS, createDefinitionsConsumer());
     READERS_MAP.put(JsonSchemaObject.DEFINITIONS_v9, createDefinitionsConsumer());
@@ -279,8 +280,7 @@ public class JsonSchemaReader {
     }
   }
 
-  @Nullable
-  private static <T> T readSingleProp(JsonPropertyAdapter adapter, String propName, Function<JsonValueAdapter, T> getterFunc) {
+  private static @Nullable <T> T readSingleProp(JsonPropertyAdapter adapter, String propName, Function<JsonValueAdapter, T> getterFunc) {
     if (propName.equals(adapter.getName())) {
       Collection<JsonValueAdapter> values = adapter.getValues();
       if (values.size() == 1) {
@@ -322,7 +322,7 @@ public class JsonSchemaReader {
     };
   }
 
-  private static MyReader createContainer(@NotNull final PairConsumer<JsonSchemaObject, List<JsonSchemaObject>> delegate) {
+  private static MyReader createContainer(final @NotNull PairConsumer<JsonSchemaObject, List<JsonSchemaObject>> delegate) {
     return (element, object, queue, virtualFile) -> {
       if (element instanceof JsonArrayValueAdapter) {
         final List<JsonValueAdapter> list = ((JsonArrayValueAdapter)element).getElements();
@@ -351,8 +351,7 @@ public class JsonSchemaReader {
     };
   }
 
-  @Nullable
-  private static JsonSchemaType parseType(@NotNull final String typeString) {
+  private static @Nullable JsonSchemaType parseType(final @NotNull String typeString) {
     try {
       return JsonSchemaType.valueOf("_" + typeString);
     } catch (IllegalArgumentException e) {
@@ -360,8 +359,7 @@ public class JsonSchemaReader {
     }
   }
 
-  @Nullable
-  private static Object readEnumValue(JsonValueAdapter value) {
+  private static @Nullable Object readEnumValue(JsonValueAdapter value) {
     if (value.isStringLiteral()) {
       return "\"" + StringUtil.unquoteString(value.getDelegate().getText()) + "\"";
     } else if (value.isNumberLiteral()) {
@@ -405,8 +403,7 @@ public class JsonSchemaReader {
     return Boolean.parseBoolean(value.getDelegate().getText());
   }
 
-  @NotNull
-  private static Number getNumber(@NotNull JsonValueAdapter value) {
+  private static @NotNull Number getNumber(@NotNull JsonValueAdapter value) {
     Number numberValue;
     try {
       numberValue = Integer.parseInt(value.getDelegate().getText());
@@ -450,8 +447,7 @@ public class JsonSchemaReader {
     };
   }
 
-  @NotNull
-  private static Predicate<JsonValueAdapter> notEmptyString() {
+  private static @NotNull Predicate<JsonValueAdapter> notEmptyString() {
     return el -> el.isStringLiteral() && !StringUtil.isEmptyOrSpaces(el.getDelegate().getText());
   }
 
@@ -539,10 +535,16 @@ public class JsonSchemaReader {
     };
   }
 
-  @NotNull
-  private static Map<String, JsonSchemaObject> readInnerObject(String parentPointer, @NotNull JsonValueAdapter element,
-                                                               @NotNull Collection<Pair<JsonSchemaObject, JsonValueAdapter>> queue,
-                                                               VirtualFile virtualFile) {
+  private static MyReader createExampleConsumer() {
+    return (element, object, queue, virtualFile) -> {
+      if (element.isObject()) {
+        object.setExample(readExample(element));
+      }
+    };
+  }
+  private static @NotNull Map<String, JsonSchemaObject> readInnerObject(String parentPointer, @NotNull JsonValueAdapter element,
+                                                                        @NotNull Collection<Pair<JsonSchemaObject, JsonValueAdapter>> queue,
+                                                                        VirtualFile virtualFile) {
     final Map<String, JsonSchemaObject> map = new HashMap<>();
     if (!(element instanceof JsonObjectValueAdapter)) return map;
     final List<JsonPropertyAdapter> properties = ((JsonObjectValueAdapter)element).getPropertyList();
@@ -563,6 +565,18 @@ public class JsonSchemaReader {
     return map;
   }
 
+  private static @NotNull Map<String, Object> readExample(@NotNull JsonValueAdapter element) {
+    final Map<String, Object> example = new HashMap<>();
+    if (!(element instanceof JsonObjectValueAdapter objectAdapter)) return example;
+    for (JsonPropertyAdapter property : objectAdapter.getPropertyList()) {
+      JsonValueAdapter value = ContainerUtil.getFirstItem(property.getValues());
+      String propertyName = property.getName();
+      if (propertyName == null) continue;
+      example.put(propertyName, mapPrimitiveTypeOrEmptyObject(value));
+    }
+    return example;
+  }
+
   private static MyReader createDefault() {
     return (element, object, queue, virtualFile) -> {
       if (element.isObject()) {
@@ -575,6 +589,24 @@ public class JsonSchemaReader {
         object.setDefault(getBoolean(element));
       }
     };
+  }
+
+  private static Object mapPrimitiveTypeOrEmptyObject(JsonValueAdapter element) {
+    if (element.isObject()) {
+      try {
+        return jsonObjectMapper.readTree(element.getDelegate().getText());
+      }
+      catch (IOException exception) {
+        return null;
+      }
+    } else if (element.isStringLiteral()) {
+      return StringUtil.unquoteString(element.getDelegate().getText());
+    } else if (element.isNumberLiteral()) {
+      return getNumber(element);
+    } else if (element.isBooleanLiteral()) {
+      return getBoolean(element);
+    }
+    return null;
   }
 
   private interface MyReader {

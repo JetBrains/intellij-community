@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.project.Project;
@@ -39,13 +39,14 @@ public abstract class WindowManagerEx extends WindowManager {
    * This method is invoked by {@code IdeEventQueue} to notify window manager that
    * some window activity happens. <u><b>Do not invoke it in other places!!!<b></u>
    */
+  @ApiStatus.Internal
   public abstract void dispatchComponentEvent(ComponentEvent e);
 
   /**
    * @return union of bounds of all default screen devices. Note that {@code x} and/or {@code y}
-   * coordinates can be negative. It depends on physical configuration of graphics devices.
-   * For example, the left monitor has negative coordinates on Win32 platform with dual monitor support
-   * (right monitor is the primer one) .
+   * coordinates can be negative. It depends on the physical configuration of graphics devices.
+   * For example, the left monitor has negative coordinates on the Win32 platform with dual-monitor support
+   *  (the right monitor is the primer one).
    */
   public abstract @NotNull Rectangle getScreenBounds();
 
@@ -64,7 +65,7 @@ public abstract class WindowManagerEx extends WindowManager {
   public abstract @Nullable ProjectFrameHelper getFrameHelper(@Nullable Project project);
 
   /**
-   * Find frame for project or if project is null, for a last focused window.
+   * Find frame for a project or if a project is null, for a last focused window.
    */
   @ApiStatus.Internal
   public abstract @Nullable IdeFrameEx findFrameHelper(@Nullable Project project);

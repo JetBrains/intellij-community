@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBLabel;
@@ -23,7 +24,8 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
-public class TitledSeparator extends JPanel {
+public class TitledSeparator extends JPanel implements ComboBox.SelectableItem {
+
   public static final int TOP_INSET = 7;
   public static final int BOTTOM_INSET = 5;
   public static final int SEPARATOR_LEFT_INSET = 6;
@@ -35,8 +37,7 @@ public class TitledSeparator extends JPanel {
 
   private FocusListener labelFocusListener;
 
-  @NotNull
-  public static Border createEmptyBorder() {
+  public static @NotNull Border createEmptyBorder() {
     return JBUI.Borders.empty(TOP_INSET, 0, BOTTOM_INSET, 0);
   }
 
@@ -62,6 +63,11 @@ public class TitledSeparator extends JPanel {
     setOpaque(false);
     updateLabelFont();
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+  }
+
+  @Override
+  public boolean isSelectable() {
+    return false;
   }
 
   @Override

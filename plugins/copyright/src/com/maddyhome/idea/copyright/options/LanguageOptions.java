@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.options;
 
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -14,8 +14,6 @@ public final class LanguageOptions implements Cloneable {
   public static final int USE_TEMPLATE = 2;
   public static final int USE_TEXT = 3;
 
-  public static final int MIN_SEPARATOR_LENGTH = 5;
-  public static final int MAX_SEPARATOR_LENGTH = 300;
   public static final String DEFAULT_FILLER = " ";
 
   private static final LanguageOptions DEFAULT_SETTINGS_HOLDER = new LanguageOptions();
@@ -250,8 +248,6 @@ public final class LanguageOptions implements Cloneable {
     this.trim = trim;
   }
 
-  public void setNotice(String notice){this.notice = notice;}
-
   public int fileTypeOverride;
   public boolean relativeBefore;
   public boolean addBlankAfter;
@@ -267,5 +263,4 @@ public final class LanguageOptions implements Cloneable {
   public boolean box;
   public String filler;
   public boolean trim;
-  public String notice;
 }

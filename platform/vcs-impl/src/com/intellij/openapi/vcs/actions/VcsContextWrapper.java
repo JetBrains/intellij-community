@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -106,12 +107,13 @@ public class VcsContextWrapper implements VcsContext {
   @Nullable
   @Override
   public File getSelectedIOFile() {
-    return VcsContextUtil.selectedIOFilesIterable(myContext).first();
+    FilePath filePath = getSelectedFilePath();
+    return filePath != null ? filePath.getIOFile() : null;
   }
 
   @Override
   public File @Nullable [] getSelectedIOFiles() {
-    return VcsContextUtil.selectedIOFilesIterable(myContext).toList().toArray(new File[0]);
+    return ContainerUtil.map(getSelectedFilePaths(), path -> path.getIOFile()).toArray(new File[0]);
   }
 
   @Override

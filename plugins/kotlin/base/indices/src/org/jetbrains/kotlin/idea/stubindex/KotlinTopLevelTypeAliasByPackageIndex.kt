@@ -16,6 +16,7 @@ class KotlinTopLevelTypeAliasByPackageIndex internal constructor() : StringStubI
 
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinTopLevelTypeAliasByPackageIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
         return Helper[key, project, scope]
     }

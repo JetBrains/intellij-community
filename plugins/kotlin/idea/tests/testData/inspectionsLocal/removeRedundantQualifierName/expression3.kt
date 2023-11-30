@@ -7,4 +7,4 @@ fun main() {
     val c = kotlin.Int.Companion::MAX_VALUE
 }
 
-// IGNORE_FIR
+// IGNORE_K2

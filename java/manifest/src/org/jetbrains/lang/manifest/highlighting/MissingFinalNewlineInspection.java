@@ -25,7 +25,10 @@
 package org.jetbrains.lang.manifest.highlighting;
 
 import com.intellij.codeInspection.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -50,9 +53,10 @@ public class MissingFinalNewlineInspection extends LocalInspectionTool {
         List<Section> sections = ((ManifestFile)file).getSections();
         assert !sections.isEmpty() : text;
         Section section = sections.get(sections.size() - 1);
+        ModCommandAction action = new AddNewlineQuickFix(section);
         ProblemDescriptor descriptor = manager.createProblemDescriptor(
           section.getLastChild(), ManifestBundle.message("inspection.newline.message"),
-          new AddNewlineQuickFix(section).asQuickFix(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly
+          LocalQuickFix.from(action), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly
         );
         return new ProblemDescriptor[]{descriptor};
       }

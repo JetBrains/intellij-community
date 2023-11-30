@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots;
 
 import com.intellij.idea.TestFor;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.testFramework.CoroutineKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
@@ -21,7 +21,7 @@ public class ProjectRootManagerImplTest extends HeavyPlatformTestCase {
   public void testLoadStateFiresJdkChange() throws IOException, JDOMException {
     AtomicInteger count = new AtomicInteger(0);
     ProjectRootManagerEx.getInstanceEx(myProject).addProjectJdkListener(() -> {
-      ApplicationManager.getApplication().assertWriteAccessAllowed();
+      ThreadingAssertions.assertWriteAccess();
       count.incrementAndGet();
     });
 
@@ -37,9 +37,9 @@ public class ProjectRootManagerImplTest extends HeavyPlatformTestCase {
                                    </component>
                                    """);
     impl.loadState(firstLoad);
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
     impl.loadState(secondLoad);
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
 
     assertThat(count).hasValueGreaterThanOrEqualTo(2);
   }
@@ -48,7 +48,7 @@ public class ProjectRootManagerImplTest extends HeavyPlatformTestCase {
   public void testNoEventsIfNothingChanged() throws IOException, JDOMException {
     AtomicInteger count = new AtomicInteger(0);
     ProjectRootManagerEx.getInstanceEx(myProject).addProjectJdkListener(() -> {
-      ApplicationManager.getApplication().assertWriteAccessAllowed();
+      ThreadingAssertions.assertWriteAccess();
       count.incrementAndGet();
     });
 
@@ -64,15 +64,15 @@ public class ProjectRootManagerImplTest extends HeavyPlatformTestCase {
                                          </component>
                                          """);
     impl.loadState(firstLoad);
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
     assertEquals(1, count.get());
 
     impl.loadState(secondLoad);
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
     assertEquals(2, count.get());
 
     impl.loadState(secondLoad);
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
     assertEquals(2, count.get());
   }
 }

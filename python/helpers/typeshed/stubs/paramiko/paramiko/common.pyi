@@ -1,5 +1,6 @@
-from typing import Protocol
-from typing_extensions import TypeAlias
+def byte_ord(c: int | str) -> int: ...
+def byte_chr(c: int) -> bytes: ...
+def byte_mask(c: int, mask: int) -> bytes: ...
 
 MSG_DISCONNECT: int
 MSG_IGNORE: int
@@ -101,14 +102,6 @@ linefeed_byte: bytes
 crlf: bytes
 cr_byte_value: int
 linefeed_byte_value: int
-
-class _SupportsAsBytes(Protocol):
-    def asbytes(self) -> bytes: ...
-
-_LikeBytes: TypeAlias = bytes | str | _SupportsAsBytes
-
-def asbytes(s: _LikeBytes) -> bytes: ...
-
 xffffffff: int
 x80000000: int
 o666: int

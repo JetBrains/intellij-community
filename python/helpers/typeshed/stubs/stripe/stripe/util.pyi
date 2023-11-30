@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any, overload
 from typing_extensions import TypeAlias
 
@@ -15,7 +16,7 @@ class class_method_variant:
     def __init__(self, class_method_name) -> None: ...
     method: Any
     def __call__(self, method): ...
-    def __get__(self, obj, objtype: Any | None = ...): ...
+    def __get__(self, obj, objtype: Incomplete | None = None): ...
 
 @overload
 def populate_headers(idempotency_key: None) -> None: ...
@@ -27,9 +28,15 @@ _RespType: TypeAlias = dict[Any, Any] | StripeObject | StripeResponse
 # undocumented
 @overload
 def convert_to_stripe_object(
-    resp: list[Any], api_key: Any | None = ..., stripe_version: Any | None = ..., stripe_account: Any | None = ...
+    resp: list[Any],
+    api_key: Incomplete | None = None,
+    stripe_version: Incomplete | None = None,
+    stripe_account: Incomplete | None = None,
 ) -> list[Any]: ...
 @overload
 def convert_to_stripe_object(
-    resp: _RespType, api_key: Any | None = ..., stripe_version: Any | None = ..., stripe_account: Any | None = ...
+    resp: _RespType,
+    api_key: Incomplete | None = None,
+    stripe_version: Incomplete | None = None,
+    stripe_account: Incomplete | None = None,
 ) -> StripeObject: ...

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import git4idea.GitFormatException;
@@ -28,8 +28,7 @@ public enum GitChangeType {
    * @throws GitFormatException if such status can't be found: it means either a developer mistake missing a possible valid status,
    *                            or a Git invalid output.
    */
-  @NotNull
-  static GitChangeType fromString(@NotNull String statusString) {
+  static @NotNull GitChangeType fromString(@NotNull String statusString) {
     assert !statusString.isEmpty();
     char c = statusString.charAt(0);
     for (GitChangeType changeType : values()) {

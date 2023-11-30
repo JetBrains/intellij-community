@@ -37,8 +37,7 @@ public class ProgressBarLoadingDecorator extends LoadingDecorator {
     return true;
   }
 
-  @NotNull
-  public JProgressBar getProgressBar() {
+  public @NotNull JProgressBar getProgressBar() {
     return myProgressBar;
   }
 

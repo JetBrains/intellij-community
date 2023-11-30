@@ -1,5 +1,5 @@
-from _typeshed import Self
 from os import stat_result
+from typing_extensions import Self
 
 class SFTPAttributes:
     FLAG_SIZE: int
@@ -18,5 +18,5 @@ class SFTPAttributes:
     attr: dict[str, str]
     def __init__(self) -> None: ...
     @classmethod
-    def from_stat(cls: type[Self], obj: stat_result, filename: str | None = ...) -> Self: ...
+    def from_stat(cls, obj: stat_result, filename: str | None = None) -> Self: ...
     def asbytes(self) -> bytes: ...

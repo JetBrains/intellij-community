@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.safe
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ProjectImportingWizardService
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemSettings
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaWizardService
 import java.nio.file.Path
@@ -21,7 +22,8 @@ internal class IdeaMavenWizardService(private val project: Project) : ProjectImp
         reader: Reader,
         path: Path,
         modulesIrs: List<ModuleIR>,
-        buildSystem: BuildSystemType
+        buildSystem: BuildSystemType,
+        buildSystemSettings: BuildSystemSettings?
     ): TaskResult<Unit> = safe {
         MavenProjectImporter(project).importProject(path)
     }

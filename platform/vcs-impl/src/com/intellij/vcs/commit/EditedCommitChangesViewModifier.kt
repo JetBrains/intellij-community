@@ -11,8 +11,6 @@ class EditedCommitChangesViewModifier(private val project: Project) : ChangesVie
     val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler ?: return
     val editedCommit = workflowHandler.ui.editedCommit ?: return
 
-    val commitNode = EditedCommitNode(editedCommit)
-    builder.insertSubtreeRoot(commitNode)
-    builder.insertChanges(editedCommit.commit.changes, commitNode)
+    insertEditedCommitNode(builder, editedCommit)
   }
 }

@@ -2,10 +2,10 @@ MODULES
 my-app
 
 my-app.commonMain
-    targetPlatform = JS/JVM (1.8)
+    targetPlatform = JS/JVM (17)
 
 my-app.commonTest
-    targetPlatform = JS/JVM (1.8)
+    targetPlatform = JS/JVM (17)
 
 my-app.danglingOnCommon
     targetPlatform = JS/JVM (1.8)

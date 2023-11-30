@@ -18,7 +18,7 @@ import com.intellij.refactoring.util.RefactoringMessageUtil
 import com.intellij.util.CommonJavaRefactoringUtil
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -165,7 +165,7 @@ internal abstract class MoveKotlinNestedClassesToUpperLevelModel(
             val targetPackageFqName = getTargetPackageFqName(target)
                 ?: throw ConfigurationException(KotlinBundle.message("text.cannot.find.target.package.name"))
 
-            val suggestedName = Fe10KotlinNameSuggester.suggestNameByName(className) {
+            val suggestedName = KotlinNameSuggester.suggestNameByName(className) {
                 target.findFile(it + "." + KotlinFileType.EXTENSION) == null
             }
 

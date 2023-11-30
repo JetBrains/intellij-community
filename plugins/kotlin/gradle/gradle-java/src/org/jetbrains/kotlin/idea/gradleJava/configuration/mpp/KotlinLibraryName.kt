@@ -3,14 +3,9 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
-import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.LibraryData
-import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryCoordinates
-import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryDependency
 import org.jetbrains.kotlin.tooling.core.UnsafeApi
-import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 @JvmInline
@@ -19,9 +14,7 @@ value class KotlinLibraryName @UnsafeApi constructor(val name: String) {
 }
 
 fun KotlinLibraryName(coordinates: IdeaKotlinBinaryCoordinates): KotlinLibraryName {
-    return KotlinLibraryName(
-        listOfNotNull(coordinates.group, coordinates.module, coordinates.sourceSetName, coordinates.version).joinToString(":")
-    )
+    return KotlinLibraryName(coordinates.identityString)
 }
 
 val LibraryData.kotlinLibraryName: KotlinLibraryName get() = KotlinLibraryName(this.externalName)

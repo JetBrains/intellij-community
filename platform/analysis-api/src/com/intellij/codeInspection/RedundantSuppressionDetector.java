@@ -20,7 +20,7 @@ public interface RedundantSuppressionDetector {
   /**
    * @return quickfix to remove {@code toolId} suppression from list of suppressions
    */
-  @Nullable
+  @NotNull
   LocalQuickFix createRemoveRedundantSuppressionFix(@NotNull String toolId);
 
   /**

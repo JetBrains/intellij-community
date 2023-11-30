@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.LocalVariableNameInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.shared.LocalVariableNameInspection

@@ -51,6 +51,11 @@
       <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
     </extensionPoint>
 
+    <extensionPoint name="codeInsight.declarativeInlayProvider"
+                    beanClass="com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.declarative.InlayHintsProvider"/>
+    </extensionPoint>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -131,6 +136,48 @@
       <bundleName><error descr="Cannot resolve property bundle">INVALID_BUNDLE</error></bundleName>
       <className>com.intellij.codeInsight.intention.IntentionAction</className>
     </intentionAction>
+
+    <codeInsight.declarativeInlayProvider
+      bundle="MyBundle"
+      nameKey="my.key"
+      descriptionKey="my.key"
+
+      language="<error descr="Cannot resolve language with id ''LANGUAGE_ID''">LANGUAGE_ID</error>"
+      providerId="test.providerId"
+      group="ANNOTATIONS_GROUP"
+      isEnabledByDefault="true"
+      implementationClass="com.intellij.codeInsight.hints.declarative.InlayHintsProvider">
+
+      <option
+        bundle="MyBundle"
+        nameKey="my.key"
+        descriptionKey="my.key"
+
+        optionId="optionId"
+        enabledByDefault="true"
+      />
+    </codeInsight.declarativeInlayProvider>
+
+    <codeInsight.declarativeInlayProvider
+      bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
+      nameKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+      descriptionKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+
+      language="<error descr="Cannot resolve language with id ''LANGUAGE_ID''">LANGUAGE_ID</error>"
+      providerId="test.providerId"
+      group="<error descr="Cannot resolve 'INVALID_INLAY_GROUP' in com.intellij.codeInsight.hints.InlayGroup">INVALID_INLAY_GROUP</error>"
+      isEnabledByDefault="true"
+      implementationClass="com.intellij.codeInsight.hints.declarative.InlayHintsProvider">
+      <option
+        bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
+        nameKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+        descriptionKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+
+        optionId="optionId"
+        enabledByDefault="true"
+      />
+    </codeInsight.declarativeInlayProvider>
+
   </extensions>
   
   <extensions defaultExtensionNs="custom">

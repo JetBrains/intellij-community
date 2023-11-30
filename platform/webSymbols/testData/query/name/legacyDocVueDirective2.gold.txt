@@ -86,6 +86,7 @@
    },
    {
     name-part: "ba456",
+    display-name: "modifier",
     matchScore: 2,
     symbol: {
      matchedName: "html/modifiers/<pattern>",

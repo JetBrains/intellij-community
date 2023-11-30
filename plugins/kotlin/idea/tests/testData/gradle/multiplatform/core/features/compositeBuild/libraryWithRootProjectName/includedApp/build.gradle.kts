@@ -9,9 +9,7 @@ kotlin {
     linuxX64()
     linuxArm64()
 
-    targetHierarchy.default()
-
-    sourceSets.commonMain.get().dependencies {
+    sourceSets.commonMain.dependencies {
         implementation("org.jetbrains.library:utils:1.0.0")
     }
 }

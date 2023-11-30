@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
 import com.intellij.configurationStore.deserialize
@@ -14,10 +14,6 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.RawProgressReporter
-import com.intellij.openapi.progress.rawProgressReporter
-import com.intellij.openapi.progress.withBackgroundProgress
-import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.OrderRootType
@@ -27,12 +23,16 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -382,9 +382,12 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
       }.awaitAll().filterNotNull()
       val updatedCount = updatedEntitiesAndProperties.size
 
-      val failedToGuessRemoteRepositoryLibraries =
-        if (failedToGuessRemoteRepository.get()) entitiesAndProperties.filter { it.second.jarRepositoryId == null }.map { it.first.library }
-        else emptyList()
+      val failedToGuessRemoteRepositoryLibraries = if (failedToGuessRemoteRepository.get()) {
+        entitiesAndProperties.filter { it.second.jarRepositoryId == null }.map { it.first.library }
+      }
+      else {
+        emptyList()
+      }
 
       if (updatedEntitiesAndProperties.isEmpty()) {
         showUpdateCompleteNotification(disableInfoNotifications, 0, snapshot, failedToGuessRemoteRepositoryLibraries, emptyList())
@@ -429,9 +432,12 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
                                                snapshot: EntityStorage,
                                                libsFailedToGuessRemoteRepository: List<LibraryEntity>,
                                                libsFailedToResolveAfterUpdate: List<LibraryEntity>) {
-      val notificationType =
-        if (libsFailedToGuessRemoteRepository.isNotEmpty() || libsFailedToResolveAfterUpdate.isNotEmpty()) NotificationType.ERROR
-        else NotificationType.INFORMATION
+      val notificationType = if (libsFailedToGuessRemoteRepository.isNotEmpty() || libsFailedToResolveAfterUpdate.isNotEmpty()) {
+        NotificationType.ERROR
+      }
+      else {
+        NotificationType.INFORMATION
+      }
 
       @Suppress("HardCodedStringLiteral") // concatenation of localized strings
       val message = buildString {
@@ -452,9 +458,14 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
         }
       }
 
-      val action =
-        if (notificationType == NotificationType.INFORMATION) null
-        else ShowStructureSettingsAction().apply { templatePresentation.text = JavaUiBundle.message("repository.library.utils.notification.action.open.project.structure") }
+      val action = if (notificationType == NotificationType.INFORMATION) {
+        null
+      }
+      else {
+        ShowStructureSettingsAction().apply {
+          templatePresentation.text = JavaUiBundle.message("repository.library.utils.notification.action.open.project.structure")
+        }
+      }
       showNotification(message, notificationType, disableInfoNotification, action)
     }
 

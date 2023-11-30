@@ -98,9 +98,9 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<Float> TWO_SIDE_SPLITTER_PROPORTION = Key.create("Diff.TwoSideSplitterProportion");
 
   /**
-   * Marker flag for viewers embedded into FileEditor tab, that should not be disposed on tab close.
+   * Callback for viewers embedded into FileEditor tab, that should not be disposed on tab close.
    */
-  Key<Boolean> DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE = Key.create("Diff.DiffInEditor.ExplicitDisposable");
+  Key<Runnable> DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE = Key.create("Diff.DiffInEditor.ExplicitDisposable");
 
   Key<Boolean> DIFF_NEW_TOOLBAR = Key.create("Diff.NewToolbar");
 

@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 private val detectorConfiguration = KotlinMainFunctionDetector.Configuration(checkResultType = false)
 
-class MainFunctionReturnUnitInspection : LocalInspectionTool() {
+internal class MainFunctionReturnUnitInspection : LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return namedFunctionVisitor { processFunction(it, holder) }
     }

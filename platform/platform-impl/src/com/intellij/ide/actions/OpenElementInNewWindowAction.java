@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  * @see FileEditorManagerImpl#getOpenMode(java.awt.AWTEvent)
  */
-final class OpenElementInNewWindowAction extends DumbAwareAction {
+final class OpenElementInNewWindowAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {}
 

@@ -17,14 +17,16 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiCodeBlock
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.uast.UBlockExpression
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.*
 
 @ApiStatus.Internal
 class JavaUCodeBlockExpression(
   override val sourcePsi: PsiCodeBlock,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBlockExpression {
-  override val expressions: List<UExpression> by lazyPub { sourcePsi.statements.map { JavaConverter.convertOrEmpty(it, this) } }
+
+  private val expressionsPart = UastLazyPart<List<UExpression>>()
+
+  override val expressions: List<UExpression>
+    get() = expressionsPart.getOrBuild { sourcePsi.statements.map { JavaConverter.convertOrEmpty(it, this) } }
 }

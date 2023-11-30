@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.indexing;
 
 import com.intellij.openapi.project.Project;
@@ -17,9 +17,8 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import java.util.List;
 import java.util.Map;
 
-public class JavaFxCustomComponentsIndex extends ScalarIndexExtension<String> {
-
-  @NonNls public static final ID<String, Void> KEY = ID.create("javafx.custom.component");
+public final class JavaFxCustomComponentsIndex extends ScalarIndexExtension<String> {
+  public static final @NonNls ID<String, Void> KEY = ID.create("javafx.custom.component");
 
   private final FileBasedIndex.InputFilter myInputFilter = new JavaFxControllerClassIndex.MyInputFilter();
   private final FxmlDataIndexer myDataIndexer = new FxmlDataIndexer() {
@@ -51,27 +50,23 @@ public class JavaFxCustomComponentsIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  @NotNull
   @Override
-  public DataIndexer<String, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
     return myDataIndexer;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return myInputFilter;
   }
 
-  @NotNull
   @Override
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return KEY;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
@@ -86,7 +81,7 @@ public class JavaFxCustomComponentsIndex extends ScalarIndexExtension<String> {
   }
 
   public static <T> List<T> findCustomFxml(final Project project,
-                                           @NotNull final String className,
+                                           final @NotNull String className,
                                            final Function<VirtualFile, T> f,
                                            final GlobalSearchScope scope) {
     return JavaFxControllerClassIndex.findFxmls(KEY, project, className, f, scope);

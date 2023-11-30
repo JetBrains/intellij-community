@@ -21,5 +21,4 @@ LIB 					(INLINE CALL with) public inline fun <T, R> with(<bold>receiver: T</bol
 
 3 KotlinUtil.extensionFun(<bold>"x"</bold>);
 8 	fun <bold>Any</bold>.extensionFun() { (in extensionFun() on Any)
-3 		KotlinUtil.extensionFun(<bold>"x"</bold>);
-
+3 		JAVA: KotlinUtil.extensionFun(<bold>"x"</bold>); (in JavaClass.f())

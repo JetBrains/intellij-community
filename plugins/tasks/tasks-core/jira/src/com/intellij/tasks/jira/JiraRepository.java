@@ -19,6 +19,7 @@ import com.intellij.tasks.jira.soap.JiraLegacyApi;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.commons.httpclient.*;
+import org.apache.commons.httpclient.auth.HttpAuthenticator;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.xmlrpc.CommonsXmlRpcTransport;
@@ -62,6 +63,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   private JiraRemoteApi myApiVersion;
   private String myJiraVersion;
   private boolean myInCloud = false;
+  private boolean myUseBearerTokenAuthentication;
 
   /**
    * Serialization constructor
@@ -82,6 +84,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     mySearchQuery = other.mySearchQuery;
     myJiraVersion = other.myJiraVersion;
     myInCloud = other.myInCloud;
+    myUseBearerTokenAuthentication = other.myUseBearerTokenAuthentication;
     if (other.myApiVersion != null) {
       myApiVersion = other.myApiVersion.getType().createApi(this);
     }
@@ -95,6 +98,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     if (!Objects.equals(mySearchQuery, repository.getSearchQuery())) return false;
     if (!Objects.equals(myJiraVersion, repository.getJiraVersion())) return false;
     if (!Comparing.equal(myInCloud, repository.isInCloud())) return false;
+    if (!Comparing.equal(myUseBearerTokenAuthentication, repository.isUseBearerTokenAuthentication())) return false;
     return true;
   }
 
@@ -266,9 +270,18 @@ public class JiraRepository extends BaseRepositoryImpl {
     // See https://confluence.atlassian.com/display/ONDEMANDKB/Getting+randomly+logged+out+of+OnDemand for details
     // IDEA-128824, IDEA-128706 Use cookie authentication only for JIRA on-Demand
     // TODO Make JiraVersion more suitable for such checks
-    if (BASIC_AUTH_ONLY || !isInCloud()) {
+    if (BASIC_AUTH_ONLY) {
       // to override persisted settings
       setUseHttpAuthentication(true);
+    }
+    else if (!isInCloud()) {
+      if (isUseBearerTokenAuthentication()) {
+        setUseHttpAuthentication(false);
+        method.addRequestHeader(new Header(HttpAuthenticator.WWW_AUTH_RESP, "Bearer " + myPassword));
+      }
+      else {
+        setUseHttpAuthentication(true);
+      }
     }
     else {
       boolean enableBasicAuthentication = !(isRestApiSupported() && containsCookie(client, AUTH_COOKIE_NAME));
@@ -337,6 +350,17 @@ public class JiraRepository extends BaseRepositoryImpl {
     myInCloud = inCloud;
   }
 
+  public boolean isUseBearerTokenAuthentication() {
+    return myUseBearerTokenAuthentication;
+  }
+
+  public void setUseBearerTokenAuthentication(boolean useBearerTokenAuthentication) {
+    if (useBearerTokenAuthentication != isUseBearerTokenAuthentication()) {
+      myUseBearerTokenAuthentication = useBearerTokenAuthentication;
+      reconfigureClient();
+    }
+  }
+
   @NotNull
   String getPresentableVersion() {
     return StringUtil.notNullize(myJiraVersion, "unknown") + (myInCloud ? " (Cloud)" : "");
@@ -364,6 +388,10 @@ public class JiraRepository extends BaseRepositoryImpl {
   @Override
   protected void configureHttpClient(HttpClient client) {
     super.configureHttpClient(client);
+    if (isUseBearerTokenAuthentication()) {
+      client.getParams().setAuthenticationPreemptive(true);
+      client.getState().clearCredentials();
+    }
     client.getParams().setCookiePolicy(CookiePolicy.BROWSER_COMPATIBILITY);
   }
 

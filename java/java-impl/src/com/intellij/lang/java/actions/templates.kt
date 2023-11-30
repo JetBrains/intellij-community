@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
 import com.intellij.codeInsight.template.TemplateBuilder
 import com.intellij.lang.jvm.actions.ExpectedParameter
 import com.intellij.lang.jvm.actions.ExpectedTypes
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
@@ -57,7 +56,7 @@ internal fun TemplateContext.setupTypeElement(typeElement: PsiTypeElement, types
 
 internal fun TemplateContext.setupParameterName(parameter: PsiParameter, expectedParameter: ExpectedParameter) {
   val nameIdentifier = parameter.nameIdentifier ?: return
-  val codeStyleManager: JavaCodeStyleManager = project.service()
+  val codeStyleManager = JavaCodeStyleManager.getInstance(project)
   val argumentType = expectedParameter.expectedTypes.firstOrNull()?.theType as? PsiType
   val names = codeStyleManager.suggestNames(expectedParameter.semanticNames, VariableKind.PARAMETER, argumentType).names
   val expression = CreateFromUsageUtils.ParameterNameExpression(names)

@@ -40,12 +40,12 @@ public class JavaForUnwrapper extends JavaUnwrapper {
     context.delete(element);
   }
 
-  private void unwrapInitializer(PsiElement element, Context context) throws IncorrectOperationException {
+  private static void unwrapInitializer(PsiElement element, Context context) throws IncorrectOperationException {
     PsiStatement init = ((PsiForStatement)element).getInitialization();
     context.extractFromBlockOrSingleStatement(init, element);
   }
 
-  private void unwrapBody(PsiElement element, Context context) throws IncorrectOperationException {
+  private static void unwrapBody(PsiElement element, Context context) throws IncorrectOperationException {
     PsiStatement body = ((PsiLoopStatement)element).getBody();
     context.extractFromBlockOrSingleStatement(body, element);
   }

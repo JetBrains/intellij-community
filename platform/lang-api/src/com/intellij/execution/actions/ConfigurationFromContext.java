@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -21,17 +21,14 @@ public abstract class ConfigurationFromContext {
 
   private boolean myIsFromAlternativeLocation;
 
-  @Nullable
-  @Nls
-  private String myAlternativeLocationDisplayName;
+  private @Nullable @Nls String myAlternativeLocationDisplayName;
 
   /**
    * Returns the created run configuration settings.
    *
    * @return the created run configuration settings.
    */
-  @NotNull
-  public abstract RunnerAndConfigurationSettings getConfigurationSettings();
+  public abstract @NotNull RunnerAndConfigurationSettings getConfigurationSettings();
 
   public abstract void setConfigurationSettings(RunnerAndConfigurationSettings configurationSettings);
 
@@ -40,8 +37,7 @@ public abstract class ConfigurationFromContext {
    *
    * @return the run configuration object.
    */
-  @NotNull
-  public RunConfiguration getConfiguration() {
+  public @NotNull RunConfiguration getConfiguration() {
     return getConfigurationSettings().getConfiguration();
   }
 
@@ -50,8 +46,7 @@ public abstract class ConfigurationFromContext {
    *
    * @return the configuration type.
    */
-  @NotNull
-  public ConfigurationType getConfigurationType() {
+  public @NotNull ConfigurationType getConfigurationType() {
     return getConfiguration().getType();
   }
 
@@ -61,8 +56,7 @@ public abstract class ConfigurationFromContext {
    *
    * @return the PSI element from which the configuration was created.
    */
-  @NotNull
-  public abstract PsiElement getSourceElement();
+  public abstract @NotNull PsiElement getSourceElement();
 
   /**
    * Called before the configuration created from context is first executed. Can be used to show additional UI for customizing the
@@ -129,9 +123,7 @@ public abstract class ConfigurationFromContext {
    *
    * @return Location display name, null if name was not provided or this configuration is not from alternative location.
    */
-  @Nullable
-  @Nls
-  public String getAlternativeLocationDisplayName() {
+  public @Nullable @Nls String getAlternativeLocationDisplayName() {
     return myAlternativeLocationDisplayName;
   }
 

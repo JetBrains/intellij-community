@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiClass;
@@ -65,6 +65,13 @@ public interface RefClass extends RefJavaElement, RefOverridable {
   }
 
   /**
+   * @return true if this is an annotation type declaration, false otherwise
+   */
+  default boolean isAnnotationType() {
+    return false;
+  }
+
+  /**
    * In Java a utility class has only static methods or fields and no non-private constructors or constructors with parameters.
    * However in Kotlin utility classes (Objects) follow singleton pattern.
    * @return true if this class is a utility class, false otherwise.
@@ -92,7 +99,6 @@ public interface RefClass extends RefJavaElement, RefOverridable {
     return false;
   }
 
-  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
   @Deprecated(forRemoval = true)
   default boolean isSelfInheritor(PsiClass psiClass) {
     throw new UnsupportedOperationException();

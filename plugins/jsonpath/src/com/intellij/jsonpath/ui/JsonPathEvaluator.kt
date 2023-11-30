@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jsonpath.ui
 
 import com.intellij.json.psi.JsonFile
@@ -9,7 +9,7 @@ import com.jayway.jsonpath.*
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider
 
-class JsonPathEvaluator(val jsonFile: JsonFile?,
+class JsonPathEvaluator(private val jsonFile: JsonFile?,
                         val expression: String,
                         private val evalOptions: Set<Option>) {
 

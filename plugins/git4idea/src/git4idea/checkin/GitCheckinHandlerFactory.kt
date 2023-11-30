@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
 import com.intellij.CommonBundle
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
@@ -21,6 +20,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.vcs.log.VcsUser
 import git4idea.GitUserRegistry
 import git4idea.GitUtil
@@ -70,7 +70,7 @@ private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(projec
 
     val files = commitInfo.committedVirtualFiles // Deleted files aren't included. But for them, we don't care about CRLFs.
     val shouldWarn = withContext(Dispatchers.Default) {
-      coroutineContext.progressSink?.update(GitBundle.message("progress.checking.line.separator.issues"))
+      coroutineContext.rawProgressReporter?.text(GitBundle.message("progress.checking.line.separator.issues"))
       coroutineToIndicator {
         GitCrlfProblemsDetector.detect(project, git, files).shouldWarn()
       }

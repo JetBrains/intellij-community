@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 @State(name = "PostfixTemplatesSettings", storages = @Storage("postfixTemplates.xml"), category = SettingsCategory.CODE)
-public class PostfixTemplatesSettings implements PersistentStateComponent<Element> {
+public final class PostfixTemplatesSettings implements PersistentStateComponent<Element> {
   private Map<String, Set<String>> myProviderToDisabledTemplates = new HashMap<>();
   /**
    * @deprecated use myProviderToDisabledTemplates

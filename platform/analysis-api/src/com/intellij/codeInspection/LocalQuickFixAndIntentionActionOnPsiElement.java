@@ -2,8 +2,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.editor.Editor;
@@ -76,61 +74,13 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
 
   /**
    * This method exists to provide compatibility bridges. Use of it is discouraged. When possible, prefer
-   * {@link ModCommandAction#asIntention()} or {@link ModCommandAction#asQuickFix()}
+   * {@link ModCommandAction#asIntention()} or {@link LocalQuickFix#from(ModCommandAction)}
    * @param action action to delegate to
    * @param psiElement some context element. Mostly unused but should remain valid in order the action to be executed
    * @return a wrapper that extends {@link LocalQuickFixAndIntentionActionOnPsiElement} and delegates to the action
    */
   @ApiStatus.Internal
   public static LocalQuickFixAndIntentionActionOnPsiElement from(@NotNull ModCommandAction action, @NotNull PsiElement psiElement) {
-    return new LocalQuickFixAndIntentionActionOnPsiElement(psiElement) {
-      @Override
-      public @NotNull String getFamilyName() {
-        return action.getFamilyName();
-      }
-
-      @Override
-      public @NotNull String getText() {
-        PsiElement element = getStartElement();
-        if (element == null) return getFamilyName();
-        ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(null, element.getContainingFile())
-          .withElement(element);
-        ModCommandAction.Presentation presentation = action.getPresentation(context);
-        if (presentation != null) {
-          return presentation.name();
-        }
-        return getFamilyName();
-      }
-
-      @Override
-      public boolean isAvailable(@NotNull Project project,
-                                 @NotNull PsiFile file,
-                                 @Nullable Editor editor,
-                                 @NotNull PsiElement startElement,
-                                 @NotNull PsiElement endElement) {
-        ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(editor, file).withElement(startElement);
-        return action.getPresentation(context) != null;
-      }
-
-      @Override
-      public void invoke(@NotNull Project project,
-                         @NotNull PsiFile file,
-                         @Nullable Editor editor,
-                         @NotNull PsiElement startElement,
-                         @NotNull PsiElement endElement) {
-        ModCommand command = action.perform(ModCommandAction.ActionContext.from(editor, file).withElement(startElement));
-        ModCommandService.getInstance().executeInteractively(project, command);
-      }
-
-      @Override
-      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-        return action.generatePreview(ModCommandAction.ActionContext.from(previewDescriptor));
-      }
-
-      @Override
-      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-        return action.generatePreview(ModCommandAction.ActionContext.from(editor, file));
-      }
-    };
+    return ModCommandService.getInstance().wrapToLocalQuickFixAndIntentionActionOnPsiElement(action, psiElement);
   }
 }

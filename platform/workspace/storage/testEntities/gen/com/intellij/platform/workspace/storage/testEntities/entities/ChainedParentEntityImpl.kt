@@ -13,21 +13,21 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ChainedParentEntityImpl(val dataSource: ChainedParentEntityData) : ChainedParentEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ChainedParentEntityImpl(private val dataSource: ChainedParentEntityData) : ChainedParentEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ChainedParentEntity::class.java, ChainedEntity::class.java,
                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CHILD_CONNECTION_ID,
     )
 
@@ -42,6 +42,7 @@ open class ChainedParentEntityImpl(val dataSource: ChainedParentEntityData) : Ch
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ChainedParentEntityData?) : ModifiableWorkspaceEntityBase<ChainedParentEntity, ChainedParentEntityData>(
     result), ChainedParentEntity.Builder {
@@ -71,7 +72,7 @@ open class ChainedParentEntityImpl(val dataSource: ChainedParentEntityData) : Ch
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -180,6 +181,11 @@ class ChainedParentEntityData : WorkspaceEntityData<ChainedParentEntity>() {
     }
   }
 
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChainedParentEntity") as EntityMetadata
+  }
+
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ChainedParentEntity::class.java
   }
@@ -227,9 +233,5 @@ class ChainedParentEntityData : WorkspaceEntityData<ChainedParentEntity>() {
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

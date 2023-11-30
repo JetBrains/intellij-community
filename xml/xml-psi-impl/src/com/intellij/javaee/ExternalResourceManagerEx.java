@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javaee;
 
 import com.intellij.openapi.Disposable;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class ExternalResourceManagerEx extends ExternalResourceManager {
-  @NonNls public static final String STANDARD_SCHEMAS = "/standardSchemas/";
+  public static final @NonNls String STANDARD_SCHEMAS = "/standardSchemas/";
 
   public enum XMLSchemaVersion {
     XMLSchema_1_0,
@@ -52,8 +52,7 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
 
   public abstract boolean isStandardResource(VirtualFile file);
 
-  @Nullable
-  public abstract @NlsSafe String getUserResource(Project project, String url, String version);
+  public abstract @Nullable @NlsSafe String getUserResource(Project project, String url, String version);
 
   public abstract @NlsSafe String getStdResource(@NotNull String url, @Nullable String version);
 

@@ -5,7 +5,8 @@ from collections import namedtuple
 
 from _pydevd_bundle.pydevd_constants import IS_PY3K, IS_CPYTHON
 
-__all__ = ["get_smart_step_into_candidates"]
+__all__ = ["find_last_call_name", "find_last_func_call_order",
+           "get_smart_step_into_candidates"]
 
 _LOAD_OPNAMES = {
     'LOAD_BUILD_CLASS',

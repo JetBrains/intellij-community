@@ -6,7 +6,6 @@ import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeRequestProducer;
 import com.intellij.diff.merge.MergeTool;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +17,7 @@ public abstract class DiffManagerEx extends DiffManager {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @NotNull
   public static DiffManagerEx getInstance() {
-    return (DiffManagerEx)ApplicationManager.getApplication().getService(DiffManager.class);
+    return (DiffManagerEx)DiffManager.getInstance();
   }
 
   //

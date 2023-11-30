@@ -19,7 +19,7 @@ class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest(), C
         disableCheckers(HighlightingChecker)
     }
 
-    @PluginTargetVersions(pluginVersion = "1.9.0-Beta+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     @Test
     fun testJvmRun() {
         doTest {
@@ -29,7 +29,7 @@ class KotlinMppRunConfigurationsTest : AbstractKotlinMppGradleImportingTest(), C
         }
     }
 
-    @PluginTargetVersions(pluginVersion = "1.9.0-Beta+")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     @Test
     fun testKmmTests() {
         /*

@@ -47,19 +47,12 @@ public abstract class ModCommandQuickFix implements LocalQuickFix {
   @Override
   public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     ModCommand command = perform(project, descriptor);
-    ModCommandService.getInstance().executeInteractively(project, command);
-  }
-
-  @Override
-  public final void applyFixNonInteractively(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    ModCommand command = perform(project, descriptor);
-    ModCommandService.getInstance().executeInBatch(project, command);
+    ModCommandExecutor.getInstance().executeInteractively(ActionContext.from(descriptor), command, null);
   }
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    PsiFile file = previewDescriptor.getPsiElement().getContainingFile();
     ModCommand modCommand = perform(project, previewDescriptor);
-    return IntentionPreviewUtils.getModCommandPreview(modCommand, file);
+    return IntentionPreviewUtils.getModCommandPreview(modCommand, ActionContext.from(previewDescriptor));
   }
 }

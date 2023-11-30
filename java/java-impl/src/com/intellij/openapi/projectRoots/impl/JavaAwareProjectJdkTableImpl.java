@@ -26,7 +26,7 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   private static final String DEFAULT_JDK_CONFIGURED = "defaultJdkConfigured";
 
   public static JavaAwareProjectJdkTableImpl getInstanceEx() {
-    return (JavaAwareProjectJdkTableImpl)ApplicationManager.getApplication().getService(ProjectJdkTable.class);
+    return (JavaAwareProjectJdkTableImpl)ProjectJdkTable.getInstance();
   }
 
   private Sdk myInternalJdk;

@@ -45,20 +45,8 @@ public abstract class ManagingFS implements FileSystemInterface {
   public abstract int getModificationCount(@NotNull VirtualFile fileOrDirectory);
 
   /**
-   * @return a number that's incremented every time something changes in the VFS, i.e. file hierarchy, names, flags, attributes, contents.
-   * This only counts modifications done in the current IDE session.
-   * @see #getStructureModificationCount()
-   * @see #getFilesystemModificationCount()
-   * @deprecated to be dropped as there is no real use for it 
-   */
-  //FIXME RC: drop this method from API -- the only use is in test code
-  @Deprecated(forRemoval = true)
-  public abstract int getModificationCount();
-
-  /**
    * @return a number that's incremented every time something changes in the VFS structure, i.e. file hierarchy or names.
    * This only counts modifications done in the current IDE session.
-   * @see #getModificationCount()
    */
   public abstract int getStructureModificationCount();
 

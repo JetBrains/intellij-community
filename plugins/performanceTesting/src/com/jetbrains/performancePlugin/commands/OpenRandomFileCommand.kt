@@ -15,7 +15,6 @@ import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.NonNls
-import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 import javax.swing.Icon
 import kotlin.time.Duration.Companion.minutes
@@ -55,22 +54,6 @@ class OpenRandomFileCommand(text: String, line: Int) : PlaybackCommandCoroutineA
     }
   }
 
-  private fun limitedFiles(files: Collection<VirtualFile>,
-                           percentOfFiles: Int,
-                           maxFilesPerPart: Int,
-                           minFileSize: Int): Collection<VirtualFile> {
-    val sortedBySize = files.filter { Files.size(it.toNioPath()) > minFileSize }.map {
-      it to Files.size(it.toNioPath())
-    }.sortedByDescending { it.second }
-    val numberOfFiles = minOf((sortedBySize.size * percentOfFiles) / 100, maxFilesPerPart)
-
-    val topFiles = sortedBySize.take(numberOfFiles).map { it.first }
-    val midFiles = sortedBySize.take(sortedBySize.size / 2 + numberOfFiles / 2).takeLast(numberOfFiles).map { it.first }
-    val lastFiles = sortedBySize.takeLast(numberOfFiles).map { it.first }
-
-    return LinkedHashSet(topFiles + midFiles + lastFiles)
-  }
-
 }
 
 internal fun fileTypeOf(extension: String): FileType {
@@ -79,6 +62,7 @@ internal fun fileTypeOf(extension: String): FileType {
       return when (extension) {
         "kt" -> "Kotlin"
         "java" -> "JAVA"
+        "scala" -> "Scala"
         else -> {
           "default"
         }

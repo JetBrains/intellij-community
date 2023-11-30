@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.MarkupIterator;
@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 
 public final class FilteringMarkupIterator<T> implements MarkupIterator<T> {
   private final @NotNull MarkupIterator<? extends T> myDelegate;
-  @NotNull private final Predicate<? super T> myFilter;
+  private final @NotNull Predicate<? super T> myFilter;
 
   public FilteringMarkupIterator(@NotNull MarkupIterator<? extends T> delegate, @NotNull Predicate<? super T> filter) {
     myDelegate = delegate;

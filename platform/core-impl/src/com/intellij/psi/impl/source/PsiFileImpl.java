@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.*;
-import com.intellij.model.ModelBranch;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -121,7 +120,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public VirtualFile getVirtualFile() {
     VirtualFile indexingFile = IndexingDataKeys.VIRTUAL_FILE.get(this);
     if (indexingFile != null) return indexingFile;
-    return getViewProvider().isEventSystemEnabled() || ModelBranch.getPsiBranch(this) != null ? getViewProvider().getVirtualFile() : null;
+    return getViewProvider().isEventSystemEnabled() ? getViewProvider().getVirtualFile() : null;
   }
 
   @Override
@@ -451,6 +450,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   public void checkDelete() throws IncorrectOperationException {
     if (!getViewProvider().isEventSystemEnabled()) {
+      if (PsiFileImplUtil.canDeleteNonPhysicalFile(this)) return;
       throw new IncorrectOperationException();
     }
     CheckUtil.checkWritable(this);
@@ -605,6 +605,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   /**
    * @return a stub tree, if this file has it, and only if AST isn't loaded
+   * @implNote for non-physical files, this method can still load AST even if it's not yet loaded
    */
   @Override
   public @Nullable StubTree getStubTree() {
@@ -926,6 +927,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return calcTreeElement();
   }
 
+  /**
+   * @implNote for non-physical files, this method can still load AST even if it's not yet loaded
+   */
   public @Nullable FileASTNode getNodeIfLoaded() {
     return getTreeElement();
   }

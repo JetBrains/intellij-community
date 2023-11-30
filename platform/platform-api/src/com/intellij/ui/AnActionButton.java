@@ -139,13 +139,11 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     return myContextComponent;
   }
 
-  @NotNull
-  public DataContext getDataContext() {
+  public @NotNull DataContext getDataContext() {
     return DataManager.getInstance().getDataContext(getContextComponent());
   }
 
-  @NotNull
-  public final RelativePoint getPreferredPopupPoint() {
+  public final @NotNull RelativePoint getPreferredPopupPoint() {
     RelativePoint result = CommonActionsPanel.getPreferredPopupPoint(this, myContextComponent);
     if (result != null) {
       return result;
@@ -197,9 +195,8 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
       return myAction.isDumbAware();
     }
 
-    @NotNull
     @Override
-    public AnAction getDelegate() {
+    public @NotNull AnAction getDelegate() {
       return myAction;
     }
   }

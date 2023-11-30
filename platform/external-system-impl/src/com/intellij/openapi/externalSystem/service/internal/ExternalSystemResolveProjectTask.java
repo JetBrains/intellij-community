@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.Nls;
@@ -80,8 +81,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
   @SuppressWarnings("unchecked")
   protected void doExecute() throws Exception {
     ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
-      (ExternalSystemProgressNotificationManagerImpl)ApplicationManager.getApplication()
-        .getService(ExternalSystemProgressNotificationManager.class);
+      (ExternalSystemProgressNotificationManagerImpl)ExternalSystemProgressNotificationManager.getInstance();
     ExternalSystemTaskId id = getId();
 
     Project ideProject;
@@ -120,7 +120,9 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     StructuredIdeActivity activity =
       externalSystemTaskStarted(ideProject, getExternalSystemId(), ResolveProject, environmentConfigurationProvider);
     try {
-      DataNode<ProjectData> project = pauseIndexingAndResolveProjectNode(id, resolver, settings);
+      boolean pauseIndexingDuringSync = Registry.is("external.system.pause.indexing.during.sync", false);
+      DataNode<ProjectData> project = pauseIndexingDuringSync ? pauseIndexingAndResolveProjectNode(id, resolver, settings)
+                                      : resolver.resolveProjectInfo(id, myProjectPath, myIsPreviewMode, settings, myResolverPolicy);
       if (project != null) {
         myExternalProject.set(project);
 

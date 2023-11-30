@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -20,6 +21,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
@@ -36,7 +38,7 @@ import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-final class ActivityMonitorAction extends DumbAwareAction {
+final class ActivityMonitorAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   private static final @NonNls String[] MEANINGLESS_PREFIXES_1 = {"com.intellij.", "com.jetbrains.", "org.jetbrains.", "org.intellij."};
   private static final @NonNls String[] MEANINGLESS_PREFIXES_2 = {"util.", "openapi.", "plugins.", "extapi."};
   private static final @NonNls String[] INFRASTRUCTURE_PREFIXES = {
@@ -75,8 +77,12 @@ final class ActivityMonitorAction extends DumbAwareAction {
     "com.intellij.openapi.progress.impl.",
     "com.intellij.ide.IdeEventQueue",
     "com.intellij.openapi.fileTypes.",
+
     "com.intellij.openapi.vfs.newvfs.persistent.PersistentFS",
     "com.intellij.openapi.vfs.newvfs.persistent.FSRecords",
+    "com.intellij.util.io.pagecache",
+    FilePageCacheLockFree.class.getName(),
+
     "com.intellij.openapi.roots.impl",
     "javax."
   };
@@ -100,8 +106,7 @@ final class ActivityMonitorAction extends DumbAwareAction {
 
       private final Map<String, String> classToSubsystem = new HashMap<>();
 
-      @NotNull
-      private String calcSubSystemName(String className) {
+      private @NotNull String calcSubSystemName(String className) {
         String pkg = StringUtil.getPackageName(className);
         if (pkg.isEmpty()) pkg = className;
 
@@ -122,7 +127,7 @@ final class ActivityMonitorAction extends DumbAwareAction {
         return result;
       }
 
-      private String findPrefix(String qname, String[] prefixes) {
+      private static String findPrefix(String qname, String[] prefixes) {
         for (String prefix : prefixes) {
           if (qname.startsWith(prefix)) {
             return prefix;
@@ -144,8 +149,7 @@ final class ActivityMonitorAction extends DumbAwareAction {
         }
       }
 
-      @NotNull
-      private String getSubsystemName(long threadId) {
+      private @NotNull String getSubsystemName(long threadId) {
         if (threadId == Thread.currentThread().getId()) {
           return "<Activity Monitor>";
         }
@@ -165,7 +169,7 @@ final class ActivityMonitorAction extends DumbAwareAction {
         return (runnable ? "<infrastructure: " : "<unidentified: ") + getCommonThreadName(info) + ">";
       }
 
-      private String getCommonThreadName(ThreadInfo info) {
+      private static String getCommonThreadName(ThreadInfo info) {
         String name = info.getThreadName();
         if (ThreadDumper.isEDT(name)) return "UI thread";
 
@@ -174,7 +178,7 @@ final class ActivityMonitorAction extends DumbAwareAction {
         return name;
       }
 
-      private boolean isInfrastructureClass(String className) {
+      private static boolean isInfrastructureClass(String className) {
         return ContainerUtil.exists(INFRASTRUCTURE_PREFIXES, className::startsWith);
       }
 
@@ -211,8 +215,7 @@ final class ActivityMonitorAction extends DumbAwareAction {
         }, ModalityState.any());
       }
 
-      @NotNull
-      private List<Pair<String, Long>> takeSnapshot() {
+      private @NotNull List<Pair<String, Long>> takeSnapshot() {
         List<Pair<String, Long>> times = new ArrayList<>();
         for (Object2LongMap.Entry<String> entry : subsystemToSamples.object2LongEntrySet()) {
           times.add(new Pair<>(entry.getKey(), TimeUnit.NANOSECONDS.toMillis(entry.getLongValue())));

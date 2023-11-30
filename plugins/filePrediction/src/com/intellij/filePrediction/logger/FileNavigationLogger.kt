@@ -8,81 +8,79 @@ import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 
-internal class FileNavigationLogger : CounterUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("file.prediction", 14)
+internal object FileNavigationLogger : CounterUsagesCollector() {
+  private val GROUP = EventLogGroup("file.prediction", 14)
 
-    private var session: IntEventField = EventFields.Int("session")
-    private var performance: LongListEventField = EventFields.LongList("performance")
+  private var session: IntEventField = EventFields.Int("session")
+  private var performance: LongListEventField = EventFields.LongList("performance")
 
-    private var anonymized_path: CandidateAnonymizedPath = CandidateAnonymizedPath()
-    private var opened: EncodedBooleanEventField = EncodedBooleanEventField("opened")
-    private var source: EncodedEnumEventField<FilePredictionCandidateSource> = EncodedEnumEventField("source")
+  private var anonymized_path: CandidateAnonymizedPath = CandidateAnonymizedPath()
+  private var opened: EncodedBooleanEventField = EncodedBooleanEventField("opened")
+  private var source: EncodedEnumEventField<FilePredictionCandidateSource> = EncodedEnumEventField("source")
 
-    private var probability: EncodedDoubleEventField = EncodedDoubleEventField("prob")
+  private var probability: EncodedDoubleEventField = EncodedDoubleEventField("prob")
 
-    private var features: StringEventField = EventFields.StringValidatedByCustomRule("features", FilePredictionFeaturesValidator::class.java)
+  private var features: StringEventField = EventFields.StringValidatedByCustomRule("features", FilePredictionFeaturesValidator::class.java)
 
-    private var candidates: ObjectListEventField = ObjectListEventField(
-      "candidates",
-      anonymized_path,
-      opened.field,
-      source.field,
-      probability.field,
-      features
+  private var candidates: ObjectListEventField = ObjectListEventField(
+    "candidates",
+    anonymized_path,
+    opened.field,
+    source.field,
+    probability.field,
+    features
+  )
+
+  private val cacheCandidates = GROUP.registerEvent("calculated", session, performance, candidates)
+
+
+  fun logEvent(project: Project,
+               sessionId: Int,
+               opened: FilePredictionCompressedCandidate?,
+               candidates: List<FilePredictionCompressedCandidate>,
+               totalDuration: Long,
+               refsComputation: Long) {
+    val allCandidates: MutableList<ObjectEventData> = arrayListOf()
+    if (opened != null) {
+      allCandidates.add(toObject(opened, true))
+    }
+
+    for (candidate in candidates) {
+      allCandidates.add(toObject(candidate, false))
+    }
+
+    val performanceMs = toPerformanceMetrics(totalDuration, refsComputation, opened, candidates)
+    cacheCandidates.log(project, sessionId, performanceMs, allCandidates)
+  }
+
+  private fun toObject(candidate: FilePredictionCompressedCandidate, wasOpened: Boolean): ObjectEventData {
+    val data = arrayListOf<EventPair<*>>(
+      anonymized_path.with(candidate.path),
+      opened.with(wasOpened),
+      source.with(candidate.source)
     )
+    if (candidate.probability != null) {
+      data.add(probability.with(candidate.probability))
+    }
+    data.add(features.with(candidate.features))
+    return ObjectEventData(data)
+  }
 
-    private val cacheCandidates = GROUP.registerEvent("calculated", session, performance, candidates)
-
-
-    fun logEvent(project: Project,
-                 sessionId: Int,
-                 opened: FilePredictionCompressedCandidate?,
-                 candidates: List<FilePredictionCompressedCandidate>,
-                 totalDuration: Long,
-                 refsComputation: Long) {
-      val allCandidates: MutableList<ObjectEventData> = arrayListOf()
-      if (opened != null) {
-        allCandidates.add(toObject(opened, true))
-      }
-
-      for (candidate in candidates) {
-        allCandidates.add(toObject(candidate, false))
-      }
-
-      val performanceMs = toPerformanceMetrics(totalDuration, refsComputation, opened, candidates)
-      cacheCandidates.log(project, sessionId, performanceMs, allCandidates)
+  private fun toPerformanceMetrics(totalDuration: Long, refsComputation: Long,
+                                   openCandidate: FilePredictionCompressedCandidate?,
+                                   candidates: List<FilePredictionCompressedCandidate>): List<Long> {
+    var featuresMs: Long = 0
+    var predictionMs: Long = 0
+    openCandidate?.let {
+      featuresMs += it.featuresComputation
+      predictionMs += it.duration ?: 0
     }
 
-    private fun toObject(candidate: FilePredictionCompressedCandidate, wasOpened: Boolean): ObjectEventData {
-      val data = arrayListOf<EventPair<*>>(
-        anonymized_path.with(candidate.path),
-        opened.with(wasOpened),
-        source.with(candidate.source)
-      )
-      if (candidate.probability != null) {
-        data.add(probability.with(candidate.probability))
-      }
-      data.add(features.with(candidate.features))
-      return ObjectEventData(data)
+    for (candidate in candidates) {
+      featuresMs += candidate.featuresComputation
+      predictionMs += candidate.duration ?: 0
     }
-
-    private fun toPerformanceMetrics(totalDuration: Long, refsComputation: Long,
-                                     openCandidate: FilePredictionCompressedCandidate?,
-                                     candidates: List<FilePredictionCompressedCandidate>): List<Long> {
-      var featuresMs: Long = 0
-      var predictionMs: Long = 0
-      openCandidate?.let {
-        featuresMs += it.featuresComputation
-        predictionMs += it.duration ?: 0
-      }
-
-      for (candidate in candidates) {
-        featuresMs += candidate.featuresComputation
-        predictionMs += candidate.duration ?: 0
-      }
-      return arrayListOf(totalDuration, refsComputation, featuresMs, predictionMs)
-    }
+    return arrayListOf(totalDuration, refsComputation, featuresMs, predictionMs)
   }
 
   override fun getGroup(): EventLogGroup {

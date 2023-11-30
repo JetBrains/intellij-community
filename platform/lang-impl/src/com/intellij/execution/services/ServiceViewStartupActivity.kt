@@ -21,7 +21,7 @@ internal class ServiceViewStartupActivity private constructor() : ProjectActivit
   }
 
   override suspend fun execute(project: Project) : Unit = blockingContext {
-    if (ServiceViewContributor.CONTRIBUTOR_EP_NAME.extensionList.isEmpty()) {
+    if (!ServiceViewContributor.CONTRIBUTOR_EP_NAME.hasAnyExtensions()) {
       ServiceViewContributor.CONTRIBUTOR_EP_NAME.addExtensionPointListener(object : ExtensionPointListener<ServiceViewContributor<*>> {
         override fun extensionAdded(extension: ServiceViewContributor<*>, pluginDescriptor: PluginDescriptor) {
           ServiceViewManager.getInstance(project)

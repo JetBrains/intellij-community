@@ -37,7 +37,7 @@ public final class TopLevelClass {
     }
 }
 
-public enum MyBooleanEnum {
+public final enum MyBooleanEnum {
     @null TRUE
     @null FALSE
     private fun MyBooleanEnum() = UastEmptyExpression

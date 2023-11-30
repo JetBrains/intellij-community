@@ -8,8 +8,6 @@ six.create_bound_method.__defaults__
 six.moves.*
 
 # Implemented using "operator" functions in the implementation
-six.byte2int
-six.indexbytes
 six.get_function_closure
 six.get_function_code
 six.get_function_defaults
@@ -19,7 +17,19 @@ six.get_method_self
 six.viewitems
 six.viewkeys
 six.viewvalues
+# Should be `operator.itemgetter[int]`. But a bug in mypy prevents using TypeVar in itemgetter__call__
+six.byte2int
+
+# Utils
+six.Module_six_moves_urllib
+six.Module_six_moves_urllib_error
+six.Module_six_moves_urllib_parse
+six.Module_six_moves_urllib_request
+six.Module_six_moves_urllib_response
+six.Module_six_moves_urllib_robotparser
+
+# Belongs to `django.utils.six`
+six.iterlists
 
 # Unclear problems
-six.Iterator.__init__
 six.callable

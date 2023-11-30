@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,8 +22,7 @@ public final class GitRefUtil {
   private static final Logger LOG = Logger.getInstance(GitRefUtil.class);
   private static final Pattern BRANCH_PATTERN = Pattern.compile(" *(?:ref:)? */?((?:refs/heads/|refs/remotes/)?\\S+)");
 
-  @Nullable
-  public static String addRefsHeadsPrefixIfNeeded(@Nullable String branchName) {
+  public static @Nullable String addRefsHeadsPrefixIfNeeded(@Nullable String branchName) {
     if (branchName != null && !branchName.startsWith(REFS_HEADS_PREFIX)) {
       return REFS_HEADS_PREFIX + branchName;
     }
@@ -36,8 +35,7 @@ public final class GitRefUtil {
    * Incorrectly formatted lines are ignored, a warning is printed to the log, null is returned.
    * A line indicating a hash which an annotated tag (specified in the previous line) points to, is ignored: null is returned.
    */
-  @Nullable
-  public static Pair<String, String> parseRefsLine(@NotNull String line) {
+  public static @Nullable Pair<String, String> parseRefsLine(@NotNull String line) {
     line = line.trim();
     if (line.isEmpty()) {
       return null;
@@ -82,8 +80,7 @@ public final class GitRefUtil {
     return Pair.create(branch, hash.trim());
   }
 
-  @NotNull
-  static Map<String, Hash> resolveRefs(@NotNull Map<String, String> data) {
+  static @NotNull Map<String, Hash> resolveRefs(@NotNull Map<String, String> data) {
     final Map<String, Hash> resolved = getResolvedHashes(data);
     Map<String, String> unresolved = ContainerUtil.filter(data, refName -> !resolved.containsKey(refName));
 
@@ -122,8 +119,7 @@ public final class GitRefUtil {
   }
 
 
-  @NotNull
-  public static Map<String, Hash> getResolvedHashes(@NotNull Map<String, String> data) {
+  public static @NotNull Map<String, Hash> getResolvedHashes(@NotNull Map<String, String> data) {
     Map<String, Hash> resolved = new HashMap<>();
     for (Map.Entry<String, String> entry : data.entrySet()) {
       String refName = entry.getKey();
@@ -135,8 +131,7 @@ public final class GitRefUtil {
     return resolved;
   }
 
-  @Nullable
-  static String getTarget(@NotNull String refName) {
+  static @Nullable String getTarget(@NotNull String refName) {
     Matcher matcher = BRANCH_PATTERN.matcher(refName);
     if (!matcher.matches()) {
       return null;
@@ -148,8 +143,7 @@ public final class GitRefUtil {
     return target;
   }
 
-  @Nullable
-  static Hash parseHash(@NotNull String value) {
+  static @Nullable Hash parseHash(@NotNull String value) {
     try {
       return HashImpl.build(value);
     }

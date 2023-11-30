@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
 import com.intellij.execution.ExecutionBundle;
@@ -132,9 +132,8 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     protected String getDescription(EnvironmentVariable environmentVariable) {
       return environmentVariable.getDescription();
     }
-    @NotNull
     @Override
-    public TableCellEditor getEditor(EnvironmentVariable variable) {
+    public @NotNull TableCellEditor getEditor(EnvironmentVariable variable) {
       return new DefaultCellEditor(new JTextField());
     }
   }
@@ -160,15 +159,13 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       setModified();
     }
 
-    @Nullable
     @Override
-    protected String getDescription(EnvironmentVariable environmentVariable) {
+    protected @Nullable String getDescription(EnvironmentVariable environmentVariable) {
       return environmentVariable.getDescription();
     }
 
-    @NotNull
     @Override
-    public TableCellEditor getEditor(EnvironmentVariable variable) {
+    public @NotNull TableCellEditor getEditor(EnvironmentVariable variable) {
       return new StringWithNewLinesCellEditor();
     }
   }
@@ -184,9 +181,8 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       return ActionUpdateThread.EDT;
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
+    public @Nullable Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.COPY_PROVIDER.is(dataId) || PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
         return this;
       }
@@ -333,8 +329,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     return new AnActionButton[]{copyButton, pasteButton};
   }
 
-  @NotNull
-  public static Map<String, String> parseEnvsFromText(String content) {
+  public static @NotNull Map<String, String> parseEnvsFromText(String content) {
     Map<String, String> result = new LinkedHashMap<>();
     if (content != null && content.contains("=")) {
       boolean legacyFormat = content.contains("\n");

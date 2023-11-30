@@ -529,7 +529,10 @@ object PyCollectionTypeUtil {
           for (arg in arguments) {
             if (arg is PyKeywordArgument) {
               if (!keyStrAdded) {
-                keyTypes.add(PyLiteralStringType.create(arg, true))
+                val strType = PyBuiltinCache.getInstance(myElement).strType
+                if (strType != null) {
+                  keyTypes.add(strType)
+                }
                 keyStrAdded = true
               }
               val value = PyUtil.peelArgument(arg)

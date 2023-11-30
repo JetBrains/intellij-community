@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.picker;
 
 import com.intellij.jna.JnaLoader;
@@ -57,8 +57,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
     return myRobot.getPixelColor(location.x, location.y);
   }
 
-  @Nullable
-  protected Color getInitialColor() {
+  protected @Nullable Color getInitialColor() {
     return myInitialColor;
   }
 
@@ -72,9 +71,8 @@ public abstract class ColorPipetteBase implements ColorPipette {
     myCurrentColor = color;
   }
 
-  @Nullable
   @Override
-  public Color getColor() {
+  public @Nullable Color getColor() {
     return myCurrentColor;
   }
 
@@ -86,8 +84,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
     return picker;
   }
 
-  @Nullable
-  protected Point updateLocation() {
+  protected @Nullable Point updateLocation() {
     PointerInfo pointerInfo = MouseInfo.getPointerInfo();
     if (pointerInfo == null) return null;
 
@@ -99,13 +96,11 @@ public abstract class ColorPipetteBase implements ColorPipette {
     return mouseLocation;
   }
 
-  @Nullable
-  protected Dialog getPickerDialog() {
+  protected @Nullable Dialog getPickerDialog() {
     return myPickerFrame;
   }
 
-  @NotNull
-  protected Dialog getOrCreatePickerDialog() {
+  protected @NotNull Dialog getOrCreatePickerDialog() {
     if (myPickerFrame == null) {
       Window owner = SwingUtilities.getWindowAncestor(myParent);
       if (owner instanceof Dialog) {
@@ -149,7 +144,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
     return myPickerFrame;
   }
 
-  protected void notifyListener(@NotNull final Color c, int delayMillis) {
+  protected void notifyListener(final @NotNull Color c, int delayMillis) {
     if (!myColorListenersNotifier.isDisposed()) {
       myColorListenersNotifier.cancelAllRequests();
       myColorListenersNotifier.addRequest(() -> myColorListener.colorChanged(c, this), delayMillis);
@@ -181,8 +176,7 @@ public abstract class ColorPipetteBase implements ColorPipette {
     setColor(null);
   }
 
-  @Nullable
-  private static Robot createRobot() {
+  private static @Nullable Robot createRobot() {
     try {
       return new Robot();
     }

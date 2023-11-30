@@ -5,10 +5,9 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.DumbUnawareHider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.editor.UIFormEditor;
@@ -25,25 +24,20 @@ public class FormOpeningTest extends FileEditorManagerTestCase {
 
     FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(getProject());
     VirtualFile file = myFixture.copyFileToProject("TestBorder.form");
-    DumbServiceImpl dumbService = (DumbServiceImpl)DumbService.getInstance(getProject());
-    dumbService.setDumb(true);
-    try {
+    GuiEditor editorComponent = DumbModeTestUtils.computeInDumbModeSynchronously(getProject(), () -> {
       FileEditor[] editors = editorManager.openFile(file, true);
       assertEquals(1, editors.length);
       assertInstanceOf(editors[0], UIFormEditor.class);
       JComponent component = getEditorComponent();
       assertInstanceOf(component, DumbUnawareHider.class);
-      GuiEditor editorComponent = UIUtil.uiTraverser(component).filter(GuiEditor.class).single();
-      assertNotNull("editor not found", editorComponent);
+      GuiEditor editor = UIUtil.uiTraverser(component).filter(GuiEditor.class).single();
+      assertNotNull("editor not found", editor);
 
-      assertFalse(editorComponent.isVisible());
+      assertFalse(editor.isVisible());
+      return editor;
+    });
 
-      dumbService.setDumb(false);
-      assertTrue(editorComponent.isVisible());
-    }
-    finally {
-      dumbService.setDumb(false);
-    }
+    assertTrue(editorComponent.isVisible());
   }
 
   private JComponent getEditorComponent() {

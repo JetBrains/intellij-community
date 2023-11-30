@@ -30,6 +30,7 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.impl.TargetOutputIndexImpl;
 import org.jetbrains.jps.builders.java.*;
+import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
@@ -109,7 +110,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   );
 
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
-  @Nullable private static final File ourDefaultRtJar;
+  private static final @Nullable File ourDefaultRtJar;
   static {
     File rtJar = null;
     StringTokenizer tokenizer = new StringTokenizer(System.getProperty("sun.boot.class.path", ""), File.pathSeparator, false);
@@ -146,14 +147,12 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     //add here class processors in the sequence they should be executed
   }
 
-  @NotNull
-  public static @NlsSafe String getBuilderName() {
+  public static @NotNull @NlsSafe String getBuilderName() {
     return "java";
   }
 
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return StringUtil.capitalize(getBuilderName());
   }
 
@@ -169,7 +168,11 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     SHOWN_NOTIFICATIONS.set(context, Collections.synchronizedSet(new HashSet<>()));
     COMPILER_USAGE_STATISTICS.set(context, new ConcurrentHashMap<>());
     if (!isJavac(compilingTool)) {
-      context.getProjectDescriptor().dataManager.getMappings().setProcessConstantsIncrementally(false);
+      Mappings mappings = context.getProjectDescriptor().dataManager.getMappings();
+      if (mappings != null) {
+        mappings.setProcessConstantsIncrementally(false);
+      }
+      // todo: need to support this mode for the new dep graph?
     }
     JavaBackwardReferenceIndexWriter.initialize(context);
     for (JavacFileReferencesRegistrar registrar : JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar.class)) {
@@ -222,9 +225,8 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  @NotNull
   @Override
-  public List<String> getCompilableFileExtensions() {
+  public @NotNull List<String> getCompilableFileExtensions() {
     return COMPILABLE_EXTENSIONS;
   }
 
@@ -526,8 +528,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  @NotNull
-  private static Collection<String> collectAdditionalRequires(Iterable<String> options) {
+  private static @NotNull Collection<String> collectAdditionalRequires(Iterable<String> options) {
     // --add-reads module=other-module(,other-module)*
     // The option specifies additional modules to be considered as required by a given module.
     final Set<String> result = new SmartHashSet<>();
@@ -597,8 +598,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  @Nullable
-  public static @Nls String validateCycle(CompileContext context, ModuleChunk chunk) {
+  public static @Nullable @Nls String validateCycle(CompileContext context, ModuleChunk chunk) {
     final JpsJavaExtensionService javaExt = JpsJavaExtensionService.getInstance();
     final JpsJavaCompilerConfiguration compilerConfig = javaExt.getCompilerConfiguration(context.getProjectDescriptor().getProject());
     final Set<JpsModule> modules = chunk.getModules();
@@ -732,8 +732,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
   // If platformCp of the build process is the same as the target platform, do not specify platformCp explicitly
   // this will allow javac to resolve against ct.sym file, which is required for the "compilation profiles" feature
-  @Nullable
-  private static Iterable<? extends File> calcEffectivePlatformCp(Collection<? extends File> platformCp, Iterable<String> options, JavaCompilingTool compilingTool) {
+  private static @Nullable Iterable<? extends File> calcEffectivePlatformCp(Collection<? extends File> platformCp, Iterable<String> options, JavaCompilingTool compilingTool) {
     if (ourDefaultRtJar == null || !isJavac(compilingTool)) {
       return platformCp;
     }
@@ -783,8 +782,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     });
   }
 
-  @NotNull
-  private static synchronized ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) throws IOException {
+  private static synchronized @NotNull ExternalJavacManager ensureJavacServerStarted(@NotNull CompileContext context) throws IOException {
     ExternalJavacManager server = ExternalJavacManager.KEY.get(context);
     if (server != null) {
       return server;
@@ -794,15 +792,13 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       @Override
       protected ExternalJavacProcessHandler createProcessHandler(UUID processId, @NotNull Process process, @NotNull String commandLine, boolean keepProcessAlive) {
         return new ExternalJavacProcessHandler(processId, process, commandLine, keepProcessAlive) {
-          @NotNull
           @Override
-          public Future<?> executeTask(@NotNull Runnable task) {
+          public @NotNull Future<?> executeTask(@NotNull Runnable task) {
             return SharedThreadPool.getInstance().submit(task);
           }
 
-          @NotNull
           @Override
-          protected BaseOutputReader.Options readerOptions() {
+          protected @NotNull BaseOutputReader.Options readerOptions() {
             return BaseOutputReader.Options.NON_BLOCKING;
           }
         };
@@ -1034,8 +1030,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     return true;
   }
 
-  @NotNull
-  public static String getUsedCompilerId(CompileContext context) {
+  public static @NotNull String getUsedCompilerId(CompileContext context) {
     final JpsProject project = context.getProjectDescriptor().getProject();
     return JpsJavaExtensionService.getInstance().getCompilerConfiguration(project).getJavaCompilerId();
   }
@@ -1045,21 +1040,24 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       context.getProjectDescriptor().getProject()
     );
 
-    final int languageLevel = getLanguageLevel(chunk.representativeTarget().getModule());
+    @NotNull JpsModule module = chunk.representativeTarget().getModule();
+    final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
+    final int languageLevel = level != null ? level.toJavaVersion().feature : 0;
     final int chunkSdkVersion = getChunkSdkVersion(chunk);
 
-    int bytecodeTarget = getModuleBytecodeTarget(context, chunk, compilerConfiguration, languageLevel);
+    int bytecodeTarget = getModuleBytecodeTarget(context, chunk, compilerConfiguration,
+                                                 (level == LanguageLevel.JDK_X) ? chunkSdkVersion : languageLevel);
 
     if (shouldUseReleaseOption(compilerConfiguration, compilerSdkVersion, chunkSdkVersion, bytecodeTarget)) {
       options.add(RELEASE_OPTION);
-      options.add(complianceOption(bytecodeTarget));
+      options.add(level == LanguageLevel.JDK_X ? complianceOption(chunkSdkVersion) : complianceOption(bytecodeTarget));
       return;
     }
 
     // using older -source, -target and -bootclasspath options
     if (languageLevel > 0 && !options.contains(SOURCE_OPTION)) {
       options.add(SOURCE_OPTION);
-      options.add(complianceOption(languageLevel));
+      options.add(level == LanguageLevel.JDK_X ? complianceOption(chunkSdkVersion) : complianceOption(languageLevel));
     }
 
     if (bytecodeTarget > 0) {
@@ -1162,8 +1160,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     return chunkSdkVersion;
   }
 
-  @Nullable
-  private static Pair<String, Integer> getForkedJavacSdk(DiagnosticListener<? super JavaFileObject> diagnostic, ModuleChunk chunk, int targetLanguageLevel) {
+  private static @Nullable Pair<String, Integer> getForkedJavacSdk(DiagnosticListener<? super JavaFileObject> diagnostic, ModuleChunk chunk, int targetLanguageLevel) {
     final Pair<JpsSdk<JpsDummyElement>, Integer> associatedSdk = getAssociatedSdk(chunk);
     boolean canRunAssociatedJavac = false;
     if (associatedSdk != null) {
@@ -1397,7 +1394,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static class ExplodedModuleNameFinder implements Function<File, String> {
+  private static final class ExplodedModuleNameFinder implements Function<File, String> {
     private final TargetOutputIndex myOutsIndex;
 
     ExplodedModuleNameFinder(CompileContext context) {
@@ -1432,7 +1429,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
 
     @Override
-    public void save(@NotNull final OutputFileObject fileObject) {
+    public void save(final @NotNull OutputFileObject fileObject) {
       // generated files must be saved synchronously, because some compilers (e.g. eclipse)
       // may want to read them for further compilation
       try {

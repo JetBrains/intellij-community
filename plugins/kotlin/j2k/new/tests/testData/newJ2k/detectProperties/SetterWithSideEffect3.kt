@@ -1,5 +1,6 @@
 class C {
-    protected var x = ""
+    protected var x: String = ""
+
     fun getX(): String {
         return x
     }

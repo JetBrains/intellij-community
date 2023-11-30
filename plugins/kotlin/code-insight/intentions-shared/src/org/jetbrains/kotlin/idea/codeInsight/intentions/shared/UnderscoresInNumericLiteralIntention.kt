@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.stubs.ConstantValueKind
 import org.jetbrains.kotlin.psi.stubs.elements.KtConstantExpressionElementType
 
-class AddUnderscoresToNumericLiteralIntention : SelfTargetingIntention<KtConstantExpression>(
+internal class AddUnderscoresToNumericLiteralIntention : SelfTargetingIntention<KtConstantExpression>(
     KtConstantExpression::class.java, KotlinBundle.lazyMessage("add.underscores")
 ) {
     override fun isApplicableTo(element: KtConstantExpression, caretOffset: Int): Boolean {
@@ -29,7 +29,7 @@ class AddUnderscoresToNumericLiteralIntention : SelfTargetingIntention<KtConstan
     }
 }
 
-class RemoveUnderscoresFromNumericLiteralIntention : SelfTargetingIntention<KtConstantExpression>(
+internal class RemoveUnderscoresFromNumericLiteralIntention : SelfTargetingIntention<KtConstantExpression>(
     KtConstantExpression::class.java, KotlinBundle.lazyMessage("remove.underscores")
 ) {
     override fun isApplicableTo(element: KtConstantExpression, caretOffset: Int): Boolean =

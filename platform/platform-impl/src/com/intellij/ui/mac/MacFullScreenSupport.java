@@ -7,6 +7,7 @@ import com.apple.eawt.event.FullScreenEvent;
 import com.intellij.ui.FullScreenSupport;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -16,7 +17,7 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 @SuppressWarnings("unused")
-public class MacFullScreenSupport implements FullScreenSupport {
+public final class MacFullScreenSupport implements FullScreenSupport {
   private FullScreenListener myListener;
   private boolean myIsFullScreen;
 
@@ -53,6 +54,8 @@ public class MacFullScreenSupport implements FullScreenSupport {
 
   @Override
   public void removeListener(@NotNull Window window) {
-    FullScreenUtilities.removeFullScreenListenerFrom(window, myListener);
+    if (window instanceof RootPaneContainer container && container.getRootPane() != null) {
+      FullScreenUtilities.removeFullScreenListenerFrom(window, myListener);
+    }
   }
 }

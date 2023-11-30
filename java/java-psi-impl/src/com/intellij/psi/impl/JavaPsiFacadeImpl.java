@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -23,6 +23,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -65,7 +66,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   public PsiClass findClass(@NotNull final String qualifiedName, @NotNull GlobalSearchScope scope) {
     ProgressIndicatorProvider.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly
 
-    Map<String, Optional<PsiClass>> map = myClassCache.computeIfAbsent(scope, scope1 -> ContainerUtil.createConcurrentWeakValueMap());
+    Map<String, Optional<PsiClass>> map = myClassCache.computeIfAbsent(scope, scope1 -> CollectionFactory.createConcurrentWeakValueMap());
     Optional<PsiClass> result = map.get(qualifiedName);
     if (result == null) {
       RecursionGuard.StackStamp stamp = RecursionManager.markStack();
@@ -222,7 +223,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       .getCachedValue(myProject, () -> {
         Map<GlobalSearchScope, Map<String, Collection<PsiJavaModule>>> scope2ModulesMap =
           ConcurrentFactoryMap.create(searchScope ->
-                                        ConcurrentFactoryMap.create(name -> javaFileManager.findModules(name, searchScope), () -> ContainerUtil.createConcurrentWeakValueMap()),
+                                        ConcurrentFactoryMap.create(name -> javaFileManager.findModules(name, searchScope), () -> CollectionFactory.createConcurrentWeakValueMap()),
                                       () -> ContainerUtil.createConcurrentSoftKeySoftValueMap());
         return new CachedValueProvider.Result<>(scope2ModulesMap, 
                                                 PsiJavaModuleModificationTracker.getInstance(myProject),

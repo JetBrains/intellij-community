@@ -55,6 +55,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry);
 
+      addJetBrainsAnnotations(model);
       MavenDependencyUtil.addFromMaven(model, "org.apache.velocity:velocity:1.7");
       MavenDependencyUtil.addFromMaven(model, "commons-collections:commons-collections:3.2.1");
 

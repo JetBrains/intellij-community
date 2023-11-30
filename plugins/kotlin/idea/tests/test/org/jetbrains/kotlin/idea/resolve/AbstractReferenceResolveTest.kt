@@ -30,10 +30,10 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
 
     protected open fun doTest(path: String) {
         configureTest()
-        val controlDirective = if (isFirPlugin()) {
-            IgnoreTests.DIRECTIVES.IGNORE_FIR
+        val controlDirective = if (isFirPlugin) {
+            IgnoreTests.DIRECTIVES.IGNORE_K2
         } else {
-            IgnoreTests.DIRECTIVES.IGNORE_FE10
+            IgnoreTests.DIRECTIVES.IGNORE_K1
         }
         IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), controlDirective) {
             performChecks()

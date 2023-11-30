@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.icons.AllIcons
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.wm.WelcomeScreenTab
 import com.intellij.openapi.wm.WelcomeTabFactory
@@ -31,6 +32,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory.createComponent
 import com.intellij.openapi.wm.impl.welcomeScreen.statistics.WelcomeScreenCounterUsageCollector
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
@@ -280,7 +282,7 @@ private fun createDropFileTarget(): DnDNativeTarget {
     override fun drop(event: DnDEvent) {
       val files = FileCopyPasteUtil.getFileListFromAttachedObject(event.attachedObject)
       if (!files.isEmpty()) {
-        ApplicationManager.getApplication().coroutineScope.launch {
+        service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
           openOrImportFilesAsync(list = files.map(File::toPath), location = "WelcomeFrame")
         }
       }

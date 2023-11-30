@@ -17,6 +17,8 @@ object KnownPlugins {
   val WebSupport: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.WebSupport, "Web support", "HTML, CSS, JS")
   val Docker: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Docker, "Docker")
 
+  val Java: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Java, "Java")
+  val Kotlin: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Kotlin, "Kotlin")
   val CSharp: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.CSharp, "C#")
   val NuGet: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.NuGet, "NuGet")
   val TestExplorer: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.TestExplorer, "TestExplorer")
@@ -31,9 +33,20 @@ object KnownPlugins {
     if (PluginManager.isPluginInstalled(PluginId.getId("tslint")))
       BuiltInFeature(TransferableIdeFeatureId.TsLint, "TSLint")
     else
-      PluginFeature(TransferableIdeFeatureId.TsLint, "tslint", "TSLint")
+      PluginFeature(TransferableIdeFeatureId.TsLint, "TSLint", "TSLint")
+  val Maven: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Maven, "Maven")
+  val Gradle: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Gradle, "Gradle")
+  val Debugger: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Debugger, "Debugger")
+  val WindowsSubsystemLinux: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Wsl, "WSL")
+  val Toml: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Toml, "TOML")
+  val Vue: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Vue, "Vue.js")
+  val AiAssistant: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.AiAssistant, "AI Assistant")
+  val Rust: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.Rust,"Rust Support")
+  // Language packs
 
-  val Rust: BuiltInFeature = BuiltInFeature(TransferableIdeFeatureId.RustSupport, "Rust Support")
+  val ChineseLanguage: PluginFeature = PluginFeature(TransferableIdeFeatureId.ChineseLanguage, "com.intellij.zh", "Chinese (Simplified) Language Pack / 中文语言包")
+  val KoreanLanguage: PluginFeature = PluginFeature(TransferableIdeFeatureId.KoreanLanguage, "com.intellij.ko", "Korean Language Pack / 한국어 언어 팩")
+  val JapaneseLanguage: PluginFeature = PluginFeature(TransferableIdeFeatureId.JapaneseLanguage, "com.intellij.ja", "Japanese Language Pack / 日本語言語パック")
 
   // Plugins
 
@@ -41,7 +54,12 @@ object KnownPlugins {
   val Ideolog: PluginFeature = PluginFeature(TransferableIdeFeatureId.Ideolog, "com.intellij.ideolog", "Ideolog (logging)")
   val IdeaVim: PluginFeature = PluginFeature(TransferableIdeFeatureId.IdeaVim, "IdeaVIM", "IdeaVIM")
   val TeamCity: PluginFeature = PluginFeature(TransferableIdeFeatureId.TeamCity, "Jetbrains TeamCity Plugin", "TeamCity")
-  val NodeJSSupport: PluginFeature = PluginFeature(TransferableIdeFeatureId.NodeJsSupport, "NodeJS", "NodeJS support")
+  val Scala: PluginFeature = PluginFeature(TransferableIdeFeatureId.Scala, "org.intellij.scala", "Scala")
+  val Dart: PluginFeature = PluginFeature(TransferableIdeFeatureId.Dart, "Dart", "Dart")
+  val Flutter: PluginFeature = PluginFeature(TransferableIdeFeatureId.Flutter, "io.flutter", "Flutter")
+  val Lombok: PluginFeature = PluginFeature(TransferableIdeFeatureId.Lombok, "Lombook Plugin", "Lombok")
+  val Prettier: PluginFeature = PluginFeature(TransferableIdeFeatureId.Prettier, "intellij.prettierJS", "Prettier")
+  val Kubernetes: PluginFeature = PluginFeature(TransferableIdeFeatureId.Kubernetes, "com.intellij.kubernetes", "Kubernetes")
 
   val Monokai: PluginFeature = PluginFeature(TransferableIdeFeatureId.Monokai, "monokai-pro", "Monokai")
   val Solarized: PluginFeature = PluginFeature(TransferableIdeFeatureId.Solarized, "com.tylerthrailkill.intellij.solarized", "Solarized")

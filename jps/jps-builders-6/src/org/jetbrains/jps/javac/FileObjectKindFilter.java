@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Function;
+import org.jetbrains.jps.javac.Iterators.BooleanFunction;
+import org.jetbrains.jps.javac.Iterators.Function;
 
 import javax.tools.*;
 import java.util.*;

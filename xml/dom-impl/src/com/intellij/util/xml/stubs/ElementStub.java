@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,8 +18,7 @@ public class ElementStub extends DomStub {
   private final int myIndex;
   private final boolean myCustom;
 
-  @Nullable
-  private final String myElementClass;
+  private final @Nullable String myElementClass;
   private final String myValue;
 
   public ElementStub(@Nullable ElementStub parent,
@@ -40,9 +39,8 @@ public class ElementStub extends DomStub {
     myChildren.add(child);
   }
 
-  @NotNull
   @Override
-  public List<? extends Stub> getChildrenStubs() {
+  public @NotNull List<? extends Stub> getChildrenStubs() {
     return myChildren;
   }
 
@@ -73,8 +71,7 @@ public class ElementStub extends DomStub {
     return myElementClass;
   }
 
-  @NotNull
-  public String getValue() {
+  public @NotNull String getValue() {
     return myValue;
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -26,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnlyColorsScheme {
+public class DefaultColorsScheme extends AbstractColorsScheme {
   private String myName;
 
   public DefaultColorsScheme() {
@@ -34,14 +20,12 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   }
 
   @Override
-  @Nullable
-  public TextAttributes getAttributes(TextAttributesKey key) {
+  public @Nullable TextAttributes getAttributes(TextAttributesKey key) {
     return key == null ? null : getAttributes(key, true);
   }
 
-  @Nullable
-  public TextAttributes getAttributes(@NotNull TextAttributesKey key, boolean useDefaults) {
-    TextAttributes attrs = myAttributesMap.get(key.getExternalName());
+  public @Nullable TextAttributes getAttributes(@NotNull TextAttributesKey key, boolean useDefaults) {
+    TextAttributes attrs = attributesMap.get(key.getExternalName());
     if (attrs != null) return attrs;
 
     TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
@@ -54,20 +38,17 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     return fallbackKey == null ? null : getKeyDefaults(fallbackKey);
   }
 
-  @Nullable
-  protected TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
+  protected @Nullable TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
     return key.getDefaultAttributes();
   }
 
-  @Nullable
   @Override
-  public Color getColor(@Nullable ColorKey key) {
+  public @Nullable Color getColor(@Nullable ColorKey key) {
     return key == null ? null : getColor(key, true);
   }
 
-  @Nullable
-  public Color getColor(@NotNull ColorKey key, boolean useDefaults) {
-    Color color = myColorsMap.get(key);
+  public @Nullable Color getColor(@NotNull ColorKey key, boolean useDefaults) {
+    Color color = colorMap.get(key);
     if (color != null) return color == NULL_COLOR_MARKER ? null : color;
 
     ColorKey fallbackKey = key.getFallbackColorKey();
@@ -86,9 +67,8 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     myName = parentNode.getAttributeValue(NAME_ATTR);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -118,8 +98,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     return true;
   }
 
-  @NonNls
-  public String getEditableCopyName() {
+  public @NonNls String getEditableCopyName() {
     return EDITABLE_COPY_PREFIX + myName;
   }
 
@@ -128,9 +107,13 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     return false;
   }
 
-  @NotNull
   @Override
-  public SchemeState getSchemeState() {
+  public boolean isReadOnly() {
+    return true;
+  }
+
+  @Override
+  public @NotNull SchemeState getSchemeState() {
     return SchemeState.NON_PERSISTENT;
   }
 }

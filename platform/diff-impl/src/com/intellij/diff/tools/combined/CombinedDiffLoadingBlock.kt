@@ -3,24 +3,20 @@ package com.intellij.diff.tools.combined
 
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.FrameDiffTool.DiffViewer
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
 
 internal class CombinedDiffLoadingBlock(size: Dimension? = null) : DiffViewer {
-
-  private val loadingPanel = JBLoadingPanel(BorderLayout(), this)
-    .apply {
-      add(JBUI.Panels.simplePanel()
-            .apply {
-              background = EditorColorsManager.getInstance().globalScheme.defaultBackground
-              preferredSize = size ?: HEIGHT.get().let { height -> Dimension(height, height) }
-            })
+  private val loadingPanel: JBLoadingPanel = object : JBLoadingPanel(BorderLayout(), this, CombinedDiffUI.LOADING_BLOCK_PROGRESS_DELAY) {
+    init {
+      background = CombinedDiffUI.LOADING_BLOCK_BACKGROUND
     }
+
+    override fun getPreferredSize(): Dimension = size ?: Dimension(super.getPreferredSize().width, DEFAULT_LOADING_BLOCK_HEIGHT.get())
+  }
 
   override fun getComponent(): JComponent = loadingPanel
 
@@ -36,6 +32,6 @@ internal class CombinedDiffLoadingBlock(size: Dimension? = null) : DiffViewer {
   }
 
   companion object {
-    val HEIGHT = JBValue.UIInteger("CombinedLazyDiffViewer.height", 150)
+    val DEFAULT_LOADING_BLOCK_HEIGHT = JBValue.UIInteger("CombinedLazyDiffViewer.height", 150)
   }
 }

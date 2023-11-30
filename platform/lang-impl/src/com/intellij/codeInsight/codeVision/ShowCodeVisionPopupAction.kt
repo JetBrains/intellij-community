@@ -5,8 +5,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 
-class ShowCodeVisionPopupAction : AnAction(CodeVisionBundle.message("ShowCodeVisionPopupAction.action.show.code.vision.text")) {
+class ShowCodeVisionPopupAction : AnAction(CodeVisionBundle.message("ShowCodeVisionPopupAction.action.show.code.vision.text")), ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }

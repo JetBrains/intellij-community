@@ -5,7 +5,7 @@ import com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlo
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.psi.impl.source.tree.injected.changesHandler.range
+import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
@@ -358,8 +358,8 @@ suspend fun unknownContext() {
 
         myFixture.launchAction(action!!)
         val warning = myFixture.doHighlighting(HighlightSeverity.WARNING)
-            .firstOrNull {
-                it.description == "Possibly blocking call in non-blocking context could lead to thread starvation" && it.range.equalsToRange(511, 516)
+            .firstOrNull { info ->
+                info.description == "Possibly blocking call in non-blocking context could lead to thread starvation" && TextRange.create(info) == TextRange(511, 516)
             }
 
         Assert.assertNotNull("Inspection should report blocking call with unknown contexts considered non-blocking", warning)
@@ -367,7 +367,7 @@ suspend fun unknownContext() {
         myFixture.launchAction(reverseAction!!)
         val info = myFixture.doHighlighting(HighlightSeverity.INFORMATION)
             .firstOrNull {
-                it.description == "Consider unknown contexts non-blocking" && it.range.equalsToRange(511, 516)
+                it.description == "Consider unknown contexts non-blocking" && TextRange.create(it) == TextRange(511, 516)
             }
         Assert.assertNotNull("Inspection should NOT report blocking call with unknown contexts considered blocking," +
                                      " but should have intention to change behaviour instead", info)

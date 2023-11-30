@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -27,13 +27,13 @@ import java.util.Arrays;
 class TreeToolbarDecorator extends ToolbarDecorator {
   private final JComponent myComponent;
   private final JTree myTree;
-  @Nullable private final ElementProducer<?> myProducer;
+  private final @Nullable ElementProducer<?> myProducer;
 
-  TreeToolbarDecorator(JTree tree, @Nullable final ElementProducer<?> producer) {
+  TreeToolbarDecorator(JTree tree, final @Nullable ElementProducer<?> producer) {
     this(tree, tree, producer);
   }
 
-  TreeToolbarDecorator(@NotNull JComponent component, @NotNull JTree tree, @Nullable final ElementProducer<?> producer) {
+  TreeToolbarDecorator(@NotNull JComponent component, @NotNull JTree tree, final @Nullable ElementProducer<?> producer) {
     myComponent = component;
     myTree = tree;
     myProducer = producer;

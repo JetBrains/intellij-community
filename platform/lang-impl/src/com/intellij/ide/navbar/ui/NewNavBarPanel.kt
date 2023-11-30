@@ -16,7 +16,7 @@ import com.intellij.ide.navbar.vm.NavBarItemVm
 import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.ui.UISettings
-import com.intellij.internal.statistic.service.fus.collectors.NavBarShowPopup
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.NavBarShowPopup
 import com.intellij.model.Pointer
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.actionSystem.DataProvider
@@ -164,7 +164,7 @@ internal class NewNavBarPanel(
       field = value
     }
 
-  private fun showPopup(cs: CoroutineScope, itemComponentIndex: Int, vm: NavBarPopupVm) {
+  private fun showPopup(cs: CoroutineScope, itemComponentIndex: Int, vm: NavBarPopupVm<*>) {
     NavBarShowPopup.log(project)
     val itemComponent = myItemComponents[itemComponentIndex]
     val list = navBarPopupList(vm, this, isFloating).also {

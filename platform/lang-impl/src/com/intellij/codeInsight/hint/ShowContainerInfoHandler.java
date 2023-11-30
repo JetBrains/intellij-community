@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 
-public class ShowContainerInfoHandler implements CodeInsightActionHandler {
+public final class ShowContainerInfoHandler implements CodeInsightActionHandler {
   private static final Key<WeakReference<LightweightHint>> MY_LAST_HINT_KEY = Key.create("MY_LAST_HINT_KEY");
   private static final Key<PsiElement> CONTAINER_KEY = Key.create("CONTAINER_KEY");
 

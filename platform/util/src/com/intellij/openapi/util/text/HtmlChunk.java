@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -17,7 +17,7 @@ import java.util.stream.Stream;
  * @see HtmlBuilder
  */
 public abstract class HtmlChunk {
-  private static class Empty extends HtmlChunk {
+  private static final class Empty extends HtmlChunk {
     private static final Empty INSTANCE = new Empty();
     
     @Override
@@ -30,7 +30,7 @@ public abstract class HtmlChunk {
     }
   }
   
-  private static class Text extends HtmlChunk {
+  private static final class Text extends HtmlChunk {
     private final String myContent;
 
     private Text(String content) {
@@ -43,7 +43,7 @@ public abstract class HtmlChunk {
     }
   }
   
-  private static class Raw extends HtmlChunk {
+  private static final class Raw extends HtmlChunk {
     private final String myContent;
 
     private Raw(String content) {
@@ -56,7 +56,7 @@ public abstract class HtmlChunk {
     }
   }
   
-  static class Fragment extends HtmlChunk {
+  static final class Fragment extends HtmlChunk {
     private final List<? extends HtmlChunk> myContent;
 
     Fragment(List<? extends HtmlChunk> content) {
@@ -83,7 +83,7 @@ public abstract class HtmlChunk {
 
   }
   
-  private static class Nbsp extends HtmlChunk {
+  private static final class Nbsp extends HtmlChunk {
     private static final HtmlChunk ONE = new Nbsp(1);
     private final int myCount;
 
@@ -265,7 +265,7 @@ public abstract class HtmlChunk {
     }
   }
 
-  private static class IconElement extends Element {
+  private static final class IconElement extends Element {
     private final @NotNull String myId;
     private final @NotNull Icon myIcon;
 

@@ -1,5 +1,6 @@
 package com.intellij.searchEverywhereMl.ranking.features
 
+import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -31,6 +32,9 @@ internal class SearchEverywhereCommonFeaturesProvider : SearchEverywhereElementF
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
+    if (element is PsiItemWithSimilarity<*>) {
+      return getElementFeatures(element.value, currentTime, searchQuery, elementPriority, cache)
+    }
     val features = arrayListOf<EventPair<*>>(
       PRIORITY_DATA_KEY.with(elementPriority),
     )

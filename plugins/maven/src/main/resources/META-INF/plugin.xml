@@ -66,6 +66,8 @@
   <depends optional="true" config-file="maven-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="org.jetbrains.idea.maven.project.MavenProjectsManagerProjectActivity"/>
+
     <pathMacroContributor implementation="org.jetbrains.idea.maven.utils.MavenPathMacroContributor"/>
     <customJavadocTagProvider implementation="org.jetbrains.idea.maven.javadoc.MojoClassAnnotationTagProvider"/>
     <fileType name="MavenConfig" implementationClass="org.jetbrains.idea.maven.config.MavenConfigFileType"
@@ -94,7 +96,6 @@
                     serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectResolverImpl"/>
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.server.MavenDistributionsCache"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.project.importing.MavenImportingManager"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.utils.MavenWslCache"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager"/>
@@ -104,6 +105,7 @@
                     serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager" preload="true"/>
+    <applicationService serviceImplementation="org.jetbrains.idea.maven.internal.ReadStatisticsCollector"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"
                         serviceImplementation="org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider" overrides="true"/>
@@ -142,11 +144,9 @@
     <externalIconProvider key="MAVEN" implementationClass="org.jetbrains.idea.maven.ui.MavenIconProvider"/>
     <externalSystemKeymapProvider implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
     <externalSystemWorkspaceContributor implementation="org.jetbrains.idea.maven.importing.MavenWorkspaceContributor"/>
-    <externalProjectWatcherContributor implementation="org.jetbrains.idea.maven.project.MavenProjectsManager$ExternalWatcherContributor"/>
-    <!-- Disabled in Android Studio
+    <externalProjectWatcherContributor implementation="org.jetbrains.idea.maven.project.auto.reload.MavenProjectWatcherContributor"/>
     <configurationType implementation="org.jetbrains.idea.maven.execution.MavenRunConfigurationType"/>
     <runConfigurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
-    -->
     <orderEnumerationHandlerFactory implementation="org.jetbrains.idea.maven.execution.MavenOrderEnumeratorHandler$FactoryImpl"/>
     <executionTargetLanguageRuntimeType implementation="org.jetbrains.idea.maven.execution.target.MavenRuntimeType"/>
 
@@ -308,17 +308,15 @@
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenPluginCollector"/>
 
     <statistics.validation.customValidationRule implementation="org.jetbrains.idea.maven.statistics.MavenPluginCoordinatesWhitelistValidationRule"/>
-    <statistics.validation.customValidationRule implementation="org.jetbrains.idea.maven.statistics.MavenPluginVersionValidationRule"/>
 
+    <registryKey key="maven.collect.local.stat" defaultValue="false"
+                 description="Collect local maven statistics. Used in Internal mode. Does not affect FUS"/>
 
     <registryKey key="maven.dedicated.indexer.vmargs" defaultValue="-Xmx1024m"
                  description="Dedicated maven indexer VM arguments, restart maven server or IDEA after changing this parameter"/>
 
     <registryKey key="maven.dedicated.indexer" defaultValue="true"
                  description="Dedicated maven indexer" restartRequired="true"/>
-
-    <registryKey key="maven.linear.import" defaultValue="false"
-                 description="Linear maven import process"/>
 
     <registryKey key="maven.plugins.use.cache" defaultValue="true"
                  description="Use cache for plugin resolving"/>
@@ -332,8 +330,20 @@
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
 
+    <registryKey key="maven.import.keep.existing.module.names" defaultValue="true"
+                 description="Keep existing module names after maven project reimport"/>
+
+    <registryKey key="maven.import.module.name.template" defaultValue="artifactId"
+                 description="Defines how IntelliJ IDEA modules are named. Possible values: artifactId, groupId.artifactId, folderName. Other values default to artifactId"/>
+
     <registryKey key="maven.create.dummy.module.on.first.import" defaultValue="true"
                  description="Create maven dummy module on import"/>
+
+    <registryKey key="maven.preimport.project" defaultValue="false"
+                 description="Make fast project preimport"/>
+
+    <registryKey key="maven.preimport.only" defaultValue="false"
+                 description="Make fast project preimport only, without running maven import"/>
 
     <registryKey key="maven.server.per.idea.project" defaultValue="false"
                  description="Single Maven server per idea project, .mvn could be ignored"/>
@@ -363,9 +373,6 @@
 
     <registryKey key="maven.server.generate.sources.for.aggregator.projects" defaultValue="true"
                  description="Generate sources for aggregator projects (instead of all projects) for better performance"/>
-
-    <registryKey key="maven.import.to.workspace.model.fast.facet.creation" defaultValue="false"
-                 description="Create facets in a background thread instead of EDT"/>
 
     <intentionAction>
       <language>XML</language>
@@ -638,9 +645,6 @@
     <action id="Maven.OpenSettingsXml"
             class="org.jetbrains.idea.maven.project.actions.OpenOrCreateSettingsXmlAction"/>
 
-    <action id="Maven.OpenProfilesXml"
-            class="org.jetbrains.idea.maven.project.actions.OpenOrCreateProfilesXmlAction"/>
-
     <action id="Maven.IgnoreProjects"
             class="org.jetbrains.idea.maven.project.actions.ToggleIgnoredProjectsAction">
     </action>
@@ -718,6 +722,14 @@
       <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
     </action>
 
+    <group id="Maven.Internal" internal="true" popup="true">
+      <action id="Maven.PrintStatistics" class="org.jetbrains.idea.maven.internal.MavenShowReadStatisticsAction"/>
+      <action id="Maven.ResetReadStatistic" class="org.jetbrains.idea.maven.internal.MavenResetStatisticsAction"/>
+      <action id="Maven.Killall" class="org.jetbrains.idea.maven.internal.MavenKillallConnectors"/>
+      <action id="Maven.ShowConnectors" class="org.jetbrains.idea.maven.server.ui.ShowMavenConnectorsAction"/>
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
               class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction">
@@ -784,22 +796,30 @@
       <reference id="Maven.RemoveManagedFiles"/>
       <separator/>
       <reference id="Maven.OpenSettingsXml"/>
-      <reference id="Maven.OpenProfilesXml"/>
       <separator/>
       <reference id="Maven.DownloadAllGroup"/>
       <separator/>
       <reference id="Maven.ShowEffectivePom"/>
-      <separator/>
-      <reference id="Maven.ViewDependencyAnalyzer"/>
     </group>
 
     <group id="Maven.NavigatorProjectMenu" popup="true">
       <reference ref="Maven.BaseProjectMenu"/>
       <separator/>
+      <reference id="Maven.NavigatorDependencyAnalyzer"/>
+      <separator/>
       <reference id="Maven.RunBuild"/>
       <reference ref="RunContextGroup"/>
       <separator/>
       <reference id="EditSource"/>
+    </group>
+
+    <group id="Maven.ProfilesMenu" popup="true">
+      <action id="Maven.ResetProfiles"
+              class="org.jetbrains.idea.maven.project.actions.ResetProfilesAction"/>
+    </group>
+
+    <group id="Maven.ProfileMenu" popup="true">
+      <reference ref="Maven.ToggleProfile"/>
     </group>
 
     <group id="Maven.BuildMenu" popup="true" class="org.jetbrains.idea.maven.navigator.actions.MavenBuildMenu">
@@ -815,7 +835,6 @@
       <reference ref="Maven.BaseProjectMenu"/>
     </group>
 
-    <action id="Maven.ShowConnectors" class="org.jetbrains.idea.maven.server.ui.ShowMavenConnectorsAction"/>
     <group id="Maven.GenerateGroup" class="org.jetbrains.idea.maven.dom.generate.MavenGenerateDomActionGroup">
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </group>

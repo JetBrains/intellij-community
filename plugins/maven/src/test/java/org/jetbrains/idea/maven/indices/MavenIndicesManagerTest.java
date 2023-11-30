@@ -58,7 +58,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     MavenIndexHolder indexHolder = myIndicesFixture.getIndicesManager().getIndex();
     MavenIndex localIndex = indexHolder.getLocalIndex();
     Assert.assertNotNull(localIndex);
-    localIndex.updateOrRepair(true, MavenProjectsManager.getInstance(myProject).getGeneralSettings(), getMavenProgressIndicator());
+    localIndex.updateOrRepair(true, getMavenProgressIndicator(), false);
 
     assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
   }
@@ -66,7 +66,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   @Test
   public void testAddingArchetypes() {
     MavenArchetype mavenArchetype = new MavenArchetype("myGroup", "myArtifact", "666", null, null);
-    myIndicesFixture.getIndicesManager().addArchetype(mavenArchetype);
+    MavenIndicesManager.addArchetype(mavenArchetype);
 
     assertArchetypeExists("myGroup:myArtifact:666");
   }

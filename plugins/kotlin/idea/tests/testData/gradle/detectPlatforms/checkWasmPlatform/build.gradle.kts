@@ -23,9 +23,9 @@ kotlin {
             }
         }
 
-        val wasmTest by getting {
+        val wasmJsTest by getting {
             dependencies {
-                implementation(kotlin("test-wasm"))
+                implementation(kotlin("test-wasm-js"))
                 implementation(kotlin("test-annotations-wasm"))
             }
         }

@@ -4,7 +4,7 @@ class X {
         switch (obj) {
             case null, default -> System.out.println("null or default");
             case Integer i -> System.out.println("Integer");
-            case <caret>String s when s.isEmpty() -> System.out.println("empty String");
+            case String s when s.isEmpty()<caret> -> System.out.println("empty String");
         }
     }
 }

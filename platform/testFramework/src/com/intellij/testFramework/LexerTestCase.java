@@ -22,15 +22,15 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public abstract class LexerTestCase extends UsefulTestCase {
-  protected void doTest(String text) {
+  protected void doTest(@NotNull String text) {
     doTest(text, null);
   }
 
-  protected void doTest(String text, @Nullable String expected) {
+  protected void doTest(@NotNull String text, @Nullable String expected) {
     doTest(text, expected, createLexer());
   }
 
-  protected void doTest(String text, @Nullable String expected, @NotNull Lexer lexer) {
+  protected void doTest(@NotNull String text, @Nullable String expected, @NotNull Lexer lexer) {
     String result = printTokens(lexer, text, 0);
 
     if (expected != null) {
@@ -41,12 +41,12 @@ public abstract class LexerTestCase extends UsefulTestCase {
     }
   }
 
-  protected String printTokens(Lexer lexer, CharSequence text, int start) {
+  protected String printTokens(@NotNull Lexer lexer, @NotNull CharSequence text, int start) {
     return printTokens(text, start, lexer);
   }
 
   @NotNull
-  protected String getPathToTestDataFile(String extension) {
+  protected String getPathToTestDataFile(@NotNull String extension) {
     return IdeaTestExecutionPolicy.getHomePathWithPolicy() + "/" + getDirPath() + "/" + getTestName(true) + extension;
   }
 
@@ -55,7 +55,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
     return ".txt";
   }
 
-  protected void checkZeroState(String text, TokenSet tokenTypes) {
+  protected void checkZeroState(@NotNull String text, TokenSet tokenTypes) {
     Lexer lexer = createLexer();
     lexer.start(text);
 
@@ -71,7 +71,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
     }
   }
 
-  protected String printTokens(String text, int start) {
+  protected String printTokens(@NotNull String text, int start) {
     return printTokens(text, start, createLexer());
   }
 
@@ -123,7 +123,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
     return allTokens;
   }
 
-  public static String printTokens(CharSequence text, int start, Lexer lexer) {
+  public static String printTokens(@NotNull CharSequence text, int start, @NotNull Lexer lexer) {
     lexer.start(text, start, text.length());
     StringBuilder result = new StringBuilder();
     IElementType tokenType;
@@ -147,11 +147,11 @@ public abstract class LexerTestCase extends UsefulTestCase {
     return result.toString();
   }
 
-  public static String printSingleToken(CharSequence fileText, IElementType tokenType, int start, int end) {
+  public static String printSingleToken(@NotNull CharSequence fileText, @NotNull IElementType tokenType, int start, int end) {
     return tokenType + " ('" + getTokenText(tokenType, fileText, start, end) + "')\n";
   }
 
-  protected void doFileTest(String fileExt) {
+  protected void doFileTest(@NotNull String fileExt) {
     doTest(loadTestDataFile("." + fileExt));
   }
 
@@ -180,7 +180,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
            : StringUtil.replace(sequence.subSequence(start, end).toString(), "\n", "\\n");
   }
 
-  protected abstract Lexer createLexer();
+  protected abstract @NotNull Lexer createLexer();
 
-  protected abstract String getDirPath();
+  protected abstract @NotNull String getDirPath();
 }

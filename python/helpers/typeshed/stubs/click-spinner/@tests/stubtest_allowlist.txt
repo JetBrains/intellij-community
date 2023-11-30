@@ -1,2 +1,0 @@
-click_spinner.Spinner.__init__
-click_spinner.spinner

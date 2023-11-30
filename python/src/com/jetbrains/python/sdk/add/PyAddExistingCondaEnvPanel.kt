@@ -30,7 +30,6 @@ import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.associateWithModule
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.setupAssociated
 import icons.PythonIcons
 import java.awt.BorderLayout
@@ -85,7 +84,7 @@ open class PyAddExistingCondaEnvPanel(private val project: Project?,
   }
 
   override fun validateAll(): List<ValidationInfo> {
-    return listOfNotNull(validateSdkComboBox(sdkComboBox, this), CondaEnvSdkFlavor.validateCondaPath(condaPathField.text))
+    return listOfNotNull(validateSdkComboBox(sdkComboBox, this))
   }
 
   override fun getOrCreateSdk(): Sdk? {

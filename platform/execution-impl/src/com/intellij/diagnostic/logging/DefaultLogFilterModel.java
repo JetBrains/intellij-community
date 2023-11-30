@@ -154,8 +154,7 @@ public class DefaultLogFilterModel extends LogFilterModel {
   }
 
   @Override
-  @NotNull
-  public MyProcessingResult processLine(String line) {
+  public @NotNull MyProcessingResult processLine(String line) {
     final String type = LogConsolePreferences.getType(line);
     Key contentType = type != null
                       ? LogConsolePreferences.getProcessOutputTypes(type)

@@ -53,7 +53,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
         if (possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation, psiField)
             && validate(psiAnnotation, psiField, new ProblemProcessingSink())) {
 
-          generatePsiElements(psiField, psiAnnotation, result);
+          generatePsiElements(psiField, psiAnnotation, result, nameHint);
         }
       }
     }
@@ -75,7 +75,8 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
 
   protected abstract void generatePsiElements(@NotNull PsiField psiField,
                                               @NotNull PsiAnnotation psiAnnotation,
-                                              @NotNull List<? super PsiElement> target);
+                                              @NotNull List<? super PsiElement> target,
+                                              @Nullable String nameHint);
 
   @NotNull
   @Override

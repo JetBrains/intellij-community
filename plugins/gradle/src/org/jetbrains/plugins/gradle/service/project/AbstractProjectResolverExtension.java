@@ -31,13 +31,11 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.ClassSetProjectImportModelProvider;
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * {@link AbstractProjectResolverExtension} provides dummy implementation of Gradle project resolver.
@@ -120,11 +118,22 @@ public abstract class AbstractProjectResolverExtension implements GradleProjectR
     return Collections.emptySet();
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public ProjectImportModelProvider getModelProvider() {
-    Set<Class<?>> projectModelClasses = getExtraProjectModelClasses();
-    return projectModelClasses.isEmpty() ? null : new ClassSetProjectImportModelProvider(projectModelClasses);
+  public Set<Class<?>> getExtraBuildModelClasses() {
+    return Collections.emptySet();
+  }
+
+  @Override
+  public @NotNull List<ProjectImportModelProvider> getModelProviders() {
+    ProjectImportModelProvider provider = getModelProvider();
+    if (provider != null) {
+      return List.of(provider);
+    }
+    List<ProjectImportModelProvider> providers = new ArrayList<>();
+    providers.addAll(GradleClassProjectModelProvider.createAll(getExtraProjectModelClasses()));
+    providers.addAll(GradleClassBuildModelProvider.createAll(getExtraBuildModelClasses()));
+    return providers;
   }
 
   @NotNull

@@ -7,6 +7,6 @@ val foo: O = when {
     else -> P()<caret>
 }
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix

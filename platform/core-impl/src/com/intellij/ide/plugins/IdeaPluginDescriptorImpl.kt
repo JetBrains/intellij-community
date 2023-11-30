@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "OVERRIDE_DEPRECATION")
 package com.intellij.ide.plugins
 
@@ -21,7 +21,7 @@ import java.time.ZoneOffset
 import java.util.*
 
 private val LOG: Logger
-  get() = PluginManagerCore.getLogger()
+  get() = PluginManagerCore.logger
 
 fun Iterable<IdeaPluginDescriptor>.toPluginIdSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
 
@@ -125,9 +125,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun getDescriptorPath(): String? = descriptorPath
 
-  override fun getDependencies(): List<IdeaPluginDependency> {
-    return if (pluginDependencies.isEmpty()) Collections.emptyList() else Collections.unmodifiableList(pluginDependencies)
-  }
+  override fun getDependencies(): List<IdeaPluginDependency> =
+    if (pluginDependencies.isEmpty()) Collections.emptyList() else Collections.unmodifiableList(pluginDependencies)
 
   override fun getPluginPath(): Path = path
 
@@ -417,15 +416,17 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     return result
   }
 
-  private fun fromPluginBundle(key: String, @Nls defaultValue: String?): String? = (resourceBundleBaseName?.let { baseName ->
-    try {
-      AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(classLoader, baseName), key,defaultValue ?: "")
-    }
-    catch (_: MissingResourceException) {
-      LOG.info("Cannot find plugin $id resource-bundle: $baseName")
-      null
-    }
-  }) ?: defaultValue
+  private fun fromPluginBundle(key: String, @Nls defaultValue: String?): String? {
+    return (resourceBundleBaseName?.let { baseName ->
+      try {
+        AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(classLoader, baseName), key, defaultValue ?: "")
+      }
+      catch (_: MissingResourceException) {
+        LOG.info("Cannot find plugin $id resource-bundle: $baseName")
+        null
+      }
+    }) ?: defaultValue
+  }
 
   override fun getChangeNotes(): String? = changeNotes
 
@@ -441,14 +442,16 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun getOptionalDependentPluginIds(): Array<PluginId> {
     val pluginDependencies = pluginDependencies
-    return if (pluginDependencies.isEmpty())
-      PluginId.EMPTY_ARRAY
-    else
-      pluginDependencies.asSequence()
+    if (pluginDependencies.isEmpty()) {
+      return PluginId.EMPTY_ARRAY
+    }
+    else {
+      return pluginDependencies.asSequence()
         .filter { it.isOptional }
         .map { it.pluginId }
         .toList()
         .toTypedArray()
+    }
   }
 
   override fun getVendor(): String? = vendor
@@ -468,11 +471,9 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   /*
-     This setter was explicitly defined to be able to set a category for a
-     descriptor outside its loading from the xml file.
-     Problem was that most commonly plugin authors do not publish the plugin's
-     category in its .xml file so to be consistent in plugins representation
-     (e.g. in the Plugins form) we have to set this value outside.
+     This setter was explicitly defined to be able to set a category for a descriptor outside its loading from the xml file.
+     The problem was that most commonly plugin authors do not publish the plugin's category in its .xml file,
+     so to be consistent in plugin representation (e.g., in the Plugins form) we have to set this value outside.
   */
   fun setCategory(category: String?) {
     this.category = category
@@ -517,30 +518,16 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   override fun isRequireRestart(): Boolean = isRestartRequired
 
   override fun equals(other: Any?): Boolean {
-    if (this === other) {
-      return true
-    }
-    if (other !is IdeaPluginDescriptorImpl) {
-      return false
-    }
-    return id == other.id && descriptorPath == other.descriptorPath
+    return this === other || other is IdeaPluginDescriptorImpl && id == other.id && descriptorPath == other.descriptorPath
   }
 
-  override fun hashCode(): Int {
-    return 31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
-  }
+  override fun hashCode(): Int = 31 * id.hashCode() + (descriptorPath?.hashCode() ?: 0)
 
   override fun toString(): String {
-    return "PluginDescriptor(" +
-           "name=$name, " +
-           "id=$id, " +
+    return "PluginDescriptor(name=$name, id=$id, " +
            (if (moduleName == null) "" else "moduleName=$moduleName, ") +
            "descriptorPath=${descriptorPath ?: "plugin.xml"}, " +
-           "path=${pluginPathToUserString(path)}, " +
-           "version=$version, " +
-           "package=$packagePrefix, " +
-           "isBundled=$isBundled" +
-           ")"
+           "path=${pluginPathToUserString(path)}, version=$version, package=$packagePrefix, isBundled=$isBundled)"
   }
 }
 

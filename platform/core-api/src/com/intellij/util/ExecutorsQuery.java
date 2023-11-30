@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,13 +17,13 @@ public final class ExecutorsQuery<Result, Parameter> extends AbstractQuery<Resul
   private final List<? extends QueryExecutor<Result, Parameter>> myExecutors;
   private final Parameter myParameters;
 
-  public ExecutorsQuery(@NotNull final Parameter params, @NotNull List<? extends QueryExecutor<Result, Parameter>> executors) {
+  public ExecutorsQuery(final @NotNull Parameter params, @NotNull List<? extends QueryExecutor<Result, Parameter>> executors) {
     myParameters = params;
     myExecutors = executors;
   }
 
   @Override
-  protected boolean processResults(@NotNull final Processor<? super Result> consumer) {
+  protected boolean processResults(final @NotNull Processor<? super Result> consumer) {
     for (QueryExecutor<Result, Parameter> executor : myExecutors) {
       try {
         ProgressManager.checkCanceled();

@@ -25,6 +25,7 @@ abstract class TargetEnvironmentConfiguration(typeId: String) : ContributedConfi
    *
    * This field is only persisted by [TargetEnvironmentsManager]. It will be regenerated on each launch unless you use
    * this manager.
+   * See also [TargetConfigurationWithId.targetAndTypeId]
    */
   var uuid: String = UUID.randomUUID().toString()
     internal set

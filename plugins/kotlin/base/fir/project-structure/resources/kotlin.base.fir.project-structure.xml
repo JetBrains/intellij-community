@@ -1,0 +1,10 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.base.fir.projectStructure">
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.base.fir.projectStructure.FirOrderedWorkspaceModelChangeListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+  </projectListeners>
+
+  <dependencies>
+    <module name="kotlin.base.fir.analysis-api-providers"/>
+  </dependencies>
+</idea-plugin>

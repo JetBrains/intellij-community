@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class WorkingContextManager {
   private static final Logger LOG = Logger.getInstance(WorkingContextManager.class);
   @NonNls private static final String TASKS_FOLDER = "tasks";
@@ -161,6 +161,8 @@ public final class WorkingContextManager {
       tasksFolder.mkdirs();
     }
     String projectName = FileUtil.sanitizeFileName(myProject.getName());
+    int maxNameLength = 240;
+    projectName = projectName.length() <= maxNameLength ? projectName : projectName.substring(0, maxNameLength); // make sure archive file name does not exceed 255
     return new File(tasksFolder, projectName + postfix);
   }
 

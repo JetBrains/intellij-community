@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.jspecify.nullness.NullMarked;
-import org.jspecify.nullness.Nullable;
-import org.jspecify.nullness.NullnessUnspecified;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullnessUnspecified;
 
 @NullMarked
 class TypeVariableUnionNullToObjectUnionNull<
@@ -41,83 +40,67 @@ class TypeVariableUnionNullToObjectUnionNull<
     NullChildOfParametricT extends @Nullable ParametricT,
     //
     UnusedT> {
-  @Nullable
-  Object x0(@Nullable Never1T x) {
+  @Nullable Object x0(@Nullable Never1T x) {
     return x;
   }
 
-  @Nullable
-  Object x1(@Nullable ChildOfNever1T x) {
+  @Nullable Object x1(@Nullable ChildOfNever1T x) {
     return x;
   }
 
-  @Nullable
-  Object x2(@Nullable UnspecChildOfNever1T x) {
+  @Nullable Object x2(@Nullable UnspecChildOfNever1T x) {
     return x;
   }
 
-  @Nullable
-  Object x3(@Nullable NullChildOfNever1T x) {
+  @Nullable Object x3(@Nullable NullChildOfNever1T x) {
     return x;
   }
 
-  @Nullable
-  Object x4(@Nullable Never2T x) {
+  @Nullable Object x4(@Nullable Never2T x) {
     return x;
   }
 
-  @Nullable
-  Object x5(@Nullable ChildOfNever2T x) {
+  @Nullable Object x5(@Nullable ChildOfNever2T x) {
     return x;
   }
 
-  @Nullable
-  Object x6(@Nullable UnspecChildOfNever2T x) {
+  @Nullable Object x6(@Nullable UnspecChildOfNever2T x) {
     return x;
   }
 
-  @Nullable
-  Object x7(@Nullable NullChildOfNever2T x) {
+  @Nullable Object x7(@Nullable NullChildOfNever2T x) {
     return x;
   }
 
-  @Nullable
-  Object x8(@Nullable UnspecT x) {
+  @Nullable Object x8(@Nullable UnspecT x) {
     return x;
   }
 
-  @Nullable
-  Object x9(@Nullable ChildOfUnspecT x) {
+  @Nullable Object x9(@Nullable ChildOfUnspecT x) {
     return x;
   }
 
-  @Nullable
-  Object x10(@Nullable UnspecChildOfUnspecT x) {
+  @Nullable Object x10(@Nullable UnspecChildOfUnspecT x) {
     return x;
   }
 
-  @Nullable
-  Object x11(@Nullable NullChildOfUnspecT x) {
+  @Nullable Object x11(@Nullable NullChildOfUnspecT x) {
     return x;
   }
 
-  @Nullable
-  Object x12(@Nullable ParametricT x) {
+  @Nullable Object x12(@Nullable ParametricT x) {
     return x;
   }
 
-  @Nullable
-  Object x13(@Nullable ChildOfParametricT x) {
+  @Nullable Object x13(@Nullable ChildOfParametricT x) {
     return x;
   }
 
-  @Nullable
-  Object x14(@Nullable UnspecChildOfParametricT x) {
+  @Nullable Object x14(@Nullable UnspecChildOfParametricT x) {
     return x;
   }
 
-  @Nullable
-  Object x15(@Nullable NullChildOfParametricT x) {
+  @Nullable Object x15(@Nullable NullChildOfParametricT x) {
     return x;
   }
 }

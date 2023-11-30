@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -367,7 +366,7 @@ public final class RepositoryAttachDialog extends DialogWrapper {
 
   @Override
   protected void dispose() {
-    Disposer.dispose(myProgressIcon);
+    myProgressIcon.dispose();
     PropertiesComponent storage = PropertiesComponent.getInstance(myProject);
     storage.setValue(PROPERTY_DOWNLOAD_TO_PATH_ENABLED, String.valueOf(myDownloadToCheckBox.isSelected()));
     String downloadPath = myDirectoryField.getText();

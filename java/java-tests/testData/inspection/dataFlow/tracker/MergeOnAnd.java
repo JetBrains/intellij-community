@@ -16,7 +16,7 @@ Value is always false (bar.equals("Asdasdd") && asdsa.length() == 12; line#32)
       Left operand is in {0..3} (asdsa.length(); line#32)
         Range is known from line #32 (bar.equals("Asdasdd"); line#32)
  */
-class A
+class A {
   public A(String asdsa) {
     String foo = "asd";
     String bar;

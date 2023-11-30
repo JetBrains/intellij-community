@@ -5,24 +5,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.platform.workspace.jps.entities.LibraryId;
 import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-public class LibraryPropertyEntityIndexableEntityProvider implements IndexableEntityProvider.Enforced<LibraryPropertiesEntity> {
+public final class LibraryPropertyEntityIndexableEntityProvider implements IndexableEntityProvider.Enforced<LibraryPropertiesEntity> {
 
   @Override
   public @NotNull Class<LibraryPropertiesEntity> getEntityClass() {
     return LibraryPropertiesEntity.class;
-  }
-
-  @Override
-  public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
-    return Collections.emptyList();
   }
 
   @Override
@@ -32,6 +27,12 @@ public class LibraryPropertyEntityIndexableEntityProvider implements IndexableEn
     // no change in dependencies happen, only Added event on LibraryEntity.
     // For debug see com.intellij.roots.libraries.LibraryTest
     return IndexableIteratorBuilders.INSTANCE.forLibraryEntity(entity.getLibrary().getSymbolicId(), false);
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull LibraryPropertiesEntity entity,
+                                                                                                  @NotNull Project project) {
+    return getAddedEntityIteratorBuilders(entity, project);
   }
 
   @Override

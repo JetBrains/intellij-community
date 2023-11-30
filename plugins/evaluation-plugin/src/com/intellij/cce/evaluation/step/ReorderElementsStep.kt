@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.core.Features
@@ -12,12 +13,11 @@ import com.intellij.cce.workspace.FeaturesSerializer
 import com.intellij.cce.workspace.info.FileSessionsInfo
 import com.intellij.openapi.project.Project
 
-class ReorderElementsStep(config: Config, project: Project, isHeadless: Boolean) :
+class ReorderElementsStep(config: Config, project: Project) :
   CreateWorkspaceStep(
     Config.buildFromConfig(config) { evaluationTitle = config.reorder.title },
     ReorderElementsHandler(config.reorder.features),
-    project,
-    isHeadless) {
+    project) {
 
   override val name: String = "Reorder elements"
 
@@ -35,19 +35,18 @@ class ReorderElementsStep(config: Config, project: Project, isHeadless: Boolean)
         for (session in fileSessionsInfo.sessions) {
           val json = workspace1.featuresStorage.getFeatures(session.id, fileSessionsInfo.filePath)
           val features = FeaturesSerializer.deserialize(json)
-          val newSession = Session(session.offset, session.expectedText, session.completableLength, session.content, session.properties)
+          val newSession = Session(session.offset, session.expectedText, session.completableLength, session.properties)
           for ((i, lookup) in session.lookups.withIndex()) {
             val elements2features = lookup.suggestions.zip(features[i].element)
             val sortedElements2features = elements2features.sortedWith(compareByMultipleFeatures())
             newSession.addLookup(
               Lookup(
-                lookup.prefix,
-                lookup.offset,
-                sortedElements2features.map { it.first },
-                lookup.latency,
-                Features(features[i].common, sortedElements2features.map { it.second }),
-                lookup.selectedPosition,
-                lookup.isNew
+                prefix = lookup.prefix,
+                offset = lookup.offset,
+                suggestions = sortedElements2features.map { it.first },
+                latency = lookup.latency,
+                features = Features(features[i].common, sortedElements2features.map { it.second }),
+                isNew = lookup.isNew
               )
             )
           }

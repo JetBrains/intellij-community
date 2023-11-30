@@ -10,13 +10,13 @@ import javax.swing.ListCellRenderer
 internal annotation class LcrDslMarker
 
 /**
- * Builds [ListCellRenderer], which can contains several cells with texts or icons placed in one row.
+ * Builds [ListCellRenderer], which can contains several cells with texts, icons and other entities placed in one row.
  * Covers most common kinds of renderers and provides all necessary functionality:
  *
  * * Rectangular selection and correct insets for old UI
  * * Rounded selection, correct insets and height for new UI
  * * Uses correct colors for text in selected/unselected state
- * * Gray color has different color in selected state
+ * * Grey color has different color in selected state
  * * Supports IDE scaling and compact mode
  * * Provides accessibility details for rows: by default it is concatenation of accessible names of all visible cells
  *
@@ -24,20 +24,15 @@ internal annotation class LcrDslMarker
  */
 @ApiStatus.Experimental
 fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
-  val result = LcrRowImpl<T>()
-  result.init()
-  result.onInitFinished()
-
-  return result
+  return UiDslRendererProvider.getRenderer(init)
 }
 
 /**
  * Simplified version of [listCellRenderer] with one text cell
  */
 @ApiStatus.Experimental
-fun <T> simpleListCellRenderer(textExtractor: (T) -> @Nls String?): ListCellRenderer<T> {
+fun <T> textListCellRenderer(textExtractor: (T) -> @Nls String?): ListCellRenderer<T> {
   return listCellRenderer {
-    val text = text()
-    renderer { value -> text.text = textExtractor(value) }
+    text(textExtractor(value) ?: "")
   }
 }

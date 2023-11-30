@@ -17,7 +17,7 @@ private const val ATTEMPTS_REGISTRY_KEY = "kotlin.scripting.deferred.definition.
 
 internal class DeferredScriptDefinition(
     val scriptCode: SourceCode,
-    private val definitionsProvider: ScriptDefinitionsManager
+    private val definitionsProvider: OldLogicDelegate
 ) : ScriptDefinition() {
 
     private val definition : ScriptDefinition by lazy {

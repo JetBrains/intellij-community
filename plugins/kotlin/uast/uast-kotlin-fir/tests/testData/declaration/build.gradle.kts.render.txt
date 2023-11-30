@@ -1,0 +1,34 @@
+public final class Build_gradle {
+    public fun Build_gradle(args: java.lang.String[]) {
+        <anonymous class>({
+            <anonymous class>("com.android.application") <other> "2.3.3"
+            <anonymous class>("android") <other> "2.3.3"
+            return <anonymous class>("android") <other> "1.1.51"
+        })
+        <anonymous class>({
+            <anonymous class>(23)
+            <anonymous class>({
+                <anonymous class>(7)
+                <anonymous class>(23)
+                applicationId = "com.example.kotlingradle"
+                versionCode = 1
+                return versionName = "1.0"
+            })
+            return <anonymous class>({
+                return <anonymous class>("release", {
+                    isMinifyEnabled = false
+                    return <anonymous class>("proguard-rules.pro")
+                })
+            })
+        })
+        <anonymous class>({
+            <anonymous class>("com.android.support:appcompat-v7:23.4.0")
+            <anonymous class>("com.android.support.constraint:constraint-layout:1.0.0-alpha8")
+            return <anonymous class>(<anonymous class>("stdlib", "1.1.51"))
+        })
+        <anonymous class>({
+            return <anonymous class>()
+        })
+    }
+    public static final fun main(args: java.lang.String[]) : void = UastEmptyExpression
+}

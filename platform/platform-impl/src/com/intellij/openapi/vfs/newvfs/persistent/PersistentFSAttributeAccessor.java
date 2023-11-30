@@ -4,10 +4,9 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
+import com.intellij.util.io.blobstorage.ByteBufferReader;
+import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import com.intellij.util.io.DataInputOutputUtil;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,10 +16,8 @@ import java.io.IOException;
 @ApiStatus.Internal
 public final class PersistentFSAttributeAccessor {
 
-  @NotNull
-  private final PersistentFSConnection connection;
-  @NotNull
-  private final AbstractAttributesStorage attributesStorage;
+  private final @NotNull PersistentFSConnection connection;
+  private final @NotNull AbstractAttributesStorage attributesStorage;
 
   PersistentFSAttributeAccessor(final @NotNull PersistentFSConnection connection) {
     this.connection = connection;
@@ -32,17 +29,15 @@ public final class PersistentFSAttributeAccessor {
     return attributesStorage.hasAttributePage(connection, fileId, attribute);
   }
 
-  @Nullable
-  public AttributeInputStream readAttribute(final int fileId,
-                                            final @NotNull FileAttribute attribute) throws IOException {
+  public @Nullable AttributeInputStream readAttribute(final int fileId,
+                                                      final @NotNull FileAttribute attribute) throws IOException {
     final AttributeInputStream attributeStream = attributesStorage.readAttribute(connection, fileId, attribute);
     return validateAttributeVersion(attribute, attributeStream);
   }
 
   @ApiStatus.Internal
-  @Nullable
-  public static AttributeInputStream validateAttributeVersion(final @NotNull FileAttribute attribute,
-                                                              final AttributeInputStream attributeStream) {
+  public static @Nullable AttributeInputStream validateAttributeVersion(final @NotNull FileAttribute attribute,
+                                                                        final AttributeInputStream attributeStream) {
     if (attributeStream != null && attribute.isVersioned()) {
       try {
         final int actualVersion = DataInputOutputUtil.readINT(attributeStream);
@@ -97,7 +92,7 @@ public final class PersistentFSAttributeAccessor {
       //TODO RC: drill hole for storage.writeAttributeRaw(connection, fileId, attribute, writer)
       //return storage.writeAttribute(connection, fileId, attribute, buffer -> {
       //  if (attribute.isVersioned()) {
-      //    final int actualVersion = DataInputOutputUtil.writeINT(buffer);
+      //    DataInputOutputUtil.writeINT(buffer);
       //  }
       //  return writer.write(buffer);
       //});
@@ -112,9 +107,8 @@ public final class PersistentFSAttributeAccessor {
   /**
    * Opens given attribute of given file for writing
    */
-  @NotNull
-  public AttributeOutputStream writeAttribute(final int fileId,
-                                              final @NotNull FileAttribute attribute) {
+  public @NotNull AttributeOutputStream writeAttribute(final int fileId,
+                                                       final @NotNull FileAttribute attribute) {
     //MAYBE RC: check fileId for be in range (1..max)? fileId will be checked on stream.close(),
     //          but it is quite common to swallow exceptions from stream.close() -- and in general
     //          it is better to fail earlier
@@ -133,15 +127,5 @@ public final class PersistentFSAttributeAccessor {
 
   public void deleteAttributes(final int fileId) throws IOException {
     attributesStorage.deleteAttributes(connection, fileId);
-  }
-
-  public int getLocalModificationCount() {
-    return attributesStorage.getLocalModificationCount();
-  }
-
-  public void checkAttributesStorageSanity(final int fileId,
-                                           final @NotNull IntList usedAttributeRecordIds,
-                                           final @NotNull IntList validAttributeIds) throws IOException {
-    attributesStorage.checkAttributesStorageSanity(connection, fileId, usedAttributeRecordIds, validAttributeIds);
   }
 }

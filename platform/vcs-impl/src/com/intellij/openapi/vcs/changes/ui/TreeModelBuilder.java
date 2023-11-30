@@ -85,13 +85,13 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   public TreeModelBuilder(@Nullable Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
     myProject = project != null && !project.isDefault() ? project : null;
     myRoot = ChangesBrowserNode.createRoot();
-    myModel = new DefaultTreeModel(myRoot);
+    myModel = new ChangesTreeModel(myRoot);
     myGroupingPolicyFactory = grouping;
   }
 
   @NotNull
   public static DefaultTreeModel buildEmpty() {
-    return new DefaultTreeModel(ChangesBrowserNode.createRoot());
+    return new ChangesTreeModel(ChangesBrowserNode.createRoot());
   }
 
   @NotNull
@@ -426,7 +426,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
 
     StaticFilePath pathKey = getKey(change);
     ChangesBrowserNode<?> parentNode = ReadAction.compute(
-      () -> notNull(GROUPING_POLICY.getRequired(subtreeRoot).getParentNodeFor(pathKey, subtreeRoot), subtreeRoot));
+      () -> notNull(GROUPING_POLICY.getRequired(subtreeRoot).getParentNodeFor(pathKey, node, subtreeRoot), subtreeRoot));
     ChangesBrowserNode<?> cachingRoot = BaseChangesGroupingPolicy.getCachingRoot(parentNode, subtreeRoot);
 
     myModel.insertNodeInto(node, parentNode, myModel.getChildCount(parentNode));

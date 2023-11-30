@@ -67,15 +67,15 @@ public abstract class BaseControl<Bound extends JComponent, T> extends DomUICont
     return myDefaultForeground;
   }
 
-  protected final Color getErrorBackground() {
+  protected static Color getErrorBackground() {
     return ERROR_BACKGROUND;
   }
 
-  protected final Color getWarningBackground() {
+  protected static Color getWarningBackground() {
     return WARNING_BACKGROUND;
   }
 
-  protected final Color getErrorForeground() {
+  protected static Color getErrorForeground() {
     return ERROR_FOREGROUND;
   }
 

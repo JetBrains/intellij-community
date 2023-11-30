@@ -46,8 +46,9 @@ import java.io.File
  * // PLATFORM: directive should belong to any file inside a module (after MODULE and FILE directives).
  * Multiples of the same directive in any one module in one or several of its files are forbidden.
  *
- * A single leaf JVM module named 'jvm' is expected in a test with multiple modules, all other modules are considered common,
- * can have arbitrary name and can be referenced by their name in a dependency list of another module.
+ * A single leaf JVM module with a name starting with 'jvm' is expected in a test with multiple modules,
+ * all other modules are considered common, can have arbitrary name and can be referenced by their name
+ * in a dependency list of another module.
  * The resulting dependency graph is not checked for cycles or hanging nodes, so be careful when defining dependencies.
  *
  * A small clarification on common modules with JVM platform.
@@ -224,7 +225,7 @@ abstract class AbstractKotlinEvaluateExpressionInMppTest : AbstractKotlinEvaluat
 
         dependsOnModuleNames.forEach { name ->
             val dependsOnModule = context.filesByModules.keys.find { it.name == name } ?:
-                error("Unknown module in depends on list. Known modules: $allModuleNames; found: $name for module ${module.name}")
+            error("Unknown module in depends on list. Known modules: $allModuleNames; found: $name for module ${module.name}")
             context.dependsOnEdges.putValue(module, dependsOnModule)
         }
 

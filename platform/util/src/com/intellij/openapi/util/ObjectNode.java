@@ -144,7 +144,7 @@ final class ObjectNode {
 
   // must not override hasCode/equals because ObjectNode must have identity semantics
 
-  private static class MapNodeChildren implements NodeChildren {
+  private static final class MapNodeChildren implements NodeChildren {
     private final Map<Disposable, ObjectNode> myChildren;
 
     MapNodeChildren(@NotNull List<? extends ObjectNode> children) {
@@ -190,7 +190,7 @@ final class ObjectNode {
     }
   }
 
-  private static class ListNodeChildren implements NodeChildren {
+  private static final class ListNodeChildren implements NodeChildren {
     private final @NotNull List<ObjectNode> myChildren;
 
     ListNodeChildren(@NotNull ObjectNode node) {

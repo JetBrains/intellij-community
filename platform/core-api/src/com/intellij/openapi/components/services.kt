@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientKind
 import org.jetbrains.annotations.ApiStatus
 
@@ -59,6 +60,12 @@ inline fun <reified T : Any> ComponentManager.services(includeLocal: Boolean): L
 @ApiStatus.Experimental
 suspend inline fun <reified T : Any> ComponentManager.serviceAsync(): T {
   return (this as ComponentManagerEx).getServiceAsync(T::class.java)
+}
+
+@ApiStatus.Internal
+@ApiStatus.Experimental
+suspend inline fun <reified T : Any> serviceAsync(): T {
+  return (ApplicationManager.getApplication() as ComponentManagerEx).getServiceAsync(T::class.java)
 }
 
 @ApiStatus.Internal

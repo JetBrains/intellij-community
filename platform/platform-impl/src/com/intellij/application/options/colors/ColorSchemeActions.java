@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.schemes.AbstractSchemeActions;
@@ -39,9 +39,8 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     super(schemesPanel);
   }
 
-  @NotNull
   @Override
-  protected Collection<String> getSchemeImportersNames() {
+  protected @NotNull Collection<String> getSchemeImportersNames() {
     List<String> importersNames = new ArrayList<>();
     for (ImportHandler importHandler : ImportHandler.EP_NAME.getExtensionList()) {
       importersNames.add(importHandler.getTitle());
@@ -198,24 +197,22 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     super.exportScheme(project, schemeToExport, exporterName);
   }
 
-  @NotNull
   @Override
-  protected Class<EditorColorsScheme> getSchemeType() {
+  protected @NotNull Class<EditorColorsScheme> getSchemeType() {
     return EditorColorsScheme.class;
   }
 
-  @NotNull
-  protected abstract ColorAndFontOptions getOptions();
+  protected abstract @NotNull ColorAndFontOptions getOptions();
 
-  private static class ImportSchemeChooserDialog extends DialogWrapper {
+  private static final class ImportSchemeChooserDialog extends DialogWrapper {
 
     private final Component myComponentAbove;
     private final List<ColorSchemeItem> mySchemeItems;
     private JBList<ColorSchemeItem> mySchemeList;
 
-    protected ImportSchemeChooserDialog(@NotNull Component parent,
-                                        @NotNull Component componentAbove,
-                                        @NotNull List<ColorSchemeItem> schemeItems) {
+    private ImportSchemeChooserDialog(@NotNull Component parent,
+                                      @NotNull Component componentAbove,
+                                      @NotNull List<ColorSchemeItem> schemeItems) {
       super(parent, false);
       setTitle(ApplicationBundle.message("settings.editor.scheme.import.chooser.title"));
       setOKButtonText(ApplicationBundle.message("settings.editor.scheme.import.chooser.button"));
@@ -224,17 +221,15 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
       init();
     }
 
-    @Nullable
     @Override
-    public Point getInitialLocation() {
+    public @Nullable Point getInitialLocation() {
       Point location = myComponentAbove.getLocationOnScreen();
       location.translate(0, myComponentAbove.getHeight() + JBUIScale.scale(20));
       return location;
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       JPanel schemesPanel = new JPanel(new BorderLayout());
       mySchemeList = new JBList<>(mySchemeItems);
       schemesPanel.add(mySchemeList, BorderLayout.CENTER);

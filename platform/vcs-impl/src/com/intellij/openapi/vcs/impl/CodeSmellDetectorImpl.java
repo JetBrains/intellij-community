@@ -84,7 +84,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   public List<CodeSmellInfo> findCodeSmells(@NotNull final List<? extends VirtualFile> filesToCheck) throws ProcessCanceledException {
     MainPassesRunner runner =
       new MainPassesRunner(myProject, VcsBundle.message("checking.code.smells.progress.title"), getInspectionProfile());
-    Map<Document, List<HighlightInfo>> infos = runner.runMainPasses(filesToCheck);
+    Map<Document, List<HighlightInfo>> infos = runner.runMainPasses(filesToCheck, HighlightSeverity.WARNING);
     return convertErrorsAndWarnings(infos);
   }
   @Nullable

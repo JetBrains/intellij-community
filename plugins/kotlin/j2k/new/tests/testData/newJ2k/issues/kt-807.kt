@@ -12,7 +12,7 @@ internal object FileRead {
             val `in` = DataInputStream(fstream)
             val br = BufferedReader(InputStreamReader(`in`))
             var strLine: String?
-            while (br.readLine().also { strLine = it } != null) {
+            while ((br.readLine().also { strLine = it }) != null) {
                 println(strLine)
             }
             `in`.close()

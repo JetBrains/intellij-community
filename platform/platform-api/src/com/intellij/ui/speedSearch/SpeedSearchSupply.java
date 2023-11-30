@@ -39,13 +39,11 @@ public abstract class SpeedSearchSupply {
   protected static final JBColor ERROR_FOREGROUND_COLOR = namedColor("SpeedSearch.errorForeground", namedColor("SearchField.errorForeground", JBColor.RED));
 
 
-  @Nullable
-  public static SpeedSearchSupply getSupply(@NotNull final JComponent component) {
+  public static @Nullable SpeedSearchSupply getSupply(final @NotNull JComponent component) {
     return getSupply(component, false);
   }
 
-  @Nullable
-  public static SpeedSearchSupply getSupply(@NotNull final JComponent component, boolean evenIfInactive) {
+  public static @Nullable SpeedSearchSupply getSupply(final @NotNull JComponent component, boolean evenIfInactive) {
     SpeedSearchSupply speedSearch = (SpeedSearchSupply)component.getClientProperty(SPEED_SEARCH_COMPONENT_MARKER);
 
     if (evenIfInactive) {
@@ -55,8 +53,7 @@ public abstract class SpeedSearchSupply {
     return speedSearch != null && speedSearch.isPopupActive() ? speedSearch : null;
   }
 
-  @Nullable
-  public abstract Iterable<TextRange> matchingFragments(@NotNull final String text);
+  public abstract @Nullable Iterable<TextRange> matchingFragments(final @NotNull String text);
 
   /**
    * Selects element according to search criteria changes
@@ -65,8 +62,7 @@ public abstract class SpeedSearchSupply {
 
   public abstract boolean isPopupActive();
 
-  @Nullable
-  public String getEnteredPrefix() {
+  public @Nullable String getEnteredPrefix() {
     return null;
   }
 

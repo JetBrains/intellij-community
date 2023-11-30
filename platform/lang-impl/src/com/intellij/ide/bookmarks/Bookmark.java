@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -337,7 +337,7 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     return result.toString();
   }
 
-  private static class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
+  private static final class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
     private final Bookmark myBookmark;
 
     MyGutterIconRenderer(@NotNull Bookmark bookmark) {

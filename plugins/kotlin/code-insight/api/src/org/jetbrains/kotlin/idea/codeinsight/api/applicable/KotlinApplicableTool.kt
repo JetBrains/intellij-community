@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtElement
 
@@ -45,5 +47,8 @@ internal fun <ELEMENT : KtElement> KotlinApplicableTool<ELEMENT>.isApplicableWit
 @OptIn(KtAllowAnalysisOnEdt::class)
 internal fun <ELEMENT : KtElement> KotlinApplicableTool<ELEMENT>.isApplicableWithAnalyzeAllowEdt(element: ELEMENT): Boolean =
     allowAnalysisOnEdt {
-        isApplicableWithAnalyze(element)
+        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        allowAnalysisFromWriteAction {
+            isApplicableWithAnalyze(element)
+        }
     }

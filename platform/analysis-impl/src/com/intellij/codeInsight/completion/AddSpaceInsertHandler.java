@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -15,18 +15,18 @@ import org.jetbrains.annotations.NotNull;
  * @author zolotov
  */
 public class AddSpaceInsertHandler implements InsertHandler<LookupElement> {
-  private final static String VALID_COMPLETION_CHARS = "\u0000\n\t\r(,.:=";
+  private static final String VALID_COMPLETION_CHARS = "\u0000\n\t\r(,.:=";
 
-  public final static InsertHandler<LookupElement> INSTANCE = CompositeDeclarativeInsertHandler.Companion
+  public static final InsertHandler<LookupElement> INSTANCE = CompositeDeclarativeInsertHandler.Companion
     .withUniversalHandler(VALID_COMPLETION_CHARS,
                           new SingleInsertionDeclarativeInsertHandler(" ",
-                                                                      DeclarativeInsertHandler2.PopupOptions.DoNotShow.INSTANCE)
+                                                                      DeclarativeInsertHandler.PopupOptions.DoNotShow.INSTANCE)
     );
 
-  public final static InsertHandler<LookupElement> INSTANCE_WITH_AUTO_POPUP = CompositeDeclarativeInsertHandler.Companion
+  public static final InsertHandler<LookupElement> INSTANCE_WITH_AUTO_POPUP = CompositeDeclarativeInsertHandler.Companion
     .withUniversalHandler(VALID_COMPLETION_CHARS,
                           new SingleInsertionDeclarativeInsertHandler(" ",
-                                                                      DeclarativeInsertHandler2.PopupOptions.MemberLookup.INSTANCE)
+                                                                      DeclarativeInsertHandler.PopupOptions.MemberLookup.INSTANCE)
     );
 
   private final String myIgnoreOnChars;

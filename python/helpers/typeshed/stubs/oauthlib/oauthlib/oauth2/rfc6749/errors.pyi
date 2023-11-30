@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 class OAuth2Error(Exception):
@@ -14,11 +15,11 @@ class OAuth2Error(Exception):
     grant_type: Any
     def __init__(
         self,
-        description: Any | None = ...,
-        uri: Any | None = ...,
-        state: Any | None = ...,
-        status_code: Any | None = ...,
-        request: Any | None = ...,
+        description: Incomplete | None = None,
+        uri: Incomplete | None = None,
+        state: Incomplete | None = None,
+        status_code: Incomplete | None = None,
+        request: Incomplete | None = None,
     ) -> None: ...
     def in_uri(self, uri): ...
     @property
@@ -137,4 +138,4 @@ class CustomOAuth2Error(OAuth2Error):
     error: Any
     def __init__(self, error, *args, **kwargs) -> None: ...
 
-def raise_from_error(error, params: Any | None = ...) -> None: ...
+def raise_from_error(error, params: Incomplete | None = None) -> None: ...

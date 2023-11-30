@@ -51,6 +51,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
+
 /**
  * Form to display run configuration.
  * It displays target type, target, additional arguments, custom options (if provided) and environment options
@@ -128,7 +130,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
       if (StringUtil.isEmpty(workingDirectory)) {
         return null;
       }
-      return LocalFileSystem.getInstance().findFileByPath(workingDirectory);
+      return LocalFileSystem.getInstance().findFileByPath(getExpandedWorkingDir(configuration));
     });
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -67,7 +67,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
   public CreateDirectoryOrPackageAction() {
     super(IdeBundle.messagePointer("action.create.new.directory.or.package"),
-          IdeBundle.messagePointer("action.create.new.directory.or.package"), null);
+          IdeBundle.messagePointer("action.create.new.directory.or.package"));
   }
 
   @Override
@@ -374,7 +374,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     }
   }
 
-  private static class DirectoriesWithCompletionPopupPanel extends NewItemWithTemplatesPopupPanel<CompletionItem> {
+  private static final class DirectoriesWithCompletionPopupPanel extends NewItemWithTemplatesPopupPanel<CompletionItem> {
     final static private SimpleTextAttributes MATCHED = new SimpleTextAttributes(UIUtil.getListBackground(),
                                                                                  UIUtil.getListForeground(),
                                                                                  null,
@@ -382,7 +382,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     private MinusculeMatcher currentMatcher = null;
     private boolean locked = false;
 
-    protected DirectoriesWithCompletionPopupPanel(@NotNull List<CompletionItem> items) {
+    private DirectoriesWithCompletionPopupPanel(@NotNull List<CompletionItem> items) {
       super(items, SimpleListCellRenderer.create("", item -> item.displayText), true);
       setupRenderers();
 

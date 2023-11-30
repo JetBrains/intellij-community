@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -6,7 +6,9 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
+import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.diagnostic.PluginException;
@@ -16,6 +18,8 @@ import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -335,13 +339,13 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
           @NotNull
           @Override
           public String getText() {
-            return null;
+            return "?";
           }
 
           @NotNull
           @Override
           public String getFamilyName() {
-            return null;
+            return "";
           }
 
           @Override
@@ -367,7 +371,7 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
           @NotNull
           @Override
           public String getFamilyName() {
-            return null;
+            return "stub";
           }
 
           @Override
@@ -393,14 +397,14 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
           @NotNull
           @Override
           public String getText() {
-            return null;
+            return "?";
           }
 
           @Nls(capitalization = Nls.Capitalization.Sentence)
           @NotNull
           @Override
           public String getFamilyName() {
-            return null;
+            return getText();
           }
 
           @Override
@@ -541,13 +545,14 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
     configureFromFileText("foo.txt", "hello<caret>");
     DisabledQuickFixAnnotator.FIX_ENABLED = true;
     assertEmpty(doHighlighting());
-    assertEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile()));
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
     DisabledQuickFixAnnotator.FIX_ENABLED = false;
     DaemonRespondToChangesTest.useAnnotatorsIn(PlainTextLanguage.INSTANCE, new DaemonRespondToChangesTest.MyRecordingAnnotator[]{new DisabledQuickFixAnnotator()}, ()-> {
       assertOneElement(highlightErrors());
-      assertEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())); // nothing, not even EmptyIntentionAction
-
+      assertEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())
+                    .stream()
+                    .filter(i -> IntentionActionDelegate.unwrap(i) instanceof EmptyIntentionAction)
+                    .toList()); // nothing, not even EmptyIntentionAction
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
       DisabledQuickFixAnnotator.FIX_ENABLED = true;
       assertNotEmpty(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())); // maybe a lot of CleanupIntentionAction, FixAllIntention etc
@@ -562,14 +567,10 @@ public class LightAnnotatorHighlightingTest extends LightDaemonAnalyzerTestCase 
         holder.newAnnotation(HighlightSeverity.ERROR, "i hate it")
           .newFix(new DeleteElementFix(element) {
             @Override
-            public boolean isAvailable(@NotNull Project project,
-                                       @NotNull PsiFile file,
-                                       @Nullable Editor editor,
-                                       @NotNull PsiElement startElement,
-                                       @NotNull PsiElement endElement) {
-              return FIX_ENABLED;
+            protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+              return FIX_ENABLED ? super.getPresentation(context, element) : null;
             }
-          }).registerFix().create();
+          }.asIntention()).registerFix().create();
         iDidIt();
       }
     }

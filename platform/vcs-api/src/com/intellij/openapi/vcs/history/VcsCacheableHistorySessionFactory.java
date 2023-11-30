@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -9,7 +9,6 @@ import java.io.Serializable;
 import java.util.List;
 
 public interface VcsCacheableHistorySessionFactory<Cacheable extends Serializable, T extends VcsAbstractHistorySession> {
-
   T createFromCachedData(@Nullable Cacheable cacheable,
                          @NotNull List<? extends VcsFileRevision> revisions,
                          @NotNull FilePath filePath,
@@ -18,13 +17,11 @@ public interface VcsCacheableHistorySessionFactory<Cacheable extends Serializabl
   /**
    * define if path should be changed for session construction (file can be moved)
    */
-  @Nullable
-  default FilePath getUsedFilePath(T session) {
+  default @Nullable FilePath getUsedFilePath(T session) {
     return null;
   }
 
-  @Nullable
-  default Cacheable getAdditionallyCachedData(T session) {
+  default @Nullable Cacheable getAdditionallyCachedData(T session) {
     return null;
   }
 }

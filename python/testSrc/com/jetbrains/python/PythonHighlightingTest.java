@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -756,11 +756,37 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON311, false, true);
   }
 
+  public void testParamSpecWithBoundsReported() {
+    doTest(LanguageLevel.PYTHON312, true, false);
+  }
+
+  // PY-61857
+  public void testTypeVarTupleWithBoundsReported() {
+    doTest(LanguageLevel.PYTHON312, true, false);
+  }
+
+  // PY-61857
+  public void testEmptyTypeParameterConstraintReported() {
+    doTest(LanguageLevel.PYTHON312, true, false);
+  }
+
+  // PY-61857
+  public void testOneTypeParameterConstraintReported() {
+    doTest(LanguageLevel.PYTHON312, true, false);
+  }
+
+  // PY-61857
+  public void testTypeParameterDuplicationReported() {
+    doTest(LanguageLevel.PYTHON312, true, false);
+  }
+
+
+
   @NotNull
   private static EditorColorsScheme createTemporaryColorScheme() {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
-    manager.addColorsScheme(scheme);
+    manager.addColorScheme(scheme);
     EditorColorsManager.getInstance().setGlobalScheme(scheme);
     return scheme;
   }

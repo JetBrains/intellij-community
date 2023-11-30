@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml.stub;
 
 import com.intellij.psi.impl.source.xml.XmlStubBasedTag;
@@ -13,7 +13,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class XmlTagStubImpl extends StubBase<XmlStubBasedTag> implements XmlTagStub<XmlStubBasedTag> {
 
-  @NotNull private final String name;
+  private final @NotNull String name;
 
   public XmlTagStubImpl(@Nullable StubElement<?> parent,
                  @NotNull StubInputStream dataStream,
@@ -35,8 +35,7 @@ public class XmlTagStubImpl extends StubBase<XmlStubBasedTag> implements XmlTagS
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 

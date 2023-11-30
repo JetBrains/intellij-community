@@ -5,7 +5,7 @@ import com.intellij.collaboration.util.resolveRelative
 import com.intellij.openapi.util.NlsSafe
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.remote.hosting.HostedRepositoryCoordinates
-import org.jetbrains.plugins.gitlab.project.GitLabProjectPath
+import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.URI
 
 data class GitLabProjectCoordinates(override val serverPath: GitLabServerPath, val projectPath: GitLabProjectPath)

@@ -1,5 +1,4 @@
-// REPORT_NON_TRIVIAL_ACCESSORS: false
-// PROBLEM: none
+// HIGHLIGHT: INFORMATION
 fun test(i: I) {
     i.<caret>getFoo()
 }

@@ -1,18 +1,19 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,25 +22,29 @@ import java.util.List;
 import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getLOperands;
 import static com.intellij.codeInsight.intention.impl.SplitConditionUtil.getROperands;
 
-public class SplitFilterAction extends PsiElementBaseIntentionAction {
+public class SplitFilterAction extends PsiUpdateModCommandAction<PsiJavaToken> {
   private static final Logger LOG = Logger.getInstance(SplitFilterAction.class.getName());
 
+  public SplitFilterAction() {
+    super(PsiJavaToken.class);
+  }
+  
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiJavaToken element) {
     final PsiPolyadicExpression expression = SplitConditionUtil.findCondition(element, true, false);
-    if (expression == null || expression.getOperands().length < 2) return false;
+    if (expression == null || expression.getOperands().length < 2) return null;
 
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (!(parent instanceof PsiLambdaExpression)) return false;
-    if (((PsiLambdaExpression)parent).getParameterList().getParametersCount() != 1) return false;
+    if (!(parent instanceof PsiLambdaExpression lambda)) return null;
+    if (lambda.getParameterList().getParametersCount() != 1) return null;
     parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
 
-    if (!(parent instanceof PsiExpressionList)) return false;
+    if (!(parent instanceof PsiExpressionList)) return null;
     final PsiElement gParent = parent.getParent();
-    if (!(gParent instanceof PsiMethodCallExpression)) return false;
-
-    return MergeFilterChainAction.isFilterCall((PsiMethodCallExpression)gParent) &&
-           !hasPatternVariablesUsedAfterSplit(expression, element);
+    if (!(gParent instanceof PsiMethodCallExpression call)) return null;
+    if (!MergeFilterChainAction.isFilterCall(call) || hasPatternVariablesUsedAfterSplit(expression, element)) return null;
+    
+    return Presentation.of(JavaBundle.message("intention.split.filter.text"));
   }
 
   private static boolean hasPatternVariablesUsedAfterSplit(@NotNull PsiPolyadicExpression expression, @NotNull PsiElement token) {
@@ -61,12 +66,6 @@ public class SplitFilterAction extends PsiElementBaseIntentionAction {
     return false;
   }
 
-  @NotNull
-  @Override
-  public String getText() {
-    return JavaBundle.message("intention.split.filter.text");
-  }
-
   @Override
   @NotNull
   public String getFamilyName() {
@@ -74,8 +73,7 @@ public class SplitFilterAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiJavaToken token = (PsiJavaToken)element;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiJavaToken token, @NotNull ModPsiUpdater updater) {
     final PsiPolyadicExpression expression = SplitConditionUtil.findCondition(token, true, false);
 
     final PsiLambdaExpression originalLambdaExpression = PsiTreeUtil.getParentOfType(expression, PsiLambdaExpression.class);
@@ -89,8 +87,8 @@ public class SplitFilterAction extends PsiElementBaseIntentionAction {
     final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
     LOG.assertTrue(qualifierExpression != null);
 
-    final PsiMethodCallExpression newFilterCall = (PsiMethodCallExpression)
-      JavaPsiFacade.getElementFactory(project).createExpressionFromText("a.filter(" + lambdaParameterName + " -> x)", methodCallExpression);
+    final PsiMethodCallExpression newFilterCall = (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(context.project())
+        .createExpressionFromText("a.filter(" + lambdaParameterName + " -> x)", methodCallExpression);
     final PsiLambdaExpression newFilterLambda = (PsiLambdaExpression)newFilterCall.getArgumentList().getExpressions()[0];
     final PsiExpression filterCallQualifier = newFilterCall.getMethodExpression().getQualifierExpression();
     LOG.assertTrue(filterCallQualifier != null);

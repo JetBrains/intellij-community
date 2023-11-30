@@ -2,22 +2,22 @@
 package com.intellij.openapi.util.registry;
 
 import com.intellij.idea.TestFor;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static junit.framework.Assert.*;
 
 public class RegistryTest {
   private static final String INTEGER_KEY = "editor.mouseSelectionStateResetDeadZone";
+  private static final String INT_KEY_REQUIRE_RESTART = "editor.caret.width";
+
 
   @After
   public void tearDown(){
@@ -167,6 +167,19 @@ public class RegistryTest {
   }
 
   @Test
+  public void dontPersistDefaultValue(){
+    int originalValue = Registry.intValue(INT_KEY_REQUIRE_RESTART);
+    Registry.get(INT_KEY_REQUIRE_RESTART).setValue("2222");
+    assertTrue(JDOMUtil.writeElement(Registry.getInstance().getState()).contains(
+      "<entry key=\"%s\" value=\"2222\"".formatted(INT_KEY_REQUIRE_RESTART))
+    );
+    Registry.get(INT_KEY_REQUIRE_RESTART).setValue(String.valueOf(originalValue));
+    assertFalse(JDOMUtil.writeElement(Registry.getInstance().getState()).contains(
+      INT_KEY_REQUIRE_RESTART)
+    );
+  }
+
+  @Test
   public void beforeListenerDoesNotChangeValueWhenSetting() {
     String registryValue = "testBoolean";
     RegistryValue regValue = new RegistryValue(Registry.getInstance(), registryValue, null);
@@ -180,6 +193,37 @@ public class RegistryTest {
     regValue.setValue(true);
     assertTrue(regValue.asBoolean());
   }
+
+  @Test
+  public void checkElementOrderIsStable() {
+    Registry.getInstance().reset();
+
+    {
+      Map<String, String> map = populateMap(Comparator.naturalOrder(), "value");
+      Element state2load = registryElementFromMap(map);
+      Registry.loadState(state2load, null);
+      assertEquals(JDOMUtil.writeElement(state2load), JDOMUtil.writeElement(Registry.getInstance().getState()));
+    }
+    // load state with elements reversed
+    Registry.loadState(registryElementFromMap(populateMap(Comparator.reverseOrder(), "AnotherValue1111")), null);
+
+    assertEquals(JDOMUtil.writeElement(registryElementFromMap(populateMap(Comparator.naturalOrder(), "AnotherValue1111"))),
+                 JDOMUtil.writeElement(Registry.getInstance().getState()));
+  }
+
+  private Map<String, String> populateMap(Comparator<String> comparator, String valueBase) {
+    Map<String, String> map = new TreeMap<>(comparator);
+    map.put("first.key", "first." + valueBase);
+    for (int i = 0; i < 20; i++) {
+      map.put("Key#" + i, valueBase + "." + i);
+    }
+    map.put("second.key", "second." + valueBase);
+    map.put("third.key", "third." + valueBase);
+    map.put("forth.key", "forth." + valueBase);
+    map.put("fifth.key", "fifth." + valueBase);
+    return map;
+  }
+
 
   private Element registryElementFromMap(Map<String, String> map){
     Element registryElement = new Element("registry");

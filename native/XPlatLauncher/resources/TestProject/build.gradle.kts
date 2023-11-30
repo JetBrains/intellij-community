@@ -19,6 +19,11 @@ dependencies {
   implementation("org.jetbrains.intellij.deps", "async-profiler", "2.9-15")
 }
 
+tasks.compileJava {
+  @Suppress("SpellCheckingInspection")
+  options.compilerArgs = listOf("--add-modules=jdk.jcmd", "--add-exports=jdk.jcmd/sun.tools.jps=ALL-UNNAMED")
+}
+
 task("fatJar", type = Jar::class) {
   dependsOn.addAll(listOf("compileJava", "processResources")) // We need this for Gradle optimization to work
 

@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
@@ -554,8 +555,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
       myContext.setProjectBuilder(builder);
       step.updateStep();
+
       JComponent component = step.getComponent();
-      if (isNewWizard()) {
+      if (isNewWizard() && !(builder instanceof PromoModuleBuilder)) {
         component = new JBScrollPane(component);
         component.setBorder(JBUI.Borders.empty());
       }
@@ -930,6 +932,17 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
                  !Objects.equals(upper.getName(), value.getParentGroup());
         }
       });
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList<? extends TemplatesGroup> list,
+                                                  TemplatesGroup value,
+                                                  int index,
+                                                  boolean isSelected,
+                                                  boolean cellHasFocus) {
+      Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      myNextStepLabel.setIcon(value.isPromo() ? AllIcons.Ultimate.Lock : null);
+      return component;
     }
 
     @Override

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.file
 import com.intellij.diff.editor.DiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.ide.actions.SplitAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
@@ -11,15 +12,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectUIContextHolder
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 class GitLabMergeRequestDiffFile(override val connectionId: String,
                                  private val project: Project,
                                  private val glProject: GitLabProjectCoordinates,
-                                 val mergeRequestId: GitLabMergeRequestId)
-  : DiffVirtualFile(GitLabBundle.message("merge.request.diff.file.name", mergeRequestId.iid)),
+                                 val mergeRequestIid: String)
+  : DiffVirtualFile(GitLabBundle.message("merge.request.diff.file.name", mergeRequestIid)),
     VirtualFilePathWrapper,
     GitLabVirtualFile {
 
@@ -29,24 +30,16 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
 
   override fun enforcePresentableName() = true
 
-  override fun isValid(): Boolean = findContext() != null
+  override fun isValid(): Boolean = findProjectVm(project, connectionId) != null
 
   override fun getPath(): String =
-    (fileSystem as GitLabVirtualFileSystem).getPath(connectionId, project, glProject, mergeRequestId, true)
+    (fileSystem as GitLabVirtualFileSystem).getPath(connectionId, project, glProject, mergeRequestIid, true)
 
-  override fun getPresentablePath(): String = "$glProject/mergerequests/${mergeRequestId.iid}.diff"
-
-  private fun findContext() = project.serviceIfCreated<GitLabProjectUIContextHolder>()
-    ?.projectContext?.value?.takeIf { it.connectionId == connectionId }
+  override fun getPresentablePath(): String = presentablePath(glProject, mergeRequestIid)
 
   override fun createProcessor(project: Project): DiffRequestProcessor {
-    val ctx = findContext() ?: error("Missing context for $this")
-    return createMergeRequestDiffRequestProcessor(project,
-                                                  ctx.currentUser,
-                                                  ctx.projectData,
-                                                  ctx.getDiffBridge(mergeRequestId),
-                                                  ctx.avatarIconProvider,
-                                                  mergeRequestId)
+    val projectVm = findProjectVm(project, connectionId) ?: error("Missing project view model for $this")
+    return project.service<GitLabMergeRequestDiffService>().createDiffRequestProcessor(projectVm, mergeRequestIid)
   }
 
   override fun getFileSystem(): VirtualFileSystem = GitLabVirtualFileSystem.getInstance()
@@ -64,17 +57,24 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
     if (connectionId != other.connectionId) return false
     if (project != other.project) return false
     if (glProject != other.glProject) return false
-    return mergeRequestId == other.mergeRequestId
+    return mergeRequestIid == other.mergeRequestIid
   }
 
   override fun hashCode(): Int {
     var result = connectionId.hashCode()
     result = 31 * result + project.hashCode()
     result = 31 * result + glProject.hashCode()
-    result = 31 * result + mergeRequestId.hashCode()
+    result = 31 * result + mergeRequestIid.hashCode()
     return result
   }
 
   override fun toString(): String =
-    "GitLabMergeRequestDiffFile(connectionId='$connectionId', project=$project, glProject=$glProject, mergeRequestId=$mergeRequestId)"
+    "GitLabMergeRequestDiffFile(connectionId='$connectionId', project=$project, glProject=$glProject, mergeRequestId=$mergeRequestIid)"
 }
+
+
+internal fun presentablePath(glProject: GitLabProjectCoordinates, mergeRequestIid: String): String =
+  "$glProject/mergerequests/${mergeRequestIid}.diff"
+
+internal fun findProjectVm(project: Project, connectionId: String): GitLabToolWindowProjectViewModel? =
+  project.serviceIfCreated<GitLabToolWindowViewModel>()?.projectVm?.value?.takeIf { it.connectionId == connectionId }

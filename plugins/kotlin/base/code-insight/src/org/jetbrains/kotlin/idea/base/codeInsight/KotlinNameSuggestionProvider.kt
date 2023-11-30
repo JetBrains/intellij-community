@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.psi.PsiElement
@@ -34,7 +34,7 @@ abstract class KotlinNameSuggestionProvider<Validator : (String) -> Boolean> : N
             val names = SmartList<String>().apply {
                 val name = element.name
                 if (!name.isNullOrBlank()) {
-                    this += nameSuggester.getCamelNames(name, validator, name.first().isLowerCase())
+                    this += KotlinNameSuggester.getCamelNames(name, validator, name.first().isLowerCase())
                 }
 
                 this += getReturnTypeNames(element, validator)

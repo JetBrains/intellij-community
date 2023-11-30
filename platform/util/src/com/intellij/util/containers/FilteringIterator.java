@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
@@ -108,7 +108,7 @@ public final class FilteringIterator<Dom, E extends Dom> implements PeekableIter
     return create((Iterator<T>)iterator, instanceOf(aClass));
   }
 
-  public static class InstanceOf<T> implements Condition<Object> {
+  public static final class InstanceOf<T> implements Condition<Object> {
     private final Class<T> myInstancesClass;
 
     public InstanceOf(@NotNull Class<T> instancesClass) {

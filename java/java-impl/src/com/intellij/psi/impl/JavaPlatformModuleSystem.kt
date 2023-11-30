@@ -28,13 +28,16 @@ import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
 import java.util.regex.Pattern
 
+private const val MAIN = "main"
+private val javaVersionPattern: Pattern by lazy { Pattern.compile("java\\d+") }
+
 /**
  * Checks package accessibility according to JLS 7 "Packages and Modules".
  *
  * @see <a href="https://docs.oracle.com/javase/specs/jls/se9/html/jls-7.html">JLS 7 "Packages and Modules"</a>
  * @see <a href="http://openjdk.org/jeps/261">JEP 261: Module System</a>
  */
-class JavaPlatformModuleSystem : JavaModuleSystemEx {
+internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun getName(): String = JavaBundle.message("java.platform.module.system.name")
 
   override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): Boolean =
@@ -311,8 +314,4 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     }
   }
 
-  private companion object {
-    const val MAIN = "main"
-    val javaVersionPattern: Pattern by lazy { Pattern.compile("java\\d+") }
-  }
 }

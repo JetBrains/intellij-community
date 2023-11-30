@@ -12,7 +12,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.util.containers.SLRUMap
 
-@Service
+@Service(Service.Level.PROJECT)
 class FileStateCache : Disposable {
   private val cache = SLRUMap<SmartPsiElementPointer<PsiFile>, PrivateFileState>(100, 50)
 

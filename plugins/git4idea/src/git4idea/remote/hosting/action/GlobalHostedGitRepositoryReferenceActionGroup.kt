@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remote.hosting.action
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -15,13 +15,12 @@ import java.util.function.Supplier
 import javax.swing.Icon
 
 abstract class GlobalHostedGitRepositoryReferenceActionGroup : HostedGitRepositoryReferenceActionGroup {
-
   constructor() : super()
 
   constructor(
     dynamicText: Supplier<@NlsActions.ActionText String>,
     dynamicDescription: Supplier<@NlsActions.ActionDescription String>,
-    icon: Icon?
+    icon: Supplier<Icon?>?
   ) : super(dynamicText, dynamicDescription, icon)
 
   protected abstract fun repositoriesManager(project: Project): HostedGitRepositoriesManager<*>

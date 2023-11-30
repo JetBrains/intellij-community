@@ -1,13 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
+import com.intellij.collaboration.async.throwFailure
 import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.*
@@ -86,7 +89,7 @@ internal class GitLabFiltersPanelFactory(
     chooseValue = { point ->
       ChooserPopupUtil.showAsyncChooserPopup(
         point,
-        itemsLoader = { vm.getLabels().map { label -> LabelFilterValue(label.title) } },
+        itemsLoader = vm.labels.throwFailure().map { labels -> labels.map { label -> LabelFilterValue(label.title) } },
         presenter = { labelFilterValue -> ChooserPopupUtil.PopupItemPresentation.Simple(shortText = labelFilterValue.title) }
       )
     }
@@ -102,17 +105,15 @@ internal class GitLabFiltersPanelFactory(
     filterName,
     valuePresenter = { participant -> participant.fullname },
     chooseValue = { point ->
-      val selectedAuthor = showParticipantChooser(point, participantsLoader = {
-        vm.getMergeRequestMembers()
-      })
+      val selectedAuthor = showParticipantChooser(point, participantsLoader = vm.mergeRequestMembers.throwFailure())
       selectedAuthor?.let { user -> participantCreator(user) }
     })
 
   private suspend fun showParticipantChooser(
     point: RelativePoint,
-    participantsLoader: suspend () -> List<GitLabUserDTO>
+    participantsLoader: Flow<List<GitLabUserDTO>>
   ): GitLabUserDTO? = ChooserPopupUtil.showAsyncChooserPopup(
-    point, itemsLoader = { participantsLoader() },
+    point, itemsLoader = participantsLoader,
     presenter = { user ->
       ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, Avatar.Sizes.BASE))
     })

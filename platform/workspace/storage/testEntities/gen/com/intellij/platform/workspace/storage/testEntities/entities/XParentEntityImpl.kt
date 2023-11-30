@@ -14,20 +14,20 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class XParentEntityImpl(private val dataSource: XParentEntityData) : XParentEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java, XChildEntity::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_MANY, false)
     internal val OPTIONALCHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java,
@@ -36,7 +36,7 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
     internal val CHILDCHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java, XChildChildEntity::class.java,
                                                                               ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
       OPTIONALCHILDREN_CONNECTION_ID,
       CHILDCHILD_CONNECTION_ID,
@@ -62,6 +62,7 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: XParentEntityData?) : ModifiableWorkspaceEntityBase<XParentEntity, XParentEntityData>(
     result), XParentEntity.Builder {
@@ -91,7 +92,7 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -310,7 +311,7 @@ open class XParentEntityImpl(val dataSource: XParentEntityData) : XParentEntity,
 class XParentEntityData : WorkspaceEntityData<XParentEntity>() {
   lateinit var parentProperty: String
 
-  fun isParentPropertyInitialized(): Boolean = ::parentProperty.isInitialized
+  internal fun isParentPropertyInitialized(): Boolean = ::parentProperty.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<XParentEntity> {
     val modifiable = XParentEntityImpl.Builder(null)
@@ -327,6 +328,11 @@ class XParentEntityData : WorkspaceEntityData<XParentEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -380,9 +386,5 @@ class XParentEntityData : WorkspaceEntityData<XParentEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + parentProperty.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

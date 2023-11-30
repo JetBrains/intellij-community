@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.messages;
 
 import com.intellij.openapi.project.Project;
@@ -153,8 +153,7 @@ public class MessageDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
-  protected JPanel createIconPanel() {
+  protected @NotNull JPanel createIconPanel() {
     JPanel panel = new JPanel(new BorderLayout(15, 0));
     if (myIcon != null) {
       JLabel iconLabel = new JLabel(myIcon);
@@ -166,8 +165,7 @@ public class MessageDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
-  protected JPanel createMessagePanel() {
+  protected @NotNull JPanel createMessagePanel() {
     JPanel messagePanel = new JPanel(new BorderLayout());
     if (myMessage != null) {
       JLabel textLabel = new JLabel(myMessage);

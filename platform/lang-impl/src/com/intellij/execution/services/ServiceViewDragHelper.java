@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
@@ -143,7 +143,7 @@ final class ServiceViewDragHelper {
     return content;
   }
 
-  static class ServiceViewDragBean implements DataProvider {
+  static final class ServiceViewDragBean implements DataProvider {
     private final ServiceView myServiceView;
     private final List<ServiceViewItem> myItems;
     private final ServiceViewContributor myContributor;
@@ -192,7 +192,7 @@ final class ServiceViewDragHelper {
     }
   }
 
-  private static class ServiceViewDnDSource implements DnDSource {
+  private static final class ServiceViewDnDSource implements DnDSource {
     private final ServiceView myServiceView;
 
     ServiceViewDnDSource(@NotNull ServiceView serviceView) {
@@ -249,7 +249,7 @@ final class ServiceViewDragHelper {
     }
   }
 
-  private static class ServiceViewDnDTarget implements DnDTarget {
+  private static final class ServiceViewDnDTarget implements DnDTarget {
     private final JTree myTree;
 
     ServiceViewDnDTarget(@NotNull JTree tree) {

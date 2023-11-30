@@ -62,7 +62,7 @@ public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Cou
     }
 
     @NotNull
-    private TemplateResource copyOf(TemplateResource resource) {
+    private static TemplateResource copyOf(TemplateResource resource) {
       TemplateResource result = new TemplateResource();
       result.setFileName(resource.getFileName());
       result.setTemplate(resource.getTemplate());
@@ -77,7 +77,7 @@ public final class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Cou
         return equals(o1.first, o2.first) && equals(o1.second, o2.second);
       }
 
-      private boolean equals(TemplateResource r1, TemplateResource r2) {
+      private static boolean equals(TemplateResource r1, TemplateResource r2) {
         return Objects.equals(r1.getTemplate(), r2.getTemplate()) && Objects.equals(r1.getFileName(), r2.getFileName());
       }
     };

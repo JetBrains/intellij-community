@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfigurationBase<?>> extends FragmentedSettingsEditor<Settings> {
-  private final static Logger LOG = Logger.getInstance(RunConfigurationFragmentedEditor.class);
+  private static final Logger LOG = Logger.getInstance(RunConfigurationFragmentedEditor.class);
   private final RunConfigurationExtensionsManager<RunConfigurationBase<?>, RunConfigurationExtensionBase<RunConfigurationBase<?>>> myExtensionsManager;
   private boolean myDefaultSettings;
 
@@ -52,8 +52,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     return myDefaultSettings;
   }
 
-  @NotNull
-  protected Project getProject() {
+  protected @NotNull Project getProject() {
     return mySettings.getProject();
   }
 
@@ -155,8 +154,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     }
   }
 
-  @NotNull
-  private List<@NotNull RunConfigurationEditorFragment<?,?>> getRunFragments() {
+  private @NotNull List<@NotNull RunConfigurationEditorFragment<?,?>> getRunFragments() {
     return ContainerUtil.mapNotNull(getFragments(),
                                     fragment -> fragment instanceof RunConfigurationEditorFragment
                                                 ? (RunConfigurationEditorFragment<?,?>)fragment

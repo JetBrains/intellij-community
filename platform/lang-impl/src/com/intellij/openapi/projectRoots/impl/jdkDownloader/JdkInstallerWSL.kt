@@ -3,7 +3,6 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.isAncestor
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -59,7 +58,7 @@ object JdkInstallerWSL {
     val packageRootPrefix = packageRootPrefixRaw.removePrefix("./").trim('/')
     val packageRootDir = if (packageRootPrefix.isBlank()) unpackDir else unpackDir.resolve(packageRootPrefixRaw).normalize()
 
-    if (!unpackDir.isAncestor(packageRootDir)) {
+    if (!packageRootDir.startsWith(unpackDir)) {
       error("Failed to move JDK contents from $unpackDir to $packageRootDir. Invalid metadata is detected")
     }
 

@@ -12,32 +12,33 @@ import com.intellij.codeInsight.codeVision.ui.renderers.painters.DefaultCodeVisi
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.ICodeVisionEntryBasePainter
 import com.intellij.openapi.util.ClassExtension
 
+private val INSTANCE = CodeVisionPainterProviders()
 
-class CodeVisionPainterProviders : ClassExtension<ICodeVisionEntryBasePainter<CodeVisionEntry>>("com.intellij.codeVisionPainterProvider") {
-  companion object {
-    val INSTANCE: CodeVisionPainterProviders = CodeVisionPainterProviders()
-  }
-
+private class CodeVisionPainterProviders : ClassExtension<ICodeVisionEntryBasePainter<CodeVisionEntry>>("com.intellij.codeVisionPainterProvider") {
   fun <T : CodeVisionEntry> getPainter(element: T): ICodeVisionEntryBasePainter<T> {
-    return INSTANCE.forClass(element.javaClass) as? ICodeVisionEntryBasePainter<T> ?: CodeVisionVisionTextPainter({
-                                                                                                                    it.toString()
-                                                                                                                  })
+    return INSTANCE.forClass(element.javaClass) as? ICodeVisionEntryBasePainter<T>
+           ?: CodeVisionVisionTextPainter({ it.toString() })
   }
 }
 
-class CounterCodeVisionEntryPainter : DefaultCodeVisionPainter<CounterCodeVisionEntry>({ _, entry, _ -> entry.icon },
-                                                                                       CodeVisionVisionTextPainter(
-                                                                                         { "${it.count} ${it.text}" }))
+private class CounterCodeVisionEntryPainter : DefaultCodeVisionPainter<CounterCodeVisionEntry>(
+  iconProvider = { _, entry, _ -> entry.icon },
+  textPainter = CodeVisionVisionTextPainter({ "${it.count} ${it.text}" })
+)
 
-class TextCodeVisionEntryPainter : DefaultCodeVisionPainter<TextCodeVisionEntry>({ _, entry, _ -> entry.icon },
+private class TextCodeVisionEntryPainter : DefaultCodeVisionPainter<TextCodeVisionEntry>({ _, entry, _ -> entry.icon },
                                                                                  CodeVisionVisionTextPainter({ it.text }))
 
-class AdditionalCodeVisionEntryPainter : DefaultCodeVisionPainter<AdditionalCodeVisionEntry>({ _, it, _ -> it.swingIcon },
-                                                                                             CodeVisionVisionTextPainter({ it.text }))
+private class AdditionalCodeVisionEntryPainter : DefaultCodeVisionPainter<AdditionalCodeVisionEntry>(
+  iconProvider = { _, it, _ -> it.swingIcon },
+  textPainter = CodeVisionVisionTextPainter({ it.text })
+)
 
-class RichTextCodeVisionEntryPainter : DefaultCodeVisionPainter<RichTextCodeVisionEntry>({ _, entry, _ -> entry.icon },
-                                                                                         CodeVisionRichTextPainter({ it.text }))
+private class RichTextCodeVisionEntryPainter : DefaultCodeVisionPainter<RichTextCodeVisionEntry>(
+  iconProvider = { _, entry, _ -> entry.icon },
+  textPainter = CodeVisionRichTextPainter({ it.text })
+)
 
-fun CodeVisionEntry.painter(): ICodeVisionEntryBasePainter<CodeVisionEntry> {
-  return CodeVisionPainterProviders.INSTANCE.getPainter(this@painter)
+internal fun CodeVisionEntry.painter(): ICodeVisionEntryBasePainter<CodeVisionEntry> {
+  return INSTANCE.getPainter(this@painter)
 }

@@ -8,6 +8,7 @@ import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -156,6 +157,12 @@ public class GradleExecutionHelper {
       });
   }
 
+  /** This method masks some system properties while computing the action.
+   * <p/>
+   * This is a workaround <a href="for">https://github.com/gradle/gradle/issues/17745</a><br>
+   * Gradle <7.6 will pass all TAPI client's system properties to Gradle daemon.
+   *
+   */
   private static <T> T maybeFixSystemProperties(@NotNull Computable<T> action, String projectDir) {
     Map<String, String> keyToMask = ApplicationManager.getApplication().getService(SystemPropertiesAdjuster.class).getKeyToMask(projectDir);
     Map<String, String> oldValues = new HashMap<>();
@@ -345,6 +352,8 @@ public class GradleExecutionHelper {
     @NotNull GradleExecutionSettings settings,
     @NotNull ExternalSystemTaskNotificationListener listener
   ) {
+    clearSystemProperties(operation);
+
     applyIdeaParameters(settings);
 
     BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, settings);
@@ -367,12 +376,18 @@ public class GradleExecutionHelper {
       .forEachExtensionSafe(proc -> proc.prepareForExecution(id, operation, settings, buildEnvironment));
   }
 
+  private static void clearSystemProperties(LongRunningOperation operation) {
+    // for Gradle 7.6+ this will cancel implicit transfer of current System.properties to Gradle Daemon.
+    operation.withSystemProperties(Collections.emptyMap());
+  }
+
   private static void applyIdeaParameters(@NotNull GradleExecutionSettings settings) {
     if (settings.isOfflineWork()) {
       settings.withArgument(GradleConstants.OFFLINE_MODE_CMD_OPTION);
     }
     settings.withArgument("-Didea.active=true");
     settings.withArgument("-Didea.version=" + getIdeaVersion());
+    settings.withArgument("-Didea.vendor.name=" + ApplicationInfo.getInstance().getShortCompanyName());
   }
 
   private static void setupProgressListeners(
@@ -385,9 +400,18 @@ public class GradleExecutionHelper {
     String buildRootDir = getBuildRoot(buildEnvironment);
     GradleProgressListener progressListener = new GradleProgressListener(listener, id, buildRootDir);
     operation.addProgressListener((ProgressListener)progressListener);
-    operation.addProgressListener(progressListener, OperationType.TASK, OperationType.FILE_DOWNLOAD);
+    operation.addProgressListener(
+      progressListener,
+      OperationType.TASK,
+      OperationType.FILE_DOWNLOAD
+    );
     if (settings.isRunAsTest() && settings.isBuiltInTestEventsUsed()) {
-      operation.addProgressListener(progressListener, OperationType.TEST, OperationType.TEST_OUTPUT);
+      operation.addProgressListener(
+        progressListener,
+        OperationType.TEST,
+        OperationType.TEST_OUTPUT,
+        OperationType.TASK
+      );
     }
   }
 
@@ -708,6 +732,12 @@ public class GradleExecutionHelper {
   public static void attachTargetPathMapperInitScript(@NotNull GradleExecutionSettings executionSettings) {
     var initScriptFile = GradleInitScriptUtil.createTargetPathMapperInitScript();
     executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.toString());
+  }
+
+  @ApiStatus.Internal
+  public static void attachIdeaPluginConfigurator(@NotNull GradleExecutionSettings executionSettings) {
+    Path initScriptPath = GradleInitScriptUtil.createIdeaPluginConfiguratorInitScript();
+    executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
   }
 
   @ApiStatus.Experimental

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.validation;
 
 import com.intellij.openapi.project.Project;
@@ -29,11 +15,11 @@ import java.util.regex.Pattern;
 /**
  * @author Konstantin Bulenkov
  */
-public class ValidationTest extends DialogWrapper {
+public final class ValidationTest extends DialogWrapper {
   private final ValidTest myPanel;
   final ValidationInfo[] ERRORS;
 
-  protected ValidationTest(Project project) {
+  ValidationTest(Project project) {
     super(project);
     myPanel = new ValidTest();
     ERRORS = new ValidationInfo[]{
@@ -64,9 +50,8 @@ public class ValidationTest extends DialogWrapper {
     Messages.showInfoMessage("on OK", "Info");
   }
 
-  @NotNull
   @Override
-  protected List<ValidationInfo> doValidateAll() {
+  protected @NotNull List<ValidationInfo> doValidateAll() {
     List<ValidationInfo> result = new ArrayList<>();
 
     if (myPanel.field1.getText().isEmpty()) result.add(ERRORS[0]);

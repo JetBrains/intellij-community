@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.diagnostic.Dumpable;
@@ -20,7 +20,7 @@ import java.util.Collections;
  * Caches information allowing faster offset<->logicalPosition conversions even for long lines.
  * Requests for conversion can be made from under read action, document changes and cache invalidation should be done in EDT.
  */
-class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, Dumpable {
+final class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, Dumpable {
   private final Document myDocument;
   private final EditorView myView;
   private ArrayList<LineData> myLines = new ArrayList<>();
@@ -78,8 +78,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     }
   }
 
-  @NotNull
-  synchronized LogicalPosition offsetToLogicalPosition(int offset) {
+  synchronized @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
     if (myUpdateInProgress) throw new IllegalStateException();
     int textLength = myDocument.getTextLength();
     if (offset <= 0 || textLength == 0) {
@@ -173,8 +172,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     }
   }
 
-  @NotNull
-  private LineData getLineInfo(int line) {
+  private @NotNull LineData getLineInfo(int line) {
     checkDisposed();
     LineData result = myLines.get(line);
     if (result == null) {
@@ -207,9 +205,8 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     }
   }
 
-  @NotNull
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     try {
       validateState();
       return "valid";

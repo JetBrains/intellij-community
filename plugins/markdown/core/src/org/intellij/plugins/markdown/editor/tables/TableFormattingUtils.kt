@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.suggested.startOffset
-import org.apache.commons.lang.StringUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsIndices
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
@@ -23,7 +22,7 @@ import java.lang.Integer.max
 object TableFormattingUtils {
   private class CellContentState(val contentWithCarets: String, val caretsInside: Array<Caret> = emptyArray()) {
     val trimmedContentWithCarets by lazy { contentWithCarets.trim(' ') }
-    val trimmedContentWithoutCarets: String by lazy { StringUtils.remove(trimmedContentWithCarets, TableProps.CARET_REPLACE_CHAR) }
+    val trimmedContentWithoutCarets: String by lazy { trimmedContentWithCarets.filterNot { it == TableProps.CARET_REPLACE_CHAR } }
   }
 
   private fun buildCellState(range: TextRange, document: Document, carets: Iterable<Caret>): CellContentState {
@@ -64,7 +63,7 @@ object TableFormattingUtils {
       else -> cells.maxOfOrNull { it.textRange.length }
     }
     checkNotNull(contentCellsWidth)
-    return max(contentCellsWidth, separatorCellRange?.length ?: 0)
+    return max(contentCellsWidth, separatorCellRange?.length ?: 1)
   }
 
   private fun calculateNewCaretsPositions(content: String, cellRange: TextRange): Array<Int> {

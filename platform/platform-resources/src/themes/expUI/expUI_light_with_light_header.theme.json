@@ -2,9 +2,9 @@
   "name": "Light with Light Header",
   "dark": false,
   "author": "JetBrains",
-  "parentTheme": "Light",
-  "editorScheme": "/themes/expUI/expUI_lightScheme.xml",
-
+  "parentTheme": "ExperimentalLight",
+  "nameKey": "light.header.theme.name",
+  "editorScheme": "Light",
   "ui": {
     "CodeWithMe.MainToolbar.NoConnectionLabelForeground": "Grey7",
 
@@ -42,7 +42,7 @@
         "foreground": "Grey1",
         "background": "Grey13",
         "hoverBackground": "Grey12",
-        "transparentHoverBackground": "#0000001A",
+        "transparentHoverBackground": "#0000000D",
         "pressedBackground": "Grey11"
       }
     },
@@ -73,7 +73,7 @@
 
     "Notification": {
       "background": "Grey14",
-      "borderColor": "Grey11",
+      "borderColor": "Grey10",
       "foreground": "Grey1",
       "linkForeground": "Blue2",
       "Button": {
@@ -196,6 +196,28 @@
           "End": "#3D968B"
         }
       }
-    }
+    },
+
+    "DataSummary.Chart.barColor": "Blue4",
+    "PresentationAssistant": {
+      "Pale": {
+        "Popup": {
+          "foreground": "Grey2",
+          "border": "Grey9"
+        },
+        "PopupBackground": "Grey14",
+        "keymapLabel": "Grey7"
+      },
+      "Bright": {
+        "Popup": {
+          "foreground": "Grey14",
+          "border": "Grey2"
+        },
+        "PopupBackground": "Grey2",
+        "keymapLabel": "Grey9"
+      }
+    },
+
+    "DataSummary.Chart.background": "Blue4"
   }
 }

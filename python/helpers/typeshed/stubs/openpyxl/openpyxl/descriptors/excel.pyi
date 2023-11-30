@@ -1,46 +1,49 @@
-from typing import Any
+from _typeshed import Incomplete
+from typing import ClassVar
+from typing_extensions import Literal
 
-from . import Integer, MatchPattern, MinMax, String
+from . import Integer, MatchPattern, MinMax, Strict, String
+from .base import _M, _N
 from .serialisable import Serialisable
 
-class HexBinary(MatchPattern):
+class HexBinary(MatchPattern[str, Incomplete]):
     pattern: str
 
-class UniversalMeasure(MatchPattern):
+class UniversalMeasure(MatchPattern[str, Incomplete]):
     pattern: str
 
-class TextPoint(MinMax):
-    expected_type: Any
-    min: int
-    max: int
+class TextPoint(MinMax[_M, _N]):
+    expected_type: type[_M]
+    min: float
+    max: float
 
 Coordinate = Integer
 
-class Percentage(MinMax):
+class Percentage(MinMax[float, Incomplete]):
     pattern: str
-    min: int
-    max: int
-    def __set__(self, instance, value) -> None: ...
+    min: float
+    max: float
+    def __set__(self, instance: Serialisable | Strict, value: Incomplete) -> None: ...
 
 class Extension(Serialisable):
-    uri: Any
-    def __init__(self, uri: Any | None = ...) -> None: ...
+    uri: String[Literal[False]]
+    def __init__(self, uri: str) -> None: ...
 
 class ExtensionList(Serialisable):
-    ext: Any
-    def __init__(self, ext=...) -> None: ...
+    ext: Incomplete
+    def __init__(self, ext=()) -> None: ...
 
-class Relation(String):
-    namespace: Any
+class Relation(String[Incomplete]):
+    namespace: ClassVar[str]
     allow_none: bool
 
-class Base64Binary(MatchPattern):
+class Base64Binary(MatchPattern[str, Incomplete]):
     pattern: str
 
-class Guid(MatchPattern):
+class Guid(MatchPattern[str, Incomplete]):
     pattern: str
 
-class CellRange(MatchPattern):
+class CellRange(MatchPattern[str, Incomplete]):
     pattern: str
     allow_none: bool
-    def __set__(self, instance, value) -> None: ...
+    def __set__(self, instance: Serialisable | Strict, value) -> None: ...

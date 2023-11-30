@@ -2,7 +2,7 @@ import javaApi.JavaClass
 import kotlinApi.KotlinClass
 
 internal class X {
-    operator fun get(index: Int): Int {
+    fun get(index: Int): Int {
         return 0
     }
 }
@@ -13,7 +13,7 @@ internal class C {
     }
 
     fun foo(x: X): Int {
-        return x[0]
+        return x.get(0)
     }
 
     fun foo(kotlinClass: KotlinClass): Int {

@@ -47,7 +47,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, false);
     if (lambdaExpression != null) {
       PsiElement body = lambdaExpression.getBody();
@@ -84,7 +84,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
     PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, false);
     if (lambdaExpression != null) {
       PsiCodeBlock body = CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);

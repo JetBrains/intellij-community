@@ -44,7 +44,7 @@ class c4 {
         k=0;
     }
     c4(int i) {
-      if (false) 
+      if (false)
         <error descr="Variable 'k' might already have been assigned to">k</error> =1;
     }
     c4() {
@@ -91,7 +91,7 @@ class c6 {
 
 
 
-// multiple initalizers
+// multiple initializers
 class c7 {
  private final String x;
  {
@@ -100,7 +100,7 @@ class c7 {
 
  private final String y;
  {
-   y = x; 
+   y = x;
  }
 
  private static int i;

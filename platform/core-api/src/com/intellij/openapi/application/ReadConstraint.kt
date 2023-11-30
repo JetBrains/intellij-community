@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.project.Project
@@ -9,17 +9,18 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
 interface ReadConstraint {
 
   /**
-   * @return `true` if this constraint is satisfied in the current read action, otherwise `false`, in which case [schedule] will be called
+   * @return `true` if this constraint is satisfied in the current read action, otherwise `false`,
+   * in which case [awaitConstraint] will be called
    */
   @RequiresReadLock
   fun isSatisfied(): Boolean
 
   /**
-   * Schedules the [runnable] to be executed when this constraint can be satisfied.
-   * General contract: [isSatisfied] should be `true` inside that runnable.
+   * Suspends until it's possible to obtain the read lock to find [isSatisfied] is `true`,
+   * for example, if the project is in dumb mode, then it does not make sense to check [isSatisfied] in a loop,
+   * instead, this function is called to suspend until it will make sense to check [isSatisfied].
    */
-  @RequiresReadLock
-  fun schedule(runnable: Runnable)
+  suspend fun awaitConstraint()
 
   companion object {
 

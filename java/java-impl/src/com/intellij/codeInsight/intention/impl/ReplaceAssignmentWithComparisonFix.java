@@ -2,8 +2,10 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAssignmentExpression;
@@ -21,14 +23,14 @@ public class ReplaceAssignmentWithComparisonFix extends PsiUpdateModCommandActio
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiAssignmentExpression assignmentExpression, @NotNull ModPsiUpdater updater) {
+    PsiExpression rExpression = assignmentExpression.getRExpression();
+    if (rExpression == null) return;
     Project project = context.project();
     PsiBinaryExpression
       comparisonExpr = (PsiBinaryExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("a==b", assignmentExpression);
     comparisonExpr.getLOperand().replace(assignmentExpression.getLExpression());
     PsiExpression rOperand = comparisonExpr.getROperand();
     assert rOperand != null;
-    PsiExpression rExpression = assignmentExpression.getRExpression();
-    assert rExpression != null;
     rOperand.replace(rExpression);
     CodeStyleManager.getInstance(project).reformat(assignmentExpression.replace(comparisonExpr));
   }

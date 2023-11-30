@@ -7,6 +7,7 @@
 // ACTION: Remove 'actual' modifier
 // ACTION: Remove explicit type specification
 // DISABLE-ERRORS
+// IGNORE_K2
 
 actual class My {
     actual fun <caret>foo(param: String): Int = 42

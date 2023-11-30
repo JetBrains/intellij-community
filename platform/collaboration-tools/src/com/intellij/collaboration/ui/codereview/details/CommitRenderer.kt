@@ -3,18 +3,22 @@ package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.intellij.lang.annotations.Language
 import java.awt.Component
 import java.util.*
 import javax.swing.JLabel
 import javax.swing.JList
+import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
 class CommitRenderer<T> private constructor(
@@ -28,9 +32,12 @@ class CommitRenderer<T> private constructor(
     text = CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount)
   }
 
-  private val commitMessage: JLabel = JLabel().apply {
-    iconTextGap = JBUIScale.scale(ICON_TEXT_OFFSET)
+  private val commitMessageIcon: JLabel = JLabel()
+  private val commitMessageText: JBLabel = JBLabel().apply {
+    setCopyable(true)
   }
+
+  private val commitMessagePanel: JPanel = HorizontalListPanel(ICON_TEXT_OFFSET)
 
   private val authorAndDate: JLabel = JLabel().apply {
     border = JBUI.Borders.emptyTop(MESSAGE_INFO_VERTICAL_GAP)
@@ -54,7 +61,7 @@ class CommitRenderer<T> private constructor(
     val presentation = presenter(value)
     val commit = presentation.value
 
-    commitMessage.icon = if (presentation.isSelected) AllIcons.Actions.Checked_selected else emptyIcon
+    commitMessageIcon.icon = if (presentation.isSelected) AllIcons.Actions.Checked_selected else emptyIcon
     allCommitsMessage.icon = if (presentation.isSelected) AllIcons.Actions.Checked_selected else emptyIcon
     authorAndDate.icon = emptyIcon
 
@@ -62,9 +69,12 @@ class CommitRenderer<T> private constructor(
       commitPanel.addToCenter(allCommitsMessage)
     }
     else {
-      commitMessage.text = commit.title
+      commitMessageText.text = commit.titleHtml
       authorAndDate.text = "${commit.author}, ${DateFormatUtil.formatPrettyDateTime(commit.committedDate)}"
-      textPanel.addToCenter(commitMessage).addToBottom(authorAndDate)
+
+      commitMessagePanel.add(commitMessageIcon)
+      commitMessagePanel.add(commitMessageText)
+      textPanel.addToCenter(commitMessagePanel).addToBottom(authorAndDate)
       commitPanel.addToCenter(textPanel)
     }
 
@@ -74,6 +84,7 @@ class CommitRenderer<T> private constructor(
   }
 
   private fun cleanupComponents() {
+    commitMessagePanel.removeAll()
     textPanel.removeAll()
     commitPanel.removeAll()
   }
@@ -103,8 +114,8 @@ class CommitRenderer<T> private constructor(
 }
 
 data class CommitPresentation(
-  val title: @NlsSafe String,
-  val description: @NlsSafe String,
+  @Language("HTML") val titleHtml: @NlsSafe String,
+  @Language("HTML") val descriptionHtml: @NlsSafe String,
   val author: @NlsSafe String,
   val committedDate: Date
 )

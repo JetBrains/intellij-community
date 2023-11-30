@@ -52,7 +52,9 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
     }
 
     asyncCoroutineScope.launch {
-      dumpedThreads(ThreadDumper.getThreadDumpInfo(infos, true))
+      val rawDump = ThreadDumper.getThreadDumpInfo(infos, true)
+      val dump = EventCountDumper.addEventCountersTo(rawDump)
+      dumpedThreads(dump)
     }
       // don't schedule yet another dumpedThreads - wait for completion
       .join()

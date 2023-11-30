@@ -1,3 +1,12 @@
+class CircularArray<E> {
+    val first: E
+        get() = TODO()
+
+    var last: E
+        get() = TODO()
+        set(value) = TODO()
+}
+
 class NonNullUpperBound<T : Any>(ctorParam: T) {
     fun inheritedNullability(i: T): T = i
     fun explicitNullable(e: T?): T? = e

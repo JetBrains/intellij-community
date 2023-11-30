@@ -51,6 +51,7 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           RefactorJBundle.message("cannot.perform.the.refactoring") + cannotRefactorMessage,
                                           getRefactoringName(), HelpID.ExtractClass);
+      return;
     }
     new ExtractClassDialog(containingClass, new HashSet<>(elements)).show();
   }
@@ -76,6 +77,9 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
     }
     if (!containingClass.getManager().isInProject(containingClass)) {
       return RefactorJBundle.message("the.selected.class.should.belong.to.project.sources");
+    }
+    if (containingClass instanceof PsiUnnamedClass) {
+      return RefactorJBundle.message("refactoring.cannot.be.done.in.unnamed.class");
     }
     return null;
   }

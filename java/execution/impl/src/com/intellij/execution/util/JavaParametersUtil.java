@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -64,14 +64,18 @@ public final class JavaParametersUtil {
   }
 
   @MagicConstant(valuesFromClass = JavaParameters.class)
-  public static int getClasspathType(final RunConfigurationModule configurationModule, final String mainClassName,
-                                     final boolean classMustHaveSource) throws CantRunException {
+  @SuppressWarnings("unused")
+  public static int getClasspathType(@NotNull RunConfigurationModule configurationModule,
+                                     @NotNull String mainClassName,
+                                     boolean classMustHaveSource) throws CantRunException {
     return getClasspathType(configurationModule, mainClassName, classMustHaveSource, false);
   }
 
   @MagicConstant(valuesFromClass = JavaParameters.class)
-  public static int getClasspathType(final RunConfigurationModule configurationModule, final String mainClassName,
-                                     final boolean classMustHaveSource, final boolean includeProvidedDependencies) throws CantRunException {
+  public static int getClasspathType(@NotNull RunConfigurationModule configurationModule,
+                                     @NotNull String mainClassName,
+                                     boolean classMustHaveSource,
+                                     boolean includeProvidedDependencies) throws CantRunException {
     final Module module = configurationModule.getModule();
     if (module == null) throw CantRunException.noModuleConfigured(configurationModule.getModuleName());
     Boolean inProduction = isClassInProductionSources(mainClassName, module);
@@ -288,7 +292,7 @@ public final class JavaParametersUtil {
     JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     for (String key : index.getAllKeys(project)) {
       nextModule: 
-      for (PsiJavaModule aModule : index.get(key, project, GlobalSearchScope.allScope(project))) {
+      for (PsiJavaModule aModule : index.getModules(key, project, GlobalSearchScope.allScope(project))) {
         if (forModulePath.contains(aModule)) continue;
         for (PsiProvidesStatement provide : aModule.getProvides()) {
           PsiClassType provideInterfaceType = provide.getInterfaceType();
@@ -313,22 +317,18 @@ public final class JavaParametersUtil {
     }
   }
 
-  private static VirtualFile getClasspathEntry(PsiJavaModule javaModule,
-                                               ProjectFileIndex fileIndex,
-                                               JarFileSystem jarFileSystem) {
-    VirtualFile moduleFile = PsiImplUtil.getModuleVirtualFile(javaModule);
-
-    Module moduleDependency = fileIndex.getModuleForFile(moduleFile);
-    if (moduleDependency == null) {
-      return jarFileSystem.getLocalVirtualFileFor(moduleFile);
+  private static VirtualFile getClasspathEntry(PsiJavaModule javaModule, ProjectFileIndex fileIndex, JarFileSystem jarFileSystem) {
+    var moduleFile = PsiImplUtil.getModuleVirtualFile(javaModule);
+    var moduleDependency = fileIndex.getModuleForFile(moduleFile);
+    if (moduleDependency != null) {
+      var moduleExtension = CompilerModuleExtension.getInstance(moduleDependency);
+      if (moduleExtension != null) {
+        var inTests = fileIndex.isInTestSourceContent(moduleFile);
+        return inTests ? moduleExtension.getCompilerOutputPathForTests() : moduleExtension.getCompilerOutputPath();
+      }
     }
 
-    CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(moduleDependency);
-    if (moduleExtension != null) {
-      return fileIndex.isInTestSourceContent(moduleFile) ? moduleExtension.getCompilerOutputPathForTests()
-                                                         : moduleExtension.getCompilerOutputPath();
-    }
-    return null;
+    return jarFileSystem.getLocalByEntry(moduleFile);
   }
 
   public static void applyModifications(JavaParameters parameters, List<ModuleBasedConfigurationOptions.ClasspathModification> modifications) {

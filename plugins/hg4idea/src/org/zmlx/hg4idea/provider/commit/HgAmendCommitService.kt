@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.zmlx.hg4idea.HgVcs
 import org.zmlx.hg4idea.execution.HgCommandExecutor
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class HgAmendCommitService(project: Project) : AmendCommitService(project) {
   private val vcs: HgVcs get() = HgVcs.getInstance(project)!!
 

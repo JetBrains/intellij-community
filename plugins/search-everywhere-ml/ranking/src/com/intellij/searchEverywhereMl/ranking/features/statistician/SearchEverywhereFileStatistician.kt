@@ -1,7 +1,6 @@
 package com.intellij.searchEverywhereMl.ranking.features.statistician
 
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.PsiItemWithPresentation
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiFileSystemItem
@@ -16,9 +15,9 @@ private class SearchEverywhereFileStatistician : SearchEverywhereStatistician<An
     ?.let { getModule(it) }
     ?.let { "$contextPrefix#${it.name}" }
 
-  private fun getModule(file: PsiFileSystemItem): Module? = runReadAction {
+  private fun getModule(file: PsiFileSystemItem): Module? {
     val fileIndex = ProjectRootManager.getInstance(file.project).fileIndex
-    fileIndex.getModuleForFile(file.virtualFile)
+    return fileIndex.getModuleForFile(file.virtualFile)
   }
 
   private fun getFileWithVirtualFile(element: Any): PsiFileSystemItem? = when (element) {

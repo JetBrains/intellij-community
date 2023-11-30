@@ -23,5 +23,5 @@ public interface JsonCustomStructureViewFactory {
    * @return a structure view builder for the given JSON file or {@code null} if the file doesn't need customized structure view.
    */
   @Nullable
-  StructureViewBuilder getStructureViewBuilder(@NotNull final JsonFile jsonFile);
+  StructureViewBuilder getStructureViewBuilder(final @NotNull JsonFile jsonFile);
 }

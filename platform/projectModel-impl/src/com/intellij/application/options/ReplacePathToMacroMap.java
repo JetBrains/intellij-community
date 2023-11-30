@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -27,24 +27,16 @@ public final class ReplacePathToMacroMap extends PathMacroMap {
   private List<String> pathIndex = null;
   private final Map<String, String> myMacroMap = new LinkedHashMap<>();
 
-  public static final String[] PROTOCOLS;
-
-  static {
-    List<String> protocols = new ArrayList<>();
-    protocols.add("file");
-    protocols.add("jar");
-    protocols.add("jrt");
-    if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(PathMacroExpandableProtocolBean.EP_NAME)) {
-      PathMacroExpandableProtocolBean.EP_NAME.forEachExtensionSafe(bean -> protocols.add(bean.protocol));
-    }
-    PROTOCOLS = ArrayUtilRt.toStringArray(protocols);
-  }
-
   public ReplacePathToMacroMap() {
+    Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      PathMacroProtocolHolder.loadAppExtensions$intellij_platform_projectModel_impl(app);
+    }
   }
 
   @SuppressWarnings("CopyConstructorMissesField")
   public ReplacePathToMacroMap(@NotNull ReplacePathToMacroMap map) {
+    this();
     myMacroMap.putAll(map.myMacroMap);
   }
 
@@ -55,7 +47,7 @@ public final class ReplacePathToMacroMap extends PathMacroMap {
   public void addReplacement(String path, String macroExpr, boolean overwrite) {
     path = Strings.trimEnd(path, "/");
     putIfAbsent(path, macroExpr, overwrite);
-    for (String protocol : PROTOCOLS) {
+    for (String protocol : PathMacroProtocolHolder.getProtocols()) {
       putIfAbsent(protocol + ":" + path, protocol + ":" + macroExpr, overwrite);
       putIfAbsent(protocol + ":/" + path, protocol + ":/" + macroExpr, overwrite);
       putIfAbsent(protocol + "://" + path, protocol + "://" + macroExpr, overwrite);

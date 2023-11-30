@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +22,7 @@ public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
     search.setupListeners();
   }
 
-  public static @NotNull ComboboxSpeedSearch installOn(@NotNull final JComboBox<?> comboBox) {
+  public static @NotNull ComboboxSpeedSearch installOn(final @NotNull JComboBox<?> comboBox) {
     ComboboxSpeedSearch search = new ComboboxSpeedSearch(comboBox, null);
     search.setupListeners();
     return search;
@@ -37,7 +37,7 @@ public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
    * method to enable speed search
    */
   @Deprecated
-  public ComboboxSpeedSearch(@NotNull final JComboBox comboBox) {
+  public ComboboxSpeedSearch(final @NotNull JComboBox comboBox) {
     super(comboBox);
     removeKeyStroke(comboBox.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT), KeyStroke.getKeyStroke(' ', 0));
   }
@@ -45,7 +45,7 @@ public class ComboboxSpeedSearch extends SpeedSearchBase<JComboBox> {
   /**
    * @param sig parameter is used to avoid clash with the deprecated constructor
    */
-  public ComboboxSpeedSearch(@NotNull final JComboBox comboBox, Void sig) {
+  public ComboboxSpeedSearch(final @NotNull JComboBox comboBox, Void sig) {
     super(comboBox, sig);
   }
 

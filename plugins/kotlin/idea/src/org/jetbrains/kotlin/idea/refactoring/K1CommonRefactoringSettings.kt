@@ -39,9 +39,27 @@ internal class K1CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
     override var MOVE_SEARCH_REFERENCES: Boolean
             by delegateTo { it::MOVE_SEARCH_REFERENCES }
 
-    override var MOVE_DELETE_EMPTY_SOURCE_FILES: Boolean
-            by delegateTo { it::MOVE_DELETE_EMPTY_SOURCE_FILES }
-
     override var MOVE_MPP_DECLARATIONS: Boolean
             by delegateTo { it::MOVE_MPP_DECLARATIONS }
+
+    override var INTRODUCE_DECLARE_WITH_VAR: Boolean
+            by delegateTo { it::INTRODUCE_DECLARE_WITH_VAR }
+
+    override var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean
+            by delegateTo { it::INTRODUCE_SPECIFY_TYPE_EXPLICITLY }
+
+    override var renameFileNames: Boolean
+            by delegateTo { it::renameFileNames }
+
+    override var renameVariables: Boolean
+            by delegateTo { it::renameVariables }
+
+    override var renameParameterInHierarchy: Boolean
+            by delegateTo { it::renameParameterInHierarchy }
+
+    override var renameInheritors: Boolean
+            by delegateTo { it::renameInheritors }
+
+    override var renameOverloads: Boolean
+            by delegateTo { it::renameOverloads }
 }

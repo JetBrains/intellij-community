@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.ActivityTracker;
@@ -317,7 +317,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     }
   }
 
-  static class LayoutData {
+  static final class LayoutData {
     int toFitWidth;
     int requiredWidth;
     Dimension layoutSize;
@@ -413,8 +413,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     }
   }
 
-  @Nullable
-  private static DnDTarget getDnDTarget(Content content) {
+  private static @Nullable DnDTarget getDnDTarget(Content content) {
     DnDTarget target = content.getUserData(Content.TAB_DND_TARGET_KEY);
     if (target != null) return target;
     return ObjectUtils.tryCast(content, DnDTarget.class);

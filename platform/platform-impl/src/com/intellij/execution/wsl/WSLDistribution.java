@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.google.common.net.InetAddresses;
@@ -8,6 +8,7 @@ import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
+import com.intellij.platform.ijent.IjentApi;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
@@ -225,6 +227,31 @@ public class WSLDistribution implements AbstractWslDistribution {
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
+    if (WslIjentManager.isIjentAvailable() && !options.isLaunchWithWslExe()) {
+      if (commandLine instanceof PtyCommandLine) {
+        commandLine.setProcessCreator((processBuilder) -> {
+          var ptyOptions = ((PtyCommandLine)commandLine).getPtyOptions();
+          var ijentPty = new IjentApi.Pty(ptyOptions.getInitialColumns(), ptyOptions.getInitialRows(), !ptyOptions.getConsoleMode());
+
+          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, options, ijentPty);
+        });
+      }
+      else {
+        commandLine.setProcessCreator((processBuilder) -> {
+          return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, options, null);
+        });
+      }
+    }
+    else {
+      doPatchCommandLine(commandLine, project, options);
+    }
+
+    return commandLine;
+  }
+
+  final @NotNull <T extends GeneralCommandLine> T doPatchCommandLine(@NotNull T commandLine,
+                                                                     @Nullable Project project,
+                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
     logCommandLineBefore(commandLine, options);
     Path executable = getExecutablePath();
     boolean launchWithWslExe = options.isLaunchWithWslExe() || executable == null;
@@ -442,6 +469,9 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @return environment map of the default user in wsl
    */
   public @Nullable Map<String, String> getEnvironment() {
+    if (WslIjentManager.isIjentAvailable()) {
+      return WslIjentManager.getInstance().fetchLoginShellEnv(this, null, false);
+    }
     try {
       ProcessOutput processOutput = WslExecution.executeInShellAndGetCommandOnlyStdout(
         this, new GeneralCommandLine("env"),
@@ -449,7 +479,7 @@ public class WSLDistribution implements AbstractWslDistribution {
           .setExecuteCommandInShell(true)
           .setExecuteCommandInLoginShell(true)
           .setExecuteCommandInInteractiveShell(true),
-        5000);
+        DEFAULT_TIMEOUT);
       if (processOutput.getExitCode() == 0) {
         Map<String, String> result = new HashMap<>();
         for (String string : processOutput.getStdoutLines()) {
@@ -583,7 +613,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   private @NotNull String getUNCRootPathString() {
-    return WslConstants.UNC_PREFIX + myDescriptor.getMsId();
+    return WSLUtil.getUncPrefix() + myDescriptor.getMsId();
   }
 
   /**
@@ -591,8 +621,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    *
    * @throws ExecutionException if IP can't be obtained (see logs for more info)
    */
-  @NotNull
-  public final InetAddress getHostIpAddress() throws ExecutionException {
+  public final @NotNull InetAddress getHostIpAddress() throws ExecutionException {
     final var hostIpOrException = getValueWithLogging(myLazyHostIp, "host IP");
     if (hostIpOrException == null) {
       throw new ExecutionException(IdeBundle.message("wsl.error.host.ip.not.obtained.message", getPresentableName()));
@@ -603,8 +632,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * Linux IP address. See class doc IP section for more info.
    */
-  @NotNull
-  public final InetAddress getWslIpAddress() {
+  public final @NotNull InetAddress getWslIpAddress() {
     if (Registry.is("wsl.proxy.connect.localhost")) {
       return InetAddress.getLoopbackAddress();
     }
@@ -675,10 +703,9 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @return IP
    * @throws ExecutionException IP can't be parsed
    */
-  @NotNull
-  private String executeAndParseOutput(@NlsContexts.DialogMessage @NotNull String ipType,
-                                       @NotNull Function<List<@NlsSafe String>, @Nullable String> parser,
-                                       @NotNull String @NotNull ... command)
+  private @NotNull String executeAndParseOutput(@NlsContexts.DialogMessage @NotNull String ipType,
+                                                @NotNull Function<List<@NlsSafe String>, @Nullable String> parser,
+                                                @NotNull String @NotNull ... command)
     throws ExecutionException {
     final ProcessOutput output;
     output = executeOnWsl(Arrays.asList(command), new WSLCommandLineOptions(), 10_000, null);
@@ -704,7 +731,7 @@ public class WSLDistribution implements AbstractWslDistribution {
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setExecuteCommandInInteractiveShell(true)
       .setExecuteCommandInLoginShell(true);
-    return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", name), options, DEFAULT_TIMEOUT,
+    return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", name), options.setLaunchWithWslExe(true), DEFAULT_TIMEOUT,
                                                               true);
   }
 
@@ -713,7 +740,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   private @NlsSafe @Nullable String readShellPath() {
-    WSLCommandLineOptions options = new WSLCommandLineOptions().setExecuteCommandInDefaultShell(true);
+    WSLCommandLineOptions options = new WSLCommandLineOptions().setExecuteCommandInDefaultShell(true).setLaunchWithWslExe(true);
     return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", "SHELL"), options, DEFAULT_TIMEOUT,
                                                               true);
   }

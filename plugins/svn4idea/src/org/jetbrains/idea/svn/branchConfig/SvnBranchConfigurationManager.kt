@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher
 import com.intellij.openapi.project.Project
@@ -113,7 +112,7 @@ internal class SvnBranchConfigurationManager(private val project: Project) : Per
       isUserInfoInUrl = persistedConfiguration.isUserinfoInUrl
     }
 
-    val storage = project.service<SvnLoadedBranchesStorage>()
+    val storage = SvnLoadedBranchesStorage.getInstance(project)
     for (branchLocation in persistedConfiguration.branchUrls.mapNotNull { addUserInfo(it, false, userInfo) }) {
       val storedBranches = storage.get(branchLocation)?.sorted() ?: mutableListOf()
       result.addBranches(branchLocation,

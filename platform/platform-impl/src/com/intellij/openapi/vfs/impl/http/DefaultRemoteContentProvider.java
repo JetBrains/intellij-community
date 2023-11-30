@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.http;
 
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,8 +26,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
   private static final Logger LOG = Logger.getInstance(DefaultRemoteContentProvider.class);
   private static final int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;
 
-  @NotNull
-  public static RequestBuilder addRequestTuner(@NotNull Url url, @NotNull RequestBuilder requestBuilder) {
+  public static @NotNull RequestBuilder addRequestTuner(@NotNull Url url, @NotNull RequestBuilder requestBuilder) {
     BuiltInServerManager builtInServerManager = BuiltInServerManager.getInstance();
     if (builtInServerManager.isOnBuiltInWebServer(url)) {
       requestBuilder.tuner(builtInServerManager::configureRequestToWebServer);
@@ -42,7 +40,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
   }
 
   @Override
-  public void saveContent(@NotNull final Url url, @NotNull final File file, @NotNull final DownloadingCallback callback) {
+  public void saveContent(final @NotNull Url url, final @NotNull File file, final @NotNull DownloadingCallback callback) {
     Throwable startTrace = ApplicationManager.getApplication().isUnitTestMode() ? new Throwable() : null;
     ProcessIOExecutorService.INSTANCE.execute(() -> downloadContent(url, file, callback, startTrace));
   }
@@ -100,8 +98,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
     return DEFAULT_CONNECT_TIMEOUT;
   }
 
-  @Nullable
-  protected FileType adjustFileType(@Nullable FileType type, @NotNull Url url) {
+  protected @Nullable FileType adjustFileType(@Nullable FileType type, @NotNull Url url) {
     return type;
   }
 
@@ -110,7 +107,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
   }
 
   @Override
-  public boolean isUpToDate(@NotNull final Url url, @NotNull final VirtualFile local) {
+  public boolean isUpToDate(final @NotNull Url url, final @NotNull VirtualFile local) {
     return false;
   }
 }

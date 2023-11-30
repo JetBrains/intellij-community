@@ -9,15 +9,14 @@ import org.jetbrains.annotations.NotNull;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class CloudTerminalProviderImpl extends CloudTerminalProvider {
+public final class CloudTerminalProviderImpl extends CloudTerminalProvider {
 
   @Override
-  public TerminalHandlerBase createTerminal(@NotNull String presentableName,
-                                            @NotNull Project project,
-                                            @NotNull InputStream terminalOutput,
-                                            @NotNull OutputStream terminalInput,
-                                            boolean deferTerminalSessionUntilFirstShown) {
-    return new TerminalHandlerImpl(presentableName, project, terminalOutput, terminalInput, deferTerminalSessionUntilFirstShown);
+  public @NotNull TerminalHandlerBase createTerminal(@NotNull String presentableName,
+                                                     @NotNull Project project,
+                                                     @NotNull InputStream terminalOutput,
+                                                     @NotNull OutputStream terminalInput) {
+    return new TerminalHandlerImpl(presentableName, project, terminalOutput, terminalInput);
   }
 
   @Override

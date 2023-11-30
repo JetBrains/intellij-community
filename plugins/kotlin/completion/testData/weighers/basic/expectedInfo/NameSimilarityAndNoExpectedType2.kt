@@ -6,6 +6,7 @@ interface I {
 
 fun takeYyy(i: I) = i.take<caret>
 
+// IGNORE_K2
 // ORDER: takeYyy
 // ORDER: takeXxx
 // ORDER: takeZzz

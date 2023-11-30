@@ -436,8 +436,8 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
-  public void visitTemplate(@NotNull PsiTemplate expression) {
-    visitElement(expression);
+  public void visitTemplate(@NotNull PsiTemplate template) {
+    visitElement(template);
   }
 
   public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
@@ -478,6 +478,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
     visitExpression(expression);
+  }
+
+  public void visitUnnamedClass(@NotNull PsiUnnamedClass aClass) {
+    visitClass(aClass);
   }
 
   public void visitUnnamedPattern(@NotNull PsiUnnamedPattern pattern) {

@@ -1,18 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.storage;
 
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 
-final class DataTable implements Closeable, Forceable {
+final class DataTable implements IDataTable {
   private static final Logger LOG = Logger.getInstance(DataTable.class);
 
   private static final int HEADER_SIZE = 32;
@@ -26,48 +24,54 @@ final class DataTable implements Closeable, Forceable {
   private static final int HEADER_WASTE_SIZE_OFFSET = 4;
   private volatile boolean myIsDirty;
 
-  DataTable(@NotNull Path filePath, @NotNull StorageLockContext context) throws IOException {
+  DataTable(@NotNull Path filePath,
+            @NotNull StorageLockContext context) throws IOException {
     myFile = new PagedFileStorage(filePath, context, 8 * 1024, false, false);
     myFile.lockWrite();
     try {
-      if (myFile.length() == 0) {
-        markDirty();
-      }
-      else {
-        readInHeader(filePath);
-      }
+    if (myFile.length() == 0) {
+      markDirty();
     }
+    else {
+      readInHeader(filePath);
+    }
+  }
     finally {
       myFile.unlockWrite();
     }
   }
 
+  @Override
   public boolean isCompactNecessary() {
-    return ((double)myWasteSize)/myFile.length() > 0.25 && myWasteSize > 3 * FileUtilRt.MEGABYTE;
+    return ((double)myWasteSize) / myFile.length() > 0.25 && myWasteSize > 3 * FileUtilRt.MEGABYTE;
   }
 
   private void readInHeader(@NotNull Path filePath) throws IOException {
     int magic = myFile.getInt(HEADER_MAGIC_OFFSET);
     if (magic != SAFELY_CLOSED_MAGIC) {
-      myFile.close();
+        myFile.close();
       throw new IOException("Records table for '" + filePath + "' haven't been closed correctly. Rebuild required.");
     }
     myWasteSize = myFile.getInt(HEADER_WASTE_SIZE_OFFSET);
   }
 
+  @Override
   public void readBytes(long address, byte[] bytes) throws IOException {
     myFile.get(address, bytes, 0, bytes.length, true);
   }
 
+  @Override
   public void writeBytes(long address, byte[] bytes) throws IOException {
     writeBytes(address, bytes, 0, bytes.length);
   }
 
+  @Override
   public void writeBytes(long address, byte[] bytes, int off, int len) throws IOException {
     markDirty();
     myFile.put(address, bytes, off, len);
   }
 
+  @Override
   public long allocateSpace(int len) throws IOException {
     final long result = Math.max(myFile.length(), HEADER_SIZE);
 
@@ -81,6 +85,7 @@ final class DataTable implements Closeable, Forceable {
     return result;
   }
 
+  @Override
   public void reclaimSpace(int len) throws IOException {
     if (len > 0) {
       markDirty();
@@ -124,10 +129,12 @@ final class DataTable implements Closeable, Forceable {
     myFile.putInt(HEADER_WASTE_SIZE_OFFSET, wasteSize);
   }
 
+  @Override
   public int getWaste() {
     return myWasteSize;
   }
 
+  @Override
   public long getFileSize() {
     return myFile.length();
   }

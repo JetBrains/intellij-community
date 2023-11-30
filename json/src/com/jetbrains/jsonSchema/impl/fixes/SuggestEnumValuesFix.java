@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.fixes;
 
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
@@ -30,24 +30,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class SuggestEnumValuesFix implements LocalQuickFix, BatchQuickFix {
+public final class SuggestEnumValuesFix implements LocalQuickFix, BatchQuickFix {
   private final JsonLikeSyntaxAdapter myQuickFixAdapter;
 
   public SuggestEnumValuesFix(JsonLikeSyntaxAdapter quickFixAdapter) {
     myQuickFixAdapter = quickFixAdapter;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JsonBundle.message("replace.with.allowed.value");
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
     return getFamilyName();
   }
 

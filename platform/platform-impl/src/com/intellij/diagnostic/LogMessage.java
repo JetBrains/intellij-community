@@ -57,12 +57,6 @@ public final class LogMessage extends AbstractMessage {
     return Collections.unmodifiableList(myAttachments);
   }
 
-  /** @deprecated pass all attachments to {@link #eventOf} */
-  @Deprecated(forRemoval = true)
-  public synchronized void addAttachment(@NotNull Attachment attachment) {
-    myAttachments.add(attachment);
-  }
-
   // factory methods
   /**
    * @param userMessage      user-friendly message description (short, single line if possible)

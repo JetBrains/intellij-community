@@ -42,11 +42,11 @@ import static com.intellij.openapi.editor.colors.EditorColors.createInjectedLang
 
 final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
-  private final @Nullable Collection<? extends @NotNull TextRange> myReducedRanges;
+  private final @Nullable List<? extends @NotNull TextRange> myReducedRanges;
 
   InjectedGeneralHighlightingPass(@NotNull PsiFile file,
                                   @NotNull Document document,
-                                  @Nullable Collection<? extends @NotNull TextRange> reducedRanges,
+                                  @Nullable List<? extends @NotNull TextRange> reducedRanges,
                                   int startOffset,
                                   int endOffset,
                                   boolean updateAll,
@@ -69,11 +69,12 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_HIGHLIGHT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
 
-    List<PsiElement> allInsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.inside));
-    List<PsiElement> allOutsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.outside));
+    List<PsiElement> allInsideElements = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.inside()));
+    List<PsiElement> allOutsideElements = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.outside()));
 
     List<HighlightInfo> resultInside = new ArrayList<>(100);
     List<HighlightInfo> resultOutside = new ArrayList<>(100);
+
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     TextAttributesKey fragmentKey = createInjectedLanguageFragmentKey(myFile.getLanguage());
     processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, (injectedPsi, places) ->
@@ -113,6 +114,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
             }
           }
         }
+
         myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(), resultOutside, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()), getId());
       }
     }
@@ -267,7 +269,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
         new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
                           info.getDescription(), info.getToolTip(), info.getSeverity(), isAfterEndOfLine, null,
-                          false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer(), info.getGroup(), info.unresolvedReference, injectedPsi);
+                          false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer(), info.getGroup(), info.unresolvedReference);
       patched.setHint(info.hasHint());
 
       info.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {

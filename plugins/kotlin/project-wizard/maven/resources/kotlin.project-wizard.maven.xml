@@ -7,6 +7,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <newProjectWizard.kotlin.buildSystem implementation="org.jetbrains.kotlin.tools.projectWizard.maven.MavenKotlinNewProjectWizard"/>
+    <fileTemplateGroup implementation="org.jetbrains.kotlin.tools.projectWizard.maven.MavenKotlinFileTemplateGroupFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">

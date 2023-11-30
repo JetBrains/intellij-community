@@ -105,12 +105,12 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
              Collection<LineMarkerProvider> providers = getMarkerProviders(language, myProject);
              List<LineMarkerProvider> providersList = new ArrayList<>(providers);
              queryProviders(
-               elements.inside, root, providersList, (__, info) -> {
+               elements.inside(), root, providersList, (__, info) -> {
                  info.updatePass = passId;
                  lineMarkers.add(info);
                  LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
                });
-             queryProviders(elements.outside, root, providersList,
+             queryProviders(elements.outside(), root, providersList,
                (__, info) -> {
                  info.updatePass = passId;
                  lineMarkers.add(info);
@@ -119,14 +119,14 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
            });
     }
 
-    List<LineMarkerInfo<?>> markers = mergeLineMarkers(lineMarkers, getDocument());
+    List<LineMarkerInfo<?>> markers = mergeLineMarkers(lineMarkers, getDocument(), passId);
     if (LOG.isDebugEnabled()) {
       LOG.debug("LineMarkersPass.doCollectInformation. lineMarkers: " + lineMarkers+"; merged: "+markers);
     }
     return markers;
   }
 
-  private static @NotNull List<LineMarkerInfo<?>> mergeLineMarkers(@NotNull List<LineMarkerInfo<?>> markers, @NotNull Document document) {
+  private static @NotNull List<LineMarkerInfo<?>> mergeLineMarkers(@NotNull List<LineMarkerInfo<?>> markers, @NotNull Document document, int passId) {
     Int2ObjectMap<List<MergeableLineMarkerInfo<?>>> sameLineMarkers = new Int2ObjectOpenHashMap<>();
 
     for (int i = markers.size() - 1; i >= 0; i--) {
@@ -150,7 +150,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
 
     List<LineMarkerInfo<?>> result = new ArrayList<>(markers);
     for (List<MergeableLineMarkerInfo<?>> value : sameLineMarkers.values()) {
-      result.addAll(MergeableLineMarkerInfo.merge(value));
+      result.addAll(MergeableLineMarkerInfo.merge(value, passId));
     }
     return result;
   }
@@ -159,8 +159,8 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
     List<LineMarkerProvider> forLanguage = LineMarkerProviders.getInstance().allForLanguageOrAny(language);
     List<LineMarkerProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(forLanguage);
     LineMarkerSettings settings = LineMarkerSettings.getSettings();
-    return ContainerUtil.filter(providers, provider -> !(provider instanceof LineMarkerProviderDescriptor)
-                                                       || settings.isEnabled((LineMarkerProviderDescriptor)provider));
+    return ContainerUtil.filter(providers, provider -> !(provider instanceof LineMarkerProviderDescriptor line)
+                                                       || settings.isEnabled(line));
   }
 
   private void queryProviders(@NotNull List<? extends PsiElement> elements,

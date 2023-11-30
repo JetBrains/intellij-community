@@ -7,6 +7,13 @@
     <module name="kotlin.project-wizard.idea"/>
   </dependencies>
 
+  <projectListeners>
+    <listener
+            class="org.jetbrains.kotlin.idea.gradleJava.scripting.ProjectGradleSettingsListener"
+            topic="org.jetbrains.plugins.gradle.settings.GradleSettingsListener"/>
+  </projectListeners>
+
+
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.gradleProjectImportHandler" area="IDEA_PROJECT"
@@ -20,7 +27,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-    <testTasksProvider implementation="org.jetbrains.kotlin.idea.gradleJava.run.KotlinMPPGradleTestTasksProvider"/>
 
     <frameworkSupport implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.GradleKotlinMPPSourceSetsFrameworkSupportProvider"/>
     <frameworkSupport implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.GradleKotlinJavaFrameworkSupportProvider"/>
@@ -47,6 +53,7 @@
     <projectModelContributor implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModelContributor"/>
 
     <executionEnvironmentProvider implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleAppEnvProvider"/>
+    <initScriptGenerator implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinMPGradleInitScriptGenerator"/>
     <buildTasksProvider implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinMPPBuildTasksProvider"/>
   </extensions>
 

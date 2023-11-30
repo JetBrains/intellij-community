@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -23,17 +23,16 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class XsltTreeStructureProvider implements TreeStructureProvider {
+final class XsltTreeStructureProvider implements TreeStructureProvider {
   private final Project myProject;
 
-  public XsltTreeStructureProvider(Project project) {
+  XsltTreeStructureProvider(Project project) {
     myProject = project;
   }
 
   @Override
-  @NotNull
   @SuppressWarnings({"RawUseOfParameterizedType"})
-  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
+  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
     Collection<AbstractTreeNode<?>> l = children;
     int i = 0;
     for (AbstractTreeNode<?> o : children) {

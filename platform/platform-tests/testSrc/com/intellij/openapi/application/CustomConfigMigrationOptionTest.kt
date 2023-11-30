@@ -48,14 +48,9 @@ class CustomConfigMigrationOptionTest : ConfigImportHelperBaseTest() {
   private fun readOption(configDir: Path) = CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile(configDir)
 
   private fun createMarkerFile(content: String): Path {
-    val configDir = createConfigDir()
-    val markerFile = CustomConfigMigrationOption.getCustomConfigMarkerFilePath(configDir)
-    Files.write(markerFile, content.toByteArray())
-    return configDir
-  }
-
-  private fun createConfigDir(): Path {
     val configPath = PathManager.getDefaultConfigPathFor("IntelliJIdea2020.1")
-    return Files.createDirectories(memoryFs.fs.getPath(configPath).normalize())
+    val configDir = Files.createDirectories(memoryFs.fs.getPath(configPath).normalize())
+    Files.writeString(CustomConfigMigrationOption.getCustomConfigMarkerFilePath(configDir), content)
+    return configDir
   }
 }

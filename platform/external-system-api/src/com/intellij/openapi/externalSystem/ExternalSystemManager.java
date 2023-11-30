@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem;
 
 import com.intellij.execution.Executor;
@@ -19,8 +19,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * IntelliJ external systems integration is built using GoF Bridge pattern, i.e. 'external-system' module defines
@@ -109,5 +113,14 @@ public interface ExternalSystemManager<
                                              @NotNull Executor executor,
                                              @NotNull RunConfiguration runConfiguration) {
     return null;
+  }
+
+  /**
+   * @return list of extension points used for populating external project data graph.
+   * Plugins containing extensions will be used to look for classes on deserialization of external project data graph.
+   */
+  @ApiStatus.Experimental
+  default @NotNull List<ExtensionPointName<?>> getExtensionPointsForResolver() {
+    return Collections.emptyList();
   }
 }

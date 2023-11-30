@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.util.Arrays;
@@ -55,17 +55,7 @@ public class ValidationResult implements Comparable<ValidationResult> {
 
   @Override
   public String toString() {
-    String prefix;
-    switch (kind) {
-      case CONFLICT:
-        prefix = "?";
-        break;
-      case ERROR:
-        prefix = "!";
-        break;
-      default:
-        prefix = "";
-    }
+    String prefix = kind == Kind.CONFLICT ? "?" : kind == Kind.ERROR ? "!" : "";
     return prefix + action + " " + path + ": " + message + " (" + options + ")";
   }
 

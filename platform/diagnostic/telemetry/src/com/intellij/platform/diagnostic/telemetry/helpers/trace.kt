@@ -24,7 +24,6 @@ inline fun <T> SpanBuilder.useWithScope(operation: (Span) -> T): T {
   }
 }
 
-
 suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext, crossinline operation: suspend CoroutineScope.(Span) -> T): T {
   val span = startSpan()
   return withContext(Context.current().with(span).asContextElement() + context) {

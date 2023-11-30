@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
@@ -66,26 +65,18 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
     return getDelegate().isSearchInLibraries();
   }
 
-  @NotNull
   @Override
-  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+  public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     return getDelegate().getUnloadedModulesBelongingToScope();
   }
 
   @Override
-  public @NotNull Collection<ModelBranch> getModelBranchesAffectingScope() {
-    return getDelegate().getModelBranchesAffectingScope();
-  }
-
-  @NotNull
-  @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return getDelegate().getDisplayName();
   }
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return getDelegate().getIcon();
   }
 
@@ -114,13 +105,11 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
     return result;
   }
 
-  @NotNull
-  public GlobalSearchScope getDelegate() {
+  public @NotNull GlobalSearchScope getDelegate() {
     return myBaseScope;
   }
 
-  @NotNull
-  public GlobalSearchScope unwrap() {
+  public @NotNull GlobalSearchScope unwrap() {
     GlobalSearchScope delegate = getDelegate();
     return delegate instanceof DelegatingGlobalSearchScope ? ((DelegatingGlobalSearchScope)delegate).unwrap() : delegate;
   }

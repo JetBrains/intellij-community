@@ -135,7 +135,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       }
 
       //skip 'print' and 'println'
-      private boolean skipResult(GroovyResolveResult result) {
+      private static boolean skipResult(GroovyResolveResult result) {
         PsiElement element = result.getElement();
         if (element instanceof PsiMethod) {
           String name = ((PsiMethod)element).getName();

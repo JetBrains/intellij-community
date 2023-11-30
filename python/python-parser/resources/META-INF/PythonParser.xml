@@ -1,0 +1,11 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Python"
+              language="Python"
+              extensions="py;pyw"
+              hashBangs="python"
+              implementationClass="com.jetbrains.python.PythonFileType"
+              fieldName="INSTANCE"/>
+    <iconMapper mappingFile="PythonPsiApiIconMappings.json"/>
+  </extensions>
+</idea-plugin>

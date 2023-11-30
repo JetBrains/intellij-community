@@ -30,6 +30,7 @@ interface TextMateBundleReader {
 typealias TextMateScopeName = CharSequence
 
 data class TextMateGrammar(val fileNameMatchers: Collection<TextMateFileNameMatcher>,
+                           val firstLinePattern: String?,
                            val plist: Lazy<Plist>,
                            val overrideName: String?,
                            val overrideScopeName: String?)
@@ -37,7 +38,9 @@ data class TextMateGrammar(val fileNameMatchers: Collection<TextMateFileNameMatc
 data class TextMatePreferences(val scopeName: TextMateScopeName,
                                val variables: Collection<TextMateShellVariable>,
                                val highlightingPairs: Set<TextMateBracePair>?,
-                               val smartTypingPairs: Set<TextMateBracePair>?,
+                               val smartTypingPairs: Set<TextMateAutoClosingPair>?,
+                               val autoCloseBefore: String?,
+                               val surroundingPairs:  Set<TextMateBracePair>?,
                                val indentationRules: IndentationRules,
                                val customHighlightingAttributes: TextMateTextAttributes?)
 
@@ -56,7 +59,12 @@ fun readTextMateBundle(path: Path): TextMateBundleReader {
         val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.flatMap { s ->
           listOf(TextMateFileNameMatcher.Name(s), TextMateFileNameMatcher.Extension(s))
         }
-        TextMateGrammar(fileNameMatchers = fileNameMatchers, plist = lazy { plist }, overrideName = null, overrideScopeName = null)
+        val firstLinePattern = plist.getPlistValue(Constants.FIRST_LINE_MATCH)?.string
+        TextMateGrammar(fileNameMatchers = fileNameMatchers,
+                        firstLinePattern = firstLinePattern,
+                        plist = lazy { plist },
+                        overrideName = null,
+                        overrideScopeName = null)
       }
     }
 
@@ -85,7 +93,12 @@ fun readSublimeBundle(path: Path): TextMateBundleReader {
         val fileNameMatchers = plist.getPlistValue(Constants.FILE_TYPES_KEY, emptyList<Any>()).stringArray.flatMap { s ->
           listOf(TextMateFileNameMatcher.Name(s), TextMateFileNameMatcher.Extension(s))
         }
-        TextMateGrammar(fileNameMatchers = fileNameMatchers, plist = lazy { plist }, overrideName = null, overrideScopeName = null)
+        val firstLinePattern = plist.getPlistValue(Constants.FIRST_LINE_MATCH)?.string
+        TextMateGrammar(fileNameMatchers = fileNameMatchers,
+                        firstLinePattern = firstLinePattern,
+                        plist = lazy { plist },
+                        overrideName = null,
+                        overrideScopeName = null)
       }
     }
 
@@ -118,6 +131,8 @@ private fun readPreferencesFromPlist(plist: Plist): TextMatePreferences? {
     plist.getPlistValue(Constants.SETTINGS_KEY)?.plist?.let { settings ->
       val highlightingPairs = PreferencesReadUtil.readPairs(settings.getPlistValue(Constants.HIGHLIGHTING_PAIRS_KEY))
       val smartTypingPairs = PreferencesReadUtil.readPairs(settings.getPlistValue(Constants.SMART_TYPING_PAIRS_KEY))
+        ?.map { TextMateAutoClosingPair(it.left, it.right, null) }
+        ?.toSet()
       val indentationRules = PreferencesReadUtil.loadIndentationRules(settings)
       val variables = settings.getPlistValue(Constants.SHELL_VARIABLES_KEY)?.let { variables ->
         variables.array.map { variable ->
@@ -130,8 +145,10 @@ private fun readPreferencesFromPlist(plist: Plist): TextMatePreferences? {
       val customHighlightingAttributes = TextMateTextAttributes.fromPlist(settings)
       TextMatePreferences(scopeName = scopeName,
                           variables = variables,
-                          highlightingPairs = highlightingPairs,
-                          smartTypingPairs = smartTypingPairs,
+                          highlightingPairs = highlightingPairs ?: Constants.DEFAULT_HIGHLIGHTING_BRACE_PAIRS,
+                          smartTypingPairs = smartTypingPairs ?: Constants.DEFAULT_SMART_TYPING_BRACE_PAIRS,
+                          surroundingPairs = null,
+                          autoCloseBefore = null,
                           indentationRules = indentationRules,
                           customHighlightingAttributes = customHighlightingAttributes)
     }

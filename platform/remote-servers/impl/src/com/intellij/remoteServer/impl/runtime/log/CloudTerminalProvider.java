@@ -18,19 +18,10 @@ public abstract class CloudTerminalProvider {
     return contributed == null ? DummyInstanceHolder.INSTANCE : contributed;
   }
 
-  public TerminalHandlerBase createTerminal(@NotNull @Nls String presentableName,
-                                            @NotNull Project project,
-                                            @NotNull InputStream terminalOutput,
-                                            @NotNull OutputStream terminalInput) {
-
-    return createTerminal(presentableName, project, terminalOutput, terminalInput, false);
-  }
-
-  public abstract TerminalHandlerBase createTerminal(@NotNull @Nls String presentableName,
-                                                     @NotNull Project project,
-                                                     @NotNull InputStream terminalOutput,
-                                                     @NotNull OutputStream terminalInput,
-                                                     boolean deferTerminalSessionUntilFirstShown);
+  public abstract @NotNull TerminalHandlerBase createTerminal(@NotNull @Nls String presentableName,
+                                                              @NotNull Project project,
+                                                              @NotNull InputStream terminalOutput,
+                                                              @NotNull OutputStream terminalInput);
 
   public abstract boolean isTtySupported();
 

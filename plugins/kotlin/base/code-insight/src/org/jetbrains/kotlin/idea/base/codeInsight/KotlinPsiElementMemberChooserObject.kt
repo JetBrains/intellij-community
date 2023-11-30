@@ -13,7 +13,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -42,7 +42,7 @@ class KotlinPsiElementMemberChooserObject(
     companion object {
         private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
             modifiersRenderer = modifiersRenderer.with {
-                modifierFilter = KtRendererModifierFilter.NONE
+                keywordsRenderer = keywordsRenderer.with { keywordFilter = KtRendererKeywordFilter.NONE }
             }
         }
 
@@ -74,7 +74,8 @@ class KotlinPsiElementMemberChooserObject(
             }
         }
 
-        private fun KtAnalysisSession.getChooserText(symbol: KtSymbol): @NlsSafe String {
+        context(KtAnalysisSession)
+        private fun getChooserText(symbol: KtSymbol): @NlsSafe String {
             if (symbol is KtClassOrObjectSymbol) {
                 val classId = symbol.classIdIfNonLocal
                 if (classId != null) {
@@ -89,7 +90,8 @@ class KotlinPsiElementMemberChooserObject(
             return ""
         }
 
-        private fun KtAnalysisSession.getChooserIcon(element: PsiElement, symbol: KtSymbol): Icon? {
+        context(KtAnalysisSession)
+        private fun getChooserIcon(element: PsiElement, symbol: KtSymbol): Icon? {
             val isClass = element is KtClass || element is PsiClass
             val flags = if (isClass) 0 else Iconable.ICON_FLAG_VISIBILITY
 

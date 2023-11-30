@@ -48,7 +48,7 @@ abstract class IdeVersionedDataParser<T : IdeVersionedDataState> {
 
       parseJson(obj)?.let {
         it.isDefault = false
-        it.ideVersion = versionInfo
+        it.ideVersion = ideVersion
         it.lastUpdateTime = System.currentTimeMillis()
         return it
       }

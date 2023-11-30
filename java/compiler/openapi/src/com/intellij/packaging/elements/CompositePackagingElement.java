@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.elements;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.platform.workspace.storage.ExternalEntityMapping;
 import com.intellij.platform.workspace.storage.MutableExternalEntityMapping;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.java.workspace.entities.CompositePackagingElementEntity;
-import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder;
+import com.intellij.util.containers.ContainerUtil;
 import kotlin.Pair;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;

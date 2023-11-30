@@ -9,7 +9,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 
 class CleanStaleTargetsTest : JpsBuildTestCase() {
   fun `test delete old output when module is deleted`() {
-    //todo[nik, jeka] currently references to classes from deleted module aren't removed ClassToSubclasses, ClassToClassDependency, SourceFileToClasses mappings
+    //todo currently references to classes from deleted module aren't removed ClassToSubclasses, ClassToClassDependency, SourceFileToClasses mappings
     doTestDeleteOldOutput(false) {
       myProject.removeModule(it)
     }

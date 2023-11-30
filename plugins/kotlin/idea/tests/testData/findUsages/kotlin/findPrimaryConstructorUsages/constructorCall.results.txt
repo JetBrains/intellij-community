@@ -1,2 +1,3 @@
+Callable reference 9 val d = ::KK
 Local variable declaration 5 val kk: KK = KK()
 New instance creation 5 val kk: KK = KK()

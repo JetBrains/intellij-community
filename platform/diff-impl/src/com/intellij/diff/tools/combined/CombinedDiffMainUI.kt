@@ -8,7 +8,6 @@ import com.intellij.diff.DiffTool
 import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.diff.impl.DiffRequestProcessor.getToolOrderFromSettings
-import com.intellij.diff.impl.DiffRequestProcessor.notifyMessage
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
 import com.intellij.diff.impl.ui.DiffToolChooser
 import com.intellij.diff.impl.ui.DifferencesLabel
@@ -31,12 +30,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.ui.GuiUtils
-import com.intellij.ui.JBColor
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.Centerizer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -48,7 +47,6 @@ import java.awt.Dimension
 import java.lang.Boolean.getBoolean
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.JProgressBar
 import javax.swing.SwingUtilities
 import kotlin.math.max
 
@@ -65,17 +63,15 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   private val popupActionGroup = DefaultActionGroup()
   private val touchbarActionGroup = DefaultActionGroup()
 
-  private val panel: JPanel
   private val mainPanel = MyMainPanel()
   private val contentPanel = Wrapper()
   private val topPanel: JPanel
   private val leftToolbar: ActionToolbar
   private val rightToolbar: ActionToolbar
-  private val leftToolbarWrapper: Wrapper
-  private val rightToolbarWrapper: Wrapper
+  private val leftToolbarWrapper: Centerizer
+  private val rightToolbarWrapper: Centerizer
   private val diffInfoWrapper: Wrapper
   private val toolbarStatusPanel = Wrapper()
-  private val progressBar = MyProgressBar()
 
   private val diffToolChooser: MyDiffToolChooser
 
@@ -106,18 +102,16 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     context.putUserData(DiffUserDataKeysEx.LEFT_TOOLBAR, leftToolbar)
     leftToolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     leftToolbar.targetComponent = mainPanel
-    leftToolbarWrapper = Wrapper(leftToolbar.component)
+    leftToolbarWrapper = Centerizer(leftToolbar.component, Centerizer.TYPE.VERTICAL)
 
     rightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, rightToolbarGroup, true)
     rightToolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     rightToolbar.targetComponent = mainPanel
 
-    rightToolbarWrapper = Wrapper(JBUI.Panels.simplePanel(rightToolbar.component))
+    rightToolbarWrapper = Centerizer(rightToolbar.component, Centerizer.TYPE.VERTICAL)
 
-    panel = JBUI.Panels.simplePanel(mainPanel)
     diffInfoWrapper = Wrapper()
     topPanel = buildTopPanel()
-    topPanel.border = JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0)
 
     val bottomContentSplitter = JBSplitter(true, "CombinedDiff.BottomComponentSplitter", 0.8f)
     bottomContentSplitter.firstComponent = contentPanel
@@ -142,7 +136,10 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     val toolbarComponents = viewer.init()
     val diffInfo = toolbarComponents.diffInfo
     if (diffInfo != null) {
-      diffInfoWrapper.setContent(diffInfo.component)
+      val component = diffInfo.component
+      component.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
+      val centerizer = Centerizer(component, Centerizer.TYPE.BOTH)
+      diffInfoWrapper.setContent(centerizer)
     }
     else {
       diffInfoWrapper.setContent(null)
@@ -157,13 +154,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     return if (component.isShowing) component else null
   }
 
-  fun getComponent(): JComponent = panel
-
-  @RequiresEdt
-  fun startProgress() = progressBar.startProgress()
-
-  @RequiresEdt
-  fun stopProgress() = progressBar.stopProgress()
+  fun getComponent(): JComponent = mainPanel
 
   fun isUnified() = diffToolChooser.getActiveTool() is CombinedUnifiedDiffTool
 
@@ -173,7 +164,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   }
 
   fun isWindowFocused(): Boolean {
-    val window = SwingUtilities.getWindowAncestor(panel)
+    val window = SwingUtilities.getWindowAncestor(mainPanel)
     return window != null && window.isFocused
   }
 
@@ -196,11 +187,16 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
 
   private fun buildToolbar(viewerActions: List<AnAction?>?) {
     collectToolbarActions(viewerActions)
-    (leftToolbar as ActionToolbarImpl).clearPresentationCache()
+    (leftToolbar as ActionToolbarImpl).reset()
     leftToolbar.updateActionsImmediately()
+    leftToolbar.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
+    leftToolbar.border = JBUI.Borders.empty()
     DiffUtil.recursiveRegisterShortcutSet(leftToolbarGroup, mainPanel, null)
-    (rightToolbar as ActionToolbarImpl).clearPresentationCache()
+    (rightToolbar as ActionToolbarImpl).reset()
     rightToolbar.updateActionsImmediately()
+    rightToolbar.background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
+    rightToolbar.border = JBUI.Borders.empty()
+
     DiffUtil.recursiveRegisterShortcutSet(rightToolbarGroup, mainPanel, null)
   }
 
@@ -230,26 +226,27 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
 
   private fun collectNavigationActions(): List<AnAction> {
     return listOfNotNull(
-      CombinedPrevDifferenceAction(context),
-      CombinedNextDifferenceAction(context),
       CombinedPrevBlockAction(context),
-      CombinedNextBlockAction(context),
+      CombinedPrevDifferenceAction(context),
       differencesLabel,
+      CombinedNextDifferenceAction(context),
+      CombinedNextBlockAction(context),
       openInEditorAction,
     )
   }
 
   private fun buildTopPanel(): BorderLayoutPanel {
-    val rightPanel = JBUI.Panels.simplePanel(rightToolbarWrapper).addToLeft(progressBar)
-    val topPanel = JBUI.Panels.simplePanel(diffInfoWrapper).addToLeft(leftToolbarWrapper).addToRight(rightPanel)
+    val topPanel = JBUI.Panels.simplePanel(diffInfoWrapper)
+      .andTransparent()
+      .addToLeft(leftToolbarWrapper)
+      .addToRight(rightToolbarWrapper)
+      .apply {
+        border = JBUI.Borders.empty(CombinedDiffUI.MAIN_HEADER_INSETS)
+      }
     GuiUtils.installVisibilityReferent(topPanel, leftToolbar.component)
     GuiUtils.installVisibilityReferent(topPanel, rightToolbar.component)
 
     return topPanel
-  }
-
-  internal fun notifyMessage(e: AnActionEvent, next: Boolean) {
-    notifyMessage(e, contentPanel, next)
   }
 
   private fun clear() {
@@ -298,24 +295,23 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   private inner class MyDifferencesLabel(goToChangeAction: AnAction?) :
     DifferencesLabel(goToChangeAction, leftToolbar.component) {
 
-    private val loadedDifferences = hashMapOf<Int, Int>()
+    private val loadedDifferences = hashMapOf<CombinedBlockId, Int>()
 
     override fun getFileCount(): Int = combinedViewer?.getDiffBlocksCount() ?: 0
     override fun getTotalDifferences(): Int = calculateTotalDifferences()
 
     fun countDifferences(blockId: CombinedBlockId, childViewer: DiffViewer) {
-      val combinedViewer = combinedViewer ?: return
-      val index = combinedViewer.getBlockIndex(blockId) ?: return
-
-      loadedDifferences[index] = 1
+      loadedDifferences[blockId] = 1
 
       if (childViewer is DiffViewerBase) {
         val listener = object : DiffViewerListener() {
           override fun onAfterRediff() {
-            loadedDifferences[index] = if (childViewer is DifferencesCounter) childViewer.getTotalDifferences() else 1
+            loadedDifferences[blockId] = if (childViewer is DifferencesCounter) childViewer.getTotalDifferences() else 1
           }
         }
         childViewer.addListener(listener)
+
+
         Disposer.register(childViewer, Disposable { childViewer.removeListener(listener) })
       }
     }
@@ -340,6 +336,12 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
       model.reload()
     }
 
+    override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+      return super.createCustomComponent(presentation, place).apply {
+        background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
+      }
+    }
+
     override fun getTools(): List<CombinedDiffTool> = availableTools.toList()
 
     override fun getActiveTool(): DiffTool = activeTool
@@ -348,6 +350,10 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   }
 
   private inner class MyMainPanel : JBPanelWithEmptyText(BorderLayout()), DataProvider {
+    init {
+      background = CombinedDiffUI.MAIN_HEADER_BACKGROUND
+    }
+
     override fun getPreferredSize(): Dimension {
       val windowSize = DiffUtil.getDefaultDiffPanelSize()
       val size = super.getPreferredSize()
@@ -359,7 +365,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
       if (data != null) return data
 
       return when {
-        OpenInEditorAction.KEY.`is`(dataId) -> OpenInEditorAction()
         DiffDataKeys.DIFF_REQUEST.`is`(dataId) -> model.getCurrentRequest()
         CommonDataKeys.PROJECT.`is`(dataId) -> context.project
         PlatformCoreDataKeys.HELP_ID.`is`(dataId) -> {
@@ -393,7 +398,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     override fun actionPerformed(e: AnActionEvent) {
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(DiffBundle.message("diff.actions"), popupActionGroup, e.dataContext,
                                                                       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
-      popup.showInCenterOf(panel)
+      popup.showInCenterOf(mainPanel)
     }
   }
 
@@ -404,26 +409,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     }
 
     override fun getProject() = context.project
-  }
-
-  private class MyProgressBar : JProgressBar() {
-    private var progressCount = 0
-
-    init {
-      isIndeterminate = true
-      isVisible = false
-    }
-
-    fun startProgress() {
-      progressCount++
-      isVisible = true
-    }
-
-    fun stopProgress() {
-      progressCount--
-      assert(progressCount >= 0) { "Progress count $progressCount cannot be negative" }
-      if (progressCount == 0) isVisible = false
-    }
   }
 
   companion object {

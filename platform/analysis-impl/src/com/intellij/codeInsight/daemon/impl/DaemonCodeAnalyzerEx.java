@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -23,8 +23,9 @@ import java.util.List;
 
 public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   private static final Logger LOG = Logger.getInstance(DaemonCodeAnalyzerEx.class);
+
   public static DaemonCodeAnalyzerEx getInstanceEx(Project project) {
-    return (DaemonCodeAnalyzerEx)project.getService(DaemonCodeAnalyzer.class);
+    return (DaemonCodeAnalyzerEx)DaemonCodeAnalyzer.getInstance(project);
   }
 
   public static boolean processHighlights(@NotNull Document document,
@@ -47,8 +48,8 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, marker -> {
       ProgressManager.checkCanceled();
-      Object tt = marker.getErrorStripeTooltip();
-      if (!(tt instanceof HighlightInfo info)) return true;
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(marker);
+      if (info == null) return true;
       return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
              || info.getHighlighter() == null
              || processor.process(info);
@@ -70,15 +71,13 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   public abstract boolean hasVisibleLightBulbOrPopup();
 
-  @NotNull
-  public abstract List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
-                                                    @NotNull Document document,
-                                                    @NotNull ProgressIndicator progress);
+  public abstract @NotNull List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
+                                                             @NotNull Document document,
+                                                             @NotNull ProgressIndicator progress);
 
   public abstract boolean isErrorAnalyzingFinished(@NotNull PsiFile file);
 
-  @NotNull
-  public abstract FileStatusMap getFileStatusMap();
+  public abstract @NotNull FileStatusMap getFileStatusMap();
 
   public abstract void cleanFileLevelHighlights(int group, @NotNull PsiFile psiFile);
   public abstract boolean hasFileLevelHighlights(int group, @NotNull PsiFile psiFile);
@@ -92,4 +91,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     return fileEditor instanceof TextEditor textEditor
            && getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNull(textEditor.getEditor().getDocument());
   }
+  abstract boolean cutOperationJustHappened();
+  abstract boolean isEscapeJustPressed();
+
 }

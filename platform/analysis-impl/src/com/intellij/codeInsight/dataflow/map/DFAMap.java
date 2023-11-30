@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.dataflow.map;
 
 import com.intellij.codeInsight.dataflow.SetUtil;
@@ -72,8 +72,7 @@ public class DFAMap<V> {
     }
   }
 
-  @Nullable
-  public V get(String key) {
+  public @Nullable V get(String key) {
     if (myAll != null) {
       return myAll.get(key);
     }

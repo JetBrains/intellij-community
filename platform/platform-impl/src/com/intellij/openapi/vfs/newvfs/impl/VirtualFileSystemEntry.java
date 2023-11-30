@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ExceptionUtil;
@@ -39,11 +39,6 @@ import java.util.List;
 
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
-
-  @ApiStatus.Internal
-  public static void markAllFilesAsUnindexed() {
-    VfsData.markAllFilesAsUnindexed();
-  }
 
   static PersistentFS getPersistence() {
     return PersistentFS.getInstance();
@@ -88,7 +83,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private volatile CachedFileType myFileType;
 
   static {
-    //noinspection ConstantValue
     assert ~ALL_FLAGS_MASK == LocalTimeCounter.TIME_MASK;
   }
 
@@ -156,7 +150,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public @NotNull CharSequence getNameSequence() {
-    return FileNameCache.getVFileName(getNameId());
+    PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
+    if (fs == null) {
+      return "<FS-is-disposed>";//shutdown-safe
+    }
+    return fs.getNameByNameId(getNameId());
   }
 
   public final int getNameId() {
@@ -213,18 +211,18 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     getSegment().setFlag(myId, mask, value);
   }
 
-  public boolean isFileIndexed() {
+  public int getIndexedStamp() {
     if (VfsData.isIsIndexedFlagDisabled()) {
-      return false;
+      return 0;
     }
-    return getSegment().isIndexed(myId);
+    return getSegment().getIndexedStamp(myId);
   }
 
-  public void setFileIndexed(boolean indexed) {
+  public void setIndexedStamp(int stamp) {
     if (VfsData.isIsIndexedFlagDisabled()) {
       return;
     }
-    getSegment().setIndexed(myId, indexed);
+    getSegment().setIndexedStamp(myId, stamp);
   }
 
   @Override
@@ -429,7 +427,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
     VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
-    getSegment().setNameId(myId, FileNameCache.storeName(newName));
+    getSegment().setNameId(myId, FSRecords.getInstance().getNameId(newName));
     parent.addChild(this);
     ((PersistentFSImpl)getPersistence()).incStructuralModificationCount();
   }
@@ -452,7 +450,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return getFileSystem() instanceof LocalFileSystem;
   }
 
-  private static class DebugInvalidation {
+  private static final class DebugInvalidation {
     private static final Logger LOG = Logger.getInstance(VirtualFileSystemEntry.class);
     private static final boolean DEBUG = LOG.isDebugEnabled();
     private static final Key<String> INVALIDATION_REASON = Key.create("INVALIDATION_REASON");
@@ -622,9 +620,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     FileType type = cache == null ? null : cache.getUpToDateOrNull();
     if (type == null) {
       type = super.getFileType();
-      if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-        myFileType = CachedFileType.forType(type);
-      }
+      myFileType = CachedFileType.forType(type);
     }
     return type;
   }

@@ -16,16 +16,16 @@ public abstract class ServerConnectionManager {
   }
 
   @NotNull
-  public abstract <C extends ServerConfiguration> ServerConnection getOrCreateConnection(@NotNull RemoteServer<C> server);
+  public abstract <C extends ServerConfiguration> ServerConnection<?> getOrCreateConnection(@NotNull RemoteServer<C> server);
 
   @Nullable
-  public abstract <C extends ServerConfiguration> ServerConnection getConnection(@NotNull RemoteServer<C> server);
+  public abstract <C extends ServerConfiguration> ServerConnection<?> getConnection(@NotNull RemoteServer<C> server);
 
   @NotNull
-  public abstract Collection<ServerConnection> getConnections();
+  public abstract Collection<ServerConnection<?>> getConnections();
 
   @NotNull
-  public <C extends ServerConfiguration> ServerConnection createTemporaryConnection(@NotNull RemoteServer<C> server) {
+  public <C extends ServerConfiguration> ServerConnection<?> createTemporaryConnection(@NotNull RemoteServer<C> server) {
     throw new UnsupportedOperationException();
   }
 }

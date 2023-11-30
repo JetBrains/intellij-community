@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,10 +32,8 @@ import java.util.regex.Pattern;
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 /**
- * Class for working with WSL after Fall Creators Update
- * https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/
- * - multiple linuxes
- * - file system is unavailable form windows (for now at least)
+ * A tool for working with WSL distributions via the `wsl.exe` utility refined in
+ * <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Windows 10 1709</a>.
  */
 public final class WSLUtil {
   public static final Logger LOG = Logger.getInstance("#com.intellij.execution.wsl");
@@ -44,8 +43,8 @@ public final class WSLUtil {
    * Method will be removed after we check statistics and make sure versions before 1903 aren't used.
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public static List<WSLDistribution> getAvailableDistributions() {
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static @NotNull List<WSLDistribution> getAvailableDistributions() {
     if (!isSystemCompatible()) return Collections.emptyList();
 
     final Path executableRoot = getExecutableRootPath();
@@ -79,8 +78,7 @@ public final class WSLUtil {
   /**
    * @return root for WSL executable or null if unavailable
    */
-  @Nullable
-  private static Path getExecutableRootPath() {
+  private static @Nullable Path getExecutableRootPath() {
     String localAppDataPath = System.getenv().get("LOCALAPPDATA");
     return StringUtil.isEmpty(localAppDataPath) ? null : Paths.get(localAppDataPath, "Microsoft\\WindowsApps");
   }
@@ -92,12 +90,11 @@ public final class WSLUtil {
   /**
    * @param wslPath a path in WSL file system, e.g. "/mnt/c/Users/file.txt" or "/c/Users/file.txt"
    * @param mntRoot a directory where fixed drives will be mounted. Default is "/mnt/" - {@link WSLDistribution#DEFAULT_WSL_MNT_ROOT}).
-   *                See https://docs.microsoft.com/ru-ru/windows/wsl/wsl-config#configuration-options
+   *                See <a href="https://docs.microsoft.com/ru-ru/windows/wsl/wsl-config#configuration-options">WSL configuration options</a>.
    * @return Windows-dependent path to the file, pointed by {@code wslPath} in WSL or null if the path is unmappable.
    * For example, {@code getWindowsPath("/mnt/c/Users/file.txt", "/mnt/") returns "C:\Users\file.txt"}
    */
-  @Nullable
-  public static String getWindowsPath(@NotNull String wslPath, @NotNull String mntRoot) {
+  public static @Nullable String getWindowsPath(@NotNull String wslPath, @NotNull String mntRoot) {
     if (!wslPath.startsWith(mntRoot)) {
       return null;
     }
@@ -160,7 +157,7 @@ public final class WSLUtil {
   }
 
 
-  static class WSLToolFlags {
+  static final class WSLToolFlags {
     public final boolean isQuietFlagAvailable;
     public final boolean isVerboseFlagAvailable;
 
@@ -172,7 +169,7 @@ public final class WSLUtil {
 
   private static final NullableLazyValue<WSLToolFlags> WSL_TOOL_FLAGS = lazyNullable(() -> getWSLToolFlagsInternal());
 
-  public static @Nullable WSLToolFlags getWSLToolFlags() {
+  static @Nullable WSLToolFlags getWSLToolFlags() {
     return WSL_TOOL_FLAGS.getValue();
   }
 
@@ -199,5 +196,9 @@ public final class WSLUtil {
       LOG.warn(e);
       return null;
     }
+  }
+
+  static @NotNull String getUncPrefix() {
+    return SystemInfo.isWin11OrNewer ? "\\\\wsl.localhost\\" : WslConstants.UNC_PREFIX;
   }
 }

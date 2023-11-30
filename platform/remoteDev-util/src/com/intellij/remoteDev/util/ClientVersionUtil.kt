@@ -13,7 +13,7 @@ object ClientVersionUtil {
   private val separateConfigEnabledByDefaultSince: BuildNumber
     get() = BuildNumber("", 233, 2350)
   private val separateConfigEnabledByDefaultSince232: BuildNumber
-    get() = BuildNumber("", 232, 9544)
+    get() = BuildNumber("", 232, 9552)
 
   fun isJBCSeparateConfigSupported(clientVersion: String): Boolean {
     val clientBuild = BuildNumber.fromString(clientVersion)

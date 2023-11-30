@@ -15,7 +15,7 @@ abstract class BaseEnvironmentService : EnvironmentService {
 
   protected fun checkKeyRegistered(key: EnvironmentKey) {
     val isKeyRegistered = EnvironmentKeyProvider.EP_NAME.extensionList.any { provider ->
-      provider.getKnownKeys().any { it.key == key }
+      provider.knownKeys.any { it.key == key }
     }
     if (!isKeyRegistered) {
       LOG.warn("The key '${key.id}' is not registered in any 'com.intellij.ide.environment.EnvironmentKeyRegistry'. " +

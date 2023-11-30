@@ -71,7 +71,11 @@ object BranchedFoldingUtils {
     }
 
     internal fun getFoldableAssignmentNumber(expression: KtExpression?): Int {
-        expression ?: return -1
+        return getFoldableAssignments(expression).size
+    }
+
+    internal fun getFoldableAssignments(expression: KtExpression?): Set<KtBinaryExpression> {
+        expression ?: return emptySet()
         val assignments = linkedSetOf<KtBinaryExpression>()
         fun collectAssignmentsAndCheck(e: KtExpression?): Boolean = when (e) {
             is KtWhenExpression -> {
@@ -102,12 +106,12 @@ object BranchedFoldingUtils {
             is KtThrowExpression, is KtReturnExpression -> true
             else -> false
         }
-        if (!collectAssignmentsAndCheck(expression)) return -1
-        val firstAssignment = assignments.firstOrNull { !it.right.isNullExpression() } ?: assignments.firstOrNull() ?: return 0
-        val leftType = firstAssignment.left?.let { it.getType(it.analyze(BodyResolveMode.PARTIAL)) } ?: return 0
-        val rightTypeConstructor = firstAssignment.rightType()?.constructor ?: return -1
+        if (!collectAssignmentsAndCheck(expression)) return emptySet()
+        val firstAssignment = assignments.firstOrNull { !it.right.isNullExpression() } ?: assignments.firstOrNull() ?: return emptySet()
+        val leftType = firstAssignment.left?.let { it.getType(it.analyze(BodyResolveMode.PARTIAL)) } ?: return emptySet()
+        val rightTypeConstructor = firstAssignment.rightType()?.constructor ?: return emptySet()
         if (assignments.any { !firstAssignment.checkAssignmentsMatch(it, leftType, rightTypeConstructor) }) {
-            return -1
+            return emptySet()
         }
         if (expression.anyDescendantOfType<KtBinaryExpression>(
                 predicate = {
@@ -121,9 +125,9 @@ object BranchedFoldingUtils {
                 }
             )
         ) {
-            return -1
+            return emptySet()
         }
-        return assignments.size
+        return assignments
     }
 
     private fun getFoldableReturns(branches: List<KtExpression?>): List<KtReturnExpression>? =

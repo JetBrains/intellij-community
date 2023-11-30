@@ -5,13 +5,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.FakePsiElement;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class CommonLinkDestinationReferenceTest extends BasePlatformTestCase {
 
-  public static final Logger LOGGER = Logger.getInstance(CommonLinkDestinationReferenceTest.class);
+  private static final Logger LOGGER = Logger.getInstance(CommonLinkDestinationReferenceTest.class);
 
   @NotNull
   @Override
@@ -76,7 +77,9 @@ public class CommonLinkDestinationReferenceTest extends BasePlatformTestCase {
   public void testTrailingSlashUrl() {
     final PsiReference reference = myFixture.getReferenceAtCaretPosition("trailingSlashUrl.md");
     assertNotNull(reference);
-
-    assertTrue((reference.resolve()) instanceof FakePsiElement);
+    // there are two reference providers adding same WebReference (AutoLinkWebReferenceContributor + CommonLinkDestinationReferenceContributor)
+    for (PsiReference unwrappedRef : PsiReferenceUtil.unwrapMultiReference(reference)) {
+      assertTrue((unwrappedRef.resolve()) instanceof FakePsiElement);
+    }
   }
 }

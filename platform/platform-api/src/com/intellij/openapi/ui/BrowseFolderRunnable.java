@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -51,8 +51,7 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
     myAccessor = accessor;
   }
 
-  @Nullable
-  protected Project getProject() {
+  protected @Nullable Project getProject() {
     return myProject;
   }
 
@@ -76,8 +75,7 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
     FileChooser.chooseFile(fileChooserDescriptor, getProject(), myTextComponent, getInitialFile(), this::onFileChosen);
   }
 
-  @Nullable
-  protected VirtualFile getInitialFile() {
+  protected @Nullable VirtualFile getInitialFile() {
     @NonNls String directoryName = myAccessor.getText(myTextComponent).trim();
     if (StringUtil.isEmptyOrSpaces(directoryName)) {
       return null;
@@ -94,9 +92,7 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
     return path;
   }
 
-  @NotNull
-  @NonNls
-  protected String expandPath(@NotNull @NonNls String path) {
+  protected @NotNull @NonNls String expandPath(@NotNull @NonNls String path) {
     var descriptor = BrowseFolderDescriptor.asBrowseFolderDescriptor(myFileChooserDescriptor);
     var convertTextToPath = descriptor.getConvertTextToPath();
     if (convertTextToPath != null) {
@@ -105,8 +101,7 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
     return path;
   }
 
-  @NotNull
-  protected @NlsSafe String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+  protected @NotNull @NlsSafe String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
     var descriptor = BrowseFolderDescriptor.asBrowseFolderDescriptor(myFileChooserDescriptor);
     var convertFileToText = descriptor.getConvertFileToText();
     if (convertFileToText != null) {

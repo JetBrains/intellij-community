@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -19,8 +19,7 @@ public interface JavaScriptDebuggerStarter<RC extends RunConfiguration, U> {
     static final ExtensionPointName<JavaScriptDebuggerStarter> EP_NAME = ExtensionPointName.create("org.jetbrains.javaScriptDebuggerStarter");
     private static final Object NULL_OBJECT = new Object();
 
-    @Nullable
-    public static <RC extends RunConfiguration, T> JavaScriptDebuggerStarter<RC, T> get(@NotNull RC runConfiguration) {
+    public static @Nullable <RC extends RunConfiguration, T> JavaScriptDebuggerStarter<RC, T> get(@NotNull RC runConfiguration) {
       for (JavaScriptDebuggerStarter<?, ?> starter : EP_NAME.getExtensionList()) {
         if (starter.isApplicable(runConfiguration)) {
           //noinspection unchecked

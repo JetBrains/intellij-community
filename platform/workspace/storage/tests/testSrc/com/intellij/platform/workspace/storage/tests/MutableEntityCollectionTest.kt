@@ -1,17 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.testEntities.entities.*
-import com.intellij.testFramework.ApplicationRule
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceSet
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -20,11 +20,7 @@ import kotlin.test.assertTrue
 class MutableEntityCollectionTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
-  @Rule
-  @JvmField
-  var application = ApplicationRule()
-
-  @Before
+  @BeforeEach
   fun setUp() {
     virtualFileManager = VirtualFileUrlManagerImpl()
   }
@@ -196,14 +192,16 @@ class MutableEntityCollectionTest {
     }
   }
 
-  @Test(expected = IllegalStateException::class)
+  @Test
   fun `collection modification allowed only in modifyEntity block`() {
     val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map { virtualFileManager.fromUrl(it) }.toSet()
     val builder = createEmptyBuilder()
     builder.addEntity(SetVFUEntity("hello", vfuSet, SampleEntitySource("test")))
     val entity = builder.entities(SetVFUEntity::class.java).first()
     entity as SetVFUEntityImpl.Builder
-    entity.fileProperty.remove(entity.fileProperty.first())
+    assertThrows<IllegalStateException> {
+      entity.fileProperty.remove(entity.fileProperty.first())
+    }
   }
 
   @Test

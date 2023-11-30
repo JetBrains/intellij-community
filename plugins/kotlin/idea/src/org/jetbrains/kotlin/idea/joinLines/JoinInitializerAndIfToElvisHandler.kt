@@ -20,8 +20,8 @@ class JoinInitializerAndIfToElvisHandler : JoinRawLinesHandlerDelegate {
             ?.firstOrNull { it.textContains('\n') }
             ?: return -1
         val ifExpression = lineBreak.getNextSiblingIgnoringWhitespaceAndComments() as? KtIfExpression ?: return -1
-        if (!FoldInitializerAndIfToElvisInspection.isApplicable(ifExpression)) return -1
-        return FoldInitializerAndIfToElvisInspection.applyTo(ifExpression).textRange.startOffset
+        if (!FoldInitializerAndIfToElvisInspection.Util.isApplicable(ifExpression)) return -1
+        return FoldInitializerAndIfToElvisInspection.Util.applyTo(ifExpression).textRange.startOffset
     }
 
     override fun tryJoinLines(document: Document, file: PsiFile, start: Int, end: Int) = -1

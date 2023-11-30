@@ -8,12 +8,14 @@ import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
 import com.intellij.ide.BrowserUtil
 import com.intellij.lang.documentation.CompositeDocumentationProvider
 import com.intellij.lang.documentation.ExternalDocumentationHandler
+import com.intellij.lang.documentation.ide.ui.TOGGLE_EXPANDABLE_DEFINITION
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.impl.InternalLinkResult
 import com.intellij.platform.backend.documentation.impl.handleLink
 import com.intellij.psi.PsiManager
 import com.intellij.util.SlowOperations
@@ -25,11 +27,19 @@ internal suspend fun handleLink(
   project: Project,
   targetPointer: Pointer<out DocumentationTarget>,
   url: String,
+  page: DocumentationPage
 ): Any? {
-  if (url.startsWith("open")) {
-    return libraryEntry(project, targetPointer)
+  when {
+    url.startsWith("open") -> {
+      return libraryEntry(project, targetPointer)
+    }
+    url == TOGGLE_EXPANDABLE_DEFINITION -> {
+      val expandableDefinition = page.expandableDefinition!!
+      expandableDefinition.toggleExpanded()
+      return InternalLinkResult.Updater(expandableDefinition)
+    }
+    else -> return handleLink(targetPointer, url)
   }
-  return handleLink(targetPointer, url)
 }
 
 private suspend fun libraryEntry(project: Project, targetPointer: Pointer<out DocumentationTarget>): OrderEntry? {

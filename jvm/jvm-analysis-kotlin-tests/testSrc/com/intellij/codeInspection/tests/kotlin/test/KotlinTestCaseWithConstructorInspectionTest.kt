@@ -1,17 +1,18 @@
 package com.intellij.codeInspection.tests.kotlin.test
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.TestCaseWithConstructorInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.TestCaseWithConstructorInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.PathUtil
 import java.io.File
 
 class KotlinTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspectionTestBase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : JUnitProjectDescriptor(languageLevel) {
+  override fun getProjectDescriptor(): LightProjectDescriptor = object : JUnitProjectDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       val jar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))

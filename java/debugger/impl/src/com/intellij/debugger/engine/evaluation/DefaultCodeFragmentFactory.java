@@ -63,7 +63,7 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
       fragment = factory.createCodeBlockCodeFragment(text, context, true);
     }
 
-    if (item.getImports().length() > 0) {
+    if (!item.getImports().isEmpty()) {
       fragment.addImportsFromString(item.getImports());
     }
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);

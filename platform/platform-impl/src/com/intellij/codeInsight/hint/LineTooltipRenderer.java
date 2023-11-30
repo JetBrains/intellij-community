@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.BrowserUtil;
@@ -22,7 +22,10 @@ import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
@@ -44,7 +47,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
    * <br>
    * very nbsp; long nbsp; text nbsp; with nbsp; 'nbsp;' as spaces cannot be break
    */
-  @Tooltip @Nullable protected String myText;
+  protected @Tooltip @Nullable String myText;
 
   //mostly is used as a marker that we are in popup with description
   protected final int myCurrentWidth;
@@ -64,12 +67,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     myText = text;
   }
 
-  @NotNull
-  private static JPanel createMainPanel(@NotNull HintHint hintHint,
-                                        @NotNull JScrollPane pane,
-                                        @NotNull JEditorPane editorPane,
-                                        boolean highlightActions,
-                                        boolean hasSeparators) {
+  private static @NotNull JPanel createMainPanel(@NotNull HintHint hintHint,
+                                                 @NotNull JScrollPane pane,
+                                                 @NotNull JEditorPane editorPane,
+                                                 boolean highlightActions,
+                                                 boolean hasSeparators) {
     int leftBorder = 10;
     int rightBorder = 12;
     final class MyPanel extends JPanel implements WidthBasedLayout {
@@ -302,9 +304,8 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
   // Java text components don't support specifying color for 'hr' tag, so we need to replace it with something else,
   // if we need a separator with custom color
-  @NotNull
   @Contract(pure = true)
-  private static String colorizeSeparators(@NotNull String html) {
+  private static @NotNull String colorizeSeparators(@NotNull String html) {
     String body = UIUtil.getHtmlBody(html);
     List<String> parts = StringUtil.split(body, UIUtil.BORDER_LINE, true, false);
     if (parts.size() <= 1) return html;
@@ -355,8 +356,10 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                            @NotNull List<? super AnAction> actions,
                            @NotNull TooltipReloader expandCallback,
                            boolean highlightActions) {
-    hintHint.setComponentBorder(JBUI.Borders.empty());
-    hintHint.setBorderInsets(JBUI.emptyInsets());
+    if (!ExperimentalUI.isNewUI()) {
+      hintHint.setComponentBorder(JBUI.Borders.empty());
+      hintHint.setBorderInsets(JBUI.emptyInsets());
+    }
   }
 
   private static boolean handle(@NotNull String ref, @NotNull Editor editor) {
@@ -386,16 +389,15 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     tooltipComponent.setPreferredSize(dimension);
   }
 
-  @NotNull
-  private static Dimension correctLocation(@NotNull Editor editor,
-                                           @NotNull Point p,
-                                           boolean alignToRight,
-                                           boolean expanded,
-                                           @NotNull JComponent tooltipComponent,
-                                           @NotNull JLayeredPane layeredPane,
-                                           int widthLimit,
-                                           int heightLimit,
-                                           int currentWidth) {
+  private static @NotNull Dimension correctLocation(@NotNull Editor editor,
+                                                    @NotNull Point p,
+                                                    boolean alignToRight,
+                                                    boolean expanded,
+                                                    @NotNull JComponent tooltipComponent,
+                                                    @NotNull JLayeredPane layeredPane,
+                                                    int widthLimit,
+                                                    int heightLimit,
+                                                    int currentWidth) {
     Dimension preferredSize = tooltipComponent.getPreferredSize();
     int width = expanded ? 3 * currentWidth / 2 : preferredSize.width;
     int height = expanded ? Math.max(preferredSize.height, 150) : preferredSize.height;
@@ -452,13 +454,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     }
   }
 
-  @NotNull
-  public LineTooltipRenderer createRenderer(@Tooltip @Nullable String text, int width) {
+  public @NotNull LineTooltipRenderer createRenderer(@Tooltip @Nullable String text, int width) {
     return new LineTooltipRenderer(text, width, getEqualityObjects());
   }
 
-  @NotNull
-  protected @Tooltip String dressDescription(@NotNull Editor editor, @NotNull @Tooltip String tooltipText, boolean expanded) {
+  protected @NotNull @Tooltip String dressDescription(@NotNull Editor editor, @NotNull @Tooltip String tooltipText, boolean expanded) {
     return tooltipText;
   }
 
@@ -479,16 +479,13 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     myText = XmlStringUtil.wrapInHtml(newBody);
   }
 
-  @Nullable
-  public @Tooltip String getText() {
+  public @Nullable @Tooltip String getText() {
     return myText;
   }
 
   private static final class ReloadHintAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    @NotNull 
-    private final HintHint myHintHint;
-    @NotNull
-    private final TooltipReloader myReloader;
+    private final @NotNull HintHint myHintHint;
+    private final @NotNull TooltipReloader myReloader;
     private final boolean myExpanded;
 
     private ReloadHintAction(@NotNull HintHint hintHint, @NotNull TooltipReloader reloader, boolean expanded) {

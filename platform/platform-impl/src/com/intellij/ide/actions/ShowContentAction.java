@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
@@ -22,7 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public final class ShowContentAction extends AnAction implements DumbAware {
-  @NonNls public static final String ACTION_ID = "ShowContent";
+  public static final @NonNls String ACTION_ID = "ShowContent";
 
   private ToolWindow myWindow;
 
@@ -58,8 +58,7 @@ public final class ShowContentAction extends AnAction implements DumbAware {
     }
   }
 
-  @Nullable
-  private ToolWindow getWindow(@NotNull AnActionEvent event) {
+  private @Nullable ToolWindow getWindow(@NotNull AnActionEvent event) {
     if (myWindow != null) {
       return myWindow;
     }

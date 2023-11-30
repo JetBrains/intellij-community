@@ -9,45 +9,42 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.util.registry.Registry
-import training.featuresSuggester.statistics.FeatureSuggesterStatistics.Companion.SUGGESTER_ID_VALIDATION_RULE
 import training.featuresSuggester.suggesters.FeatureSuggester
 
-class FeatureSuggesterStatistics : CounterUsagesCollector() {
-  override fun getGroup() = GROUP
+object FeatureSuggesterStatistics : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private const val GROUP_ID = "feature_suggester"
-    private const val NOTIFICATION_SHOWED_EVENT_ID = "notification.showed"
-    private const val NOTIFICATION_DONT_SUGGEST_EVENT_ID = "notification.dont_suggest"
-    private const val NOTIFICATION_LEARN_MORE_EVENT_ID = "notification.learn_more"
-    private const val SUGGESTION_FOUND = "suggestion_found"
-    private const val SUGGESTER_ID_FIELD = "suggester_id"
-    const val SUGGESTER_ID_VALIDATION_RULE = "feature_suggester_id"
+  private const val GROUP_ID = "feature_suggester"
+  private const val NOTIFICATION_SHOWED_EVENT_ID = "notification.showed"
+  private const val NOTIFICATION_DONT_SUGGEST_EVENT_ID = "notification.dont_suggest"
+  private const val NOTIFICATION_LEARN_MORE_EVENT_ID = "notification.learn_more"
+  private const val SUGGESTION_FOUND = "suggestion_found"
+  private const val SUGGESTER_ID_FIELD = "suggester_id"
+  const val SUGGESTER_ID_VALIDATION_RULE = "feature_suggester_id"
 
-    private val GROUP = EventLogGroup(GROUP_ID, 4)
+  private val GROUP = EventLogGroup(GROUP_ID, 4)
 
-    private val suggesterIdField = EventFields.StringValidatedByCustomRule(SUGGESTER_ID_FIELD, FeatureSuggesterIdRuleValidator::class.java)
+  private val suggesterIdField = EventFields.StringValidatedByCustomRule(SUGGESTER_ID_FIELD, FeatureSuggesterIdRuleValidator::class.java)
 
-    private val notificationShowedEvent = GROUP.registerEvent(NOTIFICATION_SHOWED_EVENT_ID, suggesterIdField)
-    private val notificationDontSuggestEvent = GROUP.registerEvent(NOTIFICATION_DONT_SUGGEST_EVENT_ID, suggesterIdField)
-    private val notificationLearnMoreEvent = GROUP.registerEvent(NOTIFICATION_LEARN_MORE_EVENT_ID, suggesterIdField)
-    private val suggestionFoundEvent = GROUP.registerEvent(SUGGESTION_FOUND, suggesterIdField)
+  private val notificationShowedEvent = GROUP.registerEvent(NOTIFICATION_SHOWED_EVENT_ID, suggesterIdField)
+  private val notificationDontSuggestEvent = GROUP.registerEvent(NOTIFICATION_DONT_SUGGEST_EVENT_ID, suggesterIdField)
+  private val notificationLearnMoreEvent = GROUP.registerEvent(NOTIFICATION_LEARN_MORE_EVENT_ID, suggesterIdField)
+  private val suggestionFoundEvent = GROUP.registerEvent(SUGGESTION_FOUND, suggesterIdField)
 
-    fun logNotificationShowed(suggesterId: String) = sendStatistics(notificationShowedEvent, suggesterId)
-    fun logNotificationDontSuggest(suggesterId: String) = sendStatistics(notificationDontSuggestEvent, suggesterId)
-    fun logNotificationLearnMore(suggesterId: String) = sendStatistics(notificationLearnMoreEvent, suggesterId)
-    fun logSuggestionFound(suggesterId: String) = sendStatistics(suggestionFoundEvent, suggesterId)
+  fun logNotificationShowed(suggesterId: String) = sendStatistics(notificationShowedEvent, suggesterId)
+  fun logNotificationDontSuggest(suggesterId: String) = sendStatistics(notificationDontSuggestEvent, suggesterId)
+  fun logNotificationLearnMore(suggesterId: String) = sendStatistics(notificationLearnMoreEvent, suggesterId)
+  fun logSuggestionFound(suggesterId: String) = sendStatistics(suggestionFoundEvent, suggesterId)
 
-    private fun sendStatistics(event: EventId1<String?>, suggesterId: String) {
-      if (Registry.`is`("feature.suggester.send.statistics", false)) {
-        event.log(suggesterId)
-      }
+  private fun sendStatistics(event: EventId1<String?>, suggesterId: String) {
+    if (Registry.`is`("feature.suggester.send.statistics", false)) {
+      event.log(suggesterId)
     }
   }
 }
 
 class FeatureSuggesterIdRuleValidator : CustomValidationRule() {
-  override fun getRuleId(): String = SUGGESTER_ID_VALIDATION_RULE
+  override fun getRuleId(): String = FeatureSuggesterStatistics.SUGGESTER_ID_VALIDATION_RULE
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     val suggesterIds = FeatureSuggester.suggesters.filter { getPluginInfo(it::class.java).isDevelopedByJetBrains() }

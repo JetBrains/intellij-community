@@ -3,7 +3,7 @@ package com.intellij.diagnostic
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 
@@ -19,7 +19,7 @@ abstract class PerformanceWatcher {
 
     private var instance: PerformanceWatcher? = null
 
-    @ApiStatus.Internal
+    @Internal
     fun getInstanceIfCreated(): PerformanceWatcher? {
       return instance
     }
@@ -76,10 +76,10 @@ abstract class PerformanceWatcher {
 
   abstract fun clearFreezeStacktraces()
 
-  @ApiStatus.Internal
+  @Internal
   abstract fun edtEventStarted()
 
-  @ApiStatus.Internal
+  @Internal
   abstract fun edtEventFinished()
 
   @Deprecated("use {@link #dumpThreads(String, boolean, boolean)} instead",
@@ -97,4 +97,7 @@ abstract class PerformanceWatcher {
    * library internals might be omitted.
    */
   abstract fun dumpThreads(pathPrefix: String, appendMillisecondsToFileName: Boolean, stripDump: Boolean): Path?
+
+  @Internal
+  abstract fun startEdtSampling()
 }

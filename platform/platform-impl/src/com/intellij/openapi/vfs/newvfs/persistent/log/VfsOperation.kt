@@ -24,19 +24,27 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
 
   val serializer: Serializer<*> get() = tag.operationSerializer
 
+  interface PayloadContainingOperation {
+    val dataRef: PayloadRef
+  }
+
   sealed class RecordsOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
     class AllocateRecord(result: OperationResult<Int>) : RecordsOperation<Int>(VfsOperationTag.REC_ALLOC, result) {
       internal companion object : Serializer<AllocateRecord> {
         override val valueSizeBytes: Int = OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): AllocateRecord =
           DataInputStream(this).run {
-            val result = readResult<Int>(enumerator)
+            val result = readResult<Int>()
             return AllocateRecord(result)
           }
 
         override fun OutputStream.serialize(operation: AllocateRecord, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "AllocateRecord(result=$result)"
       }
     }
 
@@ -48,7 +56,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           DataInputStream(this).run {
             val fileId = readInt()
             val recordId = readInt()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return SetAttributeRecordId(fileId, recordId, result)
           }
 
@@ -56,8 +64,12 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           DataOutputStream(this).run {
             writeInt(operation.fileId)
             writeInt(operation.recordId)
-            writeResult(operation.result, enumerator)
+            writeResult(operation.result)
           }
+      }
+
+      override fun toString(): String {
+        return "SetAttributeRecordId(fileId=$fileId, recordId=$recordId, result=$result)"
       }
     }
 
@@ -69,7 +81,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           DataInputStream(this).run {
             val fileId = readInt()
             val recordId = readInt()
-            val result = readResult<Boolean>(enumerator)
+            val result = readResult<Boolean>()
             return SetContentRecordId(fileId, recordId, result)
           }
 
@@ -77,8 +89,12 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           DataOutputStream(this).run {
             writeInt(operation.fileId)
             writeInt(operation.recordId)
-            writeResult(operation.result, enumerator)
+            writeResult(operation.result)
           }
+      }
+
+      override fun toString(): String {
+        return "SetContentRecordId(fileId=$fileId, recordId=$recordId, result=$result)"
       }
     }
 
@@ -90,15 +106,19 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           DataInputStream(this).run {
             val fileId = readInt()
             val parentId = readInt()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return SetParent(fileId, parentId, result)
           }
 
         override fun OutputStream.serialize(operation: SetParent, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.fileId)
           writeInt(operation.parentId)
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "SetParent(fileId=$fileId, parentId=$parentId, result=$result)"
       }
     }
 
@@ -110,15 +130,19 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           DataInputStream(this).run {
             val fileId = readInt()
             val nameId = readInt()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return SetNameId(fileId, nameId, result)
           }
 
         override fun OutputStream.serialize(operation: SetNameId, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.fileId)
           writeInt(operation.nameId)
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "SetNameId(fileId=$fileId, nameId=$nameId, result=$result)"
       }
     }
 
@@ -130,15 +154,19 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           DataInputStream(this).run {
             val fileId = readInt()
             val flags = readInt()
-            val result = readResult<Boolean>(enumerator)
+            val result = readResult<Boolean>()
             return SetFlags(fileId, flags, result)
           }
 
         override fun OutputStream.serialize(operation: SetFlags, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.fileId)
           writeInt(operation.flags)
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "SetFlags(fileId=$fileId, flags=$flags, result=$result)"
       }
     }
 
@@ -150,15 +178,19 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           DataInputStream(this).run {
             val fileId = readInt()
             val length = readLong()
-            val result = readResult<Boolean>(enumerator)
+            val result = readResult<Boolean>()
             return SetLength(fileId, length, result)
           }
 
         override fun OutputStream.serialize(operation: SetLength, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.fileId)
           writeLong(operation.length)
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "SetLength(fileId=$fileId, length=$length, result=$result)"
       }
     }
 
@@ -170,15 +202,19 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           DataInputStream(this).run {
             val fileId = readInt()
             val timestamp = readLong()
-            val result = readResult<Boolean>(enumerator)
+            val result = readResult<Boolean>()
             return SetTimestamp(fileId, timestamp, result)
           }
 
         override fun OutputStream.serialize(operation: SetTimestamp, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.fileId)
           writeLong(operation.timestamp)
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "SetTimestamp(fileId=$fileId, timestamp=$timestamp, result=$result)"
       }
     }
 
@@ -189,15 +225,19 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): MarkRecordAsModified =
           DataInputStream(this).run {
             val fileId = readInt()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return MarkRecordAsModified(fileId, result)
           }
 
         override fun OutputStream.serialize(operation: MarkRecordAsModified, enumerator: DataEnumerator<String>): Unit =
           DataOutputStream(this).run {
             writeInt(operation.fileId)
-            writeResult(operation.result, enumerator)
+            writeResult(operation.result)
           }
+      }
+
+      override fun toString(): String {
+        return "MarkRecordAsModified(fileId=$fileId, result=$result)"
       }
     }
 
@@ -215,7 +255,7 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             val nameId = readInt()
             val parent = readInt()
             val overwriteAttrRef = readBoolean()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return FillRecord(fileId, timestamp, length, flags, nameId, parent, overwriteAttrRef, result)
           }
 
@@ -227,8 +267,13 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
           writeInt(operation.nameId)
           writeInt(operation.parentId)
           writeBoolean(operation.overwriteAttrRef)
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "FillRecord(fileId=$fileId, timestamp=$timestamp, length=$length, flags=$flags, nameId=$nameId, " +
+               "parentId=$parentId, overwriteAttrRef=$overwriteAttrRef, result=$result)"
       }
     }
 
@@ -239,14 +284,18 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): CleanRecord =
           DataInputStream(this).run {
             val fileId = readInt()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return CleanRecord(fileId, result)
           }
 
         override fun OutputStream.serialize(operation: CleanRecord, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.fileId)
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "CleanRecord(fileId=$fileId, result=$result)"
       }
     }
 
@@ -257,20 +306,24 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): SetVersion =
           DataInputStream(this).run {
             val version = readInt()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return RecordsOperation.SetVersion(version, result)
           }
 
         override fun OutputStream.serialize(operation: SetVersion, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.version)
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "SetVersion(version=$version, result=$result)"
       }
     }
 
     companion object {
       val <T: Any> RecordsOperation<T>.fileId: Int? get() = when (this) {
-        is AllocateRecord -> if (result.hasValue) result.value else null
+        is AllocateRecord -> if (result.isSuccess) result.value else null
         is CleanRecord -> fileId
         is FillRecord -> fileId
         is MarkRecordAsModified -> fileId
@@ -287,8 +340,8 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
   }
 
   sealed class AttributesOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
-    class WriteAttribute(val fileId: Int, val enumeratedAttribute: EnumeratedFileAttribute, val attrDataPayloadRef: PayloadRef, result: OperationResult<Unit>)
-      : AttributesOperation<Unit>(VfsOperationTag.ATTR_WRITE_ATTR, result) {
+    class WriteAttribute(val fileId: Int, val enumeratedAttribute: EnumeratedFileAttribute, override val dataRef: PayloadRef, result: OperationResult<Unit>)
+      : AttributesOperation<Unit>(VfsOperationTag.ATTR_WRITE_ATTR, result), PayloadContainingOperation {
       internal companion object : Serializer<WriteAttribute> {
         override val valueSizeBytes: Int = Int.SIZE_BYTES + EnumeratedFileAttribute.SIZE_BYTES + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): WriteAttribute =
@@ -296,16 +349,20 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             val fileId = readInt()
             val attrIdEnumerated = readLong().toULong()
             val payloadRef = readPayloadRef()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return WriteAttribute(fileId, EnumeratedFileAttribute(attrIdEnumerated), payloadRef, result)
           }
 
         override fun OutputStream.serialize(operation: WriteAttribute, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.fileId)
           writeLong(operation.enumeratedAttribute.compressedInfo.toLong())
-          writePayloadRef(operation.attrDataPayloadRef)
-          writeResult(operation.result, enumerator)
+          writePayloadRef(operation.dataRef)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "WriteAttribute(fileId=$fileId, enumeratedAttribute=$enumeratedAttribute, dataRef=$dataRef, result=$result)"
       }
     }
 
@@ -316,14 +373,18 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): DeleteAttributes =
           DataInputStream(this).run {
             val fileId = readInt()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return DeleteAttributes(fileId, result)
           }
 
         override fun OutputStream.serialize(operation: DeleteAttributes, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.fileId)
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "DeleteAttributes(fileId=$fileId, result=$result)"
       }
     }
 
@@ -334,15 +395,19 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): AttributesOperation.SetVersion =
           DataInputStream(this).run {
             val version = readInt()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return AttributesOperation.SetVersion(version, result)
           }
 
         override fun OutputStream.serialize(operation: AttributesOperation.SetVersion,
                                             enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.version)
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "SetVersion(version=$version, result=$result)"
       }
     }
 
@@ -356,8 +421,9 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
   }
 
   sealed class ContentsOperation<T : Any>(tag: VfsOperationTag, result: OperationResult<T>) : VfsOperation<T>(tag, result) {
-    class WriteBytes(val recordId: Int, val fixedSize: Boolean, val dataPayloadRef: PayloadRef, result: OperationResult<Unit>)
-      : ContentsOperation<Unit>(VfsOperationTag.CONTENT_WRITE_BYTES, result) {
+    class WriteBytes(val recordId: Int, val fixedSize: Boolean, override val dataRef: PayloadRef, result: OperationResult<Unit>)
+      : ContentsOperation<Unit>(VfsOperationTag.CONTENT_WRITE_BYTES, result), PayloadContainingOperation {
+
       internal companion object : Serializer<WriteBytes> {
         override val valueSizeBytes: Int = Int.SIZE_BYTES + 1 + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): WriteBytes =
@@ -365,41 +431,49 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             val recordId = readInt()
             val fixedSize = readBoolean()
             val payloadRef = readPayloadRef()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return WriteBytes(recordId, fixedSize, payloadRef, result)
           }
 
         override fun OutputStream.serialize(operation: WriteBytes, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.recordId)
           writeBoolean(operation.fixedSize)
-          writePayloadRef(operation.dataPayloadRef)
-          writeResult(operation.result, enumerator)
+          writePayloadRef(operation.dataRef)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "WriteBytes(recordId=$recordId, fixedSize=$fixedSize, dataRef=$dataRef, result=$result)"
       }
     }
 
-    class WriteStream(val recordId: Int, val dataPayloadRef: PayloadRef, result: OperationResult<Unit>)
-      : ContentsOperation<Unit>(VfsOperationTag.CONTENT_WRITE_STREAM, result) {
+    class WriteStream(val recordId: Int, override val dataRef: PayloadRef, result: OperationResult<Unit>)
+      : ContentsOperation<Unit>(VfsOperationTag.CONTENT_WRITE_STREAM, result), PayloadContainingOperation {
       internal companion object : Serializer<WriteStream> {
         override val valueSizeBytes: Int = Int.SIZE_BYTES + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): WriteStream =
           DataInputStream(this).run {
             val recordId = readInt()
             val payloadRef = readPayloadRef()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return WriteStream(recordId, payloadRef, result)
           }
 
         override fun OutputStream.serialize(operation: WriteStream, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.recordId)
-          writePayloadRef(operation.dataPayloadRef)
-          writeResult(operation.result, enumerator)
+          writePayloadRef(operation.dataRef)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "WriteStream(recordId=$recordId, dataRef=$dataRef, result=$result)"
       }
     }
 
-    class WriteStream2(val recordId: Int, val fixedSize: Boolean, val dataPayloadRef: PayloadRef, result: OperationResult<Unit>)
-      : ContentsOperation<Unit>(VfsOperationTag.CONTENT_WRITE_STREAM_2, result) {
+    class WriteStream2(val recordId: Int, val fixedSize: Boolean, override val dataRef: PayloadRef, result: OperationResult<Unit>)
+      : ContentsOperation<Unit>(VfsOperationTag.CONTENT_WRITE_STREAM_2, result), PayloadContainingOperation {
       internal companion object : Serializer<WriteStream2> {
         override val valueSizeBytes: Int = Int.SIZE_BYTES + 1 + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): WriteStream2 =
@@ -407,41 +481,49 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             val recordId = readInt()
             val payloadRef = readPayloadRef()
             val fixedSize = readBoolean()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return WriteStream2(recordId, fixedSize, payloadRef, result)
           }
 
         override fun OutputStream.serialize(operation: WriteStream2, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.recordId)
-          writePayloadRef(operation.dataPayloadRef)
+          writePayloadRef(operation.dataRef)
           writeBoolean(operation.fixedSize)
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "WriteStream2(recordId=$recordId, fixedSize=$fixedSize, dataRef=$dataRef, result=$result)"
       }
     }
 
-    class AppendStream(val recordId: Int, val dataPayloadRef: PayloadRef, result: OperationResult<Unit>)
-      : ContentsOperation<Unit>(VfsOperationTag.CONTENT_APPEND_STREAM, result) {
+    class AppendStream(val recordId: Int, override val dataRef: PayloadRef, result: OperationResult<Unit>)
+      : ContentsOperation<Unit>(VfsOperationTag.CONTENT_APPEND_STREAM, result), PayloadContainingOperation {
       internal companion object : Serializer<AppendStream> {
         override val valueSizeBytes: Int = Int.SIZE_BYTES + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): AppendStream =
           DataInputStream(this).run {
             val recordId = readInt()
             val payloadRef = readPayloadRef()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return AppendStream(recordId, payloadRef, result)
           }
 
         override fun OutputStream.serialize(operation: AppendStream, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.recordId)
-          writePayloadRef(operation.dataPayloadRef)
-          writeResult(operation.result, enumerator)
+          writePayloadRef(operation.dataRef)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "AppendStream(recordId=$recordId, dataRef=$dataRef, result=$result)"
       }
     }
 
-    class ReplaceBytes(val recordId: Int, val offset: Int, val dataPayloadRef: PayloadRef, result: OperationResult<Unit>)
-      : ContentsOperation<Unit>(VfsOperationTag.CONTENT_REPLACE_BYTES, result) {
+    class ReplaceBytes(val recordId: Int, val offset: Int, override val dataRef: PayloadRef, result: OperationResult<Unit>)
+      : ContentsOperation<Unit>(VfsOperationTag.CONTENT_REPLACE_BYTES, result), PayloadContainingOperation {
       internal companion object : Serializer<ReplaceBytes> {
         override val valueSizeBytes: Int = Int.SIZE_BYTES * 2 + PayloadRef.SIZE_BYTES + OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): ReplaceBytes =
@@ -449,16 +531,20 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             val recordId = readInt()
             val offset = readInt()
             val payloadRef = readPayloadRef()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return ReplaceBytes(recordId, offset, payloadRef, result)
           }
 
         override fun OutputStream.serialize(operation: ReplaceBytes, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.recordId)
           writeInt(operation.offset)
-          writePayloadRef(operation.dataPayloadRef)
-          writeResult(operation.result, enumerator)
+          writePayloadRef(operation.dataRef)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "ReplaceBytes(recordId=$recordId, offset=$offset, dataRef=$dataRef, result=$result)"
       }
     }
 
@@ -468,13 +554,17 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         override val valueSizeBytes: Int = OperationResult.SIZE_BYTES
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): AcquireNewRecord =
           DataInputStream(this).run {
-            val result = readResult<Int>(enumerator)
+            val result = readResult<Int>()
             return AcquireNewRecord(result)
           }
 
         override fun OutputStream.serialize(operation: AcquireNewRecord, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "AcquireNewRecord(result=$result)"
       }
     }
 
@@ -485,15 +575,20 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): AcquireRecord =
           DataInputStream(this).run {
             val recordId = readInt()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return AcquireRecord(recordId, result)
           }
 
         override fun OutputStream.serialize(operation: AcquireRecord, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.recordId)
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
       }
+
+      override fun toString(): String {
+        return "AcquireRecord(recordId=$recordId, result=$result)"
+      }
+
     }
 
     class ReleaseRecord(val recordId: Int, result: OperationResult<Unit>)
@@ -503,14 +598,18 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): ReleaseRecord =
           DataInputStream(this).run {
             val recordId = readInt()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return ReleaseRecord(recordId, result)
           }
 
         override fun OutputStream.serialize(operation: ReleaseRecord, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeInt(operation.recordId)
-          writeResult(operation.result, enumerator)
+          writeResult(operation.result)
         }
+      }
+
+      override fun toString(): String {
+        return "ReleaseRecord(recordId=$recordId, result=$result)"
       }
     }
 
@@ -521,21 +620,25 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): ContentsOperation.SetVersion =
           DataInputStream(this).run {
             val version = readInt()
-            val result = readResult<Unit>(enumerator)
+            val result = readResult<Unit>()
             return ContentsOperation.SetVersion(version, result)
           }
 
         override fun OutputStream.serialize(operation: ContentsOperation.SetVersion, enumerator: DataEnumerator<String>): Unit =
           DataOutputStream(this).run {
             writeInt(operation.version)
-            writeResult(operation.result, enumerator)
+            writeResult(operation.result)
           }
+      }
+
+      override fun toString(): String {
+        return "SetVersion(version=$version, result=$result)"
       }
     }
 
     companion object {
       val <T: Any> ContentsOperation<T>.contentRecordId: Int? get() = when (this) {
-        is AcquireNewRecord -> if (result.hasValue) result.value else null
+        is AcquireNewRecord -> if (result.isSuccess) result.value else null
         is AcquireRecord -> recordId
         is AppendStream -> recordId
         is ReleaseRecord -> recordId
@@ -568,6 +671,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeInt(operation.fileId)
           }
         }
+
+        override fun toString(): String {
+          return "EventStart.ContentChange(fileId=$fileId, eventTimestamp=$eventTimestamp, result=$result)"
+        }
       }
 
       class Copy(eventTimestamp: Long, val fileId: Int, val newParentId: Int)
@@ -588,6 +695,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeInt(operation.newParentId)
           }
         }
+
+        override fun toString(): String {
+          return "EventStart.Copy(fileId=$fileId, newParentId=$newParentId, eventTimestamp=$eventTimestamp, result=$result)"
+        }
       }
 
       class Create(
@@ -595,7 +706,9 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
         val parentId: Int,
         val newChildName: PayloadRef, // TODO: is it really needed?
         val isDirectory: Boolean
-      ) : EventStart(VfsOperationTag.VFILE_EVENT_CREATE, eventTimestamp) {
+      ) : EventStart(VfsOperationTag.VFILE_EVENT_CREATE, eventTimestamp), PayloadContainingOperation {
+        override val dataRef: PayloadRef get() = newChildName
+
         internal companion object : Serializer<Create> {
           override val valueSizeBytes: Int = Long.SIZE_BYTES + Int.SIZE_BYTES + PayloadRef.SIZE_BYTES + 1
           override fun InputStream.deserialize(enumerator: DataEnumerator<String>): Create =
@@ -614,6 +727,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeBoolean(operation.isDirectory)
           }
         }
+
+        override fun toString(): String {
+          return "EventStart.Create(parentId=$parentId, newChildName=$newChildName, isDirectory=$isDirectory, eventTimestamp=$eventTimestamp, result=$result)"
+        }
       }
 
       class Delete(eventTimestamp: Long, val fileId: Int) : EventStart(VfsOperationTag.VFILE_EVENT_DELETE, eventTimestamp) {
@@ -630,6 +747,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeLong(operation.eventTimestamp)
             writeInt(operation.fileId)
           }
+        }
+
+        override fun toString(): String {
+          return "EventStart.Delete(fileId=$fileId, eventTimestamp=$eventTimestamp, result=$result)"
         }
       }
 
@@ -653,6 +774,10 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeInt(operation.newParentId)
           }
         }
+
+        override fun toString(): String {
+          return "EventStart.Move(fileId=$fileId, oldParentId=$oldParentId, newParentId=$newParentId, eventTimestamp=$eventTimestamp, result=$result)"
+        }
       }
 
       class PropertyChange(eventTimestamp: Long, val fileId: Int, @PropName val propertyName: String)
@@ -673,40 +798,44 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
             writeInt(enumerator.enumerate(operation.propertyName))
           }
         }
+
+        override fun toString(): String {
+          return "EventStart.PropertyChange(fileId=$fileId, propertyName='$propertyName', eventTimestamp=$eventTimestamp, result=$result)"
+        }
       }
     }
 
-    class EventEnd(val eventTag: VfsOperationTag, result: OperationResult<Unit>)
-      : VFileEventOperation<Unit>(VfsOperationTag.VFILE_EVENT_END, result) {
+    class EventEnd(val eventTag: VfsOperationTag)
+      : VFileEventOperation<Unit>(VfsOperationTag.VFILE_EVENT_END, fromValue(Unit)) {
       internal companion object : Serializer<EventEnd> {
-        override val valueSizeBytes: Int = 1 + OperationResult.SIZE_BYTES
+        override val valueSizeBytes: Int = 1
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): EventEnd =
           DataInputStream(this).run {
             val tag = readByte()
-            val result = readResult<Unit>(enumerator)
-            return EventEnd(VfsOperationTag.values()[tag.toInt()].also {
-              if (!it.isVFileEventOperation) {
+            return EventEnd(VfsOperationTag.entries[tag.toInt()].also {
+              if (!it.isVFileEventStartOperation) {
                 throw IllegalStateException("unexpected EventEnd tag: $it")
               }
-            }, result)
+            })
           }
 
         override fun OutputStream.serialize(operation: EventEnd, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeByte(operation.eventTag.ordinal)
-          writeResult(operation.result, enumerator)
         }
+      }
+
+      override fun toString(): String {
+        return "EventEnd(eventTag=$eventTag)"
       }
     }
   }
 
   companion object {
-    private inline fun <reified T : Any> DataInputStream.readResult(enumerator: DataEnumerator<String>) =
-      OperationResult.deserialize<T>(readInt()) {
-        enumerator.valueOf(it) ?: throw IllegalStateException("corrupted enumerator storage")
-      }
+    private inline fun <reified T : Any> DataInputStream.readResult() =
+      OperationResult.deserialize<T>(readInt())
 
-    private inline fun <reified T : Any> DataOutputStream.writeResult(result: OperationResult<T>, enumerator: DataEnumerator<String>) =
-      writeInt(result.serialize { enumerator.enumerate(it) })
+    private inline fun <reified T : Any> DataOutputStream.writeResult(result: OperationResult<T>) =
+      writeInt(result.serialize())
   }
 }
 

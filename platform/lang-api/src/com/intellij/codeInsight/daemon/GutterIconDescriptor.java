@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import org.jetbrains.annotations.NonNls;
@@ -19,16 +19,13 @@ public abstract class GutterIconDescriptor {
    *
    * @return {@code null} if no configuration needed
    */
-  @Nullable("null means disabled")
-  @GutterName
-  public abstract String getName();
+  public abstract @Nullable("null means disabled") @GutterName String getName();
 
   /**
    * Icon in size 12x12.
    * See <a href="https://jetbrains.org/intellij/sdk/docs/reference_guide/work_with_icons_and_images.html">Icons and Images</a>.
    */
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 
@@ -36,8 +33,7 @@ public abstract class GutterIconDescriptor {
     return true;
   }
 
-  @NonNls
-  public String getId() {
+  public @NonNls String getId() {
     return getClass().getName();
   }
 
@@ -69,15 +65,13 @@ public abstract class GutterIconDescriptor {
       return LineMarkerSettings.getSettings().isEnabled(this);
     }
 
-    @Nullable
     @Override
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
       return myIcon;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 

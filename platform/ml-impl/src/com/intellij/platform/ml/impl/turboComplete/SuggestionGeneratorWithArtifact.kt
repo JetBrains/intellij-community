@@ -3,10 +3,10 @@ package com.intellij.platform.ml.impl.turboComplete
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.addingPolicy.PassDirectlyPolicy
 import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.platform.ml.impl.turboComplete.addingPolicy.CollectionFillingPolicy
-import com.intellij.platform.ml.impl.turboComplete.addingPolicy.PassDirectlyPolicy
 
 /**
  * Generates completion suggestions for a certain type of completion kind and stores

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.RemoveReturnLab
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
-class RedundantReturnLabelInspection : AbstractKotlinInspection() {
+internal class RedundantReturnLabelInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = returnExpressionVisitor(
         fun(returnExpression) {
             val label = returnExpression.getTargetLabel() ?: return

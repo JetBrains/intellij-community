@@ -18,7 +18,9 @@ public class DelombokDataActionTest extends LombokLightActionTestCase {
   public void testDataSimple() throws Exception {
     doTest();
   }
-
+  public void testDataWithEAHCExclude() throws Exception {
+    doTest();
+  }
   public void testDataWithAnnotations() throws Exception {
     doTest();
   }

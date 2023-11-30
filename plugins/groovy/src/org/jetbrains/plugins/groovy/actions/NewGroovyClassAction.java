@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.actions;
 
 import com.intellij.ide.IdeView;
@@ -30,15 +29,14 @@ import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import static org.jetbrains.plugins.groovy.projectRoots.RootTypesKt.ROOT_TYPES;
 
-public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
-
-  public NewGroovyClassAction() {
-    super(GroovyBundle.message("new.class.action.text"), GroovyBundle.message("new.class.action.description"),
-          JetgroovyIcons.Groovy.Class, ROOT_TYPES);
+final class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
+  NewGroovyClassAction() {
+    super(GroovyBundle.messagePointer("new.class.action.text"), GroovyBundle.messagePointer("new.class.action.description"),
+          () -> JetgroovyIcons.Groovy.Class, ROOT_TYPES);
   }
 
   @Override
-  protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+  protected void buildDialog(@NotNull Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(GroovyBundle.message("new.class.dialog.title"))
       .addKind(GroovyBundle.message("new.class.list.item.class"), JetgroovyIcons.Groovy.Class, GroovyTemplates.GROOVY_CLASS)
@@ -119,7 +117,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
   }
 
   @Override
-  protected final GrTypeDefinition doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
+  protected GrTypeDefinition doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
     final String fileName = className + NewGroovyActionBase.GROOVY_EXTENSION;
     final PsiFile fromTemplate = GroovyTemplatesFactory.createFromTemplate(dir, className, fileName, templateName, true);
     if (fromTemplate instanceof GroovyFile) {

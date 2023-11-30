@@ -16,6 +16,11 @@ enum class ClientKind {
    */
   LOCAL,
 
+  @ApiStatus.Internal
+  @Deprecated("This api will be removed")
+  // This api will be removed as soon as Rider is able to run separate projects in different processes. Ask Rider Team
+  FRONTEND,
+
   /**
    * A remote owner connected to the IDE. Operates with IDE being connected through the Gateway
    *

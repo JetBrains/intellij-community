@@ -2,8 +2,8 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getWslFile

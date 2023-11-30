@@ -19,7 +19,7 @@ import static com.intellij.openapi.util.Disposer.isDisposed;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-@Service
+@Service(Service.Level.PROJECT)
 final class SvnCompatibilityChecker implements Disposable {
   private final Project myProject;
   private final static long ourFrequency = 10;

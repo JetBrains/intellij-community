@@ -169,6 +169,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
     Ref<RunningInfo> ref = Ref.create(null);
     Pair<Target, Parameters> key = Pair.create(target, configuration);
+    boolean created = false;
     if (!getExistingInfo(ref, key)) {
       startProcess(target, configuration, key);
       if (ref.isNull()) {
@@ -185,6 +186,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           checkIndicator(indicator);
         }
       }
+      created = true;
     }
     RunningInfo info = ref.get();
     if (info instanceof FailedInfo o) {
@@ -194,7 +196,14 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     else if (info == null || info.handler == null) {
       throw new ExecutionException(ExecutionBundle.message("dialog.remote.process.unable.to.acquire.remote.proxy.for", getName(target)));
     }
-    return acquire(info);
+    EntryPoint result = acquire(info);
+    if (created) {
+      onCreated(target, configuration, result);
+    }
+    return result;
+  }
+
+  protected void onCreated(@NotNull Target target, @NotNull Parameters configuration, @NotNull EntryPoint result) {
   }
 
   private static void checkIndicator(@Nullable ProgressIndicator indicator) {
@@ -458,14 +467,20 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     if (!RemoteObject.IN_PROCESS) return null;
     Pair<Target, Parameters> key = Pair.create(target, configuration);
     InProcessInfo<EntryPoint> info;
+    boolean created = false;
     synchronized (myInProcMap) {
       info = myInProcMap.get(key);
       if (info == null) {
         info = new InProcessInfo<>(acquireInProcessFactory(target, configuration));
         myInProcMap.put(key, info);
+        created = true;
       }
     }
-    return info.factory.compute();
+    EntryPoint result = info.factory.compute();
+    if (created) {
+      onCreated(target, configuration, result);
+    }
+    return result;
   }
 
   @NotNull

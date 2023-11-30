@@ -475,12 +475,11 @@ public final class DiffUtil {
     Color commentFg = JBColor.lazy(() -> {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       TextAttributes commentAttributes = scheme.getAttributes(DefaultLanguageHighlighterColors.LINE_COMMENT);
-      if (commentAttributes.getForegroundColor() != null && commentAttributes.getBackgroundColor() == null) {
-        return commentAttributes.getForegroundColor();
+      Color commentAttributesForegroundColor = commentAttributes.getForegroundColor();
+      if (commentAttributesForegroundColor != null && commentAttributes.getBackgroundColor() == null) {
+        return commentAttributesForegroundColor;
       }
-      else {
-        return scheme.getDefaultForeground();
-      }
+      return scheme.getDefaultForeground();
     });
     label.setForeground(commentFg);
 
@@ -747,13 +746,7 @@ public final class DiffUtil {
 
   @NotNull
   public static List<JComponent> createSyncHeightComponents(@NotNull final List<JComponent> components) {
-    if (!ContainerUtil.exists(components, Conditions.notNull())) return components;
-    List<JComponent> result = new ArrayList<>();
-    for (int i = 0; i < components.size(); i++) {
-      JComponent component = components.get(i);
-      result.add(new SyncHeightComponent(components, component));
-    }
-    return result;
+    return SyncHeightComponent.createSyncHeightComponents(components);
   }
 
   @NotNull
@@ -1295,6 +1288,13 @@ public final class DiffUtil {
   public static TextDiffType getDiffType(@NotNull DiffFragment fragment) {
     boolean left = fragment.getEndOffset1() != fragment.getStartOffset1();
     boolean right = fragment.getEndOffset2() != fragment.getStartOffset2();
+    return getDiffType(left, right);
+  }
+
+  @NotNull
+  public static TextDiffType getDiffType(@NotNull Range range) {
+    boolean left = range.start1 != range.end1;
+    boolean right = range.start2 != range.end2;
     return getDiffType(left, right);
   }
 

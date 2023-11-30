@@ -2,11 +2,12 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -40,7 +41,7 @@ public class CollapseIntoLoopAction implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    return ModCommands.psiUpdate(context.file(), f -> {
+    return ModCommand.psiUpdate(context.file(), f -> {
       LoopModel model = LoopModel.from(context.withFile(f));
       if (model == null) return;
       model.generate();

@@ -1,4 +1,5 @@
 internal open class Base
+
 internal class X : Base(), Cloneable {
     override fun hashCode(): Int {
         TODO("_root_ide_package_")

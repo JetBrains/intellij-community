@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.detection.DetectedFrameworkDescription;
@@ -121,7 +121,7 @@ public final class DetectedFrameworksData {
     }
   }
 
-  private static class TIntHashSetExternalizer implements DataExternalizer<IntSet> {
+  private static final class TIntHashSetExternalizer implements DataExternalizer<IntSet> {
     @Override
     public void save(@NotNull DataOutput out, IntSet value) throws IOException {
       out.writeInt(value.size());

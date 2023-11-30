@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.jps.model.diagnostic.JpsMetrics
+import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import io.opentelemetry.api.metrics.Meter
@@ -20,6 +20,9 @@ import kotlin.system.measureTimeMillis
  *
  * Initially IJ loads the state of workspace model from the cache. In this startup activity it synchronizes the state
  * of workspace model with project model files (iml/xml).
+ *
+ * If this synchronizer overrides your changes and you'd like to postpone the changes to be after this synchronization,
+ *   you can use [com.intellij.workspaceModel.ide.JpsProjectLoadingManager].
  */
 @VisibleForTesting
 class DelayedProjectSynchronizer : ProjectActivity {

@@ -1,26 +1,23 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
-import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.testFramework.AutoPopupParameterInfoTestUtil;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.NoSuchElementException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 
@@ -112,12 +109,6 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
     throw new NoSuchElementException("Unable to find a lookup element by '" + lookupString + "' among [" + allLookupElements + "]");
   }
 
-
-  private void waitForParameterInfoUpdate() throws TimeoutException {
-    ParameterInfoControllerBase.waitForDelayedActions(getEditor(), 1, TimeUnit.MINUTES);
-    waitForParameterInfo();
-  }
-
   public static void waitTillAnimationCompletes(Editor editor) {
     long deadline = System.currentTimeMillis() + 60_000;
     while (ParameterHintsPresentationManager.getInstance().isAnimationInProgress(editor)) {
@@ -127,20 +118,12 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
     }
   }
 
-  protected void waitForAutoPopup() {
-    try {
-      AutoPopupController.getInstance(getProject()).waitForDelayedActions(1, TimeUnit.MINUTES);
-    }
-    catch (TimeoutException e) {
-      fail("Timed out waiting for auto-popup");
-    }
-  }
-
   protected void waitForAllAsyncStuff() {
-    try { waitForParameterInfoUpdate(); } catch (TimeoutException e) { fail("Timed out waiting for parameter info update"); }
+    AutoPopupParameterInfoTestUtil.waitForParameterInfoUpdate(myFixture.getEditor());
+    waitForParameterInfo();
     myFixture.doHighlighting();
     waitTillAnimationCompletes(getEditor());
-    waitForAutoPopup();
+    AutoPopupParameterInfoTestUtil.waitForAutoPopup(myFixture.getProject());
     waitForParameterInfo();
   }
 }

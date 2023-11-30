@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.ide.IdeBundle;
@@ -58,9 +58,7 @@ public class CertificateInfoPanel extends JPanel {
     add(builder.getPanel(), BorderLayout.NORTH);
   }
 
-  @NotNull
-  @NlsSafe
-  public static String formatHex(@NotNull String hex, boolean split) {
+  public static @NotNull @NlsSafe String formatHex(@NotNull String hex, boolean split) {
     if (NOT_AVAILABLE.equals(hex)) return hex;
 
     StringBuilder builder = new StringBuilder();

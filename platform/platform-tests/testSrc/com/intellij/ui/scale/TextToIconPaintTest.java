@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale;
 
 import com.intellij.openapi.util.ScalableIcon;
@@ -18,9 +18,10 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class TextToIconPaintTest extends CompositeIconPaintTestHelper {
+  @RegisterExtension
+  public static final RestoreScaleExtension manageState = new RestoreScaleExtension();
   private static final String TEXT = "IDEA";
   private static final int FONT_SIZE = 12;
-
   private static final int[][] SCALES_TO_SIZE = { // {USR_SCALE, SYS_SCALE, OBJ_SCALE -> size}
     {1, 1, 1, 26},
     {1, 2, 1, 26},
@@ -34,15 +35,12 @@ public class TextToIconPaintTest extends CompositeIconPaintTestHelper {
 
   static {
     for (int[] scaleData : SCALES_TO_SIZE) {
-      CTX_TO_SIZE.put(ScaleContext.Companion.of(ScaleType.USR_SCALE.of(scaleData[0]),
-                                                ScaleType.SYS_SCALE.of(scaleData[1]),
-                                                ScaleType.OBJ_SCALE.of(scaleData[2])),
+      CTX_TO_SIZE.put(ScaleContext.Companion.of(new Scale[]{ScaleType.USR_SCALE.of(scaleData[0]),
+                        ScaleType.SYS_SCALE.of(scaleData[1]),
+                        ScaleType.OBJ_SCALE.of(scaleData[2])}),
                       scaleData[3]);
     }
   }
-
-  @RegisterExtension
-  public static final RestoreScaleExtension manageState = new RestoreScaleExtension();
 
   @Test
   @Override

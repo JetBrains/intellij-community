@@ -25,8 +25,16 @@ public class JavaMethodNameIndex extends StringStubIndexExtension<PsiMethod> {
     return JavaStubIndexKeys.METHODS;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getMethods(String, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
   public Collection<PsiMethod> get(@NotNull final String methodName, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+    return getMethods(methodName, project, scope);
+  }
+
+  public Collection<PsiMethod> getMethods(@NotNull final String methodName, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), methodName, project, new JavaSourceFilterScope(scope), PsiMethod.class);
   }
 }

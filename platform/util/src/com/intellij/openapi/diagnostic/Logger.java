@@ -37,7 +37,7 @@ import java.util.function.Function;
  * <li>Error and warning messages go directly to the console.
  * <li>Error messages additionally throw an {@link AssertionError}.
  * <li>Info and debug messages are buffered in memory.
- * At the end of a test that fails, these messages go to the console; otherwise they are dropped.
+ * At the end of a test that fails, these messages go to the console; otherwise, they are dropped.
  * <li>Trace messages are dropped.
  * <li>To configure the log level during a single test,
  * see {@code TestLoggerFactory.enableDebugLogging} and {@code TestLoggerFactory.enableTraceLogging}.
@@ -122,14 +122,16 @@ public abstract class Logger {
    * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
    * <p>
    * In UsefulTestCase mode, debug messages are buffered in memory.
-   * At the end of a test that fails, these messages go to the console; otherwise they are dropped.
+   * At the end of a test that fails, these messages go to the console; otherwise, they are dropped.
    *
    * @param message should be a plain string literal,
    *                or the call should be enclosed in {@link #isDebugEnabled()};
    *                for all other cases, {@link #debug(String, Object...)} is more efficient
    *                as it delays building the string and calling {@link Object#toString()} on the arguments
    */
-  public abstract void debug(String message);
+  public void debug(String message) {
+    debug(message, (Throwable)null);
+  }
 
   /**
    * Log a stack trace at debug level, without any message.
@@ -139,11 +141,13 @@ public abstract class Logger {
    * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
    * <p>
    * In UsefulTestCase mode, debug messages are buffered in memory.
-   * At the end of a test that fails, these messages go to the console; otherwise they are dropped.
+   * At the end of a test that fails, these messages go to the console; otherwise, they are dropped.
    *
    * @see #debug(String, Throwable)
    */
-  public abstract void debug(@Nullable Throwable t);
+  public void debug(@Nullable Throwable t) {
+    if (t != null) debug(t.getMessage(), t);
+  }
 
   /**
    * Log a message including a stack trace at debug level.
@@ -153,7 +157,7 @@ public abstract class Logger {
    * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
    * <p>
    * In UsefulTestCase mode, debug messages are buffered in memory.
-   * At the end of a test that fails, these messages go to the console; otherwise they are dropped.
+   * At the end of a test that fails, these messages go to the console; otherwise, they are dropped.
    */
   public abstract void debug(String message, @Nullable Throwable t);
 
@@ -168,7 +172,7 @@ public abstract class Logger {
    * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
    * <p>
    * In UsefulTestCase mode, debug messages are buffered in memory.
-   * At the end of a test that fails, these messages go to the console; otherwise they are dropped.
+   * At the end of a test that fails, these messages go to the console; otherwise, they are dropped.
    *
    * @param message the first part of the log message, a plain string without any placeholders
    */
@@ -193,7 +197,7 @@ public abstract class Logger {
    * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
    * <p>
    * In UsefulTestCase mode, debug messages are buffered in memory.
-   * At the end of a test that fails, these messages go to the console; otherwise they are dropped.
+   * At the end of a test that fails, these messages go to the console; otherwise, they are dropped.
    *
    * @param header the main log message, a plain string without any placeholders
    */
@@ -213,7 +217,7 @@ public abstract class Logger {
   }
 
   /**
-   * Log the one-line summary of the throwable at info level, and the stack trace on debug level.
+   * Log the one-line summary of the throwable at info level, and the stack trace at debug level.
    *
    * @see #info(String)
    * @see #debug(Throwable)
@@ -244,7 +248,7 @@ public abstract class Logger {
   }
 
   /**
-   * Log the message at warning level, and the stack trace on debug level.
+   * Log the message at warning level, and the stack trace at debug level.
    *
    * @see #warn(String)
    * @see #debug(Throwable)
@@ -270,7 +274,7 @@ public abstract class Logger {
    * <p>
    * In UsefulTestCase mode, trace messages are disabled by default,
    * use {@code TestLoggerFactory.enableTraceLogging} to enable them.
-   * At the end of a test that fails, these messages go to the console; otherwise they are dropped.
+   * At the end of a test that fails, these messages go to the console; otherwise, they are dropped.
    *
    * @param message should be a plain string literal,
    *                or the call should be enclosed in {@link #isTraceEnabled()}
@@ -288,7 +292,7 @@ public abstract class Logger {
    * <p>
    * In UsefulTestCase mode, trace messages are disabled by default,
    * use {@code TestLoggerFactory.enableTraceLogging} to enable them.
-   * At the end of a test that fails, these messages go to the console; otherwise they are dropped.
+   * At the end of a test that fails, these messages go to the console; otherwise, they are dropped.
    */
   public void trace(@Nullable Throwable t) {
     debug(t);
@@ -300,7 +304,7 @@ public abstract class Logger {
    * In production mode, info messages are enabled by default.
    * <p>
    * In UsefulTestCase mode, info messages are buffered in memory.
-   * At the end of a test that fails, these messages go to the console; otherwise they are dropped.
+   * At the end of a test that fails, these messages go to the console; otherwise, they are dropped.
    */
   public void info(@NotNull Throwable t) {
     info(t.getMessage(), t);
@@ -312,9 +316,11 @@ public abstract class Logger {
    * In production mode, info messages are enabled by default.
    * <p>
    * In UsefulTestCase mode, info messages are buffered in memory.
-   * At the end of a test that fails, these messages go to the console; otherwise they are dropped.
+   * At the end of a test that fails, these messages go to the console; otherwise, they are dropped.
    */
-  public abstract void info(String message);
+  public void info(String message) {
+    info(message, null);
+  }
 
   /**
    * Log a message and a stack trace at info level.
@@ -322,7 +328,7 @@ public abstract class Logger {
    * In production mode, info messages are enabled by default.
    * <p>
    * In UsefulTestCase mode, info messages are buffered in memory.
-   * At the end of a test that fails, these messages go to the console; otherwise they are dropped.
+   * At the end of a test that fails, these messages go to the console; otherwise, they are dropped.
    */
   public abstract void info(String message, @Nullable Throwable t);
 
@@ -370,9 +376,7 @@ public abstract class Logger {
     error(message, new Throwable(message), ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
-  /**
-   * @deprecated use {@link #error(String)} instead and provide a meaningful error message
-   */
+  /** @deprecated use {@link #error(String)} instead and provide a meaningful error message */
   @Deprecated
   public void error(Object message) {
     error(String.valueOf(message));
@@ -504,7 +508,7 @@ public abstract class Logger {
     }
   }
 
-  protected static Throwable ensureNotControlFlow(@Nullable Throwable t) {
+  protected static @Nullable Throwable ensureNotControlFlow(@Nullable Throwable t) {
     return t instanceof ControlFlowException ?
            new Throwable("Control-flow exceptions (e.g. this " + t.getClass() + ") should never be logged. " +
                          "Instead, these should have been rethrown if caught.", t) :

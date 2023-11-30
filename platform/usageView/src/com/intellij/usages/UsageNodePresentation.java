@@ -10,6 +10,7 @@ import java.awt.*;
 
 @Internal
 public final class UsageNodePresentation {
+  public static final UsageNodePresentation EMPTY = new UsageNodePresentation(null, TextChunk.EMPTY_ARRAY, null);
 
   private final @Nullable Icon myIcon;
   private final @Nullable Color myBackgroundColor;

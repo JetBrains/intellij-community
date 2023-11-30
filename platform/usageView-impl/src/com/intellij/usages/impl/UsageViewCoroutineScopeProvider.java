@@ -4,9 +4,11 @@ package com.intellij.usages.impl;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 public final class UsageViewCoroutineScopeProvider {
   private final CoroutineScope myCoroutineScope;
 
@@ -20,7 +22,7 @@ public final class UsageViewCoroutineScopeProvider {
 
   // This service lifetime, could be used in UI components
   // as coroutine scope for various BGT activities
-  CoroutineScope getCoroutineScope() {
+  public CoroutineScope getCoroutineScope() {
     return myCoroutineScope;
   }
 }

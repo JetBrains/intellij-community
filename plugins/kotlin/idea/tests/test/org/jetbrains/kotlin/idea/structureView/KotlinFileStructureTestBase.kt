@@ -39,7 +39,7 @@ abstract class KotlinFileStructureTestBase : KotlinLightCodeInsightFixtureTestCa
         )
     }
 
-    protected fun getFileName(ext: String): String {
+    protected open fun getFileName(ext: String): String {
         return getTestName(false) + if (StringUtil.isEmpty(ext)) "" else ".$ext"
     }
 
@@ -64,6 +64,6 @@ abstract class KotlinFileStructureTestBase : KotlinLightCodeInsightFixtureTestCa
         PlatformTestUtil.waitForPromise(TreeUtil.promiseExpandAll(popupFixture.tree))
         PlatformTestUtil.waitWhileBusy(popupFixture.tree)
         val popupText = StructureViewUtil.print(popupFixture.tree, false, printInfo, null).trim { it <= ' ' }
-        assertSameLinesWithFile("$testDataPath/$treeFileName", popupText)
+        assertSameLinesWithFile("${testDataDirectory.path}/$treeFileName", popupText)
     }
 }

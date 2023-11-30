@@ -70,8 +70,8 @@ object CodeReviewDetailsCommitInfoComponentFactory {
         commit.collect { commit: T? ->
           if (commit == null) return@collect
           val presentation = commitPresentation(commit)
-          title.setHtmlBody(presentation.title)
-          description.setHtmlBody(presentation.description)
+          title.text = presentation.titleHtml
+          description.text = presentation.descriptionHtml
           info.setHtmlBody("${presentation.author}, ${DateFormatUtil.formatPrettyDateTime(presentation.committedDate)}")
         }
       }

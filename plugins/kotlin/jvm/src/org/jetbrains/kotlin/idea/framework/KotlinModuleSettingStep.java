@@ -100,10 +100,11 @@ public class KotlinModuleSettingStep extends ModuleWizardStep {
             @Override
             public void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel) {
                 if (libraryCompositionSettings != null) {
-                    libraryCompositionSettings.addLibraries(rootModel, new ArrayList<Library>(), librariesContainer);
+                    libraryCompositionSettings.addLibraries(rootModel, new ArrayList<>(), librariesContainer);
 
                     if (customLibraryDescription instanceof CustomLibraryDescriptionWithDeferredConfig) {
-                        ((CustomLibraryDescriptionWithDeferredConfig) customLibraryDescription).finishLibConfiguration(module, rootModel, isNewProject);
+                        ((CustomLibraryDescriptionWithDeferredConfig) customLibraryDescription)
+                                .finishLibConfiguration(module, rootModel, isNewProject);
                     }
                 }
 

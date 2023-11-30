@@ -6,6 +6,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.io.AppendablePersistentMap.ValueDataAppender;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -78,6 +79,7 @@ public interface PersistentMapBase<Key, Value> {
 
   boolean containsKey(Key key) throws IOException;
 
+  @Nullable
   Value get(Key key) throws IOException;
 
   void put(Key key, Value value) throws IOException;

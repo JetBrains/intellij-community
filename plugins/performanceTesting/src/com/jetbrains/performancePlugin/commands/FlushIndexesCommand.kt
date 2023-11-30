@@ -2,6 +2,7 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
@@ -17,7 +18,7 @@ import org.jetbrains.concurrency.toPromise
 class FlushIndexesCommand(text: String, line: Int) : AbstractCommand(text, line) {
   companion object {
     const val PREFIX = CMD_PREFIX + "flushIndexes"
-    private val LOG = Logger.getInstance(FlushIndexesCommand::class.java)
+    private val LOG = logger<FlushIndexesCommand>()
   }
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {

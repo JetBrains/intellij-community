@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots;
 
-import com.intellij.ProjectTopics;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -62,7 +61,7 @@ public class RootsChangedTest extends JavaModuleTestCase {
     getOrCreateProjectBaseDir();
     MessageBusConnection connection = myProject.getMessageBus().connect(getTestRootDisposable());
     myModuleRootListener = new MyModuleRootListener(myProject);
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, myModuleRootListener);
+    connection.subscribe(ModuleRootListener.TOPIC, myModuleRootListener);
   }
 
   @Override

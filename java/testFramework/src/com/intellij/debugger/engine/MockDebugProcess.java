@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -41,7 +41,7 @@ public class MockDebugProcess extends DebugProcessEvents {
   }
 
   @Override
-  public @Nullable ExecutionResult attachVirtualMachine(DebugEnvironment environment, DebuggerSession session) {
+  public @Nullable ExecutionResult attachVirtualMachine(@NotNull DebugEnvironment environment, @NotNull DebuggerSession session) {
     mySession = session;
     return null;
   }

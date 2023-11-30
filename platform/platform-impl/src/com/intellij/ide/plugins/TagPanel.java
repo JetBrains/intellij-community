@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
+import com.intellij.accessibility.AccessibilityUtils;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.newui.HorizontalLayout;
 import com.intellij.ide.plugins.newui.TagComponent;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
@@ -11,6 +13,8 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -18,7 +22,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class TagPanel extends NonOpaquePanel {
+public final class TagPanel extends NonOpaquePanel {
   private final LinkListener<Object> mySearchListener;
 
   public TagPanel(@NotNull LinkListener<Object> searchListener) {
@@ -78,5 +82,21 @@ public class TagPanel extends NonOpaquePanel {
       }
     }
     return -1;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleTagPanel();
+      accessibleContext.setAccessibleName(IdeBundle.message("plugins.configurable.plugin.details.tags.panel.accessible.name"));
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleTagPanel extends AccessibleJPanel {
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibilityUtils.GROUPED_ELEMENTS;
+    }
   }
 }

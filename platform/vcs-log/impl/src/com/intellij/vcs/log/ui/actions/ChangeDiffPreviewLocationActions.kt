@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -23,7 +23,7 @@ abstract class ChangeDiffPreviewLocationAction : BooleanPropertyToggleAction() {
     super.update(e)
 
     val properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES) ?: return
-    e.presentation.isEnabled = properties.exists(SHOW_DIFF_PREVIEW) && properties[SHOW_DIFF_PREVIEW]
+    e.presentation.isEnabledAndVisible = properties.exists(SHOW_DIFF_PREVIEW) && properties[SHOW_DIFF_PREVIEW]
   }
 
   override fun getProperty(): VcsLogUiProperties.VcsLogUiProperty<Boolean> = DIFF_PREVIEW_VERTICAL_SPLIT

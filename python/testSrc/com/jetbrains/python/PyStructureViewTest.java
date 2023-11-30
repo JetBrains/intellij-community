@@ -66,7 +66,7 @@ public class PyStructureViewTest extends PyTestCase {
   public void testInherited() {
     myFixture.configureByFile(TEST_DIRECTORY + "inherited.py");
     doTest("""
-             -inherited.py
+              -inherited.py
               -C(object)
                f(self, x)
                __str__(self)
@@ -76,8 +76,8 @@ public class PyStructureViewTest extends PyTestCase {
                __new__(cls)
                __setattr__(self, __name, __value)
                __delattr__(self, __name)
-               __eq__(self, __o)
-               __ne__(self, __o)
+               __eq__(self, __value)
+               __ne__(self, __value)
                __repr__(self)
                __hash__(self)
                __format__(self, __format_spec)
@@ -85,8 +85,10 @@ public class PyStructureViewTest extends PyTestCase {
                __sizeof__(self)
                __reduce__(self)
                __reduce_ex__(self, __protocol)
+               __getstate__(self)
                __dir__(self)
                __init_subclass__(cls)
+               __subclasshook__(cls, __subclass)
                __annotations__
                __dict__
                __doc__
@@ -122,8 +124,8 @@ public class PyStructureViewTest extends PyTestCase {
                __new__(cls)
                __setattr__(self, __name, __value)
                __delattr__(self, __name)
-               __eq__(self, __o)
-               __ne__(self, __o)
+               __eq__(self, __value)
+               __ne__(self, __value)
                __str__(self)
                __repr__(self)
                __hash__(self)
@@ -132,8 +134,10 @@ public class PyStructureViewTest extends PyTestCase {
                __sizeof__(self)
                __reduce__(self)
                __reduce_ex__(self, __protocol)
+               __getstate__(self)
                __dir__(self)
                __init_subclass__(cls)
+               __subclasshook__(cls, __subclass)
                __annotations__
                __dict__
                __doc__

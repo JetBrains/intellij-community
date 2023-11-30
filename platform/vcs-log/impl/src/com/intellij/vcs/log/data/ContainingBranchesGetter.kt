@@ -32,11 +32,10 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
   private val cache = Caffeine.newBuilder()
     .maximumSize(2000)
     .build<CommitId, List<String>>()
-  private val conditionsCache: CurrentBranchConditionCache
+  private val conditionsCache = CurrentBranchConditionCache(logData, parentDisposable)
   private var currentBranchesChecksum = 0
 
   init {
-    conditionsCache = CurrentBranchConditionCache(logData, parentDisposable)
     taskExecutor = SequentialLimitedLifoExecutor(parentDisposable, 10, CachingTask::run)
     logData.addDataPackChangeListener { dataPack: DataPack ->
       val checksum = dataPack.refsModel.branches.hashCode()
@@ -163,7 +162,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
                                                  root: VirtualFile, hash: Hash): List<String>
   }
 
-  private inner class GraphTask constructor(provider: VcsLogProvider, root: VirtualFile, hash: Hash, dataPack: DataPack) :
+  private inner class GraphTask(provider: VcsLogProvider, root: VirtualFile, hash: Hash, dataPack: DataPack) :
     Task(provider, root, hash) {
 
     private val graph = dataPack.permanentGraph

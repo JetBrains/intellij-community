@@ -62,6 +62,7 @@
    },
    {
     name-part: "keydown",
+    display-name: "event",
     symbol: {
      matchedName: "js/ng-custom-events/<pattern>",
      name: "Extended key events",
@@ -79,6 +80,7 @@
    },
    {
     name-part: ".",
+    display-name: "event",
     symbol: {
      matchedName: "js/ng-custom-events/<pattern>",
      name: "Extended key events",

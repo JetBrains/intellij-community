@@ -1,36 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MoveClassToSeparateFileFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance(MoveClassToSeparateFileFix.class);
-
-  private final PsiClass myClass;
-
+public class MoveClassToSeparateFileFix extends PsiUpdateModCommandAction<PsiClass> {
   public MoveClassToSeparateFileFix(@NotNull PsiClass aClass) {
-    myClass = aClass;
-  }
-
-  @Override
-  @NotNull
-  public String getText() {
-    return QuickFixBundle.message("move.class.to.separate.file.text", myClass.getName());
+    super(aClass);
   }
 
   @Override
@@ -40,53 +27,33 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
-    if  (!myClass.isValid() || !BaseIntentionAction.canModify(myClass)) return false;
-    PsiDirectory dir = file.getContainingDirectory();
-    if (dir == null) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiClass aClass) {
+    PsiDirectory dir = context.file().getContainingDirectory();
+    if (dir == null) return null;
     try {
-      JavaDirectoryServiceImpl.checkCreateClassOrInterface(dir, myClass.getName());
+      JavaDirectoryServiceImpl.checkCreateClassOrInterface(dir, aClass.getName());
     }
     catch (IncorrectOperationException e) {
-      return false;
+      return null;
     }
 
-    return true;
-  }
-
-  @NotNull
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myClass;
+    return Presentation.of(QuickFixBundle.message("move.class.to.separate.file.text", aClass.getName()));
   }
 
   @Override
-  public void invoke(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
-    PsiDirectory dir = file.getContainingDirectory();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass myClass, @NotNull ModPsiUpdater updater) {
+    PsiDirectory dir = updater.getWritable(context.file().getContainingDirectory());
     String name = myClass.getName();
+    if (name == null) return;
     JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
     PsiClass placeHolder = myClass.isInterface() ? directoryService.createInterface(dir, name) : directoryService.createClass(dir, name);
-    WriteAction.run(() -> {
-      PsiClass newClass = (PsiClass)placeHolder.replace(myClass);
-      myClass.delete();
-
-      Navigatable descriptor = PsiNavigationSupport.getInstance().createNavigatable(project,
-                                                                                    newClass.getContainingFile()
-                                                                                            .getVirtualFile(),
-                                                                                    newClass.getTextOffset());
-      descriptor.navigate(true);
-    });
+    PsiClass newClass = (PsiClass)placeHolder.replace(myClass);
+    myClass.delete();
+    updater.moveTo(newClass.getContainingFile());
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiClass classInCopy = PsiTreeUtil.findSameElementInCopy(myClass, file);
-    return IntentionPreviewInfo.movePsi(classInCopy, myClass.getContainingFile().getContainingDirectory());
+  protected @NotNull IntentionPreviewInfo generatePreview(ActionContext context, PsiClass myClass) {
+    return IntentionPreviewInfo.movePsi(myClass, myClass.getContainingFile().getContainingDirectory());
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
 }

@@ -26,7 +26,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
 
   @NotNull
   public static final Set<String> NAMEDTUPLE_SPECIAL_ATTRIBUTES =
-    ImmutableSet.of("_make", "_asdict", "_replace", "_source", "_fields", "_field_types", "_field_defaults");
+    ImmutableSet.of("_make", "_asdict", "_replace", "_fields", "_field_types", "_field_defaults");
 
   @NotNull
   private final String myName;

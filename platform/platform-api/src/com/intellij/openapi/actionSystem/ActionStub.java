@@ -106,9 +106,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   }
 
   public static void copyTemplatePresentation(Presentation sourcePresentation, Presentation targetPresentation) {
-    if (targetPresentation.getIcon() == null && sourcePresentation.getIcon() != null) {
-      targetPresentation.setIcon(sourcePresentation.getIcon());
-    }
+    targetPresentation.copyIconIfUnset(sourcePresentation);
     if (Strings.isEmpty(targetPresentation.getText()) && sourcePresentation.getText() != null) {
       targetPresentation.setTextWithMnemonic(sourcePresentation.getTextWithPossibleMnemonic());
     }

@@ -39,24 +39,24 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.task.ProjectTaskManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.Restarter
-import com.intellij.util.io.inputStream
-import com.intellij.util.io.isDirectory
-import com.intellij.util.io.isFile
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 
 private val LOG = logger<UpdateIdeFromSourcesAction>()
 
-fun updateFromSources(project: Project, beforeRestart: () -> Unit, error: (@DialogMessage String) -> Unit) {
+fun updateFromSources(project: Project, beforeRestart: () -> Unit, error: (@DialogMessage String) -> Unit, restartAutomatically: Boolean) {
+  LOG.debug("Update from sources requested")
   val state = UpdateFromSourcesSettings.getState()
   val devIdeaHome = project.basePath ?: return
   val workIdeHome = state.actualIdePath
-  val restartAutomatically = state.restartAutomatically
   if (!ApplicationManager.getApplication().isRestartCapable && FileUtil.pathsEqual(workIdeHome, PathManager.getHomePath())) {
     return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.ide.cannot.restart"))
   }
@@ -80,14 +80,14 @@ fun updateFromSources(project: Project, beforeRestart: () -> Unit, error: (@Dial
   if (buildEnabledPluginsOnly) {
     val pluginDirectoriesToSkip = LinkedHashSet(state.pluginDirectoriesForDisabledPlugins)
     pluginDirectoriesToSkip.removeAll(
-      PluginManagerCore.getLoadedPlugins().asSequence()
+      PluginManagerCore.loadedPlugins.asSequence()
         .filter { it.isBundled }
         .map { it.pluginPath }
         .filter { it.isDirectory() }
         .map { it.name }
         .toHashSet()
     )
-    PluginManagerCore.getPlugins()
+    PluginManagerCore.plugins
       .filter { it.isBundled && !it.isEnabled }
       .map { it.pluginPath }
       .filter { it.isDirectory() }
@@ -95,7 +95,7 @@ fun updateFromSources(project: Project, beforeRestart: () -> Unit, error: (@Dial
     val list = pluginDirectoriesToSkip.toMutableList()
     state.pluginDirectoriesForDisabledPlugins = list
     bundledPluginDirsToSkip = list
-    nonBundledPluginDirsToInclude = PluginManagerCore.getPlugins()
+    nonBundledPluginDirsToInclude = PluginManagerCore.plugins
       .asSequence()
       .filter { !it.isBundled && it.isEnabled }
       .map { it.pluginPath }
@@ -306,7 +306,7 @@ private fun restartWithCommand(command: Array<String>, deployDirPath: String, be
     updateNonBundledPlugin(newPluginNode, pluginsDir) { nonBundledPluginsPaths.value[it] }
   }
 
-  Restarter.doNotLockInstallFolderOnRestart()
+  Restarter.setCopyRestarterFiles()
   beforeRestart()
   (ApplicationManagerEx.getApplicationEx() as ApplicationImpl).restart(
     ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE,
@@ -316,7 +316,7 @@ private fun restartWithCommand(command: Array<String>, deployDirPath: String, be
 
 private fun readPluginsDir(pluginsDirPath: Path): List<PluginNode> {
   val pluginsXml = pluginsDirPath.resolve("plugins.xml")
-  if (!pluginsXml.isFile()) {
+  if (!pluginsXml.isRegularFile()) {
     LOG.warn("Cannot read non-bundled plugins from $pluginsXml, they won't be updated")
     return emptyList()
   }
@@ -333,7 +333,7 @@ private fun readPluginsDir(pluginsDirPath: Path): List<PluginNode> {
 }
 
 private fun nonBundledPluginsPaths(): Map<PluginId, Path> {
-  return PluginManagerCore.getLoadedPlugins()
+  return PluginManagerCore.loadedPlugins
     .asSequence()
     .filterNot { it.isBundled }
     .associate { it.pluginId to it.pluginPath }
@@ -342,13 +342,13 @@ private fun nonBundledPluginsPaths(): Map<PluginId, Path> {
 
 private fun updateNonBundledPlugin(
   newDescriptor: PluginNode,
-  pluginsDir: Path,
+  pluginDir: Path,
   oldPluginPathProvider: (PluginId) -> Path?,
 ) {
   assert(!newDescriptor.isBundled)
   val oldPluginPath = oldPluginPathProvider(newDescriptor.pluginId) ?: return
 
-  val newPluginPath = pluginsDir.resolve(newDescriptor.downloadUrl)
+  val newPluginPath = pluginDir.resolve(newDescriptor.downloadUrl)
     .also { LOG.debug("Adding update command: $oldPluginPath to $it") }
 
   PluginInstaller.installAfterRestart(

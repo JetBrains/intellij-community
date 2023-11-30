@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.memory;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
@@ -20,17 +22,17 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
   private final Map<K, ValueContainerImpl<V>> myMap;
 
   public InMemoryIndexStorage(@NotNull KeyDescriptor<K> keyDescriptor) {
-    myMap = IndexStorageUtil.createKeyDescriptorHashedMap(keyDescriptor);
+    myMap = ConcurrentCollectionFactory.createConcurrentMap(IndexStorageUtil.adaptKeyDescriptorToStrategy(keyDescriptor));
   }
 
   @Override
   public boolean processKeys(@NotNull Processor<? super K> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) {
-    return myMap.keySet().stream().allMatch(processor::process);
+    return ContainerUtil.and(myMap.keySet(), processor::process);
   }
 
   @Override
   public void addValue(K k, int inputId, V v) {
-    myMap.computeIfAbsent(k, __ -> new ValueContainerImpl<>()).addValue(inputId, v);
+    myMap.computeIfAbsent(k, __ -> ValueContainerImpl.createNewValueContainer()).addValue(inputId, v);
   }
 
   @Override
@@ -50,7 +52,7 @@ public final class InMemoryIndexStorage<K, V> implements VfsAwareIndexStorage<K,
 
   @Override
   public @NotNull ValueContainer<V> read(K k) throws StorageException {
-    return ObjectUtils.notNull(myMap.get(k), new ValueContainerImpl<>());
+    return ObjectUtils.notNull(myMap.get(k), ValueContainerImpl.createNewValueContainer());
   }
 
   @Override

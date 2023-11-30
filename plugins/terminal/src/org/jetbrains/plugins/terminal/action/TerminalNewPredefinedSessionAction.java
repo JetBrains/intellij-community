@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
+public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
 
   public TerminalNewPredefinedSessionAction() {
     super(TerminalBundle.messagePointer("action.NewPredefinedSession.label"));
@@ -153,7 +153,7 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     return null;
   }
 
-  private static class TerminalSettingsAction extends DumbAwareAction {
+  private static final class TerminalSettingsAction extends DumbAwareAction {
 
     private TerminalSettingsAction() {
       super(IdeBundle.message("action.text.settings"), null, AllIcons.General.Settings);
@@ -168,7 +168,7 @@ public class TerminalNewPredefinedSessionAction extends DumbAwareAction {
     }
   }
 
-  private static class OpenShellAction extends DumbAwareAction {
+  private static final class OpenShellAction extends DumbAwareAction {
 
     private final List<String> myCommand;
     private final Supplier<@NlsActions.ActionText String> myPresentableName;

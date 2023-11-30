@@ -36,6 +36,8 @@
       <categoryKey>inspection.group.name.regexp</categoryKey>
     </intentionAction>
 
+    <inspection.basicVisitor class="org.intellij.lang.regexp.psi.RegExpElementVisitor"/>
+
     <localInspection shortName="CustomRegExpInspection" enabledByDefault="true" level="NON_SWITCHABLE_WARNING" dynamicGroup="true"
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.custom.regexp"
                      implementationClass="org.intellij.lang.regexp.inspection.custom.CustomRegExpInspection" language=""/>

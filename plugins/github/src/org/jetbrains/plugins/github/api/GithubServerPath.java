@@ -81,7 +81,7 @@ public final class GithubServerPath implements ServerPath {
   /**
    * @deprecated use an util method directly
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean matches(@NotNull String gitRemoteUrl) {
     return GitHostingUrlUtil.match(toURI(), gitRemoteUrl);
   }

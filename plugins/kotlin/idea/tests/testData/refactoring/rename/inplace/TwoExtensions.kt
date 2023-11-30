@@ -1,3 +1,5 @@
+// NEW_NAME: example
+// RENAME: member
 class Foo
 class Bar
 

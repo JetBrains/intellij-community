@@ -52,6 +52,9 @@ fun <T> buildTargetPopup(
   presentationProvider: Function<in T, out TargetPresentation>,
   processor: Consumer<in T>
 ): IPopupChooserBuilder<T> {
+  require(items.size > 1) {
+    "Attempted to build a target popup with ${items.size} elements"
+  }
   return buildTargetPopupWithMultiSelect(items, presentationProvider, Predicate { processor.accept(it); return@Predicate false })
 }
 
@@ -61,9 +64,6 @@ fun <T> buildTargetPopupWithMultiSelect(
   presentationProvider: Function<in T, out TargetPresentation>,
   predicate: Predicate<in T>
 ): IPopupChooserBuilder<T> {
-  require(items.size > 1) {
-    "Attempted to build a target popup with ${items.size} elements"
-  }
   return JBPopupFactory.getInstance()
     .createPopupChooserBuilder(items)
     .setRenderer(RoundedCellRenderer(createTargetPresentationRenderer(presentationProvider)))
@@ -74,6 +74,7 @@ fun <T> buildTargetPopupWithMultiSelect(
     }.setItemsChosenCallback { set -> set.all { predicate.test(it) } }
 }
 
+@Deprecated("Use GotoTargetRendererNew instead")
 fun <T> createTargetPresentationRenderer(presentationProvider: Function<in T, out TargetPresentation>): ListCellRenderer<T> {
   return if (UISettings.getInstance().showIconInQuickNavigation) {
     TargetPresentationRenderer(presentationProvider)

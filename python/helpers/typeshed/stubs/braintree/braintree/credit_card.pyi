@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from braintree.address import Address as Address
@@ -44,9 +45,9 @@ class CreditCard(Resource):
     Prepaid: Any
     ProductId: Any
     @staticmethod
-    def create(params: Any | None = ...): ...
+    def create(params: Incomplete | None = None): ...
     @staticmethod
-    def update(credit_card_token, params: Any | None = ...): ...
+    def update(credit_card_token, params: Incomplete | None = None): ...
     @staticmethod
     def delete(credit_card_token): ...
     @staticmethod

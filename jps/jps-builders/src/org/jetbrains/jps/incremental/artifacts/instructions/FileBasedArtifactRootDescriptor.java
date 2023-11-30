@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collections;
 
-public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
+public final class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private static final Logger LOG = Logger.getInstance(FileBasedArtifactRootDescriptor.class);
   private final FileCopyingHandler myCopyingHandler;
 
@@ -99,7 +99,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     outSrcMapping.appendData(targetPath, rootIndex, filePath);
   }
 
-  private static class CompositeSourceFileFilter extends SourceFileFilter {
+  private static final class CompositeSourceFileFilter extends SourceFileFilter {
     private final SourceFileFilter myBaseFilter;
     private final FileFilter myFilter;
 

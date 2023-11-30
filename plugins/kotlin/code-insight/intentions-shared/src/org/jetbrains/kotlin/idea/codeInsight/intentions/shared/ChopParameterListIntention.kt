@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-abstract class AbstractChopListIntention<TList : KtElement, TElement : KtElement>(
+internal abstract class AbstractChopListIntention<TList : KtElement, TElement : KtElement>(
     listClass: Class<TList>,
     private val elementClass: Class<TElement>,
     textGetter: () -> String
@@ -91,7 +91,7 @@ abstract class AbstractChopListIntention<TList : KtElement, TElement : KtElement
     }
 }
 
-class ChopParameterListIntention : AbstractChopListIntention<KtParameterList, KtParameter>(
+internal class ChopParameterListIntention : AbstractChopListIntention<KtParameterList, KtParameter>(
     KtParameterList::class.java,
     KtParameter::class.java,
     KotlinBundle.lazyMessage("put.parameters.on.separate.lines")
@@ -110,7 +110,7 @@ class ChopParameterListIntention : AbstractChopListIntention<KtParameterList, Kt
     }
 }
 
-class ChopArgumentListIntention : AbstractChopListIntention<KtValueArgumentList, KtValueArgument>(
+internal class ChopArgumentListIntention : AbstractChopListIntention<KtValueArgumentList, KtValueArgument>(
     KtValueArgumentList::class.java,
     KtValueArgument::class.java,
     KotlinBundle.lazyMessage("put.arguments.on.separate.lines")

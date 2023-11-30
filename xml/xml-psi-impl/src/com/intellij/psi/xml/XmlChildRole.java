@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.xml;
 
 import com.intellij.lang.ASTNode;
@@ -22,8 +22,7 @@ public interface XmlChildRole {
 
   RoleFinder CLOSING_TAG_NAME_FINDER = new RoleFinder() {
     @Override
-    @Nullable
-    public ASTNode findChild(@NotNull ASTNode parent) {
+    public @Nullable ASTNode findChild(@NotNull ASTNode parent) {
       final PsiElement element = XmlTagUtil.getEndTagNameElement((XmlTag)parent.getPsi());
       return element == null ? null : element.getNode();
     }

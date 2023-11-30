@@ -37,6 +37,7 @@
    },
    {
     name-part: "foo-",
+    display-name: "property name",
     symbol: {
      matchedName: "html/fixed-attrs/<pattern>",
      name: "Nested",
@@ -54,6 +55,7 @@
    },
    {
     name-part: "FOO-BAR",
+    display-name: "property name",
     symbol: {
      matchedName: "html/attributes/foo-bar",
      origin: "web-components@1.0.0 (<none>)",

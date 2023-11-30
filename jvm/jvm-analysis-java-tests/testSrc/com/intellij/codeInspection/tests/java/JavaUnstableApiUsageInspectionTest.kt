@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.UnstableApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.UnstableApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() {
   fun `test java experimental api usages`() {

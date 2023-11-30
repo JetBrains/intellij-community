@@ -2,15 +2,19 @@
 package com.intellij.modcommand;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
+
 /**
- * A support service to handle {@link ModCommand} and {@link ModCommandAction}
+ * A support service for {@link ModCommand} and {@link ModCommandAction}. In general, should not be used directly.
  */
 public interface ModCommandService {
   /**
@@ -21,21 +25,17 @@ public interface ModCommandService {
   @NotNull IntentionAction wrap(@NotNull ModCommandAction action);
 
   /**
-   * @param action action to wrap
-   * @return the action adapted to {@link LocalQuickFix} interface. The adapter is not perfect. In particular,
-   * its {@link LocalQuickFix#getName()} simply returns the result of {@link ModCommandAction#getFamilyName()}. If the client
-   * of the quick-fix is ModCommand-aware, it can use {@link #unwrap(LocalQuickFix)} to get
-   * the action back.
-   * @see ModCommandAction#asQuickFix()
+   * @param action     action
+   * @param psiElement context PsiElement
+   * @return an {@link IntentionAction} wrapper that adapts this action to the old code which requires {@code LocalQuickFixAndIntentionActionOnPsiElement}.
    */
-  @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action);
+  @NotNull LocalQuickFixAndIntentionActionOnPsiElement wrapToLocalQuickFixAndIntentionActionOnPsiElement(@NotNull ModCommandAction action,
+                                                                                                         @NotNull PsiElement psiElement);
 
   /**
-   * @param action {@link IntentionAction}
-   * @return a {@link ModCommandAction} which is wrapped inside the supplied intention action; null if the supplied intention action
-   * does not wrap a {@code ModCommandAction}.
+   * Implementation of {@link LocalQuickFix#from(ModCommandAction)}. Should not be used directly
    */
-  @Nullable ModCommandAction unwrap(@NotNull IntentionAction action);
+  @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action);
 
   /**
    * @param fix {@link LocalQuickFix}
@@ -45,21 +45,23 @@ public interface ModCommandService {
   @Nullable ModCommandAction unwrap(@NotNull LocalQuickFix fix);
 
   /**
-   * Executes given {@link ModCommand} interactively (may require user input, navigate into editors, etc.).
-   * 
-   * @param project current project
-   * @param command a command to execute
+   * Implementation of ModCommand.psiUpdate; should not be used directly.
    */
-  @RequiresEdt
-  void executeInteractively(@NotNull Project project, @NotNull ModCommand command);
+  @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
+                                @NotNull Consumer<@NotNull ModPsiUpdater> updater);
 
   /**
-   * Executes given {@link ModCommand} in batch (applies default options, do not navigate) 
-   *
-   * @param project current project
-   * @param command a command to execute
+   * Implementation of ModCommand.updateOption; should not be used directly 
    */
-  void executeInBatch(@NotNull Project project, @NotNull ModCommand command);
+  <T extends InspectionProfileEntry> @NotNull ModCommand updateOption(
+    @NotNull PsiElement context, @NotNull T inspection, @NotNull Consumer<@NotNull T> updater);
+
+  /**
+   * @param modCommand {@link ModCommand} to generate preview for
+   * @param context context in which the action is about to be executed
+   * @return default preview for a given ModCommand
+   */
+  @NotNull IntentionPreviewInfo getPreview(@NotNull ModCommand modCommand, @NotNull ActionContext context);
 
   /**
    * @return an instance of this service

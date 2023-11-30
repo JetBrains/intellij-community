@@ -1,5 +1,7 @@
 import pack.KtClass
 
+// IGNORE_K2
+
 fun foo() {
     KtClass()<caret>
 }

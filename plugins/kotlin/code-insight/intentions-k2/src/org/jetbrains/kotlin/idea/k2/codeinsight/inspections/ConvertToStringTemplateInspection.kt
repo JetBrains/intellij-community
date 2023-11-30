@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -18,10 +21,16 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.isFirstStringPlusExpress
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-internal class ConvertToStringTemplateInspection : AbstractKotlinApplicableInspectionWithContext<KtBinaryExpression, ConvertToStringTemplateInspection.Context>(
-    KtBinaryExpression::class
-) {
+internal class ConvertToStringTemplateInspection : AbstractKotlinApplicableInspectionWithContext<KtBinaryExpression, ConvertToStringTemplateInspection.Context>() {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+        return object : KtVisitorVoid() {
+            override fun visitBinaryExpression(expression: KtBinaryExpression) {
+                visitTargetElement(expression, holder, isOnTheFly)
+            }
+        }
+    }
     class Context(val replacement: SmartPsiElementPointer<KtStringTemplateExpression>)
 
     override fun apply(element: KtBinaryExpression, context: Context, project: Project, editor: Editor?) {

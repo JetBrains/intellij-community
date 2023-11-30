@@ -3,7 +3,7 @@ package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.ui.popup.AbstractPopup
 
-internal interface PopupBoundsHandler {
+interface PopupBoundsHandler {
 
   fun showPopup(popup: AbstractPopup)
 

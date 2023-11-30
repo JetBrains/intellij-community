@@ -28,17 +28,19 @@ internal const val PRIMARY_GROUP_ID: String = "Documentation.PrimaryGroup"
 internal const val TOGGLE_SHOW_IN_POPUP_ACTION_ID: String = "Documentation.ToggleShowInPopup"
 internal const val TOGGLE_AUTO_SHOW_ACTION_ID: String = "Documentation.ToggleAutoShow"
 internal const val TOGGLE_AUTO_UPDATE_ACTION_ID: String = "Documentation.ToggleAutoUpdate"
+internal const val NAVIGATION_GROUP_ID: String = "Documentation.Navigation"
+internal const val EDIT_SOURCE_ACTION_ID: String = "Documentation.EditSource"
 
 internal fun primaryActions(): List<AnAction> = groupActions(PRIMARY_GROUP_ID)
 internal fun navigationActions(): List<AnAction> = groupActions("Documentation.Navigation")
 private fun groupActions(groupId: String) = listOf(*requireNotNull(ActionUtil.getActionGroup(groupId)).getChildren(null))
 
 internal fun registerBackForwardActions(component: JComponent) {
-  EmptyAction.registerWithShortcutSet("Documentation.Back", CustomShortcutSet(
+  ActionUtil.wrap("Documentation.Back").registerCustomShortcutSet(CustomShortcutSet(
     KeyboardShortcut.fromString(if (ScreenReader.isActive()) "alt LEFT" else "LEFT"),
     KeymapUtil.parseMouseShortcut("button4"),
   ), component)
-  EmptyAction.registerWithShortcutSet("Documentation.Forward", CustomShortcutSet(
+    ActionUtil.wrap("Documentation.Forward").registerCustomShortcutSet(CustomShortcutSet(
     KeyboardShortcut.fromString(if (ScreenReader.isActive()) "alt RIGHT" else "RIGHT"),
     KeymapUtil.parseMouseShortcut("button5")
   ), component)

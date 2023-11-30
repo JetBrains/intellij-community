@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.focus;
 
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class FocusTracesDialog extends DialogWrapper {
+public final class FocusTracesDialog extends DialogWrapper {
   private final JBTable myRequestsTable;
   private final List<FocusRequestInfo> myRequests;
   private static final String[] COLUMNS = {"Time", "Forced", "Component"};
@@ -141,7 +141,7 @@ public class FocusTracesDialog extends DialogWrapper {
     drawer.setDone();
   }
 
-  class BorderDrawer extends Thread {
+  final class BorderDrawer extends Thread {
     Component prev = null;
     private volatile boolean running = true;
     BorderDrawer() {

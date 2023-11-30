@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.ExecutionException;
@@ -29,16 +29,17 @@ import java.util.concurrent.Future;
 public final class Helpers {
   private static final Logger LOG = Logger.getInstance(Helpers.class);
   private static final String MODEL_ID_PREFIX = "Model Identifier:";
-  @NonNls private static final String TB_SERVER_PROCESS = "TouchBarServer";
+  private static final @NonNls String TB_SERVER_PROCESS = "TouchBarServer";
   private static final boolean FORCE_PHYSICAL_ESC = Boolean.getBoolean("touchbar.physical.esc");
   private static Boolean ourIsPhysicalEsc = null;
   private static Future<?> ourIsPhysicalEscFuture = null;
 
   static void emulateKeyPress(int javaKeyEventCode) {
-    Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
+    EventQueue systemEventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    systemEventQueue.postEvent(
       new KeyEvent(new JPanel(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, javaKeyEventCode, KeyEvent.CHAR_UNDEFINED)
     );
-    Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
+    systemEventQueue.postEvent(
       new KeyEvent(new JPanel(), KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, javaKeyEventCode, KeyEvent.CHAR_UNDEFINED)
     );
   }
@@ -83,7 +84,8 @@ public final class Helpers {
       final ID dict = Foundation.invoke(bundle, "infoDictionary");
       final ID nsAppID = Foundation.invoke(dict, "objectForKey:", Foundation.nsString("CFBundleIdentifier"));
       appId = Foundation.toStringViaUTF8(nsAppID);
-    } finally {
+    }
+    finally {
       Foundation.invoke(nativePool, "release");
     }
 
@@ -95,8 +97,9 @@ public final class Helpers {
   }
 
   public static boolean isPhisycalEsc() {
-    if (FORCE_PHYSICAL_ESC)
+    if (FORCE_PHYSICAL_ESC) {
       return true;
+    }
 
     if (ourIsPhysicalEsc != null) {
       return ourIsPhysicalEsc;
@@ -144,10 +147,11 @@ public final class Helpers {
       final GeneralCommandLine cmdLine = new GeneralCommandLine("system_profiler", TB_SERVER_PROCESS);
       cmdLine.addParameter("SPHardwareDataType");
       try {
-        final ProcessOutput out = ExecUtil.execAndGetOutput(cmdLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM));
+        final ProcessOutput out =
+          ExecUtil.execAndGetOutput(cmdLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM));
         LOG.debug("SPHardwareDataType output:");
-        for (String line: out.getStdoutLines(true)) {
-          LOG.debug("\t"+line);
+        for (String line : out.getStdoutLines(true)) {
+          LOG.debug("\t" + line);
           String tline = line.trim();
           if (tline.startsWith(MODEL_ID_PREFIX)) {
             // FIXME: need to get output for 16-inch macbook and ensure correctness
@@ -155,7 +159,7 @@ public final class Helpers {
             ourIsPhysicalEsc = model.contains("16") || model.equals("MacBookPro17,1");
           }
         }
-        LOG.debug("\tourIsPhysicalEsc="+ourIsPhysicalEsc);
+        LOG.debug("\tourIsPhysicalEsc=" + ourIsPhysicalEsc);
       }
       catch (ExecutionException e) {
         LOG.debug(e);

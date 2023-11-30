@@ -12,7 +12,7 @@ class GitCommitShaWithPatches(val sha: String, val parents: List<String>, val pa
     return sha == other.sha
   }
 
-  override fun hashCode(): Int {
-    return sha.hashCode()
-  }
+  override fun hashCode(): Int = sha.hashCode()
+
+  override fun toString(): String = "GitCommitShaWithPatches(sha='$sha', parents=$parents, patches=$patches)"
 }

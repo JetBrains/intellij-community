@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.RecentProjectsManager
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
@@ -21,26 +20,21 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl.FrameHelper
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.ui.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Rectangle
 import java.awt.Window
@@ -59,7 +53,7 @@ private val LOG: Logger
 open class ProjectFrameHelper internal constructor(
   val frame: IdeFrameImpl,
   loadingState: FrameLoadingState? = null,
-) : IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
+) : IdeFrameEx, AccessibleContextAccessor, DataProvider {
   constructor(frame: IdeFrameImpl) : this(frame = frame, loadingState = null)
 
   private val isUpdatingTitle = AtomicBoolean()
@@ -87,8 +81,7 @@ open class ProjectFrameHelper internal constructor(
     rootPane = createIdeRootPane(loadingState)
     frame.doSetRootPane(rootPane)
     // NB!: the root pane must be set before decorator, which holds its own client properties in a root pane
-    @Suppress("LeakingThis")
-    frameDecorator = IdeFrameDecorator.decorate(frame, rootPane.glassPane as IdeGlassPane, this)
+    frameDecorator = rootPane.createDecorator()
     frame.setFrameHelper(object : FrameHelper {
       override fun getData(dataId: String) = this@ProjectFrameHelper.getData(dataId)
 
@@ -117,7 +110,7 @@ open class ProjectFrameHelper internal constructor(
           frame.doDispose()
         }
         else {
-          Disposer.dispose(this@ProjectFrameHelper)
+          this@ProjectFrameHelper.dispose()
         }
       }
     })
@@ -155,7 +148,7 @@ open class ProjectFrameHelper internal constructor(
   }
 
   protected open fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
-    return IdeRootPane(frame = frame, parentDisposable = this, loadingState = loadingState)
+    return IdeRootPane(frame = frame, loadingState = loadingState)
   }
 
   private val isInitialized = AtomicBoolean()
@@ -180,7 +173,7 @@ open class ProjectFrameHelper internal constructor(
     }
     else {
       if (SystemInfoRt.isLinux) {
-        IdeMenuBar.installAppMenuIfNeeded(frame)
+        installAppMenuIfNeeded(frame)
       }
 
       // in production (not from sources) it makes sense only on Linux
@@ -342,14 +335,14 @@ open class ProjectFrameHelper internal constructor(
   }
 
   open suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
-    rootPane.statusBar!!.init(project)
+    rootPane.statusBar!!.init(project, frame)
   }
 
   fun appClosing() {
     frameDecorator?.appClosing()
   }
 
-  override fun dispose() {
+  open fun dispose() {
     MouseGestureManager.getInstance().remove(this)
     balloonLayout?.let {
       balloonLayout = null
@@ -387,7 +380,9 @@ open class ProjectFrameHelper internal constructor(
       return CompletableDeferred(value = Unit)
     }
     else {
-      return frameDecorator.toggleFullScreen(state).asDeferred()
+      return rootPane.coroutineScope.launch {
+        frameDecorator.toggleFullScreen(state)
+      }
     }
   }
 

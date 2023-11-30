@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.dow
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFileToCacheLocation
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.verbose
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
@@ -22,13 +23,24 @@ import java.util.concurrent.*
 
 object ClassesFromCompileInc {
   const val MANIFEST_JSON_URL_ENV_NAME = "JPS_BOOTSTRAP_MANIFEST_JSON_URL"
+  const val MANIFEST_JSON_HTTP_USERNAME_ENV_NAME = "JPS_BOOTSTRAP_MANIFEST_JSON_HTTP_USERNAME"
+  const val MANIFEST_JSON_HTTP_PASSWORD_ENV_NAME = "JPS_BOOTSTRAP_MANIFEST_JSON_HTTP_PASSWORD"
 
   @Throws(IOException::class, InterruptedException::class)
-  fun downloadProjectClasses(project: JpsProject, communityRoot: BuildDependenciesCommunityRoot, modules: Collection<JpsModule?>?) {
+  fun downloadProjectClasses(project: JpsProject, communityRoot: BuildDependenciesCommunityRoot, modules: Collection<JpsModule>) {
     val manifestUrl = System.getenv(MANIFEST_JSON_URL_ENV_NAME)
-    check(!(manifestUrl == null || manifestUrl.isBlank())) { "Env variable '$MANIFEST_JSON_URL_ENV_NAME' is missing or empty" }
-    verbose("Got manifest json url '$manifestUrl' from $$MANIFEST_JSON_URL_ENV_NAME")
-    val manifest = downloadFileToCacheLocation(communityRoot, URI.create(manifestUrl))
+    check(!manifestUrl.isNullOrBlank()) { "Env variable '$MANIFEST_JSON_URL_ENV_NAME' is missing or empty" }
+    verbose("Got manifest json url '$manifestUrl' from $MANIFEST_JSON_URL_ENV_NAME")
+    val manifestHttpUsername = System.getenv(MANIFEST_JSON_HTTP_USERNAME_ENV_NAME)
+    val manifestHttpPassword = System.getenv(MANIFEST_JSON_HTTP_PASSWORD_ENV_NAME)
+    check(manifestHttpUsername.isNullOrBlank() == manifestHttpPassword.isNullOrBlank()) { "Both env. variables '$MANIFEST_JSON_HTTP_USERNAME_ENV_NAME' and '$MANIFEST_JSON_HTTP_PASSWORD_ENV_NAME' must be either set or not" }
+
+    val manifest = if (manifestHttpUsername.isNullOrBlank()) {
+      downloadFileToCacheLocation(communityRoot, URI.create(manifestUrl))
+    }
+    else {
+      downloadFileToCacheLocation(communityRoot, URI.create(manifestUrl), manifestHttpUsername, manifestHttpPassword)
+    }
     val productionModuleOutputs = downloadProductionPartsFromMetadataJson(manifest, communityRoot, modules)
     assignModuleOutputs(project, productionModuleOutputs)
   }
@@ -48,22 +60,26 @@ object ClassesFromCompileInc {
     }
   }
 
-  private fun downloadProductionPartsFromMetadataJson(metadataJson: Path, communityRoot: BuildDependenciesCommunityRoot, modules: Collection<JpsModule?>?): Map<JpsModule, Path> {
+  private fun downloadProductionPartsFromMetadataJson(metadataJson: Path, communityRoot: BuildDependenciesCommunityRoot, modules: Collection<JpsModule>): Map<JpsModule, Path> {
     var partsMetadata: CompilationPartsMetadata
     Files.newBufferedReader(metadataJson, StandardCharsets.UTF_8).use { manifestReader -> partsMetadata = Gson().fromJson(manifestReader, CompilationPartsMetadata::class.java) }
-    check(partsMetadata.files!!.isNotEmpty()) { "partsMetadata.files is empty, check $metadataJson" }
+    check(partsMetadata.files?.isNotEmpty() == true) { "partsMetadata.files is empty, check $metadataJson" }
     val tasks: MutableList<Callable<Pair<JpsModule, Path>>> = ArrayList()
-    for (module in modules!!) {
-      val c = Callable {
-        val modulePrefix = "production/" + module!!.name
-        val hash = partsMetadata.files!![modulePrefix]
-          ?: throw IllegalStateException("Unable to find module output by name '$modulePrefix' in $metadataJson")
+    for (module in modules) {
+      val modulePrefix = "production/" + module.name
+      val hash = partsMetadata.files?.get(modulePrefix)
+      if (hash == null) {
+        check(module.getSourceRoots(JavaSourceRootType.SOURCE).none()) {
+          "Unable to find module output by name '$modulePrefix' in $metadataJson"
+        }
+        continue
+      }
+      tasks += Callable {
         val outputPartUri = URI.create(partsMetadata.serverUrl + "/" + partsMetadata.prefix + "/" + modulePrefix + "/" + hash + ".jar")
         val outputPart = downloadFileToCacheLocation(communityRoot, outputPartUri)
         val outputPartExtracted = extractFileToCacheLocation(communityRoot, outputPart)
         module to outputPartExtracted
       }
-      tasks.add(c)
     }
     return JpsBootstrapUtil.executeTasksInParallel(tasks).associate { it.first to it.second }
   }

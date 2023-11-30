@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -44,7 +44,7 @@ abstract class CommittedChangesPanel(val project: Project) : BorderLayoutPanel()
     browser.setTableContextMenu(group, auxiliaryView?.popupActions.orEmpty())
     browser.addFilter(filterComponent)
 
-    registerWithShortcutSet("CommittedChanges.Refresh", CommonShortcuts.getRerun(), this)
+    ActionUtil.wrap("CommittedChanges.Refresh").registerCustomShortcutSet(CommonShortcuts.getRerun(), this)
   }
 
   abstract fun refreshChanges()

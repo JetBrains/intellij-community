@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang.java6;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -33,7 +33,6 @@ class JarLoader extends Loader {
 
   private final String myFilePath;
   private final ClassPath myConfiguration;
-  private final URL myUrl;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myConfiguration.myCanLockJars==true
   private volatile Map<Resource.Attribute, String> myAttributes;
   private volatile String myClassPathManifestAttribute;
@@ -43,7 +42,6 @@ class JarLoader extends Loader {
 
     myFilePath = filePath;
     myConfiguration = configuration;
-    myUrl = url;
 
     if (!configuration.myLazyClassloadingCaches) {
       // IOException from opening is propagated to caller if zip file isn't valid,
@@ -56,7 +54,7 @@ class JarLoader extends Loader {
   String getClassPathManifestAttribute() {
     loadManifestAttributes();
     String manifestAttribute = myClassPathManifestAttribute;
-    //noinspection StringEquality
+    //noinspection StringEquality,StringNegatedEqualitySSR
     return manifestAttribute != NULL_STRING ? manifestAttribute : null;
   }
 
@@ -85,12 +83,13 @@ class JarLoader extends Loader {
         if (myClassPathManifestAttribute != null) return;
         ZipFile zipFile = getZipFile();
         try {
-          Attributes manifestAttributes = myConfiguration.getManifestData(myUrl);
+          Attributes manifestAttributes = null;
+          ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
+          if (entry != null) {
+            manifestAttributes = loadManifestAttributes(zipFile.getInputStream(entry));
+          }
           if (manifestAttributes == null) {
-            ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
-            if (entry != null) manifestAttributes = loadManifestAttributes(zipFile.getInputStream(entry));
-            if (manifestAttributes == null) manifestAttributes = new Attributes(0);
-            myConfiguration.cacheManifestData(myUrl, manifestAttributes);
+            manifestAttributes = new Attributes(0);
           }
 
           myAttributes = getAttributes(manifestAttributes);
@@ -270,7 +269,7 @@ class JarLoader extends Loader {
 
   protected @NotNull ZipFile getZipFile() throws IOException {
     // This code is executed at least 100K times (O(number of classes needed to load)) and it takes considerable time to open ZipFile's
-    // such number of times so we store reference to ZipFile if we allowed to lock the file (assume it isn't changed)
+    // such number of times, so we store reference to ZipFile if we allowed locking the file (assume it isn't changed)
     if (myConfiguration.myCanLockJars) {
       SoftReference<ZipFile> ref = myZipFileSoftReference;
       ZipFile zipFile = ref == null ? null : ref.get();

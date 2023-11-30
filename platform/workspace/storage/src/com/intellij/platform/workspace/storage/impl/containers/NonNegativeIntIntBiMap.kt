@@ -4,7 +4,7 @@ package com.intellij.platform.workspace.storage.impl.containers
 import it.unimi.dsi.fastutil.ints.*
 import java.util.function.Consumer
 
-class ImmutableNonNegativeIntIntBiMap(
+internal class ImmutableNonNegativeIntIntBiMap(
   override val key2Value: Int2IntMap,
   override val value2Keys: ImmutableNonNegativeIntIntMultiMap.ByList
 ) : NonNegativeIntIntBiMap() {
@@ -14,7 +14,7 @@ class ImmutableNonNegativeIntIntBiMap(
   fun toMutable(): MutableNonNegativeIntIntBiMap = MutableNonNegativeIntIntBiMap(key2Value, value2Keys.toMutable())
 }
 
-class MutableNonNegativeIntIntBiMap private constructor(
+internal class MutableNonNegativeIntIntBiMap private constructor(
   override var key2Value: Int2IntMap,
   override var value2Keys: MutableNonNegativeIntIntMultiMap.ByList,
   private var freezed: Boolean
@@ -88,7 +88,7 @@ class MutableNonNegativeIntIntBiMap private constructor(
   }
 }
 
-sealed class NonNegativeIntIntBiMap {
+internal sealed class NonNegativeIntIntBiMap {
 
   protected abstract val key2Value: Int2IntMap
   protected abstract val value2Keys: NonNegativeIntIntMultiMap

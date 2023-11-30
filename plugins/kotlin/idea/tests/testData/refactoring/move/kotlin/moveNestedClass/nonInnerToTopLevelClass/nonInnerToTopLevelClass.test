@@ -2,5 +2,6 @@
   "mainFile": "test.kt",
   "type": "MOVE_KOTLIN_NESTED_CLASS",
   "targetClass": "test3.D",
-  "withRuntime": "true"
+  "withRuntime": "true",
+  "enabledInK2": "false"
 }

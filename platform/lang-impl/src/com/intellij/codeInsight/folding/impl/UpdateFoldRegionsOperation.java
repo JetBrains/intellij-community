@@ -3,6 +3,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
@@ -26,6 +27,8 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY;
 
 final class UpdateFoldRegionsOperation implements Runnable {
   enum ApplyDefaultStateMode { YES, EXCEPT_CARET_REGION, NO }
@@ -78,8 +81,9 @@ final class UpdateFoldRegionsOperation implements Runnable {
   public void run() {
     EditorFoldingInfo info = EditorFoldingInfo.get(myEditor);
     FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
-    Map<TextRange,Boolean> rangeToExpandStatusMap = new HashMap<>();
+    removeZombieRegions(foldingModel);
 
+    Map<TextRange,Boolean> rangeToExpandStatusMap = new HashMap<>();
     removeInvalidRegions(info, foldingModel, rangeToExpandStatusMap);
 
     Map<FoldRegion, Boolean> shouldExpand = new HashMap<>();
@@ -133,11 +137,13 @@ final class UpdateFoldRegionsOperation implements Runnable {
                                                         descriptor.isNonExpandable());
       if (region == null) continue;
 
-      PsiElement psi = descriptor.getElement().getPsi();
-
-      if (psi == null || !psi.isValid() || !myFile.isValid()) {
-        region.dispose();
-        continue;
+      PsiElement psi;
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-326651, EA-831712")) {
+        psi = descriptor.getElement().getPsi();
+        if (psi == null || !psi.isValid() || !myFile.isValid()) {
+          region.dispose();
+          continue;
+        }
       }
 
       region.setGutterMarkEnabledForSingleLine(descriptor.isGutterMarkEnabledForSingleLine());
@@ -326,6 +332,18 @@ final class UpdateFoldRegionsOperation implements Runnable {
     int regionEndLine = myEditor.getDocument().getLineNumber(region.getEndOffset());
     int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
     return caretLine >= regionStartLine && caretLine <= regionEndLine;
+  }
+
+  private static void removeZombieRegions(@NotNull FoldingModelEx foldingModel) {
+    if (!(foldingModel instanceof FoldingModelImpl) ||
+        (((FoldingModelImpl) foldingModel).getIsZombieRaised().compareAndSet(true, false))) {
+      FoldRegion[] regions = foldingModel.getAllFoldRegions();
+      for (FoldRegion region : regions) {
+        if (Boolean.TRUE.equals(region.getUserData(ZOMBIE_REGION_KEY))) {
+          foldingModel.removeFoldRegion(region);
+        }
+      }
+    }
   }
 
   private static final class FoldingMap extends MultiMap<PsiElement, FoldingUpdate.RegionInfo> {

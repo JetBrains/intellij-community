@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -22,7 +23,8 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.usages.Usage
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.toArray
-import com.intellij.util.indexing.UnindexedFilesUpdater
+import com.intellij.util.indexing.UnindexedFilesScanner
+import org.jetbrains.kotlin.asJava.classes.runReadAction
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.perf.util.ExternalProject
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.disableAllInspections
@@ -105,7 +107,7 @@ class PerformanceSuite {
 
     class ApplicationScope(val rootDisposable: Disposable, val stats: StatsScope) : AutoCloseable {
         val application = initApp(rootDisposable)
-        val jdk: Sdk = initSdk(rootDisposable)
+        val jdk: Sdk = runInEdtAndGet { initSdk(rootDisposable) }
 
         fun project(externalProject: ExternalProject, refresh: Boolean = false, block: ProjectScope.() -> Unit) =
             ProjectScope(ProjectScopeConfig(externalProject, refresh), this).use(block)
@@ -135,10 +137,10 @@ class PerformanceSuite {
                 }
             }
 
-            fixture("src/HelloMain.kt").use { fixture ->
-                fixture.highlight()
+            fixture("src/HelloMain.kt") {
+                highlight()
                     .also {
-                        fixture.checkNoErrors(it)
+                        checkNoErrors(it)
                     }
                     .firstOrNull { it.severity == HighlightSeverity.WARNING }
                     ?: error("`[UNUSED_PARAMETER] Parameter 'args' is never used` has to be highlighted")
@@ -200,12 +202,19 @@ class PerformanceSuite {
         fun editor(path: String) =
             openInEditor(project, path).psiFile.also { openFiles.add(it.virtualFile) }
 
-        fun fixture(path: String, updateScriptDependenciesIfNeeded: Boolean = true): Fixture {
-            return fixture(projectFileByName(project, path).virtualFile, path, updateScriptDependenciesIfNeeded)
+        fun fixture(path: String, f: Fixture.() -> Unit) {
+            fixture(path, updateScriptDependenciesIfNeeded = true, f = f)
+        }
+
+        fun fixture(path: String, updateScriptDependenciesIfNeeded: Boolean = true, f: Fixture.() -> Unit) {
+            runInEdtAndWait {
+                val fixture = fixture(projectFileByName(project, path).virtualFile, path, updateScriptDependenciesIfNeeded)
+                fixture.f()
+            }
         }
 
         fun fixture(file: VirtualFile, fileName: String? = null, updateScriptDependenciesIfNeeded: Boolean = true): Fixture {
-            val fixture = Fixture.openFixture(project, file, fileName)
+            val fixture = runReadAction { Fixture.openFixture(project, file, fileName) }
             openFiles.add(fixture.vFile)
             if (file.name.endsWith(KotlinFileType.EXTENSION)) {
                 assert(fixture.psiFile is KtFile) {
@@ -332,7 +341,7 @@ class PerformanceSuite {
 
                 dispatchAllInvocationEvents()
                 with(DumbService.getInstance(project)) {
-                    UnindexedFilesUpdater(project).queue()
+                    UnindexedFilesScanner(project).queue()
                     completeJustSubmittedTasks()
                 }
                 dispatchAllInvocationEvents()

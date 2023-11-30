@@ -17,7 +17,6 @@ import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
@@ -27,13 +26,14 @@ import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_MANY, false)
     internal val CUSTOMIMLDATA_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
@@ -50,7 +50,7 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
     internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CONTENTROOTS_CONNECTION_ID,
       CUSTOMIMLDATA_CONNECTION_ID,
       GROUPPATH_CONNECTION_ID,
@@ -95,6 +95,7 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
     return connections
   }
 
+
   class Builder(result: ModuleEntityData?) : ModifiableWorkspaceEntityBase<ModuleEntity, ModuleEntityData>(result), ModuleEntity.Builder {
     constructor() : this(ModuleEntityData())
 
@@ -122,7 +123,7 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -466,8 +467,8 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
   var type: String? = null
   lateinit var dependencies: MutableList<ModuleDependencyItem>
 
-  fun isNameInitialized(): Boolean = ::name.isInitialized
-  fun isDependenciesInitialized(): Boolean = ::dependencies.isInitialized
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
+  internal fun isDependenciesInitialized(): Boolean = ::dependencies.isInitialized
 
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
@@ -630,6 +631,10 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
     }
   }
 
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.ModuleEntity") as EntityMetadata
+  }
+
   override fun clone(): ModuleEntityData {
     val clonedEntity = super.clone()
     clonedEntity as ModuleEntityData
@@ -701,24 +706,5 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
     result = 31 * result + type.hashCode()
     result = 31 * result + dependencies.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(ModuleDependencyItem.SdkDependency::class.java)
-    collector.add(ModuleDependencyItem.Exportable::class.java)
-    collector.add(ModuleDependencyItem::class.java)
-    collector.add(LibraryTableId.ModuleLibraryTableId::class.java)
-    collector.add(ModuleDependencyItem.Exportable.LibraryDependency::class.java)
-    collector.add(LibraryId::class.java)
-    collector.add(LibraryTableId::class.java)
-    collector.add(ModuleDependencyItem.DependencyScope::class.java)
-    collector.add(LibraryTableId.GlobalLibraryTableId::class.java)
-    collector.add(ModuleDependencyItem.Exportable.ModuleDependency::class.java)
-    collector.add(ModuleId::class.java)
-    collector.addObject(ModuleDependencyItem.ModuleSourceDependency::class.java)
-    collector.addObject(LibraryTableId.ProjectLibraryTableId::class.java)
-    collector.addObject(ModuleDependencyItem.InheritedSdkDependency::class.java)
-    this.dependencies?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

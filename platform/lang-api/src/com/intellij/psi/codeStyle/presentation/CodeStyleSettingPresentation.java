@@ -14,9 +14,7 @@ import java.util.Map;
 public class CodeStyleSettingPresentation {
 
   public static class SettingsGroup {
-    @Nullable
-    @NlsContexts.Label
-    public final String name;
+    public final @Nullable @NlsContexts.Label String name;
 
     public SettingsGroup(@Nullable @NlsContexts.Label String name) {
       this.name = name;
@@ -41,26 +39,20 @@ public class CodeStyleSettingPresentation {
     }
   }
 
-  @NotNull
-  protected String myFieldName;
+  protected @NotNull String myFieldName;
 
-  @NotNull
-  @NlsContexts.Label
-  protected String myUiName;
+  protected @NotNull @NlsContexts.Label String myUiName;
 
   public CodeStyleSettingPresentation(@NotNull String fieldName, @NotNull @NlsContexts.Label String uiName) {
     myFieldName = fieldName;
     myUiName = uiName;
   }
 
-  @NotNull
-  public String getFieldName() {
+  public @NotNull String getFieldName() {
     return myFieldName;
   }
 
-  @NotNull
-  @NlsContexts.Label
-  public String getUiName() {
+  public @NotNull @NlsContexts.Label String getUiName() {
     return myUiName;
   }
 
@@ -89,8 +81,7 @@ public class CodeStyleSettingPresentation {
    * @param settingsType type to get standard settings for
    * @return mapping setting groups to contained setting presentations
    */
-  @NotNull
-  public static Map<SettingsGroup, List<CodeStyleSettingPresentation>> getStandardSettings(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
+  public static @NotNull Map<SettingsGroup, List<CodeStyleSettingPresentation>> getStandardSettings(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
     return switch (settingsType) {
       case BLANK_LINES_SETTINGS -> CodeStyleSettingsPresentations.getInstance().getBlankLinesStandardSettings();
       case SPACING_SETTINGS -> CodeStyleSettingsPresentations.getInstance().getSpacingStandardSettings();

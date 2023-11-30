@@ -73,12 +73,18 @@ public final class PsiImplUtil {
     if (referenceElement != null) {
       PsiElement resolved = referenceElement.resolve();
       if (resolved != null) {
-        PsiMethod[] methods = ((PsiClass)resolved).findMethodsByName(attributeName, false);
-        for (PsiMethod method : methods) {
-          if (PsiUtil.isAnnotationMethod(method)) {
-            return ((PsiAnnotationMethod)method).getDefaultValue();
-          }
-        }
+        return findAttributeValue((PsiClass)resolved, attributeName);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiAnnotationMemberValue findAttributeValue(@NotNull PsiClass annotationClass, @Nullable @NonNls String attributeName) {
+    PsiMethod[] methods = annotationClass.findMethodsByName(attributeName, false);
+    for (PsiMethod method : methods) {
+      if (PsiUtil.isAnnotationMethod(method)) {
+        return ((PsiAnnotationMethod)method).getDefaultValue();
       }
     }
     return null;
@@ -504,6 +510,9 @@ public final class PsiImplUtil {
    * Checks if the given PSI element is deprecated with annotation or JavaDoc tag.
    * <br>
    * It is suitable for elements other than {@link PsiDocCommentOwner}.
+   * <p>
+   *   Prefer specifying context for more precise check using JavaDeprecationUtils#isDeprecated.
+   * </p>
    */
   public static boolean isDeprecated(@NotNull PsiElement psiElement) {
     if (psiElement instanceof PsiDocCommentOwner) {

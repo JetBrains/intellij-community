@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.application.Topics;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.impl.ProjectUtilCore;
@@ -94,7 +93,7 @@ public final class PsiVFSListener implements BulkFileListener {
           ((FileManagerImpl)psiManager.getFileManager()).processFileTypesChanged(e.getRemovedFileType() != null);
         }
       });
-      connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerListener(project));
+      connection.subscribe(FileDocumentManagerListener.TOPIC, new MyFileDocumentManagerListener(project));
 
       connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override
@@ -647,7 +646,7 @@ public final class PsiVFSListener implements BulkFileListener {
     }
   }
 
-  private static class MyAdditionalLibraryRootListener implements AdditionalLibraryRootsListener {
+  private static final class MyAdditionalLibraryRootListener implements AdditionalLibraryRootsListener {
     private final PsiManagerImpl psiManager;
     private final FileManagerImpl fileManager;
 

@@ -7,15 +7,14 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.impl.Utils.isAsyncDataContext
-import com.intellij.openapi.actionSystem.impl.Utils.wrapToAsyncDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.mapWithProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.navigation.NavigationRequest
@@ -24,6 +23,7 @@ import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.pom.Navigatable
 import com.intellij.util.OverflowSemaphore
 import com.intellij.util.ui.EDT
@@ -46,7 +46,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
       LOG.error("Expected async context, got: $ctx")
       val asyncContext = withContext(Dispatchers.EDT) {
         // hope that context component is still available
-        wrapToAsyncDataContext(ctx)
+        Utils.createAsyncDataContext(ctx)
       }
       navigate(asyncContext, options)
     }

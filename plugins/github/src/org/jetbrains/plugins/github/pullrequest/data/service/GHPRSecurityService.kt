@@ -20,5 +20,4 @@ interface GHPRSecurityService {
   fun isSquashMergeAllowed(): Boolean
 
   fun isMergeForbiddenForProject(): Boolean
-  fun isUserInAnyTeam(slugs: List<String>): Boolean
 }

@@ -8,13 +8,14 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.referenceScope
 import org.jetbrains.kotlin.idea.completion.suppressAutoInsertion
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -30,18 +31,26 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 internal class FirDeclarationFromUnresolvedNameContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
-) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext, weighingContext: WeighingContext) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
+    context(KtAnalysisSession)
+    override fun complete(
+        positionContext: KotlinRawPositionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
         val declaration = positionContext.position.getCurrentDeclarationAtCaret() ?: return
         val referenceScope = referenceScope(declaration) ?: return
 
-        referenceScope.forEachDescendantOfType<KtNameReferenceExpression> { refExpr ->
+        referenceScope.forEachDescendantOfType<KtNameReferenceExpression>(
+            canGoInside = { it !is KtPackageDirective && it !is KtImportDirective }
+        ) { refExpr ->
             ProgressManager.checkCanceled()
             processReference(referenceScope, declaration, refExpr)
         }
     }
 
-    private fun KtAnalysisSession.processReference(
+    context(KtAnalysisSession)
+    private fun processReference(
         referenceScope: KtElement,
         currentDeclarationInFakeFile: KtNamedDeclaration,
         unresolvedRef: KtNameReferenceExpression
@@ -61,7 +70,8 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         }
     }
 
-    private fun KtAnalysisSession.shouldOfferCompletion(
+    context(KtAnalysisSession)
+    private fun shouldOfferCompletion(
         unresolvedRef: KtNameReferenceExpression,
         currentDeclarationInFakeFile: KtNamedDeclaration
     ): Boolean {
@@ -108,7 +118,8 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         return qualifiedExpression.receiverExpression
     }
 
-    private fun KtAnalysisSession.getReceiverType(symbol: KtCallableSymbol): KtType? {
+    context(KtAnalysisSession)
+    private fun getReceiverType(symbol: KtCallableSymbol): KtType? {
         return symbol.receiverType ?: (symbol as? KtCallableSymbol)?.getDispatchReceiverType()
     }
 

@@ -24,8 +24,8 @@ import com.jetbrains.commandInterface.commandLine.CommandLineLanguage;
 import com.jetbrains.commandInterface.commandLine.psi.CommandLineFile;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.toolWindowWithActions.ConsoleWithProcess;
 import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,6 +119,17 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
   }
 
   @Override
+  public void requestFocus() {
+    super.getPreferredFocusableComponent().requestFocus();
+  }
+
+  @Override
+  public void setInputText(@NotNull String query) {
+    super.setInputText(query);
+    getConsoleEditor().getCaretModel().moveToOffset(query.length());
+  }
+
+  @Override
   public void print(@NotNull String text, @NotNull final ConsoleViewContentType contentType) {
     if (myCommandsInfo != null) {
       final Function1<String, String> outputFilter = myCommandsInfo.getOutputFilter();
@@ -138,7 +149,7 @@ final class CommandConsole extends LanguageConsoleImpl implements Consumer<Strin
    */
   @NotNull
   static CommandConsole createConsole(@NotNull final Module module,
-                                      @NotNull final String title,
+                                      @Nls @NotNull final String title,
                                       @Nullable final CommandsInfo commandsInfo) {
     final CommandConsole console = new CommandConsole(module, title, commandsInfo);
     console.setEditable(true);

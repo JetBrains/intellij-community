@@ -41,11 +41,14 @@ import java.util.List;
  * be serialized to an integer, so there is a bijection between {@link Data} and its hashcode. In such
  * cases {@link #myInlineKeysNoMapping} param allows to skip collision resolution paths altogether.
  */
-public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> {
+public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Data> implements DurableDataEnumerator<Data>,
+                                                                                               ScannableDataEnumeratorEx<Data>,
+                                                                                               CleanableStorage {
   private static final int BTREE_PAGE_SIZE;
   private static final int DEFAULT_BTREE_PAGE_SIZE = 32768;
 
-  private static final boolean DO_EXPENSIVE_CHECKS = SystemProperties.getBooleanProperty("idea.persistent.enumerator.do.expensive.checks", false);
+  private static final boolean DO_EXPENSIVE_CHECKS =
+    SystemProperties.getBooleanProperty("idea.persistent.enumerator.do.expensive.checks", false);
   @VisibleForTesting
   public static final String DO_SELF_HEAL_PROP = "idea.persistent.enumerator.do.self.heal";
 
@@ -66,6 +69,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private int myDataPageStart;
   private int myFirstPageStart;
 
+
   private int myDataPageOffset;
   private int myDuplicatedValuesPageStart;
   private int myDuplicatedValuesPageOffset;
@@ -82,7 +86,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private static final int MAX_DATA_SEGMENT_LENGTH = 128;
 
-  protected static int baseVersion() {
+  public static int baseVersion() {
     return 8 + IntToIntBtree.version() + BTREE_PAGE_SIZE + INTERNAL_PAGE_SIZE + MAX_DATA_SEGMENT_LENGTH;
   }
 
@@ -160,7 +164,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       }
       catch (Throwable ignored) {
       }
-      throw new CorruptedException("PersistentEnumerator storage corrupted " + file);
+      throw new CorruptedException("PersistentEnumerator storage corrupted " + file, e);
     }
     finally {
       unlockStorageWrite();
@@ -231,7 +235,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
     List<DataWithOffset> items = new ArrayList<>();
     try {
-      doIterateData((offset, data) -> {
+      iterateData((offset, data) -> {
         items.add(new DataWithOffset(data, offset));
         return true;
       });
@@ -275,6 +279,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   private void initBtree(boolean initial) throws IOException {
+    if (myBTree != null) {
+      myBTree.doClose();
+      myBTree = null;
+    }
     myBTree = new IntToIntBtree(BTREE_PAGE_SIZE, indexFile(myFile), myCollisionResolutionStorage.getStorageLockContext(), initial);
   }
 
@@ -308,7 +316,9 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     assert offset + 4 < MAX_DATA_SEGMENT_LENGTH;
 
     if (toDisk) {
-      if (myFirstPageStart == -1 || myCollisionResolutionStorage.getInt(offset) != value) myCollisionResolutionStorage.putInt(offset, value);
+      if (myFirstPageStart == -1 || myCollisionResolutionStorage.getInt(offset) != value) {
+        myCollisionResolutionStorage.putInt(offset, value);
+      }
     }
     else {
       value = myCollisionResolutionStorage.getInt(offset);
@@ -346,7 +356,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   }
 
   @Override
-  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor, final @Nullable DataFilter filter)
+  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor,
+                                      final @Nullable DataFilter filter)
     throws IOException {
     if (myInlineKeysNoMapping) {
       return traverseAllRecords(new RecordsProcessor() {
@@ -361,6 +372,30 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       });
     }
     return super.processAllDataObject(processor, filter);
+  }
+
+  @Override
+  public boolean forEach(@NotNull ValueReader<? super Data> reader,
+                         @Nullable DataFilter filter) throws IOException {
+    if (myInlineKeysNoMapping) {
+      return traverseAllRecords(new RecordsProcessor() {
+        @Override
+        public boolean process(int recordId) throws IOException {
+          if (filter == null || filter.accept(recordId)) {
+            int currentKey = getCurrentKey();
+            Data data = ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(currentKey);
+            return reader.read(recordId, data);
+          }
+          return true;
+        }
+      });
+    }
+    return super.forEach(reader, filter);
+  }
+
+  @Override
+  public int recordsCount() throws IOException {
+    return myValuesCount;
   }
 
   @Override
@@ -697,7 +732,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     try {
       try {
         LOG.info("Listing corrupted enumerator:");
-        doIterateData((offset, data) -> {
+        iterateData((offset, data) -> {
           LOG.info("Enumerator entry '" + data.toString() + "'");
           return true;
         });
@@ -706,7 +741,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       catch (Throwable throwable) {
         LOG.info(throwable);
       }
-
     }
     finally {
       unlockStorageWrite();
@@ -726,6 +760,12 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
         StorageStatsRegistrar.INSTANCE.unregisterEnumerator(myFile);
       }
     }
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    close();
+    IOUtil.deleteAllFilesStartingWith(myFile);
   }
 
   @Override

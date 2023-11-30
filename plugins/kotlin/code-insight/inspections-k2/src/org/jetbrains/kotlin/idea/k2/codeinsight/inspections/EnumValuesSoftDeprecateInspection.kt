@@ -12,9 +12,10 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 
-class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspectionBase() {
+internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspectionBase() {
 
-    override fun KtAnalysisSession.isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean {
+    context(KtAnalysisSession)
+    override fun isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean {
         return isOptInAllowed(element, annotationClassId, element.languageVersionSettings)
     }
 

@@ -21,7 +21,7 @@ abstract class AbstractBreakpointHighlightingTest : AbstractKotlinSteppingTest()
     }
     else {
       val lambdaText = position!!.file.text.substring(highlightRange.startOffset, highlightRange.endOffset)
-      println("Highlight lambda range: $lambdaText", ProcessOutputTypes.SYSTEM)
+      println("Highlight lambda range: '$lambdaText'", ProcessOutputTypes.SYSTEM)
     }
   }
 

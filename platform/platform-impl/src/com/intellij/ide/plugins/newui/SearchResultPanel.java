@@ -1,13 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.Alarm;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +33,8 @@ public abstract class SearchResultPanel {
   private AtomicBoolean myRunQuery;
   private boolean myEmpty = true;
   private boolean isMarketplace;
+  private boolean isLoading;
+  private SingleAlarm myAnnounceSearchResultsAlarm;
 
   protected Runnable myPostFillGroupCallback;
 
@@ -39,6 +45,7 @@ public abstract class SearchResultPanel {
                            int backTabIndex) {
     this.controller = controller;
     myPanel = panel;
+    myPanel.getAccessibleContext().setAccessibleName(IdeBundle.message("title.search.results"));
     this.tabIndex = tabIndex;
     this.backTabIndex = backTabIndex;
     this.isMarketplace = isMarketplace;
@@ -52,18 +59,15 @@ public abstract class SearchResultPanel {
     }
   }
 
-  @NotNull
-  public PluginsGroupComponent getPanel() {
+  public @NotNull PluginsGroupComponent getPanel() {
     return myPanel;
   }
 
-  @NotNull
-  public PluginsGroup getGroup() {
+  public @NotNull PluginsGroup getGroup() {
     return myGroup;
   }
 
-  @NotNull
-  public JComponent createScrollPane() {
+  public @NotNull JComponent createScrollPane() {
     JBScrollPane pane = new JBScrollPane(myPanel);
     pane.setBorder(JBUI.Borders.empty());
     if (isProgressMode()) {
@@ -72,8 +76,7 @@ public abstract class SearchResultPanel {
     return pane;
   }
 
-  @NotNull
-  public JComponent createVScrollPane() {
+  public @NotNull JComponent createVScrollPane() {
     JBScrollPane pane = (JBScrollPane)createScrollPane();
     pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -93,8 +96,7 @@ public abstract class SearchResultPanel {
     myQuery = "";
   }
 
-  @NotNull
-  public String getQuery() {
+  public @NotNull String getQuery() {
     return StringUtil.defaultIfEmpty(myQuery, "");
   }
 
@@ -153,6 +155,7 @@ public abstract class SearchResultPanel {
             }
           }
 
+          announceSearchResultsWithDelay();
           myPanel.initialSelection(false);
           runPostFillGroupCallback();
           fullRepaint();
@@ -168,6 +171,7 @@ public abstract class SearchResultPanel {
         myPanel.initialSelection(false);
       }
 
+      announceSearchResultsWithDelay();
       runPostFillGroupCallback();
       fullRepaint();
     }
@@ -185,9 +189,11 @@ public abstract class SearchResultPanel {
   private void loading(boolean start) {
     PluginsGroupComponentWithProgress panel = (PluginsGroupComponentWithProgress)myPanel;
     if (start) {
+      isLoading = true;
       panel.startLoading();
     }
     else {
+      isLoading = false;
       panel.stopLoading();
     }
   }
@@ -195,6 +201,9 @@ public abstract class SearchResultPanel {
   public void dispose() {
     if (isProgressMode()) {
       ((PluginsGroupComponentWithProgress)myPanel).dispose();
+    }
+    if (myAnnounceSearchResultsAlarm != null) {
+      Disposer.dispose(myAnnounceSearchResultsAlarm);
     }
   }
 
@@ -215,5 +224,25 @@ public abstract class SearchResultPanel {
     myPanel.doLayout();
     myPanel.revalidate();
     myPanel.repaint();
+  }
+
+  private void announceSearchResultsWithDelay() {
+    if (AccessibleAnnouncerUtil.isSafeAnnouncingAvailable()) {
+      if (myAnnounceSearchResultsAlarm == null) {
+        myAnnounceSearchResultsAlarm =
+          new SingleAlarm(this::announceSearchResults, 250, null, Alarm.ThreadToUse.SWING_THREAD, ModalityState.stateForComponent(myPanel));
+      }
+
+      myAnnounceSearchResultsAlarm.cancelAndRequest();
+    }
+  }
+
+  private void announceSearchResults() {
+    if (myPanel.isShowing() && !isLoading) {
+      String pluginsTabName = IdeBundle.message(isMarketplace ? "plugin.manager.tab.marketplace" : "plugin.manager.tab.installed");
+      String message = IdeBundle.message("plugins.configurable.search.result.0.plugins.found.in.1",
+                                         myGroup.descriptors.size(), pluginsTabName);
+      AccessibleAnnouncerUtil.announce(myPanel, message, false);
+    }
   }
 }

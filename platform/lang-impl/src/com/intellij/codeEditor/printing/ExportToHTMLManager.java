@@ -17,8 +17,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,7 +161,7 @@ final class ExportToHTMLManager {
 
   private static @NotNull Path doPaint(@NotNull Path outDir,
                                        @NotNull HTMLTextPainter textPainter,
-                                       @Nullable Int2ObjectSortedMap<PsiReference> refMap) throws IOException {
+                                       @Nullable Int2ObjectMap<? extends PsiReference> refMap) throws IOException {
     Path htmlFile = outDir.resolve(getHTMLFileName(textPainter.getPsiFile()));
     try (BufferedWriter writer = Files.newBufferedWriter(htmlFile)) {
       textPainter.paint(refMap, writer, true);
@@ -182,9 +182,9 @@ final class ExportToHTMLManager {
         return;
       }
 
-      Int2ObjectRBTreeMap<PsiReference> refMap = null;
+      Int2ObjectMap<PsiReference> refMap = null;
       for (PrintOption printOption : PrintOption.EP_NAME.getExtensionList()) {
-        TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
+        Map<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
         if (map != null) {
           refMap = new Int2ObjectRBTreeMap<>(map);
         }
@@ -255,15 +255,18 @@ final class ExportToHTMLManager {
   }
 
   private final class ExportRunnable implements Runnable {
+    @NotNull
     private final ExportToHTMLSettings myExportToHTMLSettings;
     private final PsiDirectory myPsiDirectory;
+    @NotNull
     private final Path outDir;
+    @NotNull
     private final Project myProject;
 
-    ExportRunnable(ExportToHTMLSettings exportToHTMLSettings,
-                          PsiDirectory psiDirectory,
-                          @NotNull Path outputDirectoryName,
-                          Project project) {
+    ExportRunnable(@NotNull ExportToHTMLSettings exportToHTMLSettings,
+                   PsiDirectory psiDirectory,
+                   @NotNull Path outputDirectoryName,
+                   @NotNull Project project) {
       myExportToHTMLSettings = exportToHTMLSettings;
       myPsiDirectory = psiDirectory;
       outDir = outputDirectoryName;
@@ -320,7 +323,7 @@ final class ExportToHTMLManager {
     }
   }
 
-  static String getHTMLFileName(@NotNull PsiFileSystemItem psiFile) {
+  static @NotNull String getHTMLFileName(@NotNull PsiFileSystemItem psiFile) {
     return psiFile.getVirtualFile().getNameSequence() + ".html";
   }
 }

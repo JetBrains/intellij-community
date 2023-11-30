@@ -46,14 +46,14 @@
     },
     {
       "number": 15,
-      "description": "Full Line local model",
+      "description": "Full Line - Inline independent DROP UNKNOWN RED CODE",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
     },
     {
       "number": 16,
-      "description": "Full Line trigger model",
+      "description": "Full Line - Inline with trigger model",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
@@ -78,6 +78,13 @@
       "useMLRanking": false,
       "showArrows": false,
       "calculateFeatures": true
+    },
+    {
+      "number": 22,
+      "description": "Full Line - Inline independent",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
     }
   ],
   "languages": [
@@ -90,13 +97,13 @@
     {
       "id": "python",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12, 13, 15, 16 ],
+      "includeGroups": [13, 15, 16, 15, 16, 22, 22, 13],
       "shouldLogElementFeatures": true
     },
     {
       "id": "kotlin",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 8, 12, 13, 17, 17, 17 ],
+      "includeGroups": [ 7, 8, 8, 8, 12, 17, 17, 17 ],
       "shouldLogElementFeatures": true
     },
     {

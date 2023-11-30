@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -37,7 +37,7 @@ public class RunHotswapDialog extends OptionsDialog {
     myElementsChooser = new ElementsChooser<>(items, true);
     myPanel.setBorder(JBUI.Borders.empty(10, 0, 5, 0));
     //myElementsChooser.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
-    if (sessions.size() > 0) {
+    if (!sessions.isEmpty()) {
       myElementsChooser.selectElements(items.subList(0, 1));
     }
     myPanel.add(myElementsChooser, BorderLayout.CENTER);

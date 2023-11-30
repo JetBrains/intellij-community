@@ -26,6 +26,7 @@ import com.intellij.util.CharTable;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
@@ -86,6 +87,8 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   private final ASTNode myOriginalTree;
   private final MyTreeStructure myParentLightTree;
   private final int myOffset;
+
+  private final Interner<String> myErrorInterner = Interner.createStringInterner();
 
   private IElementType myCachedTokenType;
 
@@ -378,7 +381,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     public void doneBefore(@NotNull IElementType type, @NotNull Marker before, @NotNull @Nls String errorMessage) {
       StartMarker marker = (StartMarker)before;
       ErrorItem errorItem = myBuilder.myPool.allocateErrorItem();
-      errorItem.myMessage = errorMessage;
+      errorItem.setMessage(errorMessage);
       errorItem.myLexemeIndex = marker.myLexemeIndex;
       myBuilder.myProduction.addBefore(errorItem, marker);
       doneBefore(type, before);
@@ -616,6 +619,10 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       myMessage = null;
     }
 
+    void setMessage(@NlsContexts.DetailedDescription String message) {
+      myMessage = myBuilder.myErrorInterner.intern(message);
+    }
+
     @Override
     void setLexemeIndex(int lexemeIndex, boolean done) {
       assert !done;
@@ -740,6 +747,23 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   @Override
   public int rawTokenIndex() {
     return myCurrentLexeme;
+  }
+
+  @Override
+  public void rawAdvanceLexer(int steps) {
+    ProgressIndicatorProvider.checkCanceled();
+    if (steps < 0) {
+      throw new IllegalArgumentException("Steps must be a positive integer - lexer can only be advanced. " +
+                                         "Use Marker.rollbackTo if you want to rollback PSI building.");
+    }
+    if (steps == 0) return;
+    // Be permissive as advanceLexer() and don't throw error if advancing beyond eof state
+    myCurrentLexeme += steps;
+    if (myCurrentLexeme > myLexemeCount || myCurrentLexeme < 0 /* int overflow */ ) {
+      myCurrentLexeme = myLexemeCount;
+    }
+    myTokenTypeChecked = false;
+    clearCachedTokenType();
   }
 
   @Override
@@ -882,7 +906,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       return;
     }
     ErrorItem marker = myPool.allocateErrorItem();
-    marker.myMessage = messageText;
+    marker.setMessage(messageText);
     marker.myLexemeIndex = myCurrentLexeme;
     myProduction.addMarker(marker);
   }
@@ -1078,7 +1102,8 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     CharSequence context =
       index < myLexStarts.length ? myText.subSequence(Math.max(0, myLexStarts[index] - 1000), myLexStarts[index]) : "<none>";
     String language = myFile != null ? myFile.getLanguage() + ", " : "";
-    LOG.error(UNBALANCED_MESSAGE + "\nlanguage: " + language + "\ncontext: '" + context + "'");
+    LOG.error(UNBALANCED_MESSAGE + "\nlanguage: " + language + "\ncontext: '" + context + "'" +
+              "\nmarker id: " + (marker == null ? "n/a" : marker.markerId));
   }
 
   private void balanceWhiteSpaces() {

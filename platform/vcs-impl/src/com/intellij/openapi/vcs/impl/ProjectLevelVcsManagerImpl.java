@@ -44,6 +44,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
@@ -110,9 +111,13 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public @Nullable AbstractVcs findVcsByName(@Nullable String name) {
-    AbstractVcs result = name == null || myProject.isDisposed() ? null : AllVcses.getInstance(myProject).getByName(name);
-    ProgressManager.checkCanceled();
-    return result;
+    if (name == null) return null;
+    AbstractVcs vcs = AllVcses.getInstance(myProject).getByName(name);
+    if (vcs == null && myProject.isDisposed()) {
+      // Take readLock to avoid race between Project.isDisposed and Disposer.dispose.
+      ReadAction.run(ProgressManager::checkCanceled);
+    }
+    return vcs;
   }
 
   @Override
@@ -496,6 +501,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
+  @Deprecated
   public List<VirtualFile> getDetailedVcsMappings(@NotNull AbstractVcs vcs) {
     return MappingsToRoots.getDetailedVcsMappings(myProject, myMappings, vcs);
   }
@@ -651,7 +657,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
         return checker;
       }
     }
-    return new DefaultVcsRootChecker(vcs);
+    return new DefaultVcsRootChecker(vcs, getDescriptor(vcs.getName()));
   }
 
   @Override
@@ -681,13 +687,13 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @RequiresEdt
   void startBackgroundTask(Object @NotNull ... keys) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(myBackgroundRunningTasks.add(new ActionKey(keys)));
   }
 
   @RequiresEdt
   void stopBackgroundTask(Object @NotNull ... keys) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(myBackgroundRunningTasks.remove(new ActionKey(keys)));
   }
 

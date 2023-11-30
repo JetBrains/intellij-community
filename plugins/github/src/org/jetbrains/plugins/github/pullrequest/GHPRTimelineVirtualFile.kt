@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryConnectionManager
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.Icon
 

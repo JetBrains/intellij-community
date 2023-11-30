@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.lang.DependentLanguage
@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 data class LanguageRef(val id: String, @field:Nls val displayName: String, val icon: Icon?) {
@@ -47,10 +48,10 @@ data class LanguageRef(val id: String, @field:Nls val displayName: String, val i
   }
 }
 
-data class FileTypeRef(val name: String, val icon: Icon?) {
+data class FileTypeRef(val name: @NonNls String, val displayName: @Nls String, val icon: Icon?) {
   companion object {
     @JvmStatic
-    fun forFileType(fileType: FileType): FileTypeRef = FileTypeRef(fileType.name, fileType.icon)
+    fun forFileType(fileType: FileType): FileTypeRef = FileTypeRef(fileType.name, fileType.displayName, fileType.icon)
 
     @JvmStatic
     fun forAllFileTypes(): List<FileTypeRef> {

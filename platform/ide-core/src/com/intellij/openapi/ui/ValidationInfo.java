@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +18,7 @@ import javax.swing.*;
  */
 public final class ValidationInfo {
   /**
-   * The description of a validation problem to display to user.
+   * The description of a validation problem to display to user, in HTML format.
    * The blank message means that there is still a problem, but nothing to display.
    * It can be used for some obvious problems like an empty text field.
    */
@@ -52,6 +53,18 @@ public final class ValidationInfo {
     this(message, null);
   }
 
+  /**
+   * Creates a validation error message associated with a specific component. The component will have an error icon drawn next to it,
+   * and will be focused when the user tries to close the dialog by pressing OK.
+   *
+   * @param message   the error message to display.
+   * @param component the component containing the invalid data.
+   */
+  public ValidationInfo(@NotNull HtmlChunk message, @Nullable JComponent component) {
+    this.message = message.toString();
+    this.component = component;
+  }
+
   public ValidationInfo withOKEnabled() {
     okEnabled = true;
     return this;
@@ -78,5 +91,10 @@ public final class ValidationInfo {
            this.component == that.component &&
            this.okEnabled == that.okEnabled &&
            this.warning == that.warning;
+  }
+
+  @Override
+  public  String toString() {
+    return "ValidationInfo{message='" + message + '\'' + '}';
   }
 }

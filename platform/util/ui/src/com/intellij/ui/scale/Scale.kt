@@ -22,11 +22,11 @@ import java.util.function.DoubleFunction
  * In this mode there's a single coordinate space, and the whole UI is scaled by the IDE guided by the user scale factor ([USR_SCALE]).
  *
  * 2) JRE-managed HiDPI mode.
- * In this mode the JRE scales graphics prior to drawing it on the device.
+ * In this mode, the JRE scales graphics prior to drawing it on the device.
  * So, there are two coordinate spaces: the user space and the device space.
  * The system scale factor ([SYS_SCALE]) defines the transform b/w the spaces.
- * The UI size metrics (windows, controls, fonts height) are in the user coordinate space.
- * Though, the raster images should be aware of the device scale in order to meet HiDPI.
+ * The UI size metrics (windows, controls, font height) are in the user coordinate space.
+ * Though, the raster images should be aware of the device scale to meet HiDPI.
  * (For instance, JRE on a Mac Retina monitor device works in the JRE-managed HiDPI mode,
  * transforming graphics to the double-scaled device coordinate space)
  *
@@ -98,7 +98,7 @@ enum class ScaleType {
  * @author tav
  */
 @Internal
-data class Scale(val value: Double, val type: ScaleType)
+data class Scale(@JvmField val value: Double, @JvmField val type: ScaleType)
 
 // the cache radically reduces potential thousands of equal Scale instances
 private val cache = ThreadLocal.withInitial {

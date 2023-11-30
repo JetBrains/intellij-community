@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -18,7 +18,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.stream.Collectors;
 
-public class JsonValidationError {
+public final class JsonValidationError {
 
   public IssueData getIssueData() {
     return myIssueData;
@@ -30,6 +30,7 @@ public class JsonValidationError {
 
   public enum FixableIssueKind {
     MissingProperty,
+    MissingOptionalProperty,
     MissingOneOfProperty,
     MissingAnyOfProperty,
     ProhibitedProperty,
@@ -43,7 +44,7 @@ public class JsonValidationError {
 
   }
 
-  public static class MissingOneOfPropsIssueData implements IssueData {
+  public static final class MissingOneOfPropsIssueData implements IssueData {
     public final Collection<MissingMultiplePropsIssueData> myExclusiveOptions;
 
     public MissingOneOfPropsIssueData(Collection<MissingMultiplePropsIssueData> options) {
@@ -51,7 +52,7 @@ public class JsonValidationError {
     }
   }
 
-  public static class MissingMultiplePropsIssueData implements IssueData {
+  public static final class MissingMultiplePropsIssueData implements IssueData {
     public final Collection<MissingPropertyIssueData> myMissingPropertyIssues;
 
     public MissingMultiplePropsIssueData(Collection<MissingPropertyIssueData> missingPropertyIssues) {
@@ -96,7 +97,7 @@ public class JsonValidationError {
     }
   }
 
-  public static class MissingPropertyIssueData implements IssueData {
+  public static final class MissingPropertyIssueData implements IssueData {
     public final String propertyName;
     public final JsonSchemaType propertyType;
     public final Object defaultValue;
@@ -110,7 +111,7 @@ public class JsonValidationError {
     }
   }
 
-  public static class ProhibitedPropertyIssueData implements IssueData {
+  public static final class ProhibitedPropertyIssueData implements IssueData {
     public final @NlsSafe String propertyName;
 
     public ProhibitedPropertyIssueData(@NlsSafe String propertyName) {
@@ -118,7 +119,7 @@ public class JsonValidationError {
     }
   }
 
-  public static class TypeMismatchIssueData implements IssueData {
+  public static final class TypeMismatchIssueData implements IssueData {
     public final JsonSchemaType[] expectedTypes;
 
     public TypeMismatchIssueData(JsonSchemaType[] expectedTypes) {

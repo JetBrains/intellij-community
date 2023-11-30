@@ -6,8 +6,8 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.apiUsage.ApiUsageProcessor;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -73,7 +73,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
                                            @Nullable PsiMethod constructor,
                                            @Nullable UClass subclassDeclaration) {
     if (constructor != null) {
-      if (PsiImplUtil.isDeprecated(constructor) && myForRemoval == isForRemovalAttributeSet(constructor)) {
+      if (JavaDeprecationUtils.isDeprecated(constructor, sourceNode.getSourcePsi()) && myForRemoval == isForRemovalAttributeSet(constructor)) {
         checkTargetDeprecated(sourceNode, constructor);
         return;
       }

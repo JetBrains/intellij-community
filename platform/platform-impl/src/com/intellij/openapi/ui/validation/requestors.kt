@@ -3,21 +3,22 @@ package com.intellij.openapi.ui.validation
 
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.openapi.observable.util.*
 import com.intellij.ui.EditorTextField
 import java.awt.ItemSelectable
 import javax.swing.text.JTextComponent
 
 
-val WHEN_TEXT_CHANGED: DialogValidationRequestor.WithParameter<JTextComponent> = DialogValidationRequestor.WithParameter { textComponent ->
+val WHEN_TEXT_CHANGED: DialogValidationRequestor.WithParameter<JTextComponent> = DialogValidationRequestor.WithParameter { component ->
   DialogValidationRequestor { parentDisposable, validate ->
-    textComponent.whenTextChanged(parentDisposable) { validate() }
+    component.whenTextChanged(parentDisposable) { validate() }
   }
 }
 
-val WHEN_TEXT_FIELD_TEXT_CHANGED: DialogValidationRequestor.WithParameter<EditorTextField> = DialogValidationRequestor.WithParameter { textComponent ->
+val WHEN_DOCUMENT_CHANGED: DialogValidationRequestor.WithParameter<EditorTextField> = DialogValidationRequestor.WithParameter { component ->
   DialogValidationRequestor { parentDisposable, validate ->
-    textComponent.whenDocumentChanged(parentDisposable) {
+    component.whenDocumentChanged(parentDisposable) {
       validate()
     }
   }
@@ -31,7 +32,7 @@ val WHEN_STATE_CHANGED: DialogValidationRequestor.WithParameter<ItemSelectable> 
 
 val WHEN_PROPERTY_CHANGED: DialogValidationRequestor.WithParameter<ObservableProperty<*>> = DialogValidationRequestor.WithParameter { property ->
   DialogValidationRequestor { parentDisposable, validate ->
-    property.afterChange(parentDisposable) { validate() }
+    property.whenPropertyChanged(parentDisposable) { validate() }
   }
 }
 

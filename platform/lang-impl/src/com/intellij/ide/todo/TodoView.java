@@ -75,7 +75,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
                                                          () -> myChangeListTodosContent);
   }
 
-  static class State {
+  static final class State {
     @Attribute("selected-index")
     public int selectedIndex;
 

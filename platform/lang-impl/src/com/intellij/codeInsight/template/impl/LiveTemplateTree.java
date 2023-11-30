@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.LiveTemplateContextService;
@@ -153,7 +153,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
     return !myConfigurable.getSelectedTemplates().isEmpty();
   }
 
-  private static class SubstringSpeedSearchComparator extends SpeedSearchComparator {
+  private static final class SubstringSpeedSearchComparator extends SpeedSearchComparator {
     @Override
     public int matchingDegree(String pattern, String text) {
       return matchingFragments(pattern, text) != null ? 1 : 0;

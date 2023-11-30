@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
@@ -26,7 +27,7 @@ class DeleteFileCommand(text: String, line: Int) : AbstractFileCommand(text, lin
   }
 
   companion object {
-    private val LOG = Logger.getInstance(DeleteFileCommand::class.java)
+    private val LOG = logger<DeleteFileCommand>()
     const val PREFIX: @NonNls String = CMD_PREFIX + "deleteFile"
   }
 }

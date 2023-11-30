@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages.CANCEL
 import com.intellij.openapi.ui.Messages.YES
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.messages.Topic
 import kotlin.time.Duration.Companion.minutes
 
@@ -81,7 +82,7 @@ class ElevationSettings : PersistentStateComponentWithModificationTracker<Elevat
   }
 
   private fun doAskEnableKeepAuthIfNeeded(): Boolean {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     if (isSettingsUpdateDone) return true
 

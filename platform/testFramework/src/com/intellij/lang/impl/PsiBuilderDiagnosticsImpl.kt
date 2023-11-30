@@ -8,7 +8,7 @@ import java.util.regex.Pattern
 import kotlin.math.max
 import kotlin.streams.asSequence
 
-class PsiBuilderDiagnosticsImpl(val collectTraces: Boolean = false, ignoreMatching: Set<String> = emptySet()) : PsiBuilderDiagnostics {
+class PsiBuilderDiagnosticsImpl(private val collectTraces: Boolean = false, ignoreMatching: Set<String> = emptySet()) : PsiBuilderDiagnostics {
   private val rollbacks: MutableMap<Int, AtomicInteger> = hashMapOf()
   private val passes: MutableList<Pair<Int, Int>> = mutableListOf()
   private val traces: MutableMap<StackTraceElement, StatEntry> = hashMapOf()

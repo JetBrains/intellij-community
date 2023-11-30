@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.LangBundle;
@@ -442,7 +442,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private class SelectionOption extends FieldOption {
+  private final class SelectionOption extends FieldOption {
     final String @NotNull [] options;
     final int @NotNull [] values;
 
@@ -490,7 +490,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private class IntOption extends FieldOption {
+  private final class IntOption extends FieldOption {
 
     private final int myMinValue;
     private final int myMaxValue;
@@ -614,7 +614,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
   public final ColumnInfo[] COLUMNS = new ColumnInfo[]{TITLE, VALUE};
 
-  protected static class MyTreeNode extends DefaultMutableTreeNode {
+  protected static final class MyTreeNode extends DefaultMutableTreeNode {
     private final Option myKey;
     private final String myText;
     private Object myValue;
@@ -659,7 +659,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private class MyValueRenderer implements TableCellRenderer {
+  private final class MyValueRenderer implements TableCellRenderer {
     private JTable myTable;
     private int myRow;
     private int myColumn;
@@ -730,7 +730,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       return myEmptyLabel;
     }
 
-    protected class OptionsLabel extends JLabel {
+    protected final class OptionsLabel extends JLabel {
       @Override
       public AccessibleContext getAccessibleContext() {
         if (accessibleContext == null) {
@@ -739,7 +739,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         return accessibleContext;
       }
 
-      protected class AccessibleOptionsLabel extends AccessibleJLabel implements AccessibleAction {
+      protected final class AccessibleOptionsLabel extends AccessibleJLabel implements AccessibleAction {
         @Override
         public AccessibleRole getAccessibleRole() {
           return AccessibleRole.PUSH_BUTTON;
@@ -786,7 +786,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   /**
    * @author Konstantin Bulenkov
    */
-  private class MyValueEditor extends AbstractTableCellEditor {
+  private final class MyValueEditor extends AbstractTableCellEditor {
     public static final String STOP_CELL_EDIT_ACTION_KEY = "stopEdit";
     private final JCheckBox myBooleanEditor = new JBCheckBox();
     private final JBComboBoxTableCellEditorComponent myOptionsEditor = new JBComboBoxTableCellEditorComponent();
@@ -1006,7 +1006,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     return b.toString();
   }
 
-  protected static class ColoredLabel extends JLabel {
+  protected static final class ColoredLabel extends JLabel {
     public ColoredLabel(@Nls String text, Color foreground) {
       super(text);
       setForeground(foreground);

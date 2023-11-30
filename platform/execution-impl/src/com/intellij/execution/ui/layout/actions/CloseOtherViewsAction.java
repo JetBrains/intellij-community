@@ -19,7 +19,7 @@ package com.intellij.execution.ui.layout.actions;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
-public class CloseOtherViewsAction extends CloseViewsActionBase {
+public final class CloseOtherViewsAction extends CloseViewsActionBase {
 
   @Override
   protected boolean isAccepted(@NotNull Content c, Content @NotNull [] selectedContents) {

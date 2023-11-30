@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -45,13 +30,7 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
   public void testDefaultWarModel() {
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
 
-    List<WebConfiguration> ideaModule = ContainerUtil.mapNotNull(
-      ideaModules, new Function<IdeaModule, WebConfiguration>() {
-        @Override
-        public WebConfiguration fun(IdeaModule module) {
-          return allModels.getModel(module, WebConfiguration.class);
-        }
-      });
+    List<WebConfiguration> ideaModule = ContainerUtil.mapNotNull(ideaModules, module -> allModels.getModel(module, WebConfiguration.class));
 
     assertEquals(1, ideaModule.size());
     WebConfiguration webConfiguration = ideaModule.get(0);
@@ -63,16 +42,11 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
 
     assertArrayEquals(
       new String[]{"MANIFEST.MF", "additionalWebInf", "rootContent"},
-      ContainerUtil.map2Array(warModel.getWebResources(), new Function<WebConfiguration.WebResource, Object>() {
-        @Override
-        public Object fun(WebConfiguration.WebResource resource) {
-          return resource.getFile().getName();
-        }
-      }));
+      ContainerUtil.map2Array(warModel.getWebResources(), resource -> resource.getFile().getName()));
   }
 
   @Override
   protected Set<Class<?>> getModels() {
-    return Collections.<Class<?>>singleton(WebConfiguration.class);
+    return Collections.singleton(WebConfiguration.class);
   }
 }

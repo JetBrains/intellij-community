@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -44,21 +44,18 @@ public final class UiInspectorUtil {
     return null;
   }
 
-  @Nullable
-  private static String getRawActionId(@NotNull AnAction action) {
+  private static @Nullable String getRawActionId(@NotNull AnAction action) {
     return ActionManager.getInstance().getId(action);
   }
 
-  @Nullable
-  public static String getActionId(@NotNull AnAction action) {
+  public static @Nullable String getActionId(@NotNull AnAction action) {
     AnAction delegate = ActionUtil.getDelegateChainRootAction(action);
     return getRawActionId(delegate);
   }
 
-  @NotNull
-  public static List<PropertyBean> collectActionGroupInfo(@NotNull @NonNls String prefix,
-                                                          @NotNull ActionGroup group,
-                                                          @Nullable String place) {
+  public static @NotNull List<PropertyBean> collectActionGroupInfo(@NotNull @NonNls String prefix,
+                                                                   @NotNull ActionGroup group,
+                                                                   @Nullable String place) {
     List<PropertyBean> result = new ArrayList<>();
 
     if (place != null) {
@@ -79,8 +76,7 @@ public final class UiInspectorUtil {
     return result;
   }
 
-  @NotNull
-  public static List<PropertyBean> collectAnActionInfo(@NotNull AnAction action) {
+  public static @NotNull List<PropertyBean> collectAnActionInfo(@NotNull AnAction action) {
     List<PropertyBean> result = new ArrayList<>();
 
     Class<? extends AnAction> clazz = action.getClass();
@@ -138,7 +134,8 @@ public final class UiInspectorUtil {
     return clazz.getSimpleName();
   }
 
-  public static @NotNull String getClassPresentation(@NotNull Object value) {
+  public static @NotNull String getClassPresentation(@Nullable Object value) {
+    if (value == null) return "[null]";
     return getClassPresentation(value.getClass());
   }
 
@@ -161,8 +158,7 @@ public final class UiInspectorUtil {
     }
   }
 
-  @Nullable
-  public static PsiElement findClassByFqn(@Nullable Project project, @NotNull String jvmFqn) {
+  public static @Nullable PsiElement findClassByFqn(@Nullable Project project, @NotNull String jvmFqn) {
     if (project == null) return null;
 
     try {
@@ -207,8 +203,7 @@ public final class UiInspectorUtil {
     return null;
   }
 
-  @Nullable
-  private static PsiElement findAnonymousClass(@NotNull PsiElement containingClass, @NotNull String jvmFqn) {
+  private static @Nullable PsiElement findAnonymousClass(@NotNull PsiElement containingClass, @NotNull String jvmFqn) {
     try {
       Class<?> searchContributor = Class.forName("com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor");
       Method getPathToAnonymousClass = searchContributor.getDeclaredMethod("pathToAnonymousClass", String.class);

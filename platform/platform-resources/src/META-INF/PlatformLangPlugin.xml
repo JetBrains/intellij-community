@@ -47,7 +47,7 @@
 
   <xi:include href="/META-INF/PlatformExtensions.xml"/>
   <xi:include href="/META-INF/LangExtensions.xml"/>
-  <xi:include href="/META-INF/OTelExtensions.xml"/>
+  <xi:include href="/META-INF/OpenTelemetryExtensions.xml"/>
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 
@@ -129,8 +129,8 @@
 
     <applicationService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever"
                         serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.EditorWindowTracker"
-                        serviceImplementation="com.intellij.psi.impl.source.tree.injected.EditorWindowTrackerImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.InjectedEditorWindowTracker"
+                        serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedEditorWindowTrackerImpl"/>
 
     <applicationInitializedListener implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
   </extensions>

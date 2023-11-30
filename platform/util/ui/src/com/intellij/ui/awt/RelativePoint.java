@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.awt;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,15 +9,11 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class RelativePoint {
-  @NotNull
-  private final Component myComponent;
-  @NotNull
-  private final Point myPointOnComponent;
+  private final @NotNull Component myComponent;
+  private final @NotNull Point myPointOnComponent;
 
-  @NotNull
-  private final Component myOriginalComponent;
-  @NotNull
-  private final Point myOriginalPoint;
+  private final @NotNull Component myOriginalComponent;
+  private final @NotNull Point myOriginalPoint;
 
   public RelativePoint(@NotNull MouseEvent event) {
     this(event.getComponent(), event.getPoint());
@@ -27,15 +23,13 @@ public class RelativePoint {
     this(getTargetWindow(), calcPoint(screenPoint));
   }
 
-  @NotNull
-  private static Point calcPoint(@NotNull Point screenPoint) {
+  private static @NotNull Point calcPoint(@NotNull Point screenPoint) {
     Point p = new Point(screenPoint.x, screenPoint.y);
     SwingUtilities.convertPointFromScreen(p, getTargetWindow());
     return p;
   }
 
-  @NotNull
-  private static Window getTargetWindow() {
+  private static @NotNull Window getTargetWindow() {
     Window[] windows = Window.getWindows();
     Window targetWindow = null;
     for (Window each : windows) {
@@ -65,8 +59,7 @@ public class RelativePoint {
     myOriginalPoint = aPointOnComponent;
   }
 
-  @NotNull
-  public Component getComponent() {
+  public @NotNull Component getComponent() {
     return myComponent;
   }
 
@@ -74,7 +67,7 @@ public class RelativePoint {
     return myPointOnComponent;
   }
 
-  public Point getPoint(@Nullable Component aTargetComponent) {
+  public @NotNull Point getPoint(@Nullable Component aTargetComponent) {
     //todo: remove that after implementation of DND to html design time controls
     boolean window = aTargetComponent instanceof Window;
     if (aTargetComponent == null || !window && (aTargetComponent.getParent() == null || SwingUtilities.getWindowAncestor(aTargetComponent) == null)) {
@@ -84,87 +77,62 @@ public class RelativePoint {
     return SwingUtilities.convertPoint(getComponent(), getPoint(), aTargetComponent);
   }
 
-  @NotNull
-  public RelativePoint getPointOn(@NotNull Component aTargetComponent) {
+  public @NotNull RelativePoint getPointOn(@NotNull Component aTargetComponent) {
     final Point point = getPoint(aTargetComponent);
     return new RelativePoint(aTargetComponent, point);
   }
 
-  @NotNull
-  public Point getScreenPoint() {
+  public @NotNull Point getScreenPoint() {
     final Point point = (Point) getPoint().clone();
     SwingUtilities.convertPointToScreen(point, getComponent());
     return point;
   }
 
-  @NotNull
-  public MouseEvent toMouseEvent() {
+  public @NotNull MouseEvent toMouseEvent() {
     return new MouseEvent(myComponent, 0, 0, 0, myPointOnComponent.x, myPointOnComponent.y, 1, false);
   }
 
   @Override
-  @NotNull
-  public String toString() {
+  public @NotNull String toString() {
     //noinspection HardCodedStringLiteral
     return getPoint() + " on " + getComponent();
   }
 
-  @NotNull
-  public static RelativePoint getCenterOf(@NotNull JComponent component) {
-    final Rectangle visibleRect = component.getVisibleRect();
-    final Point point = new Point(visibleRect.x + visibleRect.width/2, visibleRect.y + visibleRect.height/2);
-    return new RelativePoint(component, point);
+  public static @NotNull RelativePoint getCenterOf(@NotNull JComponent component) {
+    return new AnchoredPoint(AnchoredPoint.Anchor.CENTER, component);
   }
 
-  @NotNull
-  public static RelativePoint getSouthEastOf(@NotNull JComponent component) {
-    final Rectangle visibleRect = component.getVisibleRect();
-    final Point point = new Point(visibleRect.x + visibleRect.width, visibleRect.y + visibleRect.height);
-    return new RelativePoint(component, point);
+  public static @NotNull RelativePoint getSouthEastOf(@NotNull JComponent component) {
+    return new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_RIGHT, component);
   }
 
-  @NotNull
-  public static RelativePoint getSouthWestOf(@NotNull JComponent component) {
-    final Rectangle visibleRect = component.getVisibleRect();
-    final Point point = new Point(visibleRect.x, visibleRect.y + visibleRect.height);
-    return new RelativePoint(component, point);
+  public static @NotNull RelativePoint getSouthWestOf(@NotNull JComponent component) {
+    return new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_LEFT, component);
   }
 
-  @NotNull
-  public static RelativePoint getSouthOf(@NotNull JComponent component) {
-    final Rectangle visibleRect = component.getVisibleRect();
-    final Point point = new Point(visibleRect.x + visibleRect.width / 2, visibleRect.y + visibleRect.height);
-    return new RelativePoint(component, point);
+  public static @NotNull RelativePoint getSouthOf(@NotNull JComponent component) {
+    return new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM, component);
   }
 
-  @NotNull
-  public static RelativePoint getNorthWestOf(@NotNull JComponent component) {
-    final Rectangle visibleRect = component.getVisibleRect();
-    final Point point = new Point(visibleRect.x, visibleRect.y);
-    return new RelativePoint(component, point);
+  public static @NotNull RelativePoint getNorthWestOf(@NotNull JComponent component) {
+    return new AnchoredPoint(AnchoredPoint.Anchor.TOP_LEFT, component);
   }
 
-  @NotNull @SuppressWarnings("unused")
-  public static RelativePoint getNorthEastOf(@NotNull JComponent component) {
-    final Rectangle visibleRect = component.getVisibleRect();
-    final Point point = new Point(visibleRect.x + visibleRect.width, visibleRect.y);
-    return new RelativePoint(component, point);
+  public static @NotNull RelativePoint getNorthEastOf(@NotNull JComponent component) {
+    return new AnchoredPoint(AnchoredPoint.Anchor.TOP_RIGHT, component);
   }
 
-  @NotNull
-  public static RelativePoint fromScreen(Point screenPoint) {
+  public static @NotNull RelativePoint fromScreen(Point screenPoint) {
     Frame root = JOptionPane.getRootFrame();
     SwingUtilities.convertPointFromScreen(screenPoint, root);
     return new RelativePoint(root, screenPoint);
   }
 
-  @NotNull
-  public Component getOriginalComponent() {
+  public @NotNull Component getOriginalComponent() {
     return myOriginalComponent;
   }
 
-  @NotNull
-  public Point getOriginalPoint() {
+  public @NotNull Point getOriginalPoint() {
     return myOriginalPoint;
   }
 }

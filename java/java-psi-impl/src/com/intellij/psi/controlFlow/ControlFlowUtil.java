@@ -2167,7 +2167,7 @@ public final class ControlFlowUtil {
                                                                   @NotNull Set<? extends PsiVariable> writeVars,
                                                                   @NotNull Set<? extends PsiVariable> readVars,
                                                                   final int stopPoint) {
-    Map<PsiElement, PsiVariable> writes = new HashMap<>();
+    Map<PsiElement, PsiVariable> writes = new LinkedHashMap<>();
     List<Instruction> instructions = flow.getInstructions();
 
     for (int i = 0; i < instructions.size(); i++) {

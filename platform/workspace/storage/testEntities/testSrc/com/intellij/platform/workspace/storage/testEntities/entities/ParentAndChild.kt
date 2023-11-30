@@ -45,7 +45,7 @@ interface ParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentEntity, modification: ParentEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ParentEntity, modification: ParentEntity.Builder.() -> Unit): ParentEntity = modifyEntity(
   ParentEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -80,6 +80,6 @@ interface ChildEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildEntity, modification: ChildEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ChildEntity, modification: ChildEntity.Builder.() -> Unit): ChildEntity = modifyEntity(
   ChildEntity.Builder::class.java, entity, modification)
 //endregion

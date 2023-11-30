@@ -1,0 +1,8 @@
+pluginManagement {
+    plugins {
+        id "org.jetbrains.kotlin.jvm" version kotlinPluginVersion
+    }
+}
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.5.0'
+}

@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class VFileMoveEvent extends VFileEvent {
@@ -12,21 +12,20 @@ public final class VFileMoveEvent extends VFileEvent {
   private final VirtualFile myOldParent;
   private final VirtualFile myNewParent;
 
-  public VFileMoveEvent(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) {
-    super(requestor, false);
+  @ApiStatus.Internal
+  public VFileMoveEvent(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) {
+    super(requestor);
     myFile = file;
     myNewParent = newParent;
     myOldParent = file.getParent();
   }
 
-  @NotNull
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
-  @NotNull
-  public VirtualFile getNewParent() {
+  public @NotNull VirtualFile getNewParent() {
     return myNewParent;
   }
 
@@ -35,26 +34,22 @@ public final class VFileMoveEvent extends VFileEvent {
   }
 
   @Override
-  @NonNls
   public String toString() {
     return "VfsEvent[move " + myFile.getName() +" from " + myOldParent + " to " + myNewParent + "]";
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     return computePath();
   }
 
-  @NotNull
   @Override
-  protected String computePath() {
+  protected @NotNull String computePath() {
     return myFile.getPath();
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 
@@ -85,13 +80,11 @@ public final class VFileMoveEvent extends VFileEvent {
     return result;
   }
 
-  @NotNull
-  public String getOldPath() {
+  public @NotNull String getOldPath() {
     return myOldParent.getPath() + "/" + myFile.getName();
   }
 
-  @NotNull
-  public String getNewPath() {
+  public @NotNull String getNewPath() {
     return myNewParent.getPath() + "/" + myFile.getName();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.progress.ProgressManager
@@ -12,7 +12,7 @@ class VirtualFileHolder(private val myProject: Project) : FileHolder {
   val files: List<VirtualFile> get() = myFiles.toList()
 
   override fun cleanAll() = myFiles.clear()
-  override fun cleanAndAdjustScope(scope: VcsModifiableDirtyScope) = cleanScope(myFiles, scope)
+  override fun cleanUnderScope(scope: VcsDirtyScope) = cleanScope(myFiles, scope)
 
   fun addFile(file: VirtualFile) {
     myFiles.add(file)
@@ -42,7 +42,7 @@ class VirtualFileHolder(private val myProject: Project) : FileHolder {
 
   companion object {
 
-    fun cleanScope(files: MutableCollection<VirtualFile>, scope: VcsModifiableDirtyScope) {
+    fun cleanScope(files: MutableSet<VirtualFile>, scope: VcsDirtyScope) {
       ProgressManager.checkCanceled()
       if (files.isEmpty()) return
 
@@ -63,9 +63,8 @@ class VirtualFileHolder(private val myProject: Project) : FileHolder {
           val iterator = files.iterator()
           while (iterator.hasNext()) {
             val file = iterator.next()
-            if (fileDropped(file)) {
+            if (!file.isValid) {
               iterator.remove()
-              scope.addDirtyFile(VcsUtil.getFilePath(file))
             }
           }
         }
@@ -74,17 +73,11 @@ class VirtualFileHolder(private val myProject: Project) : FileHolder {
         val iterator = files.iterator()
         while (iterator.hasNext()) {
           val file = iterator.next()
-          val fileDropped = fileDropped(file)
-          if (fileDropped) {
-            scope.addDirtyFile(VcsUtil.getFilePath(file))
-          }
-          if (fileDropped || scope.belongsTo(VcsUtil.getFilePath(file))) {
+          if (!file.isValid || scope.belongsTo(VcsUtil.getFilePath(file))) {
             iterator.remove()
           }
         }
       }
     }
-
-    private fun fileDropped(file: VirtualFile): Boolean = !file.isValid
   }
 }

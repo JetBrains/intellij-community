@@ -42,7 +42,7 @@ class AddBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class.ja
     override fun applyTo(element: KtElement, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
         val expression = element.getTargetExpression(editor.caretModel.offset) ?: return
-        addBraces(element, expression)
+        Util.addBraces(element, expression)
     }
 
     private fun KtElement.getTargetExpression(caretLocation: Int): KtExpression? {
@@ -63,7 +63,7 @@ class AddBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class.ja
         }
     }
 
-    companion object {
+    object Util {
         fun addBraces(element: KtElement, expression: KtExpression) {
             val psiFactory = KtPsiFactory(element.project)
 

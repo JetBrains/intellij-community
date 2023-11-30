@@ -197,23 +197,21 @@ class SuspendFunctionOnCoroutineScopeInspection : AbstractKotlinInspection() {
             }
         }
     }
+}
 
-    companion object {
-        private const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
+private const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
 
-        private const val COROUTINE_SCOPE_WRAPPER = "kotlinx.coroutines.coroutineScope"
+private const val COROUTINE_SCOPE_WRAPPER = "kotlinx.coroutines.coroutineScope"
 
-        private const val COROUTINE_CONTEXT = "coroutineContext"
+private const val COROUTINE_CONTEXT = "coroutineContext"
 
-        private val MESSAGE get() = KotlinBundle.message("ambiguous.coroutinecontext.due.to.coroutinescope.receiver.of.suspend.function")
+private val MESSAGE get() = KotlinBundle.message("ambiguous.coroutinecontext.due.to.coroutinescope.receiver.of.suspend.function")
 
-        private fun KotlinType.isCoroutineScope(): Boolean =
-            constructor.declarationDescriptor?.fqNameSafe?.asString() == COROUTINE_SCOPE
+private fun KotlinType.isCoroutineScope(): Boolean =
+    constructor.declarationDescriptor?.fqNameSafe?.asString() == COROUTINE_SCOPE
 
-        private fun ReceiverParameterDescriptor?.ofCoroutineScopeType(): Boolean {
-            if (this == null) return false
-            if (type.isCoroutineScope()) return true
-            return type.constructor.supertypes.reversed().any { it.isCoroutineScope() }
-        }
-    }
+private fun ReceiverParameterDescriptor?.ofCoroutineScopeType(): Boolean {
+    if (this == null) return false
+    if (type.isCoroutineScope()) return true
+    return type.constructor.supertypes.reversed().any { it.isCoroutineScope() }
 }

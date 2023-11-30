@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -15,7 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory, MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory, MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar,
+                                               DumbAware {
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
     // start after PostHighlightingPass completion since it could report errors that can prevent us to run

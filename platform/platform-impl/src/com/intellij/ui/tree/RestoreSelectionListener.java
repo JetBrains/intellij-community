@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
@@ -31,9 +31,8 @@ public final class RestoreSelectionListener implements TreeSelectionListener {
                 Reference<TreePath> reference = new Reference<>();
                 reference.set(tree.getPathForRow(0)); // select first node if old path removed completely
                 TreeVisitor visitor = new TreeVisitor.ByTreePath<>(path, o -> o) {
-                  @NotNull
                   @Override
-                  protected Action visit(@NotNull TreePath path, Object component) {
+                  protected @NotNull Action visit(@NotNull TreePath path, Object component) {
                     Action action = super.visit(path, component);
                     if (action == Action.CONTINUE || action == Action.INTERRUPT) reference.set(path);
                     return action;

@@ -90,12 +90,12 @@ abstract class GradleRunAnythingProviderTestCase : GradleImportingTestCase() {
       }
     )
 
-    val targetDone = Semaphore()
+    val targetDone = Semaphore(1)
     val result = Ref<BuildView>()
     myProject.messageBus.connect(testRootDisposable).subscribe(
       ExecutionManager.EXECUTION_TOPIC,
       object : ExecutionListener {
-        override fun processStartScheduled(executorIdLocal: String, environmentLocal: ExecutionEnvironment) = targetDone.down()
+        override fun processStartScheduled(executorIdLocal: String, environmentLocal: ExecutionEnvironment) = Unit
         override fun processNotStarted(executorIdLocal: String, environmentLocal: ExecutionEnvironment) = targetDone.up()
         override fun processTerminated(
           executorIdLocal: String,

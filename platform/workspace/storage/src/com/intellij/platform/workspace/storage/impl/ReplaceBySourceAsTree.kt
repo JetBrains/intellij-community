@@ -4,10 +4,10 @@ package com.intellij.platform.workspace.storage.impl
 import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.containers.HashingStrategy
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.ReplaceBySourceAsTree.OperationsApplier
+import com.intellij.util.containers.CollectionFactory
+import com.intellij.util.containers.HashingStrategy
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import org.jetbrains.annotations.TestOnly
@@ -174,7 +174,7 @@ internal class ReplaceBySourceAsTree {
                 val myIndex = replaceWithChildAssociatedWithCurrentElement?.let { replaceWithChildren[it] } ?: index
                 childEntityId to myIndex
               }.sortedBy { it.second }.map { it.first }
-              targetStorage.refs.updateChildrenOfParent(connectionId, targetParent.asParent(), sortedChildren)
+              targetStorage.refs.replaceChildrenOfParent(connectionId, targetParent.asParent(), sortedChildren)
             }
           }
         }
@@ -968,7 +968,7 @@ internal sealed interface ReplaceWithState {
   object NoChangeTraceLost : ReplaceWithState
 }
 
-sealed interface ParentsRef {
+internal sealed interface ParentsRef {
   data class TargetRef(val targetEntityId: EntityId) : ParentsRef {
     override fun toString(): String {
       return "TargetRef(targetEntityId=${targetEntityId.asString()})"

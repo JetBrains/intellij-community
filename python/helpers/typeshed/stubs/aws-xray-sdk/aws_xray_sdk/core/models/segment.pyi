@@ -1,11 +1,10 @@
+from types import TracebackType
 from typing import Any
 
-from ..exceptions.exceptions import SegmentNameMissingException as SegmentNameMissingException
 from ..recorder import AWSXRayRecorder
-from ..utils.atomic_counter import AtomicCounter as AtomicCounter
-from .entity import Entity as Entity
+from ..utils.atomic_counter import AtomicCounter
+from .entity import Entity
 from .subsegment import Subsegment
-from .traceid import TraceId as TraceId
 
 ORIGIN_TRACE_HEADER_ATTR_KEY: str
 
@@ -14,9 +13,11 @@ class SegmentContextManager:
     segment_kwargs: dict[str, Any]
     recorder: AWSXRayRecorder
     segment: Segment
-    def __init__(self, recorder: AWSXRayRecorder, name: str | None = ..., **segment_kwargs) -> None: ...
+    def __init__(self, recorder: AWSXRayRecorder, name: str | None = None, **segment_kwargs) -> None: ...
     def __enter__(self): ...
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None: ...
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None: ...
 
 class Segment(Entity):
     trace_id: str | None
@@ -28,7 +29,7 @@ class Segment(Entity):
     parent_id: str | None
     service: dict[str, str]
     def __init__(
-        self, name, entityid: str | None = ..., traceid: str | None = ..., parent_id: str | None = ..., sampled: bool = ...
+        self, name, entityid: str | None = None, traceid: str | None = None, parent_id: str | None = None, sampled: bool = True
     ) -> None: ...
     def add_subsegment(self, subsegment: Subsegment) -> None: ...
     def increment(self) -> None: ...

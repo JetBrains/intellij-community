@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.testFramework.fixtures.TestFixtureRule;
 import com.intellij.testFramework.rules.TempDirectory;
+import org.assertj.core.api.Assertions;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,18 +25,23 @@ public final class WSLUtilTest {
   @Rule public final TempDirectory tempDirectory = new TempDirectory();
 
   @Test
+  public void testUncPrefix() {
+    Assertions.assertThat(WSLUtil.getUncPrefix()).isIn(WslConstants.UNC_PREFIX, "\\\\wsl.localhost\\");
+  }
+
+  @Test
   public void testWslToWinPath() {
     var wsl = wslRule.getWsl();
-    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\cd", wsl.getWindowsPath("/mnt/cd"));
-    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt", wsl.getWindowsPath("/mnt"));
-    assertEquals("\\\\wsl$\\" + wsl.getMsId(), wsl.getWindowsPath(""));
-    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\test", wsl.getWindowsPath("/mnt//test"));
-    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\1\\test", wsl.getWindowsPath("/mnt/1/test"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId() + "\\mnt\\cd", wsl.getWindowsPath("/mnt/cd"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId()+ "\\mnt", wsl.getWindowsPath("/mnt"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId(), wsl.getWindowsPath(""));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId() + "\\mnt\\test", wsl.getWindowsPath("/mnt//test"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId() + "\\mnt\\1\\test", wsl.getWindowsPath("/mnt/1/test"));
 
     assertEquals("C:", wsl.getWindowsPath("/mnt/c"));
-    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\", wsl.getWindowsPath("/mnt/"));
-    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt", wsl.getWindowsPath("/mnt"));
-    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\", wsl.getWindowsPath("/"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId() + "\\mnt\\", wsl.getWindowsPath("/mnt/"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId() + "\\mnt", wsl.getWindowsPath("/mnt"));
+    assertEquals(WSLUtil.getUncPrefix() + wsl.getMsId() + "\\", wsl.getWindowsPath("/"));
     assertEquals("X:\\", wsl.getWindowsPath("/mnt/x/"));
     assertEquals("C:", wsl.getWindowsPath("/mnt/C"));
 

@@ -13,6 +13,7 @@ import kotlin.reflect.KClass
  * Applies a fix to the PSI with [apply] given some [CONTEXT] from [prepareContext] if the intention is applicable via [isApplicableByPsi] and
  * [prepareContext].
  */
+@Deprecated("use org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext")
 abstract class AbstractKotlinApplicableIntentionWithContext<ELEMENT : KtElement, CONTEXT>(
     elementType: KClass<ELEMENT>,
 ) : AbstractKotlinApplicableIntentionBase<ELEMENT>(elementType), KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
@@ -33,7 +34,7 @@ abstract class AbstractKotlinApplicableIntentionWithContext<ELEMENT : KtElement,
     }
 
     final override fun startInWriteAction(): Boolean =
-        // `applyTo` should start without a write action because it first uses `analyzeWithReadAction` to get the context. Also,
+        // `applyTo` should start without a write action because it first uses `analyse` to get the context. Also,
         // `getContext` when called from `applyTo` should not have access to a write action for `element` to discourage mutating `element`.
         false
 }

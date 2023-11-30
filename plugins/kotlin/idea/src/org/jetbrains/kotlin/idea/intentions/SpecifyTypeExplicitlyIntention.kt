@@ -46,6 +46,8 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
 ), HighPriorityAction {
     override fun applicabilityRange(element: KtCallableDeclaration): TextRange? {
         if (!ExplicitApiDeclarationChecker.returnTypeCheckIsApplicable(element)) return null
+        if (element is KtParameter && element.isLoopParameter && element.destructuringDeclaration != null) return null
+
         // If ApiMode is on, then this intention duplicates corresponding quickfix for compiler error
         // and we disable it here.
         if (ExplicitApiDeclarationChecker.publicReturnTypeShouldBePresentInApiMode(
@@ -54,6 +56,7 @@ class SpecifyTypeExplicitlyIntention : SelfTargetingRangeIntention<KtCallableDec
                 element.resolveToDescriptorIfAny()
             )
         ) return null
+
         setTextGetter(
             if (element is KtFunction)
                 KotlinBundle.lazyMessage("specify.return.type.explicitly")

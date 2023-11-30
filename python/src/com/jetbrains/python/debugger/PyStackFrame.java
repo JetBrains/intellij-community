@@ -24,6 +24,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.pydev.ProcessDebugger;
 import com.jetbrains.python.debugger.pydev.ProtocolParser;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
+import com.jetbrains.python.psi.PyUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,7 @@ public class PyStackFrame extends XStackFrame {
   private final PyFrameAccessor myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
   private final XSourcePosition myPosition;
+  private volatile boolean isExternal = true;
 
   private @Nullable Map<String, PyDebugValueDescriptor> myChildrenDescriptors;
 
@@ -57,6 +59,22 @@ public class PyStackFrame extends XStackFrame {
     myDebugProcess = debugProcess;
     myFrameInfo = frameInfo;
     myPosition = position;
+    computeIsExternal();
+  }
+
+  private void computeIsExternal() {
+    if (myPosition != null) {
+      VirtualFile file = myPosition.getFile();
+      PyUtil.runWithProgress(myProject, PyBundle.message("debugger.progress.title.stackframe.processing"), false, true, indicator -> {
+        isExternal = ReadAction.compute(() -> {
+                                          final Document document = FileDocumentManager.getInstance().getDocument(file);
+                                          if (document != null && myProject != null) {
+                                            return !ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
+                                          }
+                                          return true;
+                                        });
+      });
+    }
   }
 
   @Override
@@ -82,19 +100,6 @@ public class PyStackFrame extends XStackFrame {
       component.append(PyBundle.message("debugger.stack.frame.frame.not.available"), SimpleTextAttributes.GRAY_ATTRIBUTES);
       return;
     }
-
-    final VirtualFile file = myPosition.getFile();
-    boolean isExternal =
-      ReadAction.compute(() -> {
-
-        final Document document = FileDocumentManager.getInstance().getDocument(file);
-        if (document != null) {
-          return !ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(file);
-        }
-        else {
-          return true;
-        }
-      });
 
     component.append(myFrameInfo.getName(), gray(isExternal));
     component.append(", ", gray(isExternal));

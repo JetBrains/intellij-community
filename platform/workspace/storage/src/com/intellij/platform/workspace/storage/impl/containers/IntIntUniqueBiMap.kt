@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.function.Consumer
 
-class ImmutableIntIntUniqueBiMap internal constructor(
+internal class ImmutableIntIntUniqueBiMap internal constructor(
   override val key2Value: Int2IntMap,
   override val value2Key: Int2IntMap
 ) : IntIntUniqueBiMap() {
@@ -17,7 +17,7 @@ class ImmutableIntIntUniqueBiMap internal constructor(
   fun toMutable(): MutableIntIntUniqueBiMap = MutableIntIntUniqueBiMap(key2Value, value2Key)
 }
 
-class MutableIntIntUniqueBiMap private constructor(
+internal class MutableIntIntUniqueBiMap private constructor(
   override var key2Value: Int2IntMap,
   override var value2Key: Int2IntMap,
   private var freezed: Boolean
@@ -26,22 +26,14 @@ class MutableIntIntUniqueBiMap private constructor(
   constructor() : this(Int2IntOpenHashMap(), Int2IntOpenHashMap(), false)
   constructor(key2Value: Int2IntMap, value2Key: Int2IntMap) : this(key2Value, value2Key, true)
 
-  fun putForce(key: Int, value: Int) {
-    startWrite()
-
-    if (key2Value.containsKey(key)) {
-      val existingValue = key2Value[key]
-      key2Value.remove(key)
-      value2Key.remove(existingValue)
-    }
-    if (value2Key.containsKey(value)) {
-      val existingKey = value2Key[value]
-      value2Key.remove(value)
-      key2Value.remove(existingKey)
-    }
-    put(key, value)
-  }
-
+  /**
+   * Put the key-value pair to the map
+   *
+   * Since the map is unique, no existing key or existing value is allowed in the map.
+   * [IllegalStateException] will be thrown if trying to add existing values.
+   * If you're not sure if these values already exist in the map, you can remove the previous values
+   *   with [removeKey] and [removeValue] functions.
+   */
   fun put(key: Int, value: Int) {
     if (key2Value.containsKey(key)) error("Key $key already exists in the map")
     if (value2Key.containsKey(value)) error("Value $value already exists in the map")
@@ -92,7 +84,7 @@ class MutableIntIntUniqueBiMap private constructor(
   }
 }
 
-sealed class IntIntUniqueBiMap {
+internal sealed class IntIntUniqueBiMap {
 
   protected abstract val key2Value: Int2IntMap
   protected abstract val value2Key: Int2IntMap

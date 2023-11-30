@@ -55,8 +55,7 @@ public class ShowHistoryAction extends LocalHistoryAction {
     return gw.isVersioned(f) && (f.isDirectory() || gw.areContentChangesVersioned(f));
   }
 
-  @Nullable
-  protected static VirtualFile getFile(@NotNull AnActionEvent e) {
+  protected static @Nullable VirtualFile getFile(@NotNull AnActionEvent e) {
     return JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single();
   }
 }

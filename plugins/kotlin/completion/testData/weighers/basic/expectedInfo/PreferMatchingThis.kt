@@ -8,6 +8,7 @@ open class Y : X {
     }
 }
 
+// IGNORE_K2
 // ORDER: this@Y
 // ORDER: this@Inner
 // ORDER: this@foo

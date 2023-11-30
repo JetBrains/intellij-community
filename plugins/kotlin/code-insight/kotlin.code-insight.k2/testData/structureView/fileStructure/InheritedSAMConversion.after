@@ -1,6 +1,0 @@
--InheritedSAMConversion.kt
- -class KotlinTest
-  fun equals(other: Any?): Boolean location=→Any
-  fun foo(samClass: TestSAM.SamClass?) location=→TestSAM
-  fun hashCode(): Int location=→Any
-  fun toString(): String location=→Any

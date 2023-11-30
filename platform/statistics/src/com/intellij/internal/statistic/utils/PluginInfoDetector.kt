@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
 /**
- * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
+ * Returns if this code is coming from IntelliJ Platform, a plugin created by JetBrains (bundled or not) or from official repository,
  * so API from it may be reported
  */
 fun getPluginInfo(aClass: Class<*>): PluginInfo {
@@ -52,7 +52,7 @@ fun getPluginInfo(className: String): PluginInfo {
 }
 
 /**
- * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
+ * Returns if this code is coming from IntelliJ Platform, a plugin created by JetBrains (bundled or not) or from official repository,
  * so API from it may be reported.
  *
  * Use only if you don't have [PluginDescriptor].
@@ -63,14 +63,14 @@ fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
   }
   val plugin = PluginManagerCore.getPlugin(pluginId)
   if (plugin == null) {
-    // we can't load plugin descriptor for a not installed plugin, but we can check if it's from JB repo
+    // we can't load plugin descriptor for a not installed plugin, but we can check if it's from JetBrains Marketplace
     return if (isPluginFromOfficialJbPluginRepo(pluginId)) PluginInfo(PluginType.LISTED, pluginId.idString, null) else unknownPlugin
   }
   return getPluginInfoByDescriptor(plugin)
 }
 
 /**
- * Returns if this code is coming from IntelliJ platform, a plugin created by JetBrains (bundled or not) or from official repository,
+ * Returns if this code is coming from IntelliJ Platform, a plugin created by JetBrains (bundled or not) or from official repository,
  * so API from it may be reported
  */
 fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo = getPluginInfoByDescriptorWithFeaturedPlugins(plugin, null)
@@ -113,7 +113,7 @@ enum class PluginType {
   JVM_CORE,
 
   /**
-   * IntelliJ platform
+   * IntelliJ Platform
    */
   PLATFORM,
 
@@ -153,21 +153,21 @@ enum class PluginType {
   JB_UPDATED_BUNDLED;
 
   /**
-   * @return true if code is from IntelliJ platform or JVM
+   * @return true if code is from IntelliJ Platform or JVM
    */
   fun isPlatformOrJvm(): Boolean {
     return this == JVM_CORE || this == PLATFORM
   }
 
   /**
-   * @return true if code is from IntelliJ platform or JB plugin.
+   * @return true if code is from IntelliJ Platform or JetBrains plugin.
    */
   fun isDevelopedByJetBrains(): Boolean {
     return this == JB_BUNDLED || this == FROM_SOURCES || this == JB_UPDATED_BUNDLED || this == JB_NOT_BUNDLED || isPlatformOrJvm()
   }
 
   /**
-   * @return true if code is from IntelliJ platform, JB plugin or plugin from JB plugin repository.
+   * @return true if code is from IntelliJ Platform, JetBrains plugin or plugin from JetBrains Marketplace.
    */
   fun isSafeToReport(): Boolean {
     return isDevelopedByJetBrains() || this == LISTED
@@ -187,12 +187,12 @@ private const val tbePluginId = "org.jetbrains.toolbox-enterprise-client"
 
 data class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
   /**
-   * @return true if code is from IntelliJ platform or JB plugin.
+   * @return true if code is from IntelliJ Platform or JetBrains plugin.
    */
   fun isDevelopedByJetBrains() = type.isDevelopedByJetBrains()
 
   /**
-   * @return true if code is from IntelliJ platform, JB plugin or plugin from JB plugin repository.
+   * @return true if code is from IntelliJ Platform, JetBrains plugin or plugin from JetBrains Marketplace.
    */
   fun isSafeToReport() = type.isSafeToReport()
 

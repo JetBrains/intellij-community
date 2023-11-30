@@ -16,7 +16,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class AutoIndentLinesHandler implements CodeInsightActionHandler {
+public final class AutoIndentLinesHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance(AutoIndentLinesHandler.class);
 
   @Override

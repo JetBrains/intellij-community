@@ -3,6 +3,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -142,12 +143,12 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       Icon icon = option.getKind().icon();
       if ("bool".equals(type)) {
         String lookupString = (booleanStart ? "" : Boolean.parseBoolean(option.getDefaultValue()) ? "-" : "+") + option.getOptionName();
-        tailType = TailType.SPACE;
+        tailType = TailTypes.spaceType();
         e = LookupElementBuilder.create(option.createPointer(), lookupString);
       }
       else if (!booleanStart) {
         String tailText = " = " + option.getDefaultValue();
-        tailType = TailType.EQUALS;
+        tailType = TailTypes.equalsType();
         e = LookupElementBuilder.create(option.createPointer(), option.getOptionName()).withTailText(tailText, true);
       }
       if (e != null) {

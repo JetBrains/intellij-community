@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -25,7 +26,7 @@ import java.util.function.Consumer;
 /**
  * An action that opens emoji picker popup, selected by user.
  */
-final class OpenEmojiPickerAction extends DumbAwareAction {
+final class OpenEmojiPickerAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   private static Context getContext(AnActionEvent e, boolean findOnly) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {

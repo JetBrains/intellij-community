@@ -74,8 +74,7 @@ public class DumbProgressIndicator implements StandardProgressIndicator {
   }
 
   @Override
-  @NotNull
-  public ModalityState getModalityState() {
+  public @NotNull ModalityState getModalityState() {
     return ModalityState.nonModal();
   }
 

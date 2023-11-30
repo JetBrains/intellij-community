@@ -11,6 +11,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
@@ -18,8 +19,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KtCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.KtCompilerTarget
+import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
+import org.jetbrains.kotlin.codegen.ClassBuilderFactories
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.core.KotlinCompilerIde
+import org.jetbrains.kotlin.idea.base.codeInsight.compiler.compileToDirectory
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.scratch.LOG
 import org.jetbrains.kotlin.idea.scratch.ScratchExpression
@@ -145,8 +155,38 @@ class KtScratchExecutionSession(
         val tmpDir = FileUtil.createTempDirectory("compile", "scratch")
         LOG.printDebugMessage("Temp output dir: ${tmpDir.path}")
 
-        KotlinCompilerIde(psiFile).compileToDirectory(tmpDir)
-        return tmpDir
+        val result = analyze(psiFile) {
+            val configuration = CompilerConfiguration().apply {
+                val containingModule = psiFile.module
+                if (containingModule != null) {
+                    put(CommonConfigurationKeys.MODULE_NAME, containingModule.name)
+                }
+
+                put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, psiFile.languageVersionSettings)
+            }
+
+            try {
+                val compilerTarget = KtCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
+                val allowedErrorFilter: (KtDiagnostic) -> Boolean = { false }
+
+                compileToDirectory(psiFile, configuration, compilerTarget, allowedErrorFilter, tmpDir)
+            } catch (e: ProcessCanceledException) {
+                throw e
+            } catch (e: Throwable) {
+                LOG.error(e)
+                return null
+            }
+        }
+
+        when (result) {
+            is KtCompilationResult.Failure -> {
+                LOG.warn("Errors found on analyzing the scratch file. Compilation aborted")
+                return null
+            }
+            is KtCompilationResult.Success -> {
+                return tmpDir
+            }
+        }
     }
 
     private fun createCommandLine(originalFile: KtFile, module: Module?, mainClassName: String, tempOutDir: String): Pair<TargetEnvironmentRequest, TargetedCommandLine> {

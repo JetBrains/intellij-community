@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -75,7 +75,7 @@ public class MeaninglessRecordAnnotationInspection extends AbstractBaseJavaLocal
           message = JavaBundle.message("inspection.meaningless.record.annotation.message.parameter");
         }
         else return;
-        holder.registerProblem(annotation, message, new DeleteElementFix(annotation));
+        holder.problem(annotation, message).fix(new DeleteElementFix(annotation)).register();
       }
     };
   }

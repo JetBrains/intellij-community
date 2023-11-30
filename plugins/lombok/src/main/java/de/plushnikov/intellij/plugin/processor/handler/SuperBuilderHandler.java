@@ -1,14 +1,18 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
+import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.quickfix.AddAbstractAndStaticModifiersFix;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -20,6 +24,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations.createRelevantNonNullAnnotation;
 
 public class SuperBuilderHandler extends BuilderHandler {
 
@@ -41,20 +47,31 @@ public class SuperBuilderHandler extends BuilderHandler {
   public boolean validateExistingBuilderClass(@NotNull String builderClassName,
                                               @NotNull PsiClass psiClass,
                                               @NotNull ProblemSink problemSink) {
-    final Optional<PsiClass> existingInnerBuilderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
+    final Optional<PsiClass> existingInnerBuilderClassOptional = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
 
-    if (existingInnerBuilderClass.isPresent()) {
+    if (existingInnerBuilderClassOptional.isPresent()) {
 
-      if (!validateInvalidAnnotationsOnBuilderClass(existingInnerBuilderClass.get(), problemSink)) {
+      final PsiClass existingInnerBuilderClass = existingInnerBuilderClassOptional.get();
+      if (!validateInvalidAnnotationsOnBuilderClass(existingInnerBuilderClass, problemSink)) {
         return false;
       }
 
-      final Optional<PsiClass> isStaticAndAbstract = existingInnerBuilderClass
-        .filter(psiInnerClass -> psiInnerClass.hasModifierProperty(PsiModifier.STATIC))
-        .filter(psiInnerClass -> psiInnerClass.hasModifierProperty(PsiModifier.ABSTRACT));
+      final boolean isStatic = existingInnerBuilderClass.hasModifierProperty(PsiModifier.STATIC);
+      final boolean isAbstract = existingInnerBuilderClass.hasModifierProperty(PsiModifier.ABSTRACT);
 
-      if (isStaticAndAbstract.isEmpty()) {
-        problemSink.addErrorMessage("inspection.message.existing.builder.must.be.abstract.static.inner.class");
+      if (!isStatic || !isAbstract) {
+        final LombokProblem problem =
+          problemSink.addErrorMessage("inspection.message.existing.builder.must.be.abstract.static.inner.class");
+
+        if (!isAbstract && !isStatic) {
+          problem.withLocalQuickFixes(() -> LocalQuickFix.from(new AddAbstractAndStaticModifiersFix(existingInnerBuilderClass)));
+        }
+        else if (!isAbstract) {
+          problem.withLocalQuickFixes(() -> new ModifierFix(existingInnerBuilderClass, PsiModifier.ABSTRACT, true, false));
+        }
+        else {
+          problem.withLocalQuickFixes(() -> new ModifierFix(existingInnerBuilderClass, PsiModifier.STATIC, true, false));
+        }
         return false;
       }
     }
@@ -133,6 +150,8 @@ public class SuperBuilderHandler extends BuilderHandler {
     final String blockText = String.format("return new %s();", PsiClassUtil.getTypeWithGenerics(builderImplClass).getCanonicalText(false));
     methodBuilder.withBodyText(blockText);
 
+    createRelevantNonNullAnnotation(containingClass, methodBuilder);
+
     return Optional.of(methodBuilder);
   }
 
@@ -155,6 +174,8 @@ public class SuperBuilderHandler extends BuilderHandler {
                                            PsiClassUtil.getTypeWithGenerics(builderImplClass).getCanonicalText(false),
                                            FILL_VALUES_METHOD_NAME);
     methodBuilder.withBodyText(blockText);
+
+    createRelevantNonNullAnnotation(containingClass, methodBuilder);
 
     return Optional.of(methodBuilder);
   }
@@ -333,7 +354,8 @@ public class SuperBuilderHandler extends BuilderHandler {
 
         final String callSuperCode = "super." + FILL_VALUES_METHOD_NAME + "(" + INSTANCE_VARIABLE_NAME + ");\n";
         final String codeBlockText = String.format("%s%s.%s(%s, this);\nreturn self();", forceCallSuper ? callSuperCode : "",
-                                                   baseClassBuilder.getQualifiedName(), STATIC_FILL_VALUES_METHOD_NAME, INSTANCE_VARIABLE_NAME);
+                                                   baseClassBuilder.getQualifiedName(), STATIC_FILL_VALUES_METHOD_NAME,
+                                                   INSTANCE_VARIABLE_NAME);
         methodBuilder.withBodyText(codeBlockText);
 
         result.add(methodBuilder);
@@ -360,6 +382,9 @@ public class SuperBuilderHandler extends BuilderHandler {
         .withNavigationElement(psiClass)
         .withModifier(PsiModifier.ABSTRACT)
         .withModifier(PsiModifier.PUBLIC);
+
+      createRelevantNonNullAnnotation(psiClass, buildMethod);
+
       result.add(buildMethod);
     }
 
@@ -447,6 +472,9 @@ public class SuperBuilderHandler extends BuilderHandler {
       final String buildCodeBlockText =
         String.format("return new %s(this);", PsiClassUtil.getTypeWithGenerics(psiClass).getCanonicalText(false));
       buildMethod.withBodyText(buildCodeBlockText);
+
+      createRelevantNonNullAnnotation(psiClass, buildMethod);
+
       result.add(buildMethod);
     }
 

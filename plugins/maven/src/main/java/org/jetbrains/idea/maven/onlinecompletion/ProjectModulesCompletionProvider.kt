@@ -14,7 +14,7 @@ class ProjectModulesCompletionProvider(private val myProject: Project) : Depende
 
   override fun fulltextSearch(searchString: String) = getLocal()
 
-  override fun suggestPrefix(groupId: String?, artifactId: String?) = getLocal()
+  override fun suggestPrefix(groupId: String, artifactId: String) = getLocal()
 
   private fun getLocal(): CompletableFuture<List<RepositoryArtifactData>> =
     CompletableFuture.supplyAsync {

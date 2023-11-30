@@ -1,9 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.BuildContext
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -11,6 +9,8 @@ import java.util.function.BiConsumer
 
 @Suppress("IdentifierGrammar")
 object VmOptionsGenerator {
+  /** duplicates RepositoryHelper.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY */
+  private const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url"
   @Suppress("SpellCheckingInspection")
   private val COMMON_VM_OPTIONS: List<String> = listOf(
     "-XX:+UseG1GC",
@@ -31,9 +31,8 @@ object VmOptionsGenerator {
   )
 
   private const val DEFAULT_XMS = 128
-  /**
-   * Must be the same as [com.intellij.diagnostic.MemorySizeConfigurator.DEFAULT_XMX].
-   */
+
+  /** Must be the same as [com.intellij.diagnostic.MemorySizeConfigurator.DEFAULT_XMX]. */
   private const val DEFAULT_XMX = 2048
 
   private val MEMORY_OPTIONS: Map<String, String> = linkedMapOf(
@@ -42,15 +41,30 @@ object VmOptionsGenerator {
     "-XX:ReservedCodeCacheSize=" to "512m"
   )
 
-  fun computeVmOptions(isEAP: Boolean, productProperties: ProductProperties): List<String> {
-    return computeVmOptions(isEAP, productProperties.customJvmMemoryOptions, productProperties.additionalVmOptions)
+  fun computeVmOptions(context: BuildContext): List<String> {
+    var additionalVmOptions = context.productProperties.additionalVmOptions
+    val customPluginRepositoryUrl = computeCustomPluginRepositoryUrl(context)
+    if (customPluginRepositoryUrl != null) {
+      additionalVmOptions = additionalVmOptions.add("-D$CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY=$customPluginRepositoryUrl")  
+    }
+    return computeVmOptions(context.applicationInfo.isEAP, context.productProperties.customJvmMemoryOptions,
+                            additionalVmOptions)
   }
 
-  fun computeVmOptions(
-    isEAP: Boolean,
-    customJvmMemoryOptions: Map<String, String>?,
-    additionalVmOptions: List<String>? = null
-  ): List<String> {
+  private fun computeCustomPluginRepositoryUrl(context: BuildContext): String? {
+    val artifactsServer = context.proprietaryBuildTools.artifactsServer
+    if (artifactsServer == null || !context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+      return null
+    }
+    val builtinPluginsRepoUrl = artifactsServer.urlToArtifact(context, "${context.applicationInfo.productCode}-plugins/plugins.xml")
+                                ?: return null
+    if (builtinPluginsRepoUrl.startsWith("http:")) {
+      context.messages.error("Insecure artifact server: $builtinPluginsRepoUrl")
+    }
+    return builtinPluginsRepoUrl
+  }
+
+  fun computeVmOptions(isEAP: Boolean, customJvmMemoryOptions: Map<String, String>?, additionalVmOptions: List<String>? = null): List<String> {
     val result = ArrayList<String>()
 
     if (customJvmMemoryOptions != null) {

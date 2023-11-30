@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class LineBreakpoint
@@ -85,8 +85,8 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   @Override
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return new LayeredIcon(isMuted ? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint,
-                           AllIcons.General.WarningDecorator);
+    return LayeredIcon.layeredIcon(new Icon[]{isMuted ? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint,
+                               AllIcons.General.WarningDecorator});
   }
 
   @Override
@@ -333,7 +333,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     if (isValid()) {
       final int lineNumber = getLineIndex() + 1;
       String className = getClassName();
-      final boolean hasClassInfo = className != null && className.length() > 0;
+      final boolean hasClassInfo = className != null && !className.isEmpty();
       final String methodName = getMethodName();
       final String displayName = methodName != null ? methodName + "()" : null;
       final boolean hasMethodInfo = displayName != null;
@@ -421,7 +421,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   //  if (!super.canMoveTo(position)) {
   //    return false;
   //  }
-  //  final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(position.getFile());
+  //  final Document document = position.getFile().getViewProvider().getDocument();
   //  return canAddLineBreakpoint(myProject, document, position.getLine());
   //}
 

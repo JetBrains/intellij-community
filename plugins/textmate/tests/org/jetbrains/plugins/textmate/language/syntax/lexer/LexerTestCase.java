@@ -11,6 +11,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.PathInterner;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TestUtil;
 import org.jetbrains.plugins.textmate.bundles.TextMateFileNameMatcher;
 import org.jetbrains.plugins.textmate.bundles.TextMateGrammar;
@@ -99,7 +100,8 @@ abstract public class LexerTestCase extends UsefulTestCase {
     else {
       Iterator<CharSequence> extensionsIterator = TextMateEditorUtilsKt.fileNameExtensions(myFileName).iterator();
       while (extensionsIterator.hasNext()) {
-        CharSequence scopeForExtension = myLanguageDescriptors.get(new TextMateFileNameMatcher.Extension(extensionsIterator.next().toString()));
+        CharSequence scopeForExtension =
+          myLanguageDescriptors.get(new TextMateFileNameMatcher.Extension(extensionsIterator.next().toString()));
         if (scopeForExtension != null) {
           myRootScope = scopeForExtension;
           break;
@@ -121,7 +123,8 @@ abstract public class LexerTestCase extends UsefulTestCase {
       final int s = lexer.getTokenStart();
       final int e = lexer.getTokenEnd();
       final IElementType tokenType = lexer.getTokenType();
-      final String str = tokenType + ": [" + s + ", " + e + "], {" + text.substring(s, e) + "}\n";
+      final String tokenTypePresentation = getTokenTypePresentation(tokenType);
+      final String str = tokenTypePresentation + ": [" + s + ", " + e + "], {" + text.substring(s, e) + "}\n";
       output.append(str);
       lexer.advance();
     }
@@ -130,6 +133,32 @@ abstract public class LexerTestCase extends UsefulTestCase {
     String suffix = extension.isEmpty() ? "" : "." + extension;
     String expectedFilePath = myFile.getParent() + "/" + FileUtilRt.getNameWithoutExtension(myFileName) + "_after" + suffix;
     assertSameLinesWithFile(expectedFilePath, output.toString().trim());
+  }
+
+  @Nullable
+  private static String getTokenTypePresentation(IElementType tokenType) {
+    if (tokenType instanceof TextMateElementType) {
+      TextMateScope scope = ((TextMateElementType)tokenType).getScope();
+      StringBuilder builder = new StringBuilder();
+      CharSequence scopeName = scope.getScopeName();
+      if (scopeName != null) {
+        builder.append(scopeName);
+      }
+
+      TextMateScope parent = scope.getParent();
+      while (parent != null) {
+        CharSequence parentScopeName = parent.getScopeName();
+        if (parentScopeName != null) {
+          if (!builder.isEmpty()) {
+            builder.insert(0, ";");
+          }
+          builder.insert(0, parentScopeName);
+        }
+        parent = parent.getParent();
+      }
+      return builder.toString().trim();
+    }
+    return tokenType.toString();
   }
 
   protected abstract String getTestDirRelativePath();

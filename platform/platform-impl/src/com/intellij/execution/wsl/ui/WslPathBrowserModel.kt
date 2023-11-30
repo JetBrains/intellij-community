@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ui
 
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.listWindowsLocalDriveRoots
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -9,8 +10,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
-import java.nio.file.FileSystems
 
+private val logger = Logger.getInstance("WslPathBrowser")
 
 /**
  * User enters [linuxPath] on [distro] and this function returns Windows to open in file browser.
@@ -22,7 +23,6 @@ fun getBestWindowsPathFromLinuxPath(distro: WSLDistribution, linuxPath: String):
 
   @Suppress("NAME_SHADOWING")
   val linuxPath = linuxPath.trim()
-  val logger = Logger.getInstance(WslPathBrowser::class.java)
   logger.info("Open $linuxPath in ${distro.getUNCRootPath()}${FileUtil.toSystemDependentName(FileUtil.normalize(linuxPath))}")
   distro.getWindowsPath(linuxPath).let {
     var fileName: String? = it
@@ -45,7 +45,7 @@ fun getRootsForFileDescriptor(distro: WSLDistribution, accessWindowsFs: Boolean)
   val roots = mutableListOf<VirtualFile>()
   fs.findFileByNioFile(distro.getUNCRootPath())?.let { roots.add(it) }
   if (accessWindowsFs) {
-    roots.addAll(FileSystems.getDefault().rootDirectories.mapNotNull { fs.findFileByNioFile(it) })
+    roots.addAll(listWindowsLocalDriveRoots().mapNotNull { fs.findFileByNioFile(it) })
   }
   return roots
 }

@@ -15,9 +15,11 @@ public interface EventLogUploaderOptions {
   String URL_OPTION = "--url";
   String PRODUCT_OPTION = "--product";
   String PRODUCT_VERSION_OPTION = "--product-version";
+  String BASELINE_VERSION = "--baseline-version";
   String USER_AGENT_OPTION = "--user-agent";
   String EXTRA_HEADERS = "--extra-headers";
   String INTERNAL_OPTION = "--internal";
-  String TEST_OPTION = "--test";
+  String TEST_SEND_ENDPOINT = "--test-send-endpoint";
+  String TEST_CONFIG = "--test-config";
   String EAP_OPTION = "--eap";
 }

@@ -22,6 +22,10 @@ public class LightUnnamedVariablesHighlightingTest extends LightJavaCodeInsightF
   public void testUnnamedVariables() {
     doTest();
   } 
+  
+  public void testUnnamedVariablesInGuard() {
+    doTest();
+  } 
 
   public void testUnnamedVariablesJava9() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_9, () -> doTest());

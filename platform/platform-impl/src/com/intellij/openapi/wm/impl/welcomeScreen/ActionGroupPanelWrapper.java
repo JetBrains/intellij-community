@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.CommonBundle;
@@ -38,15 +38,15 @@ public final class ActionGroupPanelWrapper {
 
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
 
-  public static Pair<JPanel, JBList<AnAction>> createActionGroupPanel(final ActionGroup action,
-                                                                      final Runnable backAction,
+  public static Pair<JPanel, JBList<AnAction>> createActionGroupPanel(ActionGroup action,
+                                                                      Runnable backAction,
                                                                       @NotNull Disposable parentDisposable) {
     JPanel actionsListPanel = new JPanel(new BorderLayout());
 
     actionsListPanel.setBackground(getProjectsBackground());
-    final java.util.List<AnAction> groups = flattenActionGroups(action);
-    final DefaultListModel<AnAction> model = JBList.createDefaultListModel(groups);
-    final JBList<AnAction> list = new JBList<>(model);
+    java.util.List<AnAction> groups = flattenActionGroups(action);
+    DefaultListModel<AnAction> model = JBList.createDefaultListModel(groups);
+    JBList<AnAction> list = new JBList<>(model);
     for (AnAction group : groups) {
       if (group instanceof Disposable) {
         Disposer.register(parentDisposable, (Disposable)group);
@@ -61,15 +61,13 @@ public final class ActionGroupPanelWrapper {
 
     list.setBackground(getProjectsBackground());
     list.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<AnAction>() {
-                           @Nullable
                            @Override
-                           public String getTextFor(AnAction value) {
+                           public @Nullable String getTextFor(AnAction value) {
                              return value.getTemplateText();
                            }
 
-                           @Nullable
                            @Override
-                           public String getCaptionAboveOf(AnAction value) {
+                           public @Nullable String getCaptionAboveOf(AnAction value) {
                              return getParentGroupName(value);
                            }
 
@@ -232,8 +230,7 @@ public final class ActionGroupPanelWrapper {
     currentPanel.getRootPane().setDefaultButton(actionButton);
   }
 
-  @Nullable
-  private static JComponent createCancelButton(@Nullable Runnable cancelAction) {
+  private static @Nullable JComponent createCancelButton(@Nullable Runnable cancelAction) {
     if (cancelAction == null) return null;
 
     JButton cancelButton = new JButton(CommonBundle.getCancelButtonText());
@@ -251,7 +248,7 @@ public final class ActionGroupPanelWrapper {
     });
   }
 
-  private static List<AnAction> flattenActionGroups(@NotNull final ActionGroup action) {
+  private static List<AnAction> flattenActionGroups(final @NotNull ActionGroup action) {
     final ArrayList<AnAction> groups = new ArrayList<>();
     String groupName;
     for (AnAction anAction : action.getChildren(null)) {
@@ -271,11 +268,11 @@ public final class ActionGroupPanelWrapper {
     return groups;
   }
 
-  private static @NlsContexts.Separator String getParentGroupName(@NotNull final AnAction value) {
+  private static @NlsContexts.Separator String getParentGroupName(final @NotNull AnAction value) {
     return (String)value.getTemplatePresentation().getClientProperty(ACTION_GROUP_KEY);
   }
 
-  private static void setParentGroupName(@NotNull final String groupName, @NotNull final AnAction childAction) {
+  private static void setParentGroupName(final @NotNull String groupName, final @NotNull AnAction childAction) {
     childAction.getTemplatePresentation().putClientProperty(ACTION_GROUP_KEY, groupName);
   }
 

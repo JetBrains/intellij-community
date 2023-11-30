@@ -24,6 +24,7 @@ import java.util.Collection;
  * @author Vladislav.Soroka
  */
 public interface FileCollectionDependency extends ExternalDependency {
+
   /**
    * Returns files of this dependency.
    *
@@ -31,4 +32,6 @@ public interface FileCollectionDependency extends ExternalDependency {
    */
   @NotNull
   Collection<File> getFiles();
+
+  boolean isExcludedFromIndexing();
 }

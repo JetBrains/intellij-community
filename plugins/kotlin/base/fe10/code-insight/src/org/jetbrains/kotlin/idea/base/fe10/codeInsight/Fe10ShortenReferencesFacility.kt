@@ -12,7 +12,7 @@ internal class Fe10ShortenReferencesFacility : ShortenReferencesFacility {
         ShortenReferences.DEFAULT.process(file, range.startOffset, range.endOffset)
     }
 
-    override fun shorten(element: KtElement) {
-        ShortenReferences.DEFAULT.process(element)
+    override fun shorten(element: KtElement): KtElement {
+        return ShortenReferences.DEFAULT.process(element)
     }
 }

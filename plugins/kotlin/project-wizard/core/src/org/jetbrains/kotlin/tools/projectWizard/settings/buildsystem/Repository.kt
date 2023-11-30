@@ -70,4 +70,8 @@ object Repositories {
         "maven.pkg.jetbrains.space",
         "kotlin/p/kotlin/bootstrap"
     )
+    val JETBRAINS_KOTLIN_IDE_PLUGIN_DEPENDENCIES = CacheRedirector(
+        "maven.pkg.jetbrains.space",
+        "kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
+    )
 }

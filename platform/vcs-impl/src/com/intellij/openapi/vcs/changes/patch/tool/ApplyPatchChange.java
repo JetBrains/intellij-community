@@ -58,7 +58,7 @@ class ApplyPatchChange {
 
   private boolean myResolved;
 
-  ApplyPatchChange(@NotNull PatchChangeBuilder.Hunk hunk, int index, @NotNull ApplyPatchViewer viewer) {
+  ApplyPatchChange(@NotNull PatchChangeBuilder.AppliedHunk hunk, int index, @NotNull ApplyPatchViewer viewer) {
     myIndex = index;
     myViewer = viewer;
     myPatchDeletionRange = hunk.getPatchDeletionRange();
@@ -232,6 +232,9 @@ class ApplyPatchChange {
     if (myStatus == HunkStatus.EXACTLY_APPLIED) {
       ContainerUtil.addIfNotNull(myOperations, createOperation(OperationType.APPLY));
     }
+    else {
+      ContainerUtil.addIfNotNull(myOperations, createOperation(OperationType.COPY));
+    }
     ContainerUtil.addIfNotNull(myOperations, createOperation(OperationType.IGNORE));
   }
 
@@ -240,28 +243,38 @@ class ApplyPatchChange {
     if (isResolved()) return null;
 
     EditorEx editor = myViewer.getPatchEditor();
-    int offset = DiffGutterOperation.lineToOffset(editor, getPatchRange().start);
+    int line = type == OperationType.COPY ? getPatchInsertionRange().start : getPatchRange().start;
+    int offset = DiffGutterOperation.lineToOffset(editor, line);
 
     return new DiffGutterOperation.Simple(editor, offset, () -> {
-      if (type == OperationType.APPLY) {
-        return createApplyRenderer();
-      }
-      else {
-        return createIgnoreRenderer();
-      }
+      return switch (type) {
+        case APPLY -> createApplyRenderer();
+        case COPY -> createCopyRenderer();
+        case IGNORE -> createIgnoreRenderer();
+      };
     });
   }
 
   @Nullable
   private GutterIconRenderer createApplyRenderer() {
-    return createIconRenderer(DiffBundle.message("action.presentation.diff.accept.text"), DiffUtil.getArrowIcon(Side.RIGHT), () -> myViewer.executeCommand(
-      DiffBundle.message("merge.dialog.accept.change.command"), () -> myViewer.replaceChange(this)));
+    return createIconRenderer(DiffBundle.message("action.presentation.diff.accept.text"), DiffUtil.getArrowIcon(Side.RIGHT),
+                              () -> myViewer.executeCommand(DiffBundle.message("merge.dialog.accept.change.command"),
+                                                            () -> myViewer.replaceChange(this)));
+  }
+
+  @Nullable
+  private GutterIconRenderer createCopyRenderer() {
+    if (getPatchInsertionRange().isEmpty()) return null;
+    return createIconRenderer(DiffBundle.message("action.presentation.diff.copy.text"), AllIcons.Actions.Copy,
+                              () -> myViewer.executeCommand(DiffBundle.message("patch.dialog.copy.change.command"),
+                                                            () -> myViewer.copyChangeToClipboard(this)));
   }
 
   @Nullable
   private GutterIconRenderer createIgnoreRenderer() {
-    return createIconRenderer(DiffBundle.message("action.presentation.merge.ignore.text"), AllIcons.Diff.Remove, () -> myViewer.executeCommand(
-      DiffBundle.message("merge.dialog.ignore.change.command"), () -> myViewer.markChangeResolved(this)));
+    return createIconRenderer(DiffBundle.message("action.presentation.merge.ignore.text"), AllIcons.Diff.Remove,
+                              () -> myViewer.executeCommand(DiffBundle.message("merge.dialog.ignore.change.command"),
+                                                            () -> myViewer.markChangeResolved(this)));
   }
 
   @Nullable
@@ -278,7 +291,7 @@ class ApplyPatchChange {
   }
 
   private enum OperationType {
-    APPLY, IGNORE
+    APPLY, COPY, IGNORE
   }
 
   //

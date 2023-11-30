@@ -1,3 +1,3 @@
 // "Implement as constructor parameters" "true"
-
+// IGNORE_K2
 actual class End(override val a: Int) : IFoo

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.find.ngrams.TrigramIndex
@@ -19,7 +19,6 @@ import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.UsefulTestCase.assertContainsElements
 import com.intellij.testFramework.UsefulTestCase.assertTrue
 import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexableSetContributor
 import org.junit.Test
 
@@ -201,12 +200,12 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
 
     val fileBasedIndex = FileBasedIndex.getInstance()
     assertIndexableFiles(parentContentRootFile.file, nestedContentRootFile.file)
-    // Currently order of checks masks the fact,
+    // Currently order of checks masks the fact
     // that called before calls to content-dependent indices on files in question,
     // content-independent indices won't return those files
-    fileBasedIndex.assertHasDataInIndex(nestedContentRootFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
-    fileBasedIndex.assertHasDataInIndex(parentContentRootFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
-    fileBasedIndex.assertNoDataInIndex(excludedFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
+    fileBasedIndex.assertHasDataInIdAndTrigramIndexes(nestedContentRootFile.file)
+    fileBasedIndex.assertHasDataInIdAndTrigramIndexes(parentContentRootFile.file)
+    fileBasedIndex.assertNoDataInIdAndTrigramIndexes(excludedFile.file)
     assertContainsElements(FilenameIndex.getAllFilesByExt(project, "txt", GlobalSearchScope.projectScope(project)),
                            parentContentRootFile.file, nestedContentRootFile.file)
     assertContainsElements(FileTypeIndex.getFiles(PlainTextFileType.INSTANCE, GlobalSearchScope.projectScope(project)),
@@ -214,9 +213,9 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
 
     PsiTestUtil.removeContentEntry(module, nestedContentRoot.file)
     assertIndexableFiles(parentContentRootFile.file, nestedContentRootFile.file, excludedFile.file)
-    fileBasedIndex.assertHasDataInIndex(nestedContentRootFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
-    fileBasedIndex.assertHasDataInIndex(parentContentRootFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
-    fileBasedIndex.assertHasDataInIndex(excludedFile.file, IdIndex.NAME, TrigramIndex.INDEX_ID)
+    fileBasedIndex.assertHasDataInIdAndTrigramIndexes(nestedContentRootFile.file)
+    fileBasedIndex.assertHasDataInIdAndTrigramIndexes(parentContentRootFile.file)
+    fileBasedIndex.assertHasDataInIdAndTrigramIndexes(excludedFile.file)
 
     assertContainsElements(FilenameIndex.getAllFilesByExt(project, "txt", GlobalSearchScope.projectScope(project)),
                            parentContentRootFile.file, nestedContentRootFile.file, excludedFile.file)
@@ -224,15 +223,15 @@ class IndexableFilesBeneathExcludedDirectoryTest : IndexableFilesBaseTest() {
                            parentContentRootFile.file, nestedContentRootFile.file, excludedFile.file)
   }
 
-  private fun FileBasedIndex.assertHasDataInIndex(file: VirtualFile, vararg indexIds: ID<*, *>) {
-    for (indexId in indexIds) {
+  private fun FileBasedIndex.assertHasDataInIdAndTrigramIndexes(file: VirtualFile) {
+    for (indexId in listOf(IdIndex.NAME, TrigramIndex.INDEX_ID)) {
       val values = getFileData(indexId, file, project).values
       assertTrue("No data is found in $indexId for ${file.name}", !values.isEmpty())
     }
   }
 
-  private fun FileBasedIndex.assertNoDataInIndex(file: VirtualFile, vararg indexIds: ID<*, *>) {
-    for (indexId in indexIds) {
+  private fun FileBasedIndex.assertNoDataInIdAndTrigramIndexes(file: VirtualFile) {
+    for (indexId in listOf(IdIndex.NAME, TrigramIndex.INDEX_ID)) {
       val values = getFileData(indexId, file, project).values
       assertTrue("Some data found in " + indexId + " for " + file.name, values.isEmpty())
     }

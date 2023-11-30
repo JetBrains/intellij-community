@@ -1,23 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ui.UIExperiment;
-import com.intellij.execution.ui.layout.impl.JBRunnerTabs;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.navigationToolbar.NavBarBorder;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.UiUtils;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
-import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
 
-class ServiceViewTreeUi implements ServiceViewUi {
+final class ServiceViewTreeUi implements ServiceViewUi {
   private final JPanel myMainPanel;
   private final SimpleToolWindowPanel myContentPanel = new SimpleToolWindowPanel(false);
   private final Splitter mySplitter;
@@ -53,6 +48,13 @@ class ServiceViewTreeUi implements ServiceViewUi {
     myContentPanel.setContent(mySplitter);
 
     myMasterPanel = new JPanel(new BorderLayout());
+    DataManager.registerDataProvider(myMasterPanel, dataId -> {
+      if (ServiceViewActionUtils.IS_FROM_TREE_KEY.is(dataId)) {
+        return true;
+      }
+      return null;
+    });
+
     mySplitter.setFirstComponent(myMasterPanel);
 
     myDetailsPanel = new JPanel(new BorderLayout());
@@ -162,7 +164,7 @@ class ServiceViewTreeUi implements ServiceViewUi {
     }
     ActionToolbar serviceActionToolbar = myServiceActionToolbar;
     if (serviceActionToolbar != null) {
-      ((ActionToolbarImpl)serviceActionToolbar).clearPresentationCache();
+      ((ActionToolbarImpl)serviceActionToolbar).reset();
       serviceActionToolbar.updateActionsImmediately();
     }
     ApplicationManager.getApplication().invokeLater(() -> {

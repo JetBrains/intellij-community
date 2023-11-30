@@ -2,8 +2,8 @@
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.progress.Cancellation.computeInNonCancelableSection
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.timeoutRunBlocking
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

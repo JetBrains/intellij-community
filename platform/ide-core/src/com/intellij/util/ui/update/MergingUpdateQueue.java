@@ -397,6 +397,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
 
     for (Update eachInQueue : getAllScheduledUpdates()) {
       if (eachInQueue.actuallyCanEat(update)) {
+        update.setRejected();
         return true;
       }
       if (update.actuallyCanEat(eachInQueue)) {

@@ -1,9 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components;
 
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.ui.RegistryBooleanOptionDescriptor;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.internal.inspector.ComponentPropertiesCollector;
 import com.intellij.internal.inspector.PropertyBean;
@@ -14,10 +18,19 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,14 +78,14 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
   private StripeTable myTable;
   private ConsoleView myPreviewComponent;
 
-  InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo, @Nullable Project project) {
+  InspectorTable(final @NotNull List<? extends PropertyBean> clickInfo, @Nullable Project project) {
     super(true, 0.75f);
     myProject = project;
     myModel = new MyModel(clickInfo);
     init(null);
   }
 
-  InspectorTable(@NotNull final Component component, @Nullable Project project) {
+  InspectorTable(final @NotNull Component component, @Nullable Project project) {
     super(true, 0.75f);
     myProject = project;
     myModel = new MyModel(component);
@@ -174,8 +187,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     }
   }
 
-  @NotNull
-  public String getCellTextValue(int row, int col) {
+  public @NotNull String getCellTextValue(int row, int col) {
     Object value = myTable.getValueAt(row, col);
     if (value instanceof String) return (String)value;
 
@@ -204,7 +216,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     return null;
   }
 
-  private static class MyModel extends AbstractTableModel {
+  private static final class MyModel extends AbstractTableModel {
     final Component myComponent;
     final List<PropertyBean> myProperties = new ArrayList<>();
 
@@ -219,8 +231,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     }
 
     @Override
-    @Nullable
-    public Object getValueAt(int row, int column) {
+    public @Nullable Object getValueAt(int row, int column) {
       final PropertyBean bean = myProperties.get(row);
       if (bean != null) {
         return column == 0 ? bean.propertyName : bean.propertyValue;
@@ -244,8 +255,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
       }
     }
 
-    @Nullable
-    public Function<Object, Object> updater(PropertyBean bean) {
+    public @Nullable Function<Object, Object> updater(PropertyBean bean) {
       if (myComponent == null) return null;
 
       String name = bean.propertyName.trim();
@@ -367,8 +377,9 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     }
   }
 
-  private class MyCellSelectionListener implements ListSelectionListener {
+  private final class MyCellSelectionListener implements ListSelectionListener {
     private String selectedProperty = null;
+    private ProgressIndicator previewUpdateIndicator = null;
 
     @Override
     public void valueChanged(ListSelectionEvent e) {
@@ -394,81 +405,118 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
           myPreviewComponent = TextConsoleBuilderFactory.getInstance().createBuilder(myProject).getConsole();
           JComponent consoleComponent = myPreviewComponent.getComponent();
           consoleComponent.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 1));
-          setSecondComponent(consoleComponent);
         }
 
-        String strValue = String.valueOf(value);
+        String renderedValue = getCellTextValue(row, column);
+        if (previewUpdateIndicator != null) {
+          previewUpdateIndicator.cancel();
+        }
+        previewUpdateIndicator = new EmptyProgressIndicator(ModalityState.stateForComponent(InspectorTable.this));
         myPreviewComponent.clear();
-        if (property.equals("added-at")) {
-          myPreviewComponent.print(strValue, ERROR_OUTPUT);
-        }
-        else if (property.equals("text")) {
-          myPreviewComponent.print(strValue, NORMAL_OUTPUT);
-        }
-        else if (property.trim().equals("hierarchy")) {
-          String[] classNames = strValue.split(" *→ *");
-          printClassNamesToConsole(myPreviewComponent, classNames, true);
-        }
-        else if (property.equals("toString")) {
-          printToStringProperty(myPreviewComponent, strValue);
-        }
-        else if (property.contains("Listeners") && value != null) {
-          String listeners = ValueCellRenderer.getToStringValue(value);
-          String[] classNames = listeners.split(" *, *");
-          printClassNamesToConsole(myPreviewComponent, classNames, false);
-        }
-        else if (property.equals("clientProperties") && value != null) {
-          Map<Object, Object> properties = ValueCellRenderer.parseClientProperties(value);
-          if (properties != null) {
-            for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-              if (entry.getKey().equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
-              myPreviewComponent.print(entry.getKey() + " -> ", NORMAL_OUTPUT);
-              printClassName(myPreviewComponent, String.valueOf(entry.getValue()));
-              myPreviewComponent.print("\n", NORMAL_OUTPUT);
-            }
+        var task = new Task.Backgroundable(myProject, "Invisible title", false) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            fillPreviewComponent(property, value, renderedValue);
+            indicator.checkCanceled();
+            myPreviewComponent.scrollTo(0);
           }
-        }
-        else if (value instanceof CachedImageIcon) {
-          myPreviewComponent.print("Icon path: ", NORMAL_OUTPUT);
-          printIconPath(myPreviewComponent, (CachedImageIcon)value);
-        }
-        else {
-          String renderedValue = getCellTextValue(row, column);
-          printClassName(myPreviewComponent, renderedValue);
-        }
+        };
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, previewUpdateIndicator);
 
-        myPreviewComponent.scrollTo(0);
         setSecondComponent(myPreviewComponent.getComponent());
       }
     }
 
-    private void printClassNamesToConsole(ConsoleView consoleView, String[] classNames, boolean withIndent) {
-      for (int idx = 0; idx < classNames.length; idx++) {
-        if (withIndent) {
-          consoleView.print("\t".repeat(idx), NORMAL_OUTPUT);
+    private void fillPreviewComponent(String property, Object value, String renderedValue) {
+      String strValue = String.valueOf(value);
+      if (property.equals("added-at")) {
+        if (value == null) {
+          printToPreview("Stacktrace is not available. There are two options:\n1. ", NORMAL_OUTPUT);
+          printHyperlinkToPreview("Click", project -> {
+            UiInspectorAction.enableStacktracesSaving();
+            showHintInPreview("Enabled, please reopen the UI needed to inspect");
+          });
+          printToPreview(" to enable stacktraces saving until IDE restart.\n2. ", NORMAL_OUTPUT);
+          printHyperlinkToPreview("Click", project -> {
+            Registry.get("ui.inspector.save.stacktraces").setValue(true);
+            RegistryBooleanOptionDescriptor.suggestRestart(InspectorTable.this.getRootPane());
+            if (ModalityState.current() != ModalityState.nonModal()) {
+              // If there is a modal context, the restart won't happen until all dialogs are closed, so suggest it.
+              showHintInPreview("Close all active dialogs to perform restart");
+            }
+          });
+          printToPreview("""
+                            to enable stacktraces saving by default. Requires restart.
+                              Will enable 'ui.inspector.save.stacktraces' Registry property.
+                           """, NORMAL_OUTPUT);
+          printToPreview("Note that saving stacktraces for each UI component can consume significant amount of memory.", NORMAL_OUTPUT);
         }
-        String className = classNames[idx];
-        printClassName(consoleView, className);
-        consoleView.print("\n", NORMAL_OUTPUT);
+        else {
+          printToPreview(strValue, ERROR_OUTPUT);
+        }
+      }
+      else if (property.equals("text")) {
+        printToPreview(strValue, NORMAL_OUTPUT);
+      }
+      else if (property.trim().equals("hierarchy")) {
+        String[] classNames = strValue.split(" *→ *");
+        printClassNamesToConsole(classNames, true);
+      }
+      else if (property.equals("toString")) {
+        printToStringProperty(strValue);
+      }
+      else if (property.contains("Listeners") && value != null) {
+        String listeners = ValueCellRenderer.getToStringValue(value);
+        String[] classNames = listeners.split(" *, *");
+        printClassNamesToConsole(classNames, false);
+      }
+      else if (property.equals("clientProperties") && value != null) {
+        Map<Object, Object> properties = ValueCellRenderer.parseClientProperties(value);
+        if (properties != null) {
+          for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+            if (entry.getKey().equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
+            printToPreview(entry.getKey() + " -> ", NORMAL_OUTPUT);
+            printClassName(String.valueOf(entry.getValue()));
+            printToPreview("\n", NORMAL_OUTPUT);
+          }
+        }
+      }
+      else if (value instanceof CachedImageIcon) {
+        printToPreview("Icon path: ", NORMAL_OUTPUT);
+        printIconPath((CachedImageIcon)value);
+      }
+      else {
+        printClassName(renderedValue);
       }
     }
 
-    private void printClassName(ConsoleView consoleView, String className) {
+    private void printClassNamesToConsole(String[] classNames, boolean withIndent) {
+      for (int idx = 0; idx < classNames.length; idx++) {
+        if (withIndent) {
+          printToPreview("\t".repeat(idx), NORMAL_OUTPUT);
+        }
+        String className = classNames[idx];
+        printClassName(className);
+        printToPreview("\n", NORMAL_OUTPUT);
+      }
+    }
+
+    private void printClassName(String className) {
       String[] parts = className.split("@");  // there can be a class name with hashcode
       String classFqn = parts[0];
-      PsiElement classElement = UiInspectorUtil.findClassByFqn(myProject, classFqn);
+      PsiElement classElement = ReadAction.compute(() -> UiInspectorUtil.findClassByFqn(myProject, classFqn));
       if (classElement != null) {
-        consoleView.printHyperlink(classFqn, project -> UiInspectorUtil.openClassByFqn(project, classFqn, true));
+        printHyperlinkToPreview(classFqn, project -> UiInspectorUtil.openClassByFqn(project, classFqn, true));
         if (parts.length > 1) {
-          consoleView.print("@" + parts[1], NORMAL_OUTPUT);
+          printToPreview("@" + parts[1], NORMAL_OUTPUT);
         }
       }
       else {
-        consoleView.print(className, NORMAL_OUTPUT);
+        printToPreview(className, NORMAL_OUTPUT);
       }
     }
 
-    private void printToStringProperty(ConsoleView consoleView, Object value) {
+    private void printToStringProperty(Object value) {
       String strValue = value.toString();
       int classNameEnd = strValue.indexOf("[");
       if (classNameEnd == -1) return;
@@ -476,47 +524,67 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
       String content = strValue.substring(classNameEnd + 1, strValue.length() - 1);
       String[] properties = content.split(" *, *");
 
-      printClassName(consoleView, className);
-      consoleView.print(" " + strValue.charAt(classNameEnd) + "\n", NORMAL_OUTPUT);
+      printClassName(className);
+      printToPreview(" " + strValue.charAt(classNameEnd) + "\n", NORMAL_OUTPUT);
       for (String prop : properties) {
         if (prop.isEmpty()) continue;
-        consoleView.print("\t", NORMAL_OUTPUT);
+        printToPreview("\t", NORMAL_OUTPUT);
         String[] keyValuePair = prop.split("=");
         if (keyValuePair.length == 1) {
-          consoleView.print(keyValuePair[0], NORMAL_OUTPUT);
+          printToPreview(keyValuePair[0], NORMAL_OUTPUT);
           if (prop.contains("=")) {
-            consoleView.print("=", NORMAL_OUTPUT);
+            printToPreview("=", NORMAL_OUTPUT);
           }
         }
         else {
           String key = keyValuePair[0];
-          consoleView.print(key + "=", NORMAL_OUTPUT);
-          printClassName(consoleView, keyValuePair[1]);
+          printToPreview(key + "=", NORMAL_OUTPUT);
+          printClassName(keyValuePair[1]);
         }
-        consoleView.print("\n", NORMAL_OUTPUT);
+        printToPreview("\n", NORMAL_OUTPUT);
       }
-      consoleView.print("]", NORMAL_OUTPUT);
+      printToPreview("]", NORMAL_OUTPUT);
     }
 
-    private void printIconPath(ConsoleView consoleView, CachedImageIcon icon) {
+    private void printIconPath(CachedImageIcon icon) {
       URL iconUrl = icon.getUrl();
       if (iconUrl != null) {
         VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(iconUrl.getPath());
         if (file != null && myProject != null) {
           Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(myProject, file, 0);
-          consoleView.printHyperlink(file.getPath(), project -> navigatable.navigate(true));
+          printHyperlinkToPreview(file.getPath(), project -> navigatable.navigate(true));
         }
         else {
-          consoleView.print(iconUrl.toString(), NORMAL_OUTPUT);
+          printToPreview(iconUrl.toString(), NORMAL_OUTPUT);
         }
       }
       else {
-        consoleView.print(String.valueOf(icon.getOriginalPath()), NORMAL_OUTPUT);
+        printToPreview(String.valueOf(icon.getOriginalPath()), NORMAL_OUTPUT);
+      }
+    }
+
+    private void printToPreview(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+      ProgressManager.checkCanceled();
+      myPreviewComponent.print(text, contentType);
+    }
+
+    private void printHyperlinkToPreview(@NotNull String hyperlinkText, @Nullable HyperlinkInfo info) {
+      ProgressManager.checkCanceled();
+      myPreviewComponent.printHyperlink(hyperlinkText, info);
+    }
+
+    private void showHintInPreview(@NotNull String text) {
+      // Can't access ConsoleViewImpl in this module to cast ConsoleView and get Editor from it.
+      // So, there is a little bit more hacky way.
+      Editor editor = myPreviewComponent.getPreferredFocusableComponent() instanceof EditorComponentImpl editorComponent
+                      ? editorComponent.getEditor() : null;
+      if (editor != null) {
+        HintManager.getInstance().showInformationHint(editor, text, HintManager.ABOVE);
       }
     }
   }
 
-  private static class PropertyNameRenderer extends DefaultTableCellRenderer {
+  private static final class PropertyNameRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table,
                                                    Object value,
@@ -542,7 +610,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     }
   }
 
-  private class MyInspectorTableCopyProvider implements CopyProvider {
+  private final class MyInspectorTableCopyProvider implements CopyProvider {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;

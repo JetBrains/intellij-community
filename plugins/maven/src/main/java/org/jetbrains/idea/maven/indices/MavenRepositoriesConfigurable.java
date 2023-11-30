@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.icons.AllIcons;
@@ -6,7 +6,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
@@ -16,6 +15,7 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 
 import javax.swing.*;
@@ -111,7 +111,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   }
 
   private void doUpdateIndex() {
-    MavenIndicesManager.getInstance(myProject).scheduleUpdateContent(getSelectedIndices());
+    MavenIndicesManager.getInstance(myProject).scheduleUpdateContent(getSelectedIndices(), true);
   }
 
   private List<MavenIndex> getSelectedIndices() {
@@ -138,8 +138,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 
@@ -179,7 +178,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
     myRepaintTimer.removeActionListener(myTimerListener);
     myRepaintTimer.stop();
-    Disposer.dispose(myUpdatingIcon);
+    myUpdatingIcon.dispose();
   }
 
   private class MyTableModel extends AbstractTableModel {
@@ -235,7 +234,11 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
           if (timestamp == -1) yield IndicesBundle.message("maven.index.updated.never");
           yield DateFormatUtil.formatDate(timestamp);
         }
-        case 3 -> MavenIndicesManager.getInstance(myProject).getUpdatingState(i);
+        case 3 -> {
+          MavenRepositoryInfo repository = i.getRepository();
+          if (repository == null) yield MavenIndexUpdateManager.IndexUpdatingState.IDLE;
+          yield MavenSystemIndicesManager.getInstance().getUpdatingStateSync(myProject, repository);
+        }
         default -> throw new RuntimeException();
       };
     }

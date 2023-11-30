@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -61,7 +61,7 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     return doGetActions(myFilter, new LangFilterCollector(), onChanged);
   }
 
-  public static class Factory implements SearchEverywhereContributorFactory<Object> {
+  public static final class Factory implements SearchEverywhereContributorFactory<Object> {
     @NotNull
     @Override
     public SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {

@@ -4,8 +4,10 @@ package com.intellij.ide.environment.impl
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.type.CollectionType
 import com.intellij.ide.environment.EnvironmentKey
+import com.intellij.ide.environment.EnvironmentService
 import com.intellij.ide.environment.description
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.*
 import java.io.IOException
 
@@ -15,7 +17,7 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
     getModelFromFile()
   }
 
-  override suspend fun getEnvironmentValue(key: EnvironmentKey): String? {
+  override suspend fun getEnvironmentValue(key: EnvironmentKey): String {
     return getEnvironmentValueOrNull(key)
            ?: throw MissingEnvironmentKeyException(key)
   }
@@ -33,19 +35,21 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
 
     val valueFromEnvironmentVariable = System.getProperty(key.id)
     if (valueFromEnvironmentVariable != null) {
+      logger<EnvironmentService>().info("Obtained value for ${key.id} from a system property: $valueFromEnvironmentVariable")
       return valueFromEnvironmentVariable
     }
 
     val mapping = configurationFileModel.await()
     val valueFromConfigurationFile = mapping[key.id]
     if (valueFromConfigurationFile != null) {
+      logger<EnvironmentService>().info("Obtained value for ${key.id} from the configuration file: $valueFromConfigurationFile")
       return valueFromConfigurationFile
     }
     return null
   }
 
   class MissingEnvironmentKeyException(val key: EnvironmentKey) : CancellationException(
-    """Missing value for a key '${key.id}'
+    """Missing value for the environment key '${key.id}'
       |Usage:
       |${key.description}
       |""".trimMargin())

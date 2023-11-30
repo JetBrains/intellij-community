@@ -109,7 +109,7 @@ internal class JcefBrowserPipeImpl(
   private fun callSubscribers(type: String, data: String) {
     when (val subscribers = receiveSubscribers[type]) {
       null -> logger.warn("No subscribers for $type!\nAttached data: $data")
-      else -> subscribers.forEach { it.messageReceived(data) }
+      else -> subscribers.takeWhile { it.processMessageReceived(data) }
     }
   }
 

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.platforms
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -23,6 +24,7 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.util.io.*
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
@@ -115,14 +117,25 @@ class LibraryEffectiveKindProvider(private val project: Project) {
         internal companion object {
             fun runScannerOutsideScanningSession(classRoots: Array<VirtualFile>) {
                 val scannerVisitor = ScannerVisitor()
+                var lastResult: KnownLibraryKindForIndex? = null
                 for (classRoot in classRoots) {
+                    scannerVisitor.result = null
                     VfsUtil.visitChildrenRecursively(classRoot, object : VirtualFileVisitor<Any?>() {
+                        override fun visitFileEx(file: VirtualFile): Result =
+                          if (visitFile(file)) CONTINUE else skipTo(classRoot)
+
                         override fun visitFile(file: VirtualFile): Boolean {
+                            ProgressManager.checkCanceled()
                             scannerVisitor.visitFile(file)
-                            return true
+                            return scannerVisitor.result == null
                         }
                     })
+                    val result = scannerVisitor.result
+                    if (result != null && (lastResult == null || result != KnownLibraryKindForIndex.COMMON)) {
+                        lastResult = result
+                    }
                 }
+                scannerVisitor.result = lastResult
                 scannerVisitor.visitingFinished(classRoots.toList())
             }
         }
@@ -134,17 +147,30 @@ class LibraryEffectiveKindProvider(private val project: Project) {
             var result: KnownLibraryKindForIndex? = null
 
             fun visitFile(fileOrDir: VirtualFile) {
+                if (fileOrDir.isDirectory) return
+
                 if (result != KnownLibraryKindForIndex.UNKNOWN) {
-                    val fileType = fileOrDir.fileType
+                    val nameSequence = fileOrDir.nameSequence
+                    if (nameSequence.endsWith(".java") ||
+                        nameSequence.endsWith(KotlinFileType.DOT_DEFAULT_EXTENSION)
+                    ) return
+
+                    val fileType = when {
+                        nameSequence.endsWith(".class") -> classFileType
+                        else -> fileOrDir.fileType
+                    }
                     when {
                         fileType == classFileType ->
                             result = KnownLibraryKindForIndex.UNKNOWN
+
                         fileType == kotlinJavaScriptMetaFileType ->
                             result = KnownLibraryKindForIndex.JS
-                        fileType == KotlinBuiltInFileType
-                                && fileOrDir.extension == MetadataPackageFragment.METADATA_FILE_EXTENSION
-                                && result == null ->
+
+                        result == null &&
+                                nameSequence.endsWith(MetadataPackageFragment.DOT_METADATA_FILE_EXTENSION) &&
+                                fileType == KotlinBuiltInFileType ->
                             result = KnownLibraryKindForIndex.COMMON
+
                         else -> Unit
                     }
                 }

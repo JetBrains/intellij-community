@@ -34,4 +34,5 @@ interface GHPRReviewThreadModel : ListModel<GHPRReviewCommentModel> {
   fun addComment(comment: GHPullRequestReviewComment)
 
   fun addAndInvokeStateChangeListener(listener: () -> Unit)
+  val originalCommit: GHCommitHash?
 }

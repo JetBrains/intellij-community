@@ -86,13 +86,13 @@ class IndexedDetails(private val dataGetter: IndexDataGetter,
         val author = authors[commitIndex]
         val committer = committers[commitIndex] ?: author
         val authorTime = authorTimes[commitIndex]
-        val commitTime =  commitTimes[commitIndex]
+        val commitTime = commitTimes[commitIndex]
         val fullMessage = messages[commitIndex]
 
         if (commitId != null && parent != null && author != null && committer != null && commitTime != null && authorTime != null && fullMessage != null) {
           result.put(commitIndex, factory.createCommitMetadata(commitId.hash, parent, commitTime, commitId.root, getSubject(fullMessage),
-                                                               author.name,
-                                                               author.email, fullMessage, committer.name, committer.email, authorTime))
+                                                               author.name, author.email, fullMessage, committer.name, committer.email,
+                                                               authorTime))
         }
       }
 

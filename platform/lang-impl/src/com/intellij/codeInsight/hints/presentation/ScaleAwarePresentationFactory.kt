@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.codeInsight.hints.InlayPresentationFactory
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.scale.ScaleContextAware
 import com.intellij.util.IconUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AlphaComposite
@@ -27,7 +25,7 @@ class ScaleAwarePresentationFactory(
   private val delegate: PresentationFactory
 ) : InlayPresentationFactory by delegate {
   fun lineCentered(presentation: InlayPresentation): InlayPresentation {
-    return LineCenteredInset(presentation, editor)
+    return LineCenteredInset(presentation = presentation, editor = editor)
   }
 
   override fun container(presentation: InlayPresentation,
@@ -35,20 +33,25 @@ class ScaleAwarePresentationFactory(
                          roundedCorners: InlayPresentationFactory.RoundedCorners?,
                          background: Color?,
                          backgroundAlpha: Float): InlayPresentation {
-    return ScaledContainerPresentation(presentation, editor, padding, roundedCorners, background, backgroundAlpha)
+    return ScaledContainerPresentation(presentation = presentation,
+                                       editor = editor,
+                                       padding = padding,
+                                       roundedCorners = roundedCorners,
+                                       background = background,
+                                       backgroundAlpha = backgroundAlpha)
   }
 
   override fun icon(icon: Icon): InlayPresentation {
-    return ScaleAwareIconPresentation(icon, editor, fontShift = 0)
+    return ScaleAwareIconPresentation(icon = icon, editor = editor, fontShift = 0)
   }
 
   fun icon(icon: Icon, debugName: String, fontShift: Int): InlayPresentation {
-    return ScaleAwareIconPresentation(icon, editor, debugName, fontShift)
+    return ScaleAwareIconPresentation(icon = icon, editor = editor, debugName = debugName, fontShift = fontShift)
   }
 
   fun inset(base: InlayPresentation, left: Int = 0, right: Int = 0, top: Int = 0, down: Int = 0): InlayPresentation {
     return ScaledInsetPresentation(
-      base,
+      presentation = base,
       left = left,
       right = right,
       top = top,
@@ -57,9 +60,7 @@ class ScaleAwarePresentationFactory(
     )
   }
 
-  fun seq(vararg presentations: InlayPresentation): InlayPresentation {
-    return delegate.seq(*presentations)
-  }
+  fun seq(vararg presentations: InlayPresentation): InlayPresentation = delegate.seq(*presentations)
 }
 
 @ApiStatus.Internal
@@ -73,11 +74,11 @@ class ScaledInsetPresentation(
 ) : ScaledDelegatedPresentation() {
   override val delegate: InsetPresentation by valueOf<InsetPresentation, Float> { fontSize ->
     InsetPresentation(
-      presentation,
-      scaleByFont(left, fontSize),
-      scaleByFont(right, fontSize),
-      scaleByFont(top, fontSize),
-      scaleByFont(down, fontSize)
+      presentation = presentation,
+      left = scaleByFont(left, fontSize),
+      right = scaleByFont(right, fontSize),
+      top = scaleByFont(top, fontSize),
+      down = scaleByFont(down, fontSize)
     )
   }.withState {
     editor.colorsScheme.editorFontSize2D
@@ -95,11 +96,11 @@ class ScaledContainerPresentation(
 ) : ScaledDelegatedPresentation() {
   override val delegate: ContainerInlayPresentation by valueOf<ContainerInlayPresentation, Float> { fontSize ->
     ContainerInlayPresentation(
-      presentation,
-      scaleByFont(padding, fontSize),
-      scaleByFont(roundedCorners, fontSize),
-      background,
-      backgroundAlpha
+      presentation = presentation,
+      padding = scaleByFont(padding, fontSize),
+      roundedCorners = scaleByFont(roundedCorners, fontSize),
+      background = background,
+      backgroundAlpha = backgroundAlpha
     )
   }.withState {
     editor.colorsScheme.editorFontSize2D
@@ -120,12 +121,10 @@ abstract class ScaledDelegatedPresentation : BasePresentation() {
     delegate.paint(g, attributes)
   }
 
-  override fun toString(): String {
-    return delegate.toString()
-  }
+  override fun toString(): String = delegate.toString()
 
   override fun mouseClicked(event: MouseEvent, translated: Point) {
-    delegate.mouseExited()
+    delegate.mouseClicked(event, translated)
   }
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {
@@ -144,7 +143,7 @@ class LineCenteredInset(
 ) : ScaledDelegatedPresentation() {
   override val delegate: InlayPresentation by valueOf<InlayPresentation, Int> { lineHeight ->
     val innerHeight = presentation.height
-    InsetPresentation(presentation, top = (lineHeight - innerHeight) / 2)
+    InsetPresentation(presentation = presentation, top = (lineHeight - innerHeight) / 2)
   }.withState {
     editor.lineHeight
   }
@@ -170,8 +169,7 @@ class ScaleAwareIconPresentation(val icon: Icon,
   override fun toString(): String = "<$debugName>"
 
   private val scaledIcon by valueOf<Icon, Float> { fontSize ->
-    (icon as? ScaleContextAware)?.updateScaleContext(ScaleContext.create(editor.component))
-    IconUtil.scaleByFont(icon, editor.component, fontSize)
+    IconUtil.scaleByFont(icon = icon, ancestor = editor.component, fontSize = fontSize)
   }.withState {
     editor.colorsScheme.editorFontSize2D - fontShift
   }

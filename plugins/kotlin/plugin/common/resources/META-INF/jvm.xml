@@ -1,0 +1,7 @@
+<idea-plugin>
+  <actions>
+    <action id="ShowKotlinBytecode" class="org.jetbrains.kotlin.idea.actions.bytecode.ShowKotlinBytecodeAction">
+      <add-to-group group-id="KotlinToolsGroup"/>
+    </action>
+  </actions>
+</idea-plugin>

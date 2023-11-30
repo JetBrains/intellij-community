@@ -165,7 +165,8 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     if (!documentWindow.isValid()) {
       return hostEditor; // since the moment we got hold of injectedFile and this moment call, document may have been dirtied
     }
-    EditorWindowTrackerImpl tracker = (EditorWindowTrackerImpl)ApplicationManager.getApplication().getService(EditorWindowTracker.class);
+    InjectedEditorWindowTrackerImpl
+      tracker = (InjectedEditorWindowTrackerImpl)ApplicationManager.getApplication().getService(InjectedEditorWindowTracker.class);
     return tracker.createEditor(documentWindow, (EditorImpl)hostEditor, injectedFile);
   }
 
@@ -182,7 +183,8 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, -1), false);
     if (editor == null || editor instanceof EditorWindow || editor.isDisposed()) return editor;
     if (document instanceof DocumentWindowImpl) {
-      EditorWindowTrackerImpl tracker = (EditorWindowTrackerImpl)ApplicationManager.getApplication().getService(EditorWindowTracker.class);
+      InjectedEditorWindowTrackerImpl
+        tracker = (InjectedEditorWindowTrackerImpl)ApplicationManager.getApplication().getService(InjectedEditorWindowTracker.class);
       return tracker.createEditor((DocumentWindowImpl)document, (EditorImpl)editor, file);
     }
     return editor;
@@ -316,7 +318,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
                (DocumentEx)hostDocument,
                indicator, oldRoot, newRoot, documentManager);
     if (runnable == null) {
-      ApplicationManager.getApplication().getService(EditorWindowTracker.class).disposeEditorFor(injectedDocument);
+      ApplicationManager.getApplication().getService(InjectedEditorWindowTracker.class).disposeEditorFor(injectedDocument);
     }
     return runnable;
   }

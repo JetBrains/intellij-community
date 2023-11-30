@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.PathUtil
@@ -103,3 +103,5 @@ private fun findBuildGradleFile(path: String, vararg fileNames: String): Path? =
 private fun Path.getPsiFile(project: Project) = VfsUtil.findFile(this, true)?.let {
     PsiManager.getInstance(project).findFile(it)
 }
+
+fun PsiFile.canBeConfigured(): Boolean = WritingAccessProvider.isPotentiallyWritable(this.virtualFile, null)

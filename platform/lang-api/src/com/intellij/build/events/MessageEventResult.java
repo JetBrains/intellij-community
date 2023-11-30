@@ -1,7 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.events;
 
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -10,7 +9,5 @@ import org.jetbrains.annotations.Nullable;
 public interface MessageEventResult extends EventResult {
   MessageEvent.Kind getKind();
 
-  @Nullable
-  @BuildEventsNls.Description
-  default String getDetails() { return null; }
+  default @Nullable @BuildEventsNls.Description String getDetails() { return null; }
 }

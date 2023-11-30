@@ -1,6 +1,9 @@
 internal interface I
+
 internal class C
+
 internal class O
+
 internal class E {
     override fun equals(o: Any?): Boolean {
         return super.equals(o)
@@ -14,10 +17,9 @@ internal open class B {
 }
 
 internal class BB : B()
+
 internal enum class EE {
-    A,
-    B,
-    C
+    A, B, C
 }
 
 internal class X {
@@ -51,6 +53,7 @@ internal class X {
         if (bb1 === bb2) return
         if (arr1 == arr2) return
         if (ee1 == ee2 || ee1 == null) return
+
         if (s1 !== s2) return
         if (c1 != c2) return
     }

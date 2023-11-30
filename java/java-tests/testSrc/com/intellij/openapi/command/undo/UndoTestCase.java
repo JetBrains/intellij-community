@@ -28,8 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public abstract class UndoTestCase extends JavaCodeInsightTestCase {
-  private CurrentEditorProvider myOldEditorProvider;
-
   protected UndoManagerImpl myManager;
   protected VirtualFile myRoot;
 
@@ -37,7 +35,6 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myManager = (UndoManagerImpl)UndoManager.getInstance(myProject);
-    myOldEditorProvider = myManager.getEditorProvider();
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
@@ -52,9 +49,8 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      myManager.setEditorProvider(myOldEditorProvider);
+      myManager.setOverriddenEditorProvider(null);
       myManager = null;
-      myOldEditorProvider = null;
     }
     catch (Throwable e) {
       addSuppressedException(e);

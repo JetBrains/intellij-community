@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.intellij.dvcs.MultiRootMessage;
@@ -12,7 +12,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
-import git4idea.*;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -83,8 +86,7 @@ public class GitFetcher {
    * @deprecated Use {@link GitFetchSupport}
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public GitFetchResult fetch(@NotNull VirtualFile root, @NotNull String remoteName, @Nullable String branch) {
+  public @NotNull GitFetchResult fetch(@NotNull VirtualFile root, @NotNull String remoteName, @Nullable String branch) {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       return logError("Repository can't be null for " + root, myRepositoryManager.toString());
@@ -102,8 +104,7 @@ public class GitFetcher {
     return GitFetchResult.error(message);
   }
 
-  @NotNull
-  private GitFetchResult fetchCurrentRemote(@NotNull GitRepository repository) {
+  private static @NotNull GitFetchResult fetchCurrentRemote(@NotNull GitRepository repository) {
     FetchParams fetchParams = getFetchParams(repository);
     if (fetchParams.isError()) {
       return fetchParams.getError();
@@ -113,17 +114,15 @@ public class GitFetcher {
     return fetchRemote(repository, remote, null);
   }
 
-  @NotNull
-  private GitFetchResult fetchRemote(@NotNull GitRepository repository,
-                                     @NotNull GitRemote remote,
-                                     @Nullable String branch) {
+  private static @NotNull GitFetchResult fetchRemote(@NotNull GitRepository repository,
+                                                     @NotNull GitRemote remote,
+                                                     @Nullable String branch) {
     return fetchNatively(repository, remote, branch);
   }
 
   // leaving this unused method, because the wanted behavior can change again
   @SuppressWarnings("UnusedDeclaration")
-  @NotNull
-  private GitFetchResult fetchCurrentBranch(@NotNull GitRepository repository) {
+  private static @NotNull GitFetchResult fetchCurrentBranch(@NotNull GitRepository repository) {
     FetchParams fetchParams = getFetchParams(repository);
     if (fetchParams.isError()) {
       return fetchParams.getError();
@@ -134,8 +133,7 @@ public class GitFetcher {
     return fetchNatively(repository, remote, remoteBranch);
   }
 
-  @NotNull
-  private static FetchParams getFetchParams(@NotNull GitRepository repository) {
+  private static @NotNull FetchParams getFetchParams(@NotNull GitRepository repository) {
     GitLocalBranch currentBranch = repository.getCurrentBranch();
     if (currentBranch == null) {
       // fetching current branch is called from Update Project and Push, where branch tracking is pre-checked
@@ -154,8 +152,7 @@ public class GitFetcher {
     return new FetchParams(remote, trackInfo.getRemoteBranch());
   }
 
-  @NotNull
-  private static GitFetchResult fetchAll(@NotNull GitRepository repository) {
+  private static @NotNull GitFetchResult fetchAll(@NotNull GitRepository repository) {
     GitFetchResult fetchResult = GitFetchResult.success();
     for (GitRemote remote : repository.getRemotes()) {
       String url = remote.getFirstUrl();
@@ -173,8 +170,7 @@ public class GitFetcher {
     return fetchResult;
   }
 
-  @NotNull
-  private static GitFetchResult fetchNatively(@NotNull GitRepository repository, @NotNull GitRemote remote, @Nullable String branch) {
+  private static @NotNull GitFetchResult fetchNatively(@NotNull GitRepository repository, @NotNull GitRemote remote, @Nullable String branch) {
     Git git = Git.getInstance();
     String[] additionalParams = branch != null ?
                                 new String[]{getFetchSpecForBranch(branch, remote.getName())} :
@@ -188,9 +184,6 @@ public class GitFetcher {
     if (result.success()) {
       BackgroundTaskUtil.syncPublisher(repository.getProject(), GIT_AUTHENTICATION_SUCCESS).authenticationSucceeded(repository, remote);
       fetchResult = GitFetchResult.success();
-    }
-    else if (result.cancelled()) {
-      fetchResult = GitFetchResult.cancel();
     }
     else {
       fetchResult = GitFetchResult.error(result.getErrorOutputAsJoinedString());
@@ -206,14 +199,12 @@ public class GitFetcher {
     return branch;
   }
 
-  @NotNull
-  private static String getFetchSpecForBranch(@NotNull String branch, @NotNull String remoteName) {
+  private static @NotNull String getFetchSpecForBranch(@NotNull String branch, @NotNull String remoteName) {
     branch = getRidOfPrefixIfExists(branch);
     return REFS_HEADS_PREFIX + branch + ":" + REFS_REMOTES_PREFIX + remoteName + "/" + branch;
   }
 
-  @NotNull
-  public Collection<Exception> getErrors() {
+  public @NotNull Collection<Exception> getErrors() {
     return myErrors;
   }
 
@@ -225,10 +216,6 @@ public class GitFetcher {
     if (result.isSuccess()) {
       notifier.notifySuccess(FETCH_SUCCESS, "",
                              GitBundle.message("notification.content.fetched.successfully") + result.getAdditionalInfo());
-    }
-    else if (result.isCancelled()) {
-      notifier.notifyMinorWarning(GitNotificationIdsHolder.FETCH_CANCELLED,
-                                  GitBundle.message("notification.content.fetch.cancelled.by.user") + result.getAdditionalInfo());
     }
     else if (result.isNotAuthorized()) {
       if (errorNotificationTitle != null) {
@@ -295,7 +282,7 @@ public class GitFetcher {
 
     private static final Pattern PRUNE_PATTERN = Pattern.compile("\\s*x\\s*\\[deleted\\].*->\\s*(\\S*)");
 
-    @NotNull private final Collection<String> myPrunedRefs = new ArrayList<>();
+    private final @NotNull Collection<String> myPrunedRefs = new ArrayList<>();
 
     @Override
     public void onLineAvailable(String line, Key outputType) {
@@ -306,8 +293,7 @@ public class GitFetcher {
       }
     }
 
-    @NotNull
-    public Collection<String> getPrunedRefs() {
+    public @NotNull Collection<String> getPrunedRefs() {
       return myPrunedRefs;
     }
   }

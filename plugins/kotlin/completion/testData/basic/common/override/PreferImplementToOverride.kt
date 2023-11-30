@@ -10,6 +10,7 @@ class A : Base(), I {
     overr<caret>
 }
 
+// IGNORE_K2
 // WITH_ORDER
 // EXIST: { itemText: "override" }
 // EXIST: { itemText: "override fun bbb() {...}" }

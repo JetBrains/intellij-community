@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.core.CoreBundle;
@@ -35,9 +35,8 @@ public class EverythingGlobalScope extends GlobalSearchScope {
   public EverythingGlobalScope() {
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return getNameText();
   }
 
@@ -46,7 +45,7 @@ public class EverythingGlobalScope extends GlobalSearchScope {
   }
 
   @Override
-  public boolean contains(@NotNull final VirtualFile file) {
+  public boolean contains(final @NotNull VirtualFile file) {
     return true;
   }
 
@@ -61,26 +60,23 @@ public class EverythingGlobalScope extends GlobalSearchScope {
   }
 
   @Override
-  public boolean isSearchInModuleContent(@NotNull final Module aModule) {
+  public boolean isSearchInModuleContent(final @NotNull Module aModule) {
     return true;
   }
 
-  @NotNull
   @Override
-  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+  public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     Project project = getProject();
     return project != null ? FileIndexFacade.getInstance(project).getUnloadedModuleDescriptions() : Collections.emptySet();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope union(@NotNull SearchScope scope) {
+  public @NotNull GlobalSearchScope union(@NotNull SearchScope scope) {
     return this;
   }
 
-  @NotNull
   @Override
-  public SearchScope intersectWith(@NotNull SearchScope scope2) {
+  public @NotNull SearchScope intersectWith(@NotNull SearchScope scope2) {
     return scope2;
   }
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.application.*
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -39,7 +38,7 @@ class WorkspaceModelTest {
   @Test
   fun `do not fire rootsChanged if there were no changes`() {
     val disposable = Disposer.newDisposable()
-    projectModel.project.messageBus.connect(disposable).subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+    projectModel.project.messageBus.connect(disposable).subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         Assert.fail("rootsChanged must not be called if there are no changes")
       }

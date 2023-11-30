@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.awt.RelativePoint
@@ -154,6 +155,9 @@ internal class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
       }
       is Breadcrumbs -> {
         c.crumbs.toList().map { it.text }.join(", ")
+      }
+      is ToolbarComboWidget -> {
+        c.text
       }
       is Container -> {
         val text = mutableListOf<String?>()

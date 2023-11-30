@@ -8,4 +8,4 @@ data class A(val <caret>a: Int, val b: String)
 
 
 
-// IGNORE_FIR_LOG
+// IGNORE_K2_LOG

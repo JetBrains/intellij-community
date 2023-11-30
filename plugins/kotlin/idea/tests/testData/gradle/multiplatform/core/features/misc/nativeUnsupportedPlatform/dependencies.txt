@@ -2,11 +2,11 @@ MODULES
 project
 
 project.commonMain
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 project.commonTest
     commonMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
 
 project.supportedMain
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB

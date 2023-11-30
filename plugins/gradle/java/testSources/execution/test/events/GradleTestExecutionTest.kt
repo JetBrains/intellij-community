@@ -7,20 +7,21 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.use
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.events.ProgressListener
+import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
+import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatConfigurationCacheIsSupported
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleTestExecutionTest : GradleExecutionTestCase() {
 
   @ParameterizedTest
-  @TargetVersions("4.7+")
   @AllGradleVersionsSource
   fun `test grouping events of the same suite comes from different tasks`(gradleVersion: GradleVersion) {
     testJunit5Project(gradleVersion) {
@@ -48,13 +49,13 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test :additionalTest", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("AppTest") {
           assertNode("test")
           assertNode("test")
         }
       }
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("failed") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -64,27 +65,20 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("AppTest") {
-                    assertNode("Test test()(org.example.AppTest)")
-                  }
-                }
+              assertNode("AppTest") {
+                assertNode("Test test()(org.example.AppTest)")
               }
             }
           }
           assertNode(":additionalTest") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :additionalTest") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("AppTest") {
-                    assertNode("Test test()(org.example.AppTest)") {
-                      assertNode("'Test error message'")
-                    }
-                  }
+              assertNode("AppTest") {
+                assertNode("Test test()(org.example.AppTest)") {
+                  assertNode("'Test error message'")
                 }
               }
             }
+            // IDEA-334636 this node should have the same indention as the 'additionalTest' node
             assertNode("There were failing tests. See the report at: .*".toRegex())
           }
         }
@@ -116,7 +110,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("AppTest") {
           assertNode("test")
         }
@@ -145,12 +139,12 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("AppTest") {
           assertNode("test")
         }
       }
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -160,12 +154,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("AppTest") {
-                    assertNode("Test test()(org.example.AppTest)")
-                  }
-                }
+              assertNode("AppTest") {
+                assertNode("Test test()(org.example.AppTest)")
               }
             }
           }
@@ -196,7 +186,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase1") {
           assertNode("test1")
           assertNode("test2")
@@ -208,7 +198,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       }
 
       executeTasks(":test --tests org.example.TestCase1", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase1") {
           assertNode("test1")
           assertNode("test2")
@@ -216,7 +206,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       }
 
       executeTasks(":test --tests org.example.TestCase2.test2", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase2") {
           assertNode("test2")
         }
@@ -237,12 +227,12 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test")
         }
       }
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -252,12 +242,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -265,12 +251,12 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       }
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test")
         }
       }
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -280,12 +266,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -293,12 +275,12 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       }
 
       executeTasks(":test --rerun-tasks", isRunAsTest = false)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test")
         }
       }
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -308,12 +290,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -321,8 +299,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       }
 
       executeTasks(":test", isRunAsTest = false)
-      assertTestTreeViewIsEmpty()
-      assertBuildExecutionTree {
+      assertTestViewTreeIsEmpty()
+      assertBuildViewTree {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -354,12 +332,12 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":allTests", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test")
         }
       }
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -369,12 +347,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -383,12 +357,12 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       }
 
       executeTasks(":allTests", isRunAsTest = true)
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("test")
         }
       }
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -398,12 +372,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -412,7 +382,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       }
 
       executeTasks(":allTests --rerun-tasks", isRunAsTest = false)
-      assertRunTreeView {
+      assertRunViewTree {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -426,7 +396,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       }
 
       executeTasks(":allTests", isRunAsTest = false)
-      assertRunTreeView {
+      assertRunViewTree {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -465,15 +435,15 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":allTests --tests *", isRunAsTest = true)
-      assertTestTreeViewIsEmpty()
-      assertBuildExecutionTree {
+      assertTestViewTreeIsEmpty()
+      assertBuildViewTree {
         assertNode("failed") {
           assertNode("Unknown command-line option '--tests'")
         }
       }
 
       executeTasks(":allTests --tests *", isRunAsTest = false)
-      assertRunTreeView {
+      assertRunViewTree {
         assertNode("failed") {
           assertNode("Unknown command-line option '--tests'")
         }
@@ -498,7 +468,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":beforeTest :test --tests org.example.TestCase.test", isRunAsTest = true)
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("successful") {
           assertNode(":beforeTest")
           assertNode(":compileJava")
@@ -509,19 +479,15 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
         }
       }
       executeTasks(":test --tests org.example.TestCase.test :afterTest", isRunAsTest = true)
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -531,12 +497,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -544,7 +506,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         }
       }
       executeTasks(":beforeTest :test --tests org.example.TestCase.test :afterTest", isRunAsTest = true)
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("successful") {
           assertNode(":beforeTest")
           assertNode(":compileJava")
@@ -555,12 +517,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -571,9 +529,9 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   }
 
   @ParameterizedTest
-  @TargetVersions("8.1+")
-  @GradleTestSource("8.1")
+  @AllGradleVersionsSource
   fun `test configuration cache for tests`(gradleVersion: GradleVersion) {
+    assumeThatConfigurationCacheIsSupported(gradleVersion)
     testJavaProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
         |package org.example;
@@ -588,23 +546,23 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
-      assertTestTreeView { assertNode("TestCase") { assertNode("test1"); assertNode("test2") } }
+      assertTestViewTree { assertNode("TestCase") { assertNode("test1"); assertNode("test2") } }
       assertTestConsoleDoesNotContain("Unable to enhance Gradle Daemon")
 
       executeTasks(":test --tests org.example.TestCase.test1", isRunAsTest = true)
-      assertTestTreeView { assertNode("TestCase") { assertNode("test1") } }
+      assertTestViewTree { assertNode("TestCase") { assertNode("test1") } }
       assertTestConsoleDoesNotContain("Unable to enhance Gradle Daemon")
 
       executeTasks(":test --tests org.example.TestCase.test2", isRunAsTest = true)
-      assertTestTreeView { assertNode("TestCase") { assertNode("test2") } }
+      assertTestViewTree { assertNode("TestCase") { assertNode("test2") } }
       assertTestConsoleDoesNotContain("Unable to enhance Gradle Daemon")
     }
   }
 
   @ParameterizedTest
-  @TargetVersions("3.5+")
   @AllGradleVersionsSource
   fun `test configuration resolves after execution graph`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "3.5")
     testJavaProject(gradleVersion) {
       appendText("build.gradle", """
         |import java.util.concurrent.atomic.AtomicBoolean;
@@ -641,14 +599,15 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   }
 
   @ParameterizedTest
-  @TargetVersions("4.7+")
   @AllGradleVersionsSource
   fun `test test task execution with additional gradle listeners`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "3.5")
     val extension = object : GradleOperationHelperExtension {
       override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) = Unit
       override fun prepareForExecution(id: ExternalSystemTaskId,
                                        operation: LongRunningOperation,
-                                       gradleExecutionSettings: GradleExecutionSettings) {
+                                       gradleExecutionSettings: GradleExecutionSettings,
+                                       buildEnvironment: BuildEnvironment?) {
         operation.addProgressListener(ProgressListener {})
       }
     }
@@ -664,12 +623,12 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         GradleOperationHelperExtension.EP_NAME.point.registerExtension(extension, testDisposable)
         executeTasks(":test", isRunAsTest = true)
       }
-      assertTestTreeView {
+      assertTestViewTree {
         assertNode("AppTest") {
           assertNode("test1")
         }
       }
-      assertBuildExecutionTree {
+      assertBuildViewTree {
         assertNode("successful") {
           assertNode(":compileJava")
           assertNode(":processResources")
@@ -679,12 +638,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("AppTest") {
-                    assertNode("Test test1()(org.example.AppTest)")
-                  }
-                }
+              assertNode("AppTest") {
+                assertNode("Test test1()(org.example.AppTest)")
               }
             }
           }

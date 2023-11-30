@@ -24,23 +24,28 @@ internal class GitBranchCheckoutOperation(private val project: Project, private 
   }
 
   fun perform(startPoint: String, options: GitNewBranchOptions) {
+    perform(startPoint, options, null)
+  }
+
+  fun perform(startPoint: String, options: GitNewBranchOptions, callInAwtLater: Runnable?) {
     val checkout = options.checkout
     val name = options.name
     val reset = options.reset
 
     val localHasMoreCommits = checkLocalHasMoreCommits(project, repositories, name, startPoint)
     if (checkout) {
-      performCheckout(startPoint, name, localHasMoreCommits, reset)
+      performCheckout(startPoint, name, localHasMoreCommits, reset, callInAwtLater)
     }
     else {
-      performCreate(startPoint, name, localHasMoreCommits, reset)
+      performCreate(startPoint, name, localHasMoreCommits, reset, callInAwtLater)
     }
   }
 
   private fun performCheckout(startPoint: String,
                               name: String,
                               localHasMoreCommits: Boolean,
-                              reset: Boolean) {
+                              reset: Boolean,
+                              callInAwtLater: Runnable? = null) {
     if (localHasMoreCommits) {
       if (reset) {
         val result = Messages.showYesNoCancelDialog(
@@ -49,8 +54,8 @@ internal class GitBranchCheckoutOperation(private val project: Project, private 
           GitBundle.message("checkout.and.rebase"), GitBundle.message("branches.drop.local.commits"), IdeBundle.message("button.cancel"),
           null)
         when (result) {
-          Messages.YES -> checkout(startPoint, name, CheckoutConflictResolution.REBASE)
-          Messages.NO -> checkout(startPoint, name, CheckoutConflictResolution.RESET)
+          Messages.YES -> checkout(startPoint, name, CheckoutConflictResolution.REBASE, callInAwtLater = callInAwtLater)
+          Messages.NO -> checkout(startPoint, name, CheckoutConflictResolution.RESET, callInAwtLater = callInAwtLater)
           Messages.CANCEL -> return
         }
       }
@@ -61,72 +66,72 @@ internal class GitBranchCheckoutOperation(private val project: Project, private 
           GitBundle.message("checkout.and.rebase"), GitBundle.message("branches.checkout.local"), IdeBundle.message("button.cancel"),
           null)
         when (result) {
-          Messages.YES -> checkout(startPoint, name, CheckoutConflictResolution.REBASE)
-          Messages.NO -> checkout(startPoint, name, CheckoutConflictResolution.USE_LOCAL)
+          Messages.YES -> checkout(startPoint, name, CheckoutConflictResolution.REBASE, callInAwtLater = callInAwtLater)
+          Messages.NO -> checkout(startPoint, name, CheckoutConflictResolution.USE_LOCAL, callInAwtLater = callInAwtLater)
           Messages.CANCEL -> return
         }
       }
     }
     else {
-      checkout(startPoint, name, if (reset) CheckoutConflictResolution.RESET else CheckoutConflictResolution.TRY)
+      checkout(startPoint, name, if (reset) CheckoutConflictResolution.RESET else CheckoutConflictResolution.TRY, callInAwtLater = callInAwtLater)
     }
   }
 
-  private fun performCreate(startPoint: String, name: String, localHasMoreCommits: Boolean, reset: Boolean) {
+  private fun performCreate(startPoint: String, name: String, localHasMoreCommits: Boolean, reset: Boolean, callInAwtLater: Runnable?) {
     if (localHasMoreCommits) {
       if (reset) {
         val result = Messages.showYesNoDialog(
           GitBundle.message("branches.create.with.reset.local.has.more.commits", name, startPoint),
           GitBundle.message("checkout.0", startPoint),
           GitBundle.message("branches.drop.local.commits"), IdeBundle.message("button.cancel"), null)
-        if (result == Messages.YES) create(startPoint, name, true)
+        if (result == Messages.YES) create(startPoint, name, true, callInAwtLater)
       }
       else {
         val result = Messages.showYesNoDialog(
           GitBundle.message("branches.create.local.has.more.commits", name, startPoint),
           GitBundle.message("checkout.0", startPoint),
           GitBundle.message("new.branch.dialog.operation.create.name"), IdeBundle.message("button.cancel"), null)
-        if (result == Messages.YES) create(startPoint, name, false)
+        if (result == Messages.YES) create(startPoint, name, false, callInAwtLater)
       }
     }
     else {
-      create(startPoint, name, reset)
+      create(startPoint, name, reset, callInAwtLater)
     }
   }
 
-  private fun checkout(startPoint: String, name: String, localConflictResolution: CheckoutConflictResolution) {
+  private fun checkout(startPoint: String, name: String, localConflictResolution: CheckoutConflictResolution, callInAwtLater: Runnable? = null) {
     val (reposWithLocalBranch, reposWithoutLocalBranch) = repositories.partition { it.branches.findLocalBranch(name) != null }
 
     //checkout existing branch
     if (reposWithLocalBranch.isNotEmpty()) when (localConflictResolution) {
-      CheckoutConflictResolution.USE_LOCAL -> brancher.checkout(name, false, reposWithLocalBranch, null)
-      CheckoutConflictResolution.RESET -> brancher.checkoutNewBranchStartingFrom(name, startPoint, true, reposWithLocalBranch, null)
+      CheckoutConflictResolution.USE_LOCAL -> brancher.checkout(name, false, reposWithLocalBranch, callInAwtLater)
+      CheckoutConflictResolution.RESET -> brancher.checkoutNewBranchStartingFrom(name, startPoint, true, reposWithLocalBranch, callInAwtLater)
       CheckoutConflictResolution.REBASE -> brancher.rebase(reposWithLocalBranch, startPoint, name)
-      CheckoutConflictResolution.TRY -> brancher.checkoutNewBranchStartingFrom(name, startPoint, false, reposWithLocalBranch, null)
+      CheckoutConflictResolution.TRY -> brancher.checkoutNewBranchStartingFrom(name, startPoint, false, reposWithLocalBranch, callInAwtLater)
     }
 
     //checkout new
     if (reposWithoutLocalBranch.isNotEmpty()) {
-      brancher.checkoutNewBranchStartingFrom(name, startPoint, false, reposWithoutLocalBranch, null)
+      brancher.checkoutNewBranchStartingFrom(name, startPoint, false, reposWithoutLocalBranch, callInAwtLater)
     }
   }
 
-  private fun create(startPoint: String, name: String, reset: Boolean) {
+  private fun create(startPoint: String, name: String, reset: Boolean, callInAwtLater: Runnable?) {
     val (reposWithLocalBranch, reposWithoutLocalBranch) = repositories.partition { it.branches.findLocalBranch(name) != null }
 
     if (reposWithLocalBranch.isNotEmpty() && reset) {
       val (currentBranchOfSameName, currentBranchOfDifferentName) = reposWithLocalBranch.partition { it.currentBranchName == name }
       //git checkout -B for current branches with the same name (cannot force update current branch) and git branch -f for not current
       if (currentBranchOfSameName.isNotEmpty()) {
-        brancher.checkoutNewBranchStartingFrom(name, startPoint, true, currentBranchOfSameName, null)
+        brancher.checkoutNewBranchStartingFrom(name, startPoint, true, currentBranchOfSameName, callInAwtLater)
       }
       if (currentBranchOfDifferentName.isNotEmpty()) {
-        brancher.createBranch(name, currentBranchOfDifferentName.associateWith { startPoint }, true)
+        brancher.createBranch(name, currentBranchOfDifferentName.associateWith { startPoint }, true, callInAwtLater)
       }
     }
 
     if (reposWithoutLocalBranch.isNotEmpty()) {
-      brancher.createBranch(name, reposWithoutLocalBranch.associateWith { startPoint })
+      brancher.createBranch(name, reposWithoutLocalBranch.associateWith { startPoint }, callInAwtLater)
     }
   }
 

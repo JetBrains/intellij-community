@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.ide.ui.UISettings
@@ -6,8 +6,8 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
+import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import java.awt.Frame
@@ -19,7 +19,7 @@ import javax.swing.event.ChangeListener
 
 internal class MenuFrameHeader(frame: JFrame,
                                private val headerTitle: CustomHeaderTitle,
-                               private val ideMenu: IdeMenuBar) : FrameHeader(frame), MainFrameCustomHeader {
+                               private val ideMenu: IdeJMenuBar) : FrameHeader(frame), MainFrameCustomHeader {
   private val menuHolder: JComponent
   private var changeListener: ChangeListener
 
@@ -41,7 +41,7 @@ internal class MenuFrameHeader(frame: JFrame,
     headerTitle.onBoundsChanged = { windowStateChanged() }
 
     menuHolder = JPanel(MigLayout("filly, ins 0, novisualpadding, hidemode 3", "[pref!]10"))
-    menuHolder.border = JBUI.Borders.empty(0, H - 1, 0, 0)
+    menuHolder.border = JBUI.Borders.emptyLeft(H - 1)
     menuHolder.isOpaque = false
     menuHolder.add(ideMenu, "wmin 0, wmax pref, top, growy")
 
@@ -52,7 +52,7 @@ internal class MenuFrameHeader(frame: JFrame,
     add(view, "left, growx, gapbottom 1")
     buttonPanes?.let { add(it.getView(), "right, gapbottom 1") }
 
-    setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
+    setCustomFrameTopBorder({ state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH }, {true})
 
     mainMenuUpdater = UISettingsListener {
       menuHolder.isVisible = UISettings.getInstance().showMainMenu
@@ -62,15 +62,11 @@ internal class MenuFrameHeader(frame: JFrame,
     menuHolder.isVisible = UISettings.getInstance().showMainMenu
   }
 
-  override fun updateMenuActions(forceRebuild: Boolean) {
-    ideMenu.updateMenuActions(forceRebuild)
-  }
-
   override fun getComponent(): JComponent = this
 
   override fun updateActive() {
     super.updateActive()
-    headerTitle.setActive(myActive)
+    headerTitle.setActive(isActive)
   }
 
   override fun installListeners() {

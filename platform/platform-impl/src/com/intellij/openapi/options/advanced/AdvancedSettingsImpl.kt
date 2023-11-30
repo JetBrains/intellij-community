@@ -189,6 +189,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
       null
     else {
       val classLoader = pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader
+      @Suppress("IncorrectServiceRetrieving")
       ApplicationManager.getApplication().getService(classLoader.loadClass(service))
     }
   }

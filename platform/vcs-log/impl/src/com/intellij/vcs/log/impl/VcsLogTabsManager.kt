@@ -27,11 +27,9 @@ import com.intellij.vcs.log.impl.VcsLogContentUtil.openLogTab
 import com.intellij.vcs.log.impl.VcsLogContentUtil.updateLogUiName
 import com.intellij.vcs.log.impl.VcsLogEditorUtil.findVcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
-import com.intellij.vcs.log.impl.VcsProjectLog.ProjectLogListener
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem
 import com.intellij.vcs.log.visible.filters.getPresentation
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.*
@@ -131,8 +129,8 @@ class VcsLogTabsManager internal constructor(private val project: Project,
     return PersistentVcsLogUiFactory(logManager.getMainLogUiFactory(tabId, filters), location)
   }
 
-  private inner class PersistentVcsLogUiFactory constructor(private val factory: VcsLogUiFactory<out MainVcsLogUi>,
-                                                            private val logTabLocation: VcsLogTabLocation) : VcsLogUiFactory<MainVcsLogUi> {
+  private inner class PersistentVcsLogUiFactory(private val factory: VcsLogUiFactory<out MainVcsLogUi>,
+                                                private val logTabLocation: VcsLogTabLocation) : VcsLogUiFactory<MainVcsLogUi> {
     override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val ui = factory.createLogUi(project, logData)
       uiProperties.addTab(ui.id, logTabLocation)
@@ -146,7 +144,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
 
   companion object {
     private val LOG = Logger.getInstance(VcsLogTabsManager::class.java)
-    private val TAB_GROUP_ID = TabGroupId(VcsLogContentProvider.TAB_NAME, { VcsLogBundle.message("vcs.log.tab.name") }, true)
+    val TAB_GROUP_ID = TabGroupId(VcsLogContentProvider.TAB_NAME, { VcsLogBundle.message("vcs.log.tab.name") }, true)
 
     private fun generateShortDisplayName(ui: VcsLogUi): @TabTitle String {
       val filters = ui.filterUi.filters

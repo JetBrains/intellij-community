@@ -6,7 +6,8 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.j2k.ast.Nullability
-import org.jetbrains.kotlin.j2k.ast.Nullability.*
+import org.jetbrains.kotlin.j2k.ast.Nullability.NotNull
+import org.jetbrains.kotlin.j2k.ast.Nullability.Nullable
 import org.jetbrains.kotlin.js.descriptorUtils.getKotlinTypeFqName
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -44,7 +45,6 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
         val double = typeByFqName(StandardNames.FqNames._double)
 
         val string = typeByFqName(StandardNames.FqNames.string)
-        val possiblyNullString = typeByFqName(StandardNames.FqNames.string, nullability = Default)
 
         val unit = typeByFqName(StandardNames.FqNames.unit)
         val nothing = typeByFqName(StandardNames.FqNames.nothing)

@@ -17,7 +17,6 @@ import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
@@ -27,15 +26,16 @@ import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.io.Serializable
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : LibraryEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val EXCLUDEDROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, ExcludeUrlEntity::class.java,
                                                                                  ConnectionId.ConnectionType.ONE_TO_MANY, true)
     internal val SDK_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, SdkEntity::class.java,
@@ -44,7 +44,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
                                                                                      LibraryPropertiesEntity::class.java,
                                                                                      ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       EXCLUDEDROOTS_CONNECTION_ID,
       SDK_CONNECTION_ID,
       LIBRARYPROPERTIES_CONNECTION_ID,
@@ -77,6 +77,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
     return connections
   }
 
+
   class Builder(result: LibraryEntityData?) : ModifiableWorkspaceEntityBase<LibraryEntity, LibraryEntityData>(
     result), LibraryEntity.Builder {
     constructor() : this(LibraryEntityData())
@@ -106,7 +107,7 @@ open class LibraryEntityImpl(val dataSource: LibraryEntityData) : LibraryEntity,
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -343,9 +344,9 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
   lateinit var tableId: LibraryTableId
   lateinit var roots: MutableList<LibraryRoot>
 
-  fun isNameInitialized(): Boolean = ::name.isInitialized
-  fun isTableIdInitialized(): Boolean = ::tableId.isInitialized
-  fun isRootsInitialized(): Boolean = ::roots.isInitialized
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
+  internal fun isTableIdInitialized(): Boolean = ::tableId.isInitialized
+  internal fun isRootsInitialized(): Boolean = ::roots.isInitialized
 
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
@@ -450,6 +451,10 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
     }
   }
 
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.LibraryEntity") as EntityMetadata
+  }
+
   override fun clone(): LibraryEntityData {
     val clonedEntity = super.clone()
     clonedEntity as LibraryEntityData
@@ -520,18 +525,5 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
     result = 31 * result + tableId.hashCode()
     result = 31 * result + roots.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(LibraryRoot::class.java)
-    collector.add(LibraryTableId.ModuleLibraryTableId::class.java)
-    collector.add(LibraryTableId::class.java)
-    collector.add(LibraryTableId.GlobalLibraryTableId::class.java)
-    collector.add(LibraryRootTypeId::class.java)
-    collector.add(ModuleId::class.java)
-    collector.add(LibraryRoot.InclusionOptions::class.java)
-    collector.addObject(LibraryTableId.ProjectLibraryTableId::class.java)
-    this.roots?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
@@ -10,7 +10,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class CloseActiveTabAction extends AnAction implements DumbAware {
+public final class CloseActiveTabAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(e.getDataContext(), true);

@@ -46,7 +46,7 @@ class StatisticsEventLogFileWriter(private val recorderId: String,
       logger = fileEventLoggerLogger
       if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
         AppExecutorUtil.getAppScheduledExecutorService().schedule(
-          { (if (loggerProvider.isRecordEnabled()) fileEventLoggerLogger.flush ())  }, 10, TimeUnit.SECONDS)
+          { if (loggerProvider.isRecordEnabled()) fileEventLoggerLogger.flush ()  }, 10, TimeUnit.SECONDS)
       }
     }
     catch (e: IOException) {

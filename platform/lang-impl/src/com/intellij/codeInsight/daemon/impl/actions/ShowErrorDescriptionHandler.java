@@ -13,7 +13,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class ShowErrorDescriptionHandler implements CodeInsightActionHandler {
+final class ShowErrorDescriptionHandler implements CodeInsightActionHandler {
   private final boolean myRequestFocus;
 
   ShowErrorDescriptionHandler(boolean requestFocus) {

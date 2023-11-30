@@ -46,7 +46,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 
-class HectorComponentImpl extends JPanel implements HectorComponent {
+final class HectorComponentImpl extends JPanel implements HectorComponent {
   private static final Logger LOG = Logger.getInstance(HectorComponent.class);
 
   private WeakReference<JBPopup> myHectorRef;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -17,21 +17,19 @@ import java.util.List;
 import java.util.Map;
 
 @State(name = "RecentsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class RecentsManager implements PersistentStateComponent<Element> {
-  @NonNls private static final String KEY_ELEMENT_NAME = "key";
-  @NonNls private static final String RECENT_ELEMENT_NAME = "recent";
-  @NonNls protected static final String NAME_ATTR = "name";
+public final class RecentsManager implements PersistentStateComponent<Element> {
+  private static final @NonNls String KEY_ELEMENT_NAME = "key";
+  private static final @NonNls String RECENT_ELEMENT_NAME = "recent";
+  private static final @NonNls String NAME_ATTR = "name";
 
   private final Map<String, LinkedList<String>> myMap = new HashMap<>();
   private int myRecentsNumberToKeep = 5;
 
-  @NotNull
-  public static RecentsManager getInstance(@NotNull Project project) {
+  public static @NotNull RecentsManager getInstance(@NotNull Project project) {
     return project.getService(RecentsManager.class);
   }
 
-  @Nullable
-  public List<String> getRecentEntries(@NotNull String key) {
+  public @Nullable List<String> getRecentEntries(@NotNull String key) {
     return myMap.get(key);
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
+import com.intellij.diagnostic.EventCountDumper;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,9 @@ public final class ThreadDumpParser {
     boolean haveNonEmptyStackTrace = false;
     StringBuilder coroutineDump = null;
     for(@NonNls String line: StringUtil.tokenize(threadDump, "\r\n")) {
+      if (EventCountDumper.EVENT_COUNTS_HEADER.equals(line)) {
+        break;
+      }
       if (isCoroutineDumpHeader(line)) {
         coroutineDump = new StringBuilder();
       }

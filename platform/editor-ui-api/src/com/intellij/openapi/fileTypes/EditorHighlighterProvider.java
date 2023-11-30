@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *  Low level API for customizing language's file syntax highlighting in editor component.
+ *  Low-level API for customizing language's file syntax highlighting in editor component.
  *  Override to provide {@link EditorHighlighter} which creates {@link HighlighterIterator}
  *  which returns a stream of {@link com.intellij.psi.tree.IElementType}s with their {@link com.intellij.openapi.editor.markup.TextAttributes}
  *
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface EditorHighlighterProvider {
   /**
-   * Low level API for customizing language's file syntax highlighting in editor component.
+   * Low-level API for customizing language's file syntax highlighting in an editor component.
    *
    * @param project     The project in which the highlighter will work, or null if the highlighter is not tied to any project.
    * @param fileType    the file type of the file to be highlighted
@@ -27,6 +27,6 @@ public interface EditorHighlighterProvider {
    */
   EditorHighlighter getEditorHighlighter(@Nullable Project project,
                                          @NotNull FileType fileType,
-                                         final @Nullable VirtualFile virtualFile,
+                                         @Nullable VirtualFile virtualFile,
                                          @NotNull EditorColorsScheme colors);
 }

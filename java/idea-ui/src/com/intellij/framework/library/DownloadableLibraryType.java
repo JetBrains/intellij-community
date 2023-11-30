@@ -35,18 +35,6 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
   private final DownloadableLibraryDescription myLibraryDescription;
 
   /**
-   * @deprecated The constructor is meant to maintain the binary compatibility with external plugins.
-   * Please use the constructors with a messagePointer for {@link DownloadableLibraryType#myLibraryCategoryName}
-   */
-  @Deprecated(forRemoval = true)
-  protected DownloadableLibraryType(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String libraryCategoryName,
-                                    @NotNull String libraryTypeId,
-                                    @NotNull String groupId,
-                                    URL @NotNull ... localUrls) {
-    this(() -> libraryCategoryName, libraryTypeId, groupId, localUrls);
-  }
-
-  /**
    * Creates instance of library type. You also <strong>must</strong> override {@link #getLibraryTypeIcon()} method and return non-null value
    * from it.
    *

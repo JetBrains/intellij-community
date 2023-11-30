@@ -1,14 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.BundleBase
 import com.intellij.CommonBundle.getCancelButtonText
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.withCurrentJob
+import com.intellij.openapi.progress.withModalProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -26,6 +30,7 @@ import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
+import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
@@ -45,7 +50,14 @@ private val LOG = logger<AbstractCommitWorkflow>()
 
 internal fun @Nls String.removeEllipsisSuffix(): @Nls String = StringUtil.removeEllipsisSuffix(this)
 
-internal fun cleanActionText(text: @Nls String): @Nls String = UIUtil.removeMnemonic(text).removeEllipsisSuffix()
+internal fun cleanActionText(text: @Nls String, removeMnemonic: Boolean = true): @Nls String {
+  if (removeMnemonic) {
+    return UIUtil.removeMnemonic(text).removeEllipsisSuffix()
+  }
+  else {
+    return text.removeEllipsisSuffix()
+  }
+}
 
 internal fun @Nls String.dropMnemonic(): @Nls String = this.replace(BundleBase.MNEMONIC_STRING, "")
 
@@ -393,10 +405,12 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         return null
       }
 
+      val commitCheckClazz = commitCheck.asCheckinHandler()?.javaClass ?: commitCheck.javaClass
+
       var success = false
       val activity = CommitSessionCounterUsagesCollector.COMMIT_CHECK_SESSION.started(project) {
         listOf(
-          CommitSessionCounterUsagesCollector.COMMIT_CHECK_CLASS.with(commitCheck.asCheckinHandler()?.javaClass ?: commitCheck.javaClass),
+          CommitSessionCounterUsagesCollector.COMMIT_CHECK_CLASS.with(commitCheckClazz),
           CommitSessionCounterUsagesCollector.EXECUTION_ORDER.with(commitCheck.getExecutionOrder())
         )
       }
@@ -405,7 +419,10 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         LOG.debug("Running commit check $commitCheck")
         val ctx = coroutineContext
         ctx.ensureActive()
-        ctx.progressSink?.update(text = "", details = "")
+        ctx.rawProgressReporter?.apply {
+          text("")
+          details("")
+        }
 
         val problem = commitCheck.runCheck(commitInfo)
         success = problem == null
@@ -416,7 +433,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
       catch (e: Throwable) {
         LOG.error(e)
-        return CommitProblem.createError(e)
+        return CommitProblem.createError(PluginException.createByClass(e, commitCheckClazz))
       }
       finally {
         activity.finished {

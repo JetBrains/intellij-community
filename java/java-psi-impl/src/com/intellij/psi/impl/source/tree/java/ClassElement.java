@@ -265,6 +265,9 @@ public class ClassElement extends CompositeElement implements Constants {
         return findChildByType(TYPE_PARAMETER_LIST);
 
       case ChildRole.CLASS_OR_INTERFACE_KEYWORD:
+        if (this instanceof UnnamedClassElement) {
+          return null;
+        }
         for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
           if (CLASS_KEYWORD_BIT_SET.contains(child.getElementType())) return child;
         }

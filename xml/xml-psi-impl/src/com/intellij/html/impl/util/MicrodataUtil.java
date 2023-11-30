@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.impl.util;
 
 import com.intellij.openapi.util.Key;
@@ -35,8 +35,7 @@ public final class MicrodataUtil {
     return findScopeTag(tag) != null;
   }
 
-  @Nullable
-  public static XmlTag findScopeTag(@Nullable XmlTag context) {
+  public static @Nullable XmlTag findScopeTag(@Nullable XmlTag context) {
     Map<String, XmlTag> id2tag = findScopesWithItemRef(context != null ? context.getContainingFile() : null);
     XmlTag tag = context;
     while (tag != null) {
@@ -48,7 +47,7 @@ public final class MicrodataUtil {
     return null;
   }
 
-  private static Map<String, XmlTag> findScopesWithItemRef(@Nullable final PsiFile file) {
+  private static Map<String, XmlTag> findScopesWithItemRef(final @Nullable PsiFile file) {
     if (!(file instanceof XmlFile)) return Collections.emptyMap();
     return CachedValuesManager.getCachedValue(file, new CachedValueProvider<>() {
       @Override
@@ -129,8 +128,7 @@ public final class MicrodataUtil {
     return result.toArray(PsiReference.EMPTY_ARRAY);
   }
 
-  @Nullable
-  public static String getStripedAttributeValue(@Nullable XmlTag tag, String attributeName) {
+  public static @Nullable String getStripedAttributeValue(@Nullable XmlTag tag, String attributeName) {
     String value = tag != null ? tag.getAttributeValue(attributeName) : null;
     return value != null ? StringUtil.unquoteString(value) : null;
   }

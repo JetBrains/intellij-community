@@ -4,11 +4,13 @@ package org.jetbrains.plugins.gitlab.api.dto
 import com.intellij.collaboration.api.dto.GraphQLFragment
 import com.intellij.collaboration.auth.AccountDetails
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import java.net.URL
 
+@SinceGitLab("12.0")
 @GraphQLFragment("graphql/fragment/user.graphql")
 open class GitLabUserDTO(
-  val id: String,
+  @SinceGitLab("13.0") val id: String,
   val username: @NlsSafe String,
   override val name: @NlsSafe String,
   override val avatarUrl: String?,
@@ -41,15 +43,19 @@ open class GitLabUserDTO(
 
   companion object {
     fun fromRestDTO(dto: GitLabUserRestDTO): GitLabUserDTO {
-      val url = URL(dto.webUrl)
-      val serverId = url.host.split(".").dropLast(1).joinToString(".")
+      // Basing ID on serverId doesn't work when the server is an IP, honestly not even sure what GL setting the name is based on.
+      // For locally setup gitlab servers this is 'gitlab' as well, but not sure if it can be set.
+      // val url = URL(dto.webUrl)
+      // val serverId = url.host.split(".").dropLast(1).joinToString(".")
 
       val server = dto.avatarUrl?.let {
         URL(it)
       }
 
+      // Assuming all gitlab servers use 'gitlab' as server ID. Seems to be dictated
+      // by a global 'GlobalID.app' setting for the 'globalid' library for RoR.
       return GitLabUserDTO(
-        id = "gid://$serverId/User/${dto.id}",
+        id = "gid://gitlab/User/${dto.id}",
         username = dto.username,
         name = dto.name,
         avatarUrl = server?.path,

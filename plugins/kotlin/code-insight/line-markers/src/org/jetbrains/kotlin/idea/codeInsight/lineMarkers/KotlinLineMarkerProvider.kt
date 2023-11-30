@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
 import com.intellij.codeInsight.navigation.GotoTargetHandler
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.ui.awt.RelativePoint
@@ -21,6 +20,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.dsl.collectHighlightingDslMarkers
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.AbstractKotlinLineMarkerProvider
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.LineMarkerInfos
 import org.jetbrains.kotlin.idea.highlighter.markers.InheritanceMergeableLineMarkerInfo
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinGutterTooltipHelper
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
@@ -37,19 +38,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import java.awt.event.MouseEvent
 import java.util.concurrent.atomic.AtomicReference
 
-class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
-    override fun getName() = KotlinBundle.message("highlighter.name.kotlin.line.markers")
+class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
 
-    override fun getOptions(): Array<Option> = KotlinLineMarkerOptions.options
-
-    override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
-    override fun collectSlowLineMarkers(elements: MutableList<out PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
-        if (elements.isEmpty()) return
-        if (KotlinLineMarkerOptions.options.none { option -> option.isEnabled }) return
-
-        val first = elements.first()
-        if (DumbService.getInstance(first.project).isDumb) return
-
+    override fun doCollectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
         for (element in elements) {
             if (!(element is LeafPsiElement && element.elementType == KtTokens.IDENTIFIER)) continue
             val declaration = element.parent as? KtNamedDeclaration ?: continue
@@ -183,7 +174,7 @@ object SuperDeclarationPopupHandler : GutterIconNavigationHandler<PsiElement> {
 }
 
 object ImplementationsPopupHandler : InheritorsLineMarkerNavigator() {
-    override fun getMessageForDumbMode() = KotlinBundle.message("notification.navigation.to.overriding.classes")
+    override fun getMessageForDumbMode(): String = KotlinBundle.message("notification.navigation.to.overriding.classes")
 }
 
 private fun comparator(): Comparator<PsiElement> = Comparator.comparing { el ->

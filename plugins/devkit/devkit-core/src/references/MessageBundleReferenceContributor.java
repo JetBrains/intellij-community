@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -47,7 +47,7 @@ import java.util.Objects;
 
 import static com.intellij.patterns.PlatformPatterns.virtualFile;
 
-public final class MessageBundleReferenceContributor extends PsiReferenceContributor {
+final class MessageBundleReferenceContributor extends PsiReferenceContributor {
   @NonNls private static final String ACTION = "action.";
   @NonNls private static final String GROUP = "group.";
   @NonNls private static final String TEXT = ".text";
@@ -85,7 +85,7 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
         }
 
         @Nullable
-        private PsiReference createActionOrGroupIdReference(@NotNull PsiElement element, String text) {
+        private static PsiReference createActionOrGroupIdReference(@NotNull PsiElement element, String text) {
           if (!isActionOrGroupKey(text)) return null;
 
           final int dotAfterPrefix = text.indexOf('.');
@@ -103,7 +103,7 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
         }
 
         @Nullable
-        private PsiReference createToolwindowIdReference(@NotNull PsiElement element, String text) {
+        private static PsiReference createToolwindowIdReference(@NotNull PsiElement element, String text) {
           if (!isToolwindowKey(text)) return null;
 
           String id = StringUtil.notNullize(StringUtil.substringAfter(text, TOOLWINDOW_STRIPE_PREFIX)).replace('_', ' ');
@@ -111,7 +111,7 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
         }
 
         @Nullable
-        private PsiReference createExportableIdReference(@NotNull PsiElement element, String text) {
+        private static PsiReference createExportableIdReference(@NotNull PsiElement element, String text) {
           if (!isExportableKey(text)) return null;
 
           String id = text.replace(EXPORTABLE_PREFIX, "").replace(EXPORTABLE_SUFFIX, "");
@@ -119,7 +119,7 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
         }
 
         @Nullable
-        private PsiReference createPluginIdReference(@NotNull PsiElement element, String text) {
+        private static PsiReference createPluginIdReference(@NotNull PsiElement element, String text) {
           if (!isPluginDescriptionKey(text)) return null;
 
           String id = StringUtil.substringAfter(StringUtil.notNullize(StringUtil.substringBefore(text, DESCRIPTION)), PLUGIN);
@@ -127,7 +127,7 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
         }
 
         @Nullable
-        private PsiReference createAdvancedSettingReference(@NotNull PsiElement element, String text) {
+        private static PsiReference createAdvancedSettingReference(@NotNull PsiElement element, String text) {
           if (!isAdvancedSettingKey(text)) return null;
 
           String s = StringUtil.notNullize(StringUtil.substringAfter(text, ADVANCED_SETTING));
@@ -368,7 +368,7 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
   }
 
 
-  public static class ImplicitUsageProvider implements ImplicitPropertyUsageProvider {
+  final static class ImplicitUsageProvider implements ImplicitPropertyUsageProvider {
 
     @NonNls private static final String ICON_TOOLTIP_PREFIX = "icon.";
     @NonNls private static final String ICON_TOOLTIP_SUFFIX = ".tooltip";

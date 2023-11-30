@@ -35,7 +35,7 @@ class FrameworkLibraryValidatorWithDynamicDescription(
         if (platform.isCommon) return true
 
         if (KotlinVersionInfoProvider.EP_NAME.extensionList.any {
-                it.getLibraryVersions(context.module, platform, context.rootModel).isNotEmpty()
+                it.getLibraryVersionsSequence(context.module, platform, context.rootModel).any()
             }
         ) return true
 

@@ -15,6 +15,9 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import com.intellij.util.indexing.EntityIndexingServiceEx;
@@ -24,12 +27,9 @@ import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusSer
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
-import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
-import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -41,7 +41,7 @@ import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public class IndexableFilesIndexImpl implements IndexableFilesIndex {
+public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
   @NotNull
   private final Project project;
   private final AdditionalIndexableFileSet filesFromIndexableSetContributors;
@@ -89,6 +89,17 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       iterators.addAll(IndexableEntityProviderMethods.INSTANCE.createModuleContentIterators(module));
     }
 
+    Set<IndexableSetOrigin> libraryOrigins = new HashSet<>();
+
+    WorkspaceIndexingRootsBuilder.Companion.Settings settings = new WorkspaceIndexingRootsBuilder.Companion.Settings();
+    settings.setCollectExplicitRootsForModules(false);
+    settings.setRetainCondition(contributor -> contributor.getStorageKind() == EntityStorageKind.MAIN);
+    WorkspaceIndexingRootsBuilder builder =
+      WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(entityStorage, settings);
+    WorkspaceIndexingRootsBuilder.Iterators iteratorsFromRoots = builder.getIteratorsFromRoots(libraryOrigins, entityStorage);
+    iterators.addAll(iteratorsFromRoots.getContentIterators());
+    iterators.addAll(iteratorsFromRoots.getExternalIterators());
+
     List<Sdk> sdks = new ArrayList<>();
     ModuleDependencyIndex moduleDependencyIndex = ModuleDependencyIndex.getInstance(project);
     for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
@@ -107,7 +118,6 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       iterators.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
     }
 
-    Set<IndexableSetOrigin> libraryOrigins = new HashSet<>();
     LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
     Sequence<LibraryTable> libs = SequencesKt.asSequence(tablesRegistrar.getCustomLibraryTables().iterator());
     libs = SequencesKt.plus(libs, tablesRegistrar.getLibraryTable());
@@ -124,22 +134,16 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       }
     }
 
-    WorkspaceIndexingRootsBuilder.Companion.Settings settings = new WorkspaceIndexingRootsBuilder.Companion.Settings();
-    settings.setCollectExplicitRootsForModules(false);
-    settings.setRetainCondition(contributor -> contributor.getStorageKind() == EntityStorageKind.MAIN);
-    WorkspaceIndexingRootsBuilder builder =
-      WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(project, entityStorage, settings);
-    builder.addIteratorsFromRoots(iterators, libraryOrigins, entityStorage);
-
     boolean addedFromDependenciesIndexedStatusService = false;
     if (DependenciesIndexedStatusService.shouldBeUsed()) {
       DependenciesIndexedStatusService cacheService = DependenciesIndexedStatusService.getInstance(project);
       if (cacheService.shouldSaveStatus()) {
         addedFromDependenciesIndexedStatusService = true;
         ProgressManager.checkCanceled();
-        iterators.addAll(cacheService.saveIndexableSetsAndInstantiateIterators());
-        ProgressManager.checkCanceled();
         iterators.addAll(cacheService.saveLibsAndInstantiateLibraryIterators());
+        iterators.addAll(iteratorsFromRoots.getCustomIterators());
+        ProgressManager.checkCanceled();
+        iterators.addAll(cacheService.saveIndexableSetsAndInstantiateIterators());
         cacheService.saveExcludePolicies();
       }
     }
@@ -150,6 +154,8 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
           iterators.add(new SyntheticLibraryIndexableFilesIteratorImpl(library));
         }
       }
+
+      iterators.addAll(iteratorsFromRoots.getCustomIterators());
 
       for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
         iterators.add(new IndexableSetContributorFilesIterator(contributor, project));

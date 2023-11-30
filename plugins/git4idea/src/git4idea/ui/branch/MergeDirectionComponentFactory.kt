@@ -124,7 +124,7 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
       return branchModel
     }
 
-    private fun <RepoMapping : GitRepositoryMappingData> chooseBaseBranch(parentComponent: JComponent,
+    fun <RepoMapping : GitRepositoryMappingData> chooseBaseBranch(parentComponent: JComponent,
                                                                           currentBranch: GitRemoteBranch?,
                                                                           repoMapping: RepoMapping,
                                                                           applySelection: (GitRemoteBranch?) -> Unit) {

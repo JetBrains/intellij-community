@@ -29,6 +29,11 @@ class JavaUCallExpression(
   override val sourcePsi: PsiMethodCallExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallExpression, UElementWithLocation, UMultiResolvable {
+
+  private val valueArgumentsPart = UastLazyPart<List<UExpression>>()
+  private val methodIdentifierPart = UastLazyPart<UIdentifier?>()
+  private var typeArgumentCountLazy = Int.MIN_VALUE
+
   override val kind: UastCallKind
     get() {
       val element = nameReferenceElement
@@ -38,9 +43,10 @@ class JavaUCallExpression(
       return UastCallKind.METHOD_CALL
     }
 
-  override val methodIdentifier: UIdentifier? by lazyPub {
-    nameReferenceElement?.let { UIdentifier(it, this) }
-  }
+  override val methodIdentifier: UIdentifier?
+    get() = methodIdentifierPart.getOrBuild {
+      nameReferenceElement?.let { UIdentifier(it, this) }
+    }
 
   private val nameReferenceElement: PsiElement?
     get() = sourcePsi.methodExpression.referenceNameElement
@@ -51,9 +57,10 @@ class JavaUCallExpression(
   override val valueArgumentCount: Int
     get() = sourcePsi.argumentList.expressionCount
 
-  override val valueArguments: List<UExpression> by lazyPub {
-    PsiArrayToUElementListMappingView(sourcePsi.argumentList.expressions) { JavaConverter.convertOrEmpty(it, this@JavaUCallExpression) }
-  }
+  override val valueArguments: List<UExpression>
+    get() = valueArgumentsPart.getOrBuild {
+      PsiArrayToUElementListMappingView(sourcePsi.argumentList.expressions) { JavaConverter.convertOrEmpty(it, this@JavaUCallExpression) }
+    }
 
   override fun getArgumentForParameter(i: Int): UExpression? {
     val resolved = multiResolve().mapNotNull { it.element as? PsiMethod }
@@ -69,7 +76,14 @@ class JavaUCallExpression(
     return null
   }
 
-  override val typeArgumentCount: Int by lazyPub { sourcePsi.typeArguments.size }
+  override val typeArgumentCount: Int
+    get() {
+      if (typeArgumentCountLazy == Int.MIN_VALUE) {
+        typeArgumentCountLazy = sourcePsi.typeArguments.size
+      }
+
+      return typeArgumentCountLazy
+    }
 
   override val typeArguments: List<PsiType>
     get() = sourcePsi.typeArguments.toList()
@@ -134,13 +148,25 @@ class JavaConstructorUCallExpression(
   override val sourcePsi: PsiNewExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallExpression, UMultiResolvable {
-  override val kind: UastCallKind by lazyPub {
-    when {
-      sourcePsi.arrayInitializer != null -> UastCallKind.NEW_ARRAY_WITH_INITIALIZER
-      sourcePsi.arrayDimensions.isNotEmpty() -> UastCallKind.NEW_ARRAY_WITH_DIMENSIONS
-      else -> UastCallKind.CONSTRUCTOR_CALL
+
+  private val classReferencePart = UastLazyPart<UReferenceExpression?>()
+  private val valueArgumentsPart = UastLazyPart<List<UExpression>>()
+
+  private var kindLazy: UastCallKind? = null
+  private var typeArgumentCountLazy = Int.MIN_VALUE
+
+  override val kind: UastCallKind
+    get() {
+      if (kindLazy == null) {
+        kindLazy = when {
+          sourcePsi.arrayInitializer != null -> UastCallKind.NEW_ARRAY_WITH_INITIALIZER
+          sourcePsi.arrayDimensions.isNotEmpty() -> UastCallKind.NEW_ARRAY_WITH_DIMENSIONS
+          else -> UastCallKind.CONSTRUCTOR_CALL
+        }
+      }
+
+      return kindLazy!!
     }
-  }
 
   override val receiver: UExpression?
     get() = null
@@ -151,11 +177,12 @@ class JavaConstructorUCallExpression(
   override val methodIdentifier: UIdentifier?
     get() = null
 
-  override val classReference: UReferenceExpression? by lazyPub {
-    sourcePsi.classReference?.let { ref ->
-      JavaConverter.convertReference(ref, this, UElement::class.java) as? UReferenceExpression
+  override val classReference: UReferenceExpression?
+    get() = classReferencePart.getOrBuild {
+      sourcePsi.classReference?.let { ref ->
+        JavaConverter.convertReference(ref, this, UElement::class.java) as? UReferenceExpression
+      }
     }
-  }
 
   override val valueArgumentCount: Int
     get() {
@@ -167,18 +194,26 @@ class JavaConstructorUCallExpression(
       }
     }
 
-  override val valueArguments: List<UExpression> by lazyPub {
-    val initializer = sourcePsi.arrayInitializer
-    when {
-      initializer != null -> initializer.initializers.map { JavaConverter.convertOrEmpty(it, this) }
-      sourcePsi.arrayDimensions.isNotEmpty() -> sourcePsi.arrayDimensions.map { JavaConverter.convertOrEmpty(it, this) }
-      else -> sourcePsi.argumentList?.expressions?.map { JavaConverter.convertOrEmpty(it, this) } ?: emptyList()
+  override val valueArguments: List<UExpression>
+    get() = valueArgumentsPart.getOrBuild {
+      val initializer = sourcePsi.arrayInitializer
+      when {
+        initializer != null -> initializer.initializers.map { JavaConverter.convertOrEmpty(it, this) }
+        sourcePsi.arrayDimensions.isNotEmpty() -> sourcePsi.arrayDimensions.map { JavaConverter.convertOrEmpty(it, this) }
+        else -> sourcePsi.argumentList?.expressions?.map { JavaConverter.convertOrEmpty(it, this) } ?: emptyList()
+      }
     }
-  }
 
   override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
-  override val typeArgumentCount: Int by lazyPub { sourcePsi.classReference?.typeParameters?.size ?: 0 }
+  override val typeArgumentCount: Int
+    get() {
+      if (typeArgumentCountLazy == Int.MIN_VALUE) {
+        typeArgumentCountLazy = sourcePsi.classReference?.typeParameters?.size ?: 0
+      }
+
+      return typeArgumentCountLazy
+    }
 
   override val typeArguments: List<PsiType>
     get() = sourcePsi.classReference?.typeParameters?.toList() ?: emptyList()
@@ -207,6 +242,9 @@ class JavaArrayInitializerUCallExpression(
   override val sourcePsi: PsiArrayInitializerExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallExpression, UMultiResolvable {
+  private var valueArgumentCountLazy = Int.MIN_VALUE
+  private val valueArgumentsPart = UastLazyPart<List<UExpression>>()
+
   override val methodIdentifier: UIdentifier?
     get() = null
 
@@ -216,8 +254,17 @@ class JavaArrayInitializerUCallExpression(
   override val methodName: String?
     get() = null
 
-  override val valueArgumentCount: Int by lazyPub { sourcePsi.initializers.size }
-  override val valueArguments: List<UExpression> by lazyPub { sourcePsi.initializers.map { JavaConverter.convertOrEmpty(it, this) } }
+  override val valueArgumentCount: Int
+    get() {
+      if (valueArgumentCountLazy == Int.MIN_VALUE) {
+        valueArgumentCountLazy = sourcePsi.initializers.size
+      }
+
+      return valueArgumentCountLazy
+    }
+
+  override val valueArguments: List<UExpression>
+    get() = valueArgumentsPart.getOrBuild { sourcePsi.initializers.map { JavaConverter.convertOrEmpty(it, this) } }
 
   override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
@@ -248,6 +295,7 @@ class JavaAnnotationArrayInitializerUCallExpression(
   override val sourcePsi: PsiArrayInitializerMemberValue,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UCallExpression, UMultiResolvable {
+  private val valueArgumentsPart = UastLazyPart<List<UExpression>>()
 
   override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
@@ -263,13 +311,22 @@ class JavaAnnotationArrayInitializerUCallExpression(
   override val methodName: String?
     get() = null
 
-  override val valueArgumentCount: Int by lazyPub { sourcePsi.initializers.size }
+  private var valueArgumentCountLazy = Int.MIN_VALUE
 
-  override val valueArguments: List<UExpression> by lazyPub {
-    sourcePsi.initializers.map {
-      JavaConverter.convertPsiElement(it, this, UElement::class.java) as? UExpression ?: UnknownJavaExpression(it, this)
+  override val valueArgumentCount: Int
+    get() {
+      if (valueArgumentCountLazy == Int.MIN_VALUE) {
+        valueArgumentCountLazy = sourcePsi.initializers.size
+      }
+      return valueArgumentCountLazy
     }
-  }
+
+  override val valueArguments: List<UExpression>
+    get() = valueArgumentsPart.getOrBuild {
+      sourcePsi.initializers.map {
+        JavaConverter.convertPsiElement(it, this, UElement::class.java) as? UExpression ?: UnknownJavaExpression(it, this)
+      }
+    }
 
   override val typeArgumentCount: Int
     get() = 0

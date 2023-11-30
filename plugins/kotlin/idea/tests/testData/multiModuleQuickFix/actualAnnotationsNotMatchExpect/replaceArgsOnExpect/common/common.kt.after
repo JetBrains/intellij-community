@@ -1,0 +1,5 @@
+// DISABLE-ERRORS
+annotation class Ann(val value: String)
+
+@Ann("different value")
+expect fun foo()

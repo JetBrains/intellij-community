@@ -7,36 +7,81 @@ import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.page.ApiPageUtil
-import com.intellij.collaboration.api.page.foldToList
 import com.intellij.collaboration.util.resolveRelative
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.*
+import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabRepositoryDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpResponse
 
-suspend fun GitLabApi.GraphQL.loadAllProjectLabels(project: GitLabProjectCoordinates): List<GitLabLabelDTO> =
+@SinceGitLab("13.1", note = "No exact version")
+fun GitLabApi.GraphQL.createAllProjectLabelsFlow(project: GitLabProjectCoordinates): Flow<List<GitLabLabelDTO>> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters() + mapOf(
       "fullPath" to project.projectPath.fullPath()
     )
-    val request = gitLabQuery(project.serverPath, GitLabGQLQuery.GET_PROJECT_LABELS, parameters)
-    withErrorStats(project.serverPath, GitLabGQLQuery.GET_PROJECT_LABELS) {
+    val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT_LABELS, parameters)
+    withErrorStats(GitLabGQLQuery.GET_PROJECT_LABELS) {
       loadResponse<LabelConnection>(request, "project", "labels").body()
     }
-  }.map { it.nodes }.foldToList()
+  }.map { it.nodes }
 
+@SinceGitLab("7.0", note = "No exact version")
 fun getProjectUsersURI(project: GitLabProjectCoordinates) = project.restApiUri.resolveRelative("users")
 
-suspend fun GitLabApi.Rest.getProjectUsers(serverPath: GitLabServerPath, uri: URI): HttpResponse<out List<GitLabUserRestDTO>> {
+@SinceGitLab("7.0", note = "No exact version")
+suspend fun GitLabApi.Rest.getProjectUsers(uri: URI): HttpResponse<out List<GitLabUserRestDTO>> {
   val request = request(uri).GET().build()
-  return withErrorStats(serverPath, GitLabApiRequestName.REST_GET_PROJECT_USERS) {
+  return withErrorStats(GitLabApiRequestName.REST_GET_PROJECT_USERS) {
     loadJsonList(request)
+  }
+}
+
+@SinceGitLab("12.0")
+suspend fun GitLabApi.GraphQL.getProjectRepository(
+  project: GitLabProjectCoordinates
+): HttpResponse<out GitLabRepositoryDTO> {
+  val parameters = mapOf(
+    "fullPath" to project.projectPath.fullPath()
+  )
+
+  val request = gitLabQuery(GitLabGQLQuery.GET_PROJECT_REPOSITORY, parameters)
+  return withErrorStats(GitLabGQLQuery.GET_PROJECT_REPOSITORY) {
+    loadResponse<GitLabRepositoryDTO>(request, "project", "repository")
+  }
+}
+
+@SinceGitLab("13.1")
+suspend fun GitLabApi.GraphQL.createMergeRequest(
+  project: GitLabProjectCoordinates,
+  sourceBranch: String,
+  targetBranch: String,
+  title: String
+): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>?> {
+  val parameters = mapOf(
+    "projectId" to project.projectPath.fullPath(),
+    "sourceBranch" to sourceBranch,
+    "targetBranch" to targetBranch,
+    "title" to title
+  )
+
+  val request = gitLabQuery(GitLabGQLQuery.MERGE_REQUEST_CREATE, parameters)
+  return withErrorStats(GitLabGQLQuery.MERGE_REQUEST_CREATE) {
+    loadResponse<GitLabCreateMergeRequestResult>(request, "mergeRequestCreate")
   }
 }
 
 private class LabelConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabLabelDTO>)
   : GraphQLConnectionDTO<GitLabLabelDTO>(pageInfo, nodes)
+
+private class GitLabCreateMergeRequestResult(
+  mergeRequest: GitLabMergeRequestDTO,
+  errors: List<String>?,
+  override val value: GitLabMergeRequestDTO = mergeRequest
+) : GitLabGraphQLMutationResultDTO<GitLabMergeRequestDTO>(errors)

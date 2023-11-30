@@ -12,7 +12,10 @@ import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.application.isModalAwareContext
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.CeProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.*
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
@@ -24,14 +27,17 @@ import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
+import com.intellij.platform.ide.progress.*
+import com.intellij.platform.util.progress.asContextElement
+import com.intellij.platform.util.progress.impl.ProgressState
+import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.flow.throttle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.AWTEvent
-import java.awt.Component
-import java.awt.Container
-import java.awt.EventQueue
+import java.awt.*
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
@@ -65,14 +71,6 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     }.takeWhile { it != null }.map { it!! }
     return finiteFlow
   }
-
-  override fun taskCancellationNonCancellableInternal(): TaskCancellation.NonCancellable = NonCancellableTaskCancellation
-
-  override fun taskCancellationCancellableInternal(): TaskCancellation.Cancellable = defaultCancellable
-
-  override fun modalTaskOwner(component: Component): ModalTaskOwner = ComponentModalTaskOwner(component)
-
-  override fun modalTaskOwner(project: Project): ModalTaskOwner = ProjectModalTaskOwner(project)
 
   override suspend fun <T> withBackgroundProgressInternal(
     project: Project,
@@ -170,12 +168,14 @@ private class JobProviderWithOwnerContext(val modalJob: Job, val owner: ModalTas
     return when (owner) {
       is ComponentModalTaskOwner -> ProgressWindow.calcParentWindow(owner.component, null) === frame
       is ProjectModalTaskOwner -> owner.project === project
-      else -> ProgressWindow.calcParentWindow(null, null) === frame
+      is GuessModalTaskOwner -> ProgressWindow.calcParentWindow(null, null) === frame
     }
   }
 
   override fun getJob(): Job = modalJob
 }
+
+val tracer = getInstance().getTracer(ProgressManagerScope)
 
 private fun CoroutineScope.showIndicator(
   project: Project,
@@ -186,18 +186,20 @@ private fun CoroutineScope.showIndicator(
   return launch(Dispatchers.Default) {
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
     val indicator = coroutineCancellingIndicator(taskJob) // cancel taskJob from UI
-    val indicatorAdded = withContext(Dispatchers.EDT) {
-      showIndicatorInUI(project, taskInfo, indicator)
-    }
-    if (indicatorAdded) {
-      indicator.start()
-      try {
+    val span = tracer.spanBuilder("Progress: ${taskInfo.title}").startSpan()
+    indicator.start()
+    try {
+      val indicatorAdded = withContext(Dispatchers.EDT) {
+        showIndicatorInUI(project, taskInfo, indicator)
+      }
+      if (indicatorAdded) {
         indicator.updateFromFlow(stateFlow)
       }
-      finally {
-        indicator.stop()
-        indicator.finish(taskInfo)
-      }
+    }
+    finally {
+      indicator.stop()
+      indicator.finish(taskInfo)
+      span.end()
     }
   }
 }
@@ -221,8 +223,7 @@ private fun coroutineCancellingIndicator(job: Job): ProgressIndicatorEx {
  * [text2][ProgressIndicator.setText2], and [fraction][ProgressIndicator.setFraction] from the [updates].
  */
 private suspend fun ProgressIndicatorEx.updateFromFlow(updates: Flow<ProgressState>): Nothing {
-  @OptIn(FlowPreview::class)
-  updates.debounce(50).flowOn(Dispatchers.Default).collect { state: ProgressState ->
+  updates.throttle(50).flowOn(Dispatchers.Default).collect { state: ProgressState ->
     text = state.text
     text2 = state.details
     if (state.fraction >= 0.0) {
@@ -335,7 +336,9 @@ private suspend fun doShowModalIndicator(
       focusComponent.requestFocusInWindow()
       if (previousFocusOwner != null) {
         awaitCancellationAndInvoke {
-          previousFocusOwner.requestFocusInWindow()
+          // TODO: don't move focus back if the focus owner was changed
+          //if (focusComponent.isFocusOwner)
+            previousFocusOwner.requestFocusInWindow()
         }
       }
 
@@ -344,10 +347,17 @@ private suspend fun doShowModalIndicator(
   }
 }
 
+private fun ownerWindow(owner: ModalTaskOwner): Window? {
+  return when (owner) {
+    is ComponentModalTaskOwner -> ProgressWindow.calcParentWindow(owner.component, null)
+    is ProjectModalTaskOwner -> ProgressWindow.calcParentWindow(null, owner.project)
+    is GuessModalTaskOwner -> ProgressWindow.calcParentWindow(null, null) // guess
+  }
+}
+
 private suspend fun ProgressDialogUI.updateFromFlow(updates: Flow<ProgressState>): Nothing {
-  @OptIn(FlowPreview::class)
   updates
-    .debounce(50)
+    .throttle(50)
     .flowOn(Dispatchers.Default)
     .collect {
       updateProgress(it)

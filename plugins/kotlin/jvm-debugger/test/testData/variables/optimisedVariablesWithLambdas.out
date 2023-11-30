@@ -88,7 +88,6 @@ CoroutinePreflightFrame foo (optimisedVariablesWithLambdas.kt:58)
     JavaValue[local] j: java.lang.String = j (optimisedVariablesWithLambdas.kt:56)
     DummyMessageValueNode = 'b' was optimised out
     DummyMessageValueNode = 'g' was optimised out
-    DummyMessageValueNode = 'i' was optimised out
     DummyMessageValueNode = 'param1' was optimised out
     DummyMessageValueNode = 'param2' was optimised out
     DummyMessageValueNode = 'param3' was optimised out
@@ -100,9 +99,6 @@ CoroutinePreflightFrame foo (optimisedVariablesWithLambdas.kt:70)
     JavaValue[local] result = null
     DummyMessageValueNode = 'a' was optimised out
     DummyMessageValueNode = 'b' was optimised out
-    DummyMessageValueNode = 'g' was optimised out
-    DummyMessageValueNode = 'i' was optimised out
-    DummyMessageValueNode = 'j' was optimised out
     DummyMessageValueNode = 'param1' was optimised out
     DummyMessageValueNode = 'param2' was optimised out
     DummyMessageValueNode = 'param3' was optimised out
@@ -111,9 +107,6 @@ CoroutinePreflightFrame foo (optimisedVariablesWithLambdas.kt:72)
     JavaValue[local] result = null
     DummyMessageValueNode = 'a' was optimised out
     DummyMessageValueNode = 'b' was optimised out
-    DummyMessageValueNode = 'g' was optimised out
-    DummyMessageValueNode = 'i' was optimised out
-    DummyMessageValueNode = 'j' was optimised out
     DummyMessageValueNode = 'param1' was optimised out
     DummyMessageValueNode = 'param2' was optimised out
     DummyMessageValueNode = 'param3' was optimised out

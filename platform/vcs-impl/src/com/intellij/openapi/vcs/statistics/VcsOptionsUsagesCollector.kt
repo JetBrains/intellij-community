@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.statistics
 
 import com.intellij.ide.impl.isTrusted
@@ -12,11 +12,11 @@ import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.vcs.ignore.IgnoredToExcludedSynchronizerConstants.ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
 import org.jetbrains.annotations.NonNls
 
-@NonNls
-class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
+internal class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
@@ -26,6 +26,17 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
 
     val conf = VcsConfiguration.getInstance(project)
     val confDefault = VcsConfiguration()
+
+    val vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)
+    val confirmationAddValue = vcsManager.getConfirmation(VcsConfiguration.StandardConfirmation.ADD).value
+    val confirmationRemoveValue = vcsManager.getConfirmation(VcsConfiguration.StandardConfirmation.REMOVE).value
+
+    if (confirmationAddValue != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
+      set.add(STANDARD_CONFIRMATION_ADD.metric(confirmationAddValue.toConfirmationOption()))
+    }
+    if (confirmationRemoveValue != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
+      set.add(STANDARD_CONFIRMATION_REMOVE.metric(confirmationRemoveValue.toConfirmationOption()))
+    }
 
     addConfirmationIfDiffers(set, conf, confDefault, { it.REMOVE_EMPTY_INACTIVE_CHANGELISTS }, OFFER_REMOVE_EMPTY_CHANGELIST)
 
@@ -62,13 +73,17 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
     //Such case should be filtered in order to check only a user manual interaction.
     val askedToShare = booleanPropertyIfDiffers(project, ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, false)
     if (askedToShare != null) {
-      if (!addBooleanPropertyIfDiffers(project, set, SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, false, SHARE_PROJECT_CONFIGURATION_FILES)) {
+      if (!addBooleanPropertyIfDiffers(project, set, SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY, false,
+                                       SHARE_PROJECT_CONFIGURATION_FILES)) {
         set.add(ASKED_SHARE_PROJECT_CONFIGURATION_FILES.metric(askedToShare))
       }
     }
   }
 
-  private fun addExternalFilesActionsStatistics(project: Project, set: HashSet<MetricEvent>, conf: VcsConfiguration, confDefault: VcsConfiguration) {
+  private fun addExternalFilesActionsStatistics(project: Project,
+                                                set: HashSet<MetricEvent>,
+                                                conf: VcsConfiguration,
+                                                confDefault: VcsConfiguration) {
     addBoolIfDiffers(set, conf, confDefault, { it.ADD_EXTERNAL_FILES_SILENTLY }, ADD_EXTERNAL_FILES_SILENTLY)
     if (!conf.ADD_EXTERNAL_FILES_SILENTLY) {
       addBooleanPropertyIfDiffers(project, set, ASKED_ADD_EXTERNAL_FILES_PROPERTY, false, ASKED_ADD_EXTERNAL_FILES)
@@ -90,45 +105,53 @@ class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
     return if (value != defaultValue) value else null
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("vcs.settings", 4)
+  private val GROUP = EventLogGroup("vcs.settings", 6)
 
-    private val OFFER_REMOVE_EMPTY_CHANGELIST = GROUP.registerEvent("offer.remove.empty.changelist", EventFields.Enum("value", ConfirmationOption::class.java))
+  private val CONFIRMATION_OPTION_FIELD = EventFields.Enum<ConfirmationOption>("value")
+  private val STANDARD_CONFIRMATION_ADD = GROUP.registerEvent("standard.confirmation.for.add", CONFIRMATION_OPTION_FIELD)
+  private val STANDARD_CONFIRMATION_REMOVE = GROUP.registerEvent("standard.confirmation.for.remove", CONFIRMATION_OPTION_FIELD)
+  private val OFFER_REMOVE_EMPTY_CHANGELIST = GROUP.registerEvent("offer.remove.empty.changelist", CONFIRMATION_OPTION_FIELD)
 
-    private val CHANGELIST_MAKE_NEW_ACTIVE = GROUP.registerVarargEvent("changelist.make.new.active", EventFields.Enabled)
-    private val CHANGELIST_PRESELECT_EXISTING = GROUP.registerVarargEvent("changelist.preselect.existing", EventFields.Enabled)
-    private val COMMIT_BEFORE_CHECK_CODE_SMELL = GROUP.registerVarargEvent("commit.before.check.code.smell", EventFields.Enabled)
-    private val COMMIT_BEFORE_CHECK_CODE_CLEANUP = GROUP.registerVarargEvent("commit.before.check.code.cleanup", EventFields.Enabled)
-    private val COMMIT_BEFORE_CHECK_TODO = GROUP.registerVarargEvent("commit.before.check.todo", EventFields.Enabled)
-    private val COMMIT_BEFORE_OPTIMIZE_IMPORTS = GROUP.registerVarargEvent("commit.before.optimize.imports", EventFields.Enabled)
-    private val COMMIT_BEFORE_REFORMAT_PROJECT = GROUP.registerVarargEvent("commit.before.reformat.project", EventFields.Enabled)
-    private val COMMIT_BEFORE_REARRANGE = GROUP.registerVarargEvent("commit.before.rearrange", EventFields.Enabled)
-    private val COMMIT_CLEAR_INITIAL_COMMENT = GROUP.registerVarargEvent("commit.clear.initial.comment", EventFields.Enabled)
-    private val COMMIT_USE_RIGHT_MARGIN = GROUP.registerVarargEvent("commit.use.right.margin", EventFields.Enabled)
-    private val SHOW_CHANGES_PREVIEW = GROUP.registerVarargEvent("show.changes.preview", EventFields.Enabled)
-    private val INCLUDE_TEXT_INTO_SHELF = GROUP.registerVarargEvent("include.text.into.shelf", EventFields.Enabled)
-    private val CHECK_CONFLICTS_IN_BACKGROUND = GROUP.registerVarargEvent("check.conflicts.in.background", EventFields.Enabled)
-    private val ADD_EXTERNAL_FILES_SILENTLY = GROUP.registerVarargEvent("add.external.files.silently", EventFields.Enabled)
-    private val ASKED_ADD_EXTERNAL_FILES = GROUP.registerEvent("asked.add.external.files", EventFields.Enabled)
-    private val SHARE_PROJECT_CONFIGURATION_FILES = GROUP.registerEvent("share.project.configuration.files", EventFields.Enabled)
-    private val ASKED_SHARE_PROJECT_CONFIGURATION_FILES = GROUP.registerEvent("asked.share.project.configuration.files", EventFields.Enabled)
+  private val CHANGELIST_MAKE_NEW_ACTIVE = GROUP.registerVarargEvent("changelist.make.new.active", EventFields.Enabled)
+  private val CHANGELIST_PRESELECT_EXISTING = GROUP.registerVarargEvent("changelist.preselect.existing", EventFields.Enabled)
+  private val COMMIT_BEFORE_CHECK_CODE_SMELL = GROUP.registerVarargEvent("commit.before.check.code.smell", EventFields.Enabled)
+  private val COMMIT_BEFORE_CHECK_CODE_CLEANUP = GROUP.registerVarargEvent("commit.before.check.code.cleanup", EventFields.Enabled)
+  private val COMMIT_BEFORE_CHECK_TODO = GROUP.registerVarargEvent("commit.before.check.todo", EventFields.Enabled)
+  private val COMMIT_BEFORE_OPTIMIZE_IMPORTS = GROUP.registerVarargEvent("commit.before.optimize.imports", EventFields.Enabled)
+  private val COMMIT_BEFORE_REFORMAT_PROJECT = GROUP.registerVarargEvent("commit.before.reformat.project", EventFields.Enabled)
+  private val COMMIT_BEFORE_REARRANGE = GROUP.registerVarargEvent("commit.before.rearrange", EventFields.Enabled)
+  private val COMMIT_CLEAR_INITIAL_COMMENT = GROUP.registerVarargEvent("commit.clear.initial.comment", EventFields.Enabled)
+  private val COMMIT_USE_RIGHT_MARGIN = GROUP.registerVarargEvent("commit.use.right.margin", EventFields.Enabled)
+  private val SHOW_CHANGES_PREVIEW = GROUP.registerVarargEvent("show.changes.preview", EventFields.Enabled)
+  private val INCLUDE_TEXT_INTO_SHELF = GROUP.registerVarargEvent("include.text.into.shelf", EventFields.Enabled)
+  private val CHECK_CONFLICTS_IN_BACKGROUND = GROUP.registerVarargEvent("check.conflicts.in.background", EventFields.Enabled)
+  private val ADD_EXTERNAL_FILES_SILENTLY = GROUP.registerVarargEvent("add.external.files.silently", EventFields.Enabled)
+  private val ASKED_ADD_EXTERNAL_FILES = GROUP.registerEvent("asked.add.external.files", EventFields.Enabled)
+  private val SHARE_PROJECT_CONFIGURATION_FILES = GROUP.registerEvent("share.project.configuration.files", EventFields.Enabled)
+  private val ASKED_SHARE_PROJECT_CONFIGURATION_FILES = GROUP.registerEvent("asked.share.project.configuration.files", EventFields.Enabled)
 
-    private fun <T> addConfirmationIfDiffers(set: MutableSet<in MetricEvent>, settingsBean: T, defaultSettingsBean: T,
-                                             valueFunction: Function1<T, VcsShowConfirmationOption.Value>, eventId: EventId1<ConfirmationOption>) {
-      addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) {
-        val value = when (it) {
-          VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> ConfirmationOption.ask // NON-NLS
-          VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> ConfirmationOption.disabled // NON-NLS
-          VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> ConfirmationOption.silently // NON-NLS
-          else -> ConfirmationOption.unknown // NON-NLS
-        }
-        return@addMetricIfDiffers eventId.metric(value)
-      }
+  private fun <T> addConfirmationIfDiffers(set: MutableSet<in MetricEvent>,
+                                           settingsBean: T,
+                                           defaultSettingsBean: T,
+                                           valueFunction: Function1<T, VcsShowConfirmationOption.Value>,
+                                           eventId: EventId1<ConfirmationOption>) {
+    addMetricIfDiffers(set, settingsBean, defaultSettingsBean, valueFunction) {
+      val value = it.toConfirmationOption()
+      return@addMetricIfDiffers eventId.metric(value)
     }
+  }
 
-    @Suppress("EnumEntryName")
-    private enum class ConfirmationOption {
-      ask, disabled, silently, unknown
+  private fun VcsShowConfirmationOption.Value.toConfirmationOption(): ConfirmationOption {
+    return when (this) {
+      VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> ConfirmationOption.ask // NON-NLS
+      VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> ConfirmationOption.disabled // NON-NLS
+      VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> ConfirmationOption.silently // NON-NLS
+      else -> ConfirmationOption.unknown // NON-NLS
     }
+  }
+
+  @Suppress("EnumEntryName")
+  private enum class ConfirmationOption {
+    ask, disabled, silently, unknown
   }
 }

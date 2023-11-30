@@ -31,6 +31,13 @@ public class JavaHighlightErrorFilter extends HighlightErrorFilter {
     else if (description.equals(JavaPsiBundle.message("expected.comma.or.rparen"))) {
       if (isAfterUnclosedStringLiteral(element)) return false;
     }
+    else if (description.equals(JavaPsiBundle.message("expected.class.or.interface"))) {
+      String text = element.getText();
+      if ((text.equals(PsiKeyword.SEALED) || text.equals(PsiKeyword.NON_SEALED)) &&
+          PsiTreeUtil.skipWhitespacesAndCommentsForward(element) instanceof PsiClass) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -50,11 +57,8 @@ public class JavaHighlightErrorFilter extends HighlightErrorFilter {
           return true;
         }
       }
-    }
-    else if (prevLeaf instanceof PsiFragment fragment) {
-      IElementType type = fragment.getTokenType();
-      if (type == JavaTokenType.STRING_TEMPLATE_END) {
-        String text = fragment.getText();
+      else if (type == JavaTokenType.STRING_TEMPLATE_END) {
+        String text = token.getText();
         if (text.length() == 1 || !StringUtil.endsWithChar(text, '"')) {
           return true;
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.ActionChangeRange;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ActionChangeRangeImpl implements ActionChangeRange {
+public final class ActionChangeRangeImpl implements ActionChangeRange {
   private static final AtomicInteger idCounter = new AtomicInteger();
 
   private int myOffset;
@@ -174,7 +174,7 @@ public class ActionChangeRangeImpl implements ActionChangeRange {
     return false;
   }
 
-  private class Inverted implements ActionChangeRange {
+  private final class Inverted implements ActionChangeRange {
     @Override
     public int getOffset() {
       return myOffset;

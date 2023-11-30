@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -176,7 +177,7 @@ public class MockSdk implements Sdk, SdkModificator {
     WriteAction.run(myRootProvider::fireRootSetChanged);
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       WriteAction.run(() -> {
-        BuildableRootsChangeRescanningInfo info = BuildableRootsChangeRescanningInfo.newInstance().addSdk(this);
+        RootsChangeRescanningInfo info = BuildableRootsChangeRescanningInfo.newInstance().addSdk(this).buildInfo();
         ((ProjectRootManagerEx)ProjectRootManager.getInstance(project)).makeRootsChange(EmptyRunnable.getInstance(), info);
       });
     }
@@ -213,7 +214,7 @@ public class MockSdk implements Sdk, SdkModificator {
     return "MockSDK[" + myName + "]";
   }
 
-  private class MyRootProvider extends RootProviderBaseImpl implements Supplier<Sdk> {
+  private final class MyRootProvider extends RootProviderBaseImpl implements Supplier<Sdk> {
     
     @Override
     public String @NotNull [] getUrls(@NotNull OrderRootType rootType) {

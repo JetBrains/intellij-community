@@ -12,23 +12,22 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.jps.model.diagnostic.JpsMetrics
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.workspace.jps.JpsMetrics
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.orderToRemoveReplaceAdd
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
-import com.intellij.platform.workspace.storage.orderToRemoveReplaceAdd
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.atomic.AtomicLong
@@ -68,21 +67,19 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
     initializeFacetBridgeTimeMs.addElapsedTimeMs(start)
   }
 
-  init {
-    if (!project.isDefault) {
-      project.messageBus.connect(coroutineScope).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChange) {
-          WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
-            processBeforeChangeEvents(event, facetBridgeContributor)
-          }
-        }
+  class WorkspaceModelListener(project: Project) : WorkspaceModelChangeListener {
+    private val facetEntityChangeListener = getInstance(project)
 
-        override fun changed(event: VersionedStorageChange) {
-          WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
-            processChangeEvents(event, facetBridgeContributor)
-          }
-        }
-      })
+    override fun beforeChanged(event: VersionedStorageChange) {
+      WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
+        facetEntityChangeListener.processBeforeChangeEvents(event, facetBridgeContributor)
+      }
+    }
+
+    override fun changed(event: VersionedStorageChange) {
+      WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
+        facetEntityChangeListener.processChangeEvents(event, facetBridgeContributor)
+      }
     }
   }
 

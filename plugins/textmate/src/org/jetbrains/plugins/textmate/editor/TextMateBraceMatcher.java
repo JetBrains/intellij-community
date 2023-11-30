@@ -23,17 +23,15 @@ public class TextMateBraceMatcher implements BraceMatcher {
     if (iterator.getStart() == iterator.getEnd()) return false;
     IElementType tokenType = iterator.getTokenType();
     TextMateScope currentSelector = tokenType instanceof TextMateElementType ? ((TextMateElementType)tokenType).getScope() : null;
-    return TextMateEditorUtils.getHighlightingPairForLeftChar(fileText.charAt(iterator.getStart()), currentSelector) != null;
+    return TextMateEditorUtils.findRightHighlightingPair(iterator.getStart(), fileText, currentSelector) != null;
   }
 
   @Override
   public boolean isRBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
-    int end = iterator.getEnd();
-    if (end == 0 || end == iterator.getStart()) return false;
-
+    if (iterator.getEnd() == iterator.getStart()) return false;
     IElementType tokenType = iterator.getTokenType();
     TextMateScope currentSelector = tokenType instanceof TextMateElementType ? ((TextMateElementType)tokenType).getScope() : null;
-    return TextMateEditorUtils.getHighlightingPairForRightChar(fileText.charAt(end - 1), currentSelector) != null;
+    return TextMateEditorUtils.findLeftHighlightingPair(iterator.getEnd(), fileText, currentSelector) != null;
   }
 
   @Override

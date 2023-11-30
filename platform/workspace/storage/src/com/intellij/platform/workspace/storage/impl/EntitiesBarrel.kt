@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.platform.workspace.storage.GeneratedCodeCompatibilityChecker
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
@@ -122,7 +121,7 @@ internal sealed class EntitiesBarrel {
     val symbolicIds = HashSet<SymbolicEntityId<*>>()
     entityFamilies.forEachIndexed { i, family ->
       if (family == null) return@forEachIndexed
-      val clazz = i.findEntityClass<WorkspaceEntity>()
+      val clazz = i.findWorkspaceEntity()
       val hasSymbolicId = WorkspaceEntityWithSymbolicId::class.java.isAssignableFrom(clazz)
       family.assertConsistency { entityData ->
         // Assert correctness of the class
@@ -140,10 +139,6 @@ internal sealed class EntitiesBarrel {
           assert(symbolicId != null) { "Symbolic id expected for $clazz" }
           assert(symbolicId !in symbolicIds) { "Duplicated symbolic ids: $symbolicId" }
           symbolicIds.add(symbolicId!!)
-        }
-
-        if (entityData is WithAssertableConsistency) {
-          entityData.assertConsistency(abstractEntityStorage)
         }
       }
     }

@@ -1,29 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
@@ -31,9 +14,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ConvertCollectionToArrayFix implements IntentionAction {
-  private final PsiExpression myCollectionExpression;
-  private final PsiExpression myExpressionToReplace;
+public class ConvertCollectionToArrayFix extends PsiUpdateModCommandAction<PsiExpression> {
+  private final @NotNull SmartPsiElementPointer<@NotNull PsiExpression> myCollectionPointer;
   @NonNls private final String myNewArrayText;
 
   public ConvertCollectionToArrayFix(@NotNull PsiExpression collectionExpression,
@@ -46,23 +28,9 @@ public class ConvertCollectionToArrayFix implements IntentionAction {
   private ConvertCollectionToArrayFix(@NotNull PsiExpression collectionExpression,
                                       @NotNull PsiExpression expressionToReplace,
                                       @NotNull String newArrayText) {
-    myCollectionExpression = collectionExpression;
-    myExpressionToReplace = expressionToReplace;
+    super(expressionToReplace);
+    myCollectionPointer = SmartPointerManager.createPointer(collectionExpression);
     myNewArrayText = newArrayText;
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiExpression collection = PsiTreeUtil.findSameElementInCopy(myCollectionExpression, target);
-    PsiExpression expr = PsiTreeUtil.findSameElementInCopy(myExpressionToReplace, target);
-    return new ConvertCollectionToArrayFix(collection, expr, myNewArrayText);
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getText() {
-    return QuickFixBundle.message("collection.to.array.text", myNewArrayText);
   }
 
   @Nls
@@ -73,31 +41,28 @@ public class ConvertCollectionToArrayFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myCollectionExpression.isValid() && BaseIntentionAction.canModify(myCollectionExpression) &&
-           myExpressionToReplace.isValid() && BaseIntentionAction.canModify(myExpressionToReplace);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression expressionToReplace) {
+    if (myCollectionPointer.getElement() == null) return null;
+    return Presentation.of(QuickFixBundle.message("collection.to.array.text", myNewArrayText));
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    String replacement = ParenthesesUtils.getText(myCollectionExpression, ParenthesesUtils.POSTFIX_PRECEDENCE) +
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression expressionToReplace, @NotNull ModPsiUpdater updater) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
+    PsiExpression collectionExpression = myCollectionPointer.getElement();
+    if (collectionExpression == null) return;
+    String replacement = ParenthesesUtils.getText(collectionExpression, ParenthesesUtils.POSTFIX_PRECEDENCE) +
                          ".toArray(" + myNewArrayText + ")";
-    myExpressionToReplace.replace(factory.createExpressionFromText(replacement, myCollectionExpression));
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+    expressionToReplace.replace(factory.createExpressionFromText(replacement, collectionExpression));
   }
 
   @NotNull
   private static String getArrayTypeText(PsiType componentType) {
-    if (componentType instanceof PsiArrayType) {
-      return getArrayTypeText(((PsiArrayType)componentType).getComponentType()) + "[]";
+    if (componentType instanceof PsiArrayType arrayType) {
+      return getArrayTypeText(arrayType.getComponentType()) + "[]";
     }
-    if (componentType instanceof PsiClassType) {
-      return ((PsiClassType)componentType).rawType().getCanonicalText() + "[0]";
+    if (componentType instanceof PsiClassType classType) {
+      return classType.rawType().getCanonicalText() + "[0]";
     }
     return componentType.getCanonicalText() + "[0]";
   }

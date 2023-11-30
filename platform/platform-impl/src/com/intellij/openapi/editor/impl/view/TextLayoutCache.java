@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.Disposable;
@@ -9,14 +9,15 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
 
 /**
  * Editor text layout storage. Layout is stored on a per-logical-line basis,
@@ -24,7 +25,7 @@ import java.util.*;
  *
  * @see LineLayout
  */
-class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
+final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance(TextLayoutCache.class);
 
   private static final int MAX_CHUNKS_IN_ACTIVE_EDITOR = 1000;
@@ -37,19 +38,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private int myDocumentChangeOldEndLine;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private Map<LineLayout.Chunk, Object> myLaidOutChunks =
-    // using our own LinkedHashMap implementation to avoid IDEA-205735
-    new LinkedHashMap<>(MAX_CHUNKS_IN_ACTIVE_EDITOR, 0.75f, true) {
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<LineLayout.Chunk, Object> eldest) {
-        if (size() > getChunkCacheSizeLimit()) {
-          if (LOG.isDebugEnabled()) LOG.debug("Clearing chunk for " + myView.getEditor().getVirtualFile());
-          eldest.getKey().clearCache();
-          return true;
-        }
-        return false;
-      }
-    };
+  private final ObjectLinkedOpenHashSet<LineLayout.Chunk> laidOutChunks = new ObjectLinkedOpenHashSet<>(MAX_CHUNKS_IN_ACTIVE_EDITOR);
 
   TextLayoutCache(EditorView view) {
     myView = view;
@@ -91,7 +80,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   @Override
   public void dispose() {
     myLines = null;
-    myLaidOutChunks = null;
+    laidOutChunks.clear();
   }
 
   private int getAdjustedLineNumber(int offset) {
@@ -130,7 +119,8 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     }
     if (oldEndLine < newEndLine) {
       myLines.addAll(oldEndLine + 1, Collections.nCopies(newEndLine - oldEndLine, null));
-    } else if (oldEndLine > newEndLine) {
+    }
+    else if (oldEndLine > newEndLine) {
       List<LineLayout> layouts = myLines.subList(newEndLine + 1, oldEndLine + 1);
       for (LineLayout layout : layouts) {
         if (layout != null) {
@@ -162,28 +152,33 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     return myView.getEditor().getContentComponent().isShowing() ? MAX_CHUNKS_IN_ACTIVE_EDITOR : MAX_CHUNKS_IN_INACTIVE_EDITOR;
   }
 
-  void onChunkAccess(LineLayout.Chunk chunk) {
-    myLaidOutChunks.put(chunk, this); // value doesn't matter, null is not supported by our map implementation
+  void onChunkAccess(@NotNull LineLayout.Chunk chunk) {
+    if (laidOutChunks.addAndMoveToFirst(chunk) && laidOutChunks.size() > getChunkCacheSizeLimit()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Clearing chunk for " + myView.getEditor().getVirtualFile());
+      }
+      laidOutChunks.removeLast().clearCache();
+    }
   }
 
   private void removeChunksFromCache(LineLayout layout) {
-    layout.getChunksInLogicalOrder().forEach(myLaidOutChunks::remove);
+    layout.getChunksInLogicalOrder().forEach(laidOutChunks::remove);
   }
 
   private void trimChunkCache() {
     int limit = getChunkCacheSizeLimit();
-    if (myLaidOutChunks.size() > limit) {
-      Iterator<LineLayout.Chunk> it = myLaidOutChunks.keySet().iterator();
-      while (myLaidOutChunks.size() > limit) {
-        LineLayout.Chunk chunk = it.next();
-        if (LOG.isDebugEnabled()) LOG.debug("Clearing chunk for " + myView.getEditor().getVirtualFile());
-        chunk.clearCache();
-        it.remove();
+    while (laidOutChunks.size() > limit) {
+      LineLayout.Chunk chunk = laidOutChunks.removeLast();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Clearing chunk for " + myView.getEditor().getVirtualFile());
       }
+      chunk.clearCache();
     }
   }
 
   private void checkDisposed() {
-    if (myLines == null) myView.getEditor().throwDisposalError("Editor is already disposed");
+    if (myLines == null) {
+      myView.getEditor().throwDisposalError("Editor is already disposed");
+    }
   }
 }

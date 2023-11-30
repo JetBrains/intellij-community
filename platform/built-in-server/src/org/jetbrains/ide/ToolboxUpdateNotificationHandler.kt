@@ -5,13 +5,11 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.Consumer
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.concurrent.TimeUnit
 
@@ -34,7 +32,7 @@ internal class ToolboxUpdateNotificationHandler : ToolboxServiceHandler<UpdateNo
   override fun parseRequest(request: JsonElement) = parseUpdateNotificationRequest(request)
 
   override fun handleToolboxRequest(lifetime: Disposable, request: UpdateNotification, onResult: (JsonElement) -> Unit) {
-    val actionHandler = Consumer<AnActionEvent> {
+    val actionHandler = {
       onResult(JsonObject().apply { addProperty("status", "accepted") })
     }
 
@@ -51,7 +49,7 @@ internal class ToolboxRestartNotificationHandler : ToolboxServiceHandler<UpdateN
   override fun parseRequest(request: JsonElement) = parseUpdateNotificationRequest(request)
 
   override fun handleToolboxRequest(lifetime: Disposable, request: UpdateNotification, onResult: (JsonElement) -> Unit) {
-    val actionHandler = Consumer<AnActionEvent> {
+    val actionHandler = {
       //at the normal scenario, the lifetime is disposed after the connection is closed
       //so Toolbox should get everything needed to handle the restart
       //otherwise an exception is thrown here, so it's OK

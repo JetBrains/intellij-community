@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml;
 
 import com.intellij.openapi.editor.Document;
@@ -39,8 +39,7 @@ public abstract class XmlNamespaceHelper {
     void run(P param) throws T;
   }
 
-  @Nullable
-  public String getNamespacePrefix(PsiElement element) {
+  public @Nullable String getNamespacePrefix(PsiElement element) {
     if (element instanceof XmlAttribute attribute) {
       String prefix = attribute.getNamespacePrefix();
       if (!StringUtil.isEmpty(prefix)) {
@@ -55,10 +54,10 @@ public abstract class XmlNamespaceHelper {
     }
   }
 
-  public abstract void insertNamespaceDeclaration(@NotNull final XmlFile file,
-                                                  @Nullable final Editor editor,
-                                                  @NonNls @NotNull final Set<String> possibleNamespaces,
-                                                  @NonNls @Nullable final String nsPrefix,
+  public abstract void insertNamespaceDeclaration(final @NotNull XmlFile file,
+                                                  final @Nullable Editor editor,
+                                                  final @NonNls @NotNull Set<String> possibleNamespaces,
+                                                  final @NonNls @Nullable String nsPrefix,
                                                   @Nullable Runner<String, IncorrectOperationException> runAfter) throws IncorrectOperationException;
 
   public boolean qualifyWithPrefix(final String namespacePrefix, final PsiElement element, final Document document) throws
@@ -75,13 +74,11 @@ public abstract class XmlNamespaceHelper {
     return false;
   }
 
-  @NotNull
-  public abstract Set<String> guessUnboundNamespaces(@NotNull PsiElement element, final XmlFile file);
+  public abstract @NotNull Set<String> guessUnboundNamespaces(@NotNull PsiElement element, final XmlFile file);
 
-  @NotNull
-  public abstract Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context);
+  public abstract @NotNull Set<String> getNamespacesByTagName(final @NotNull String tagName, final @NotNull XmlFile context);
 
-  public String getNamespaceAlias(@NotNull final XmlFile file) {
+  public String getNamespaceAlias(final @NotNull XmlFile file) {
     return XmlPsiBundle.message("xml.terms.namespace.alias");
   }
 }

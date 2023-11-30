@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.PathManager;
@@ -55,9 +55,12 @@ public final class TeamCityLogger {
   }
 
   private static void tcLog(String message, String level) {
+    if (message.isEmpty()) return;
     try {
+      while (message.charAt(0) == '\n') message = message.substring(1);
       if (level != null) message = level + ": " + message;
-      FileUtil.appendToFile(reportFile(), message + "\n");
+      if (!message.endsWith("\n")) message += "\n";
+      FileUtil.appendToFile(reportFile(), message);
     }
     catch (IOException e) {
       LOG.error(e);

@@ -1,4 +1,2 @@
-version = "5.2.*"
-
-[tool.stubtest]
-ignore_missing_stub = false
+version = "5.3.*"
+upstream_repository = "https://github.com/tkem/cachetools"

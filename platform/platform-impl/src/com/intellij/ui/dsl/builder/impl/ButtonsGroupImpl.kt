@@ -27,8 +27,7 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
   }
 
   override fun visibleIf(property: ObservableProperty<Boolean>): ButtonsGroup {
-    super.visibleIf(property)
-    return this
+    return visibleIf(ComponentPredicate.fromObservableProperty(property))
   }
 
   override fun enabled(isEnabled: Boolean): ButtonsGroup {
@@ -42,8 +41,7 @@ internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeIm
   }
 
   override fun enabledIf(property: ObservableProperty<Boolean>): ButtonsGroup {
-    super.enabledIf(property)
-    return this
+    return enabledIf(ComponentPredicate.fromObservableProperty(property))
   }
 
   override fun <T> bind(prop: MutableProperty<T>, type: Class<T>): ButtonsGroup {

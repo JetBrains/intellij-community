@@ -17,7 +17,7 @@ import java.util.Objects;
 import java.util.concurrent.Executor;
 
 @ApiStatus.Internal
-public class AsyncRendering {
+public final class AsyncRendering {
   private static final Key<LookupElementPresentation> LAST_COMPUTED_PRESENTATION = Key.create("LAST_COMPUTED_PRESENTATION");
   private static final Key<CancellablePromise<?>> LAST_COMPUTATION = Key.create("LAST_COMPUTATION");
   private static final Executor ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ExpensiveRendering");

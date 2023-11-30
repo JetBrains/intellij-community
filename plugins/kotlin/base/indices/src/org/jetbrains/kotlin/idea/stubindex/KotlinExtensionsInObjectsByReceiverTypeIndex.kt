@@ -15,6 +15,7 @@ class KotlinExtensionsInObjectsByReceiverTypeIndex internal constructor() : Stri
 
     override fun getKey(): StubIndexKey<String, KtCallableDeclaration> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinExtensionsInObjectsByReceiverTypeIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtCallableDeclaration> {
         return Helper[key, project, scope]
     }

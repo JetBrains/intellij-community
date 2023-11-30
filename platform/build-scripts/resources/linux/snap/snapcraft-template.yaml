@@ -27,6 +27,10 @@ parts:
     plugin: dump
     source: dist.unix
     build-attributes: [no-patchelf]
+  product-json:
+    plugin: dump
+    source: dist.product-json
+    build-attributes: [no-patchelf]
   jre:
     plugin: dump
     source: jre

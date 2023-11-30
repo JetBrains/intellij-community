@@ -46,25 +46,33 @@ public abstract class StaticMemberProcessor {
     for (String memberName : matcher.sortMatching(memberNames)) {
       Set<PsiClass> classes = new HashSet<>();
       for (PsiMember member : JavaStaticMemberNameIndex.getInstance().getStaticMembers(memberName, myProject, scope)) {
-        if (isStaticallyImportable(member)) {
-          PsiClass containingClass = member.getContainingClass();
-          assert containingClass != null : member.getName() + "; " + member + "; " + member.getClass();
+        processStaticMember(consumer, member, classes);
+      }
+    }
+  }
 
-          if (JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
-            if (member instanceof PsiMethod && !classes.add(containingClass)) continue;
+  protected void processStaticMember(@NotNull Consumer<? super LookupElement> consumer, PsiMember member, Set<PsiClass> classesToSkip) {
+    if (isStaticallyImportable(member)) {
+      PsiClass containingClass = member.getContainingClass();
+      assert containingClass != null : member.getName() + "; " + member + "; " + member.getClass();
 
-            boolean shouldImport = myStaticImportedClasses.contains(containingClass);
-            showHint(shouldImport);
-            LookupElement item = member instanceof PsiMethod ? createItemWithOverloads((PsiMethod)member, containingClass, shouldImport) :
-                                 member instanceof PsiField ? createLookupElement(member, containingClass, shouldImport) :
-                                 null;
-            if (item != null) {
-              consumer.consume(item);
-            }
-          }
+      if (JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
+        if (member instanceof PsiMethod && !classesToSkip.add(containingClass)) return;
+        if(!additionalFilter(member)) return;
+        boolean shouldImport = myStaticImportedClasses.contains(containingClass);
+        showHint(shouldImport);
+        LookupElement item = member instanceof PsiMethod ? createItemWithOverloads((PsiMethod)member, containingClass, shouldImport) :
+                             member instanceof PsiField ? createLookupElement(member, containingClass, shouldImport) :
+                             null;
+        if (item != null) {
+          consumer.consume(item);
         }
       }
     }
+  }
+
+  protected boolean additionalFilter(PsiMember member) {
+    return true;
   }
 
   @Nullable

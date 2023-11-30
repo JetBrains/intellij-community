@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -37,15 +37,13 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
   /**
    * @return an element to search in a tree or {@code null} if it is obsolete
    */
-  @Nullable
-  public final T getElement() {
+  public final @Nullable T getElement() {
     return supplier.get();
   }
 
-  @NotNull
   @Override
   @RequiresBackgroundThread
-  public Action visit(@NotNull TreePath path) {
+  public @NotNull Action visit(@NotNull TreePath path) {
     if (LOG.isTraceEnabled()) LOG.debug("process ", path);
     T element = getElement();
     if (element == null) return Action.SKIP_SIBLINGS;
@@ -80,8 +78,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
    * @param element an element to find
    * @return an action that controls visiting a tree
    */
-  @NotNull
-  protected Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull T element) {
+  protected @NotNull Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull T element) {
     if (matches(node, element)) {
       LOG.debug("found ", path);
       if (predicate == null) return Action.INTERRUPT;

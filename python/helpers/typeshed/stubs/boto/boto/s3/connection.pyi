@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from boto.connection import AWSAuthConnection
@@ -10,10 +11,10 @@ def assert_case_insensitive(f): ...
 
 class _CallingFormat:
     def get_bucket_server(self, server, bucket): ...
-    def build_url_base(self, connection, protocol, server, bucket, key: str = ...): ...
+    def build_url_base(self, connection, protocol, server, bucket, key: str = ""): ...
     def build_host(self, server, bucket): ...
-    def build_auth_path(self, bucket, key: str = ...): ...
-    def build_path_base(self, bucket, key: str = ...): ...
+    def build_auth_path(self, bucket, key: str = ""): ...
+    def build_path_base(self, bucket, key: str = ""): ...
 
 class SubdomainCallingFormat(_CallingFormat):
     def get_bucket_server(self, server, bucket): ...
@@ -23,10 +24,10 @@ class VHostCallingFormat(_CallingFormat):
 
 class OrdinaryCallingFormat(_CallingFormat):
     def get_bucket_server(self, server, bucket): ...
-    def build_path_base(self, bucket, key: str = ...): ...
+    def build_path_base(self, bucket, key: str = ""): ...
 
 class ProtocolIndependentOrdinaryCallingFormat(OrdinaryCallingFormat):
-    def build_url_base(self, connection, protocol, server, bucket, key: str = ...): ...
+    def build_url_base(self, connection, protocol, server, bucket, key: str = ""): ...
 
 class Location:
     DEFAULT: str
@@ -52,26 +53,26 @@ class S3Connection(AWSAuthConnection):
     anon: Any
     def __init__(
         self,
-        aws_access_key_id: Any | None = ...,
-        aws_secret_access_key: Any | None = ...,
-        is_secure: bool = ...,
-        port: Any | None = ...,
-        proxy: Any | None = ...,
-        proxy_port: Any | None = ...,
-        proxy_user: Any | None = ...,
-        proxy_pass: Any | None = ...,
+        aws_access_key_id: Incomplete | None = None,
+        aws_secret_access_key: Incomplete | None = None,
+        is_secure: bool = True,
+        port: Incomplete | None = None,
+        proxy: Incomplete | None = None,
+        proxy_port: Incomplete | None = None,
+        proxy_user: Incomplete | None = None,
+        proxy_pass: Incomplete | None = None,
         host: Any = ...,
-        debug: int = ...,
-        https_connection_factory: Any | None = ...,
-        calling_format: Any = ...,
-        path: str = ...,
-        provider: str = ...,
+        debug: int = 0,
+        https_connection_factory: Incomplete | None = None,
+        calling_format: Any = "boto.s3.connection.SubdomainCallingFormat",
+        path: str = "/",
+        provider: str = "aws",
         bucket_class: type[Bucket] = ...,
-        security_token: Any | None = ...,
-        suppress_consec_slashes: bool = ...,
-        anon: bool = ...,
-        validate_certs: Any | None = ...,
-        profile_name: Any | None = ...,
+        security_token: Incomplete | None = None,
+        suppress_consec_slashes: bool = True,
+        anon: bool = False,
+        validate_certs: Incomplete | None = None,
+        profile_name: Incomplete | None = None,
     ) -> None: ...
     def __iter__(self): ...
     def __contains__(self, bucket_name): ...
@@ -81,59 +82,61 @@ class S3Connection(AWSAuthConnection):
         self,
         bucket_name,
         key,
-        expires_in: int = ...,
-        acl: Any | None = ...,
-        success_action_redirect: Any | None = ...,
-        max_content_length: Any | None = ...,
-        http_method: str = ...,
-        fields: Any | None = ...,
-        conditions: Any | None = ...,
-        storage_class: str = ...,
-        server_side_encryption: Any | None = ...,
+        expires_in: int = 6000,
+        acl: Incomplete | None = None,
+        success_action_redirect: Incomplete | None = None,
+        max_content_length: Incomplete | None = None,
+        http_method: str = "http",
+        fields: Incomplete | None = None,
+        conditions: Incomplete | None = None,
+        storage_class: str = "STANDARD",
+        server_side_encryption: Incomplete | None = None,
     ): ...
     def generate_url_sigv4(
         self,
         expires_in,
         method,
-        bucket: str = ...,
-        key: str = ...,
-        headers: dict[str, str] | None = ...,
-        force_http: bool = ...,
-        response_headers: dict[str, str] | None = ...,
-        version_id: Any | None = ...,
-        iso_date: Any | None = ...,
+        bucket: str = "",
+        key: str = "",
+        headers: dict[str, str] | None = None,
+        force_http: bool = False,
+        response_headers: dict[str, str] | None = None,
+        version_id: Incomplete | None = None,
+        iso_date: Incomplete | None = None,
     ): ...
     def generate_url(
         self,
         expires_in,
         method,
-        bucket: str = ...,
-        key: str = ...,
-        headers: dict[str, str] | None = ...,
-        query_auth: bool = ...,
-        force_http: bool = ...,
-        response_headers: dict[str, str] | None = ...,
-        expires_in_absolute: bool = ...,
-        version_id: Any | None = ...,
+        bucket: str = "",
+        key: str = "",
+        headers: dict[str, str] | None = None,
+        query_auth: bool = True,
+        force_http: bool = False,
+        response_headers: dict[str, str] | None = None,
+        expires_in_absolute: bool = False,
+        version_id: Incomplete | None = None,
     ): ...
-    def get_all_buckets(self, headers: dict[str, str] | None = ...): ...
-    def get_canonical_user_id(self, headers: dict[str, str] | None = ...): ...
-    def get_bucket(self, bucket_name: str, validate: bool = ..., headers: dict[str, str] | None = ...) -> Bucket: ...
-    def head_bucket(self, bucket_name, headers: dict[str, str] | None = ...): ...
-    def lookup(self, bucket_name, validate: bool = ..., headers: dict[str, str] | None = ...): ...
-    def create_bucket(self, bucket_name, headers: dict[str, str] | None = ..., location: Any = ..., policy: Any | None = ...): ...
-    def delete_bucket(self, bucket, headers: dict[str, str] | None = ...): ...
+    def get_all_buckets(self, headers: dict[str, str] | None = None): ...
+    def get_canonical_user_id(self, headers: dict[str, str] | None = None): ...
+    def get_bucket(self, bucket_name: str, validate: bool = True, headers: dict[str, str] | None = None) -> Bucket: ...
+    def head_bucket(self, bucket_name, headers: dict[str, str] | None = None): ...
+    def lookup(self, bucket_name, validate: bool = True, headers: dict[str, str] | None = None): ...
+    def create_bucket(
+        self, bucket_name, headers: dict[str, str] | None = None, location: Any = "", policy: Incomplete | None = None
+    ): ...
+    def delete_bucket(self, bucket, headers: dict[str, str] | None = None): ...
     def make_request(  # type: ignore[override]
         self,
         method,
-        bucket: str = ...,
-        key: str = ...,
-        headers: Any | None = ...,
-        data: str = ...,
-        query_args: Any | None = ...,
-        sender: Any | None = ...,
-        override_num_retries: Any | None = ...,
-        retry_handler: Any | None = ...,
+        bucket: str = "",
+        key: str = "",
+        headers: Incomplete | None = None,
+        data: str = "",
+        query_args: Incomplete | None = None,
+        sender: Incomplete | None = None,
+        override_num_retries: Incomplete | None = None,
+        retry_handler: Incomplete | None = None,
         *args,
         **kwargs,
     ): ...

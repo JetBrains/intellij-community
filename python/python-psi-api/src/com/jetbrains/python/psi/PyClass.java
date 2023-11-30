@@ -102,7 +102,16 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
   PyFunction @NotNull [] getMethods();
 
   /**
-   * Get class properties.
+   * Collects properties defined in the class, and its parents.
+   *
+   * @param context context to be used to resolve ancestors
+   * @return Map [property_name] = [{@link Property}]
+   */
+  @NotNull
+  Map<String, Property> getPropertiesInherited(@Nullable TypeEvalContext context);
+
+  /**
+   * Collects properties defined in the class.
    *
    * @return Map [property_name] = [{@link Property}]
    */

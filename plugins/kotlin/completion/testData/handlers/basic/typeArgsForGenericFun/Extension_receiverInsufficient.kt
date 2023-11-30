@@ -9,4 +9,5 @@ fun test() {
     val chainExt: JustClass<String> = JustClass(1).chainExt("").<caret>
 }
 
+// IGNORE_K2
 // ELEMENT: p

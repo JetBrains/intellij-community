@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.IdeEventQueue;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.Objects;
 
-public class RunAnythingManager {
+public final class RunAnythingManager {
   private static final String LOCATION_SETTINGS_KEY = "run.anything.popup";
   private final Project myProject;
   private JBPopup myBalloon;

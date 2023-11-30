@@ -1,10 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl
 
-import com.intellij.ide.FileEditorProvider
-import com.intellij.ide.FileSelectInContext
-import com.intellij.ide.SmartSelectInContext
+import com.intellij.ide.*
 import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
@@ -23,23 +22,75 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.OverflowSemaphore
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
-@Service
+@VisibleForTesting
+fun isSelectInProjectViewServiceBusy(project: Project):Boolean = project.serviceOrNull<SelectInProjectViewImpl>()?.isBusy == true
+
+@Service(Service.Level.PROJECT)
 internal class SelectInProjectViewImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) {
 
+  private val semaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.DROP_OLDEST)
+  private var tasks = AtomicInteger()
+  internal val isBusy: Boolean get() = tasks.get() > 0
+
+  // Overload instead of a default value to allow for the last-lambda-outside syntax.
+  private fun invokeWithSemaphore(taskName: String, task: suspend () -> Unit) {
+    invokeWithSemaphore(taskName, task, null)
+  }
+
+  private fun invokeWithSemaphore(taskName: String, task: suspend () -> Unit, onDone: (() -> Unit)?) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Attempting to start $taskName")
+    }
+    coroutineScope.launch(
+      CoroutineName(taskName),
+      start = CoroutineStart.UNDISPATCHED
+    ) {
+      try {
+        tasks.incrementAndGet()
+        semaphore.withPermit {
+          yield() // Ensure the coroutine is redispatched, even if withPermit() didn't suspend, to free the EDT.
+          if (LOG.isDebugEnabled) {
+            LOG.debug("Started $taskName")
+          }
+          task()
+        }
+      }
+      finally {
+        try {
+          onDone?.invoke()
+        }
+        finally {
+          tasks.decrementAndGet()
+          if (LOG.isDebugEnabled) {
+            LOG.debug("Finished $taskName")
+          }
+        }
+      }
+    }
+  }
+
   fun selectInCurrentTarget(fileEditor: FileEditor?, invokedManually: Boolean) {
-    coroutineScope.launch(CoroutineName("ProjectView.selectInCurrentTarget(invokedManually=$invokedManually,fileEditor=$fileEditor")) {
+    invokeWithSemaphore("SelectInProjectViewImpl.selectInCurrentTarget") {
+      doSelectInCurrentTarget(fileEditor, invokedManually)
+    }
+  }
+
+  private suspend fun doSelectInCurrentTarget(fileEditor: FileEditor?, invokedManually: Boolean) {
       if (LOG.isDebugEnabled) {
-        LOG.debug("selectInCurrentTarget: fileEditor=$fileEditor, invokedManually=$invokedManually")
+        LOG.debug("doSelectInCurrentTarget: fileEditor=$fileEditor, invokedManually=$invokedManually")
       }
       val editorsToCheck = if (fileEditor == null) allEditors() else listOf(fileEditor)
       selectInCurrentTarget(invokedManually, editorsToCheck)
-    }
   }
 
   private suspend fun selectInCurrentTarget(invokedManually: Boolean, editorsToCheck: List<FileEditor>) {
@@ -47,7 +98,7 @@ internal class SelectInProjectViewImpl(
       if (
         !invokedManually &&
         AdvancedSettings.getBoolean("project.view.do.not.autoscroll.to.libraries") &&
-        readAction { fileEditor.file?.let { file ->ProjectFileIndex.getInstance(project).isInLibrary(file) } == true }
+        readAction { fileEditor.file?.let { file -> ProjectFileIndex.getInstance(project).isInLibrary(file) } == true }
       ) {
         if (LOG.isDebugEnabled) {
           LOG.debug("Skipping $fileEditor because the file is in a library and autoscroll to libraries is off")
@@ -119,9 +170,29 @@ internal class SelectInProjectViewImpl(
     allowSubIdChange: Boolean,
     result: ActionCallback?,
   ) {
-    coroutineScope.launch(CoroutineName("ProjectView.ensureSelected(pane=$paneId,virtualFile=$virtualFile,focus=$requestFocus))")) {
+    invokeWithSemaphore(
+      "SelectInProjectViewImpl.ensureSelected",
+      task = {
+        doEnsureSelected(paneId, virtualFile, elementSupplier, requestFocus, allowSubIdChange, result)
+      },
+      onDone = {
+        if (result?.isProcessed == false) { // exception, or coroutine cancelled
+          result.setRejected()
+        }
+      },
+    )
+  }
+
+  private suspend fun doEnsureSelected(
+    paneId: String,
+    virtualFile: VirtualFile?,
+    elementSupplier: Supplier<Any?>,
+    requestFocus: Boolean,
+    allowSubIdChange: Boolean,
+    result: ActionCallback?,
+  ) {
       if (LOG.isDebugEnabled) {
-        LOG.debug("ensureSelected: " +
+        LOG.debug("doEnsureSelected: " +
                   "paneId=$paneId, " +
                   "virtualFile=$virtualFile, " +
                   "elementSupplier=$elementSupplier, " +
@@ -134,7 +205,7 @@ internal class SelectInProjectViewImpl(
       if (projectView == null) {
         LOG.debug("Not selecting anything because there is no project view")
         result?.setRejected()
-        return@launch
+        return
       }
       val pane = if (requestFocus) null else projectView.getProjectViewPaneById(paneId)
       val target = if (pane == null) null else projectView.getProjectViewSelectInTarget(pane)
@@ -164,7 +235,7 @@ internal class SelectInProjectViewImpl(
             isSubIdSelectable
           }
         if (!isSelectableInCurrentSubId) {
-          return@launch
+          return
         }
       }
       val visibleAndSelectedUserObject = withContext(Dispatchers.EDT) {
@@ -178,6 +249,7 @@ internal class SelectInProjectViewImpl(
         val isAlreadyVisibleAndSelected: Boolean,
         val virtualFile: VirtualFile?,
       )
+
       val context = readAction {
         val suppliedElement = elementSupplier.get()
         val elementToSelect = suppliedElement ?: virtualFile ?: return@readAction null
@@ -199,11 +271,69 @@ internal class SelectInProjectViewImpl(
       if (context == null || context.isAlreadyVisibleAndSelected || context.virtualFile == null) {
         LOG.debug("Nothing to do")
         result?.setDone()
-        return@launch
+        return
       }
       withContext(Dispatchers.EDT) {
         LOG.debug("Delegating back to the project view")
         projectView.select(elementSupplier, context.virtualFile, requestFocus, result)
+      }
+  }
+
+  fun selectInAnyTarget(context: SelectInContext, targets: Collection<SelectInTarget>, requestFocus: Boolean) {
+    invokeWithSemaphore("SelectInProjectViewImpl.selectInAnyTarget") {
+      doSelectInAnyTarget(context, targets, requestFocus)
+    }
+  }
+
+  private suspend fun doSelectInAnyTarget(context: SelectInContext, targets: Collection<SelectInTarget>, requestFocus: Boolean) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("doSelectInAnyTarget: context=$context, targets=$targets, requestFocus=$requestFocus")
+    }
+    for (target in targets) {
+      val canSelect = readAction { target.canSelect(context) }
+      if (LOG.isDebugEnabled) {
+        LOG.debug("${if (canSelect) "Can" else "Can NOT"} select $context in $target")
+      }
+      if (canSelect) {
+        withContext(Dispatchers.EDT) {
+          if (LOG.isDebugEnabled) {
+            LOG.debug("Selecting $context in $target")
+          }
+          target.selectIn(context, requestFocus)
+        }
+        return
+      }
+    }
+  }
+
+  fun selectInScopeViewPane(pane: ScopeViewPane, pointer: SmartPsiElementPointer<PsiElement>?, file: VirtualFile, requestFocus: Boolean) {
+    invokeWithSemaphore("SelectInProjectViewImpl.selectInScopeViewPane(element=$pointer, file=$file, requestFocus=$requestFocus)") {
+      doSelectInScopeViewPane(pane, pointer, file, requestFocus)
+    }
+  }
+
+  private suspend fun doSelectInScopeViewPane(
+    pane: ScopeViewPane,
+    pointer: SmartPsiElementPointer<PsiElement>?,
+    file: VirtualFile,
+    requestFocus: Boolean,
+  ) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("doSelectInScopeViewPane: pane=$pane, pointer=$pointer, file=$file, requestFocus=$requestFocus")
+    }
+    val currentFilter = pane.getCurrentFilter()
+    val allFilters = pane.filters.toMutableList()
+    allFilters.remove(currentFilter)
+    allFilters.add(0, currentFilter) // Start with the current filter and then fall back to others.
+    for (filter in allFilters) {
+      if (readAction { filter.accept(file) }) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The file $file has been accepted by the filter $filter, delegating to the pane")
+        }
+        withContext(Dispatchers.EDT) {
+          pane.select(pointer, file, requestFocus, filter)
+        }
+        break
       }
     }
   }

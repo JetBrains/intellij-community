@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultRawTypedHandler implements TypedActionHandlerEx {
+public final class DefaultRawTypedHandler implements TypedActionHandlerEx {
   private final TypedAction myAction;
   private CommandToken myCurrentCommandToken;
   private boolean myInOuterCommand;
@@ -34,7 +34,7 @@ public class DefaultRawTypedHandler implements TypedActionHandlerEx {
   }
 
   @Override
-  public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
+  public void execute(final @NotNull Editor editor, final char charTyped, final @NotNull DataContext dataContext) {
     CommandProcessorEx commandProcessorEx = (CommandProcessorEx)CommandProcessor.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (myCurrentCommandToken != null) {

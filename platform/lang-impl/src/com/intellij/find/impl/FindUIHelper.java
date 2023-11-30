@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 @SuppressWarnings("WeakerAccess")
-public class FindUIHelper implements Disposable {
+public final class FindUIHelper implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private FindModel myModel;
   FindModel myPreviousModel;

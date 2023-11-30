@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,12 +78,6 @@ public class MockFileTypeManager extends FileTypeManagerEx {
   @Override
   public boolean isFileIgnored(@NotNull VirtualFile file) {
     return false;
-  }
-
-  @Override
-  @SuppressWarnings("removal")
-  public String @NotNull [] getAssociatedExtensions(@NotNull FileType type) {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @Override

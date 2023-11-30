@@ -12,11 +12,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,7 +172,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
           PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(nextCall.getMethodExpression()));
         if (nextQualifier == null || !PsiEquivalenceUtil.areElementsEquivalent(qualifier, nextQualifier)) break;
         if (qualifierVar != null && VariableAccessUtils.variableIsUsed(qualifierVar, nextCall.getArgumentList())) break;
-        PsiExpression nextArg = nextCall.getArgumentList().getExpressions()[0];
+        PsiExpression nextArg = ArrayUtil.getFirstElement(nextCall.getArgumentList().getExpressions());
         Object nextKey = getKey(nextArg);
         if (nextKey != null) {
           map.computeIfAbsent(nextKey, k -> new ArrayList<>()).add(nextArg);
@@ -203,7 +205,9 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
       }
     }
 
+    @Contract("null -> null")
     private static Object getKey(PsiExpression key) {
+      if (key == null) return null;
       key = PsiUtil.skipParenthesizedExprDown(key);
       Object constant = ExpressionUtils.computeConstantExpression(key);
       if (constant != null) {
@@ -246,13 +250,8 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     @Override
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression element = myPointer.getElement();
-      if (element == null) return ModCommands.nop();
-      return ModCommands.select(element);
-    }
-
-    @Override
-    public boolean availableInBatchMode() {
-      return false;
+      if (element == null) return ModCommand.nop();
+      return ModCommand.select(element);
     }
   }
 }

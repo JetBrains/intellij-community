@@ -35,20 +35,6 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
                                @Nullable final Module module,
                                @NotNull List<? extends Sdk> sdks,
                                @NotNull final Condition<? super Sdk> acceptableSdkCondition) {
-    this(project, module, sdks, null, acceptableSdkCondition);
-  }
-
-  /**
-   * @deprecated the value of the field corresponding to {@code newProjectPath} is not used anywhere internally; use
-   * {@link #PythonSdkChooserCombo(Project, Module, List, Condition)} instead.
-   */
-  @SuppressWarnings("unchecked")
-  @Deprecated(forRemoval = true)
-  public PythonSdkChooserCombo(@Nullable final Project project,
-                               @Nullable final Module module,
-                               @NotNull List<? extends Sdk> sdks,
-                               @Nullable String newProjectPath,
-                               @NotNull final Condition<? super Sdk> acceptableSdkCondition) {
     super(new ComboBox<>());
     final Sdk initialSelection = ContainerUtil.find(sdks, acceptableSdkCondition);
     final JComboBox comboBox = getComboBox();

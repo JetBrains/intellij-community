@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.ide.IdeBundle;
@@ -32,7 +32,7 @@ import static com.intellij.util.net.ssl.CertificateWrapper.CommonField.ORGANIZAT
  * @author Mikhail Golubev
  */
 @ApiStatus.Internal
-public class CertificateTreeBuilder implements Disposable {
+public final class CertificateTreeBuilder implements Disposable {
   private static final SimpleTextAttributes STRIKEOUT_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, null);
   private static final RootDescriptor ROOT_DESCRIPTOR = new RootDescriptor();
 
@@ -108,8 +108,7 @@ public class CertificateTreeBuilder implements Disposable {
    *
    * @return - selected certificates
    */
-  @NotNull
-  public Set<X509Certificate> getSelectedCertificates(boolean addFromOrganization) {
+  public @NotNull Set<X509Certificate> getSelectedCertificates(boolean addFromOrganization) {
     Set<X509Certificate> selected = new HashSet<>();
     TreeUtil.collectSelectedUserObjects(myTree).forEach(o -> {
       if (o instanceof CertificateDescriptor) {
@@ -130,14 +129,12 @@ public class CertificateTreeBuilder implements Disposable {
     return selected;
   }
 
-  @Nullable
-  public X509Certificate getFirstSelectedCertificate(boolean addFromOrganization) {
+  public @Nullable X509Certificate getFirstSelectedCertificate(boolean addFromOrganization) {
     Set<X509Certificate> certificates = getSelectedCertificates(addFromOrganization);
     return certificates.isEmpty() ? null : certificates.iterator().next();
   }
 
-  @NotNull
-  public List<X509Certificate> getCertificatesByOrganization(@NotNull String organizationName) {
+  public @NotNull List<X509Certificate> getCertificatesByOrganization(@NotNull String organizationName) {
     Collection<CertificateWrapper> wrappers = myCertificates.get(organizationName);
     return extract(wrappers);
   }
@@ -151,10 +148,9 @@ public class CertificateTreeBuilder implements Disposable {
     return ContainerUtil.map(wrappers, wrapper -> wrapper.getCertificate());
   }
 
-  class MyTreeStructure extends AbstractTreeStructure {
-    @NotNull
+  final class MyTreeStructure extends AbstractTreeStructure {
     @Override
-    public Object getRootElement() {
+    public @NotNull Object getRootElement() {
       return RootDescriptor.ROOT;
     }
 
@@ -169,9 +165,8 @@ public class CertificateTreeBuilder implements Disposable {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    @Nullable
     @Override
-    public Object getParentElement(@NotNull Object element) {
+    public @Nullable Object getParentElement(@NotNull Object element) {
       if (element == RootDescriptor.ROOT) {
         return null;
       }
@@ -181,9 +176,8 @@ public class CertificateTreeBuilder implements Disposable {
       return ((CertificateWrapper)element).getSubjectField(ORGANIZATION);
     }
 
-    @NotNull
     @Override
-    public NodeDescriptor<?> createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+    public @NotNull NodeDescriptor<?> createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
       if (element == RootDescriptor.ROOT) {
         return ROOT_DESCRIPTOR;
       }
@@ -207,7 +201,7 @@ public class CertificateTreeBuilder implements Disposable {
 
   // Auxiliary node descriptors
 
-  static abstract class MyNodeDescriptor<T> extends PresentableNodeDescriptor<T> {
+  abstract static class MyNodeDescriptor<T> extends PresentableNodeDescriptor<T> {
     private final T myObject;
 
     MyNodeDescriptor(@Nullable NodeDescriptor parentDescriptor, @NotNull T object) {

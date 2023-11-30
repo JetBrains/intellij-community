@@ -10,7 +10,7 @@ import com.intellij.vcs.commit.ShowNotificationCommitResultHandler
 import org.jetbrains.annotations.Nls
 
 class AlienCommitWorkflow(val vcs: AbstractVcs, @Nls changeListName: String, val changes: List<Change>, commitMessage: String?) :
-  CommitChangeListDialogWorkflow(vcs.project, initialCommitMessage = commitMessage) {
+  CommitChangeListDialogWorkflow(vcs.project, initialCommitMessage = commitMessage, initiallyIncluded = changes) {
 
   init {
     updateVcses(setOf(vcs))

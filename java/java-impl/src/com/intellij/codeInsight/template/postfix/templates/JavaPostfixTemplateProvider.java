@@ -17,6 +17,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -98,7 +99,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
 
   @Override
   public void preExpand(@NotNull final PsiFile file, @NotNull final Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (isSemicolonNeeded(file, editor)) {
       ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().runUndoTransparentAction(() -> {
         EditorModificationUtil.insertStringAtCaret(editor, ";", false, false);

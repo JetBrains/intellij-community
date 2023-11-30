@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.Icon
@@ -10,6 +11,8 @@ import javax.swing.Icon
 /**
  * Represents the view for adding new Python SDK. It is used in
  * [PyAddSdkDialog].
+ *
+ * If you need to be notified when this view is closed, implement [com.intellij.openapi.Disposable]
  */
 interface PyAddSdkView {
   val panelName: String
@@ -74,6 +77,7 @@ interface PyAddSdkView {
    *
    * @see com.intellij.openapi.ui.DialogWrapper.doValidateAll
    */
+  @RequiresEdt
   fun validateAll(): List<ValidationInfo>
 
   fun addStateListener(stateListener: PyAddSdkStateListener)

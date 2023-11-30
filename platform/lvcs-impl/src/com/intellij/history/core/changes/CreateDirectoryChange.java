@@ -19,7 +19,7 @@ package com.intellij.history.core.changes;
 import java.io.DataInput;
 import java.io.IOException;
 
-public class CreateDirectoryChange extends CreateEntryChange {
+public final class CreateDirectoryChange extends CreateEntryChange {
   public CreateDirectoryChange(long id, String path) {
     super(id, path);
   }

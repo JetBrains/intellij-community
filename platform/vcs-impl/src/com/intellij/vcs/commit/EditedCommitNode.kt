@@ -5,8 +5,25 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
+import com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
+import org.jetbrains.annotations.Nls
+
+fun insertEditedCommitNode(builder: ChangesViewModelBuilder, editedCommit: EditedCommitPresentation) {
+  when (editedCommit) {
+    is EditedCommitPresentation.Details -> {
+      val commitNode = EditedCommitNode(editedCommit)
+      builder.insertSubtreeRoot(commitNode)
+      builder.insertChanges(editedCommit.commit.changes, commitNode)
+    }
+    is EditedCommitPresentation.Loading -> {
+      val commitNode = EditedCommitLoadingNode(editedCommit)
+      builder.insertSubtreeRoot(commitNode)
+    }
+  }
+}
 
 class EditedCommitNode(editedCommit: EditedCommitDetails) : ChangesBrowserNode<EditedCommitDetails>(editedCommit) {
   private val editedCommit: EditedCommitDetails get() = getUserObject()
@@ -31,4 +48,15 @@ class EditedCommitNode(editedCommit: EditedCommitDetails) : ChangesBrowserNode<E
   }
 
   override fun getTextPresentation(): String = getUserObject().commit.subject
+}
+
+class EditedCommitLoadingNode(editedCommit: EditedCommitPresentation.Loading)
+  : ChangesBrowserNode<EditedCommitPresentation.Loading>(editedCommit) {
+  override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
+    renderer.append(textPresentation!!, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+  }
+
+  override fun getTextPresentation(): @Nls String? {
+    return message("amend.commit.tree.node.loading")
+  }
 }

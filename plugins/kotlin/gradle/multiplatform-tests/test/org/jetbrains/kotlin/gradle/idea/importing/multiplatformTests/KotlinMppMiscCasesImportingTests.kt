@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 
 import com.intellij.lang.annotation.HighlightSeverity
-import org.jetbrains.kotlin.config.KotlinFacetSettings
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
@@ -10,17 +10,18 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.face
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/features/misc")
-class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest()  {
+class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() {
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         hideStdlib = true
         hideKotlinTest = true
         hideKotlinNativeDistribution = true
 
-        onlyFacetFields(KotlinFacetSettings::targetPlatform)
+        onlyFacetFields(IKotlinFacetSettings::targetPlatform)
 
         hideResourceRoots = true
     }
@@ -114,6 +115,11 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
         doTest {
             onlyCheckers(OrderEntriesChecker)
 
+            /* Code Highlighting requires 1.9, because of native opt-in annotation in source files */
+            if (kotlinPluginVersion < KotlinToolingVersion("1.9.20-dev-6845")) {
+                disableCheckers(HighlightingChecker)
+            }
+
             publish("producer")
             excludeDependencies(".*consumer.*")
             excludeModules(".*producer.*")
@@ -148,6 +154,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
         }
     }
 
+    @PluginTargetVersions(pluginVersion = "1.9.20-Beta+") // -Xexpect-actual-classes cannot be easily passed before
     @Test
     fun testTransitiveKmmLibraryThroughJava() {
         doTest {
@@ -177,8 +184,17 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     fun testAssociateCompilationIntegrationTest() {
         doTest {
             onlyCheckers(HighlightingChecker, KotlinFacetSettingsChecker)
-            onlyFacetFields(KotlinFacetSettings::additionalVisibleModuleNames)
+            onlyFacetFields(IKotlinFacetSettings::additionalVisibleModuleNames)
             hideLineMarkers = true
+        }
+    }
+
+    @Test
+    @TestMetadata("projectDependenciesToMppProjectWithAdditionalCompilations")
+    fun testProjectDependenciesToMppProjectWithAdditionalCompilations() {
+        doTest {
+            onlyCheckers(OrderEntriesChecker)
+            onlyDependencies(from = ".*client.*", to = ".*libMpp.*")
         }
     }
 }

@@ -53,6 +53,7 @@ public final class MavenServerUtil {
     File baseDir = workingDir;
     File dir = workingDir;
     while ((dir = dir.getParentFile()) != null) {
+      MavenServerStatsCollector.fileRead(new File(dir, ".mvn"));
       if (new File(dir, ".mvn").exists()) {
         baseDir = dir;
         break;

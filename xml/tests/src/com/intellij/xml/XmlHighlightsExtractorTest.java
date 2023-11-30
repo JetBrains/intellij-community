@@ -53,7 +53,7 @@ public class XmlHighlightsExtractorTest extends LightPlatformTestCase {
                            ]]>
                       </withCData>
                       <indexitem text="project" target="project.management"/>
-                      <custom-tag>hello</custom_tag>
+                      <custom-tag>hello</custom-tag>
                       <pf:foo pf:bar="bar"/>
                    </index>""", s);
   }

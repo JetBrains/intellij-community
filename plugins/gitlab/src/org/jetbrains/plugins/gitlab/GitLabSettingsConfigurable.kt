@@ -3,15 +3,12 @@ package org.jetbrains.plugins.gitlab
 
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForMemoryOnlyPasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
-import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
@@ -22,7 +19,6 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefault
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsListModel
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsPanelActionsController
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabUtil
 
 internal class GitLabSettingsConfigurable(private val project: Project)
@@ -33,11 +29,11 @@ internal class GitLabSettingsConfigurable(private val project: Project)
 
     val scope = DisposingMainScope(disposable!!) + ModalityState.any().asContextElement()
     val accountsModel = GitLabAccountsListModel()
-    val detailsProvider = GitLabAccountsDetailsProvider(scope) { account ->
+    val detailsProvider = GitLabAccountsDetailsProvider(scope, accountsModel) { account ->
       accountsModel.newCredentials.getOrElse(account) {
         accountManager.findCredentials(account)
       }?.let {
-        service<GitLabApiManager>().getClient(it)
+        service<GitLabApiManager>().getClient(account.server, it)
       }
     }
     val actionsController = GitLabAccountsPanelActionsController(project, accountsModel)
@@ -48,13 +44,12 @@ internal class GitLabSettingsConfigurable(private val project: Project)
         accountsPanelFactory.accountsPanelCell(this, detailsProvider, actionsController)
           .align(Align.FILL)
       }.resizableRow()
+
+      addWarningForMemoryOnlyPasswordSafe(
+        scope,
+        service<GitLabAccountManager>().canPersistCredentials,
+        ::panel
+      )
     }
-  }
-}
-
-internal class GitLabOpenSettingsPageAction : DumbAwareAction(GitLabBundle.message("open.settings.page")) {
-
-  override fun actionPerformed(e: AnActionEvent) {
-    ShowSettingsUtil.getInstance().showSettingsDialog(currentOrDefaultProject(e.project), GitLabSettingsConfigurable::class.java)
   }
 }

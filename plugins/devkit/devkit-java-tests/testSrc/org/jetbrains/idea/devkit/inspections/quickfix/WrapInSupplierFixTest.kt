@@ -4,10 +4,10 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
-import org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/wrapInSupplierFix")
-class WrapInSupplierFixTest : ApplicationServiceAsStaticFinalFieldInspectionTestBase() {
+class WrapInSupplierFixTest : ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase() {
 
   override fun getBasePath() = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/wrapInSupplierFix"
 

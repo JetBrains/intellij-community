@@ -924,6 +924,28 @@ public class StreamChainInliner implements CallInliner {
         return;
       }
     }
+    if (OPTIONAL_STREAM.test(sourceCall)) {
+      PsiExpression qualifierExpression = sourceCall.getMethodExpression().getQualifierExpression();
+      if (qualifierExpression != null) {
+        PsiType optValueType = PsiUtil.substituteTypeParameter(qualifierExpression.getType(), JAVA_UTIL_OPTIONAL, 0, false);
+        if (optValueType != null) {
+          builder
+            .pushForWrite(builder.createTempVariable(qualifierExpression.getType()))// optValueVar
+            .pushExpression(qualifierExpression) //optValueVar optVar
+            .unwrap(SpecialField.OPTIONAL_VALUE) //optValueVar optVar.value
+            .assign() //optValueVar
+            .dup() //optValueVar optValueVar
+            .chain(firstStep::before)
+            .ifNull() //optValueVar
+            // skip loop at all
+              .pop() //..
+            .elseBranch() //optValueVar
+              .chain(firstStep::iteration)
+            .end();
+          return;
+        }
+      }
+    }
     startStreamUnknown(builder, firstStep, originalQualifier, originalQualifierAlreadyChecked, inType);
   }
 

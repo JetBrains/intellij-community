@@ -6,5 +6,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <appStarter id="warmup" implementation="com.intellij.warmup.ProjectCachesWarmup"/>
     <projectBuildWarmupSupport implementation="com.intellij.warmup.PlatformBuildWarmupSupport"/>
+    <warmupLogger implementation="com.intellij.warmup.util.DefaultWarmupLogger"/>
   </extensions>
+
 </idea-plugin>

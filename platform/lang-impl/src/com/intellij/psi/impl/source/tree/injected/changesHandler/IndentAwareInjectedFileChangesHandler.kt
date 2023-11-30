@@ -51,7 +51,7 @@ internal class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor
     val affectedRange = TextRange.from(e.offset, max(e.newLength, e.oldLength))
     val affectedMarkers = markers.filter { affectedRange.intersects(it.fragmentMarker) }
 
-    val guardedRanges = guardedBlocks.mapTo(HashSet()) { it.range }
+    val guardedRanges = guardedBlocks.mapTo(HashSet()) { it.textRange }
     if (affectedMarkers.isEmpty() && guardedRanges.any { it.intersects(affectedRange) }) {
       // changed guarded blocks are on fragment document editor conscience, we just ignore them silently
       return
@@ -71,7 +71,7 @@ internal class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor
       "distributeTextToMarkers:\n  ${distributeTextToMarkers.joinToString("\n  ") { (m, t) -> "${markerString(m)} <<< '${t.esclbr()}'" }}"
     }
     for ((affectedMarker, markerText) in distributeTextToMarkers.reversed()) {
-      var rangeInHost = affectedMarker.hostMarker.range
+      var rangeInHost = affectedMarker.hostMarker.textRange
 
       myHostEditor.caretModel.moveToOffset(rangeInHost.startOffset)
       val newText0 =

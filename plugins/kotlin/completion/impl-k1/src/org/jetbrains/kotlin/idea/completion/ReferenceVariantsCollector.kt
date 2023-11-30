@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.codeInsight.completion.PrefixMatcher
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.core.util.externalDescriptors
@@ -36,6 +37,7 @@ class ReferenceVariantsCollector(
     private val referenceVariantsHelper: ReferenceVariantsHelper,
     private val indicesHelper: KotlinIndicesHelper,
     private val prefixMatcher: PrefixMatcher,
+    private val applicabilityFilter: (DeclarationDescriptor) -> Boolean,
     private val nameExpression: KtSimpleNameExpression,
     private val callTypeAndReceiver: CallTypeAndReceiver<*, *>,
     private val resolutionFacade: ResolutionFacade,
@@ -222,6 +224,8 @@ class ReferenceVariantsCollector(
             basicVariants = basicVariants.distinct()
         }
 
+        basicVariants = basicVariants.filter { applicabilityFilter(it) }
+
         return ReferenceVariants(filterConfiguration.filterVariants(basicVariants).toHashSet(), emptyList())
     }
 
@@ -240,7 +244,7 @@ class ReferenceVariantsCollector(
                     callTypeAndReceiver, nameExpression, bindingContext, receiverTypeFromDiagnostic = null, nameFilter
                 )
 
-            val (extensionsVariants, notImportedExtensions) = extensions.partition {
+            val (extensionsVariants, notImportedExtensions) = extensions.filter { applicabilityFilter(it) }.partition {
                 importableFqNameClassifier.isImportableDescriptorImported(
                     it
                 )

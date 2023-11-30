@@ -16,7 +16,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,17 +53,7 @@ public final class PyPostfixUtils {
 
   public static @NotNull List<PsiElement> getAllExpressionsAtOffset(PsiFile file, int offset) {
     PsiElement elementAtCaret = PsiUtilCore.getElementAtOffset(file, offset);
-    final List<PsiElement> expressions = new ArrayList<>();
-    while (elementAtCaret != null) {
-      if (elementAtCaret instanceof PyStatement || elementAtCaret instanceof PyFile) {
-        break;
-      }
-      if (elementAtCaret instanceof PyExpression) {
-        expressions.add(elementAtCaret);
-      }
-      elementAtCaret = elementAtCaret.getParent();
-    }
-    return expressions;
+    return PsiTreeUtil.collectParents(elementAtCaret, PyExpression.class, true, e -> e instanceof PyStatement || e instanceof PyFile);
   }
 
   public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset() {
@@ -72,15 +61,11 @@ public final class PyPostfixUtils {
   }
 
   public static PostfixTemplateExpressionSelector selectorTopmost() {
-    return selectorTopmost(Conditions.alwaysTrue());
-  }
-
-  public static PostfixTemplateExpressionSelector selectorTopmost(Condition<PsiElement> additionalFilter) {
-    return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
+    return new PostfixTemplateExpressionSelectorBase(null) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
         PyExpressionStatement exprStatement = PsiTreeUtil.getNonStrictParentOfType(context, PyExpressionStatement.class);
-        PyExpression expression = exprStatement != null ? PsiTreeUtil.getChildOfType(exprStatement, PyExpression.class) : null;
+        PyExpression expression = exprStatement != null ? exprStatement.getExpression() : null;
         return ContainerUtil.createMaybeSingletonList(expression);
       }
     };
@@ -94,13 +79,7 @@ public final class PyPostfixUtils {
         if (elementAtCaret instanceof PsiComment) {
           return Collections.emptyList();
         }
-        while (elementAtCaret != null) {
-          if (elementAtCaret instanceof PyStatement) {
-            return Collections.singletonList(elementAtCaret);
-          }
-          elementAtCaret = elementAtCaret.getParent();
-        }
-        return Collections.emptyList();
+        return ContainerUtil.createMaybeSingletonList(PsiTreeUtil.getParentOfType(elementAtCaret, PyStatement.class));
       }
     };
   }

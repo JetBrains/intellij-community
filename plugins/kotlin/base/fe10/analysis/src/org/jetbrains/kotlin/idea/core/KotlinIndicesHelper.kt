@@ -56,6 +56,7 @@ class KotlinIndicesHelper(
     private val resolutionFacade: ResolutionFacade,
     private val scope: GlobalSearchScope,
     visibilityFilter: (DeclarationDescriptor) -> Boolean,
+    applicabilityFilter: (DeclarationDescriptor) -> Boolean = { true },
     private val declarationTranslator: (KtDeclaration) -> KtDeclaration? = { it },
     applyExcludeSettings: Boolean = true,
     private val filterOutPrivate: Boolean = true,
@@ -67,7 +68,8 @@ class KotlinIndicesHelper(
     private val scopeWithoutKotlin = scope.excludeKotlinSources(project) as GlobalSearchScope
 
     @OptIn(FrontendInternals::class)
-    private val descriptorFilter: (DeclarationDescriptor) -> Boolean = filter@ { descriptor ->
+    private val descriptorFilter: (DeclarationDescriptor) -> Boolean = filter@{ descriptor ->
+        if (!applicabilityFilter(descriptor)) return@filter false
         if (resolutionFacade.frontendService<DeprecationResolver>().isHiddenInResolution(descriptor)) return@filter false
         if (!visibilityFilter(descriptor)) return@filter false
         if (applyExcludeSettings) {

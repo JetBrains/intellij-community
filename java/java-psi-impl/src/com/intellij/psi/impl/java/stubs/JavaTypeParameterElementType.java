@@ -8,6 +8,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.java.PsiTypeParameterImpl;
 import com.intellij.psi.impl.source.tree.java.TypeParameterElement;
@@ -21,7 +22,7 @@ import java.io.IOException;
 
 public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypeParameterStub, PsiTypeParameter> {
   public JavaTypeParameterElementType() {
-    super("TYPE_PARAMETER");
+    super("TYPE_PARAMETER", BasicJavaElementType.BASIC_TYPE_PARAMETER);
   }
 
   @NotNull

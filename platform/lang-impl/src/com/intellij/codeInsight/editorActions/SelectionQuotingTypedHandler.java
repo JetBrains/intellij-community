@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -20,18 +21,22 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public final class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   private static final ExtensionPointName<UnquotingFilter> EP_NAME = ExtensionPointName.create("com.intellij.selectionUnquotingFilter");
 
   @NotNull
   @Override
   public Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     SelectionModel selectionModel = editor.getSelectionModel();
-    if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE && selectionModel.hasSelection() && isDelimiter(c)) {
+    if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE && selectionModel.hasSelection() && isQuote(c)) {
       String selectedText = selectionModel.getSelectedText();
       if (selectedText != null && selectedText.length() == 1) {
         char selectedChar = selectedText.charAt(0);
-        if (isSimilarDelimiters(selectedChar, c) &&
+        if (isQuote(selectedChar) &&
             selectedChar != c &&
             !shouldSkipReplacementOfQuotesOrBraces(file, editor, selectedText, c) &&
             replaceQuotesBySelected(c, editor, file, selectionModel, selectedChar)) {
@@ -54,7 +59,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
           final char lastChar = selectedText.charAt(selectedText.length() - 1);
           if (isSimilarDelimiters(firstChar, c) && lastChar == getMatchingDelimiter(firstChar) &&
               (isQuote(firstChar) || firstChar != c) && !shouldSkipReplacementOfQuotesOrBraces(file, editor, selectedText, c) &&
-              !containsQuoteInside(selectedText, lastChar)) {
+              selectedText.indexOf(lastChar, 1) == selectedText.length() - 1) {
             selectedText = selectedText.substring(1, selectedText.length() - 1);
           }
         }
@@ -127,34 +132,75 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
     return true;
   }
 
-  private static boolean containsQuoteInside(String selectedText, char quote) {
-    return selectedText.indexOf(quote, 1) != selectedText.length() - 1;
+  /**
+   * @return list of pairs (offset, is escaped)
+   */
+  private static @NotNull List<Pair<Integer, Boolean>> containsCharInside(String selectedText, char selected, char typed) {
+    boolean isEscaped = false;
+    List<Pair<Integer, Boolean>> result = null;
+    for (int i = 0; i < selectedText.length(); i++) {
+      char c = selectedText.charAt(i);
+      if (isEscaped) {
+        if (c == selected || c == typed) {
+          if (result == null) result = new ArrayList<>();
+          result.add(Pair.create(i, true));
+        }
+        isEscaped = false;
+      }
+      else if (c == '\\') {
+        isEscaped = true;
+      }
+      else if (c == selected || c == typed) {
+        if (result == null) result = new ArrayList<>();
+        result.add(Pair.create(i, false));
+      }
+    }
+    return result != null ? result : Collections.emptyList();
   }
 
-  private static boolean replaceQuotesBySelected(char c,
+  private static boolean replaceQuotesBySelected(char typed,
                                                  @NotNull Editor editor,
                                                  @NotNull PsiFile file,
                                                  @NotNull SelectionModel selectionModel,
                                                  char selectedChar) {
     int selectionStart = selectionModel.getSelectionStart();
-    PsiElement element = file.findElementAt(selectionStart);
+    PsiElement leaf = file.findElementAt(selectionStart);
+    PsiElement element = leaf;
     while (element != null) {
       TextRange textRange = element.getTextRange();
-      if (textRange != null && textRange.getLength() >= 2) {
-        boolean isAtStart = textRange.getStartOffset() == selectionStart;
-        if (isAtStart || textRange.getEndOffset() == selectionStart + 1 && isQuote(c)) {
-          int matchingCharOffset = isAtStart ? textRange.getEndOffset() - 1 : textRange.getStartOffset();
-          Document document = editor.getDocument();
-          CharSequence charsSequence = document.getCharsSequence();
-          if (matchingCharOffset < charsSequence.length()) {
-            char matchingChar = charsSequence.charAt(matchingCharOffset);
-            boolean otherQuoteMatchesSelected =
-              isAtStart ? matchingChar == getMatchingDelimiter(selectedChar) : selectedChar == getMatchingDelimiter(matchingChar);
-            if (otherQuoteMatchesSelected &&
-                !containsQuoteInside(document.getText(textRange), charsSequence.charAt(textRange.getEndOffset() - 1))) {
-              replaceChar(document, textRange.getStartOffset(), c);
-              char c2 = getMatchingDelimiter(c);
-              replaceChar(document, textRange.getEndOffset() - 1, c2);
+      if (textRange != null && textRange.getLength() >= 2 &&
+          (selectionStart == textRange.getStartOffset() || textRange.getEndOffset() == selectionStart + 1)) {
+        int matchingCharOffset = selectionStart == textRange.getStartOffset() ? textRange.getEndOffset() - 1 : textRange.getStartOffset();
+        Document document = editor.getDocument();
+        CharSequence charsSequence = document.getCharsSequence();
+        if (matchingCharOffset < charsSequence.length()) {
+          char matchingChar = charsSequence.charAt(matchingCharOffset);
+          boolean otherQuoteMatchesSelected = matchingChar == selectedChar;
+          if (otherQuoteMatchesSelected) {
+            boolean handleEscaping = element == leaf; // can't handle interpolation
+            TextRange innerRange = TextRange.create(textRange.getStartOffset() + 1, textRange.getEndOffset() - 1);
+            String body = document.getText(innerRange);
+            List<Pair<Integer, Boolean>> quotesInside = containsCharInside(body, selectedChar, typed);
+            if (handleEscaping || quotesInside.isEmpty()) {
+              replaceChar(document, textRange.getStartOffset(), typed);
+              replaceChar(document, textRange.getEndOffset() - 1, typed);
+              int offsetDelta = 0;
+              if (handleEscaping && !quotesInside.isEmpty()) {
+                StringBuilder newBody = new StringBuilder(body);
+                for (Pair<Integer, Boolean> pair : quotesInside) {
+                  int offsetInBody = pair.first;
+                  char quote = body.charAt(offsetInBody);
+                  if (quote == typed && !pair.second) {
+                    newBody.insert(offsetInBody + offsetDelta, '\\');
+                    offsetDelta++;
+                  }
+                  else if (quote == selectedChar && pair.second) {
+                    newBody.deleteCharAt(offsetInBody + offsetDelta - 1);
+                    offsetDelta--;
+                  }
+                }
+                document.replaceString(innerRange.getStartOffset(), innerRange.getEndOffset(), newBody);
+              }
               editor.getCaretModel().moveToOffset(selectionModel.getSelectionEnd());
               selectionModel.removeSelection();
               return true;

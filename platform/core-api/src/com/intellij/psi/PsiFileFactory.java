@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
@@ -29,19 +29,15 @@ public abstract class PsiFileFactory {
    * since file type detecting by file extension becomes vulnerable when file type mappings are changed.
    */
   @Deprecated
-  @NotNull
-  public abstract PsiFile createFileFromText(@NotNull @NonNls String name, @NotNull @NonNls String text) throws IncorrectOperationException;
+  public abstract @NotNull PsiFile createFileFromText(@NotNull @NonNls String name, @NotNull @NonNls String text) throws IncorrectOperationException;
 
-  @NotNull
-  public abstract PsiFile createFileFromText(@NonNls @NotNull String fileName, @NotNull FileType fileType, @NotNull @NonNls CharSequence text) throws IncorrectOperationException;
+  public abstract @NotNull PsiFile createFileFromText(@NonNls @NotNull String fileName, @NotNull FileType fileType, @NotNull @NonNls CharSequence text) throws IncorrectOperationException;
 
-  @NotNull
-  public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull @NonNls CharSequence text,
-                                             long modificationStamp, boolean eventSystemEnabled) throws IncorrectOperationException;
+  public abstract @NotNull PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull @NonNls CharSequence text,
+                                                      long modificationStamp, boolean eventSystemEnabled) throws IncorrectOperationException;
 
-  @NotNull
-  public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull @NonNls CharSequence text,
-                                             long modificationStamp, boolean eventSystemEnabled, boolean markAsCopy) throws IncorrectOperationException;
+  public abstract @NotNull PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull FileType fileType, @NotNull @NonNls CharSequence text,
+                                                      long modificationStamp, boolean eventSystemEnabled, boolean markAsCopy) throws IncorrectOperationException;
 
   public abstract PsiFile createFileFromText(@NonNls @NotNull String name, @NotNull Language language, @NotNull @NonNls CharSequence text) throws IncorrectOperationException;
 
@@ -61,6 +57,5 @@ public abstract class PsiFileFactory {
 
   public abstract PsiFile createFileFromText(FileType fileType, @NonNls String fileName, @NonNls CharSequence chars, int startOffset, int endOffset) throws IncorrectOperationException;
 
-  @Nullable
-  public abstract PsiFile createFileFromText(@NotNull @NonNls CharSequence chars, @NotNull PsiFile original) throws IncorrectOperationException;
+  public abstract @Nullable PsiFile createFileFromText(@NotNull @NonNls CharSequence chars, @NotNull PsiFile original) throws IncorrectOperationException;
 }

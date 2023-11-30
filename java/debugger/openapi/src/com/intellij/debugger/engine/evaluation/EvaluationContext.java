@@ -26,13 +26,6 @@ public interface EvaluationContext extends StackFrameContext {
   @Nullable
   ClassLoaderReference getClassLoader() throws EvaluateException;
 
-  /**
-   * @deprecated Use {@link #computeThisObject()} instead, EvaluationContext now may lazily compute this object
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  Value getThisObject();
-
   @Nullable
   Value computeThisObject() throws EvaluateException;
 

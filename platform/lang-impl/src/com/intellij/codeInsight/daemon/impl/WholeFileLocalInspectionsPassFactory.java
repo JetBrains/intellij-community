@@ -46,7 +46,7 @@ final class WholeFileLocalInspectionsPassFactory implements MainHighlightingPass
   }
 
   private @NotNull LocalInspectionsPass createPass(@NotNull PsiFile file, @NotNull TextRange visibleRange, @NotNull Document document) {
-    return new LocalInspectionsPass(file, document, 0, file.getTextLength(), visibleRange, true,
+    return new LocalInspectionsPass(file, document, file.getTextRange(), visibleRange, true,
                                     new DefaultHighlightInfoProcessor(), false) {
       @Override
       protected boolean isAcceptableLocalTool(@NotNull LocalInspectionToolWrapper wrapper) {

@@ -8,6 +8,8 @@ import com.intellij.util.ui.tree.TreeUtil
 import javax.swing.tree.TreePath
 
 internal class VirtualFileVisitor(val file: VirtualFile, val collector: MutableList<TreePath>?) : TreeVisitor {
+  override fun visitThread(): TreeVisitor.VisitThread = TreeVisitor.VisitThread.BGT
+
   private fun found(path: TreePath) = collector?.add(path)?.let { TreeVisitor.Action.SKIP_CHILDREN } ?: TreeVisitor.Action.INTERRUPT
 
   override fun visit(path: TreePath): TreeVisitor.Action = when (val node = TreeUtil.getLastUserObject(path)) {

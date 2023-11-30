@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,18 +100,6 @@ public class ControlFlowBuilder {
     return new ControlFlowImpl(result.toArray(Instruction.EMPTY_ARRAY));
   }
 
-
-  /**
-   * Mutates instructions in place.
-   *
-   * @return control flow without transparent instructions
-   * @deprecated use {@link #completeControlFlow}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public final @NotNull ControlFlow getCompleteControlFlow() {
-    return completeControlFlow();
-  }
 
   /**
    * Adds edge between 2 edges

@@ -6,28 +6,17 @@ import com.intellij.platform.workspace.storage.impl.createEntityId
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
 class VirtualFileIndexTest {
-  @Rule
-  @JvmField
-  var application = ApplicationRule()
-
-  @Rule
-  @JvmField
-  var temporaryDirectoryRule = TemporaryDirectory()
-
-  @Rule
-  @JvmField
-  var disposableRule = DisposableRule()
+  @TempDir
+  lateinit var tempdir: Path
 
   private val manager = VirtualFileUrlManagerImpl()
 
@@ -122,12 +111,11 @@ class VirtualFileIndexTest {
       env.generate(Generator.sampledFrom(existingPaths))
     }
     else {
-      val temp = temporaryDirectoryRule.newPath()
-      existingPaths.add(temp)
+      existingPaths.add(tempdir)
       if (existingPaths.size > 30) {
         existingPaths.removeFirst()
       }
-      temp
+      tempdir
     }
 
     manager.fromPath(file.toString())

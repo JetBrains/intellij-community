@@ -28,30 +28,27 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.workspaceModel.ide.EntitiesOrphanage
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.WorkspaceModelUnloadedStorageChangeListener
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.jps.*
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
-import com.intellij.project.stateStore
-import com.intellij.util.PlatformUtils.isIntelliJ
-import com.intellij.util.PlatformUtils.isRider
-import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader.createProjectSerializers
-import com.intellij.workspaceModel.ide.impl.jpsMetrics
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.platform.workspace.storage.DummyParentEntitySource
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.project.stateStore
+import com.intellij.util.PlatformUtils.*
+import com.intellij.workspaceModel.ide.EntitiesOrphanage
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.*
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
@@ -325,6 +322,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
 
     jpsLoadProjectToEmptyStorageTimeMs.addElapsedTimeMs(start)
+    WorkspaceModelFusLogger.logLoadingJpsFromIml(System.currentTimeMillis() - start)
     return loadedProjectEntities
   }
 
@@ -390,7 +388,9 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   // IDEA-288703
   fun hasNoSerializedJpsModules(): Boolean {
     return !isIntelliJ() && // todo: https://youtrack.jetbrains.com/issue/IDEA-291451#focus=Comments-27-5967781.0-0
-           !isRider() && (prepareSerializers() as JpsProjectSerializersImpl).moduleSerializers.isEmpty()
+           !isRider() &&
+           !isFleetBackend() && // https://youtrack.jetbrains.com/issue/IDEA-323592#focus=Comments-27-7967807.0-0
+           (prepareSerializers() as JpsProjectSerializersImpl).moduleSerializers.isEmpty()
   }
 
   private fun prepareSerializers(): JpsProjectSerializers {

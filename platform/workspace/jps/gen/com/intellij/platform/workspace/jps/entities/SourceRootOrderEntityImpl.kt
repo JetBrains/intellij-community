@@ -15,26 +15,27 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) : SourceRootOrderEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrderEntityData) : SourceRootOrderEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val CONTENTROOTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java,
                                                                                      SourceRootOrderEntity::class.java,
                                                                                      ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CONTENTROOTENTITY_CONNECTION_ID,
     )
 
@@ -52,6 +53,7 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: SourceRootOrderEntityData?) : ModifiableWorkspaceEntityBase<SourceRootOrderEntity, SourceRootOrderEntityData>(
     result), SourceRootOrderEntity.Builder {
@@ -82,7 +84,7 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -196,7 +198,7 @@ open class SourceRootOrderEntityImpl(val dataSource: SourceRootOrderEntityData) 
 class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
   lateinit var orderOfSourceRoots: MutableList<VirtualFileUrl>
 
-  fun isOrderOfSourceRootsInitialized(): Boolean = ::orderOfSourceRoots.isInitialized
+  internal fun isOrderOfSourceRootsInitialized(): Boolean = ::orderOfSourceRoots.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SourceRootOrderEntity> {
     val modifiable = SourceRootOrderEntityImpl.Builder(null)
@@ -213,6 +215,10 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity") as EntityMetadata
   }
 
   override fun clone(): SourceRootOrderEntityData {
@@ -275,10 +281,5 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + orderOfSourceRoots.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.orderOfSourceRoots?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

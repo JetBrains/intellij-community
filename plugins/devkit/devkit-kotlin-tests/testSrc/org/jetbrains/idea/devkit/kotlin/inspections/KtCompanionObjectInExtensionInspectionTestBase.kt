@@ -1,11 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.refactoring.BaseRefactoringProcessor
+import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase
 
-abstract class KtCompanionObjectInExtensionInspectionTestBase : LightJavaCodeInsightFixtureTestCase() {
+abstract class KtCompanionObjectInExtensionInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
-  protected val fileExtension = "kt"
+  override fun getFileExtension(): String = "kt"
 
   override fun setUp() {
     super.setUp()
@@ -51,7 +54,48 @@ abstract class KtCompanionObjectInExtensionInspectionTestBase : LightJavaCodeIns
       """.trimIndent()
     )
 
+    myFixture.addClass(
+      """
+      package kotlin.jvm;
+
+      public @interface JvmStatic { }
+      """.trimIndent()
+    )
+
     myFixture.configureByFile("plugin.xml")
     myFixture.enableInspections(CompanionObjectInExtensionInspection())
+  }
+
+  protected fun doTestFixWithReferences(fixName: String, refFileExtension: String = fileExtension) {
+    val (fileNameBefore, fileNameAfter) = getBeforeAfterFileNames()
+    val (referencesFileNameBefore, referencesFileNameAfter) = getBeforeAfterFileNames(suffix = "references", extension = refFileExtension)
+    myFixture.testHighlighting(fileNameBefore, referencesFileNameBefore)
+    val intention: IntentionAction = myFixture.findSingleIntention(fixName)
+    myFixture.launchAction(intention)
+    myFixture.checkResultByFile(fileNameBefore, fileNameAfter, true)
+    myFixture.checkResultByFile(referencesFileNameBefore, referencesFileNameAfter, true)
+  }
+
+  protected fun doTestFixWithConflicts(fixName: String, expectedConflicts: List<String>) {
+    val fileName = "${getTestName(false)}.$fileExtension"
+    myFixture.testHighlighting(fileName)
+    val intention: IntentionAction = myFixture.findSingleIntention(fixName)
+    try {
+      myFixture.launchAction(intention)
+      fail("Expected ConflictsInTestsException exception te be thrown.")
+    }
+    catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
+      assertEquals(e.messages.size, expectedConflicts.size)
+      UsefulTestCase.assertContainsElements(e.messages, expectedConflicts)
+    }
+  }
+
+  private fun getBeforeAfterFileNames(
+    testName: String = getTestName(false),
+    suffix: String? = null,
+    extension: String = fileExtension,
+  ): Pair<String, String> {
+    val resultName = testName + suffix?.let { "_$it" }.orEmpty()
+    return "${resultName}.$extension" to "${resultName}_after.$extension"
   }
 }

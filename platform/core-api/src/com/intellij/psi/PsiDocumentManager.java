@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.application.ModalityState;
@@ -42,8 +42,7 @@ public abstract class PsiDocumentManager {
    * @param document the document for which the PSI file is requested.
    * @return the PSI file instance.
    */
-  @Nullable
-  public abstract PsiFile getPsiFile(@NotNull Document document);
+  public abstract @Nullable PsiFile getPsiFile(@NotNull Document document);
 
   /**
    * Returns the cached PSI file for the specified document.
@@ -51,8 +50,7 @@ public abstract class PsiDocumentManager {
    * @param document the document for which the PSI file is requested.
    * @return the PSI file instance, or {@code null} if there is currently no cached PSI tree for the file.
    */
-  @Nullable
-  public abstract PsiFile getCachedPsiFile(@NotNull Document document);
+  public abstract @Nullable PsiFile getCachedPsiFile(@NotNull Document document);
 
   /**
    * Returns the document for the specified PSI file.
@@ -60,8 +58,7 @@ public abstract class PsiDocumentManager {
    * @param file the file for which the document is requested.
    * @return the document instance, or {@code null} if the file is binary or has no associated document.
    */
-  @Nullable
-  public abstract Document getDocument(@NotNull PsiFile file);
+  public abstract @Nullable Document getDocument(@NotNull PsiFile file);
 
   /**
    * Returns the cached document for the specified PSI file.
@@ -69,8 +66,7 @@ public abstract class PsiDocumentManager {
    * @param file the file for which the document is requested.
    * @return the document instance, or {@code null} if there is currently no cached document for the file.
    */
-  @Nullable
-  public abstract Document getCachedDocument(@NotNull PsiFile file);
+  public abstract @Nullable Document getCachedDocument(@NotNull PsiFile file);
 
   /**
    * Commits (updates the PSI tree for) all modified but not committed documents.
@@ -112,8 +108,7 @@ public abstract class PsiDocumentManager {
    * This sequence is immutable.
    * @see com.intellij.util.text.ImmutableCharSequence
    */
-  @NotNull
-  public abstract CharSequence getLastCommittedText(@NotNull Document document);
+  public abstract @NotNull CharSequence getLastCommittedText(@NotNull Document document);
 
   /**
    * @return for uncommitted documents, the last stamp before the document change: the same stamp that current PSI should have.
@@ -131,8 +126,7 @@ public abstract class PsiDocumentManager {
    * the ones of {@link #getDocument(PsiFile)}. For uncommitted documents, the text is {@link #getLastCommittedText(Document)} and
    * the modification stamp is {@link #getLastCommittedStamp(Document)}.
    */
-  @Nullable
-  public abstract Document getLastCommittedDocument(@NotNull PsiFile file);
+  public abstract @Nullable Document getLastCommittedDocument(@NotNull PsiFile file);
 
   /**
    * Returns the array of documents which have been modified but not committed.
@@ -191,7 +185,7 @@ public abstract class PsiDocumentManager {
    * @param files the files to reparse.
    * @param includeOpenFiles if true, the files opened in editor tabs will also be reparsed.
    */
-  public abstract void reparseFiles(@NotNull final Collection<? extends VirtualFile> files, final boolean includeOpenFiles);
+  public abstract void reparseFiles(final @NotNull Collection<? extends VirtualFile> files, final boolean includeOpenFiles);
 
   /**
    * Listener for receiving notifications about creation of {@link Document} and {@link PsiFile} instances.

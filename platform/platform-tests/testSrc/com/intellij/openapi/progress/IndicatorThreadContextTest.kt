@@ -3,6 +3,8 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.contextModality
+import com.intellij.platform.util.progress.progressReporter
+import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.util.parent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -39,7 +41,7 @@ class IndicatorThreadContextTest : CancellationTest() {
   fun cancellation() {
     val indicator = EmptyProgressIndicator()
     withIndicator(indicator) {
-      assertThrows<JobCanceledException> {
+      assertThrows<CeProcessCanceledException> {
         prepareThreadContextTest { currentJob ->
           testNoExceptions()
           indicator.cancel()
@@ -92,17 +94,17 @@ class IndicatorThreadContextTest : CancellationTest() {
   fun `cancelled by child failure`() {
     val t = Throwable()
     val indicator = EmptyProgressIndicator()
-    val pce = assertThrows<JobCanceledException> {
+    val pce = assertThrows<CeProcessCanceledException> {
       withIndicator(indicator) {
-        throw assertThrows<JobCanceledException> {
+        throw assertThrows<CeProcessCanceledException> {
           prepareThreadContextTest { currentJob ->
             testNoExceptions()
             Job(parent = currentJob).completeExceptionally(t)
-            assertThrows<JobCanceledException> {
+            assertThrows<CeProcessCanceledException> {
               Cancellation.checkCancelled()
             }
             assertFalse(indicator.isCanceled)
-            throw assertThrows<JobCanceledException> {
+            throw assertThrows<CeProcessCanceledException> {
               ProgressManager.checkCanceled()
             }
           }

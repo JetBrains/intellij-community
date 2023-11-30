@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.*
 import com.intellij.util.IncorrectOperationException
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
@@ -32,7 +31,7 @@ import org.intellij.images.editor.ImageZoomModel
 import org.intellij.images.editor.impl.ImageFileEditorState
 import org.intellij.images.options.OptionsManager
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions
-import org.intellij.images.thumbnail.actions.ShowBorderAction
+import org.intellij.images.thumbnail.actions.ShowBorderAction.isBorderVisible
 import org.intellij.images.ui.ImageComponentDecorator
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
@@ -45,7 +44,6 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
@@ -88,6 +86,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
   private val myUIComponent: JCefImageViewerUI
   private val myViewerStateJSQuery: JBCefJSQuery
   private val myRequestHandler: CefRequestHandler
+  private val myLoadHandler: CefLoadHandler
 
   private var myState = ViewerState()
   private var myEditorState: ImageFileEditorState = ImageFileEditorState(
@@ -132,6 +131,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
 
   override fun dispose() {
     ourCefClient.removeRequestHandler(myRequestHandler, myBrowser.cefBrowser)
+    ourCefClient.removeLoadHandler(myLoadHandler, myBrowser.cefBrowser)
     myViewerStateJSQuery.clearHandlers()
     myDocument.removeDocumentListener(this)
   }
@@ -243,7 +243,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
         myState = jsonParser.decodeFromString(s)
       }
       catch (_: Exception) {
-        myUIComponent.showError()
+        SwingUtilities.invokeLater { myUIComponent.showError() }
         return@addHandler JBCefJSQuery.Response(null, 255, "Failed to parse the viewer state")
       }
 
@@ -273,7 +273,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
       JBCefJSQuery.Response(null)
     }
 
-    ourCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
+    myLoadHandler = object : CefLoadHandlerAdapter() {
       override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
         if (frame.isMain) {
           reloadStyles()
@@ -281,10 +281,11 @@ class JCefImageViewer(private val myFile: VirtualFile,
           execute("setImageUrl('$IMAGE_URL');")
           isGridVisible = myEditorState.isGridVisible
           isTransparencyChessboardVisible = myEditorState.isBackgroundVisible
-          setBorderVisible(ShowBorderAction.isBorderVisible())
+          setBorderVisible(isBorderVisible())
         }
       }
-    }, myBrowser.cefBrowser)
+    }
+    ourCefClient.addLoadHandler(myLoadHandler, myBrowser.cefBrowser)
 
     if (isDebugMode()) {
       myBrowser.loadURL("$VIEWER_URL?debug")

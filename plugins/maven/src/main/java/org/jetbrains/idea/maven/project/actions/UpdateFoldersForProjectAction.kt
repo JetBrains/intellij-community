@@ -16,14 +16,16 @@
 package org.jetbrains.idea.maven.project.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.performInBackground
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 
 class UpdateFoldersForProjectAction : MavenProjectsAction() {
   override fun perform(manager: MavenProjectsManager, mavenProjects: List<MavenProject>, e: AnActionEvent) {
-    performInBackground {
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(manager.project)
+    cs.launch {
       MavenFolderResolver(manager.project).resolveFoldersAndImport(mavenProjects)
     }
   }

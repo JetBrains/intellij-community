@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.navigation;
 
@@ -28,23 +28,18 @@ public interface GotoClassContributor extends ChooseByNameContributor {
    * @return collective name of items provided by this contributor
    * @see #getElementLanguage()
    */
-  @NotNull
-  @Nls
-  default String getElementKind() {
+  default @NotNull @Nls String getElementKind() {
     return IdeBundle.message("go.to.class.kind.text");
   }
 
   /**
    * Pluralized {@link #getElementKind()}
    */
-  @NotNull
-  @Nls
-  default List<String> getElementKindsPluralized() {
+  default @NotNull @Nls List<String> getElementKindsPluralized() {
     return List.of(IdeBundle.message("go.to.class.kind.text.pluralized"));
   }
 
-  @NotNull
-  default String getTabTitlePluralized() {
+  default @NotNull String getTabTitlePluralized() {
     List<String> kinds = getElementKindsPluralized();
     return !kinds.isEmpty() ? kinds.get(0) : IdeBundle.message("go.to.class.kind.text.pluralized");
   }
@@ -55,8 +50,7 @@ public interface GotoClassContributor extends ChooseByNameContributor {
    *
    * @return the language to which items returned by this contributor belong
    */
-  @Nullable
-  default Language getElementLanguage() {
+  default @Nullable Language getElementLanguage() {
     return null;
   }
 }

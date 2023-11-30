@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.*;
@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.codeInsight.template.impl.ListTemplatesHandler.filterTemplatesByPrefix;
 
-public class LiveTemplateCompletionContributor extends CompletionContributor implements DumbAware {
+public final class LiveTemplateCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Key<Boolean> ourShowTemplatesInTests = Key.create("ShowTemplatesInTests");
 
   @TestOnly
@@ -75,7 +75,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
           TemplateActionContext.expanding(file, editor));
         final Map<TemplateImpl, String> templates = filterTemplatesByPrefix(availableTemplates, editor, offset, false, false);
         boolean isAutopopup = parameters.getInvocationCount() == 0;
-        if (showAllTemplates()) {
+        if (shouldShowAllTemplates()) {
           final AtomicBoolean templatesShown = new AtomicBoolean(false);
           final CompletionResultSet finalResult = result;
           boolean showLiveTemplatesOnTop = Registry.is("ide.completion.show.live.templates.on.top");
@@ -136,11 +136,6 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
     return false;
   }
 
-  //for Kotlin
-  protected boolean showAllTemplates() {
-    return shouldShowAllTemplates();
-  }
-
   private static void ensureTemplatesShown(AtomicBoolean templatesShown,
                                            Map<TemplateImpl, String> templates,
                                            List<? extends TemplateImpl> availableTemplates,
@@ -152,7 +147,9 @@ public class LiveTemplateCompletionContributor extends CompletionContributor imp
       result.restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<>("type after non-identifier") {
         @Override
         public boolean accepts(@NotNull String s, ProcessingContext context) {
-          return s.length() > 1 && !Character.isJavaIdentifierPart(s.charAt(s.length() - 2)) && templateKeys.stream().anyMatch(template -> s.endsWith(template));
+          return s.length() > 1 &&
+                 !Character.isJavaIdentifierPart(s.charAt(s.length() - 2)) &&
+                 ContainerUtil.exists(templateKeys, template -> s.endsWith(template));
         }
       }));
       for (final Map.Entry<TemplateImpl, String> entry : templates.entrySet()) {

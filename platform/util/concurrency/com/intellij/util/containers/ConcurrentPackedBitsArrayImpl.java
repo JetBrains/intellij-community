@@ -9,7 +9,8 @@ class ConcurrentPackedBitsArrayImpl implements ConcurrentPackedBitsArray {
 
   ConcurrentPackedBitsArrayImpl(int bitsPerChunk) {
     if (bitsPerChunk <= 0 || bitsPerChunk > ConcurrentBitSetImpl.BITS_PER_WORD) {
-      throw new IllegalArgumentException("Bits-to-pack number must be between 1 and " + ConcurrentBitSetImpl.BITS_PER_WORD + ", but got: "+bitsPerChunk);
+      throw new IllegalArgumentException(
+        "Bits-to-pack number must be between 1 and " + ConcurrentBitSetImpl.BITS_PER_WORD + ", but got: " + bitsPerChunk);
     }
     this.bitsPerChunk = bitsPerChunk;
     mask = bitsPerChunk == Integer.SIZE ? -1 : (1 << bitsPerChunk) - 1;
@@ -22,8 +23,8 @@ class ConcurrentPackedBitsArrayImpl implements ConcurrentPackedBitsArray {
   @Override
   public long get(int id) {
     assert id >= 0 : id;
-    int bitIndex = id/chunksPerWord * ConcurrentBitSetImpl.BITS_PER_WORD + (id%chunksPerWord)*bitsPerChunk;
-    return bits.getWord(bitIndex) >> bitIndex;
+    int bitIndex = id / chunksPerWord * ConcurrentBitSetImpl.BITS_PER_WORD + (id % chunksPerWord) * bitsPerChunk;
+    return Integer.toUnsignedLong( (bits.getWord(bitIndex) >> bitIndex) & mask );
   }
 
   // stores chunk atomically, returns previous chunk
@@ -31,11 +32,12 @@ class ConcurrentPackedBitsArrayImpl implements ConcurrentPackedBitsArray {
   public long set(int id, long flags) {
     assert id >= 0 : id;
     if ((flags & ~mask) != 0) {
-      throw new IllegalArgumentException("Flags must be between 0 and "+ mask +" but got:"+flags);
+      throw new IllegalArgumentException("Flags must have <= " + bitsPerChunk + " bits set, but got: " + Long.toBinaryString(flags));
     }
-    int bitIndex = id/chunksPerWord * ConcurrentBitSetImpl.BITS_PER_WORD + (id%chunksPerWord)*bitsPerChunk;
+    int bitIndex = id / chunksPerWord * ConcurrentBitSetImpl.BITS_PER_WORD + (id % chunksPerWord) * bitsPerChunk;
 
-    return bits.changeWord(bitIndex, word -> word & ~(mask << bitIndex) | ((int)flags << bitIndex)) >> bitIndex;
+    int oldFlags = bits.changeWord(bitIndex, word -> word & ~(mask << bitIndex) | ((int)flags << bitIndex)) >> bitIndex;
+    return Integer.toUnsignedLong(oldFlags & mask);
   }
 
   @Override

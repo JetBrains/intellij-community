@@ -4,7 +4,12 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.elementType
+import com.intellij.psi.util.nextLeafs
+import com.intellij.psi.util.prevLeafs
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -13,8 +18,8 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class RemoveEmptyClassBodyInspection : AbstractApplicabilityBasedInspection<KtClassBody>(KtClassBody::class.java),
-                                       CleanupLocalInspectionTool {
+internal class RemoveEmptyClassBodyInspection : AbstractApplicabilityBasedInspection<KtClassBody>(KtClassBody::class.java),
+                                                CleanupLocalInspectionTool {
     override fun inspectionText(element: KtClassBody): String {
         return KotlinBundle.message("redundant.empty.class.body")
     }
@@ -43,6 +48,12 @@ class RemoveEmptyClassBodyInspection : AbstractApplicabilityBasedInspection<KtCl
                 val isLastChild = element == children.lastOrNull()
                 val isLastEnumEntry = element == children.lastOrNull { it is KtEnumEntry }
                 if (isLastChild || !isLastEnumEntry) return
+            }
+
+            is KtClass -> {
+                if (!element.isLocal) return
+                if (element.nextLeafs.firstOrNull { it !is PsiWhiteSpace && it !is PsiComment }?.elementType != KtTokens.LPAR) return
+                if (next.prevLeafs.firstOrNull { it !is PsiWhiteSpace && it !is PsiComment }?.elementType == KtTokens.RPAR) return
             }
 
             else -> return

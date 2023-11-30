@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.externalSystem.ImportedLibraryProperties;
@@ -15,11 +15,11 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -272,14 +272,14 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   @Override
   public void useModuleOutput(String production, String test) {
     getCompilerExtension().inheritCompilerOutputPath(false);
-    if (StringUtils.isEmpty(production) && StringUtils.isEmpty(test)) {
+    if (Strings.isEmpty(production) && Strings.isEmpty(test)) {
       getCompilerExtension().inheritCompilerOutputPath(true);
     }
-    else if (StringUtils.isEmpty(test)) {
+    else if (Strings.isEmpty(test)) {
       getCompilerExtension().setCompilerOutputPath(toUrl(production).getUrl());
       getCompilerExtension().setExcludeOutput(true);
     }
-    else if (StringUtils.isEmpty(production)) {
+    else if (Strings.isEmpty(production)) {
       getCompilerExtension().setCompilerOutputPathForTests(toUrl(test).getUrl());
       getCompilerExtension().setExcludeOutput(true);
     }

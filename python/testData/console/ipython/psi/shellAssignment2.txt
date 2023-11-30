@@ -6,8 +6,4 @@ PyFile:shellAssignment2.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyEmptyExpression
-      PsiElement(Py:PLING)('!')
-      PsiElement(Py:IDENTIFIER)('ls')
-      PsiWhiteSpace(' ')
-      PsiElement(Py:MINUS)('-')
-      PsiElement(Py:IDENTIFIER)('la')
+      PsiElement(Py:SHELL_COMMAND)('!ls -la')

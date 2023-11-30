@@ -20,49 +20,59 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.CanBePrimaryConstructorPropertyUtils.getCorrespondingPrimaryConstructorParameter
 
 class CanBePrimaryConstructorPropertyInspection : AbstractKotlinInspection() {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = propertyVisitor(fun(property) {
+        val nameIdentifier = property.nameIdentifier ?: return
+        val parameter = property.getCorrespondingPrimaryConstructorParameter() ?: return
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return propertyVisitor(fun(property) {
-            if (property.isLocal) return
-            if (property.getter != null || property.setter != null || property.delegate != null) return
-            val assigned = property.initializer as? KtReferenceExpression ?: return
-
-            val context = assigned.analyze()
-            val assignedDescriptor = context.get(BindingContext.REFERENCE_TARGET, assigned) as? ValueParameterDescriptor ?: return
-
-            val containingConstructor = assignedDescriptor.containingDeclaration as? ClassConstructorDescriptor ?: return
-            if (containingConstructor.containingDeclaration.isData) return
-
-            val propertyTypeReference = property.typeReference
-            val propertyType = context.get(BindingContext.TYPE, propertyTypeReference)
-            if (propertyType != null && propertyType != assignedDescriptor.type) return
-
-            val nameIdentifier = property.nameIdentifier ?: return
-            if (nameIdentifier.text != assignedDescriptor.name.asString()) return
-
-            val assignedParameter = DescriptorToSourceUtils.descriptorToDeclaration(assignedDescriptor) as? KtParameter ?: return
-            val containingClassOrObject = property.containingClassOrObject ?: return
-            if (containingClassOrObject !== assignedParameter.containingClassOrObject) return
-            if (containingClassOrObject.isInterfaceClass()) return
-            if (property.hasModifier(KtTokens.OPEN_KEYWORD)
-                && containingClassOrObject is KtClass
-                && containingClassOrObject.isOpen()
-                && assignedParameter.isUsedInClassInitializer(containingClassOrObject)
-            ) return
-
-            holder.registerProblem(
-                holder.manager.createProblemDescriptor(
-                    nameIdentifier,
-                    nameIdentifier,
-                    KotlinBundle.message("property.is.explicitly.assigned.to.parameter.0.can", assignedDescriptor.name),
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    isOnTheFly,
-                    MovePropertyToConstructorIntention()
-                )
+        holder.registerProblem(
+            holder.manager.createProblemDescriptor(
+                nameIdentifier,
+                nameIdentifier,
+                KotlinBundle.message("property.is.explicitly.assigned.to.parameter.0.can", parameter.name),
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                isOnTheFly,
+                MovePropertyToConstructorIntention()
             )
-        })
+        )
+    })
+}
+
+internal object CanBePrimaryConstructorPropertyUtils {
+    fun KtProperty.canBePrimaryConstructorProperty(): Boolean =
+        getCorrespondingPrimaryConstructorParameter() != null
+
+    fun KtProperty.getCorrespondingPrimaryConstructorParameter(): ValueParameterDescriptor? {
+        if (isLocal) return null
+        if (getter != null || setter != null || delegate != null) return null
+
+        val reference = initializer as? KtReferenceExpression ?: return null
+        val context = reference.analyze()
+        val assignedDescriptor = context.get(BindingContext.REFERENCE_TARGET, reference) as? ValueParameterDescriptor ?: return null
+
+        val containingConstructor = assignedDescriptor.containingDeclaration as? ClassConstructorDescriptor ?: return null
+        if (containingConstructor.containingDeclaration.isData) return null
+
+        val propertyTypeReference = typeReference
+        val propertyType = context.get(BindingContext.TYPE, propertyTypeReference)
+        if (propertyType != null && propertyType != assignedDescriptor.type) return null
+
+        val nameIdentifier = nameIdentifier ?: return null
+        if (nameIdentifier.text != assignedDescriptor.name.asString()) return null
+
+        val assignedParameter = DescriptorToSourceUtils.descriptorToDeclaration(assignedDescriptor) as? KtParameter ?: return null
+        val containingClassOrObject = containingClassOrObject ?: return null
+        if (containingClassOrObject !== assignedParameter.containingClassOrObject) return null
+        if (containingClassOrObject.isInterfaceClass()) return null
+        if (hasModifier(KtTokens.OPEN_KEYWORD)
+            && containingClassOrObject is KtClass
+            && containingClassOrObject.isOpen()
+            && assignedParameter.isUsedInClassInitializer(containingClassOrObject)
+        ) return null
+
+        return assignedDescriptor
     }
 
     private fun KtClass.isOpen(): Boolean {

@@ -40,7 +40,7 @@ public final class HgExecutableManager {
 
   @NotNull
   public String getHgExecutable() {
-    String path = ApplicationManager.getApplication().getService(HgGlobalSettings.class).getHgExecutable();
+    String path = HgGlobalSettings.getInstance().getHgExecutable();
     return path == null ? getDefaultExecutable() : path;
   }
 

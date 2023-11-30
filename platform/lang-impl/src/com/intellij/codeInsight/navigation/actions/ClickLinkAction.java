@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public class ClickLinkAction extends DumbAwareAction {
+public final class ClickLinkAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.daemon.Validator;
@@ -20,12 +20,11 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxRootTagDescriptor;
 
 import java.util.ArrayList;
 
-public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<XmlDocument> {
+public final class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<XmlDocument> {
   private XmlFile myFile;
 
-  @Nullable
   @Override
-  public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     final XmlTag parentTag = tag.getParentTag();
     if (parentTag != null) {
       final XmlElementDescriptor descriptor = parentTag.getDescriptor();
@@ -57,8 +56,7 @@ public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<Xml
   }
 
   @Override
-  @Nullable
-  public XmlFile getDescriptorFile() {
+  public @Nullable XmlFile getDescriptorFile() {
      return myFile;
    }
 

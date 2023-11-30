@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.largeFilesEditor.PlatformActionsReplacer;
@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorState;
@@ -40,7 +41,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
 
-public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFileEditor {
+public final class LargeFileEditorImpl extends UserDataHolderBase implements LargeFileEditor {
 
   private static final Logger logger = Logger.getInstance(LargeFileEditorImpl.class);
   private final Project project;
@@ -176,6 +177,11 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
   }
 
   @Override
+  public void trySetHighlighter(@NotNull EditorHighlighter highlighter) {
+    editorModel.trySetHighlighter(highlighter);
+  }
+
+  @Override
   public long getCaretPageNumber() {
     return editorModel.getCaretPageNumber();
   }
@@ -262,7 +268,7 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
     return doc;
   }
 
-  private class MyCaretListener implements CaretListener {
+  private final class MyCaretListener implements CaretListener {
     @Override
     public void caretPositionChanged(@NotNull CaretEvent e) {
       searchManager.onCaretPositionChanged(e);

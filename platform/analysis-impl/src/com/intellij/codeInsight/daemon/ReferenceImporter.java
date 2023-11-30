@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,7 @@ public interface ReferenceImporter {
    * (for example, in case of Java, the plugin added the corresponding import statement to this file, thus making this reference valid)
    */
   default boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Future<BooleanSupplier> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.compute(() -> {
       if (editor.isDisposed() || file.getProject().isDisposed()) return null;
       int offset = editor.getCaretModel().getOffset();

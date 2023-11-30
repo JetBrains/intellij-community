@@ -31,7 +31,7 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
     }
 
   var fontFace: String?
-    get() = state.fontFace ?: JBUIScale.getSystemFontData(null).first
+    get() = state.fontFace ?: JBUIScale.getSystemFontDataIfInitialized()?.first
     set(value) {
       updateState { it.copy(fontFace = value) }
     }
@@ -98,33 +98,6 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
     initialConfigurationLoaded = true
   }
 
-  internal fun migratePresentationModeFontSize(presentationModeFontSize: Int) {
-    if (state.presentationModeIdeScale != 0f) {
-      return
-    }
-
-    if (presentationModeFontSize == 24) {
-      updateState {
-        it.copy(presentationModeIdeScale = UISettingsUtils.defaultScale(true))
-      }
-    }
-    else {
-      updateState {
-        it.copy(presentationModeIdeScale = presentationModeFontSize.toFloat() / it.fontSize)
-      }
-    }
-  }
-
-  internal fun migrateOverrideLafFonts(overrideLafFonts: Boolean) {
-    if (state.overrideLafFontsWasMigrated) {
-      return
-    }
-
-    updateState {
-      it.copy(overrideLafFontsWasMigrated = true, overrideLafFonts = overrideLafFonts)
-    }
-  }
-
   internal fun fixFontSettings() {
     val state = state
 
@@ -151,6 +124,16 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
         updateState { it.copy(fontFace = fontNames[0]) }
       }
     }
+  }
+
+  internal fun migratePresentationModeIdeScale(presentationModeFontSize: Int) {
+    if (presentationModeIdeScale != 0f) {
+      return
+    }
+    presentationModeIdeScale = if (presentationModeFontSize == 24 || fontSize == 0f)
+      UISettingsUtils.defaultScale(isPresentation = true)
+    else
+      presentationModeFontSize.toFloat() / fontSize
   }
 }
 

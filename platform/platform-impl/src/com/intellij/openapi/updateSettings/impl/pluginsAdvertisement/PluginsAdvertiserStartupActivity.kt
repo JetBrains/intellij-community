@@ -1,34 +1,24 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
-import com.intellij.configurationStore.FileStorageAnnotation
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.advertiser.PluginDataSet
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.ide.util.PropertiesComponent
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.EditorNotifications
-import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -166,35 +156,7 @@ private fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureTy
 }
 
 private fun notifyUnbundledPlugins(project: Project) {
-  val llmPluginId = PluginId.getId("com.intellij.ml.llm")
-
-  if (PluginManagerCore.isPluginInstalled(llmPluginId) || PlatformUtils.isCommunityEdition()) {
-    return
-  }
-  if (PropertiesComponent.getInstance().isTrueValue("dismiss.llm.not.bundled")) {
-    return
-  }
-
-  val storage = ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(
-    FileStorageAnnotation("llm.for.code.xml", false)
-  )
-  if (storage.hasState("LLMSettings", false)) {
-    notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.unbundled.plugin.ai.assistant"), NotificationType.INFORMATION)
-      .setDisplayId("advertiser.unbundled.plugin")
-      .addAction(object : AnAction(IdeBundle.message("plugins.advertiser.unbundled.plugin.install")) {
-        override fun actionPerformed(e: AnActionEvent) {
-          installAndEnable(project, setOf(llmPluginId), true) {
-          }
-        }
-      })
-      .addAction(object : NotificationAction(IdeBundle.message("plugins.advertiser.unbundled.plugin.dismiss")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          notification.expire()
-          PropertiesComponent.getInstance().setValue("dismiss.llm.not.bundled", true)
-        }
-      })
-      .notify(project)
-  }
+  // stub for future plugins
 }
 
 private val PluginFeatureMap.isOutdated: Boolean

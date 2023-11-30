@@ -103,6 +103,7 @@
   <technology name="jetbrains-annotations" class="org.jetbrains.annotations.Contract"/>
   <technology name="jetbrains-compose" class="androidx.compose.ui.ComposeScene"/>
   <technology name="jhipster" class="io.github.jhipster.config.JHipsterProperties"/>
+  <technology name="jhipster" class="tech.jhipster.config.JHipsterConfiguration"/>
   <technology name="jmockit" class="mockit.Mock"/>
   <technology name="jodd-db" class="jodd.db.DbQuery"/>
   <technology name="jooby" class="org.jooby.Jooby"/>

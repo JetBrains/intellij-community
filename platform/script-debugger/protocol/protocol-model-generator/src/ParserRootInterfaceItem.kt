@@ -4,11 +4,7 @@ import org.jetbrains.protocolReader.JSON_READER_PARAMETER_DEF
 import org.jetbrains.protocolReader.TextOutput
 
 class ParserRootInterfaceItem(val domain: String, val name: String, private val nameScheme: ClassNameScheme.Input) : Comparable<ParserRootInterfaceItem> {
-  private val fullName: String
-
-  init {
-    fullName = nameScheme.getFullName(domain, name).getFullText()
-  }
+  private val fullName: String = nameScheme.getFullName(domain, name).getFullText()
 
   fun writeCode(out: TextOutput) {
     out.append("@JsonParseMethod").newLine()

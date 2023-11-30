@@ -7,6 +7,7 @@ import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiType;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 @ApiStatus.Experimental
-public class ShowCollectionHistoryAction extends XFetchValueActionBase {
+public class ShowCollectionHistoryAction extends XFetchValueActionBase implements ActionRemoteBehaviorSpecification.Disabled {
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (!Registry.is("debugger.collection.watchpoints.enabled")) {

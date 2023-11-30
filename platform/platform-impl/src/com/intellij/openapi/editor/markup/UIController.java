@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -29,8 +29,7 @@ public interface UIController {
    * Contains all possible actions in the settings menu. The {@code List} is wrapped
    * in ActionGroup at the UI creation level in {@code EditorMarkupModelImpl}
    */
-  @NotNull
-  default List<AnAction> getActions() {
+  default @NotNull List<AnAction> getActions() {
     return Collections.emptyList();
   }
 

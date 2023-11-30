@@ -9,6 +9,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,7 +114,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
   public void testModalityState() {
     assumeFalse("Test cannot be run in headless environment", GraphicsEnvironment.isHeadless());
     assertTrue(ApplicationManager.getApplication().getClass().getName().contains("ApplicationImpl"));
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     assertReady(null);
 

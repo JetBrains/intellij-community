@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.targets;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,9 +11,8 @@ public class DecapitalizedAliasingPsiTarget extends AliasingPsiTarget {
     super(element);
   }
 
-  @NotNull
   @Override
-  public String getNameAlias(@NotNull String psiTargetName) {
+  public @NotNull String getNameAlias(@NotNull String psiTargetName) {
     return StringUtil.decapitalize(psiTargetName);
   }
 

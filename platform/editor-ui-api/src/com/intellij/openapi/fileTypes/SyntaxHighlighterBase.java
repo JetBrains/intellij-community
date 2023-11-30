@@ -37,7 +37,7 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     return result;
   }
 
-  public static TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key, TextAttributesKey @NotNull [] base) {
+  public static @NotNull TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key, @NotNull TextAttributesKey @NotNull [] base) {
     if (key == null) return base;
     TextAttributesKey[] result = new TextAttributesKey[base.length + 1];
     System.arraycopy(base, 0, result, 1, base.length);
@@ -45,7 +45,7 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     return result;
   }
 
-  public static TextAttributesKey @NotNull [] pack(TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey t1, @Nullable TextAttributesKey t2) {
+  public static @NotNull TextAttributesKey @NotNull [] pack(TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey t1, @Nullable TextAttributesKey t2) {
     int add = 0;
     if (t1 != null) add++;
     if (t2 != null) add++;
@@ -57,11 +57,11 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     return result;
   }
 
-  public static void fillMap(@NotNull Map<IElementType, TextAttributesKey> map, @NotNull TokenSet keys, TextAttributesKey value) {
+  public static void fillMap(@NotNull Map<? super IElementType, ? super TextAttributesKey> map, @NotNull TokenSet keys, @NotNull TextAttributesKey value) {
     fillMap(map, value, keys.getTypes());
   }
 
-  protected static void fillMap(@NotNull Map<IElementType, TextAttributesKey> map, TextAttributesKey value, IElementType @NotNull ... types) {
+  protected static void fillMap(@NotNull Map<? super IElementType, ? super TextAttributesKey> map, @NotNull TextAttributesKey value, @NotNull IElementType @NotNull ... types) {
     for (IElementType type : types) {
       map.put(type, value);
     }

@@ -11,7 +11,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
-import com.intellij.internal.statistic.tools.InspectionsUsagesCollector.InspectionToolValidator;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
@@ -29,7 +28,7 @@ public final class IntentionFUSCollector extends CounterUsagesCollector {
   private static final ClassEventField ID_FIELD = EventFields.Class("id");
   private static final IntEventField POSITION_FIELD = EventFields.Int("position");
   private static final StringEventField INSPECTION_ID_FIELD =
-    EventFields.StringValidatedByCustomRule("inspection_id", InspectionToolValidator.class);
+    EventFields.StringValidatedByCustomRule("inspection_id", InspectionUsageFUSCollector.InspectionToolValidator.class);
 
   private final static EventLogGroup GROUP = new EventLogGroup("intentions", 61);
   private final static EventId3<Class<?>, PluginInfo, Language> CALLED =

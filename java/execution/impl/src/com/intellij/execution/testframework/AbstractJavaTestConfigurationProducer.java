@@ -37,14 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestConfigurationBase> extends JavaRunConfigurationProducerBase<T> {
-  /**
-   * @deprecated Override {@link #getConfigurationFactory()}.
-   */
-  @Deprecated(forRemoval = true)
-  protected AbstractJavaTestConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
-  }
-
   protected AbstractJavaTestConfigurationProducer() {
   }
 

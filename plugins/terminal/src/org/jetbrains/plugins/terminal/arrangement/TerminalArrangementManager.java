@@ -23,7 +23,7 @@ import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 import java.util.List;
 
 @State(name = "TerminalArrangementManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
-public class TerminalArrangementManager implements PersistentStateComponent<TerminalArrangementState> {
+public final class TerminalArrangementManager implements PersistentStateComponent<TerminalArrangementState> {
 
   private final TerminalWorkingDirectoryManager myWorkingDirectoryManager;
   private final Project myProject;

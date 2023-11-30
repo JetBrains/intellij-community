@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -74,7 +75,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
     if (argumentList == null) return null;
     PsiExpression[] arguments = argumentList.getExpressions();
     if (arguments.length != 1) return null;
-    return ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(arguments[0]), PsiExpression.class);
+    return PsiUtil.skipParenthesizedExprDown(arguments[0]);
   }
 
   private enum StreamType {

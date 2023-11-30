@@ -1,4 +1,5 @@
-from typing import Any, ClassVar
+from _typeshed import Incomplete
+from typing import ClassVar
 from typing_extensions import Literal
 
 from .ImageFile import ImageFile
@@ -6,5 +7,5 @@ from .ImageFile import ImageFile
 class PcdImageFile(ImageFile):
     format: ClassVar[Literal["PCD"]]
     format_description: ClassVar[str]
-    im: Any
+    im: Incomplete
     def load_end(self) -> None: ...

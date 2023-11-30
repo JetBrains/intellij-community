@@ -30,13 +30,11 @@ class RedundantUnitReturnTypeInspection : AbstractKotlinInspection(), CleanupLoc
             }
         })
     }
+}
 
-    companion object {
-        fun hasRedundantUnitReturnType(function: KtNamedFunction): Boolean {
-            if (!function.hasBlockBody()) return false
-            if (function.typeReference?.typeElement == null) return false
-            val descriptor = function.resolveToDescriptorIfAny() ?: return false
-            return descriptor.returnType?.isUnit() == true
-        }
-    }
+private fun hasRedundantUnitReturnType(function: KtNamedFunction): Boolean {
+    if (!function.hasBlockBody()) return false
+    if (function.typeReference?.typeElement == null) return false
+    val descriptor = function.resolveToDescriptorIfAny() ?: return false
+    return descriptor.returnType?.isUnit() == true
 }

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.ui.model.AdditionalCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.model.contextAvailable
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
@@ -22,7 +23,7 @@ class CodeVisionListPopup private constructor(project: Project, aStep: ListPopup
     private val settingButton = AdditionalCodeVisionEntry(CodeVisionHost.settingsLensProviderId, CodeVisionBundle.message("LensListPopup.tooltip.settings.settings"),
                                                           CodeVisionBundle.message("LensListPopup.tooltip.settings"))
 
-    fun createLensList(model: RangeCodeVisionModel, project: Project): CodeVisionListPopup {
+    fun createLensList(model: RangeCodeVisionModel, project: Project, inlay: Inlay<*>): CodeVisionListPopup {
       val lst: ArrayList<CodeVisionEntry> = ArrayList(model.sortedLensesMorePopup())
       lst.add(settingButton)
 
@@ -59,7 +60,7 @@ class CodeVisionListPopup private constructor(project: Project, aStep: ListPopup
           }
 
           doFinalStep {
-            model.handleLensClick(selectedValue)
+            model.handleLensClick(selectedValue, inlay)
           }
           return PopupStep.FINAL_CHOICE
         }

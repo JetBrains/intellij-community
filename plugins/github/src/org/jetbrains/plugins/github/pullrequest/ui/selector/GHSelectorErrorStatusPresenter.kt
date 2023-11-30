@@ -9,7 +9,6 @@ import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModel
 import org.jetbrains.plugins.github.authentication.AuthorizationType
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
@@ -30,7 +29,7 @@ class GHSelectorErrorStatusPresenter(
 
   override fun getErrorDescription(error: RepositoryAndAccountSelectorViewModel.Error): String = when (error) {
     is RepositoryAndAccountSelectorViewModel.Error.SubmissionError -> ExceptionUtil.getPresentableMessage(error.exception)
-    is RepositoryAndAccountSelectorViewModel.Error.MissingCredentials -> GithubBundle.message("account.token.missing")
+    is RepositoryAndAccountSelectorViewModel.Error.MissingCredentials -> CollaborationToolsBundle.message("account.token.missing")
   }
 
   override fun getErrorAction(error: RepositoryAndAccountSelectorViewModel.Error): Action? = when (error) {
@@ -42,7 +41,7 @@ class GHSelectorErrorStatusPresenter(
     private val project: Project,
     private val account: GithubAccount,
     private val resetAction: () -> Unit
-  ) : AbstractAction(CollaborationToolsBundle.message("repository.and.account.selector.login.again.action.text")) {
+  ) : AbstractAction(CollaborationToolsBundle.message("login.again.action.text")) {
     override fun actionPerformed(event: ActionEvent) {
       val parentComponent = event.source as? JComponent ?: return
       val authData = GHAccountsUtil.requestReLogin(account, project, parentComponent, authType = AuthorizationType.UNDEFINED)

@@ -1,17 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -19,17 +17,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class WrapSwitchRuleStatementsIntoBlockFix extends BaseIntentionAction implements IntentionActionWithFixAllOption {
-  @NotNull
-  private final PsiSwitchLabeledRuleStatement myRuleStatement;
-
+public class WrapSwitchRuleStatementsIntoBlockFix extends PsiUpdateModCommandAction<PsiSwitchLabeledRuleStatement> {
   public WrapSwitchRuleStatementsIntoBlockFix(@NotNull PsiSwitchLabeledRuleStatement ruleStatement) {
-    myRuleStatement = ruleStatement;
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new WrapSwitchRuleStatementsIntoBlockFix(PsiTreeUtil.findSameElementInCopy(myRuleStatement, target));
+    super(ruleStatement);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -40,27 +30,23 @@ public class WrapSwitchRuleStatementsIntoBlockFix extends BaseIntentionAction im
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PsiJavaFile)) return false;
-    if (!myRuleStatement.isValid()) return false;
-    if (myRuleStatement.getBody() instanceof PsiBlockStatement) return false;
-    PsiStatement sibling = PsiTreeUtil.getNextSiblingOfType(myRuleStatement, PsiStatement.class);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiSwitchLabeledRuleStatement ruleStatement) {
+    if (ruleStatement.getBody() instanceof PsiBlockStatement) return null;
+    PsiStatement sibling = PsiTreeUtil.getNextSiblingOfType(ruleStatement, PsiStatement.class);
     if (sibling == null || sibling instanceof PsiSwitchLabelStatementBase) {
-      setText(getFamilyName());
-    } else {
-      setText(QuickFixBundle.message("wrap.with.block"));
+      return Presentation.of(getFamilyName()).withFixAllOption(this);
     }
-    return true;
+    return Presentation.of(QuickFixBundle.message("wrap.with.block")).withFixAllOption(this);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!myRuleStatement.isValid()) return;
-    PsiCodeBlock parent = ObjectUtils.tryCast(myRuleStatement.getParent(), PsiCodeBlock.class);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiSwitchLabeledRuleStatement ruleStatement, @NotNull ModPsiUpdater updater) {
+    if (!ruleStatement.isValid()) return;
+    PsiCodeBlock parent = ObjectUtils.tryCast(ruleStatement.getParent(), PsiCodeBlock.class);
     if (parent == null) return;
     PsiJavaToken rBrace = parent.getRBrace();
     PsiElement[] children = parent.getChildren();
-    int index = ArrayUtil.indexOf(children, myRuleStatement);
+    int index = ArrayUtil.indexOf(children, ruleStatement);
     assert index >= 0;
     int nextIndex = index + 1;
     while (nextIndex < children.length && !(children[nextIndex] instanceof PsiSwitchLabelStatementBase) && children[nextIndex] != rBrace) {
@@ -70,18 +56,18 @@ public class WrapSwitchRuleStatementsIntoBlockFix extends BaseIntentionAction im
       nextIndex--;
     }
     PsiElement oldBody = null;
-    if (myRuleStatement.getBody() != null) {
-      oldBody = myRuleStatement.getBody().copy();
-      myRuleStatement.getBody().delete();
+    if (ruleStatement.getBody() != null) {
+      oldBody = ruleStatement.getBody().copy();
+      ruleStatement.getBody().delete();
     }
-    for (PsiElement lastChild = myRuleStatement.getLastChild(); lastChild != null; lastChild = lastChild.getPrevSibling()) {
+    for (PsiElement lastChild = ruleStatement.getLastChild(); lastChild != null; lastChild = lastChild.getPrevSibling()) {
       if (PsiUtil.isJavaToken(lastChild, JavaTokenType.SEMICOLON)) {
         lastChild.delete();
         break;
       }
     } 
-    PsiSwitchLabeledRuleStatement newRule = (PsiSwitchLabeledRuleStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(
-        myRuleStatement.getText() + "{}", myRuleStatement);
+    PsiSwitchLabeledRuleStatement newRule = (PsiSwitchLabeledRuleStatement)JavaPsiFacade.getElementFactory(context.project())
+      .createStatementFromText(ruleStatement.getText() + "{}", ruleStatement);
     PsiCodeBlock block = ((PsiBlockStatement)Objects.requireNonNull(newRule.getBody())).getCodeBlock();
     if (oldBody != null) {
       block.add(oldBody);
@@ -92,6 +78,6 @@ public class WrapSwitchRuleStatementsIntoBlockFix extends BaseIntentionAction im
       block.addRange(first, last);
       parent.deleteChildRange(first, last);
     }
-    myRuleStatement.replace(newRule);
+    ruleStatement.replace(newRule);
   }
 }

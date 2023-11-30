@@ -10,7 +10,10 @@ import com.intellij.collaboration.util.resolveRelative
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCiJobDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
@@ -25,9 +28,9 @@ class GitLabMergeRequestStatusViewModel(
 ) : CodeReviewStatusViewModel {
   private val cs = parentCs.childScope()
 
-  private val pipeline: Flow<GitLabPipelineDTO?> = mergeRequest.pipeline
+  private val pipeline: SharedFlow<GitLabPipelineDTO?> = mergeRequest.details.map { it.headPipeline }.modelFlow(cs, thisLogger())
 
-  override val hasConflicts: SharedFlow<Boolean> = mergeRequest.hasConflicts.modelFlow(cs, thisLogger())
+  override val hasConflicts: SharedFlow<Boolean> = mergeRequest.details.map { it.conflicts }.modelFlow(cs, thisLogger())
 
   override val ciJobs: SharedFlow<List<CodeReviewCIJob>> = pipeline.map {
     it?.jobs?.map { job -> job.convert() } ?: emptyList()
@@ -44,8 +47,8 @@ class GitLabMergeRequestStatusViewModel(
   }
 
   private fun GitLabCiJobDTO.convert(): CodeReviewCIJob {
-    val jobUrl: URI = serverPath.toURI().resolveRelative(webPath)
-    return CodeReviewCIJob(name, status.toCiState(), jobUrl.toString())
+    val jobUrl: URI? = webPath?.let { serverPath.toURI().resolveRelative(it) }
+    return CodeReviewCIJob(name, status.toCiState(), jobUrl?.toString())
   }
 
   // TODO: Add more states (CodeReviewCIJobState.SKIPPED -> MANUAL, SKIPPED)

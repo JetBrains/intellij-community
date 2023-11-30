@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -22,7 +23,6 @@ import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.containers.FileCollectionFactory;
-import com.intellij.util.io.PathKt;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import one.util.streamex.MoreCollectors;
@@ -42,6 +42,7 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,7 +82,7 @@ public final class MavenProjectsTree {
   private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new HashMap<>();
 
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
-  private final @NotNull  Project myProject;
+  private final @NotNull Project myProject;
 
 
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
@@ -109,7 +110,7 @@ public final class MavenProjectsTree {
   public static @Nullable MavenProjectsTree read(Project project, Path file) throws IOException {
     MavenProjectsTree result = new MavenProjectsTree(project);
 
-    try (DataInputStream in = new DataInputStream(new BufferedInputStream(PathKt.inputStream(file)))) {
+    try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(file)))) {
       try {
         if (!STORAGE_VERSION.equals(in.readUTF())) return null;
         result.myManagedFilesPaths = readCollection(in, new LinkedHashSet<>());
@@ -121,7 +122,7 @@ public final class MavenProjectsTree {
       }
       catch (IOException e) {
         in.close();
-        PathKt.delete(file);
+        Files.delete(file);
         throw e;
       }
       catch (Throwable e) {
@@ -173,7 +174,7 @@ public final class MavenProjectsTree {
   public void save(@NotNull Path file) throws IOException {
     synchronized (myStateLock) {
       withReadLock(() -> {
-        try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(PathKt.outputStream(file)))) {
+        try (var out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(NioFiles.createParentDirectories(file))))) {
           out.writeUTF(STORAGE_VERSION);
           writeCollection(out, myManagedFilesPaths);
           writeCollection(out, myIgnoredFilesPaths);
@@ -479,7 +480,8 @@ public final class MavenProjectsTree {
                                                ProgressIndicator process) {
     UpdateContext updateContext = new UpdateContext();
 
-    var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process, updateModules);
+    var updater =
+      new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process, updateModules);
     var filesToAddModules = new HashSet<VirtualFile>();
     for (VirtualFile file : files) {
       if (null == findProject(file)) {
@@ -527,6 +529,8 @@ public final class MavenProjectsTree {
     private final ProgressIndicator process;
     private final ConcurrentHashMap<VirtualFile, Boolean> updated = new ConcurrentHashMap<>();
     private final boolean updateModules;
+    private final @Nullable File userSettingsFile;
+    private final @Nullable File globalSettingsFile;
 
     MavenProjectsTreeUpdater(MavenProjectsTree tree,
                              MavenExplicitProfiles profiles,
@@ -542,6 +546,8 @@ public final class MavenProjectsTree {
       generalSettings = settings;
       this.process = process;
       this.updateModules = updateModules;
+      userSettingsFile = generalSettings.getEffectiveUserSettingsIoFile();
+      globalSettingsFile = generalSettings.getEffectiveGlobalSettingsIoFile();
     }
 
     private boolean startUpdate(VirtualFile mavenProjectFile, boolean forceRead) {
@@ -558,7 +564,7 @@ public final class MavenProjectsTree {
 
       if ((null != previousUpdate && !forceRead) || Boolean.TRUE.equals(previousUpdate)) {
         // we already updated this file
-        MavenLog.LOG.debug("Has already been updated (%s): %s; forceRead: %s".formatted(previousUpdate, mavenProjectFile, forceRead));
+        MavenLog.LOG.trace("Has already been updated (%s): %s; forceRead: %s".formatted(previousUpdate, mavenProjectFile, forceRead));
         return false;
       }
       if (null != process) {
@@ -569,7 +575,7 @@ public final class MavenProjectsTree {
     }
 
     private boolean readPomIfNeeded(MavenProject mavenProject, boolean forceRead) {
-      var timestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
+      var timestamp = calculateTimestamp(mavenProject);
       boolean timeStampChanged = !timestamp.equals(tree.myTimestamps.get(mavenProject.getFile()));
       boolean readPom = forceRead || timeStampChanged;
 
@@ -588,7 +594,7 @@ public final class MavenProjectsTree {
         }
         else {
           // ensure timestamp reflects actual parent's timestamp
-          var newTimestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
+          var newTimestamp = calculateTimestamp(mavenProject);
           tree.myTimestamps.put(mavenProject.getFile(), newTimestamp);
         }
 
@@ -598,6 +604,42 @@ public final class MavenProjectsTree {
       }
 
       return readPom;
+    }
+
+    private MavenProjectTimestamp calculateTimestamp(MavenProject mavenProject) {
+      return ReadAction.compute(() -> {
+        long pomTimestamp = getFileTimestamp(mavenProject.getFile());
+        MavenProject parent = tree.findParent(mavenProject);
+        long parentLastReadStamp = parent == null ? -1 : parent.getLastReadStamp();
+        VirtualFile profilesXmlFile = mavenProject.getProfilesXmlFile();
+        long profilesTimestamp = getFileTimestamp(profilesXmlFile);
+        VirtualFile jvmConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.JVM_CONFIG_RELATIVE_PATH);
+        long jvmConfigTimestamp = getFileTimestamp(jvmConfigFile);
+        VirtualFile mavenConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+        long mavenConfigTimestamp = getFileTimestamp(mavenConfigFile);
+        long userSettingsTimestamp = getFileTimestamp(userSettingsFile);
+        long globalSettingsTimestamp = getFileTimestamp(globalSettingsFile);
+
+        int profilesHashCode = explicitProfiles.hashCode();
+
+        return new MavenProjectTimestamp(pomTimestamp,
+                                         parentLastReadStamp,
+                                         profilesTimestamp,
+                                         userSettingsTimestamp,
+                                         globalSettingsTimestamp,
+                                         profilesHashCode,
+                                         jvmConfigTimestamp,
+                                         mavenConfigTimestamp);
+      });
+    }
+
+    private static long getFileTimestamp(@Nullable VirtualFile file) {
+      if (file == null || !file.isValid()) return -1;
+      return file.getTimeStamp();
+    }
+
+    private static long getFileTimestamp(@Nullable File file) {
+      return getFileTimestamp(file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file));
     }
 
     private void handleRemovedModules(MavenProject mavenProject, List<MavenProject> prevModules, List<VirtualFile> existingModuleFiles) {
@@ -715,47 +757,12 @@ public final class MavenProjectsTree {
     }
   }
 
-  private MavenProjectTimestamp calculateTimestamp(MavenProject mavenProject,
-                                                   MavenExplicitProfiles explicitProfiles,
-                                                   MavenGeneralSettings generalSettings) {
-    return ReadAction.compute(() -> {
-      long pomTimestamp = getFileTimestamp(mavenProject.getFile());
-      MavenProject parent = findParent(mavenProject);
-      long parentLastReadStamp = parent == null ? -1 : parent.getLastReadStamp();
-      VirtualFile profilesXmlFile = mavenProject.getProfilesXmlFile();
-      long profilesTimestamp = getFileTimestamp(profilesXmlFile);
-      VirtualFile jvmConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.JVM_CONFIG_RELATIVE_PATH);
-      long jvmConfigTimestamp = getFileTimestamp(jvmConfigFile);
-      VirtualFile mavenConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
-      long mavenConfigTimestamp = getFileTimestamp(mavenConfigFile);
-
-      long userSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveUserSettingsFile());
-      long globalSettingsTimestamp = getFileTimestamp(generalSettings.getEffectiveGlobalSettingsFile());
-
-      int profilesHashCode = explicitProfiles.hashCode();
-
-      return new MavenProjectTimestamp(pomTimestamp,
-                                       parentLastReadStamp,
-                                       profilesTimestamp,
-                                       userSettingsTimestamp,
-                                       globalSettingsTimestamp,
-                                       profilesHashCode,
-                                       jvmConfigTimestamp,
-                                       mavenConfigTimestamp);
-    });
-  }
-
   @Override
   public String toString() {
     return "MavenProjectsTree{" +
            "myRootProjects=" + myRootProjects +
            ", myProject=" + myProject +
            '}';
-  }
-
-  private static long getFileTimestamp(VirtualFile file) {
-    if (file == null || !file.isValid()) return -1;
-    return file.getTimeStamp();
   }
 
   public boolean isManagedFile(VirtualFile moduleFile) {
@@ -1584,6 +1591,52 @@ public final class MavenProjectsTree {
     }
     finally {
       myStructureWriteLock.unlock();
+    }
+  }
+
+
+  public Updater updater() {
+    return new Updater();
+  }
+
+  public class Updater {
+    public Updater setManagedFiles(@NotNull List<String> paths) {
+      myManagedFilesPaths.clear();
+      myManagedFilesPaths.addAll(paths);
+      return this;
+    }
+
+    public Updater setRootProjects(List<MavenProject> roots) {
+      myRootProjects.clear();
+      myRootProjects.addAll(roots);
+      roots.forEach(root -> {
+        myVirtualFileToProjectMapping.put(root.getFile(), root);
+      });
+
+      return this;
+    }
+
+    public Updater setAggregatorMappings(Map<MavenProject, List<MavenProject>> map) {
+      myAggregatorToModuleMapping.clear();
+      myModuleToAggregatorMapping.clear();
+
+      for (Map.Entry<MavenProject, List<MavenProject>> entry : map.entrySet()) {
+        List<MavenProject> result = new ArrayList<>(entry.getValue());
+        myAggregatorToModuleMapping.put(entry.getKey(), result);
+        for (MavenProject c : result) {
+          myModuleToAggregatorMapping.put(c, entry.getKey());
+          myVirtualFileToProjectMapping.put(c.getFile(), c);
+        }
+      }
+
+      return this;
+    }
+
+    public Updater setMavenIdMappings(@NotNull List<MavenProject> projects) {
+      projects.forEach(it -> {
+        myMavenIdToProjectMapping.put(it.getMavenId(), it);
+      });
+      return this;
     }
   }
 }

@@ -15,7 +15,9 @@ import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.util.CoverageReport;
 import com.intellij.rt.coverage.util.ProjectDataLoader;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +33,7 @@ import java.util.stream.Stream;
 
 public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(IDEACoverageRunner.class);
+  public static final String INNER_CLASS_REGEX = "(\\$.*)*";
   private static final String COVERAGE_AGENT_PATH_PROPERTY = "idea.coverage.agent.path";
 
   @Override
@@ -43,6 +46,18 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
       }
       catch (IOException e) {
         LOG.warn("Error reading source map associated with coverage data", e);
+      }
+    }
+    if (coverageSuite instanceof JavaCoverageSuite javaSuite) {
+      // Do not overwrite existing patterns if present, as they are written in the format expected by IDEA,
+      // while the patterns passed to the agent are converted to the regex format.
+      if (ArrayUtil.isEmpty(javaSuite.getIncludeFilters())) {
+        String[] includeFilters = extractPatterns(projectData.getIncudePatterns());
+        javaSuite.setIncludeFilters(includeFilters);
+      }
+      if (ArrayUtil.isEmpty(javaSuite.getExcludePatterns())) {
+        String[] excludePatterns = extractPatterns(projectData.getExcludePatterns());
+        javaSuite.setExcludePatterns(excludePatterns);
       }
     }
     return projectData;
@@ -75,17 +90,11 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                                                   patterns, excludePatterns, excludeAnnotations,
                                                                   testTracking,
                                                                   branchCoverage, sourceMapPath));
-    if (!Registry.is("idea.coverage.thread.safe.enabled")) {
-      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.coverage.thread-safe.enabled=false"));
+    if (!Registry.is("idea.coverage.new.tracing.enabled")) {
+      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.tracing.coverage=false"));
     }
-    if (!branchCoverage && Registry.is("idea.coverage.new.sampling.enabled")) {
-      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.sampling.coverage=true"));
-    }
-    if (branchCoverage && Registry.is("idea.coverage.new.tracing.enabled")) {
-      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.tracing.coverage=true"));
-      if (testTracking && !Registry.is("idea.coverage.new.test.tracking.enabled")) {
-        targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.test.tracking.coverage=false"));
-      }
+    if (branchCoverage && testTracking && !Registry.is("idea.coverage.new.test.tracking.enabled")) {
+      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.test.tracking.coverage=false"));
     }
   }
 
@@ -194,14 +203,27 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     }
   }
 
-  private static String[] convertToPatterns(String[] patterns) {
+  static String @NotNull [] convertToPatterns(String @NotNull [] patterns) {
     final String[] result = new String[patterns.length];
     for (int i = 0; i < patterns.length; i++) {
       String coveragePattern = patterns[i];
       coveragePattern = coveragePattern.replace("$", "\\$").replace(".", "\\.").replaceAll("\\*", ".*");
       if (!coveragePattern.endsWith(".*")) { //include inner classes
-        coveragePattern += "(\\$.*)*";
+        coveragePattern += INNER_CLASS_REGEX;
       }
+      result[i] = coveragePattern;
+    }
+    return result;
+  }
+
+  static String @NotNull [] convertFromPatterns(String @NotNull [] patterns) {
+    final String[] result = new String[patterns.length];
+    for (int i = 0; i < patterns.length; i++) {
+      String coveragePattern = patterns[i];
+      if (coveragePattern.endsWith(INNER_CLASS_REGEX)) {
+        coveragePattern = coveragePattern.substring(0, coveragePattern.length() - INNER_CLASS_REGEX.length());
+      }
+      coveragePattern = coveragePattern.replace(".*", "*").replace("\\.", ".").replace("\\$", "$");
       result[i] = coveragePattern;
     }
     return result;
@@ -211,6 +233,11 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     for (String coveragePattern : convertToPatterns(patterns)) {
       write2file(tempFile, coveragePattern);
     }
+  }
+
+  private static String @Nullable [] extractPatterns(@Nullable List<Pattern> patterns) {
+    if (patterns == null) return null;
+    return convertFromPatterns(ArrayUtilRt.toStringArray(ContainerUtil.map(patterns, Pattern::pattern)));
   }
 
   private static String[] getExcludeAnnotations(@Nullable Project project) {
@@ -243,7 +270,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
     return true;
   }
 
-  static void setExcludeAnnotations(Project project, ProjectData projectData) {
+  public static void setExcludeAnnotations(Project project, ProjectData projectData) {
     final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
     try {
       final String[] patterns = ArrayUtil.toStringArray(optionsProvider.getExcludeAnnotationPatterns());

@@ -9,7 +9,7 @@ import org.jetbrains.plugins.textmate.regex.StringWithId;
 
 import java.util.Objects;
 
-public class TextMateLexerState {
+public final class TextMateLexerState {
   private final int hashcode;
   @NotNull public final SyntaxNodeDescriptor syntaxRule;
   @NotNull public final MatchData matchData;

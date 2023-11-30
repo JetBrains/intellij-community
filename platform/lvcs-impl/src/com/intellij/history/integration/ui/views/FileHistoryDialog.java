@@ -187,8 +187,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     session.setTextInField(filter);
   }
 
-  @Nullable
-  private Editor findLeftEditor() {
+  private @Nullable Editor findLeftEditor() {
     DiffSplitter splitter = UIUtil.findComponentOfType(myDiffPanel.getComponent(), DiffSplitter.class);
     JComponent editorPanel;
     if (splitter != null) {
@@ -224,7 +223,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     return "reference.dialogs.showhistory";
   }
 
-  private class NextOccurenceAction extends DumbAwareAction {
+  private final class NextOccurenceAction extends DumbAwareAction {
     private final boolean myForward;
     private NextOccurenceAction(boolean forward) {
       myForward = forward;

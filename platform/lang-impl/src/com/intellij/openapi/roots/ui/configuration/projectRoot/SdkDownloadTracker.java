@@ -28,6 +28,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class SdkDownloadTracker {
+public final class SdkDownloadTracker {
   private static final Logger LOG = Logger.getInstance(SdkDownloadTracker.class);
 
   @NotNull
@@ -67,7 +68,7 @@ public class SdkDownloadTracker {
   }
 
   private void removeTask(@NotNull PendingDownload task) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myPendingTasks.remove(task);
   }
 
@@ -93,7 +94,7 @@ public class SdkDownloadTracker {
 
   public void registerSdkDownload(@NotNull Sdk originalSdk,
                                   @NotNull SdkDownloadTask item) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(findTask(originalSdk) == null, "Download is already running for the SDK " + originalSdk);
 
     PendingDownload pd = new PendingDownload(originalSdk, item, new SmartPendingDownloadModalityTracker());
@@ -112,7 +113,7 @@ public class SdkDownloadTracker {
   }
 
   public void startSdkDownloadIfNeeded(@NotNull Sdk sdkFromTable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     PendingDownload task = findTask(sdkFromTable);
     if (task == null) return;
@@ -162,7 +163,7 @@ public class SdkDownloadTracker {
                                                 @NotNull Disposable lifetime,
                                                 @NotNull ProgressIndicator indicator,
                                                 @NotNull Consumer<? super Boolean> onDownloadCompleteCallback) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     PendingDownload pd = findTask(sdk);
     if (pd == null) return false;
 
@@ -233,7 +234,7 @@ public class SdkDownloadTracker {
   // see if that {@link ModalityState#dominates} the current modality state. In fact,
   // it does call the method from the dialog setup, with NON_MODAL modality, which
   // we would like to ignore.
-  private static class SmartPendingDownloadModalityTracker implements PendingDownloadModalityTracker{
+  private static final class SmartPendingDownloadModalityTracker implements PendingDownloadModalityTracker{
     @NotNull
     static ModalityState modality() {
       ModalityState state = ModalityState.current();
@@ -258,7 +259,7 @@ public class SdkDownloadTracker {
   }
 
   // synchronized newIdentityHashSet (Collections.synchronizedSet does not help the iterator)
-  private static class SynchronizedIdentityHashSet<T> {
+  private static final class SynchronizedIdentityHashSet<T> {
     private final Set<T> myCollection = Sets.newIdentityHashSet();
 
     synchronized boolean add(@NotNull T sdk) {

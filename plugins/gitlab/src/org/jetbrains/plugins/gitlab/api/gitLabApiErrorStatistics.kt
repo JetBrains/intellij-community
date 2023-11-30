@@ -4,14 +4,10 @@ package org.jetbrains.plugins.gitlab.api
 import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.api.graphql.GraphQLErrorException
 import com.intellij.collaboration.api.json.HttpJsonDeserializationException
-import com.intellij.openapi.components.service
-import org.jetbrains.plugins.gitlab.GitLabServersManager
-import org.jetbrains.plugins.gitlab.api.request.getServerMetadataOrVersion
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
-suspend fun <T> GitLabApi.GraphQL.withErrorStats(server: GitLabServerPath,
-                                                 query: GitLabGQLQuery,
+suspend fun <T> GitLabApi.GraphQL.withErrorStats(query: GitLabGQLQuery,
                                                  responseClass: Class<*>,
                                                  loader: suspend () -> T): T {
   try {
@@ -19,33 +15,31 @@ suspend fun <T> GitLabApi.GraphQL.withErrorStats(server: GitLabServerPath,
   }
   catch (e: GraphQLErrorException) {
     if (e.errors.any { it.message.contains("doesn't exist on type") }) {
-      val version = tryGetServerVersion(server)
+      val version = getMetadataOrNull()?.version
       GitLabStatistics.logGqlModelError(query, version)
     }
     throw e
   }
   catch (e: HttpStatusErrorException) {
     if (e.statusCode in 500..599) {
-      val version = tryGetServerVersion(server)
+      val version = getMetadataOrNull()?.version
       GitLabStatistics.logServerError(GitLabApiRequestName.of(query), server.isDefault, version)
     }
     throw e
   }
   catch (e: HttpJsonDeserializationException) {
-    val version = tryGetServerVersion(server)
+    val version = getMetadataOrNull()?.version
     GitLabStatistics.logJsonDeserializationError(responseClass, version)
     throw e
   }
 }
 
-suspend inline fun <reified T> GitLabApi.GraphQL.withErrorStats(server: GitLabServerPath,
-                                                                query: GitLabGQLQuery,
+suspend inline fun <reified T> GitLabApi.GraphQL.withErrorStats(query: GitLabGQLQuery,
                                                                 noinline loader: suspend () -> T): T {
-  return withErrorStats(server, query, T::class.java, loader)
+  return withErrorStats(query, T::class.java, loader)
 }
 
-suspend fun <T> GitLabApi.Rest.withErrorStats(server: GitLabServerPath,
-                                              requestName: GitLabApiRequestName,
+suspend fun <T> GitLabApi.Rest.withErrorStats(requestName: GitLabApiRequestName,
                                               responseClass: Class<*>,
                                               loader: suspend () -> T): T {
   try {
@@ -53,25 +47,19 @@ suspend fun <T> GitLabApi.Rest.withErrorStats(server: GitLabServerPath,
   }
   catch (e: HttpStatusErrorException) {
     if (e.statusCode in 500..599) {
-      val version = tryGetServerVersion(server)
+      val version = getMetadataOrNull()?.version
       GitLabStatistics.logServerError(requestName, server.isDefault, version)
     }
     throw e
   }
   catch (e: HttpJsonDeserializationException) {
-    val version = tryGetServerVersion(server)
+    val version = getMetadataOrNull()?.version
     GitLabStatistics.logJsonDeserializationError(responseClass, version)
     throw e
   }
 }
 
-suspend inline fun <reified T> GitLabApi.Rest.withErrorStats(server: GitLabServerPath,
-                                                             requestName: GitLabApiRequestName,
+suspend inline fun <reified T> GitLabApi.Rest.withErrorStats(requestName: GitLabApiRequestName,
                                                              noinline loader: suspend () -> T): T {
-  return withErrorStats(server, requestName, T::class.java, loader)
+  return withErrorStats(requestName, T::class.java, loader)
 }
-
-private suspend fun GitLabApi.tryGetServerVersion(server: GitLabServerPath): String? =
-  service<GitLabServersManager>().getMetadata(server) {
-    runCatching { rest.getServerMetadataOrVersion(it) }
-  }?.version

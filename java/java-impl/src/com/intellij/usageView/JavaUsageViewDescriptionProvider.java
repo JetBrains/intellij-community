@@ -34,6 +34,9 @@ public class JavaUsageViewDescriptionProvider implements ElementDescriptionProvi
         boolean isStatic = initializer.hasModifierProperty(PsiModifier.STATIC);
         return isStatic ? CLINIT : INIT;
       }
+      else if (element instanceof PsiUnnamedClass unnamedClass) {
+        return unnamedClass.getContainingFile().getName();
+      }
     }
 
     if (location instanceof UsageViewLongNameLocation) {

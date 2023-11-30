@@ -6,8 +6,7 @@ import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 
 
 internal object LocalRankingModelProviderUtil {
-  fun getLocalModel(contributorId: String): DecisionFunction? {
-    val tab = SearchEverywhereTabWithMlRanking.findById(contributorId) ?: return null
+  fun getLocalModel(tab: SearchEverywhereTabWithMlRanking): DecisionFunction? {
     if (!isPathToLocalModelSpecified(tab)) return null
 
     val path = getPath(tab)
@@ -21,12 +20,7 @@ internal object LocalRankingModelProviderUtil {
     return provider.loadModel(path)
   }
 
-  fun isPathToLocalModelSpecified(tabId: String): Boolean {
-    val tab = SearchEverywhereTabWithMlRanking.findById(tabId) ?: return false
-    return isPathToLocalModelSpecified(tab)
-  }
-
-  private fun isPathToLocalModelSpecified(tab: SearchEverywhereTabWithMlRanking) = Registry.get(getRegistryKey(tab)).isChangedFromDefault
+  fun isPathToLocalModelSpecified(tab: SearchEverywhereTabWithMlRanking) = Registry.get(getRegistryKey(tab)).isChangedFromDefault
 
   private fun getRegistryKey(tab: SearchEverywhereTabWithMlRanking) = "search.everywhere.ml.${tab.name.lowercase()}.model.path"
 

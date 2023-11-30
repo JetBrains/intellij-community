@@ -6,4 +6,6 @@ import com.intellij.openapi.util.NlsSafe
 data class WebSymbolQualifiedKind(
   val namespace: @NlsSafe SymbolNamespace,
   val kind: @NlsSafe SymbolKind,
-)
+) {
+  fun withName(name: String) = WebSymbolQualifiedName(namespace, kind, name)
+}

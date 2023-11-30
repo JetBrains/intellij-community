@@ -13,11 +13,6 @@ import org.jetbrains.kotlin.noarg.NoArgPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.noarg.NoArgPluginNames.SUPPORTED_PRESETS
 
 class NoArgMavenProjectImportHandler : AbstractMavenImportHandler() {
-    private companion object {
-        val ANNOTATATION_PARAMETER_PREFIX = "no-arg:$ANNOTATION_OPTION_NAME="
-        val INVOKEINITIALIZERS_PARAMETER_PREFIX = "no-arg:$INVOKE_INITIALIZERS_OPTION_NAME="
-    }
-
     override val compilerPluginId = PLUGIN_ID
     override val pluginName = "noarg"
     override val mavenPluginArtifactName = "kotlin-maven-noarg"
@@ -40,8 +35,8 @@ class NoArgMavenProjectImportHandler : AbstractMavenImportHandler() {
         }
 
         annotations.addAll(compilerPluginOptions.mapNotNull { text ->
-            if (!text.startsWith(ANNOTATATION_PARAMETER_PREFIX)) return@mapNotNull null
-            text.substring(ANNOTATATION_PARAMETER_PREFIX.length)
+            if (!text.startsWith(ANNOTATION_PARAMETER_PREFIX)) return@mapNotNull null
+            text.substring(ANNOTATION_PARAMETER_PREFIX.length)
         })
 
         val options = annotations.mapTo(mutableListOf()) { PluginOption(ANNOTATION_OPTION_NAME, it) }
@@ -57,3 +52,6 @@ class NoArgMavenProjectImportHandler : AbstractMavenImportHandler() {
         return options
     }
 }
+
+private const val ANNOTATION_PARAMETER_PREFIX = "no-arg:$ANNOTATION_OPTION_NAME="
+private const val INVOKEINITIALIZERS_PARAMETER_PREFIX = "no-arg:$INVOKE_INITIALIZERS_OPTION_NAME="

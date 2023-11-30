@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,7 +42,7 @@ import static git4idea.rebase.interactive.GitRebaseTodoModelConverterKt.convertT
  * otherwise it just returns error code.
  */
 public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler {
-  private final static Logger LOG = Logger.getInstance(GitInteractiveRebaseEditorHandler.class);
+  private static final Logger LOG = Logger.getInstance(GitInteractiveRebaseEditorHandler.class);
   private final Project myProject;
   private final VirtualFile myRoot;
 
@@ -130,8 +130,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
     }
   }
 
-  @Nullable
-  protected List<? extends GitRebaseEntry> collectNewEntries(@NotNull List<GitRebaseEntry> entries) throws VcsException {
+  protected @Nullable List<? extends GitRebaseEntry> collectNewEntries(@NotNull List<GitRebaseEntry> entries) throws VcsException {
     Ref<List<? extends GitRebaseEntry>> newText = Ref.create();
     List<GitRebaseEntryWithDetails> entriesWithDetails = loadDetailsForEntries(entries);
 
@@ -141,8 +140,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
     return newText.get();
   }
 
-  @Nullable
-  private List<? extends GitRebaseEntry> showInteractiveRebaseDialog(List<GitRebaseEntryWithDetails> entriesWithDetails) {
+  private @Nullable List<? extends GitRebaseEntry> showInteractiveRebaseDialog(List<GitRebaseEntryWithDetails> entriesWithDetails) {
     GitInteractiveRebaseDialog<GitRebaseEntryWithDetails> editor = new GitInteractiveRebaseDialog<>(myProject, myRoot, entriesWithDetails);
     DialogManager.show(editor);
     if (editor.isOK()) {
@@ -173,8 +171,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
     myRewordedCommitMessageProvider.save(myProject, myRoot, messages);
   }
 
-  @NotNull
-  private List<GitRebaseEntryWithDetails> loadDetailsForEntries(@NotNull List<GitRebaseEntry> entries) throws VcsException {
+  private @NotNull List<GitRebaseEntryWithDetails> loadDetailsForEntries(@NotNull List<GitRebaseEntry> entries) throws VcsException {
     List<? extends VcsCommitMetadata> details = GitLogUtil.collectMetadata(
       myProject,
       myRoot,

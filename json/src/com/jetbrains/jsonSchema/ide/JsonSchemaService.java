@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.ide;
 
 import com.intellij.openapi.project.Project;
@@ -41,6 +41,8 @@ public interface JsonSchemaService {
   @NotNull
   Collection<VirtualFile> getSchemaFilesForFile(@NotNull VirtualFile file);
 
+  @Nullable
+  VirtualFile getDynamicSchemaForFile(@NotNull PsiFile psiFile);
   void registerRemoteUpdateCallback(@NotNull Runnable callback);
   void unregisterRemoteUpdateCallback(@NotNull Runnable callback);
   void registerResetAction(Runnable action);
@@ -64,13 +66,13 @@ public interface JsonSchemaService {
   VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent);
 
   @Nullable
-  JsonSchemaFileProvider getSchemaProvider(@NotNull final VirtualFile schemaFile);
+  JsonSchemaFileProvider getSchemaProvider(final @NotNull VirtualFile schemaFile);
 
   @Nullable
-  JsonSchemaFileProvider getSchemaProvider(@NotNull final JsonSchemaObject schemaObject);
+  JsonSchemaFileProvider getSchemaProvider(final @NotNull JsonSchemaObject schemaObject);
 
   @Nullable
-  VirtualFile resolveSchemaFile(@NotNull final JsonSchemaObject schemaObject);
+  VirtualFile resolveSchemaFile(final @NotNull JsonSchemaObject schemaObject);
 
   void reset();
 

@@ -36,8 +36,7 @@ public final class HtmlFormInputWithoutLabelInspection extends HtmlLocalInspecti
 
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "HtmlFormInputWithoutLabel";
   }
 
@@ -143,7 +142,7 @@ public final class HtmlFormInputWithoutLabelInspection extends HtmlLocalInspecti
     PsiElement getFirstChild(@NotNull PsiElement element);
   }
 
-  public static class ForwardIterator implements ElementIterator {
+  public static final class ForwardIterator implements ElementIterator {
     @Override
     public PsiElement getNext(PsiElement element) {
       return element.getNextSibling();
@@ -155,13 +154,12 @@ public final class HtmlFormInputWithoutLabelInspection extends HtmlLocalInspecti
     }
 
     @Override
-    @Nullable
-    public PsiElement getFirstChild(@NotNull PsiElement element) {
+    public @Nullable PsiElement getFirstChild(@NotNull PsiElement element) {
       return element.getFirstChild();
     }
   }
 
-  public static class BackwardIterator implements ElementIterator {
+  public static final class BackwardIterator implements ElementIterator {
     @Override
     public PsiElement getNext(PsiElement element) {
       return element.getPrevSibling();
@@ -173,14 +171,12 @@ public final class HtmlFormInputWithoutLabelInspection extends HtmlLocalInspecti
     }
 
     @Override
-    @Nullable
-    public PsiElement getFirstChild(@NotNull PsiElement element) {
+    public @Nullable PsiElement getFirstChild(@NotNull PsiElement element) {
       return element.getLastChild();
     }
   }
 
-  @Nullable
-  public static Pair<PsiElement, PsiElement> getNearestText(PsiElement element, ElementIterator iterator) {
+  public static @Nullable Pair<PsiElement, PsiElement> getNearestText(PsiElement element, ElementIterator iterator) {
     element = iterator.getNext(element);
     if (!(element instanceof XmlText) || element.getChildren().length == 0) {
       return null;

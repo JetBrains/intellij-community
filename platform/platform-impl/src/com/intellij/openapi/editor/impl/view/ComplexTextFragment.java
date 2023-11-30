@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,12 +16,11 @@ import java.util.function.Consumer;
 /**
  * GlyphVector-based text fragment. Used for non-Latin text or when ligatures are enabled
  */
-class ComplexTextFragment extends TextFragment {
+final class ComplexTextFragment extends TextFragment {
   private static final Logger LOG = Logger.getInstance(ComplexTextFragment.class);
   private static final double CLIP_MARGIN = 1e4;
 
-  @NotNull
-  private final GlyphVector myGlyphVector;
+  private final @NotNull GlyphVector myGlyphVector;
   private final short @Nullable [] myCodePoint2Offset; // Start offset of each Unicode code point in the fragment
                                             // (null if each code point takes one char).
                                             // We expect no more than 1025 chars in a fragment, so 'short' should be enough.

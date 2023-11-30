@@ -9,12 +9,14 @@ import com.intellij.psi.PsiReferenceService
 import com.intellij.psi.ReferenceRange
 import com.intellij.psi.search.RequestResultProcessor
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isCallableOverrideUsage
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isExtensionOfDeclarationClassUsage
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInvokeOfCompanionObject
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isUsageInContainingDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 class KotlinRequestResultProcessor(
@@ -50,6 +52,9 @@ class KotlinRequestResultProcessor(
         if (isReferenceTo(element)) {
             return true
         }
+        if (resolve()?.unwrapped == element.originalElement) {
+            return true
+        }
         if (originalElement is KtNamedDeclaration) {
             if (isInvokeOfCompanionObject(originalElement)) {
                 return true
@@ -57,7 +62,7 @@ class KotlinRequestResultProcessor(
             if (options.acceptCallableOverrides && isCallableOverrideUsage(originalElement)) {
                 return true
             }
-            if (options.acceptOverloads && isUsageInContainingDeclaration(originalElement)) {
+            if (options.acceptOverloads && originalElement is KtFunction && isUsageInContainingDeclaration(originalElement)) {
                 return true
             }
             if (options.acceptExtensionsOfDeclarationClass && isExtensionOfDeclarationClassUsage(originalElement)) {

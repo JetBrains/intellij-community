@@ -20,6 +20,8 @@ public final class MavenRunnerParameters implements Cloneable {
   private final boolean isPomExecution;
   private String myWorkingDirPath;
   private String myPomFileName;
+
+  private String myMultimoduleDir;
   private final List<String> myGoals = new ArrayList<>();
 
   private boolean myResolveToWorkspace;
@@ -165,6 +167,21 @@ public final class MavenRunnerParameters implements Cloneable {
     return myPomFileName;
   }
 
+
+  public @NlsSafe @Nullable String getMultimoduleDir() {
+    return myMultimoduleDir;
+  }
+
+  public void setMultimoduleDir(@Nullable String multimoduleDir) {
+    if (StringUtil.isEmptyOrSpaces(multimoduleDir)) {
+      myMultimoduleDir = null;
+    }
+    else {
+      myMultimoduleDir = multimoduleDir;
+    }
+
+  }
+
   public List<String> getGoals() {
     return myGoals;
   }
@@ -284,6 +301,7 @@ public final class MavenRunnerParameters implements Cloneable {
     if (!myProjectsCmdOptionValues.equals(that.myProjectsCmdOptionValues)) return false;
     if (!Objects.equals(myWorkingDirPath, that.myWorkingDirPath)) return false;
     if (!Objects.equals(myPomFileName, that.myPomFileName)) return false;
+    if (!Objects.equals(myMultimoduleDir, that.myMultimoduleDir)) return false;
     if (!myProfilesMap.equals(that.myProfilesMap)) return false;
 
     return true;
@@ -295,6 +313,7 @@ public final class MavenRunnerParameters implements Cloneable {
     result = 31 * result + (myWorkingDirPath != null ? myWorkingDirPath.hashCode() : 0);
     result = 31 * result + myGoals.hashCode();
     result = 31 * result + (myPomFileName != null ? myPomFileName.hashCode() : 0);
+    result = 31 * result + (myMultimoduleDir != null ? myMultimoduleDir.hashCode() : 0);
     result = 31 * result + myProfilesMap.hashCode();
     return result;
   }

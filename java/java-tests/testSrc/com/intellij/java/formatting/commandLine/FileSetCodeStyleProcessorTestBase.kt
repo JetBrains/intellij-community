@@ -3,12 +3,11 @@ package com.intellij.java.formatting.commandLine
 
 import com.intellij.JavaTestUtil
 import com.intellij.application.options.CodeStyle
-import com.intellij.formatting.commandLine.FileSetCodeStyleProcessor
 import com.intellij.formatting.commandLine.MessageOutput
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VfsUtilCore.loadText
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightPlatformTestCase
@@ -72,7 +71,7 @@ fun assertContentEquals(expectedFile: File, actualFile: File) {
   val actualVFile = VfsUtil.findFileByIoFile(actualFile, true)
   assertNotNull(actualVFile)
 
-  assertEquals(loadText(expectedVFile!!), loadText(actualVFile!!))
+  assertEquals(VfsUtilCore.loadText(expectedVFile!!), VfsUtilCore.loadText(actualVFile!!))
 }
 
 fun createSourceDir(subDir: String) =

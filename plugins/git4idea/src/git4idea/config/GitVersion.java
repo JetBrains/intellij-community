@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.execution.ExecutableValidator;
@@ -76,7 +76,7 @@ public final class GitVersion implements Comparable<GitVersion> {
   private final int myMinor;
   private final int myRevision;
   private final int myPatchLevel;
-  @NotNull private final Type myType;
+  private final @NotNull Type myType;
 
   private final int myHashCode;
 
@@ -96,16 +96,14 @@ public final class GitVersion implements Comparable<GitVersion> {
     this(major, minor, revision, patchLevel, Type.UNDEFINED);
   }
 
-  @NotNull
-  public static GitVersion parse(@NotNull String output) throws ParseException {
+  public static @NotNull GitVersion parse(@NotNull String output) throws ParseException {
     return parse(output, null);
   }
 
   /**
    * Parses output of "git version" command.
    */
-  @NotNull
-  public static GitVersion parse(@NotNull String output, @Nullable Type type) throws ParseException {
+  public static @NotNull GitVersion parse(@NotNull String output, @Nullable Type type) throws ParseException {
     if (StringUtil.isEmptyOrSpaces(output)) {
       throw new ParseException("Empty git --version output: " + output, 0);
     }
@@ -150,8 +148,7 @@ public final class GitVersion implements Comparable<GitVersion> {
     return Integer.parseInt(match);
   }
 
-  @NotNull
-  private static String getStringGroup(@NotNull Matcher matcher, int group) {
+  private static @NotNull String getStringGroup(@NotNull Matcher matcher, int group) {
     if (group > matcher.groupCount() + 1) {
       return "";
     }
@@ -168,8 +165,7 @@ public final class GitVersion implements Comparable<GitVersion> {
    * or {@link GitExecutableManager#getVersion(Project)}
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public static GitVersion identifyVersion(@NotNull String gitExecutable) throws TimeoutException, ExecutionException, ParseException {
+  public static @NotNull GitVersion identifyVersion(@NotNull String gitExecutable) throws TimeoutException, ExecutionException, ParseException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(gitExecutable);
     commandLine.addParameter("--version");
@@ -265,8 +261,7 @@ public final class GitVersion implements Comparable<GitVersion> {
     return myPatchLevel - o.myPatchLevel;
   }
 
-  @NotNull
-  public String getPresentation() {
+  public @NotNull String getPresentation() {
     String presentation = myMajor + "." + myMinor + "." + myRevision;
     if (myPatchLevel > 0) presentation += "." + myPatchLevel;
     return presentation;
@@ -277,8 +272,7 @@ public final class GitVersion implements Comparable<GitVersion> {
     return myMajor + "." + myMinor + "." + myRevision + "." + myPatchLevel + " (" + myType + ")";
   }
 
-  @NotNull
-  public String getSemanticPresentation() {
+  public @NotNull String getSemanticPresentation() {
     String presentation = myMajor + "." + myMinor + "." + myRevision;
     if (myPatchLevel > 0) presentation += "." + myPatchLevel;
     return presentation + "-" + myType;
@@ -298,13 +292,19 @@ public final class GitVersion implements Comparable<GitVersion> {
     return version != null && compareTo(version) >= 0;
   }
 
-  @NotNull
-  public Type getType() {
+  public @NotNull Type getType() {
     return myType;
   }
 
   public boolean isNull() {
     return getType() == Type.NULL;
+  }
+
+  public boolean isWSL() {
+    return switch (getType()) {
+      case WSL1, WSL2 -> true;
+      default -> false;
+    };
   }
 
 }

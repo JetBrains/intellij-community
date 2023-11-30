@@ -22,7 +22,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassRe
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-public class PropertiesClassReferenceContributor extends PsiReferenceContributor {
+public final class PropertiesClassReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
     JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider() {
@@ -36,6 +36,13 @@ public class PropertiesClassReferenceContributor extends PsiReferenceContributor
       @Override
       public boolean acceptsTarget(@NotNull PsiElement target) {
         return target instanceof PsiClass;
+      }
+
+      @Override
+      public boolean acceptsHints(@NotNull PsiElement element, PsiReferenceService.@NotNull Hints hints) {
+        if (hints == PsiReferenceService.Hints.HIGHLIGHTED_REFERENCES) return false;
+
+        return super.acceptsHints(element, hints);
       }
 
       @Override

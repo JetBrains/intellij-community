@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.service.fus.collectors
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -46,18 +45,5 @@ abstract class ApplicationUsagesCollector : FeatureUsagesCollector() {
 
   open suspend fun getMetricsAsync(): Set<MetricEvent> {
     return getMetrics()
-  }
-
-  companion object {
-    @ApiStatus.Internal
-    val EP_NAME = ExtensionPointName<ApplicationUsagesCollector>("com.intellij.statistics.applicationUsagesCollector")
-
-    internal fun getExtensions(invoker: UsagesCollectorConsumer): Set<ApplicationUsagesCollector> {
-      return getExtensions(invoker, EP_NAME)
-    }
-
-    internal fun getExtensions(invoker: UsagesCollectorConsumer, allowedOnStartupOnly: Boolean): Set<ApplicationUsagesCollector> {
-      return getExtensions(invoker, EP_NAME, allowedOnStartupOnly)
-    }
   }
 }

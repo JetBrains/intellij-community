@@ -65,7 +65,8 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
   private static @NotNull PersistentEnumerator<LightFilePath> createPathsEnumerator(@NotNull Collection<VirtualFile> roots,
                                                                                     @NotNull StorageId.Directory storageId,
-                                                                                    @Nullable StorageLockContext storageLockContext) throws IOException {
+                                                                                    @Nullable StorageLockContext storageLockContext)
+    throws IOException {
     Path storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
     return new PersistentEnumerator<>(storageFile, new LightFilePathKeyDescriptor(roots),
                                       AbstractStorage.PAGE_SIZE, storageLockContext, storageId.getVersion());

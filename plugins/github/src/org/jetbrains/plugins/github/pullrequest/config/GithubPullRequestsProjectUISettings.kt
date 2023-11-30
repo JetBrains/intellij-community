@@ -12,7 +12,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "GithubPullRequestsUISettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
 class GithubPullRequestsProjectUISettings(private val project: Project)
   : PersistentStateComponentWithModificationTracker<GithubPullRequestsProjectUISettings.SettingsState> {
@@ -53,7 +53,7 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<GithubPullRequestsProjectUISettings>()
+    fun getInstance(project: Project): GithubPullRequestsProjectUISettings = project.service<GithubPullRequestsProjectUISettings>()
 
     class UrlAndAccount private constructor() {
 

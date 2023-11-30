@@ -5,10 +5,12 @@ import com.intellij.diagnostic.Developer.Companion.NULL
 import com.intellij.errorreport.error.InternalEAPException
 import com.intellij.errorreport.error.NoSuchEAPUserException
 import com.intellij.errorreport.error.UpdateAvailableException
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -39,17 +41,22 @@ import javax.net.ssl.*
 
 internal object ITNProxy {
   @OptIn(ExperimentalCoroutinesApi::class)
-  internal val cs: CoroutineScope = ApplicationManager.getApplication().coroutineScope + SupervisorJob() +
-                                    Dispatchers.IO.limitedParallelism(2) + CoroutineName("ITNProxy call")
+  val dispatcher = Dispatchers.IO.limitedParallelism(2)
+
+  @Suppress("DEPRECATION")
+  internal val cs: CoroutineScope =
+    ApplicationManager.getApplication().coroutineScope + SupervisorJob() + dispatcher + CoroutineName("ITNProxy call")
+
+  internal const val EA_PLUGIN_ID = "com.intellij.sisyphus"
 
   private const val DEFAULT_USER = "idea_anonymous"
   private const val DEFAULT_PASS = "guest"
-  private const val DEVELOPERS_LIST_URL = "https://ea-engine.labs.jb.gg/data?category=developers"
-  private const val NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr"
-  private const val NEW_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/"
+  private const val DEVELOPERS_LIST_URL = "https://ea-report.jetbrains.com/developer/list"
+  private const val OLD_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/"
+  private const val NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
 
   private val TEMPLATE: Map<String, String?> by lazy {
-    val template: MutableMap<String, String?> = LinkedHashMap()
+    val template = LinkedHashMap<String, String?>()
     template["protocol.version"] = "1.1"
     template["os.name"] = SystemInfo.OS_NAME
     template["java.version"] = SystemInfo.JAVA_VERSION
@@ -69,8 +76,8 @@ internal object ITNProxy {
     template["app.build"] = appInfo.apiVersion
     template["app.version.major"] = appInfo.majorVersion
     template["app.version.minor"] = appInfo.minorVersion
-    template["app.build.date"] = appInfo.buildDate?.time?.time?.toString()
-    template["app.build.date.release"] = appInfo.majorReleaseBuildDate?.time?.time?.toString()
+    template["app.build.date"] = (appInfo.buildTime.toInstant().toEpochMilli()).toString()
+    template["app.build.date.release"] = appInfo.majorReleaseBuildDate.time.time.toString()
     template["app.product.code"] = build.productCode
     template["app.build.number"] = buildNumberWithAllDetails
     template
@@ -102,20 +109,27 @@ internal object ITNProxy {
                                 val lastActionId: String?,
                                 val previousException: Int)
 
-  suspend fun sendError(login: String?, password: String?, error: ErrorBean): Int {
+  suspend fun sendError(login: String?, password: String?, error: ErrorBean, newThreadPostUrl: String): Int {
     val useDefault = login.isNullOrBlank()
     val loginAdjusted = if (useDefault) DEFAULT_USER else login
     val passwordAdjusted = if (useDefault) DEFAULT_PASS else password ?: ""
-    return postNewThread(loginAdjusted, passwordAdjusted, error)
+    return postNewThread(loginAdjusted, passwordAdjusted, error, newThreadPostUrl)
   }
 
-  fun getBrowseUrl(threadId: Int): String = NEW_THREAD_VIEW_URL + threadId
+  fun getBrowseUrl(threadId: Int): String {
+    val isEAPluginInstalled = PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID))
+    if (isEAPluginInstalled) {
+      return NEW_THREAD_VIEW_URL + threadId
+    } else {
+      return OLD_THREAD_VIEW_URL + threadId
+    }
+  }
 
   private val ourSslContext: SSLContext by lazy { initContext() }
 
-  private suspend fun postNewThread(login: String?, password: String?, error: ErrorBean): Int {
+  private suspend fun postNewThread(login: String?, password: String?, error: ErrorBean, url: String): Int {
     val context = currentCoroutineContext()
-    val connection = post(URL(NEW_THREAD_POST_URL), createRequest(login, password, error))
+    val connection = post(URL(url), createRequest(login, password, error))
     val responseCode = connection.responseCode
     if (responseCode != HttpURLConnection.HTTP_OK) {
       throw InternalEAPException(DiagnosticBundle.message("error.http.result.code", responseCode))
@@ -134,8 +148,8 @@ internal object ITNProxy {
     if (response.startsWith("message ")) {
       throw InternalEAPException(response.substring(8))
     }
-    return try {
-      response.trim { it <= ' ' }.toInt()
+    try {
+      return response.trim().toInt()
     }
     catch (ex: NumberFormatException) {
       throw InternalEAPException(DiagnosticBundle.message("error.itn.returns.wrong.data"))

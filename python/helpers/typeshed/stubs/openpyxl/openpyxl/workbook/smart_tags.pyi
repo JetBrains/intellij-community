@@ -1,22 +1,29 @@
-from typing import Any
+from _typeshed import Incomplete
+from typing import ClassVar
+from typing_extensions import Literal, TypeAlias
 
+from openpyxl.descriptors.base import Bool, NoneSet, String, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable
 
+_SmartTagPropertiesShow: TypeAlias = Literal["all", "noIndicator"]
+
 class SmartTag(Serialisable):
-    tagname: str
-    namespaceUri: Any
-    name: Any
-    url: Any
-    def __init__(self, namespaceUri: Any | None = ..., name: Any | None = ..., url: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    namespaceUri: String[Literal[True]]
+    name: String[Literal[True]]
+    url: String[Literal[True]]
+    def __init__(self, namespaceUri: str | None = None, name: str | None = None, url: str | None = None) -> None: ...
 
 class SmartTagList(Serialisable):
-    tagname: str
-    smartTagType: Any
-    __elements__: Any
-    def __init__(self, smartTagType=...) -> None: ...
+    tagname: ClassVar[str]
+    smartTagType: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, smartTagType=()) -> None: ...
 
 class SmartTagProperties(Serialisable):
-    tagname: str
-    embed: Any
-    show: Any
-    def __init__(self, embed: Any | None = ..., show: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    embed: Bool[Literal[True]]
+    show: NoneSet[_SmartTagPropertiesShow]
+    def __init__(
+        self, embed: _ConvertibleToBool | None = None, show: _SmartTagPropertiesShow | Literal["none"] | None = None
+    ) -> None: ...

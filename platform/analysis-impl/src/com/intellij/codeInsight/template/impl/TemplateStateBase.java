@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.ExpressionContext;
@@ -63,13 +63,11 @@ public class TemplateStateBase {
     myTemplate = template;
   }
 
-  @Nullable
-  protected String getSelectionBeforeTemplate() {
+  protected @Nullable String getSelectionBeforeTemplate() {
     return (String)myProperties.get(ExpressionContext.SELECTION);
   }
 
-  @Nullable
-  public TextResult getVariableValue(@NotNull String variableName) {
+  public @Nullable TextResult getVariableValue(@NotNull String variableName) {
     if (variableName.equals(Template.SELECTION)) {
       return new TextResult(StringUtil.notNullize(getSelectionBeforeTemplate()));
     }

@@ -27,7 +27,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UDeclarationKt;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -144,10 +147,9 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private static PsiModifierListOwner getAsJavaPsi(RefMethod refMethod) {
-    UDeclaration uDeclaration = refMethod.getUastElement();
-    if (uDeclaration == null) return null;
-    PsiElement psi = uDeclaration.getJavaPsi();
-    return psi instanceof PsiModifierListOwner ? (PsiModifierListOwner)psi : null;
+    UMethod uMethod = refMethod.getUastElement();
+    if (uMethod == null) return null;
+    return uMethod.getJavaPsi();
   }
 
   private boolean isBodyEmpty(final RefMethod refMethod) {
@@ -208,24 +210,20 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
                                                 final @NotNull GlobalJavaInspectionContext context,
                                                 final @NotNull ProblemDescriptionsProcessor descriptionsProcessor) {
      manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefElement && descriptionsProcessor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(final @NotNull RefMethod refMethod) {
-              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
-              context.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
-                UMethod uDerivedMethod = UastContextKt.toUElement(derivedMethod, UMethod.class);
-                if (uDerivedMethod == null) return true;
-                UExpression body = uDerivedMethod.getUastBody();
-                if (RefMethodImpl.isEmptyExpression(body)) return true;
-                if (RefJavaUtil.getInstance().isMethodOnlyCallsSuper(uDerivedMethod)) return true;
-                descriptionsProcessor.ignoreElement(refMethod);
-                return false;
-              });
-            }
-          });
-        }
-      }
+       @Override
+       public void visitMethod(final @NotNull RefMethod refMethod) {
+         if (descriptionsProcessor.getDescriptions(refMethod) == null) return;
+         if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
+         context.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+           UMethod uDerivedMethod = UastContextKt.toUElement(derivedMethod, UMethod.class);
+           if (uDerivedMethod == null) return true;
+           UExpression body = uDerivedMethod.getUastBody();
+           if (RefMethodImpl.isEmptyExpression(body)) return true;
+           if (RefJavaUtil.getInstance().isMethodOnlyCallsSuper(uDerivedMethod)) return true;
+           descriptionsProcessor.ignoreElement(refMethod);
+           return false;
+         });
+       }
     });
 
     return false;

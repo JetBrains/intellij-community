@@ -7,6 +7,7 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.impl.cache.RecordUtil;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.PsiLambdaExpressionImpl;
 import com.intellij.psi.tree.IElementType;
@@ -17,7 +18,7 @@ import java.util.Objects;
 
 public class LambdaExpressionElementType extends FunctionalExpressionElementType<PsiLambdaExpression> {
   public LambdaExpressionElementType() {
-    super("LAMBDA_EXPRESSION");
+    super("LAMBDA_EXPRESSION", BasicJavaElementType.BASIC_LAMBDA_EXPRESSION);
   }
 
   @Override

@@ -8,13 +8,12 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.Operat
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag.*
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.bind
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.AttributeDataRule.Companion.forFileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.ContentModificationRule.Companion.forContentRecordId
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.ContentOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.PropertyOverwriteRule.Companion.forFileId
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.RecoveredChildrenIds
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.RecoveredChildrenIds
 
 object VfsChronicle {
   /*
@@ -75,43 +74,52 @@ object VfsChronicle {
     )
 
   interface ContentRestorationSequence {
-    val initial: ContentOperation.Set
+    val initial: ContentOperation.Set?
 
     /** in chronological order */
     val modifications: List<ContentOperation.Modify>
 
     companion object {
-      fun ContentRestorationSequence.restoreContent(payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray> =
-        modifications.fold(initial.readContent(payloadReader)) { data, modOp ->
+      val ContentRestorationSequence.isFormed: Boolean get() = initial != null
+      fun ContentRestorationSequence.restoreContent(payloadReader: PayloadReader): State.DefinedState<ByteArray> {
+        return modifications.fold(
+          initial?.readContent(payloadReader) ?: return State.NotAvailable("initial content was not found")
+        ) { data, modOp ->
           data.bind { modOp.modifyContent(it, payloadReader) }
         }
+      }
     }
   }
 
-  class ContentRestorationSequenceBuilder {
-    private val reversedModifications = mutableListOf<ContentOperation.Modify>()
-    private var initial: ContentOperation.Set? = null
+  operator fun ContentRestorationSequence.plus(rhs: ContentRestorationSequence): ContentRestorationSequence {
+    val lhs = this@plus
+    return object : ContentRestorationSequence {
+      override val initial: ContentOperation.Set?
+      override val modifications: List<ContentOperation.Modify>
+      init {
+        if (rhs.initial != null) {
+          initial = rhs.initial
+          modifications = rhs.modifications
+        } else {
+          initial = lhs.initial
+          modifications = lhs.modifications + rhs.modifications
+        }
+      }
+    }
+  }
 
-    val isFormed: Boolean get() = initial != null
+  class ContentRestorationSequenceBuilder : ContentRestorationSequence {
+    private val modificationsDeque = ArrayDeque<ContentOperation.Modify>()
+    override val modifications: List<ContentOperation.Modify> get() = modificationsDeque.toList()
+    override var initial: ContentOperation.Set? = null
+      private set
 
-    fun prependModification(mod: ContentOperation.Modify) = reversedModifications.add(mod)
+    fun prependModification(mod: ContentOperation.Modify) = modificationsDeque.addFirst(mod)
+    fun appendModification(mod: ContentOperation.Modify) = modificationsDeque.addLast(mod)
 
     fun setInitial(set: ContentOperation.Set) {
       assert(initial == null)
       initial = set
-    }
-
-    fun buildWithInitial(set: ContentOperation.Set): ContentRestorationSequence =
-      ContentRestorationSequenceImpl(set, reversedModifications.reversed())
-        .also { assert(initial == null) }
-
-    fun buildIfInitialIsPresent(): ContentRestorationSequence? = initial?.let {
-      ContentRestorationSequenceImpl(it, reversedModifications.reversed())
-    }
-
-    companion object {
-      private class ContentRestorationSequenceImpl(override val initial: ContentOperation.Set,
-                                                   override val modifications: List<ContentOperation.Modify>) : ContentRestorationSequence
     }
   }
 
@@ -119,7 +127,7 @@ object VfsChronicle {
   fun lookupContentRestorationStack(iterator: OperationLogStorage.Iterator,
                                     contentRecordId: Int,
                                     stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): State.DefinedState<ContentRestorationSequence> {
-    if (contentRecordId == 0) return State.NotAvailable(NotEnoughInformationCause("VFS didn't cache file's content"))
+    if (contentRecordId == 0) return State.notEnoughInformation("VFS didn't cache file's content")
     val seqBuilder = ContentRestorationSequenceBuilder()
     while (iterator.hasPrevious() && !stopIf(iterator)) {
       val lookup = lookupContentOperation(iterator, contentRecordId, TraverseDirection.REWIND, stopIf)
@@ -127,12 +135,11 @@ object VfsChronicle {
       when (val op = lookup.value) {
         is ContentOperation.Modify -> seqBuilder.prependModification(op)
         is ContentOperation.Set -> {
-          return seqBuilder.buildWithInitial(op).let(State::Ready)
+          return seqBuilder.let(State::Ready)
         }
       }
     }
-    // no ContentOp.SetValue was found
-    return State.NotAvailable()
+    return seqBuilder.let(State::Ready)
   }
 
   /**
@@ -158,7 +165,7 @@ object VfsChronicle {
     ) {
       when (it) {
         is RecordsOperation.AllocateRecord -> {
-          if (it.result.hasValue) {
+          if (it.result.isSuccess) {
             val id = it.result.value
             if (fileId == id) return RecoveredChildrenIds.of(childrenIds.toList(), true)
             seenDifferentSetParent.add(id)
@@ -187,28 +194,6 @@ object VfsChronicle {
       }
     }
     return RecoveredChildrenIds.of(childrenIds.toList(), false)
-  }
-
-  /**
-   * @see [restoreChildrenIds]
-   */
-  fun restoreRootIds(iterator: OperationLogStorage.Iterator): RecoveredChildrenIds = restoreChildrenIds(iterator, 1) // ROOT_FILE_ID
-
-  // traversing utilities
-
-  interface TraverseContext {
-    fun stop()
-    fun isStopped(): Boolean
-  }
-
-  class TraverseContextImpl : TraverseContext {
-    private var stopFlag = false
-
-    override fun stop() {
-      stopFlag = true
-    }
-
-    override fun isStopped(): Boolean = stopFlag
   }
 
   // allows T to be nullable
@@ -259,30 +244,30 @@ object VfsChronicle {
    * [onInvalid] throws the cause -- some unexpected exception happened in [OperationLogStorage], can't do anything about it;
    *
    * [onIncomplete] -- if the operation's tag is contained in [toReadMask], then we're interested in it, but it is Incomplete => information
-   *                    about the operation has been lost, better to stop the traverse; if it's not contained, then there are two cases:
+   *                    about the operation has been lost, better to throw [IllegalStateException]; if it's not contained, then there are two cases:
    *                    1. an operation is actually [OperationReadResult.Complete], but due to [toReadMask] filter it was not read completely,
    *                    2. it is actually [OperationReadResult.Incomplete] -- both cases shouldn't affect our computation anyway
    *                    (this is a subtle place as one may want to stop the traverse at any Incomplete so this needs to be carefully
    *                    revised at the usage site);
    *
-   * [onCompleteExceptional] -- operation's tag is contained in [toReadMask], but the operation has finished with an exception, stop the traverse
+   * [onCompleteExceptional] -- operation's tag is contained in [toReadMask], but the operation has finished with an exception; by default throw [IllegalStateException]
    */
   inline fun traverseOperationsLog(
     iterator: OperationLogStorage.Iterator,
     direction: TraverseDirection,
     toReadMask: VfsOperationTagsMask,
     crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
-    onInvalid: TraverseContext.(cause: Throwable) -> Unit = { throw it },
-    onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (toReadMask.contains(it)) stop() },
-    onCompleteExceptional: TraverseContext.(operation: VfsOperation<*>) -> Unit = { stop() },
-    onComplete: TraverseContext.(operation: VfsOperation<*>) -> Unit
-  ) = TraverseContextImpl().run {
-    while (iterator.movableIn(direction) && !stopIf(iterator) && !isStopped()) {
+    onInvalid: (cause: Throwable) -> Unit = { throw it },
+    onIncomplete: (tag: VfsOperationTag) -> Unit = { if (toReadMask.contains(it)) throw IllegalStateException("Incomplete operation met: $it (iterPos=${iterator.getPosition()})") },
+    onCompleteExceptional: (operation: VfsOperation<*>) -> Unit = { throw IllegalStateException("Exceptional operation met: $it (iterPos=${iterator.getPosition()})") },
+    onComplete: (operation: VfsOperation<*>) -> Unit
+  ) {
+    while (iterator.movableIn(direction) && !stopIf(iterator)) {
       when (val read = iterator.moveFiltered(direction, toReadMask)) {
         is OperationReadResult.Invalid -> onInvalid(read.cause)
         is OperationReadResult.Incomplete -> onIncomplete(read.tag)
         is OperationReadResult.Complete -> {
-          if (read.operation.result.hasValue) onComplete(read.operation)
+          if (read.operation.result.isSuccess) onComplete(read.operation)
           else onCompleteExceptional(read.operation)
         }
       }
@@ -298,10 +283,10 @@ object VfsChronicle {
     direction: TraverseDirection,
     toReadMask: VfsOperationTagsMask,
     crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
-    onInvalid: TraverseContext.(cause: Throwable) -> Unit = { throw it },
-    onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (toReadMask.contains(it)) stop() },
-    onCompleteExceptional: TraverseContext.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { _, _ -> stop() },
-    onComplete: TraverseContext.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit
+    onInvalid: (cause: Throwable) -> Unit = { throw it },
+    onIncomplete: (tag: VfsOperationTag) -> Unit = { if (toReadMask.contains(it)) throw IllegalStateException("Incomplete operation met: $it (iterPos=${iterator.getPosition()})") },
+    onCompleteExceptional: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { op, _ -> throw IllegalStateException("Exceptional operation met: $op (iterPos=${iterator.getPosition()})") },
+    onComplete: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit
   ): LookupResult<T> {
     val result = LookupResultImpl<T>()
     traverseOperationsLog(
@@ -318,9 +303,9 @@ object VfsChronicle {
     relevantOperations: VfsOperationTagsMask,
     ifModifies: ConditionalVfsModifier<T>,
     crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
-    onInvalid: TraverseContext.(cause: Throwable) -> Unit = { throw it },
-    onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (relevantOperations.contains(it)) stop() },
-    onCompleteExceptional: TraverseContext.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { _, _ -> stop() },
+    onInvalid: (cause: Throwable) -> Unit = { throw it },
+    onIncomplete: (tag: VfsOperationTag) -> Unit = { if (relevantOperations.contains(it)) throw IllegalStateException("Incomplete operation met: $it (iterPos=${iterator.getPosition()})") },
+    onCompleteExceptional: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { op, _ -> throw IllegalStateException("Exceptional operation met: $op (iterPos=${iterator.getPosition()})") },
   ): LookupResult<T> =
     traverseOperationsLogForLookup(
       iterator, direction, relevantOperations, stopIf,
@@ -334,9 +319,9 @@ object VfsChronicle {
     fileId: Int,
     propertyRule: VfsModificationContract.PropertyOverwriteRule<T>,
     crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
-    onInvalid: TraverseContext.(cause: Throwable) -> Unit = { throw it },
-    onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (propertyRule.relevantOperations.contains(it)) stop() },
-    onCompleteExceptional: TraverseContext.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { _, _ -> stop() },
+    onInvalid: (cause: Throwable) -> Unit = { throw it },
+    onIncomplete: (tag: VfsOperationTag) -> Unit = { if (propertyRule.relevantOperations.contains(it)) throw IllegalStateException("Incomplete operation met: $it (iterPos=${iterator.getPosition()})") },
+    onCompleteExceptional: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { op, _ -> throw IllegalStateException("Exceptional operation met: $op (iterPos=${iterator.getPosition()})") },
   ): LookupResult<T> =
     traverseOperationsLogForVfsModificationLookup(
       iterator, direction,

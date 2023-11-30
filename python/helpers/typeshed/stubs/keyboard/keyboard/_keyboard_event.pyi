@@ -18,11 +18,11 @@ class KeyboardEvent:
         self,
         event_type: Literal["down", "up"] | None,
         scan_code: int,
-        name: str | None = ...,
-        time: float | None = ...,
-        device: str | None = ...,
-        modifiers: tuple[str, ...] | None = ...,
-        is_keypad: bool | None = ...,
+        name: str | None = None,
+        time: float | None = None,
+        device: str | None = None,
+        modifiers: tuple[str, ...] | None = None,
+        is_keypad: bool | None = None,
     ) -> None: ...
-    def to_json(self, ensure_ascii: bool = ...) -> str: ...
+    def to_json(self, ensure_ascii: bool = False) -> str: ...
     def __eq__(self, other: object) -> bool: ...

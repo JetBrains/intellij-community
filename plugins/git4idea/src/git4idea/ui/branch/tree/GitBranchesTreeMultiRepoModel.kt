@@ -44,8 +44,10 @@ class GitBranchesTreeMultiRepoModel(
     branchesTreeCache.keys.clear()
     val localBranches = GitBranchUtil.getCommonLocalBranches(repositories)
     val remoteBranches = GitBranchUtil.getCommonRemoteBranches(repositories)
-    commonLocalBranchesTree = LazyBranchesSubtreeHolder(localBranches, repositories, null, ::isPrefixGrouping)
-    commonRemoteBranchesTree = LazyBranchesSubtreeHolder(remoteBranches, repositories, null, ::isPrefixGrouping)
+    val localFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.LOCAL)
+    val remoteFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.REMOTE)
+    commonLocalBranchesTree = LazyBranchesSubtreeHolder(repositories, localBranches, localFavorites, null, ::isPrefixGrouping)
+    commonRemoteBranchesTree = LazyBranchesSubtreeHolder(repositories, remoteBranches, remoteFavorites, null, ::isPrefixGrouping)
     treeStructureChanged(TreePath(arrayOf(root)), null, null)
   }
 
@@ -68,7 +70,8 @@ class GitBranchesTreeMultiRepoModel(
       is GitBranchType -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent, emptyList()) }
       is BranchesPrefixGroup -> {
         branchesTreeCache
-          .getOrPut(parent) { getBranchTreeNodes(parent.type, parent.prefix).sortedWith(getSubTreeComparator(repositories)) }
+          .getOrPut(parent) { getBranchTreeNodes(parent.type, parent.prefix)
+            .sortedWith(getSubTreeComparator(project.service<GitBranchManager>().getFavoriteBranches(parent.type), repositories)) }
       }
       else -> emptyList()
     }

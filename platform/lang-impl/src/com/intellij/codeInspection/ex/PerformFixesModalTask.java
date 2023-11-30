@@ -5,9 +5,11 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
@@ -15,12 +17,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.util.SequentialTask;
+import one.util.streamex.EntryStream;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static com.intellij.modcommand.ModCommandExecutor.BatchExecutionResult;
+import static com.intellij.modcommand.ModCommandExecutor.Result;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 public abstract class PerformFixesModalTask implements SequentialTask {
@@ -30,6 +38,7 @@ public abstract class PerformFixesModalTask implements SequentialTask {
   private final PsiDocumentManager myDocumentManager;
   private final PostprocessReformattingAspect myReformattingAspect;
   private final int myLength;
+  protected final @NotNull Map<@NotNull BatchExecutionResult, Integer> myResultCount = new HashMap<>();
 
   private int myProcessed;
   private int myPackIdx;
@@ -125,6 +134,27 @@ public abstract class PerformFixesModalTask implements SequentialTask {
 
     PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
     return psiElement != null ? notNullize(SymbolPresentationUtil.getSymbolPresentableText(psiElement)) : null;
+  }
+
+  /**
+   * @param actionName user-readable name of the action
+   * @return error message text; null if the action was successful
+   */
+  public final @Nullable @NlsContexts.Tooltip String getResultMessage(@NotNull String actionName) {
+    if (myResultCount.isEmpty()) {
+      return LangBundle.message("hint.text.unfortunately.currently.available.for.batch.mode", actionName);
+    }
+    if (myResultCount.size() == 1) {
+      BatchExecutionResult result = myResultCount.keySet().iterator().next();
+      if (result == Result.SUCCESS) return null;
+      return result.getMessage();
+    }
+    @Nls String message = LangBundle.message("executor.error.some.actions.failed") + "\n";
+    int total = myResultCount.values().stream().mapToInt(i -> i).sum();
+    return message + EntryStream.of(myResultCount) //NON-NLS
+      .reverseSorted(Map.Entry.comparingByValue())
+      .mapKeyValue((result, count) -> LangBundle.message("executor.one.of.actions", count, total, result.getMessage()))
+      .joining("\n");
   }
 
   private Pair<CommonProblemDescriptor, Boolean> nextDescriptor() {

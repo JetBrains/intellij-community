@@ -34,7 +34,7 @@ class CodeReviewChangesTreeFactory(private val project: Project,
         }
       }
 
-      override fun getData(dataId: String) = super.getData(dataId) ?: VcsTreeModelData.getData(project, this, dataId)
+      override fun getData(dataId: String) = VcsTreeModelData.getDataOrSuper(project, this, dataId, super.getData(dataId))
 
     }.apply {
       emptyText.text = emptyTextText

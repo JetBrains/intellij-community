@@ -4,9 +4,11 @@ package org.jetbrains.idea.devkit.inspections.internal;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UReferenceExpression;
 
+@VisibleForTesting
 public final class UsePrimitiveTypesEqualsInspection extends UseEqualsInspectionBase {
 
   @Override

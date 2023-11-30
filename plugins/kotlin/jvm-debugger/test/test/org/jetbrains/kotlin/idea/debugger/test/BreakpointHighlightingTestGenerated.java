@@ -23,6 +23,11 @@ public class BreakpointHighlightingTestGenerated extends AbstractBreakpointHighl
         KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
     }
 
+    @TestMetadata("anonymousFun.kt")
+    public void testAnonymousFun() throws Exception {
+        runTest("testData/highlighting/anonymousFun.kt");
+    }
+
     @TestMetadata("conditionalReturn.kt")
     public void testConditionalReturn() throws Exception {
         runTest("testData/highlighting/conditionalReturn.kt");
@@ -31,6 +36,21 @@ public class BreakpointHighlightingTestGenerated extends AbstractBreakpointHighl
     @TestMetadata("conditionalReturnInLambda.kt")
     public void testConditionalReturnInLambda() throws Exception {
         runTest("testData/highlighting/conditionalReturnInLambda.kt");
+    }
+
+    @TestMetadata("inlineOnlyFunctions.kt")
+    public void testInlineOnlyFunctions() throws Exception {
+        runTest("testData/highlighting/inlineOnlyFunctions.kt");
+    }
+
+    @TestMetadata("lambdaClosingBrace.kt")
+    public void testLambdaClosingBrace() throws Exception {
+        runTest("testData/highlighting/lambdaClosingBrace.kt");
+    }
+
+    @TestMetadata("lambdas.kt")
+    public void testLambdas() throws Exception {
+        runTest("testData/highlighting/lambdas.kt");
     }
 
     @TestMetadata("lambdasOnSameLine.kt")
@@ -46,5 +66,10 @@ public class BreakpointHighlightingTestGenerated extends AbstractBreakpointHighl
     @TestMetadata("oneLineLambda.kt")
     public void testOneLineLambda() throws Exception {
         runTest("testData/highlighting/oneLineLambda.kt");
+    }
+
+    @TestMetadata("samInterface.kt")
+    public void testSamInterface() throws Exception {
+        runTest("testData/highlighting/samInterface.kt");
     }
 }

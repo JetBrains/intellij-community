@@ -3,7 +3,7 @@ package com.intellij.webSymbols.patterns.impl
 
 import com.intellij.webSymbols.WebSymbolNameSegment
 
-internal class MatchResult internal constructor(
+internal open class MatchResult internal constructor(
   val segments: List<WebSymbolNameSegment>
 ) {
 

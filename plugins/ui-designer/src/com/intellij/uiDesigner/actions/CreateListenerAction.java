@@ -68,7 +68,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     FormEditingUtil.showPopupUnderComponent(popup, selection.get(0));
   }
 
-  private DefaultActionGroup prepareActionGroup(final List<? extends RadComponent> selection) {
+  private static DefaultActionGroup prepareActionGroup(final List<? extends RadComponent> selection) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     final EventSetDescriptor[] eventSetDescriptors;
     try {

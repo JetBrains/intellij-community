@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.util;
 
 import com.intellij.openapi.project.Project;
@@ -52,11 +52,11 @@ public final class GitUIUtil {
    * @param currentBranchLabel current branch label (might be null)
    */
   @SuppressWarnings({"rawtypes", "unchecked"})
-  public static void setupRootChooser(@NotNull final Project project,
-                                      @NotNull final List<? extends VirtualFile> roots,
-                                      @Nullable final VirtualFile defaultRoot,
-                                      @NotNull final JComboBox gitRootChooser,
-                                      @Nullable final JLabel currentBranchLabel) {
+  public static void setupRootChooser(final @NotNull Project project,
+                                      final @NotNull List<? extends VirtualFile> roots,
+                                      final @Nullable VirtualFile defaultRoot,
+                                      final @NotNull JComboBox gitRootChooser,
+                                      final @Nullable JLabel currentBranchLabel) {
     for (VirtualFile root : roots) {
       gitRootChooser.addItem(root);
     }
@@ -92,7 +92,7 @@ public final class GitUIUtil {
    * @param ex        the exception
    * @param operation the operation name
    */
-  public static void showOperationError(final Project project, final VcsException ex, @Nls @NotNull final String operation) {
+  public static void showOperationError(final Project project, final VcsException ex, final @Nls @NotNull String operation) {
     showOperationError(project, operation, ex.getMessage());
   }
 
@@ -105,7 +105,7 @@ public final class GitUIUtil {
    */
   public static void showOperationErrors(final Project project,
                                          final Collection<? extends VcsException> exs,
-                                         @Nls @NotNull final String operation) {
+                                         final @Nls @NotNull String operation) {
     if (exs.size() == 1) {
       showOperationError(project, operation, exs.iterator().next().getMessage());
     }
@@ -126,7 +126,7 @@ public final class GitUIUtil {
    * @param message   the error description
    * @param operation the operation name
    */
-  public static void showOperationError(final Project project, final String operation, @Nls final String message) {
+  public static void showOperationError(final Project project, final String operation, final @Nls String message) {
     Messages.showErrorDialog(project, message, GitBundle.message("error.occurred.during", operation));
   }
 
@@ -149,7 +149,7 @@ public final class GitUIUtil {
        * @param changed the changed control
        * @param impliedState the implied state
        */
-      private void check(final JCheckBox checked, final boolean checkedState, final JCheckBox changed, final boolean impliedState) {
+      private static void check(final JCheckBox checked, final boolean checkedState, final JCheckBox changed, final boolean impliedState) {
         if (checked.isSelected() == checkedState) {
           changed.setSelected(impliedState);
           changed.setEnabled(false);
@@ -185,8 +185,7 @@ public final class GitUIUtil {
     return String.format("<%2$s>%1$s</%2$s>", s, tag);
   }
 
-  @Nls
-  public static String getNoCurrentBranch() {
+  public static @Nls String getNoCurrentBranch() {
     return GitBundle.message("common.no.active.branch");
   }
 }

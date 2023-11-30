@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
-internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private val project: Project) : StoreReloadManager {
+internal class StoreReloadManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : StoreReloadManager {
   private val reloadBlockCount = AtomicInteger()
   private val blockStackTrace = AtomicReference<Throwable?>()
   private val changedStorages = LinkedHashMap<ComponentStoreImpl, MutableSet<StateStorage>>()

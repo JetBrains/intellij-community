@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.usages.similarity.bag.Bag
 import com.intellij.usages.similarity.features.UsageSimilarityFeaturesRecorder
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.psi.*
 
 class KotlinSimilarityFeaturesExtractor(element: PsiElement, private val context: PsiElement) : KtTreeVisitorVoid() {
@@ -127,7 +128,7 @@ class KotlinSimilarityFeaturesExtractor(element: PsiElement, private val context
 
     private fun collectFunctionParametersNames(function: KtFunction) {
         if (function is KtFunctionLiteral) {
-            variableNames += "it"
+            variableNames += StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
         }
 
         for (valueParameter in function.valueParameters) {

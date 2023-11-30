@@ -7,16 +7,24 @@ import org.jetbrains.intellij.build.OsFamily
 import java.nio.file.Path
 
 interface BundledRuntime {
+  val prefix: String
+
+  val build: String
+
   suspend fun getHomeForCurrentOsAndArch(): Path
 
   /**
-   * contract: returns a directory, where only one subdirectory is available: 'jbr', which contains specified JBR
+   * @return a directory, where only one subdirectory is available: 'jbr', which contains specified JBR
    */
-  suspend fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path
+  suspend fun extract(prefix: String = this.prefix, os: OsFamily, arch: JvmArchitecture): Path
 
-  suspend fun extractTo(prefix: String, os: OsFamily, destinationDir: Path, arch: JvmArchitecture)
+  suspend fun extractTo(os: OsFamily, destinationDir: Path, arch: JvmArchitecture)
 
-  fun archiveName(prefix: String, arch: JvmArchitecture, os: OsFamily, forceVersionWithUnderscores: Boolean = false): String
+  suspend fun findArchive(prefix: String = this.prefix, os: OsFamily, arch: JvmArchitecture): Path
+
+  fun downloadUrlFor(prefix: String = this.prefix, os: OsFamily, arch: JvmArchitecture): String
+
+  fun archiveName(prefix: String = this.prefix, arch: JvmArchitecture, os: OsFamily, forceVersionWithUnderscores: Boolean = false): String
 
   fun executableFilesPatterns(os: OsFamily, distribution: JetBrainsRuntimeDistribution): List<String>
 }

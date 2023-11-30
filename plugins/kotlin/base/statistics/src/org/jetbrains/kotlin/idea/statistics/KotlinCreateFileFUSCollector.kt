@@ -7,34 +7,32 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
-class KotlinCreateFileFUSCollector : CounterUsagesCollector() {
+object KotlinCreateFileFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
-    companion object {
-        private val GROUP = EventLogGroup("kotlin.ide.new.file", 2)
+    private val GROUP = EventLogGroup("kotlin.ide.new.file", 2)
 
-        private val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
+    private val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
 
-        private val allowedTemplates = listOf(
-            "Kotlin_Class",
-            "Kotlin_File",
-            "Kotlin_Interface",
-            "Kotlin_Data_Class",
-            "Kotlin_Enum",
-            "Kotlin_Sealed_Class",
-            "Kotlin_Annotation",
-            "Kotlin_Object",
-            "Kotlin_Scratch",
-            "Kotlin_Script",
-            "Kotlin_Worksheet"
-        )
+    private val allowedTemplates = listOf(
+        "Kotlin_Class",
+        "Kotlin_File",
+        "Kotlin_Interface",
+        "Kotlin_Data_Class",
+        "Kotlin_Enum",
+        "Kotlin_Sealed_Class",
+        "Kotlin_Annotation",
+        "Kotlin_Object",
+        "Kotlin_Scratch",
+        "Kotlin_Script",
+        "Kotlin_Worksheet"
+    )
 
-        private val newFileEvent = GROUP.registerEvent(
-            "Created",
-            EventFields.String("file_template", allowedTemplates),
-            EventFields.PluginInfo
-        )
+    private val newFileEvent = GROUP.registerEvent(
+        "Created",
+        EventFields.String("file_template", allowedTemplates),
+        EventFields.PluginInfo
+    )
 
-        fun logFileTemplate(template: String) = newFileEvent.log(template.replace(' ', '_'), pluginInfo)
-    }
+    fun logFileTemplate(template: String) = newFileEvent.log(template.replace(' ', '_'), pluginInfo)
 }

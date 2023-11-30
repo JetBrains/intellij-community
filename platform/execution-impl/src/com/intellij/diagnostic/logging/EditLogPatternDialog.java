@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 
-public class EditLogPatternDialog extends DialogWrapper {
+public final class EditLogPatternDialog extends DialogWrapper {
 
   private JPanel myWholePanel;
   private JTextField myNameField;

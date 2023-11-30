@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.remote;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -26,22 +27,23 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public final class JsonFileResolver {
+
+  private static final Key<Boolean> DOWNLOAD_STARTED = Key.create("DOWNLOAD_STARTED");
+
   public static boolean isRemoteEnabled(Project project) {
     return !ApplicationManager.getApplication().isUnitTestMode() &&
            JsonSchemaCatalogProjectConfiguration.getInstance(project).isRemoteActivityEnabled();
   }
 
-  @Nullable
-  public static VirtualFile urlToFile(@NotNull String urlString) {
+  public static @Nullable VirtualFile urlToFile(@NotNull String urlString) {
     if (urlString.startsWith(JsonSchemaObject.TEMP_URL)) {
       return TempFileSystem.getInstance().findFileByPath(urlString.substring(JsonSchemaObject.TEMP_URL.length() - 1));
     }
     return VirtualFileManager.getInstance().findFileByUrl(FileUtil.toSystemIndependentName(replaceUnsafeSchemaStoreUrls(urlString)));
   }
 
-  @Nullable
   @Contract("null -> null; !null -> !null")
-  public static String replaceUnsafeSchemaStoreUrls(@Nullable String urlString) {
+  public static @Nullable String replaceUnsafeSchemaStoreUrls(@Nullable String urlString) {
     if (urlString == null) return null;
     if (urlString.equals(JsonSchemaCatalogManager.DEFAULT_CATALOG)) {
       return JsonSchemaCatalogManager.DEFAULT_CATALOG_HTTPS;
@@ -53,9 +55,8 @@ public final class JsonFileResolver {
     return urlString;
   }
 
-  @Nullable
-  public static VirtualFile resolveSchemaByReference(@Nullable VirtualFile currentFile,
-                                                     @Nullable String schemaUrl) {
+  public static @Nullable VirtualFile resolveSchemaByReference(@Nullable VirtualFile currentFile,
+                                                               @Nullable String schemaUrl) {
     if (schemaUrl == null) return null;
 
     boolean isHttpPath = isHttpPath(schemaUrl);
@@ -97,7 +98,10 @@ public final class JsonFileResolver {
 
     RemoteFileInfo info = ((HttpVirtualFile)path).getFileInfo();
     if (info == null || info.getState() == RemoteFileState.DOWNLOADING_NOT_STARTED) {
-      path.refresh(true, false);
+      if (path.getUserData(DOWNLOAD_STARTED) != Boolean.TRUE) {
+        path.putUserData(DOWNLOAD_STARTED, Boolean.TRUE);
+        path.refresh(true, false);
+      }
     }
   }
 

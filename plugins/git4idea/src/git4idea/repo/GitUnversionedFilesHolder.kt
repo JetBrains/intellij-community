@@ -15,7 +15,7 @@ class GitUnversionedFilesHolder private constructor(val manager: GitRepositoryMa
 
   override fun containsFile(file: FilePath, vcsRoot: VirtualFile): Boolean {
     val repository = manager.getRepositoryForRootQuick(vcsRoot) ?: return false
-    return repository.untrackedFilesHolder.containsFile(file)
+    return repository.untrackedFilesHolder.containsUntrackedFile(file)
   }
 
   override fun values() = allHolders.flatMap { it.untrackedFilePaths }.toList()

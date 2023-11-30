@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -35,7 +36,7 @@ class ReplaceExplicitFunctionLiteralParamWithItIntention : PsiElementBaseIntenti
         if (parameter.destructuringDeclaration != null) return false
 
         if (functionLiteral.anyDescendantOfType<KtFunctionLiteral> { literal ->
-                literal.usesName(element.text) && (!literal.hasParameterSpecification() || literal.usesName("it"))
+                literal.usesName(element.text) && (!literal.hasParameterSpecification() || literal.usesName(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier))
             }) return false
 
         val lambda = functionLiteral.parent as? KtLambdaExpression ?: return false
@@ -93,7 +94,7 @@ class ReplaceExplicitFunctionLiteralParamWithItIntention : PsiElementBaseIntenti
     ) : RenameProcessor(
         editor.project!!,
         functionLiteral.valueParameters.single(),
-        "it",
+        StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier,
         false,
         false
     ) {

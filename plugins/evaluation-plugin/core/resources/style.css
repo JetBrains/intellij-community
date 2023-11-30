@@ -69,7 +69,6 @@ button:focus {
 
 .completion {
   position: relative;
-  display: inline-block;
   font-weight: bold;
 }
 
@@ -115,6 +114,8 @@ button:focus {
   border-bottom: none;
   border-top: none;
   z-index: 99;
+  top: 1.5em;
+  left: 0;
 }
 
 .autocomplete-items div {

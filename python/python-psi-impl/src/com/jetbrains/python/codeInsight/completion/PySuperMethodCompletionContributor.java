@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.completion;
 
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
@@ -103,7 +103,7 @@ public class PySuperMethodCompletionContributor extends CompletionContributor im
                        PyClassRefactoringUtil.transplantImportsFromSignature(superMethod, insertedMethod);
                      });
                    });
-                 result.addElement(TailTypeDecorator.withTail(element, TailType.NONE));
+                 result.addElement(TailTypeDecorator.withTail(element, TailTypes.noneType()));
                }
              }
            });

@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl.logging
 
 import org.jetbrains.intellij.build.BuildMessageLogger
+import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
 
@@ -24,6 +25,7 @@ abstract class BuildMessageLoggerBase : BuildMessageLogger() {
         val errorsString = (message as CompilationErrorsLogMessage).errorMessages.joinToString(separator = "\n")
         printMessage("Compilation errors (${message.compilerName}):\n$errorsString")
       }
+      LogMessage.Kind.BUILD_CANCEL -> throw BuildScriptsLoggedError(message.text)
       else -> {
         if (shouldBePrinted(message.kind)) {
           printMessage(message.text)

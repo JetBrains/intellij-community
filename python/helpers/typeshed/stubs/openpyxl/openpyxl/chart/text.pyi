@@ -1,21 +1,28 @@
-from typing import Any
+from _typeshed import Incomplete
+from typing import ClassVar
+from typing_extensions import Literal
 
+from openpyxl.chart.data_source import StrRef
+from openpyxl.descriptors.base import Alias, Typed
 from openpyxl.descriptors.serialisable import Serialisable
+from openpyxl.drawing.text import ListStyle, RichTextProperties
 
 class RichText(Serialisable):
-    tagname: str
-    bodyPr: Any
-    properties: Any
-    lstStyle: Any
-    p: Any
-    paragraphs: Any
-    __elements__: Any
-    def __init__(self, bodyPr: Any | None = ..., lstStyle: Any | None = ..., p: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    bodyPr: Typed[RichTextProperties, Literal[False]]
+    properties: Alias
+    lstStyle: Typed[ListStyle, Literal[True]]
+    p: Incomplete
+    paragraphs: Alias
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(
+        self, bodyPr: RichTextProperties | None = None, lstStyle: ListStyle | None = None, p: Incomplete | None = None
+    ) -> None: ...
 
 class Text(Serialisable):
-    tagname: str
-    strRef: Any
-    rich: Any
-    __elements__: Any
-    def __init__(self, strRef: Any | None = ..., rich: Any | None = ...) -> None: ...
-    def to_tree(self, tagname: Any | None = ..., idx: Any | None = ..., namespace: Any | None = ...): ...
+    tagname: ClassVar[str]
+    strRef: Typed[StrRef, Literal[True]]
+    rich: Typed[RichText, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, strRef: StrRef | None = None, rich: RichText | None = None) -> None: ...
+    def to_tree(self, tagname: str | None = None, idx: Incomplete | None = None, namespace: str | None = None): ...

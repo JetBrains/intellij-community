@@ -2,10 +2,10 @@
 class Test {
     String test(int x) {
         String result = null;
-        synchronized (this) {
-            if (x == 0) {
+        synchronized(this) {
+            if(x == 0) {
                 result = "foo";
-            } else if (x == 1) {
+            } else if(x == 1) {
                 result = "bar";
             }
         }

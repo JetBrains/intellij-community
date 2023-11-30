@@ -92,8 +92,11 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       Collection<X509Certificate> additionalTrustedCertificates =
         OsCertificatesService.getInstance().getCustomOsSpecificTrustedCertificates();
       if (additionalTrustedCertificates.isEmpty()) {
-        LOG.warn(
-          "Received an empty list of custom trusted root certificates from the system. Check log above for possible errors, enable debug logging in category 'org.jetbrains.nativecerts' for more information");
+        // don't nag developers, on jetbrains developer's machine this list is usually empty on MacOs and Windows
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.warn(
+            "Received an empty list of custom trusted root certificates from the system. Check log above for possible errors, enable debug logging in category 'org.jetbrains.nativecerts' for more information");
+        }
         return null;
       }
 

@@ -46,7 +46,7 @@ public class PlaceInArtifact extends PlaceInProjectStructure {
   @Override
   public String getPlacePath() {
     if (myParentPath != null && myPackagingElement != null) {
-      //todo[nik] use id of element?
+      //todo use id of element?
       return myParentPath + "/" + myPackagingElement.getType().getId();
     }
     return null;

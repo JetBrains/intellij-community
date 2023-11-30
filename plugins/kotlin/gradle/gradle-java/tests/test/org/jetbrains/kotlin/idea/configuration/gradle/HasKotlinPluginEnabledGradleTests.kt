@@ -53,7 +53,7 @@ class HasKotlinPluginEnabledGradleTest : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("7.0+")
     fun testOnlyParentModuleKotlinGradle() {
-        // submodule.main, submodule.test
+        // main, test
         val modulesWithKotlin = myProject.modules.filter { it.hasKotlinPluginEnabled() }
         TestCase.assertEquals(modulesWithKotlin.size, 2)
         TestCase.assertTrue(modulesWithKotlin.any { it.name == "project.main" })

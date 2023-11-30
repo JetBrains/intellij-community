@@ -2,10 +2,10 @@
 package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.externalSystem.actionSystem.AnAsyncAction
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -42,7 +42,7 @@ suspend fun performAction(
   action: AnAction,
   project: Project? = null,
   systemId: ProjectSystemId? = null,
-  selectedFile: VirtualFile? = null
+  selectedFile: VirtualFile? = null,
 ) {
   withSelectedFileIfNeeded(selectedFile) {
     val event = TestActionEvent.createTestEvent {
@@ -54,12 +54,28 @@ suspend fun performAction(
       }
     }
     withContext(Dispatchers.EDT) {
-      if (action is AnAsyncAction) {
-        action.actionPerformedAsync(event)
+      action.actionPerformed(event)
+    }
+  }
+}
+
+suspend fun performActionAsync(
+  action: suspend (AnActionEvent) -> Unit,
+  project: Project? = null,
+  systemId: ProjectSystemId? = null,
+  selectedFile: VirtualFile? = null,
+) {
+  withSelectedFileIfNeeded(selectedFile) {
+    val event = TestActionEvent.createTestEvent {
+      when {
+        ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.`is`(it) -> systemId
+        CommonDataKeys.PROJECT.`is`(it) -> project
+        CommonDataKeys.VIRTUAL_FILE.`is`(it) -> selectedFile
+        else -> null
       }
-      else{
-        action.actionPerformed(event)
-      }
+    }
+    withContext(Dispatchers.EDT) {
+      action(event)
     }
   }
 }

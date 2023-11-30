@@ -97,7 +97,7 @@ private class CompatibleMavenServerConnector(private val project: Project,
     throw RuntimeException("not implemented")
   }
 
-  override fun interpolateAndAlignModel(model: MavenModel?, basedir: Path?): MavenModel {
+  override fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
     throw RuntimeException("not implemented")
   }
 
@@ -151,6 +151,10 @@ private class CompatibleMavenServerConnector(private val project: Project,
     return mutableListOf()
   }
 
+  override fun getDebugStatus(clean: Boolean): MavenServerStatus {
+    throw RuntimeException("not implemented")
+  }
+
 }
 
 private class StoppedMavenServerConnector : MavenServerConnector {
@@ -158,7 +162,7 @@ private class StoppedMavenServerConnector : MavenServerConnector {
     throw RuntimeException("not implemented")
   }
 
-  override fun interpolateAndAlignModel(model: MavenModel?, basedir: Path?): MavenModel {
+  override fun interpolateAndAlignModel(model: MavenModel, basedir: Path, pomDir: Path): MavenModel {
     throw ConnectException("Cannot reconnect")
   }
 
@@ -232,6 +236,10 @@ private class StoppedMavenServerConnector : MavenServerConnector {
   }
 
   override fun getMultimoduleDirectories(): MutableList<String> {
+    throw RuntimeException("not implemented")
+  }
+
+  override fun getDebugStatus(clean: Boolean) : MavenServerStatus{
     throw RuntimeException("not implemented")
   }
 

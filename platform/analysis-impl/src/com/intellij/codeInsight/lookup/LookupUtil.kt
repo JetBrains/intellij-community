@@ -24,8 +24,19 @@ object LookupUtil {
                                            editor: Editor, caretOffset: Int,
                                            prefix: Int,
                                            lookupString: String): Int {
-    val document = getInjectedDocument(project, editor, caretOffset)
-    if (document == null) return insertLookupInDocument(caretOffset, editor.document, prefix, lookupString)
+    val injectedDocument = getInjectedDocument(project, editor, caretOffset)
+    return if (injectedDocument != null)
+      insertLookupInInjectedDocument(project, injectedDocument, caretOffset, prefix, editor, lookupString)
+    else
+      insertLookupInDocument(caretOffset, editor.document, prefix, lookupString)
+  }
+
+  private fun insertLookupInInjectedDocument(project: Project,
+                                             document: DocumentWindow,
+                                             caretOffset: Int,
+                                             prefix: Int,
+                                             editor: Editor,
+                                             lookupString: String): Int {
     val file = PsiDocumentManager.getInstance(project).getPsiFile(document)
     val offset = document.hostToInjected(caretOffset)
     val lookupStart = min(offset, max(offset - prefix, 0))
@@ -35,13 +46,17 @@ object LookupUtil {
         .intersectWithAllEditableFragments(file, TextRange.create(lookupStart, offset))
       if (ranges.isNotEmpty()) {
         diff = ranges[0].startOffset - lookupStart
-        if (ranges.size == 1 && diff == 0) diff = -1
+        if (ranges.size == 1 && diff == 0)
+          diff = -1
       }
     }
-    return if (diff == -1) insertLookupInDocument(caretOffset, editor.document, prefix, lookupString)
-    else document.injectedToHost(
-      insertLookupInDocument(offset, document, prefix - diff, if (diff == 0) lookupString else lookupString.substring(diff))
-    )
+    return if (diff == -1)
+      insertLookupInDocument(caretOffset, editor.document, prefix, lookupString)
+    else {
+      val lookupSubstring = if (diff == 0) lookupString else lookupString.substring(diff)
+      val injectedOffset = insertLookupInDocument(offset, document, prefix - diff, lookupSubstring)
+      document.injectedToHost(injectedOffset)
+    }
   }
 
   @JvmStatic

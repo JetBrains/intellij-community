@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
@@ -49,6 +50,7 @@ import com.intellij.testFramework.common.ThreadUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 
 import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
 
@@ -1278,14 +1280,13 @@ record App() {
     FileEditor editor
     edt { editor = FileEditorManager.getInstance(project).openFile(myFixture.file.virtualFile, false)[0] }
     def manager = (UndoManagerImpl) UndoManager.getInstance(project)
-    def old = manager.editorProvider
-    manager.editorProvider = new CurrentEditorProvider() {
+    manager.overriddenEditorProvider = new CurrentEditorProvider() {
       @Override
-      FileEditor getCurrentEditor() {
+      FileEditor getCurrentEditor(@Nullable Project project) {
         return editor
       }
     }
-    disposeOnTearDown ({ manager.editorProvider = old } as Disposable)
+    disposeOnTearDown ({ manager.overriddenEditorProvider = null } as Disposable)
     return editor
   }
 

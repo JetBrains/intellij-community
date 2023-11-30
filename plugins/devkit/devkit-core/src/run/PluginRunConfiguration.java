@@ -205,7 +205,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           Sdk internalJavaSdk = ObjectUtils.chooseNotNull(IdeaJdk.getInternalJavaSdk(usedIdeaJdk), usedIdeaJdk);
           var sdkVersion = ((JavaSdk)internalJavaSdk.getSdkType()).getVersion(jdk);
           if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
-            try (InputStream stream = PluginRunConfiguration.class.getResourceAsStream("OpenedPackages.txt")) {
+            try (InputStream stream = PluginRunConfiguration.class.getResourceAsStream("/META-INF/OpenedPackages.txt")) {
               assert stream != null;
               JavaModuleOptions.readOptions(stream, OS.CURRENT).forEach(vm::add);
             }
@@ -223,7 +223,6 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         }
 
         if (SystemInfo.isMac) {
-          vm.defineProperty("apple.laf.useScreenMenuBar", "true");
           vm.defineProperty("apple.awt.fileDialogForDirectories", "true");
         }
 

@@ -13,7 +13,9 @@ class PropertyCollector:
         pathSet: list[str]
 
     class TraversalSpec:
-        def __init__(self, *, path: str = ..., skip: bool = ..., type: type[ContainerView] = ..., **kwargs) -> None: ...
+        def __init__(
+            self, *, path: str = ..., skip: bool = ..., type: type[ContainerView] = ..., **kwargs: Incomplete
+        ) -> None: ...
         path: str
         skip: bool
         type: type[ContainerView]
@@ -37,14 +39,14 @@ class PropertyCollector:
             *,
             propSet: list[PropertyCollector.PropertySpec] = ...,
             objectSet: list[PropertyCollector.ObjectSpec] = ...,
-            **kwargs,
+            **kwargs: Incomplete,
         ) -> None: ...
         propSet: list[PropertyCollector.PropertySpec]
         objectSet: list[PropertyCollector.ObjectSpec]
         def __getattr__(self, name: str) -> Incomplete: ...
 
     class ObjectContent:
-        def __init__(self, *, obj: ManagedEntity = ..., propSet: list[DynamicProperty] = ..., **kwargs) -> None: ...
+        def __init__(self, *, obj: ManagedEntity = ..., propSet: list[DynamicProperty] = ..., **kwargs: Incomplete) -> None: ...
         obj: ManagedEntity
         propSet: list[DynamicProperty]
         def __getattr__(self, name: str) -> Incomplete: ...

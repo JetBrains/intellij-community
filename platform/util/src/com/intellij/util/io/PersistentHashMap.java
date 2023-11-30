@@ -57,6 +57,7 @@ public final class PersistentHashMap<Key, Value> implements AppendablePersistent
   /**
    * @deprecated Use {@link PersistentHashMap#PersistentHashMap(Path, KeyDescriptor, DataExternalizer)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public PersistentHashMap(@NotNull File file,
                            @NotNull KeyDescriptor<Key> keyDescriptor,

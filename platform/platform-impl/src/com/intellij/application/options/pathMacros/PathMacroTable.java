@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.application.options.PathMacrosCollector;
@@ -249,7 +249,7 @@ public final class PathMacroTable extends JBTable {
     }
   }
 
-  private static class EditValidator implements PathMacroEditor.Validator {
+  private static final class EditValidator implements PathMacroEditor.Validator {
     @Override
     public boolean checkName(String name) {
       if (name.isEmpty() || PathMacros.getInstance().getSystemMacroNames().contains(name)) {

@@ -2,13 +2,14 @@ package test
 
 open class BaseInheritorSamePackage {
     constructor()
+
     protected constructor(x: Int)
 
     fun foo() {
         BaseInheritorSamePackage(1)
     }
 
-    var i = 1
+    var i: Int = 1
 }
 
 internal class DerivedInheritorSamePackage : BaseInheritorSamePackage() {

@@ -15,6 +15,7 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -94,7 +95,7 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
     private fun KtClassOrObject.hasSameDeclaration(name: String) = declarations.any { it is KtNamedDeclaration && it.name == name }
 
     private fun targetNameWithoutConflicts(baseName: String, container: KtClassOrObject?) =
-        Fe10KotlinNameSuggester.suggestNameByName(defaultTargetName(baseName)) { container?.hasSameDeclaration(it) != true }
+        KotlinNameSuggester.suggestNameByName(defaultTargetName(baseName)) { container?.hasSameDeclaration(it) != true }
 
     private fun createNestedSubclass(sealedClass: KtClass, sealedName: String, editor: Editor) {
         if (!super.preparePsiElementForWriteIfNeeded(sealedClass)) return

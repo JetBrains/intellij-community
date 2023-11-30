@@ -75,7 +75,7 @@ public class CompilerEncodingServiceImpl extends CompilerEncodingService {
       }
       set.add(charset);
     }
-    //todo[nik,jeka] perhaps we should take into account encodings of source roots only not individual files
+    //todo perhaps we should take into account encodings of source roots only not individual files
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       for (VirtualFile file : ModuleRootManager.getInstance(module).getSourceRoots(true)) {
         Charset encoding = EncodingProjectManager.getInstance(myProject).getEncoding(file, true);

@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PlainTextDescriptor implements TextDescriptor {
+public final class PlainTextDescriptor implements TextDescriptor {
   private final @Nls String myText;
   private final @NonNls String myFileName;
 

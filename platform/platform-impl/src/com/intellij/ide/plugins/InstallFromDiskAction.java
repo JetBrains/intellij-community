@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -59,7 +58,7 @@ class InstallFromDiskAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (!PluginManagerFilters.getInstance().allowInstallFromDisk()) {
+    if (!PluginManagementPolicy.getInstance().isInstallFromDiskAllowed()) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       presentation.setDescription(IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"));
@@ -74,7 +73,7 @@ class InstallFromDiskAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (!PluginManagerFilters.getInstance().allowInstallFromDisk()) {
+    if (!PluginManagementPolicy.getInstance().isInstallFromDiskAllowed()) {
       Messages.showErrorDialog(project,
                                IdeBundle.message("action.InstallFromDiskAction.not.allowed.description"),
                                IdeBundle.message("action.InstallFromDiskAction.text"));
@@ -126,7 +125,7 @@ class InstallFromDiskAction extends DumbAwareAction {
            null;
   }
 
-  private static class FileChooserDescriptorImpl extends FileChooserDescriptor {
+  private static final class FileChooserDescriptorImpl extends FileChooserDescriptor {
 
     private FileChooserDescriptorImpl() {
       super(false, false, true, true, false, false);

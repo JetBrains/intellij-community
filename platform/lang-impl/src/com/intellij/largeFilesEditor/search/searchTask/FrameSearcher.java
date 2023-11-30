@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.searchTask;
 
 
@@ -15,7 +15,7 @@ import java.util.ArrayList;
  * Class, that finds all occurrences in certain frame.
  * Frame is consisted of two strings, that can be set for this class.
  */
-class FrameSearcher {
+final class FrameSearcher {
   /**
    * Use this field if bordering symbol (beforeFrameStartSymbol, afterFrameEndSymbol) doesn't exist
    */

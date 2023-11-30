@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.ListElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.StringElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.PropertyElement
 
 class KotlinScriptBuilder(indent: Int = 0) : AbstractScriptBuilder(indent) {
@@ -19,6 +20,13 @@ class KotlinScriptBuilder(indent: Int = 0) : AbstractScriptBuilder(indent) {
         add(element.name, indent, false)
         add(" = ", indent, false)
         add(element.value, indent, false)
+      }
+      is StringElement -> {
+        val escapedString = element.value
+          .replace("\\", "\\\\")
+          .replace("\n", "\\n")
+        val string = "\"" + escapedString.replace("\"", "\\\"") + "\""
+        add(string, indent, isNewLine)
       }
       else -> {
         super.add(element, indent, isNewLine)

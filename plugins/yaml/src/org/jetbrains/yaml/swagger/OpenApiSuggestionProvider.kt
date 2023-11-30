@@ -49,7 +49,8 @@ internal class OpenApiSuggestionProvider : PluginSuggestionProvider {
 private class OpenApiPluginSuggestion(val project: Project,
                                       val thisProductCode: String) : Function<FileEditor, EditorNotificationPanel?> {
   override fun apply(fileEditor: FileEditor): EditorNotificationPanel {
-    val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
+    val status = if (PluginAdvertiserService.isCommunityIde()) EditorNotificationPanel.Status.Promo else EditorNotificationPanel.Status.Info
+    val panel = EditorNotificationPanel(fileEditor, status)
 
     val suggestedIdeCode = PluginAdvertiserService.getSuggestedCommercialIdeCode(thisProductCode)
     val suggestedCommercialIde = PluginAdvertiserService.getIde(suggestedIdeCode)

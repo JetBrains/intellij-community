@@ -3,7 +3,7 @@ class TestPackagePrivateFieldInit {
     var end: Any? = null
     var handler: Any? = null
     var desc: String? = null
-    var type = 0
+    var type: Int = 0
     var next: TestPackagePrivateFieldInit? = null
 
     companion object {

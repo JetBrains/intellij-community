@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.xml;
 
 import com.intellij.codeInspection.SuppressQuickFix;
@@ -33,9 +34,8 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
 
   private final Tokenizer<? extends PsiElement> myXmlAttributeTokenizer = createAttributeValueTokenizer();
 
-  @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof XmlText) {
       return myXmlTextTokenizer;
     }
@@ -97,7 +97,7 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
     return new XmlTextTokenizer(PlainTextSplitter.getInstance());
   }
 
-  protected static abstract class XmlTextContentTokenizer<T extends XmlElement> extends XmlTokenizerBase<T> {
+  protected abstract static class XmlTextContentTokenizer<T extends XmlElement> extends XmlTokenizerBase<T> {
 
     public XmlTextContentTokenizer(Splitter splitter) {
       super(splitter);

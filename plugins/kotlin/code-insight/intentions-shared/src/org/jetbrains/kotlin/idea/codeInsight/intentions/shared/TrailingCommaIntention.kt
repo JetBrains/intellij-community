@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.formatter.trailingComma.canAddTrailingCommaWithRegistryCheck
 import org.jetbrains.kotlin.psi.KtElement
 
-class TrailingCommaIntention : SelfTargetingIntention<KtElement>(
+internal class TrailingCommaIntention : SelfTargetingIntention<KtElement>(
     KtElement::class.java,
     KotlinBundle.lazyMessage("intention.trailing.comma.text")
 ), LowPriorityAction {

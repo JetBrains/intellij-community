@@ -56,11 +56,11 @@ import java.util.regex.PatternSyntaxException;
 /**
  * @author max, andrey.zaytsev
  */
-public class EditorSearchSession implements SearchSession,
-                                            DataProvider,
-                                            SelectionListener,
-                                            SearchResults.SearchResultsListener,
-                                            SearchReplaceComponent.Listener {
+public final class EditorSearchSession implements SearchSession,
+                                                  DataProvider,
+                                                  SelectionListener,
+                                                  SearchResults.SearchResultsListener,
+                                                  SearchReplaceComponent.Listener {
   public static final DataKey<EditorSearchSession> SESSION_KEY = DataKey.create("EditorSearchSession");
   private static final Logger SELECTION_UPDATE_LOGGER = Logger.getInstance("com.intellij.find.selection");
 
@@ -126,8 +126,7 @@ public class EditorSearchSession implements SearchSession,
 
       @Override
       public void hideNotify() {
-        myLivePreviewController.off();
-        mySearchResults.removeListener(EditorSearchSession.this);
+        disableLivePreview();
       }
     });
 
@@ -194,7 +193,7 @@ public class EditorSearchSession implements SearchSession,
     FindUsagesCollector.triggerUsedOptionsStats(project, FindUsagesCollector.FIND_IN_FILE, findModel);
   }
 
-  private AnAction @NotNull [] createPrimarySearchActions() {
+  private static AnAction @NotNull [] createPrimarySearchActions() {
     if (ExperimentalUI.isNewUI()) {
       return new AnAction[]{
         new StatusTextAction(),
@@ -555,6 +554,11 @@ public class EditorSearchSession implements SearchSession,
     mySearchResults.addListener(this);
   }
 
+  public void disableLivePreview() {
+    myLivePreviewController.off();
+    mySearchResults.removeListener(this);
+  }
+
   private void updateResults(final boolean allowedToChangedEditorSelection) {
     final String text = myFindModel.getStringToFind();
     if (text.isEmpty()) {
@@ -699,7 +703,7 @@ public class EditorSearchSession implements SearchSession,
     protected abstract void onClick();
   }
 
-  private class ReplaceAction extends ButtonAction implements LightEditCompatible {
+  private final class ReplaceAction extends ButtonAction implements LightEditCompatible {
     ReplaceAction() {
       super(ApplicationBundle.message("editorsearch.replace.action.text"), 'p');
     }
@@ -715,7 +719,7 @@ public class EditorSearchSession implements SearchSession,
     }
   }
 
-  private class ReplaceAllAction extends ButtonAction implements LightEditCompatible {
+  private final class ReplaceAllAction extends ButtonAction implements LightEditCompatible {
     ReplaceAllAction() {
       super(ApplicationBundle.message("editorsearch.replace.all.action.text"), 'a');
     }
@@ -733,7 +737,7 @@ public class EditorSearchSession implements SearchSession,
     }
   }
 
-  private class ExcludeAction extends ButtonAction implements LightEditCompatible {
+  private final class ExcludeAction extends ButtonAction implements LightEditCompatible {
     ExcludeAction() {
       super(FindBundle.message("button.exclude"), 'l');
     }

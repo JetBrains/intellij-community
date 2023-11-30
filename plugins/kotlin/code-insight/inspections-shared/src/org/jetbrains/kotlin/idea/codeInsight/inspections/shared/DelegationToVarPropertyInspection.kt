@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.delegatedSuperTypeEntry
 
-class DelegationToVarPropertyInspection : AbstractKotlinInspection() {
+internal class DelegationToVarPropertyInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         delegatedSuperTypeEntry(fun(delegatedSuperTypeEntry) {
             val parameter = delegatedSuperTypeEntry.delegateExpression?.mainReference?.resolve() as? KtParameter ?: return

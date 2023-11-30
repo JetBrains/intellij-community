@@ -4,4 +4,4 @@ package com.intellij.codeInsight.util
 import com.intellij.platform.diagnostic.telemetry.Scope
 
 @JvmField
-val HighlightVisitorScope: Scope = Scope("highlightVisitor")
+val HighlightVisitorScope: Scope = Scope("highlightVisitor", verbose = true)

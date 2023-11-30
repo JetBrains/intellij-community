@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
@@ -13,8 +13,6 @@ import java.util.Objects;
 public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   private static final boolean USE_VERBOSE_GRADLE_API_BY_DEFAULT = Boolean.parseBoolean(System.getProperty("gradle.api.verbose"));
-
-  private static final long serialVersionUID = 1L;
 
   @NotNull private final GradleExecutionWorkspace myExecutionWorkspace = new GradleExecutionWorkspace();
 
@@ -32,6 +30,8 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   private boolean resolveModulePerSourceSet = true;
   private boolean useQualifiedModuleNames = false;
   private boolean delegatedBuild = true;
+  private boolean downloadSources = false;
+  private boolean isParallelModelFetch = false;
 
   private boolean myBuiltInTestEventsUsed = false;
 
@@ -161,6 +161,22 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public void setBuiltInTestEventsUsed(boolean isBuiltInTestEventsUsed) {
     myBuiltInTestEventsUsed = isBuiltInTestEventsUsed;
+  }
+
+  public boolean isDownloadSources() {
+    return downloadSources;
+  }
+
+  public void setDownloadSources(boolean downloadSources) {
+    this.downloadSources = downloadSources;
+  }
+
+  public boolean isParallelModelFetch() {
+    return isParallelModelFetch;
+  }
+
+  public void setParallelModelFetch(boolean parallelModelFetch) {
+    isParallelModelFetch = parallelModelFetch;
   }
 
   @Override

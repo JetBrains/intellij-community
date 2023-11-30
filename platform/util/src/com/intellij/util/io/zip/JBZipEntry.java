@@ -4,6 +4,7 @@ package com.intellij.util.io.zip;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
@@ -409,7 +410,7 @@ public class JBZipEntry implements Cloneable {
   void readExtraFromCentralDirectoryBytes(byte @NotNull [] extraBytes) throws IOException {
     UnsyncByteArrayInputStream stream = new UnsyncByteArrayInputStream(extraBytes);
     while (stream.available() > 0) {
-      ZipShort headerId = new ZipShort(readNBytes(stream, JBZipFile.SHORT));
+      ZipShort headerId = new ZipShort(stream.readShortLittleEndian());
       JBZipExtraField field;
       if (headerId.equals(Zip64ExtraField.HEADER_ID)) {
         field = new Zip64ExtraField();
@@ -417,7 +418,7 @@ public class JBZipEntry implements Cloneable {
       else {
         field = new UnrecognizedExtraField(headerId);
       }
-      int length = ZipShort.getValue(readNBytes(stream, JBZipFile.SHORT));
+      int length = stream.readShortLittleEndian();
       field.parseFromCentralDirectoryData(readNBytes(stream, length), 0, length);
       addExtra(field);
       if (field instanceof Zip64ExtraField) {
@@ -556,7 +557,7 @@ public class JBZipEntry implements Cloneable {
   }
 
   private static byte[] readNBytes(@NotNull InputStream is, int length) throws IOException {
-    byte[] bytes = new byte[length];
+    byte[] bytes = ArrayUtil.newByteArray(length);
 
     int n = 0;
     int off = 0;

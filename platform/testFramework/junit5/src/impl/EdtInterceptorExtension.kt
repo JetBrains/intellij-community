@@ -3,6 +3,7 @@ package com.intellij.testFramework.junit5.impl
 
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.RunMethodInEdt
+import com.intellij.testFramework.junit5.RunMethodInEdt.WriteIntentMode
 import com.intellij.testFramework.runInEdtAndGet
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.DynamicTestInvocationContext
@@ -64,7 +65,9 @@ internal class EdtInterceptorExtension : InvocationInterceptor {
   ): T {
     if (shouldIntercept(invocationContext)) {
       extensionContext.getStore(ExtensionContext.Namespace.GLOBAL).put(testFactoryWasInterceptedKey, true)
-      return intercept(invocation)
+      val writeIntent = getWriteIntent(invocationContext)
+      extensionContext.getStore(ExtensionContext.Namespace.GLOBAL).put(testFactoryNeedsWriteIntentKey, writeIntent)
+      return intercept(invocation, writeIntent)
     }
     else {
       return invocation.proceed()
@@ -77,7 +80,8 @@ internal class EdtInterceptorExtension : InvocationInterceptor {
     extensionContext: ExtensionContext,
   ) {
     if (extensionContext.getStore(ExtensionContext.Namespace.GLOBAL).get(testFactoryWasInterceptedKey) == true) {
-      intercept(invocation)
+      val writeIntent = extensionContext.getStore(ExtensionContext.Namespace.GLOBAL).get(testFactoryNeedsWriteIntentKey) as Boolean
+      intercept(invocation, writeIntent)
     }
     else {
       invocation.proceed()
@@ -104,10 +108,11 @@ internal class EdtInterceptorExtension : InvocationInterceptor {
   private companion object {
 
     const val testFactoryWasInterceptedKey = "test factory was intercepted"
+    const val testFactoryNeedsWriteIntentKey = "test factory need write intent"
 
     fun <T> intercept(invocation: Invocation<T>, invocationContext: ReflectiveInvocationContext<*>): T {
       if (shouldIntercept(invocationContext)) {
-        return intercept(invocation)
+        return intercept(invocation, getWriteIntent(invocationContext))
       }
       else {
         return invocation.proceed()
@@ -119,8 +124,23 @@ internal class EdtInterceptorExtension : InvocationInterceptor {
       return runInEdt.allMethods || AnnotationSupport.findAnnotation(invocationContext.executable, RunMethodInEdt::class.java).isPresent
     }
 
-    fun <T> intercept(invocation: Invocation<T>): T {
-      return runInEdtAndGet {
+    fun getWriteIntent(invocationContext: ReflectiveInvocationContext<*>): Boolean {
+      val runInEdt = AnnotationSupport.findAnnotation(invocationContext.targetClass, RunInEdt::class.java).get()
+      val runMethodInEdtOpt = AnnotationSupport.findAnnotation(invocationContext.executable, RunMethodInEdt::class.java)
+      if (runMethodInEdtOpt.isEmpty) {
+        return runInEdt.writeIntent
+      }
+      else {
+        when (runMethodInEdtOpt.get().writeIntent) {
+          WriteIntentMode.True -> return true
+          WriteIntentMode.False -> return false
+          WriteIntentMode.Default -> return runInEdt.writeIntent
+        }
+      }
+    }
+
+    fun <T> intercept(invocation: Invocation<T>, writeIntent: Boolean): T {
+      return runInEdtAndGet(writeIntent) {
         invocation.proceed()
       }
     }

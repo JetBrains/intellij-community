@@ -1,26 +1,53 @@
-from typing import Any
+from _typeshed import Incomplete, StrPath, SupportsRead
+from typing_extensions import Final, Literal, TypeAlias
+from zipfile import ZipFile
 
-SUPPORTED_FORMATS: Any
+from openpyxl.chartsheet.chartsheet import Chartsheet
+from openpyxl.packaging.manifest import Manifest
+from openpyxl.packaging.relationship import Relationship
+from openpyxl.reader.workbook import WorkbookParser
+from openpyxl.workbook import Workbook
+
+_SupportedFormats: TypeAlias = Literal[".xlsx", ".xlsm", ".xltx", ".xltm"]
+SUPPORTED_FORMATS: Final[tuple[_SupportedFormats, ...]]
 
 class ExcelReader:
-    archive: Any
-    valid_files: Any
-    read_only: Any
-    keep_vba: Any
-    data_only: Any
-    keep_links: Any
-    shared_strings: Any
-    def __init__(self, fn, read_only: bool = ..., keep_vba=..., data_only: bool = ..., keep_links: bool = ...) -> None: ...
-    package: Any
+    archive: ZipFile
+    valid_files: list[str]
+    read_only: bool
+    keep_vba: bool
+    data_only: bool
+    keep_links: bool
+    rich_text: bool
+    shared_strings: list[Incomplete]
+    package: Manifest  # defined after call to read_manifest()
+    parser: WorkbookParser  # defined after call to read_workbook()
+    wb: Workbook  # defined after call to read_workbook()
+
+    def __init__(
+        self,
+        fn: SupportsRead[bytes] | str,
+        read_only: bool = False,
+        keep_vba: bool = False,
+        data_only: bool = False,
+        keep_links: bool = True,
+        rich_text: bool = False,
+    ) -> None: ...
     def read_manifest(self) -> None: ...
     def read_strings(self) -> None: ...
-    parser: Any
-    wb: Any
     def read_workbook(self) -> None: ...
     def read_properties(self) -> None: ...
+    def read_custom(self) -> None: ...
     def read_theme(self) -> None: ...
-    def read_chartsheet(self, sheet, rel) -> None: ...
+    def read_chartsheet(self, sheet: Chartsheet, rel: Relationship) -> None: ...
     def read_worksheets(self) -> None: ...
     def read(self) -> None: ...
 
-def load_workbook(filename, read_only: bool = ..., keep_vba=..., data_only: bool = ..., keep_links: bool = ...): ...
+def load_workbook(
+    filename: SupportsRead[bytes] | StrPath,
+    read_only: bool = False,
+    keep_vba: bool = False,
+    data_only: bool = False,
+    keep_links: bool = True,
+    rich_text: bool = False,
+) -> Workbook: ...

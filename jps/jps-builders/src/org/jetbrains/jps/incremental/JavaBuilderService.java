@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +18,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class JavaBuilderService extends BuilderService {
-  @NotNull
+public final class JavaBuilderService extends BuilderService {
   @Override
-  public List<? extends BuildTargetType<?>> getTargetTypes() {
+  public @NotNull List<? extends BuildTargetType<?>> getTargetTypes() {
     List<BuildTargetType<?>> types = new ArrayList<>();
     types.addAll(JavaModuleBuildTargetType.ALL_TYPES);
     types.addAll(ResourcesTargetType.ALL_TYPES);
@@ -29,9 +28,8 @@ public class JavaBuilderService extends BuilderService {
     return types;
   }
 
-  @NotNull
   @Override
-  public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
+  public @NotNull List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
     return Arrays.asList(
       new JavaBuilder(SharedThreadPool.getInstance()),
       new NotNullInstrumentingBuilder(),
@@ -41,9 +39,8 @@ public class JavaBuilderService extends BuilderService {
     );
   }
 
-  @NotNull
   @Override
-  public List<? extends TargetBuilder<?, ?>> createBuilders() {
+  public @NotNull List<? extends TargetBuilder<?, ?>> createBuilders() {
     return Arrays.asList(new ResourcesBuilder(), new ProjectDependenciesResolver());
   }
 }

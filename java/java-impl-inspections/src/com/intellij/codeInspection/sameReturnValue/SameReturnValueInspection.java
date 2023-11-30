@@ -33,7 +33,7 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
 
       String returnValue = refMethod.getReturnValueIfSame();
       if (returnValue != null) {
-        final UMethod method = (UMethod)refMethod.getUastElement();
+        final UMethod method = refMethod.getUastElement();
         final PsiType returnType = method.getReturnType();
         if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
           return null;
@@ -69,18 +69,14 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
                                                 @NotNull GlobalJavaInspectionContext globalContext,
                                                 @NotNull ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
-              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
-                processor.ignoreElement(refMethod);
-                return false;
-              });
-            }
-          });
-        }
+      @Override
+      public void visitMethod(@NotNull final RefMethod refMethod) {
+        if (processor.getDescriptions(refMethod) == null) return;
+        if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
+        globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+          processor.ignoreElement(refMethod);
+          return false;
+        });
       }
     });
 

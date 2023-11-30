@@ -32,13 +32,12 @@ private fun showRestartNotification(project: Project, restart: () -> Unit) {
 }
 
 private fun scheduleRestart(project: Project, restart: () -> Unit) {
-  object : Task.Modal(project, IdeBundle.message("action.UpdateIde.task.success.title"), true) {
+  object : Task.Modal(project, IdeBundle.message("action.UpdateIde.progress.title"), true) {
     override fun run(indicator: ProgressIndicator) {
       indicator.isIndeterminate = false
       var progress = 0
       for (i in 10 downTo 1) {
-        indicator.text = IdeBundle.message(
-          "action.UpdateIde.progress.text.new.installation.prepared.ide.will.restart", i)
+        indicator.text = IdeBundle.message("action.UpdateIde.progress.text.ide.will.restart", i)
         repeat(10) {
           indicator.fraction = 0.01 * progress++
           indicator.checkCanceled()

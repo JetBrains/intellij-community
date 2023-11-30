@@ -20,8 +20,9 @@ class KotlinQuickFixesList @ForKtQuickFixesListBuilder @OptIn(PrivateForInline::
         return factories.flatMap { createQuickFixes(it, diagnostic) }
     }
 
+    context(KtAnalysisSession)
     @OptIn(PrivateForInline::class)
-    private fun KtAnalysisSession.createQuickFixes(
+    private fun createQuickFixes(
         quickFixFactory: KotlinQuickFixFactory,
         diagnostic: KtDiagnosticWithPsi<*>
     ): List<IntentionAction> = when (quickFixFactory) {
@@ -31,6 +32,13 @@ class KotlinQuickFixesList @ForKtQuickFixesListBuilder @OptIn(PrivateForInline::
                     as KotlinDiagnosticFixFactory<KtDiagnosticWithPsi<PsiElement>>
             createPlatformQuickFixes(diagnostic, factory)
         }
+        is KotlinQuickFixFactory.KotlinApplicatorModCommandBasedFactory -> {
+            @Suppress("UNCHECKED_CAST")
+            val factory = quickFixFactory.applicatorFactory
+                    as KotlinDiagnosticModCommandFixFactory<KtDiagnosticWithPsi<PsiElement>>
+            createPlatformQuickFixes(diagnostic, factory)
+        }
+
         is KotlinQuickFixFactory.KotlinQuickFixesPsiBasedFactory -> quickFixFactory.psiFactory.createQuickFix(diagnostic.psi)
     }
 
@@ -77,12 +85,26 @@ class KtQuickFixesListBuilder private constructor() {
         quickFixFactories.forEach(::registerApplicator)
     }
 
+    fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerModCommandApplicators(
+        quickFixFactories: Collection<KotlinDiagnosticModCommandFixFactory<out DIAGNOSTIC>>
+    ) {
+        quickFixFactories.forEach(::registerApplicator)
+    }
+
     @OptIn(PrivateForInline::class)
     fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerApplicator(
         quickFixFactory: KotlinDiagnosticFixFactory<out DIAGNOSTIC>
     ) {
         quickFixes.getOrPut(quickFixFactory.diagnosticClass) { mutableListOf() }
             .add(KotlinQuickFixFactory.KotlinApplicatorBasedFactory(quickFixFactory))
+    }
+
+    @OptIn(PrivateForInline::class)
+    fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerApplicator(
+        quickFixFactory: KotlinDiagnosticModCommandFixFactory<out DIAGNOSTIC>
+    ) {
+        quickFixes.getOrPut(quickFixFactory.diagnosticClass) { mutableListOf() }
+            .add(KotlinQuickFixFactory.KotlinApplicatorModCommandBasedFactory(quickFixFactory))
     }
 
     @OptIn(ForKtQuickFixesListBuilder::class, PrivateForInline::class)
@@ -101,6 +123,10 @@ sealed class KotlinQuickFixFactory {
 
     class KotlinApplicatorBasedFactory(
         val applicatorFactory: KotlinDiagnosticFixFactory<*>
+    ) : KotlinQuickFixFactory()
+
+    class KotlinApplicatorModCommandBasedFactory(
+        val applicatorFactory: KotlinDiagnosticModCommandFixFactory<*>
     ) : KotlinQuickFixFactory()
 }
 

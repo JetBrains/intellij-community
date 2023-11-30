@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.ide.IdeEventQueue;
@@ -60,8 +60,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
   }
 
   @Override
-  @NotNull
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 
@@ -70,9 +69,8 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     myState = state;
   }
 
-  @NotNull
   @Override
-  protected OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles, Collection<? extends VirtualFile> files) {
+  protected @NotNull OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles, Collection<? extends VirtualFile> files) {
     List<FileInfo> fileInfos = files.stream()
       .filter(vf-> vf != null && !vf.isWritable() && vf.isInLocalFileSystem())
       .map(vf -> new FileInfo(vf, myProject))

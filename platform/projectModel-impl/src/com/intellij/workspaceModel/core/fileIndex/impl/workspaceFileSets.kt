@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable
@@ -265,7 +265,8 @@ internal object WorkspaceFileKindMask {
   const val EXTERNAL_BINARY = 2
   const val EXTERNAL_SOURCE = 4
   const val EXTERNAL = EXTERNAL_SOURCE or EXTERNAL_BINARY
-  const val ALL = CONTENT or EXTERNAL
+  const val CUSTOM = 8
+  const val ALL = CONTENT or EXTERNAL or CUSTOM
 }
 
 internal sealed interface ExcludedFileSet : StoredFileSet {

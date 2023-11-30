@@ -142,7 +142,7 @@ public final class FileSystemUtil {
   }
 
   // thanks to SVNKit for the idea of platform-specific offsets
-  private static class JnaUnixMediatorImpl implements Mediator {
+  private static final class JnaUnixMediatorImpl implements Mediator {
     @SuppressWarnings({"OctalInteger", "SpellCheckingInspection"})
     private static final class LibC {
       static final int S_MASK = 0177777;
@@ -269,7 +269,7 @@ public final class FileSystemUtil {
     }
   }
 
-  private static class Nio2MediatorImpl implements Mediator {
+  private static final class Nio2MediatorImpl implements Mediator {
     @Override
     public FileAttributes getAttributes(@NotNull String pathStr) {
       if (SystemInfo.isWindows && pathStr.length() == 2 && pathStr.charAt(1) == ':') {
@@ -281,6 +281,10 @@ public final class FileSystemUtil {
         BasicFileAttributes attributes = NioFiles.readAttributes(path);
         return attributes == NioFiles.BROKEN_SYMLINK ? FileAttributes.BROKEN_SYMLINK : FileAttributes.fromNio(path, attributes);
       }
+      catch (NoSuchFileException e) {
+        LOG.trace(e.getClass().getName() + ": " + pathStr);
+        return null;
+      }
       catch (IOException | InvalidPathException e) {
         LOG.debug(pathStr, e);
         return null;
@@ -291,6 +295,10 @@ public final class FileSystemUtil {
     public String resolveSymLink(@NotNull String path) throws IOException {
       try {
         return Paths.get(path).toRealPath().toString();
+      }
+      catch (NoSuchFileException e) {
+        LOG.trace(e.getClass().getName() + ": " + path);
+        return null;
       }
       catch (FileSystemException e) {
         LOG.debug(path, e);
@@ -493,12 +501,14 @@ public final class FileSystemUtil {
     int FILE_SHARE_ALL = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 
     @Structure.FieldOrder({"Pointer", "Information"})
+    final
     class IO_STATUS_BLOCK_P extends Structure implements Structure.ByReference {
       public Pointer Pointer;
       public Pointer Information;
     }
 
     @Structure.FieldOrder("Flags")
+    final
     class FILE_CASE_SENSITIVE_INFORMATION_P extends Structure implements Structure.ByReference {
       // initialize with something crazy to make sure the native call did write 0 or 1 to this field
       public long Flags = 0xFFFF_FFFFL;  // FILE_CS_FLAG_CASE_SENSITIVE_DIR = 1

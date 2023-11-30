@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.instrument;
 
-import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.platform.ide.bootstrap.StartupUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
@@ -57,7 +57,7 @@ public final class LockWrappingClassVisitor extends ClassVisitor {
    * INVOKESTATIC {@link LockWrappingClassVisitor#releaseWriteIntentLockIfNeeded} (Z)V
    */
 
-  private class MyAdviceAdapter extends AdviceAdapter {
+  private final class MyAdviceAdapter extends AdviceAdapter {
     private static final String applicationUtil = "com/intellij/ide/instrument/LockWrappingClassVisitor";
     private static final String acquireLock = "acquireWriteIntentLockIfNeeded";
     private static final String releaseLock = "releaseWriteIntentLockIfNeeded";
@@ -74,7 +74,7 @@ public final class LockWrappingClassVisitor extends ClassVisitor {
      * @param name          the method's name.
      * @param descriptor    the method's descriptor (see {@link Type Type}).
      */
-    protected MyAdviceAdapter(MethodVisitor methodVisitor, int access, String name, String descriptor) {
+    private MyAdviceAdapter(MethodVisitor methodVisitor, int access, String name, String descriptor) {
       super(LockWrappingClassVisitor.this.api, methodVisitor, access, name, descriptor);
     }
 

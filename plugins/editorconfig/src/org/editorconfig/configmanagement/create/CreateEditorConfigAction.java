@@ -125,7 +125,7 @@ public final class CreateEditorConfigAction extends AnAction implements DumbAwar
   }
 
   @Nullable
-  private IdeView getIdeView(@NotNull AnActionEvent e) {
+  private static IdeView getIdeView(@NotNull AnActionEvent e) {
     return e.getData(LangDataKeys.IDE_VIEW);
   }
 

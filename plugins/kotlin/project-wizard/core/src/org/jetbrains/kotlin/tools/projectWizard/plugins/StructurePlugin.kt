@@ -3,11 +3,14 @@ package org.jetbrains.kotlin.tools.projectWizard.plugins
 
 
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
-import org.jetbrains.kotlin.tools.projectWizard.core.*
+import org.jetbrains.kotlin.tools.projectWizard.core.Context
+import org.jetbrains.kotlin.tools.projectWizard.core.Plugin
+import org.jetbrains.kotlin.tools.projectWizard.core.PluginSettingsOwner
+import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.StringValidators
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
 import org.jetbrains.kotlin.tools.projectWizard.core.service.FileSystemWizardService
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.PomIR
@@ -23,7 +26,7 @@ class StructurePlugin(context: Context) : Plugin(context) {
     companion object : PluginSettingsOwner() {
         override val pluginPath = "structure"
 
-        private val ALLOWED_SPECIAL_CHARS_IN_GROUP_ID = Module.ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES + '.'
+        private val ALLOWED_SPECIAL_CHARS_IN_GROUP_ID = Module.ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES
         private val ALLOWED_SPECIAL_CHARS_IN_ARTIFACT_ID = Module.ALLOWED_SPECIAL_CHARS_IN_MODULE_NAMES
         private val ALLOWED_SPECIAL_CHARS_IN_VERSION = setOf('_', '-', '.')
 
@@ -84,6 +87,22 @@ class StructurePlugin(context: Context) : Plugin(context) {
             defaultValue = value(true)
         }
 
+        val useCompactProjectStructure by booleanSetting(
+            "<USE_COMPACT_PROJECT_STRUCTURE>",
+            GenerationPhase.FIRST_STEP,
+        ) {
+            defaultValue = value(false)
+        }
+
+        // True when creating a new project, or when creating a submodule without parent of the same build system
+        // (e.g. a new Gradle module inside a JPS project)
+        val isCreatingNewProjectHierarchy by booleanSetting(
+            "<IS_CREATING_NEW_PROJECT_HIERARCHY>",
+            GenerationPhase.FIRST_STEP,
+        ) {
+            defaultValue = value(false)
+        }
+
         val createProjectDir by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             withAction {
                 service<FileSystemWizardService>().createDirectory(StructurePlugin.projectPath.settingValue)
@@ -98,7 +117,9 @@ class StructurePlugin(context: Context) : Plugin(context) {
             groupId,
             artifactId,
             version,
-            renderPomIR
+            renderPomIR,
+            useCompactProjectStructure,
+            isCreatingNewProjectHierarchy
         )
     override val pipelineTasks: List<PipelineTask> =
         listOf(createProjectDir)

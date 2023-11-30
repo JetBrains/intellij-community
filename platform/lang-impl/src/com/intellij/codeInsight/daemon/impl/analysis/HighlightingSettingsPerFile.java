@@ -56,7 +56,7 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
   }
 
   public static HighlightingSettingsPerFile getInstance(@NotNull Project project) {
-    return (HighlightingSettingsPerFile)project.getService(HighlightingLevelManager.class);
+    return (HighlightingSettingsPerFile)HighlightingLevelManager.getInstance(project);
   }
 
   private static int getRootIndex(@NotNull PsiFile file) {

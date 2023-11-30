@@ -7,7 +7,7 @@ import com.intellij.util.DefaultBundleService
 internal class LocalizedActionAliasMatcher : GotoActionAliasMatcher {
   override fun matchAction(action: AnAction, name: String): MatchMode {
     val service = DefaultBundleService.getInstance()
-    val matcher = GotoActionItemProvider.buildMatcher(name)
+    val matcher = buildMatcher(name)
 
     val defaultText = service.compute { action.templatePresentation.textWithPossibleMnemonic.get().text }
     if (defaultText != null && matcher.matches(defaultText)) return MatchMode.NAME

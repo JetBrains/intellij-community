@@ -457,6 +457,11 @@ public final class Mock {
     }
 
     @Override
+    public boolean acceptRequiresReadAction() {
+      return false;
+    }
+
+    @Override
     public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
       throw new UnsupportedOperationException();
     }

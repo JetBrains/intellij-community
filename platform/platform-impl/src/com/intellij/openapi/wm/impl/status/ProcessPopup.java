@@ -42,8 +42,7 @@ final class ProcessPopup {
   ProcessPopup(@NotNull InfoAndProgressPanel progressPanel) {
     myProgressPanel = progressPanel;
 
-    myIndicatorPanel = new JBPanelWithEmptyText().withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
-    myIndicatorPanel.setLayout(new VerticalLayout(0));
+    myIndicatorPanel = new JBPanelWithEmptyText(new VerticalLayout(0)).withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
     myIndicatorPanel.setBorder(JBUI.Borders.empty(10, 0, 18, 0));
     myIndicatorPanel.setFocusable(true);
     if (ExperimentalUI.isNewUI()) {
@@ -80,7 +79,7 @@ final class ProcessPopup {
   }
 
   private @NotNull Rectangle calculateBounds() {
-    JFrame frame = (JFrame)ComponentUtil.findUltimateParent(myProgressPanel.getComponent());
+    JFrame frame = (JFrame)ComponentUtil.findUltimateParent(myProgressPanel.getComponent$intellij_platform_ide_impl());
 
     Dimension contentSize = myContentPanel.getPreferredSize();
     int contentWidth = Math.max(contentSize.width, JBUI.scale(300));
@@ -131,7 +130,7 @@ final class ProcessPopup {
     Rectangle popupBounds = calculateBounds();
     myContentPanel.setPreferredSize(popupBounds.getSize());
     myPopupVisible = true;
-    myPopup.showInScreenCoordinates(myProgressPanel.getComponent().getRootPane(), popupBounds.getLocation());
+    myPopup.showInScreenCoordinates(myProgressPanel.getComponent$intellij_platform_ide_impl().getRootPane(), popupBounds.getLocation());
   }
 
   public boolean isShowing() {
@@ -183,12 +182,13 @@ final class ProcessPopup {
     builder.setRequestFocus(requestFocus);
     builder.setBelongsToGlobalPopupStack(false);
     builder.setMinSize(new JBDimension(300, 100));
-    Component frame = ComponentUtil.findUltimateParent(myProgressPanel.getComponent());
+    Component frame = ComponentUtil.findUltimateParent(myProgressPanel.getComponent$intellij_platform_ide_impl());
     Project project = null;
     if (frame instanceof IdeFrame ideFrame) {
       project = ideFrame.getProject();
     }
     builder.setDimensionServiceKey(project, DIMENSION_SERVICE_KEY, true);
+    builder.setLocateWithinScreenBounds(false);
 
     builder.setCancelButton(new MinimizeButton(IdeBundle.message("tooltip.hide")));
 

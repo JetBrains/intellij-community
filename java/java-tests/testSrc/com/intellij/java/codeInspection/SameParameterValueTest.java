@@ -3,7 +3,7 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.AccessModifier;
 import com.intellij.testFramework.JavaInspectionTestCase;
 
 public class SameParameterValueTest extends JavaInspectionTestCase {
@@ -34,8 +34,8 @@ public class SameParameterValueTest extends JavaInspectionTestCase {
   }
 
   public void testWithoutDeadCode() {
-    String previous = myTool.highestModifier;
-    myTool.highestModifier = PsiModifier.PUBLIC;
+    AccessModifier previous = myTool.highestModifier;
+    myTool.highestModifier = AccessModifier.PUBLIC;
     try {
       doTest(getTestDir(), myTool, false, false);
     } finally {
@@ -59,8 +59,8 @@ public class SameParameterValueTest extends JavaInspectionTestCase {
   }
   
   public void testMethodWithSuper() {
-    String previous = myTool.highestModifier;
-    myTool.highestModifier = PsiModifier.PUBLIC;
+    AccessModifier previous = myTool.highestModifier;
+    myTool.highestModifier = AccessModifier.PUBLIC;
     try {
       doTest(getTestDir(), myTool, false, true);
     } finally {

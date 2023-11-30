@@ -5,3 +5,7 @@
 @file:JvmName("AKt")
 
 val String.<caret>x: Int get() = 1
+
+fun test(s: String) {
+    println(s.x)
+}

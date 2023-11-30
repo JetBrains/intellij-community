@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,10 +23,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-class HttpVirtualFileImpl extends HttpVirtualFile {
+final class HttpVirtualFileImpl extends HttpVirtualFile {
   private final HttpFileSystemBase myFileSystem;
-  @Nullable private final RemoteFileInfoImpl myFileInfo;
-  @Nullable private FileType myInitialFileType;
+  private final @Nullable RemoteFileInfoImpl myFileInfo;
+  private @Nullable FileType myInitialFileType;
   private final String myPath;
   private final String myParentPath;
   private final String myName;
@@ -47,7 +47,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
     if (myFileInfo != null) {
       myFileInfo.addDownloadingListener(new FileDownloadingAdapter() {
         @Override
-        public void fileDownloaded(@NotNull final VirtualFile localFile) {
+        public void fileDownloaded(final @NotNull VirtualFile localFile) {
           boolean fileTypeChanged = myInitialFileType != null && !FileTypeRegistry.getInstance().isFileOfType(localFile, myInitialFileType);
           VirtualFile thisHttpFile = HttpVirtualFileImpl.this;
           ApplicationManager.getApplication().invokeLater(() -> {
@@ -89,32 +89,27 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   }
 
   @Override
-  @Nullable
-  public RemoteFileInfoImpl getFileInfo() {
+  public @Nullable RemoteFileInfoImpl getFileInfo() {
     return myFileInfo;
   }
 
   @Override
-  @NotNull
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFileSystem;
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     return myPath;
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "HttpVirtualFile:" + myPath + ", info=" + myFileInfo;
   }
 
@@ -143,9 +138,8 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
     return ContainerUtil.isEmpty(myChildren) ? EMPTY_ARRAY : myChildren.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Override
-  public VirtualFile findChild(@NotNull @NonNls String name) {
+  public @Nullable VirtualFile findChild(@NotNull @NonNls String name) {
     if (!ContainerUtil.isEmpty(myChildren)) {
       for (VirtualFile child : myChildren) {
         if (StringUtil.equals(child.getNameSequence(), name)) {
@@ -157,8 +151,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     if (myFileInfo == null) {
       return super.getFileType();
     }
@@ -186,8 +179,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   }
 
   @Override
-  @NotNull
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     if (myFileInfo != null) {
       VirtualFile localFile = myFileInfo.getLocalFile();
       if (localFile != null) {

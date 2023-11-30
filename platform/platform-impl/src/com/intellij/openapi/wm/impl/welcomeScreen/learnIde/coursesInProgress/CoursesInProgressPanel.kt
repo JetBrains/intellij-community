@@ -2,15 +2,11 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress
 
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.InteractiveCourseFactory
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HeightLimitedPane
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HelpAndResourcesPanel
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.LearnIdeContentColorsAndFonts
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.getBrowseCoursesAction
+import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.*
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy.JBAcademyWelcomeScreenBundle
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Align
@@ -65,12 +61,12 @@ class CoursesInProgressPanel : Wrapper() {
 
       val browseCoursesAction = getBrowseCoursesAction()
       if (browseCoursesAction != null) {
-        button(
-          JBAcademyWelcomeScreenBundle.message("welcome.tab.learn.start.new.course"),
-          browseCoursesAction,
-          ActionPlaces.WELCOME_SCREEN
-        ).align(AlignX.RIGHT)
+        val button = LearnButton(browseCoursesAction,
+                                 JBAcademyWelcomeScreenBundle.message("welcome.tab.learn.start.new.course"),
+                                 true)
+        cell(button).align(AlignX.RIGHT)
       }
+      topGap(TopGap.MEDIUM)
     }
     row {
       topGap(TopGap.SMALL)
@@ -84,7 +80,7 @@ class CoursesInProgressPanel : Wrapper() {
       val interactiveCourseFactories = InteractiveCourseFactory.INTERACTIVE_COURSE_FACTORY_EP.extensions
       val courseFactory = interactiveCourseFactories.find { !it.getCourseData().isEduTools() }
       if (courseFactory != null) {
-        topGap(TopGap.MEDIUM)
+        topGap(TopGap.SMALL)
         cell(OtherCoursesPanel(courseFactory))
       }
     }
@@ -94,7 +90,8 @@ class CoursesInProgressPanel : Wrapper() {
       alignmentY = BOTTOM_ALIGNMENT
       topGap(TopGap.MEDIUM)
     }
-    border = JBUI.Borders.empty(14, 30, 20, 30)
+  }.apply {
+    border = JBUI.Borders.empty(0,32, 40, 32)
   }
 
   private fun openCourse(courseInfo: CourseInfo) {
@@ -123,5 +120,5 @@ class CoursesInProgressPanel : Wrapper() {
 }
 
 fun createTitlePanel(titleText: String): HeightLimitedPane {
-  return HeightLimitedPane(titleText, 5, LearnIdeContentColorsAndFonts.HeaderColor, true)
+  return HeightLimitedPane(titleText, 3, LearnIdeContentColorsAndFonts.HeaderColor, true)
 }

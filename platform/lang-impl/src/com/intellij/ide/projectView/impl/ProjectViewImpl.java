@@ -25,6 +25,7 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -76,6 +77,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
@@ -152,7 +154,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       getGlobalOptions().setAutoscrollFromSource(selected);
       if (selected && !myAutoScrollFromSourceHandler.isCurrentProjectViewPaneFocused()) {
         SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because Always Select Opened File has been turned on");
-        myAutoScrollFromSourceHandler.scrollFromSource(false);
+        myAutoScrollFromSourceHandler.scrollFromSource();
       }
     }
   };
@@ -582,7 +584,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
           if (currentProjectViewPane != null && isAutoscrollFromSource(currentProjectViewPane.getId())) {
             SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the project view is shown");
-            myAutoScrollFromSourceHandler.scrollFromSource(false);
+            myAutoScrollFromSourceHandler.scrollFromSource();
           }
         }
       }
@@ -724,7 +726,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public synchronized void removeProjectPane(@NotNull AbstractProjectViewPane pane) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myUninitializedPanes.remove(pane);
     //assume we are completely initialized here
     @NotNull String idToRemove = pane.getId();
@@ -796,7 +798,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void doAddPane(@NotNull final AbstractProjectViewPane newPane) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     int index;
     final ContentManager manager = getContentManager();
     for (index = 0; index < manager.getContentCount(); index++) {
@@ -924,7 +926,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   // public for tests
   public synchronized void setupImpl(@NotNull ToolWindow toolWindow, final boolean loadPaneExtensions) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (isInitialized) return;
 
     myActionGroup = new DefaultActionGroup();
@@ -975,13 +977,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
             myAutoScrollFromSourceHandler.addRequest(() -> {
               // ensure that it is still enabled after a while
               if (isAutoscrollFromSource(getCurrentViewId())) {
-                JComponent component = editor.getComponent();
-                for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
-                  if (SwingUtilities.isDescendingFrom(component, fileEditor.getComponent())) {
-                    SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the editor has gained focus");
-                    myAutoScrollFromSourceHandler.scrollFromSource(false);
-                    break;
-                  }
+                if (findFileEditor(editor) != null) {
+                  SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the editor has gained focus");
+                  myAutoScrollFromSourceHandler.scrollFromSource();
                 }
               }
             });
@@ -1082,7 +1080,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
     if (isAutoscrollFromSource(id)) {
       SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because the project view has changed panes");
-      myAutoScrollFromSourceHandler.scrollFromSource(false);
+      myAutoScrollFromSourceHandler.scrollFromSource();
     }
   }
 
@@ -1554,9 +1552,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private boolean isAutoscrollFromSourceNotBlocked(String paneId) {
     AbstractProjectViewPane pane = getProjectViewPaneById(paneId);
-    if (pane == null) return false;
+    if (pane == null || pane != getCurrentProjectViewPane()) return false;
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
+    if (toolWindow == null || !toolWindow.isVisible()) return false;
     JTree tree = pane.getTree();
-    if (tree == null || !tree.isShowing()) return false;
+    if (tree == null) return false;
     return !ClientProperty.isTrue(tree, AUTO_SCROLL_FROM_SOURCE_BLOCKED);
   }
 
@@ -1782,8 +1782,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    void scrollFromSource(boolean invokedManually) {
-      scrollFromSource(null, invokedManually);
+    void scrollFromSource() {
+      scrollFromSource(null, false);
     }
 
     private void scrollFromSource(@Nullable FileEditor fileEditor, boolean invokedManually) {
@@ -1865,9 +1865,43 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return !isAutoscrollFromSourceEnabled(myCurrentViewId) || AdvancedSettings.getBoolean("project.view.do.not.autoscroll.to.libraries");
   }
 
+  void selectOpenedFileUsingLastFocusedEditor() {
+    selectOpenedFile(getLastFocusedEditor());
+  }
+
   void selectOpenedFile() {
+    selectOpenedFile(null);
+  }
+
+  private void selectOpenedFile(@Nullable FileEditor editor) {
     SelectInProjectViewImplKt.getLOG().debug("Invoking scroll from source because Select Opened File was performed manually");
-    myAutoScrollFromSourceHandler.scrollFromSource(true);
+    myAutoScrollFromSourceHandler.scrollFromSource(editor, true);
+  }
+
+  private @Nullable FileEditor getLastFocusedEditor() {
+    FileEditor result = null;
+    var fileEditorManager = FileEditorManager.getInstance(myProject);
+    if (fileEditorManager instanceof FileEditorManagerImpl fileEditorManagerImpl) {
+      result = fileEditorManagerImpl.getLastFocusedEditor();
+    }
+    if (result != null) {
+      if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
+        SelectInProjectViewImplKt.getLOG().debug(
+          "Forcing use of the last focused editor to select opened file: " + result
+        );
+      }
+    }
+    return result;
+  }
+
+  private @Nullable FileEditor findFileEditor(Editor editor) {
+    JComponent component = editor.getComponent();
+    for (FileEditor fileEditor : FileEditorManager.getInstance(myProject).getAllEditors()) {
+      if (SwingUtilities.isDescendingFrom(component, fileEditor.getComponent())) {
+        return fileEditor;
+      }
+    }
+    return null;
   }
 
   @NotNull
@@ -1951,25 +1985,25 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    static final class AutoscrollFromSource extends Action {
+    static final class AutoscrollFromSource extends Action implements ActionRemoteBehaviorSpecification.Frontend {
       AutoscrollFromSource() {
         super(view -> view.myAutoscrollFromSource);
       }
     }
 
-    static final class AutoscrollToSource extends Action {
+    static final class AutoscrollToSource extends Action implements ActionRemoteBehaviorSpecification.Frontend {
       AutoscrollToSource() {
         super(view -> view.myAutoscrollToSource);
       }
     }
 
-    static final class OpenDirectoriesWithSingleClick extends Action {
+    static final class OpenDirectoriesWithSingleClick extends Action implements ActionRemoteBehaviorSpecification.Frontend {
       OpenDirectoriesWithSingleClick() {
         super(view -> view.myOpenDirectoriesWithSingleClick);
       }
     }
 
-    static final class OpenInPreviewTab extends Action {
+    static final class OpenInPreviewTab extends Action implements ActionRemoteBehaviorSpecification.Frontend {
       OpenInPreviewTab() {
         super(view -> view.myOpenInPreviewTab);
       }

@@ -19,7 +19,7 @@ package com.intellij.history.core.revisions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.text.DateFormatUtil;
 
-public class RecentChange {
+public final class RecentChange {
   private final Revision myBefore;
   private final Revision myAfter;
 
@@ -36,8 +36,7 @@ public class RecentChange {
     return myAfter;
   }
 
-  @NlsContexts.Label
-  public String getChangeName() {
+  public @NlsContexts.Label String getChangeName() {
     return myAfter.getChangeSetName();
   }
 

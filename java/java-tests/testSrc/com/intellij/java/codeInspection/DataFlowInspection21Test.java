@@ -65,4 +65,15 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   }
 
   public void testNewStringWrongEquals() { doTest(); }
+
+  public void testSkipSwitchExpressionWithThrow() { doTest(); }
+
+  public void testStringTemplates() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testChronoRange() {
+    doTest();
+  }
 }

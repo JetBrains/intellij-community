@@ -1,38 +1,36 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.textarea;
 
-import com.intellij.openapi.editor.ScrollingModel;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.text.JTextComponent;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 
-class TextComponentScrollingModel implements ScrollingModel {
+final class TextComponentScrollingModel implements ScrollingModel {
   private final JTextComponent myTextComponent;
 
   TextComponentScrollingModel(@NotNull JTextComponent textComponent) {
     myTextComponent = textComponent;
   }
 
-  @NotNull
   @Override
-  public Rectangle getVisibleArea() {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @NotNull
-  @Override
-  public Rectangle getVisibleAreaOnScrollingFinished() {
+  public @NotNull Rectangle getVisibleArea() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void scrollToCaret(@NotNull final ScrollType scrollType) {
+  public @NotNull Rectangle getVisibleAreaOnScrollingFinished() {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  public void scrollToCaret(final @NotNull ScrollType scrollType) {
     final int position = myTextComponent.getCaretPosition();
     try {
       final Rectangle rectangle = myTextComponent.modelToView(position);
@@ -44,12 +42,12 @@ class TextComponentScrollingModel implements ScrollingModel {
   }
 
   @Override
-  public void scrollTo(@NotNull final LogicalPosition pos, @NotNull final ScrollType scrollType) {
+  public void scrollTo(final @NotNull LogicalPosition pos, final @NotNull ScrollType scrollType) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void runActionOnScrollingFinished(@NotNull final Runnable action) {
+  public void runActionOnScrollingFinished(final @NotNull Runnable action) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
@@ -87,12 +85,12 @@ class TextComponentScrollingModel implements ScrollingModel {
   }
 
   @Override
-  public void addVisibleAreaListener(@NotNull final VisibleAreaListener listener) {
+  public void addVisibleAreaListener(final @NotNull VisibleAreaListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void removeVisibleAreaListener(@NotNull final VisibleAreaListener listener) {
+  public void removeVisibleAreaListener(final @NotNull VisibleAreaListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 }

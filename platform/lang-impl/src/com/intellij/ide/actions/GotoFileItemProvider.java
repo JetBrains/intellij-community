@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
-import com.intellij.ide.actions.searcheverywhere.footer.FileHistoryManager;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -160,6 +158,10 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     if (pattern.contains("/") || pattern.contains("\\")) {
       String path = FileUtil.toSystemIndependentName(ChooseByNamePopup.getTransformedPattern(pattern, myModel));
       VirtualFile vFile = LocalFileSystem.getInstance().findFileByPathIfCached(path);
+      if (vFile == null) {
+        path = unitePaths(myProject.getBasePath(), path);
+        if (path != null) vFile = LocalFileSystem.getInstance().findFileByPathIfCached(path);
+      }
       if (vFile != null) {
         ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
         if (index.isInContent(vFile) || index.isInLibrary(vFile)) {
@@ -168,6 +170,20 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       }
     }
     return null;
+  }
+
+  public static String unitePaths(String projectPathStr, String filePathStr) {
+    if (filePathStr.startsWith("/")) return filePathStr;
+
+    List<String> path = new ArrayList<>(StringUtil.split(projectPathStr, "/"));
+    StringBuilder prefix = new StringBuilder();
+
+    while (!filePathStr.startsWith(StringUtil.join(path, "/"))) {
+      prefix.append(path.remove(0)).append("/");
+      if (path.isEmpty()) return null;
+    }
+
+    return prefix.append(filePathStr).toString();
   }
 
   @NotNull
@@ -284,7 +300,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     return pos;
   }
 
-  private class NameGrouper {
+  private final class NameGrouper {
     private final String namePattern;
     private final char[] NAME_PATTERN; // upper cased namePattern
     private final char[] name_pattern; // lower cased namePattern
@@ -334,7 +350,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
   }
 
-  private class SuffixMatches {
+  private final class SuffixMatches {
     final String patternSuffix;
     final MinusculeMatcher matcher;
     final List<MatchResult> matchingNames = new ArrayList<>();
@@ -466,34 +482,5 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
   private static @NotNull <T> List<List<T>> group(@NotNull List<T> items, @NotNull Comparator<? super T> comparator) {
     return StreamEx.of(items).groupRuns((n1, n2) -> comparator.compare(n1, n2) == 0).toList();
-  }
-
-  @Override
-  public boolean fetchRecents(@NotNull Project project,
-                              @NotNull ProgressIndicator cancelled,
-                              @NotNull String pattern,
-                              @NotNull ChooseByNameViewModel base,
-                              @NotNull Processor<? super FoundItemDescriptor<?>> consumer) {
-    if (StringUtil.isNotEmpty(pattern)) return false;
-
-    for (String path : FileHistoryManager.getInstance(project).getState().getIds()) {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
-      if (file == null) continue;
-
-      PsiFileSystemItem item;
-      if (file.isDirectory()) {
-        item = PsiManager.getInstance(project).findDirectory(file);
-      }
-      else if (file.exists()) {
-        item = PsiManager.getInstance(project).findFile(file);
-      }
-      else {
-        item = null;
-      }
-
-      if (item == null) continue;
-      consumer.process(new FoundItemDescriptor<>(item, 0));
-    }
-    return true;
   }
 }

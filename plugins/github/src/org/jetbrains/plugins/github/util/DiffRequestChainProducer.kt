@@ -7,10 +7,5 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.vcs.changes.Change
 
 interface DiffRequestChainProducer {
-
   fun getRequestChain(changes: ListSelection<Change>): DiffRequestChain
-
-  companion object {
-    val DATA_KEY = DataKey.create<DiffRequestChainProducer>("Diff.Request.Chain.Producer")
-  }
 }

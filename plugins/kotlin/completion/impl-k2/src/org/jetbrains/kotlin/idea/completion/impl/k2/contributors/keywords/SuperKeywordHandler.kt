@@ -18,7 +18,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
 
 internal object SuperKeywordHandler : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.SUPER_KEYWORD) {
-    override fun KtAnalysisSession.createLookups(
+    context(KtAnalysisSession)
+    override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,

@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-public class FilePathCompletionContributor extends CompletionContributor {
+public final class FilePathCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance(FilePathCompletionContributor.class);
 
   public FilePathCompletionContributor() {
@@ -292,7 +292,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  public static class FilePathLookupItem extends LookupElement {
+  public static final class FilePathLookupItem extends LookupElement {
     private final String myName;
     private final String myPath;
     private final String myInfo;

@@ -18,6 +18,7 @@ class KotlinProbablyContractedFunctionShortNameIndex internal constructor() : St
 
     override fun getKey(): StubIndexKey<String, KtNamedFunction> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinProbablyContractedFunctionShortNameIndex[shortName, project, scope]"))
     override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtNamedFunction> {
         return Helper[shortName, project, scope]
     }

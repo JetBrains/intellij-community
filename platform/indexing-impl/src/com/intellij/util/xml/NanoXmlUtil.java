@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,31 +52,26 @@ public final class NanoXmlUtil {
     }
   }
 
-  public static void parse(@NotNull IXMLReader r, @NotNull IXMLBuilder builder) {
+  public static void parse(StdXMLReader r, @NotNull IXMLBuilder builder) {
     parse(r, builder, null);
   }
 
-  public static void parse(@NotNull IXMLReader r, @NotNull IXMLBuilder builder, @Nullable IXMLValidator validator) {
+  public static void parse(StdXMLReader r, @NotNull IXMLBuilder builder, @Nullable IXMLValidator validator) {
+    StdXMLParser parser = new StdXMLParser();
+    parser.setReader(r);
+    parser.setBuilder(builder);
+    parser.setValidator(validator == null ? new EmptyValidator() : validator);
+    parser.setResolver(new EmptyEntityResolver());
     try {
-      final IXMLParser parser = XMLParserFactory.createDefaultXMLParser();
-      parser.setReader(r);
-      parser.setBuilder(builder);
-      parser.setValidator(validator == null ? new EmptyValidator() : validator);
-      parser.setResolver(new EmptyEntityResolver());
-      try {
-        parser.parse();
-      }
-      catch (ParserStoppedXmlException ignore) {
-      }
-      catch (XMLException e) {
-        if (e.getException() instanceof ProcessCanceledException) {
-          throw new ProcessCanceledException(e);
-        }
-        LOG.debug(e);
-      }
+      parser.parse();
     }
-    catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
-      LOG.error(e);
+    catch (ParserStoppedXmlException ignore) {
+    }
+    catch (XMLException e) {
+      if (e.getException() instanceof ProcessCanceledException) {
+        throw new ProcessCanceledException(e);
+      }
+      LOG.debug(e);
     }
   }
 
@@ -89,30 +84,25 @@ public final class NanoXmlUtil {
     }
   }
 
-  @NotNull
-  public static XmlFileHeader parseHeaderWithException(Reader reader) {
+  public static @NotNull XmlFileHeader parseHeaderWithException(Reader reader) {
     return parseHeader(new MyXMLReader(reader));
   }
 
-  @NotNull
-  public static XmlFileHeader parseHeaderWithException(final VirtualFile file) throws IOException {
+  public static @NotNull XmlFileHeader parseHeaderWithException(final VirtualFile file) throws IOException {
     try (InputStream stream = file.getInputStream()) {
       return parseHeader(new MyXMLReader(stream));
     }
   }
 
-  @NotNull
-  public static XmlFileHeader parseHeader(final Reader reader) {
+  public static @NotNull XmlFileHeader parseHeader(final Reader reader) {
     return parseHeader(new MyXMLReader(reader));
   }
 
-  @NotNull
-  public static XmlFileHeader parseHeader(PsiFile file) {
+  public static @NotNull XmlFileHeader parseHeader(PsiFile file) {
     return parseHeader(createReader(file));
   }
 
-  @NotNull
-  private static XmlFileHeader parseHeader(final MyXMLReader r) {
+  private static @NotNull XmlFileHeader parseHeader(final MyXMLReader r) {
     final RootTagInfoBuilder builder = new RootTagInfoBuilder();
     parse(r, builder);
     return new XmlFileHeader(builder.getRootTagName(), builder.getNamespace(), r.publicId, r.systemId);
@@ -132,7 +122,7 @@ public final class NanoXmlUtil {
    * @deprecated left for API compatibility
    */
   @Deprecated(forRemoval = true)
-  public static abstract class IXMLBuilderAdapter implements NanoXmlBuilder {
+  public abstract static class IXMLBuilderAdapter implements NanoXmlBuilder {
   }
 
   public static class BaseXmlBuilder implements NanoXmlBuilder {
@@ -163,47 +153,8 @@ public final class NanoXmlUtil {
   }
 
   public static class EmptyValidator extends NonValidator {
-    private IXMLEntityResolver myParameterEntityResolver;
-
-    @Override
-    public void setParameterEntityResolver(IXMLEntityResolver resolver) {
-      myParameterEntityResolver = resolver;
-    }
-
-    @Override
-    public IXMLEntityResolver getParameterEntityResolver() {
-      return myParameterEntityResolver;
-    }
-
-    @Override
-    public void parseDTD(String publicID, IXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception {
-      if (!external) {
-        //super.parseDTD(publicID, reader, entityResolver, external);
-        int cnt = 1;
-        for (char ch = reader.read(); !(ch == ']' && --cnt == 0); ch = reader.read()) {
-          if (ch == '[') cnt ++;
-        }
-      }
-      else {
-        int origLevel = reader.getStreamLevel();
-
-        while (true) {
-          char ch = reader.read();
-
-          if (reader.getStreamLevel() < origLevel) {
-            reader.unread(ch);
-            return; // end external DTD
-          }
-        }
-      }
-    }
-
     @Override
     public void elementStarted(String name, String systemId, int lineNr) {
-    }
-
-    @Override
-    public void elementEnded(String name, String systemId, int lineNr) {
     }
 
     @Override
@@ -213,13 +164,9 @@ public final class NanoXmlUtil {
     @Override
     public void elementAttributesProcessed(String name, Properties extraAttributes, String systemId, int lineNr) {
     }
-
-    @Override
-    public void PCDataAdded(String systemId, int lineNr)  {
-    }
   }
 
-  private static class EmptyEntityResolver implements IXMLEntityResolver {
+  private static final class EmptyEntityResolver implements IXMLEntityResolver {
     @Override
     public void addInternalEntity(String name, String value) {
     }
@@ -229,7 +176,7 @@ public final class NanoXmlUtil {
     }
 
     @Override
-    public Reader getEntity(IXMLReader xmlReader, String name) {
+    public Reader getEntity(StdXMLReader xmlReader, String name) {
       return new StringReader("");
     }
 

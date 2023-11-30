@@ -9,9 +9,9 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -45,14 +45,14 @@ public abstract class MavenProjectImporterLegacyBase extends MavenProjectImporte
   protected void setMavenizedModules(final Collection<Module> modules, final boolean mavenized) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     EntityStorage initialStorage = WorkspaceModel.getInstance(myProject).getCurrentSnapshot();
-    MutableEntityStorage storageBuilder = MutableEntityStorage.from(initialStorage);
+    MutableEntityStorage storageBuilder = MutableEntityStorage.from(initialStorage.toSnapshot());
     for (Module module : modules) {
       if (module.isDisposed()) continue;
       ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);
       if (modulePropertyManager instanceof ExternalSystemModulePropertyManagerBridge &&
           module instanceof ModuleBridge &&
           ((ModuleBridge)module).getDiff() == null) {
-        ((ExternalSystemModulePropertyManagerBridge)modulePropertyManager).setMavenized(mavenized, storageBuilder);
+        ((ExternalSystemModulePropertyManagerBridge)modulePropertyManager).setMavenized(mavenized, null, storageBuilder);
       }
       else {
         modulePropertyManager.setMavenized(mavenized);

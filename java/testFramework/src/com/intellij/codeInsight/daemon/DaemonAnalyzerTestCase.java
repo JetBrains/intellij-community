@@ -128,17 +128,6 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
   }
 
-  protected void enableInspectionToolsFromProvider(InspectionToolProvider toolProvider){
-    try {
-      for (Class<? extends LocalInspectionTool> c : toolProvider.getInspectionClasses()) {
-        enableInspectionTool(InspectionTestUtil.instantiateTool(c));
-      }
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   protected void disableInspectionTool(@NotNull String shortName){
     InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(getProject()).getCurrentProfile();
     if (profile.getInspectionTool(shortName, getProject()) != null) {
@@ -243,8 +232,8 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   protected void doCheckResult(@NotNull ExpectedHighlightingData data,
-                             Collection<HighlightInfo> infos,
-                             String text) {
+                               @NotNull Collection<? extends HighlightInfo> infos,
+                               @NotNull String text) {
     PsiFile file = getFile();
     data.checkLineMarkers(file, DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), getProject()), text);
     data.checkResult(file, infos, text);
@@ -273,17 +262,17 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   @NotNull
-  protected List<HighlightInfo> highlightErrors() {
+  protected final List<HighlightInfo> highlightErrors() {
     return doHighlighting(HighlightSeverity.ERROR);
   }
 
   @NotNull
-  protected List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minSeverity) {
+  protected final List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minSeverity) {
     return filter(doHighlighting(), minSeverity);
   }
 
   @NotNull
-  protected List<HighlightInfo> doHighlighting() {
+  protected final List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     IntList toIgnore = new IntArrayList();

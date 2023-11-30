@@ -8,7 +8,6 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
@@ -39,14 +38,6 @@ import static com.siyeh.ig.junit.JUnitCommonClassNames.SOURCE_ANNOTATIONS;
 
 public abstract class AbstractInClassConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> {
   private static final Logger LOG = Logger.getInstance(AbstractInClassConfigurationProducer.class);
-
-  /**
-   * @deprecated Override {@link #getConfigurationFactory()}.
-   */
-  @Deprecated(forRemoval = true)
-  protected AbstractInClassConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
-  }
 
   protected AbstractInClassConfigurationProducer() {
   }

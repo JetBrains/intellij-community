@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
@@ -17,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ANY_KEY;
 import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ESCAPE;
 
-public class EscapeHandler extends EditorActionHandler {
+public final class EscapeHandler extends EditorActionHandler {
   @NotNull
   private final EditorActionHandler myOriginalHandler;
 
@@ -28,6 +30,13 @@ public class EscapeHandler extends EditorActionHandler {
   @Override
   protected void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext){
     if (editor.getCaretModel().getCaretCount() == 1) {
+      // Search results highlighting is disabled when the search popup is hidden from the screen,
+      // but in tests it is not working, so we need to disable it manually.
+      var realEditor = editor instanceof EditorWindow window ? window.getDelegate() : editor;
+      var searchSession = EditorSearchSession.get(realEditor);
+      if (searchSession != null) {
+        searchSession.disableLivePreview();
+      }
       editor.setHeaderComponent(null);
 
       Project project = CommonDataKeys.PROJECT.getData(dataContext);

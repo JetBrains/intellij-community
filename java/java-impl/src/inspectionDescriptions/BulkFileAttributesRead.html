@@ -8,7 +8,7 @@ Reports multiple sequential <code>java.io.File</code> attribute checks, such as:
   <li><code>length()</code></li>
 </ul>
 Such calls can be replaced with a bulk <code>Files.readAttributes()</code> call.
-This is usually more performant then multiple separate attribute checks.
+This is usually more performant than multiple separate attribute checks.
 <p>Example:</p>
 <pre><code>
   boolean isNewFile(File file, long lastModified) throws IOException {
@@ -18,14 +18,14 @@ This is usually more performant then multiple separate attribute checks.
 <p>After the quick-fix is applied:</p>
 <pre><code>
   boolean isNewFile(File file, long lastModified) throws IOException {
-    BasicFileAttributes fileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
+    var fileAttributes = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
     return fileAttributes.isRegularFile() && fileAttributes.lastModifiedTime().toMillis() > lastModified;
   }
 </code></pre>
 <!-- tooltip end -->
 <p>This inspection does not show a warning if <code>IOException</code> is not handled in the current context, but the quick-fix is still available.</p>
 <p>Note that the replacements are usually not completely equivalent and should be applied with care. In particular, the behavior could differ if
-the file does not exist at all.</p>
+  the file does not exist at all.</p>
 <p>This inspection only reports if the language level of the project or module is 7 or higher.</p>
 <p><small>New in 2022.1</small></p>
 </body>

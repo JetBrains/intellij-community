@@ -9,13 +9,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
-import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.rules.ProjectModelExtension
-import com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -94,7 +93,7 @@ class JpsProjectSaveAfterChangesTest {
       builder addEntity LibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), source)
       builder.entities(LibraryEntity::class.java).forEach { libraryEntity ->
         val virtualFileUrl = libraryEntity.roots.first().url
-        val entitiesByUrl = builder.getMutableVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl)
+        val entitiesByUrl = builder.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl)
         assertTrue(entitiesByUrl.toList().isNotEmpty())
       }
     }

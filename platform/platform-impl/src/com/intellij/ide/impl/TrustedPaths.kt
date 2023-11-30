@@ -5,7 +5,6 @@ package com.intellij.ide.impl
 
 import com.intellij.openapi.components.*
 import com.intellij.util.ThreeState
-import com.intellij.util.io.isAncestor
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -30,7 +29,7 @@ class TrustedPaths : SerializablePersistentStateComponent<TrustedPaths.State>(St
     val trustedPaths = state.trustedPaths
     val closestAncestor = trustedPaths.keys.asSequence()
       .map { path.fileSystem.getPath(it) }
-      .filter { it.isAncestor(path) }
+      .filter { path.startsWith(it) }
       .maxByOrNull { it.nameCount }
     if (closestAncestor == null) {
       return ThreeState.UNSURE

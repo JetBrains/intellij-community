@@ -39,6 +39,7 @@ import java.util.TimeZone;
 import static java.lang.System.out;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
+final
 class AnalyzerProgressIndicator extends EmptyProgressIndicator {
 
   private long myStartMillis = System.currentTimeMillis();

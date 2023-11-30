@@ -45,7 +45,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.Map;
 
-public class ExtractCodeStyleAction extends AnAction implements DumbAware {
+public final class ExtractCodeStyleAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
@@ -107,9 +107,8 @@ public final class DomManagerImpl extends DomManager implements Disposable {
     }, this);
 
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
-      @Nullable
       @Override
-      public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+      public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
         List<DomEvent> domEvents = new ArrayList<>();
         for (VFileEvent event : events) {
           if (shouldFireDomEvents(event)) {
@@ -125,7 +124,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
         };
       }
 
-      private boolean shouldFireDomEvents(VFileEvent event) {
+      private static boolean shouldFireDomEvents(VFileEvent event) {
         if (event instanceof VFileContentChangeEvent) return !event.isFromSave();
         if (event instanceof VFilePropertyChangeEvent) {
           return VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName())
@@ -220,8 +219,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
     return myApplicationComponent.getStaticGenericInfo(type);
   }
 
-  @Nullable
-  public static DomInvocationHandler getDomInvocationHandler(DomElement proxy) {
+  public static @Nullable DomInvocationHandler getDomInvocationHandler(DomElement proxy) {
     if (proxy instanceof DomFileElement) {
       return null;
     }
@@ -240,8 +238,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
     return null;
   }
 
-  @NotNull
-  public static DomInvocationHandler getNotNullHandler(DomElement proxy) {
+  public static @NotNull DomInvocationHandler getNotNullHandler(DomElement proxy) {
     DomInvocationHandler handler = getDomInvocationHandler(proxy);
     if (handler == null) {
       throw new AssertionError("null handler for " + proxy);
@@ -263,8 +260,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   }
 
   @Override
-  @NotNull
-  public <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
+  public @NotNull <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
     if (file.getUserData(MOCK_DESCRIPTION) == null) {
       file.putUserData(MOCK_DESCRIPTION, new MockDomFileDescription<>(aClass, rootTagName, file.getViewProvider().getVirtualFile()));
       clearCache();
@@ -282,9 +278,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
     return myApplicationComponent.getAcceptingOtherRootTagNameDescriptions();
   }
 
-  @NotNull
-  @NonNls
-  public String getComponentName() {
+  public @NotNull @NonNls String getComponentName() {
     return getClass().getName();
   }
 
@@ -308,8 +302,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   }
 
   @Override
-  @Nullable
-  public <T extends DomElement> DomFileElementImpl<T> getFileElement(@Nullable XmlFile file) {
+  public @Nullable <T extends DomElement> DomFileElementImpl<T> getFileElement(@Nullable XmlFile file) {
     if (file == null || !(file.getFileType() instanceof DomSupportEnabled)) return null;
     //noinspection unchecked
     return (DomFileElementImpl<T>)CachedValuesManager.getCachedValue(file, chooseKey(FILE_ELEMENT_KEY, FILE_ELEMENT_KEY_FOR_INDEX), () ->
@@ -320,15 +313,13 @@ public final class DomManagerImpl extends DomManager implements Disposable {
     return FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() != null ? forIndex : base;
   }
 
-  @Nullable
-  static <T extends DomElement> DomFileElementImpl<T> getCachedFileElement(@NotNull XmlFile file) {
+  static @Nullable <T extends DomElement> DomFileElementImpl<T> getCachedFileElement(@NotNull XmlFile file) {
     //noinspection unchecked
     return (DomFileElementImpl<T>)SoftReference.dereference(file.getUserData(CACHED_FILE_ELEMENT));
   }
 
   @Override
-  @Nullable
-  public <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file, Class<T> domClass) {
+  public @Nullable <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file, Class<T> domClass) {
     DomFileDescription<?> description = getDomFileDescription(file);
     if (description != null && myApplicationComponent.assignabilityCache.isAssignable(domClass, description.getRootElementClass())) {
       return getFileElement(file);
@@ -337,8 +328,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   }
 
   @Override
-  @Nullable
-  public DomElement getDomElement(final XmlTag element) {
+  public @Nullable DomElement getDomElement(final XmlTag element) {
     if (myChanging) return null;
 
     final DomInvocationHandler handler = getDomHandler(element);
@@ -346,16 +336,14 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   }
 
   @Override
-  @Nullable
-  public GenericAttributeValue<?> getDomElement(final XmlAttribute attribute) {
+  public @Nullable GenericAttributeValue<?> getDomElement(final XmlAttribute attribute) {
     if (myChanging) return null;
 
     DomInvocationHandler handler = getDomHandler(attribute);
     return handler == null ? null : (GenericAttributeValue<?>)handler.getProxy();
   }
 
-  @Nullable
-  public DomInvocationHandler getDomHandler(@Nullable XmlElement xml) {
+  public @Nullable DomInvocationHandler getDomHandler(@Nullable XmlElement xml) {
     if (xml instanceof XmlTag) {
       return CachedValuesManager.getCachedValue(xml, chooseKey(HANDLER_KEY, HANDLER_KEY_FOR_INDEX), () ->
       {
@@ -374,8 +362,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   }
 
   @Override
-  @Nullable
-  public AbstractDomChildrenDescription findChildrenDescription(@NotNull final XmlTag tag, @NotNull final DomElement parent) {
+  public @Nullable AbstractDomChildrenDescription findChildrenDescription(final @NotNull XmlTag tag, final @NotNull DomElement parent) {
     DomInvocationHandler parentHandler = getDomInvocationHandler(parent);
     assert parentHandler != null;
     return parentHandler.getGenericInfo().findChildrenDescription(parentHandler, tag);
@@ -386,8 +373,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   }
 
   @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
-  @Nullable
-  public DomFileDescription<?> getDomFileDescription(PsiElement element) {
+  public @Nullable DomFileDescription<?> getDomFileDescription(PsiElement element) {
     if (element instanceof XmlElement) {
       final PsiFile psiFile = element.getContainingFile();
       if (psiFile instanceof XmlFile) {
@@ -438,15 +424,13 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   }
 
   @Override
-  @NotNull
-  public DomElement getResolvingScope(GenericDomValue<?> element) {
+  public @NotNull DomElement getResolvingScope(GenericDomValue<?> element) {
     final DomFileDescription<?> description = DomUtil.getFileElement(element).getFileDescription();
     return description.getResolveScope(element);
   }
 
   @Override
-  @NotNull
-  public DomElement getIdentityScope(DomElement element) {
+  public @NotNull DomElement getIdentityScope(DomElement element) {
     DomFileDescription<?> description = DomUtil.getFileElement(element).getFileDescription();
     return description.getIdentityScope(element);
   }

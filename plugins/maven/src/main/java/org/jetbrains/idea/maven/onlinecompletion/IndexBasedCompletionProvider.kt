@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.onlinecompletion
 
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.idea.maven.indices.MavenGAVIndex
 import org.jetbrains.idea.maven.indices.MavenIndex
 import org.jetbrains.idea.maven.indices.MavenSearchIndex
 import org.jetbrains.idea.maven.model.MavenId
@@ -14,12 +15,12 @@ import kotlin.math.min
 /**
  * This class is used as a solution to support completion from repositories, which do not support online completion
  */
-internal class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : DependencySearchProvider {
+internal class IndexBasedCompletionProvider(private val myIndex: MavenGAVIndex) : DependencySearchProvider {
 
   override fun fulltextSearch(searchString: String): CompletableFuture<List<RepositoryArtifactData>> =
     search(MavenId(searchString))
 
-  override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> =
+  override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> =
     search(MavenId(groupId, artifactId, null))
 
   private fun search(mavenId: MavenId): CompletableFuture<List<RepositoryArtifactData>> = CompletableFuture.supplyAsync {
@@ -60,7 +61,4 @@ internal class IndexBasedCompletionProvider(private val myIndex: MavenIndex) : D
   }
 
   override fun isLocal() = true
-
-  val index: MavenSearchIndex
-    get() = myIndex
-}
+  }

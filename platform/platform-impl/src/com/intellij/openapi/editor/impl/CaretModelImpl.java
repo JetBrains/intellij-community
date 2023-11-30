@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.impl;
 
@@ -49,8 +49,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   final RangeMarkerTree<CaretImpl.SelectionMarker> mySelectionMarkerTree;
 
   private final LinkedList<CaretImpl> myCarets = new LinkedList<>();
-  @NotNull
-  private volatile CaretImpl myPrimaryCaret;
+  private volatile @NotNull CaretImpl myPrimaryCaret;
   private final ThreadLocal<CaretImpl> myCurrentCaret = new ThreadLocal<>(); // active caret in the context of 'runForEachCaret' call
   private boolean myPerformCaretMergingAfterCurrentOperation;
   private boolean myVisualPositionUpdateScheduled;
@@ -82,7 +81,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
-  public void documentChanged(@NotNull final DocumentEvent e) {
+  public void documentChanged(final @NotNull DocumentEvent e) {
     myIsInUpdate = false;
     myDocumentUpdateCounter++;
     if (!myEditor.getDocument().isInBulkUpdate()) {
@@ -131,7 +130,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
-  public void addCaretListener(@NotNull final CaretListener listener) {
+  public void addCaretListener(final @NotNull CaretListener listener) {
     myCaretListeners.addListener(listener);
   }
 
@@ -141,8 +140,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
-  @NotNull
-  public TextAttributes getTextAttributes() {
+  public @NotNull TextAttributes getTextAttributes() {
     TextAttributes textAttributes = myTextAttributes;
     if (textAttributes == null) {
       myTextAttributes = textAttributes = new TextAttributes();
@@ -169,15 +167,13 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
-  @NotNull
-  public CaretImpl getCurrentCaret() {
+  public @NotNull CaretImpl getCurrentCaret() {
     CaretImpl currentCaret = myCurrentCaret.get();
     return currentCaret != null ? currentCaret : getPrimaryCaret();
   }
 
   @Override
-  @NotNull
-  public CaretImpl getPrimaryCaret() {
+  public @NotNull CaretImpl getPrimaryCaret() {
     return myPrimaryCaret;
   }
 
@@ -189,8 +185,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
-  @NotNull
-  public List<Caret> getAllCarets() {
+  public @NotNull List<Caret> getAllCarets() {
     List<Caret> carets;
     synchronized (myCarets) {
       carets = new ArrayList<>(myCarets);
@@ -199,9 +194,8 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     return carets;
   }
 
-  @Nullable
   @Override
-  public Caret getCaretAt(@NotNull VisualPosition pos) {
+  public @Nullable Caret getCaretAt(@NotNull VisualPosition pos) {
     synchronized (myCarets) {
       for (CaretImpl caret : myCarets) {
         if (caret.getVisualPosition().equals(pos)) {
@@ -212,9 +206,8 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     }
   }
 
-  @Nullable
   @Override
-  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
+  public @Nullable Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     EditorImpl.assertIsDispatchThread();
     CaretImpl caret = new CaretImpl(myEditor, this);
     caret.doMoveToVisualPosition(pos, false);
@@ -225,9 +218,8 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     return null;
   }
 
-  @Nullable
   @Override
-  public Caret addCaret(@NotNull LogicalPosition pos, boolean makePrimary) {
+  public @Nullable Caret addCaret(@NotNull LogicalPosition pos, boolean makePrimary) {
     EditorImpl.assertIsDispatchThread();
     CaretImpl caret = new CaretImpl(myEditor, this);
     caret.moveToLogicalPosition(pos, false, null, false, false);
@@ -292,12 +284,12 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
-  public void runForEachCaret(@NotNull final CaretAction action) {
+  public void runForEachCaret(final @NotNull CaretAction action) {
     runForEachCaret(action, false);
   }
 
   @Override
-  public void runForEachCaret(@NotNull final CaretAction action, final boolean reverseOrder) {
+  public void runForEachCaret(final @NotNull CaretAction action, final boolean reverseOrder) {
     if (myCurrentCaret.get() != null) {
       throw new IllegalStateException("Recursive runForEachCaret invocations are not allowed");
     }
@@ -426,12 +418,12 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   }
 
   @Override
-  public void setCaretsAndSelections(@NotNull final List<? extends CaretState> caretStates) {
+  public void setCaretsAndSelections(final @NotNull List<? extends CaretState> caretStates) {
     setCaretsAndSelections(caretStates, true);
   }
 
   @Override
-  public void setCaretsAndSelections(@NotNull final List<? extends CaretState> caretStates, final boolean updateSystemSelection) {
+  public void setCaretsAndSelections(final @NotNull List<? extends CaretState> caretStates, final boolean updateSystemSelection) {
     EditorImpl.assertIsDispatchThread();
     if (caretStates.isEmpty()) {
       throw new IllegalArgumentException("At least one caret should exist");
@@ -515,9 +507,8 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     });
   }
 
-  @NotNull
   @Override
-  public List<CaretState> getCaretsAndSelections() {
+  public @NotNull List<CaretState> getCaretsAndSelections() {
     synchronized (myCarets) {
       List<CaretState> states = new ArrayList<>(myCarets.size());
       for (CaretImpl caret : myCarets) {
@@ -566,9 +557,8 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     return myCurrentCaret.get() != null;
   }
 
-  @NotNull
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     return "[in update: " + myIsInUpdate +
            ", update counter: " + myDocumentUpdateCounter +
            ", perform caret merging: " + myPerformCaretMergingAfterCurrentOperation +

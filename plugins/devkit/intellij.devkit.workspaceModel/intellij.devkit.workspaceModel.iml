@@ -32,5 +32,7 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="library" name="workspace-model-codegen" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
+    <orderEntry type="module" module-name="kotlin.base.facet" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-jps-common" level="project" />
   </component>
 </module>

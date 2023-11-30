@@ -155,6 +155,11 @@ fun invokeActionForFocusContext(action: AnAction) {
   }
 }
 
+fun getCallBackActionId(actionId: String): String {
+  val action = getActionById(actionId)
+  return LearningUiManager.addCallback { invokeActionForFocusContext(action) }
+}
+
 fun openLinkInBrowser(link: String) {
   val desktop = if (Desktop.isDesktopSupported()) Desktop.getDesktop() else null
   if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {

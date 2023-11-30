@@ -5,6 +5,6 @@ fun callAdjust() {
     adjust(::f1) { "a" }
     adjust({ "a" }, ::f1)
     adjust(::f1, ::f1)
-    adjust({ "a" }) { "a" }
+    adjust({ "a" }, { "a" })
     adjust({ f1() }, { "a" })
 }

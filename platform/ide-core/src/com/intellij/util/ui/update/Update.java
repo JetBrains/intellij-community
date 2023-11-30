@@ -3,15 +3,9 @@ package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.util.concurrency.Propagation;
-import kotlin.Pair;
-import kotlin.coroutines.CoroutineContext;
-import kotlinx.coroutines.CompletableJob;
-import com.intellij.concurrency.ThreadContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ChildContext;
 import com.intellij.util.concurrency.Propagation;
-import kotlin.coroutines.CoroutineContext;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +25,7 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   private volatile boolean myProcessed;
   private volatile boolean myRejected;
-  private final @Nullable CoroutineContext myContext;
-  private final @Nullable CompletableJob myJob;
+  private final @Nullable ChildContext myChildContext;
 
   private final boolean myExecuteInWriteAction;
 
@@ -51,16 +44,20 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
   }
 
   public Update(@NonNls Object identity, boolean executeInWriteAction, int priority) {
-    this(identity, executeInWriteAction, priority,
-         AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : new Pair<>(null, null));
+    this(
+      identity, executeInWriteAction, priority,
+      AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : null
+    );
   }
 
-  private Update(@NonNls Object identity, boolean executeInWriteAction, int priority, @NotNull Pair<CoroutineContext, CompletableJob> pair) {
-    super(pair.getFirst() == null ? new Object[]{identity} : new Object[]{identity, ThreadContext.getContextSkeleton(pair.getFirst())});
+  private Update(@NonNls Object identity, boolean executeInWriteAction, int priority, @Nullable ChildContext childContext) {
+    super(
+      childContext == null ? new Object[]{identity}
+                           : new Object[]{identity, ThreadContext.getContextSkeleton(childContext.getContext())}
+    );
     myExecuteInWriteAction = executeInWriteAction;
     myPriority = priority;
-    myContext = pair.getFirst();
-    myJob = pair.getSecond();
+    myChildContext = childContext;
   }
 
   public boolean isDisposed() {
@@ -93,25 +90,27 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
   }
 
   final boolean actuallyCanEat(Update update) {
-    if (myContext != null) {
-      return update.myContext != null &&
-             ThreadContext.getContextSkeleton(myContext).equals(ThreadContext.getContextSkeleton(update.myContext)) &&
-             canEat(update);
+    ChildContext otherChildContext = update.myChildContext;
+    if (myChildContext == null && otherChildContext == null) {
+      return canEat(update);
+    }
+    else if (myChildContext != null && otherChildContext != null) {
+      var thisSkeleton = ThreadContext.getContextSkeleton(myChildContext.getContext());
+      var otherSkeleton = ThreadContext.getContextSkeleton(otherChildContext.getContext());
+      return thisSkeleton.equals(otherSkeleton) && canEat(update);
     }
     else {
-      return update.myContext == null &&
-             canEat(update);
+      return false;
     }
   }
 
   final void runUpdate() {
-    if (myContext == null) {
+    if (myChildContext == null) {
       run();
-    } else try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
-      if (myJob != null) {
-        Propagation.runAsCoroutine(myJob, this);
-      } else {
-        run();
+    }
+    else {
+      try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
+        myChildContext.runAsCoroutine(this);
       }
     }
   }
@@ -128,8 +127,11 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   public void setRejected() {
     myRejected = true;
-    if (myJob != null) {
-      myJob.cancel(null);
+    if (myChildContext != null) {
+      Job job = myChildContext.getJob();
+      if (job != null) {
+        job.cancel(null);
+      }
     }
   }
 

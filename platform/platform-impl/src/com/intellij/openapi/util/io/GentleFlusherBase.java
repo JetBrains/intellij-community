@@ -3,6 +3,7 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IntRef;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import io.opentelemetry.api.metrics.BatchCallback;
 import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.metrics.ObservableLongMeasurement;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Closeable;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -193,7 +195,10 @@ public abstract class GentleFlusherBase implements Runnable, Closeable {
       }
     }
     catch (InterruptedException e) {
-      log.error("Flushing interrupted -> exiting", e);
+      log.error("Flushing thread interrupted -> exiting", e);
+    }
+    catch (AlreadyDisposedException | RejectedExecutionException e){
+      log.warn("Stop flushing: pool is shutting down or whole application is closing", e);
     }
     catch (Throwable t) {
       log.warn("Unhandled exception during flush (reschedule regularly)", t);

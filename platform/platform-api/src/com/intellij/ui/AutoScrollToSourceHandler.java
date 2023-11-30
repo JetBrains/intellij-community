@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
@@ -132,11 +132,11 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   private void onSelectionChanged(final Component component) {
-    if (component != null && UIUtil.isShowing(component, false) && isAutoScrollMode()) {
+    if (component != null && component.isShowing() && isAutoScrollMode()) {
       myAutoScrollAlarm.cancelAllRequests();
       myAutoScrollAlarm.addRequest(
         () -> {
-          if (UIUtil.isShowing(component, false)) { //for tests
+          if (component.isShowing()) { //for tests
             if (!needToCheckFocus() || UIUtil.hasFocus(component)) {
               scrollToSource(component);
             }
@@ -182,8 +182,7 @@ public abstract class AutoScrollToSourceHandler {
                               DataManager.getInstance().getDataContext(tree));
   }
 
-  @NotNull
-  public ToggleAction createToggleAction() {
+  public @NotNull ToggleAction createToggleAction() {
     return new AutoscrollToSourceAction(getActionName(), getActionDescription());
   }
 

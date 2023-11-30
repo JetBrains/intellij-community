@@ -8,13 +8,19 @@ import com.intellij.completion.ml.sorting.RankingSupport;
 import com.intellij.internal.ml.completion.DecoratingItemsPolicy;
 import com.intellij.internal.ml.completion.RankingModelProvider;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import java.util.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -136,7 +142,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
 
     public State() {
       ExperimentStatus experimentStatus = ExperimentStatus.Companion.getInstance();
-      boolean isEAP = ApplicationInfoEx.getInstanceEx().isEAP();
+      boolean isEAP = ApplicationInfo.getInstance().isEAP();
       for (Language language : Language.getRegisteredLanguages()) {
         RankingModelProvider ranker = RankingSupport.INSTANCE.findProviderSafe(language);
         if (ranker != null) {

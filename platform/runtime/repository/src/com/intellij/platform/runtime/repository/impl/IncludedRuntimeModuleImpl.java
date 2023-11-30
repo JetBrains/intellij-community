@@ -11,14 +11,14 @@ import java.util.Set;
 
 public final class IncludedRuntimeModuleImpl implements IncludedRuntimeModule {
   private final RuntimeModuleDescriptor myModuleDescriptor;
-  private final ModuleImportance myLoadingRule;
+  private final ModuleImportance myImportance;
   private final Set<RuntimeModuleScope> myScopes;
 
   public IncludedRuntimeModuleImpl(@NotNull RuntimeModuleDescriptor moduleDescriptor,
                                    @NotNull ModuleImportance importance,
                                    @NotNull Set<RuntimeModuleScope> scopes) {
     myModuleDescriptor = moduleDescriptor;
-    myLoadingRule = importance;
+    myImportance = importance;
     myScopes = scopes;
   }
 
@@ -29,7 +29,7 @@ public final class IncludedRuntimeModuleImpl implements IncludedRuntimeModule {
 
   @Override
   public @NotNull ModuleImportance getImportance() {
-    return myLoadingRule;
+    return myImportance;
   }
 
   @Override

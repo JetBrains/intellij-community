@@ -1,20 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.openapi.Forceable;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.locks.Lock;
 
-public class PersistentEnumerator<Data> implements ScannableDataEnumeratorEx<Data>, Closeable, Forceable {
+public class PersistentEnumerator<Data> implements DurableDataEnumerator<Data>,
+                                                   ScannableDataEnumeratorEx<Data> {
   protected final @NotNull PersistentEnumeratorBase<Data> myEnumerator;
 
   public PersistentEnumerator(@NotNull Path file, @NotNull KeyDescriptor<Data> dataDescriptor, final int initialSize) throws IOException {
@@ -101,12 +100,12 @@ public class PersistentEnumerator<Data> implements ScannableDataEnumeratorEx<Dat
   }
 
   @Override
-  public Data valueOf(int id) throws IOException {
+  public Data valueOf(@Range(from = 1, to = Integer.MAX_VALUE) int id) throws IOException {
     return myEnumerator.valueOf(id);
   }
 
   @Override
-  public int enumerate(Data name) throws IOException {
+  public @Range(from = 1, to = Integer.MAX_VALUE) int enumerate(Data name) throws IOException {
     return myEnumerator.enumerate(name);
   }
 
@@ -120,9 +119,13 @@ public class PersistentEnumerator<Data> implements ScannableDataEnumeratorEx<Dat
     return myEnumerator.getAllDataObjects(filter);
   }
 
-  @ApiStatus.Internal
   @Override
-  public boolean processAllDataObjects(@NotNull Processor<? super Data> processor) throws IOException {
-    return myEnumerator.iterateData(processor);
+  public boolean forEach(@NotNull ValueReader<? super Data> reader) throws IOException {
+    return myEnumerator.forEach(reader);
+  }
+
+  @Override
+  public int recordsCount() throws IOException {
+    return myEnumerator.recordsCount();
   }
 }

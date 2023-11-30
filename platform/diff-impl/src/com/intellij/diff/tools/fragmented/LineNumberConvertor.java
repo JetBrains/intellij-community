@@ -290,7 +290,7 @@ public final class LineNumberConvertor {
       }
     }
 
-    private int append(int value, int shift) {
+    private static int append(int value, int shift) {
       return value == -1 ? -1 : value + shift;
     }
   }

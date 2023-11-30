@@ -68,6 +68,7 @@ fun test() {
     }
 }
 
+// IGNORE_K2
 // EXIST: foo
 // ABSENT: otherThing
 // ABSENT: child

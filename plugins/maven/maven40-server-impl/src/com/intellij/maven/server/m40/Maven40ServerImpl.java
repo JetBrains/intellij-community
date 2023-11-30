@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Collection;
+import java.util.HashSet;
 
 public class Maven40ServerImpl extends MavenServerBase {
   @Override
@@ -38,10 +38,10 @@ public class Maven40ServerImpl extends MavenServerBase {
 
   @NotNull
   @Override
-  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, MavenToken token) {
+  public MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
-      return Maven40ProfileUtil.interpolateAndAlignModel(model, basedir);
+      return Maven40ProfileUtil.interpolateAndAlignModel(model, basedir, pomDir);
     }
     catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);
@@ -63,7 +63,7 @@ public class Maven40ServerImpl extends MavenServerBase {
   public ProfileApplicationResult applyProfiles(MavenModel model,
                                                 File basedir,
                                                 MavenExplicitProfiles explicitProfiles,
-                                                Collection<String> alwaysOnProfiles, MavenToken token) {
+                                                HashSet<String> alwaysOnProfiles, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
       return Maven40ProfileUtil.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
@@ -71,5 +71,10 @@ public class Maven40ServerImpl extends MavenServerBase {
     catch (Throwable e) {
       throw wrapToSerializableRuntimeException(e);
     }
+  }
+
+  @Override
+  public MavenServerStatus getDebugStatus(boolean clean) {
+    return new MavenServerStatus();
   }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.liveTemplates.k1.macro
 
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
@@ -30,7 +31,7 @@ class Fe10SuggestVariableNameMacro(private val defaultName: String? = null) : Ab
         }
 
         val descriptor = declaration.resolveToDescriptorIfAny() as? VariableDescriptor ?: return emptyList()
-        return defaultName?.let { listOf(Fe10KotlinNameSuggester.suggestNameByName(it, nameValidator)) }
+        return defaultName?.let { listOf(KotlinNameSuggester.suggestNameByName(it, nameValidator)) }
             ?: Fe10KotlinNameSuggester.suggestNamesByType(descriptor.type, nameValidator, null)
     }
 

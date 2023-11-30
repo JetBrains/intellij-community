@@ -24,20 +24,6 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinLoggerInitializedWithForeignClassInspection : AbstractKotlinInspection() {
-    companion object {
-        private val DEFAULT_LOGGER_FACTORIES = listOf(
-            "java.util.logging.Logger" to "getLogger",
-            "org.slf4j.LoggerFactory" to "getLogger",
-            "org.apache.commons.logging.LogFactory" to "getLog",
-            "org.apache.log4j.Logger" to "getLogger",
-            "org.apache.logging.log4j.LogManager" to "getLogger",
-        )
-        private val DEFAULT_LOGGER_FACTORY_CLASS_NAMES = DEFAULT_LOGGER_FACTORIES.map { it.first }
-        private val DEFAULT_LOGGER_FACTORY_METHOD_NAMES = DEFAULT_LOGGER_FACTORIES.map { it.second }
-        private val DEFAULT_LOGGER_FACTORY_CLASS_NAME = BaseInspection.formatString(DEFAULT_LOGGER_FACTORY_CLASS_NAMES)
-        private val DEFAULT_LOGGER_FACTORY_METHOD_NAME = BaseInspection.formatString(DEFAULT_LOGGER_FACTORY_METHOD_NAMES)
-    }
-
     @Suppress("MemberVisibilityCanBePrivate")
     var loggerFactoryClassName: String = DEFAULT_LOGGER_FACTORY_CLASS_NAME
 
@@ -156,3 +142,15 @@ class KotlinLoggerInitializedWithForeignClassInspection : AbstractKotlinInspecti
         }
     }
 }
+
+private val DEFAULT_LOGGER_FACTORIES = listOf(
+    "java.util.logging.Logger" to "getLogger",
+    "org.slf4j.LoggerFactory" to "getLogger",
+    "org.apache.commons.logging.LogFactory" to "getLog",
+    "org.apache.log4j.Logger" to "getLogger",
+    "org.apache.logging.log4j.LogManager" to "getLogger",
+)
+private val DEFAULT_LOGGER_FACTORY_CLASS_NAMES = DEFAULT_LOGGER_FACTORIES.map { it.first }
+private val DEFAULT_LOGGER_FACTORY_METHOD_NAMES = DEFAULT_LOGGER_FACTORIES.map { it.second }
+private val DEFAULT_LOGGER_FACTORY_CLASS_NAME = BaseInspection.formatString(DEFAULT_LOGGER_FACTORY_CLASS_NAMES)
+private val DEFAULT_LOGGER_FACTORY_METHOD_NAME = BaseInspection.formatString(DEFAULT_LOGGER_FACTORY_METHOD_NAMES)

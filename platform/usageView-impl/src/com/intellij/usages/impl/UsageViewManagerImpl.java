@@ -291,6 +291,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   public static boolean isInScope(@NotNull Usage usage, @NotNull SearchScope searchScope) {
+    if (searchScope instanceof AcceptEveryUsageScope) return true;
     return ReadAction.compute(() -> {
       VirtualFile file;
       if (usage instanceof PsiElementUsage psiElementUsage) {
@@ -322,4 +323,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
   public static @Nls(capitalization = Sentence) @NotNull String outOfScopeMessage(int nUsages, @NotNull SearchScope searchScope) {
     return UsageViewBundle.message("0.usages.are.out.of.scope", nUsages, searchScope.getDisplayName());
   }
+
+  /**
+   * There are usages which have not virtual files, so we do not want to filter them out in some scopes
+   */
+  public interface AcceptEveryUsageScope { }
 }

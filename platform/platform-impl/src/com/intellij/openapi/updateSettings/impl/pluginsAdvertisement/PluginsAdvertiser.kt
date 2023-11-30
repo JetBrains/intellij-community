@@ -17,23 +17,18 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformUtils.isIdeaUltimate
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
-private const val IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition"
+private const val IGNORE_ULTIMATE_EDITION = "promo.ignore.ultimate.edition"
 
 @get:JvmName("getLog")
 internal val LOG: Logger = Logger.getInstance("#PluginsAdvertiser")
 
-private val propertiesComponent
-  get() = PropertiesComponent.getInstance()
-
 var isIgnoreIdeSuggestion: Boolean
-  get() = propertiesComponent.isTrueValue(IGNORE_ULTIMATE_EDITION)
-  set(value) = propertiesComponent.setValue(IGNORE_ULTIMATE_EDITION, value)
+  get() = PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION)
+  set(value) = PropertiesComponent.getInstance().setValue(IGNORE_ULTIMATE_EDITION, value)
 
 val notificationGroup: NotificationGroup
   get() = NotificationGroupManager.getInstance().getNotificationGroup("Plugins Suggestion")

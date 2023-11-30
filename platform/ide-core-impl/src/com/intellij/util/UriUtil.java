@@ -13,13 +13,11 @@ public final class UriUtil {
   private UriUtil() {
   }
 
-  @NotNull
-  public static String trimTrailingSlashes(@NotNull String url) {
+  public static @NotNull String trimTrailingSlashes(@NotNull String url) {
     return StringUtil.trimTrailing(url, '/');
   }
 
-  @NotNull
-  public static String trimLeadingSlashes(@NotNull String url) {
+  public static @NotNull String trimLeadingSlashes(@NotNull String url) {
     return StringUtil.trimLeading(url, '/');
   }
 
@@ -33,8 +31,7 @@ public final class UriUtil {
    * Scheme separator is not included neither to the scheme part, nor to the url part. <br/>
    * The scheme can be absent, in which case empty string is written to the first item of the Pair.
    */
-  @NotNull
-  public static Couple<String> splitScheme(@NotNull String url) {
+  public static @NotNull Couple<String> splitScheme(@NotNull String url) {
     int index = url.indexOf(URLUtil.SCHEME_SEPARATOR);
     if (index == -1) {
       return Couple.of("", url);

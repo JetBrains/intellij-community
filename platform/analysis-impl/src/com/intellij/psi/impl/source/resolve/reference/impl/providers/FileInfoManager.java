@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
@@ -29,13 +29,11 @@ public final class FileInfoManager {
     return _getLookupItem(file, file.getName(), file.getIcon(0));
   }
 
-  @Nullable
-  public static String getFileAdditionalInfo(PsiElement psiElement) {
+  public static @Nullable String getFileAdditionalInfo(PsiElement psiElement) {
     return _getInfo(psiElement);
   }
 
-  @Nullable
-  private static String _getInfo(PsiElement psiElement) {
+  private static @Nullable String _getInfo(PsiElement psiElement) {
     if (!(psiElement instanceof PsiFile psiFile) || !(psiElement.isPhysical())) {
       return null;
     }
@@ -62,7 +60,7 @@ public final class FileInfoManager {
     return _getLookupItem((PsiFile)psiElement, encoded, icon);
   }
 
-  public static LookupElementBuilder _getLookupItem(@NotNull final PsiFile file, String name, Icon icon) {
+  public static LookupElementBuilder _getLookupItem(final @NotNull PsiFile file, String name, Icon icon) {
     LookupElementBuilder builder = LookupElementBuilder.create(file, name).withIcon(icon);
 
     final String info = _getInfo(file);

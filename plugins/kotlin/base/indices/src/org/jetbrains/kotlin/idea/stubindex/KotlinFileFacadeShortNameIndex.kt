@@ -16,6 +16,7 @@ class KotlinFileFacadeShortNameIndex internal constructor() : StringStubIndexExt
 
     override fun getKey(): StubIndexKey<String, KtFile> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinFileFacadeShortNameIndex[shortName, project, scope]"))
     override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtFile> {
         return Helper[shortName, project, scope]
     }

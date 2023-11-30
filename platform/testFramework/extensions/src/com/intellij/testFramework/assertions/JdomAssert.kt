@@ -6,12 +6,12 @@ import com.intellij.configurationStore.serialize
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.rt.execution.junit.FileComparisonFailure
-import com.intellij.util.io.readText
 import org.assertj.core.api.AbstractAssert
 import org.assertj.core.internal.Objects
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import java.nio.file.Path
+import kotlin.io.path.readText
 
 class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual, JdomAssert::class.java) {
   fun isEmpty(): JdomAssert {

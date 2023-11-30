@@ -22,7 +22,7 @@ internal class SuggestedIdeBanner : JPanel() {
   private val hintMessage: JLabel = JLabel("", SwingConstants.CENTER)
   private val downloadLink: ActionLink = ActionLink("", ActionListener {
     val downloadUrl = suggestedIde?.downloadUrl ?: return@ActionListener
-    FUSEventSource.SEARCH.openDownloadPageAndLog(project = null, url = downloadUrl, pluginId = pluginId)
+    FUSEventSource.PLUGINS_SEARCH.openDownloadPageAndLog(project = null, url = downloadUrl, pluginId = pluginId)
   })
 
   init {
@@ -50,6 +50,8 @@ internal class SuggestedIdeBanner : JPanel() {
       val ideName = suggestedIde?.name
       hintMessage.text = IdeBundle.message("plugin.message.plugin.only.supported.in", ideName)
       downloadLink.text = IdeBundle.message("plugins.advertiser.action.try.ultimate", ideName)
+
+      FUSEventSource.PLUGINS_SEARCH.logPluginSuggested(null, pluginId)
     }
   }
 }

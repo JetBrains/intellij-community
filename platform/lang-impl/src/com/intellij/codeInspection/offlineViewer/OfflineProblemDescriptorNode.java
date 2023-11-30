@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.offlineViewer;
 
@@ -12,7 +10,7 @@ import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
+public final class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   private final OfflineDescriptorResolveResult myDescriptorResolveResult;
   private final OfflineProblemDescriptor myOfflineDescriptor;
 

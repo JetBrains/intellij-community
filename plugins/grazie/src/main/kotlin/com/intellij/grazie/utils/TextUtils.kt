@@ -51,7 +51,11 @@ object Text {
   private const val call = "$id\\(.*\\)"
   private const val commonCharEscape = "\\\\[ntbru]"
   private const val keyColonValue = "\n *[a-zA-Z0-9_\$'\"-]+: *[a-zA-Z0-9_\$'\"-]+"
-  private val codeLikePattern = Regex("$assignment|$idChain|$pyFString|$call|$commonCharEscape|$keyColonValue")
+
+  private const val cSharpTypeOrValueTuple = "($id|\\($id(, *$id)+\\))"
+  private const val cSharpGenericTypeParameter = "(((in|out) +)?$cSharpTypeOrValueTuple)"
+  private const val cSharpGenericMethod = "$id\\<$cSharpGenericTypeParameter(, *$cSharpGenericTypeParameter)*\\>\\("
+  private val codeLikePattern = Regex("$assignment|$idChain|$pyFString|$call|$commonCharEscape|$keyColonValue|$cSharpGenericMethod")
 
   fun CharSequence.looksLikeCode(): Boolean {
     if (codeLikePattern.find(this) != null) return true

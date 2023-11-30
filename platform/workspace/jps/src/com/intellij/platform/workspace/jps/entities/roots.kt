@@ -4,15 +4,19 @@ package com.intellij.platform.workspace.jps.entities
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.annotations.Child
 
+/**
+ * Describes a [ContentEntry][com.intellij.openapi.roots.ContentEntry].
+ * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
+ */
 interface ContentRootEntity : WorkspaceEntity {
     val module: ModuleEntity
 
@@ -58,12 +62,17 @@ interface ContentRootEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ContentRootEntity, modification: ContentRootEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ContentRootEntity,
+                                      modification: ContentRootEntity.Builder.() -> Unit): ContentRootEntity = modifyEntity(
   ContentRootEntity.Builder::class.java, entity, modification)
 //endregion
 
 val ExcludeUrlEntity.contentRoot: ContentRootEntity? by WorkspaceEntity.extension()
 
+/**
+ * Describes a [SourceFolder][com.intellij.openapi.roots.SourceFolder].
+ * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
+ */
 interface SourceRootEntity : WorkspaceEntity {
     val contentRoot: ContentRootEntity
 
@@ -103,10 +112,15 @@ interface SourceRootEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SourceRootEntity, modification: SourceRootEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: SourceRootEntity,
+                                      modification: SourceRootEntity.Builder.() -> Unit): SourceRootEntity = modifyEntity(
   SourceRootEntity.Builder::class.java, entity, modification)
 //endregion
 
+/**
+ * Stores order of excluded roots in iml file.
+ * This is needed to ensure that corresponding tags are saved in the same order to avoid unnecessary modifications of iml file.
+ */
 interface SourceRootOrderEntity : WorkspaceEntity {
     val contentRootEntity: ContentRootEntity
 
@@ -139,10 +153,14 @@ interface SourceRootOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SourceRootOrderEntity, modification: SourceRootOrderEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: SourceRootOrderEntity,
+                                      modification: SourceRootOrderEntity.Builder.() -> Unit): SourceRootOrderEntity = modifyEntity(
   SourceRootOrderEntity.Builder::class.java, entity, modification)
 //endregion
 
+/**
+ * Describes custom properties of [SourceFolder][com.intellij.openapi.roots.SourceFolder].
+ */
 interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
     val sourceRoot: SourceRootEntity
 
@@ -176,6 +194,6 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: CustomSourceRootPropertiesEntity,
-                                      modification: CustomSourceRootPropertiesEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: CustomSourceRootPropertiesEntity.Builder.() -> Unit): CustomSourceRootPropertiesEntity = modifyEntity(
   CustomSourceRootPropertiesEntity.Builder::class.java, entity, modification)
 //endregion

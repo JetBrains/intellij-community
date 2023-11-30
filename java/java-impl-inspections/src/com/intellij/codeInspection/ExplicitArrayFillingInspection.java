@@ -6,6 +6,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -207,12 +208,12 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         TextRange range = getRange(statement, type);
 
         if (isSetAll && mySuggestSetAll && isOnTheFly) {
-          SetInspectionOptionFix disableForSetAllFix =
-            new SetInspectionOptionFix(ExplicitArrayFillingInspection.this,
+          var disableForSetAllFix =
+            new UpdateInspectionOptionFix(ExplicitArrayFillingInspection.this,
                                        "mySuggestSetAll",
                                        JavaBundle.message("inspection.explicit.array.filling.no.suggestion.for.set.all"),
                                        false);
-          holder.registerProblem(statement, message, type, range, fix, disableForSetAllFix);
+          holder.problem(statement, message).highlight(type).range(range).fix(fix).fix(disableForSetAllFix).register();
           return;
         }
 

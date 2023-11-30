@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.config;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
@@ -30,7 +29,7 @@ final class GradleLibraryPresentationProvider extends GroovyLibraryPresentationP
   GradleLibraryPresentationProvider() {
     super(GRADLE_KIND);
 
-    myLibraryManager = ApplicationManager.getApplication().getService(GradleInstallationManager.class);
+    myLibraryManager = GradleInstallationManager.getInstance();
   }
 
   @NotNull

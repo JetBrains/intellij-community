@@ -24,9 +24,11 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -36,6 +38,11 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   @Override
   protected String getTestDataPath() {
     return BASE_PATH;
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 
   @Override
@@ -75,24 +82,21 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
   public void testStringTemplates() {
-    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_21_PREVIEW);
-    myFixture.addClass("""
-      package java.lang;
-      public interface StringTemplate {
-        Processor<String, RuntimeException> STR = null;
-        
-        @PreviewFeature(feature=PreviewFeature.Feature.STRING_TEMPLATES)
-        @FunctionalInterface
-        public interface Processor<R, E extends Throwable> {
-          R process(StringTemplate stringTemplate) throws E;
-        }
-      }""");
     doTest();
   }
   public void testNewImportListIsEmptyAndCommentPreserved() { doTest(); }
   public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() { doTest(); }
 
   public void testDontCollapseToOnDemandImport() { doTest(); }
+  public void testDontInsertRedundantJavaLangImports() {
+    myFixture.addClass("""
+      package imports;
+      
+      public enum Values {
+        String, Object, Double
+      }""");
+    doTest();
+  }
   public void testIgnoreInaccessible() { doTest();}
 
   public void testEnsureConflictingImportsNotCollapsed() {
@@ -104,6 +108,36 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testConflictingWithJavaLang() {
+    doTest();
+  }
+
+  public void testDoNotInsertImportForClassVisibleByInheritance() {
+    myFixture.addClass("""
+                         package one;
+                         public interface Super {
+                           class Result {}
+                           
+                           Result x();
+                         }
+                         """);
+    myFixture.addClass("""
+                         package two;
+                         public class Result {}
+                         public class One {}
+                         public class Two {}
+                         public class Three {}
+                         public class Four {}
+                         public class Five {}
+                         """);
+    myFixture.addClass("""
+                         package three;
+                         public class Result {}
+                         public class Six {}
+                         public class Seven {}
+                         public class Eight {}
+                         public class Nine {}
+                         public class Ten {}
+                         """);
     doTest();
   }
 

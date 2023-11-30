@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -14,9 +14,9 @@ import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class CommandProcessorImpl extends CoreCommandProcessor {
+final class CommandProcessorImpl extends CoreCommandProcessor {
   @Override
-  public void finishCommand(@NotNull final CommandToken command, @Nullable final Throwable throwable) {
+  public void finishCommand(final @NotNull CommandToken command, final @Nullable Throwable throwable) {
     if (myCurrentCommand != command) return;
     final boolean failed;
     try {
@@ -43,7 +43,7 @@ class CommandProcessorImpl extends CoreCommandProcessor {
     if (failed) {
       Project project = command.getProject();
       if (project != null) {
-        FileEditor editor = new FocusBasedCurrentEditorProvider().getCurrentEditor();
+        FileEditor editor = new FocusBasedCurrentEditorProvider().getCurrentEditor(project);
         final UndoManager undoManager = UndoManager.getInstance(project);
         if (undoManager.isUndoAvailable(editor)) {
           undoManager.undo(editor);

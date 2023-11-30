@@ -1,11 +1,14 @@
-from typing import Any
-
 from urllib3.exceptions import HTTPError as BaseHTTPError
 
-class RequestException(IOError):
-    response: Any
-    request: Any
-    def __init__(self, *args, **kwargs) -> None: ...
+from .models import Request, Response
+from .sessions import PreparedRequest
+
+class RequestException(OSError):
+    response: Response | None
+    request: Request | PreparedRequest | None
+    def __init__(
+        self, *args: object, request: Request | PreparedRequest | None = ..., response: Response | None = ...
+    ) -> None: ...
 
 class InvalidJSONError(RequestException): ...
 class JSONDecodeError(InvalidJSONError): ...

@@ -1,8 +1,8 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,15 +36,13 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
   }
 
   @Override
-  @Nullable
-  public StructureViewBuilder getStructureViewBuilder() {
+  public @Nullable StructureViewBuilder getStructureViewBuilder() {
     TextEditor textEditor = getTextEditor();
     return textEditor == null ? null : textEditor.getStructureViewBuilder();
   }
 
   @Override
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     TextEditor fileEditor = getTextEditor();
     if (fileEditor != null) {
       return fileEditor.getEditor();
@@ -54,8 +53,7 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
     return myMockTextEditor;
   }
 
-  @Nullable
-  protected abstract TextEditor getTextEditor();
+  protected abstract @Nullable TextEditor getTextEditor();
 
   @Override
   public FileEditorLocation getCurrentLocation() {
@@ -70,8 +68,7 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
   }
 
   @Override
-  @NotNull
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
     TextEditor textEditor = getTextEditor();
     return textEditor == null ? new TextEditorState() : textEditor.getState(level);
   }
@@ -150,7 +147,7 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
   }
 
   protected final void contentLoaded() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     Navigatable navigatable = myPendingNavigatable;
     if (navigatable != null) {

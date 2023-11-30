@@ -2,10 +2,12 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl;
 import com.intellij.codeInsight.hint.*;
 import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
@@ -18,6 +20,7 @@ import com.intellij.internal.statistic.IntentionFUSCollector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -42,7 +45,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -50,6 +55,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -69,7 +75,6 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -102,13 +107,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   private IntentionHintComponent(@NotNull Project project,
                                  @NotNull PsiFile file,
                                  @NotNull Editor editor,
-                                 @NotNull CachedIntentions cachedIntentions) {
+                                 @NotNull IntentionContainer cachedIntentions) {
     myEditor = editor;
     myPopup = new IntentionPopup(project, file, editor, cachedIntentions);
     Disposer.register(this, myPopup);
 
-    myLightBulbPanel =
-      new LightBulbPanel(project, file, editor, LightBulbUtil.getIcon(cachedIntentions), cachedIntentions.getTopLevelActions());
+    myLightBulbPanel = new LightBulbPanel(project, file, editor, LightBulbUtil.getIcon(cachedIntentions));
     myComponentHint = new MyComponentHint(myLightBulbPanel);
 
     EditorUtil.disposeWithEditor(myEditor, this);
@@ -121,6 +125,15 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                                                   @NotNull Editor editor,
                                                                   boolean showExpanded,
                                                                   @NotNull CachedIntentions cachedIntentions) {
+    return showIntentionHint(project, file, editor, showExpanded, (IntentionContainer)cachedIntentions);
+  }
+
+  @RequiresEdt
+  public static @NotNull IntentionHintComponent showIntentionHint(@NotNull Project project,
+                                                                  @NotNull PsiFile file,
+                                                                  @NotNull Editor editor,
+                                                                  boolean showExpanded,
+                                                                  @NotNull IntentionContainer cachedIntentions) {
     IntentionHintComponent component = new IntentionHintComponent(project, file, editor, cachedIntentions);
 
     if (editor.getSettings().isShowIntentionBulb()) {
@@ -183,7 +196,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   @TestOnly
-  public CachedIntentions getCachedIntentions() {
+  public IntentionContainer getCachedIntentions() {
     return myPopup.myCachedIntentions;
   }
 
@@ -203,7 +216,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
       @Override
       public int getPriority() {
-        return -10;
+        return INTENTION_BULB_PRIORITY;
       }
     };
     if (hintManager.canShowQuestionAction(action)) {
@@ -221,35 +234,82 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   @RequiresEdt
   private void showPopup(boolean mouseClick) {
-    RelativePoint positionHint = null;
     if (mouseClick && myLightBulbPanel.isShowing()) {
-      RelativePoint swCorner = RelativePoint.getSouthWestOf(myLightBulbPanel);
-      Point popup = swCorner.getPoint();
-
-      Point panel = SwingUtilities.convertPoint(myLightBulbPanel, new Point(), myEditor.getContentComponent());
-      Point caretLine = myEditor.offsetToXY(myEditor.getCaretModel().getOffset());
-      if (panel.y + myLightBulbPanel.getHeight() <= caretLine.y) {
-        // The light bulb panel is shown above the caret line.
-        // The caret line should be completely visible, as it contains the interesting code.
-        // The popup menu is shown below the caret line.
-        popup.y += 1; // Step outside the light bulb panel.
-        popup.y += myEditor.getLineHeight();
-      }
-      else {
-        // Let the top border pixel of the popup menu overlap the bottom border pixel of the light bulb panel.
-      }
-
-      // XXX: This formula is only guessed.
-      int adjust = (int)(UISettingsUtils.getInstance().getCurrentIdeScale() - 0.5);
-      // Align the left border of the popup menu with the light bulb panel.
-      // XXX: Where does the 1 come from?
-      popup.x += 1 + adjust;
-      // Align the top border of the menu bar.
-      popup.y += adjust;
-
-      positionHint = new RelativePoint(swCorner.getComponent(), popup);
+      showPopup(findPositionForBulbButton());
+      return;
     }
+    CodeFloatingToolbar toolbar = getFloatingToolbar();
+    if (toolbar != null && toolbar.canBeShownAtCurrentSelection()) {
+      showPopupFromToolbar(toolbar);
+      return;
+    }
+    showPopup(null);
+  }
+
+  private void showPopupFromToolbar(CodeFloatingToolbar toolbar) {
+    if (toolbar.isShown()) {
+      showPopupFromVisibleToolbar(toolbar);
+    } else {
+      toolbar.show(() -> showPopupFromVisibleToolbar(toolbar));
+    }
+  }
+
+  private void showPopupFromVisibleToolbar(@NotNull CodeFloatingToolbar toolbar) {
+    Component component = toolbar.getHintComponent();
+    if (component == null) return;
+    RelativePoint defaultPosition = new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM, component);
+    ListPopup popup = getOrCreateListPopup();
+    List<ActionButton> buttons = UIUtil.findComponentsOfType(toolbar.getHintComponent(), ActionButton.class);
+    ActionButton intentionsButton = ContainerUtil.find(buttons, b -> b.getAction() instanceof ShowIntentionActionsAction);
+    if (intentionsButton == null) return;
+    toolbar.attachPopupToButton(intentionsButton, popup);
+    showPopup(defaultPosition);
+  }
+
+  private @Nullable CodeFloatingToolbar getFloatingToolbar() {
+    if (!Registry.get("floating.codeToolbar.showIntentionsUnderPopup").asBoolean()) return null;
+    if (!myEditor.getSelectionModel().hasSelection()) return null;
+    return CodeFloatingToolbar.getToolbar(myEditor);
+  }
+
+  private ListPopup getOrCreateListPopup() {
+    if (myPopup.myListPopup == null) {
+      myPopup.myHint = this;
+      IntentionPopup.recreateMyPopup(myPopup, new IntentionListStep(myPopup, myPopup.myEditor, myPopup.myFile, myPopup.myProject, myPopup.myCachedIntentions));
+    }
+    return myPopup.myListPopup;
+  }
+
+  private void showPopup(@Nullable RelativePoint positionHint) {
     myPopup.show(this, positionHint);
+  }
+
+  private @NotNull RelativePoint findPositionForBulbButton() {
+    RelativePoint swCorner = RelativePoint.getSouthWestOf(myLightBulbPanel);
+    Point popup = swCorner.getPoint();
+
+    Point panel = SwingUtilities.convertPoint(myLightBulbPanel, new Point(), myEditor.getContentComponent());
+    Point caretLine = myEditor.offsetToXY(myEditor.getCaretModel().getOffset());
+    if (panel.y + myLightBulbPanel.getHeight() <= caretLine.y) {
+      // The light bulb panel is shown above the caret line.
+      // The caret line should be completely visible, as it contains the interesting code.
+      // The popup menu is shown below the caret line.
+      popup.y += 1; // Step outside the light bulb panel.
+      popup.y += myEditor.getLineHeight();
+    }
+    else {
+      // Let the top border pixel of the popup menu overlap the bottom border pixel of the light bulb panel.
+    }
+
+    // XXX: This formula is only guessed.
+    int adjust = (int)(UISettingsUtils.getInstance().getCurrentIdeScale() - 0.5);
+    // Align the left border of the popup menu with the light bulb panel.
+    // XXX: Where does the 1 come from?
+    popup.x += 1 + adjust;
+    // Align the top border of the menu bar.
+    popup.y += adjust;
+
+    return new RelativePoint(swCorner.getComponent(), popup);
   }
 
   private static final class MyComponentHint extends LightweightHint {
@@ -299,7 +359,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private static final int NORMAL_BORDER_SIZE = 6;
     private static final int SMALL_BORDER_SIZE = 4;
 
-    static @NotNull Icon getIcon(CachedIntentions cachedIntentions) {
+    static @NotNull Icon getIcon(IntentionContainer cachedIntentions) {
       boolean showRefactoring = !ExperimentalUI.isNewUI() && ContainerUtil.exists(
         cachedIntentions.getInspectionFixes(),
         descriptor -> IntentionActionDelegate.unwrap(descriptor.getAction()) instanceof BaseRefactoringIntentionAction
@@ -384,8 +444,12 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       if (lineY + panelHeight >= visibleArea.y + visibleArea.height) return null;
 
       int x = visibleArea.x;
+      int anotherLineWithShift = IntentionsUIImpl.SHOW_INTENTION_BULB_ON_ANOTHER_LINE.get(editor.getProject(), 0);
+      if (anotherLineWithShift != 0) {
+        x += anotherLineWithShift;
+      }
       int y;
-      if (lineHeight >= iconHeight && fitsInCaretLine(editor, x + panelWidth)) {
+      if (anotherLineWithShift == 0 && lineHeight >= iconHeight && fitsInCaretLine(editor, x + panelWidth)) {
         // Center the light bulb icon in the caret line.
         // The (usually invisible) border may be outside the caret line.
         y = lineY + (lineHeight - panelHeight) / 2;
@@ -418,46 +482,33 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   /** The light bulb icon, optionally surrounded by a border. */
-  private class LightBulbPanel extends JPanel {
+  private final class LightBulbPanel extends JPanel {
     private static final Icon ourInactiveArrowIcon = IconManager.getInstance().createEmptyIcon(AllIcons.General.ArrowDown);
 
     private final RowIcon myHighlightedIcon;
     private final RowIcon myInactiveIcon;
     private final JLabel myIconLabel;
 
-    LightBulbPanel(@NotNull Project project,
-                   @NotNull PsiFile file,
-                   @NotNull Editor editor,
-                   @NotNull Icon smartTagIcon,
-                   @NotNull Set<AnAction> topLevelActions) {
+    LightBulbPanel(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor, @NotNull Icon smartTagIcon) {
       setLayout(new BorderLayout());
       setOpaque(false);
 
       IconManager iconManager = IconManager.getInstance();
-      if (!topLevelActions.isEmpty()) {
-        Icon icon = topLevelActions.iterator().next().getTemplatePresentation().getIcon();
-        myHighlightedIcon = iconManager.createRowIcon(icon, smartTagIcon, AllIcons.General.ArrowDown);
-        myInactiveIcon = iconManager.createRowIcon(icon, smartTagIcon, ourInactiveArrowIcon);
-      }
-      else {
-        myHighlightedIcon = iconManager.createRowIcon(smartTagIcon, AllIcons.General.ArrowDown);
-        myInactiveIcon = iconManager.createRowIcon(smartTagIcon, ourInactiveArrowIcon);
-      }
+      myHighlightedIcon = iconManager.createRowIcon(smartTagIcon, AllIcons.General.ArrowDown);
+      myInactiveIcon = iconManager.createRowIcon(smartTagIcon, ourInactiveArrowIcon);
 
       myIconLabel = new JLabel(myInactiveIcon);
       myIconLabel.setOpaque(false);
       myIconLabel.addMouseListener(new LightBulbMouseListener(project, file));
       AccessibleContextUtil.setName(myIconLabel, UIBundle.message("light.bulb.panel.accessible.name"));
 
-      if (Registry.is("debugger.inlayRunToCursor") && !topLevelActions.isEmpty()) {
-        DefaultActionGroup actions = new DefaultActionGroup(List.copyOf(topLevelActions));
-        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("Any", actions, true);
-        add(toolbar.getComponent(), BorderLayout.CENTER);
-      }
-      else {
-        add(myIconLabel, BorderLayout.CENTER);
-      }
+      add(myIconLabel, BorderLayout.CENTER);
       setBorder(LightBulbUtil.createInactiveBorder(editor));
+      CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
+      boolean isIntegrated = !Registry.is("floating.codeToolbar.hideIntentionsButton");
+      if (isIntegrated && floatingToolbar != null && floatingToolbar.canBeShownAtCurrentSelection()) {
+        setVisible(false);
+      }
     }
 
     @Override
@@ -487,7 +538,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
   }
 
   // IDEA-313550: Intention light bulb border is calculated wrong
-  private class LightBulbMouseListener extends MouseAdapter {
+  private final class LightBulbMouseListener extends MouseAdapter {
     private final @NotNull Project myProject;
     private final @NotNull PsiFile myFile;
 
@@ -522,11 +573,11 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
   }
 
-  static class IntentionPopup implements Disposable.Parent {
+  static final class IntentionPopup implements Disposable.Parent {
     private final @NotNull Project myProject;
     private final @NotNull Editor myEditor;
     private final @NotNull PsiFile myFile;
-    private final @NotNull CachedIntentions myCachedIntentions;
+    private final @NotNull IntentionContainer myCachedIntentions;
     private final IntentionPreviewPopupUpdateProcessor myPreviewPopupUpdateProcessor;
     private PopupMenuListener myOuterComboboxPopupListener;
     private IntentionHintComponent myHint;
@@ -537,7 +588,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     private IntentionPopup(@NotNull Project project,
                            @NotNull PsiFile file,
                            @NotNull Editor editor,
-                           @NotNull CachedIntentions cachedIntentions) {
+                           @NotNull IntentionContainer cachedIntentions) {
       myProject = project;
       myEditor = editor;
       myFile = file;
@@ -643,7 +694,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           if (selectedItem instanceof IntentionActionWithTextCaching actionWithCaching) {
             IntentionAction action = IntentionActionDelegate.unwrap(actionWithCaching.getAction());
             if (list != null) {
-              popup.updatePreviewPopup(action, list.getOriginalSelectedIndex());
+              popup.updatePreviewPopup(actionWithCaching, list.getOriginalSelectedIndex());
             }
             highlightOnHover(actionWithCaching, context, popup);
             return;
@@ -651,21 +702,24 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         }
         context.dropHighlight();
       };
-      ((ListPopupImpl)popup.myListPopup).getList().addFocusListener(new FocusListener() {
-        @Override
-        public void focusGained(FocusEvent e) {
-          if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
-            popup.showPreview();
+      ListPopup listPopup = popup.myListPopup;
+      if (listPopup instanceof ListPopupImpl listPopupImpl) {
+        listPopupImpl.getList().addFocusListener(new FocusListener() {
+          @Override
+          public void focusGained(FocusEvent e) {
+            if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
+              popup.showPreview();
+            }
           }
-        }
 
-        @Override
-        public void focusLost(FocusEvent e) {
-          if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
-            popup.myPreviewPopupUpdateProcessor.hide();
+          @Override
+          public void focusLost(FocusEvent e) {
+            if (EditorSettingsExternalizable.getInstance().isShowIntentionPreview()) {
+              popup.myPreviewPopupUpdateProcessor.hide();
+            }
           }
-        }
-      });
+        });
+      }
       popup.myListPopup.addListSelectionListener(selectionListener);
 
       popup.myListPopup.addListener(new JBPopupListener() {
@@ -701,7 +755,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       }
 
       Disposer.register(popup, popup.myListPopup);
-      Disposer.register(popup.myListPopup, ApplicationManager.getApplication()::assertIsDispatchThread);
+      Disposer.register(popup.myListPopup, ThreadingAssertions::assertEventDispatchThread);
     }
 
     private static void highlightOnHover(@NotNull IntentionActionWithTextCaching actionWithCaching, @NotNull HighlightingContext context,
@@ -797,15 +851,17 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
               actions.add(() -> highlighter.addHighlights(List.of(rangeInFile), range.getHighlightKey()));
             }
           }
-          return () -> actions.forEach(Runnable::run);
+          return () -> {
+            dropHighlight();
+            actions.forEach(Runnable::run);
+          };
         }
-        return () -> {
-        };
+        return this::dropHighlight;
       }
     }
 
     @RequiresEdt
-    private void updatePreviewPopup(@NotNull IntentionAction action, int index) {
+    private void updatePreviewPopup(IntentionActionWithTextCaching action, int index) {
       myPreviewPopupUpdateProcessor.setup(myListPopup, index);
       myPreviewPopupUpdateProcessor.updatePopup(action);
     }
@@ -861,7 +917,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       if (myListPopup instanceof ListPopupImpl listPopup) {
         JList<?> list = listPopup.getList();
         if (list.getSelectedValue() instanceof IntentionActionWithTextCaching actionWithCaching) {
-          updatePreviewPopup(actionWithCaching.getAction(), list.getSelectedIndex());
+          updatePreviewPopup(actionWithCaching, list.getSelectedIndex());
         }
       }
     }

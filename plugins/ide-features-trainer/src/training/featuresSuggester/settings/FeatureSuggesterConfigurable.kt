@@ -1,37 +1,73 @@
 package training.featuresSuggester.settings
 
 import com.intellij.openapi.extensions.BaseExtensionPointName
+import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.ThreeStateCheckBox
 import training.featuresSuggester.FeatureSuggesterBundle
 import training.featuresSuggester.suggesters.FeatureSuggester
-import javax.swing.JComponent
 
-class FeatureSuggesterConfigurable : Configurable, Configurable.WithEpDependencies {
-  private val suggesterIdToName = FeatureSuggester.suggesters.associate { it.id to it.suggestingActionDisplayName }
-  private val settings = FeatureSuggesterSettings.instance()
-  private val panel = FeatureSuggestersPanel(suggesterIdToName, settings)
+class FeatureSuggesterConfigurable : BoundConfigurable(
+  FeatureSuggesterBundle.message("configurable.name")), Configurable.WithEpDependencies {
 
-  override fun isModified(): Boolean {
-    return suggesterIdToName.keys.any { settings.isEnabled(it) != panel.isSelected(it) }
-  }
+  private lateinit var toggleAllCheckBox: ThreeStateCheckBox
+  private val checkBoxes = mutableListOf<JBCheckBox>()
 
-  override fun apply() {
-    suggesterIdToName.keys.forEach { suggesterId ->
-      settings.setEnabled(suggesterId, panel.isSelected(suggesterId))
+  override fun createPanel(): DialogPanel {
+    val settings = FeatureSuggesterSettings.instance()
+
+    return panel {
+      row {
+        text(FeatureSuggesterBundle.message("configurable.explanation"))
+      }
+      row {
+        toggleAllCheckBox = threeStateCheckBox(FeatureSuggesterBundle.message("configurable.show.suggestions.checkbox"))
+          .applyToComponent {
+            isThirdStateEnabled = false
+          }.onChanged {
+            if (it.state != ThreeStateCheckBox.State.DONT_CARE) {
+              val selected = it.isSelected
+              for (checkBox in checkBoxes) {
+                checkBox.isSelected = selected
+              }
+            }
+          }.component
+      }
+
+      indent {
+        for (suggester in FeatureSuggester.suggesters) {
+          val id = suggester.id
+          row {
+            val checkBox = checkBox(suggester.suggestingActionDisplayName)
+              .bindSelected({ settings.isEnabled(id) }, { settings.setEnabled(id, it) })
+              .onChanged { updateToggleAllCheckBox() }
+              .component
+            checkBoxes.add(checkBox)
+          }
+        }
+      }
     }
   }
 
   override fun reset() {
-    panel.loadFromSettings()
-  }
-
-  override fun createComponent(): JComponent {
-    return panel
+    super.reset()
+    updateToggleAllCheckBox()
   }
 
   override fun getDependencies(): MutableCollection<BaseExtensionPointName<*>> {
     return mutableListOf(FeatureSuggester.EP_NAME)
   }
 
-  override fun getDisplayName(): String = FeatureSuggesterBundle.message("configurable.name")
+  private fun updateToggleAllCheckBox() {
+    val selectedCount = checkBoxes.filter { it.isSelected }.size
+    toggleAllCheckBox.state = when (selectedCount) {
+      0 -> ThreeStateCheckBox.State.NOT_SELECTED
+      checkBoxes.size -> ThreeStateCheckBox.State.SELECTED
+      else -> ThreeStateCheckBox.State.DONT_CARE
+    }
+  }
 }

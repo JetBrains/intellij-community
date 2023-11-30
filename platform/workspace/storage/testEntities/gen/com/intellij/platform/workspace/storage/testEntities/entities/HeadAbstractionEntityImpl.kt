@@ -16,21 +16,22 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneChildOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) : HeadAbstractionEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class HeadAbstractionEntityImpl(private val dataSource: HeadAbstractionEntityData) : HeadAbstractionEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(HeadAbstractionEntity::class.java, CompositeBaseEntity::class.java,
                                                                          ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CHILD_CONNECTION_ID,
     )
 
@@ -48,6 +49,7 @@ open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: HeadAbstractionEntityData?) : ModifiableWorkspaceEntityBase<HeadAbstractionEntity, HeadAbstractionEntityData>(
     result), HeadAbstractionEntity.Builder {
@@ -77,7 +79,7 @@ open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) 
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -159,7 +161,7 @@ open class HeadAbstractionEntityImpl(val dataSource: HeadAbstractionEntityData) 
 class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculableSymbolicId<HeadAbstractionEntity>() {
   lateinit var data: String
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<HeadAbstractionEntity> {
     val modifiable = HeadAbstractionEntityImpl.Builder(null)
@@ -176,6 +178,11 @@ class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculableSymbolicId<H
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstractionEntity") as EntityMetadata
   }
 
   override fun symbolicId(): SymbolicEntityId<*> {
@@ -233,9 +240,5 @@ class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculableSymbolicId<H
     var result = javaClass.hashCode()
     result = 31 * result + data.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

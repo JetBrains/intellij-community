@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * Instruction to push a field qualified by the value on the stack
  */
 public class UnwrapDerivedVariableInstruction extends EvalInstruction {
-  @NotNull private final DerivedVariableDescriptor myDerivedVariableDescriptor;
+  private final @NotNull DerivedVariableDescriptor myDerivedVariableDescriptor;
 
   public UnwrapDerivedVariableInstruction(@NotNull DerivedVariableDescriptor derivedVariable) {
     super(null, 1);

@@ -16,7 +16,7 @@ internal open class JKPrinterBase {
     private val stringBuilder: StringBuilder = StringBuilder()
     var currentIndent = 0
     private val indentSymbol = " ".repeat(4)
-    private var lastSymbolIsLineBreak = false
+    var lastSymbolIsLineBreak = false
     private var lastSymbolIsSingleSpace = false
 
     override fun toString(): String = stringBuilder.toString()
@@ -29,31 +29,24 @@ internal open class JKPrinterBase {
 
     fun print(value: String) {
         if (value.isEmpty()) return
-        lastSymbolIsLineBreak = false
 
         if (value == " ") {
             // To prettify the printed code for easier debugging, don't try to print multiple single spaces in a row
             val prevLastSymbolIsSingleSpace = lastSymbolIsSingleSpace
             lastSymbolIsSingleSpace = true
             if (!prevLastSymbolIsSingleSpace) {
-                stringBuilder.append(" ")
+                append(" ")
             }
         } else {
             lastSymbolIsSingleSpace = false
-            stringBuilder.append(value)
+            append(value)
         }
     }
 
-    fun println() {
-        if (lastSymbolIsLineBreak) return
-        stringBuilder.append('\n')
+    fun println(lineBreaks: Int = 1) {
         lastSymbolIsSingleSpace = false
-        repeat(currentIndent) {
-            stringBuilder.append(indentSymbol)
-        }
-        lastSymbolIsLineBreak = true
+        repeat(lineBreaks) { append("\n") }
     }
-
 
     inline fun indented(block: () -> Unit) {
         currentIndent++
@@ -85,6 +78,15 @@ internal open class JKPrinterBase {
         }
     }
 
+    private fun append(text: String) {
+        if (lastSymbolIsLineBreak) {
+            stringBuilder.append(indentSymbol.repeat(currentIndent))
+        }
+        stringBuilder.append(text)
+
+        lastSymbolIsLineBreak = stringBuilder.lastOrNull() == '\n'
+    }
+
     enum class ParenthesisKind(val open: String, val close: String) {
         ROUND("(", ")"),
         CURVED("{", "}"),
@@ -100,7 +102,7 @@ internal class JKPrinter(
     private val symbolRenderer = JKSymbolRenderer(importStorage, project)
 
     private fun JKType.renderTypeInfo() {
-        this@JKPrinter.print(elementInfoStorage.getOrCreateInfoForElement(this).render())
+        this@JKPrinter.print(elementInfoStorage.getOrCreateInferenceLabelForElement(this).render())
     }
 
     fun renderType(type: JKType, owner: JKTreeElement? = null) {

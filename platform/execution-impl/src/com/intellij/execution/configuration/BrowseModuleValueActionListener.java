@@ -56,6 +56,5 @@ public abstract class BrowseModuleValueActionListener<T extends JComponent> impl
     }
   }
 
-  @Nullable
-  protected abstract String showDialog();
+  protected abstract @Nullable String showDialog();
 }

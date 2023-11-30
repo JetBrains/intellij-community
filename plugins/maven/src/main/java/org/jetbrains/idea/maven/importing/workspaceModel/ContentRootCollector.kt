@@ -2,12 +2,15 @@
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
 object ContentRootCollector {
   fun collect(folders: List<ImportedFolder>): Collection<ContentRootResult> {
+    MavenLog.LOG.debug("collecting content roots, folders = ", folders)
+
     class ContentRootWithFolders(val path: String, val folders: MutableList<ImportedFolder> = mutableListOf())
 
     val result = mutableListOf<ContentRootWithFolders>()
@@ -115,7 +118,7 @@ object ContentRootCollector {
       }
     }
 
-    return result.map { root ->
+    val collectedRoots = result.map { root ->
       val sourceFolders = root.folders.asSequence().filterIsInstance<UserOrGeneratedSourceFolder>().map { folder ->
         SourceFolderResult(folder.path, folder.type, folder is GeneratedSourceFolder)
       }
@@ -124,6 +127,10 @@ object ContentRootCollector {
       }
       ContentRootResult(root.path, sourceFolders.toList(), excludeFolders.toList())
     }
+
+    MavenLog.LOG.debug("collected content roots = ", collectedRoots)
+
+    return collectedRoots
   }
 
   sealed class ImportedFolder(path: String, internal val rank: Int) : Comparable<ImportedFolder> {
@@ -162,19 +169,33 @@ object ContentRootCollector {
   }
 
   abstract class BaseExcludedFolder(path: String, rank: Int) : ImportedFolder(path, rank)
-  class ProjectRootFolder(path: String) : ImportedFolder(path, 0)
+  class ProjectRootFolder(path: String) : ImportedFolder(path, 0) {
+    override fun toString(): String {
+      return "$path root"
+    }
+  }
   class SourceFolder(path: String, type: JpsModuleSourceRootType<*>) : UserOrGeneratedSourceFolder(path, type, 1)
-  class ExcludedFolderAndPreventSubfolders(path: String) : BaseExcludedFolder(path, 2)
+  class ExcludedFolderAndPreventSubfolders(path: String) : BaseExcludedFolder(path, 2) {
+    override fun toString(): String {
+      return "$path exclude with subfolders"
+    }
+  }
   class GeneratedSourceFolder(path: String,
                               type: JpsModuleSourceRootType<*>,
                               val isAnnotationFolder: Boolean = false) : UserOrGeneratedSourceFolder(path, type, 3)
 
-  class ExcludedFolder(path: String) : BaseExcludedFolder(path, 4)
+  class ExcludedFolder(path: String) : BaseExcludedFolder(path, 4) {
+    override fun toString(): String {
+      return "$path exclude"
+    }
+  }
 
   class ContentRootResult(val path: String,
                           val sourceFolders: List<SourceFolderResult>,
                           val excludeFolders: List<ExcludedFolderResult>) {
-    override fun toString() = path
+    override fun toString(): String {
+      return "path='$path', sourceFolders=$sourceFolders, excludeFolders=$excludeFolders"
+    }
   }
 
   class SourceFolderResult(val path: String, val type: JpsModuleSourceRootType<*>, val isGenerated: Boolean) {

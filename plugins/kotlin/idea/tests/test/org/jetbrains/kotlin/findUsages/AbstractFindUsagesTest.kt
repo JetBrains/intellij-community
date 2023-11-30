@@ -141,11 +141,12 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                 }
             }
 
-            //        if (isFirPlugin) {
-            //            InTextDirectivesUtils.findStringWithPrefixes(mainFileText, "// FIR_IGNORE")?.let {
-            //                return
-            //            }
-            //        }
+            if (testType.isFir) {
+                if (InTextDirectivesUtils.isDirectiveDefined(mainFileText, "// FIR_IGNORE")) {
+                    println("test $mainFileName is ignored (${testType.name})")
+                    return
+                }
+            }
 
             val isFindFileUsages = InTextDirectivesUtils.isDirectiveDefined(mainFileText, "## FIND_FILE_USAGES")
 
@@ -263,7 +264,8 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                             alwaysAppendFileName = false,
                             testType = executionTestType,
                             javaNamesMap = javaNamesMap,
-                            ignoreLog = ignoreLog
+                            ignoreLog = ignoreLog,
+                            additionalErrorMessage = "on call from the caret element"
                         )
 
                         val navigationElement = caretElement.navigationElement
@@ -278,7 +280,8 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                                 alwaysAppendFileName = false,
                                 testType = executionTestType,
                                 javaNamesMap = javaNamesMap,
-                                ignoreLog = ignoreLog
+                                ignoreLog = ignoreLog,
+                                additionalErrorMessage = "on call from the declaration in library"
                             )
                         }
                     } else {
@@ -308,9 +311,10 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
         internal fun getUsageAdapters(
             filters: Collection<ImportFilteringRule>,
             usageInfos: Collection<UsageInfo>
-        ): Collection<UsageInfo2UsageAdapter> = usageInfos.map(::UsageInfo2UsageAdapter).filter { usageAdapter ->
-            filters.all { it.isVisible(usageAdapter) }
-        }
+        ): Collection<UsageInfo2UsageAdapter> = usageInfos
+          .map(::UsageInfo2UsageAdapter)
+          .onEach { it.updateCachedPresentation() }
+          .filter { usageAdapter -> filters.all { it.isVisible(usageAdapter) } }
 
         val KtDeclaration.descriptor: DeclarationDescriptor?
             get() = if (this is KtParameter) this.resolveToParameterDescriptorIfAny(BodyResolveMode.FULL) else this.resolveToDescriptorIfAny(BodyResolveMode.FULL)
@@ -345,7 +349,8 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     alwaysAppendFileName: Boolean = false,
     testType: FindUsageTestType = FindUsageTestType.DEFAULT,
     javaNamesMap: Map<String, String>? = null,
-    ignoreLog: Boolean = false
+    ignoreLog: Boolean = false,
+    additionalErrorMessage: String = "",
 ) {
     val highlightingMode = InTextDirectivesUtils.isDirectiveDefined(mainFileText, "// HIGHLIGHTING")
 
@@ -421,7 +426,7 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
         }
     }
 
-    KotlinTestUtils.assertEqualsToFile(testType.name, results, finalUsages.joinToString("\n"))
+    KotlinTestUtils.assertEqualsToFile("${testType.name} $additionalErrorMessage", results, finalUsages.joinToString("\n"))
 
     if (log != null  && !ignoreLog) {
         KotlinTestUtils.assertEqualsToFile(testType.name, File(rootPath, prefix + "log"), log)
@@ -473,7 +478,10 @@ internal fun findUsages(
 
         handler.getFindUsagesOptions(null).let {
             if (it is KotlinFunctionFindUsagesOptions) it.isSearchForBaseMethod = searchSuperDeclaration
-            else if (it is KotlinPropertyFindUsagesOptions) it.isSearchForBaseAccessors = searchSuperDeclaration
+            else if (it is KotlinPropertyFindUsagesOptions) {
+                it.isSearchForBaseAccessors = searchSuperDeclaration
+                it.isSearchInOverridingMethods = if (options is KotlinPropertyFindUsagesOptions) options.isSearchInOverridingMethods else false
+            }
         }
 
         options.searchScope = GlobalSearchScope.allScope(project)

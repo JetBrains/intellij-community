@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
@@ -16,6 +17,9 @@ import java.util.LinkedHashSet;
 public final class GroovyFileType extends LanguageFileType {
   public static final @NotNull GroovyFileType GROOVY_FILE_TYPE = new GroovyFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "groovy";
+
+  @NlsSafe
+  private static final String GROOVY_DESCRIPTION = "Groovy";
 
   private GroovyFileType() {
     super(GroovyLanguage.INSTANCE);
@@ -31,7 +35,7 @@ public final class GroovyFileType extends LanguageFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return GroovyBundle.message("filetype.groovy.description");
+    return GROOVY_DESCRIPTION;
   }
 
   @Override

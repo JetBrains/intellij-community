@@ -3,7 +3,7 @@ package com.intellij.codeInsight.intention.impl.config;
 
 import org.jetbrains.annotations.Nullable;
 
-public class IntentionsConfigurableProviderImpl extends IntentionsConfigurableProvider {
+public final class IntentionsConfigurableProviderImpl extends IntentionsConfigurableProvider {
   @Override
   public @Nullable IntentionsConfigurable createConfigurable() {
     return new IntentionSettingsConfigurable();

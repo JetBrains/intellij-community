@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
@@ -375,7 +375,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     return myUiEventsEnabled;
   }
 
-  public static class ModelSettings extends CodeStyleSettings {
+  public static final class ModelSettings extends CodeStyleSettings {
     private volatile boolean myLocked;
 
     public ModelSettings() {
@@ -399,7 +399,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     }
   }
 
-  public static class OverridingStatus {
+  public static final class OverridingStatus {
     private final Lock myLock = new ReentrantLock();
 
     private final static CodeStyleSettingsModifier[] EMPTY_MODIFIER_ARRAY = new CodeStyleSettingsModifier[0];

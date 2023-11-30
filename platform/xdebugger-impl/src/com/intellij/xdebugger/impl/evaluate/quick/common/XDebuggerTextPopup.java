@@ -327,7 +327,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
       }
     }
 
-    private void setTextValue(@NotNull XValueNodeImpl node, @NotNull String text) {
+    private static void setTextValue(@NotNull XValueNodeImpl node, @NotNull String text) {
       @NotNull XValue value = node.getValueContainer();
       @Nullable XValueModifier modifier = value.getModifier();
       if (modifier instanceof XStringValueModifier) {

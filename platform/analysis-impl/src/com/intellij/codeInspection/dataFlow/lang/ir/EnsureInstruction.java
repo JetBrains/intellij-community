@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -69,8 +70,7 @@ public class EnsureInstruction extends Instruction {
   /**
    * @return transfer value to apply if condition doesn't hold
    */
-  @Nullable
-  public DfaControlTransferValue getExceptionTransfer() {
+  public @Nullable DfaControlTransferValue getExceptionTransfer() {
     return myTransferValue;
   }
 
@@ -111,9 +111,10 @@ public class EnsureInstruction extends Instruction {
 
   @Override
   public int @NotNull [] getSuccessorIndexes() {
-    return myTransferValue == null
-           ? new int[]{getIndex() + 1}
-           : IntStreamEx.of(myTransferValue.getPossibleTargetIndices()).append(getIndex() + 1).toArray();
+    if (myTransferValue == null) {
+      return new int[]{getIndex() + 1};
+    }
+    return ArrayUtil.append(myTransferValue.getPossibleTargetIndices(), getIndex() + 1);
   }
 
   public @NotNull DfaCondition createCondition(@NotNull DfaValue tosValue) {

@@ -106,11 +106,11 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
       }
 
       @NotNull
-      private TextRange postprocessSwitch(Editor editor,
-                                          PsiExpression expr,
-                                          CodeStyleManager codeStyleManager,
-                                          PsiElement toReplace,
-                                          PsiSwitchBlock switchBlock) {
+      private static TextRange postprocessSwitch(Editor editor,
+                                                 PsiExpression expr,
+                                                 CodeStyleManager codeStyleManager,
+                                                 PsiElement toReplace,
+                                                 PsiSwitchBlock switchBlock) {
 
         switchBlock = (PsiSwitchBlock)codeStyleManager.reformat(switchBlock);
         PsiExpression selectorExpression = switchBlock.getExpression();
@@ -173,19 +173,19 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
         return JavaPostfixTemplatesUtils.getRenderer();
       }
 
-      private boolean isVariableInitializer(PsiElement element, PsiElement parent) {
+      private static boolean isVariableInitializer(PsiElement element, PsiElement parent) {
         return parent instanceof PsiVariable && ((PsiVariable)parent).getInitializer() == element;
       }
 
-      private boolean isRightSideOfAssignment(PsiElement element, PsiElement parent) {
+      private static boolean isRightSideOfAssignment(PsiElement element, PsiElement parent) {
         return parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getRExpression() == element;
       }
 
-      private boolean isReturnValue(PsiElement element, PsiElement parent) {
+      private static boolean isReturnValue(PsiElement element, PsiElement parent) {
         return parent instanceof PsiReturnStatement && ((PsiReturnStatement)parent).getReturnValue() == element;
       }
 
-      private boolean isArgumentList(PsiElement parent) {
+      private static boolean isArgumentList(PsiElement parent) {
         return parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCall;
       }
     };

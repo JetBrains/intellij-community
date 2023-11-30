@@ -376,7 +376,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       Set.of(
         "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
         "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind",
-        "com.intellij.notification.impl.NotificationGroupEP.DisplayType"
+        "com.intellij.notification.impl.NotificationGroupEP.DisplayType",
+        "com.intellij.codeInsight.hints.InlayGroup"
       );
 
     private static final Set<String> LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES =

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.idea.HardwareAgentRequired;
@@ -7,6 +7,7 @@ import com.intellij.internal.IconsLoadTime.StatData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.icons.ImageCacheKt;
+import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.junit.After;
 import org.junit.Before;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
 
 import static com.intellij.testFramework.PlatformTestUtil.assertTiming;
 import static junit.framework.TestCase.assertNotNull;
@@ -68,7 +70,8 @@ public class IconsLoadTimePerformanceTest {
       while ((iconPath = br.readLine()) != null) {
         URL url = new File(PlatformTestUtil.getCommunityPath() + "/" + iconPath).toURI().toURL();
         // do not use global cache
-        ImageCacheKt.loadImageFromUrlWithoutCache(url.toString());
+        //noinspection KotlinInternalInJava
+        ImageCacheKt.loadImage(url.toString(), null, null, ScaleContext.create(), false, null, Collections.emptyList(), false);
       }
     }
     StatData svgData = IconsLoadTime.getStatData(false, true);

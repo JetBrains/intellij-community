@@ -43,6 +43,11 @@ public final class DataKey<T> implements ValueKey<T> {
     return ourDataKeyIndex.values().toArray(new DataKey[0]);
   }
 
+  @ApiStatus.Internal
+  public static int allKeysCount() {
+    return ourDataKeyIndex.size();
+  }
+
   @Override
   public @NotNull @NonNls String getName() {
     return myName;

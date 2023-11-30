@@ -87,9 +87,14 @@ public final class EventLogUploader {
     String recorderId = config.getRecorderId();
     logger.info("[" + recorderId + "] Start uploading...");
     EventLogConnectionSettings connectionSettings = appInfo.getConnectionSettings();
-    logger.info("[" + recorderId + "] {product:" + appInfo.getProductCode() + ", productVersion:" + appInfo.getProductVersion() +
-                ", userAgent:" + connectionSettings.getUserAgent() + ", url: " + appInfo.getTemplateUrl() +
-                ", internal:" + appInfo.isInternal() + ", isTest:" + appInfo.isTest() + "}");
+    logger.info("[" + recorderId + "] {"
+                + "product:" + appInfo.getProductCode()
+                + ", productVersion:" + appInfo.getProductVersion()
+                + ", userAgent:" + connectionSettings.getUserAgent()
+                + ", url: " + appInfo.getTemplateUrl()
+                + ", internal:" + appInfo.isInternal()
+                + ", isTestConfig:" + appInfo.isTestConfig()
+                + ", isTestSendEndpoint:" + appInfo.isTestSendEndpoint() + "}");
 
     String logs = config.getFilesToSendProvider().getFilesToSend().stream().
       map(file -> file.getFile().getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
@@ -130,13 +135,15 @@ public final class EventLogUploader {
     String userAgent = options.get(EventLogUploaderOptions.USER_AGENT_OPTION);
     String headersString = options.get(EventLogUploaderOptions.EXTRA_HEADERS);
     Map<String, String> extraHeaders = ExtraHTTPHeadersParser.parse(headersString);
+    int baselineVersion = Integer.parseInt(options.get(EventLogUploaderOptions.BASELINE_VERSION));
     if (url != null && productCode != null) {
       boolean isInternal = options.containsKey(EventLogUploaderOptions.INTERNAL_OPTION);
-      boolean isTest = options.containsKey(EventLogUploaderOptions.TEST_OPTION);
+      boolean isTestSendEndpoint = options.containsKey(EventLogUploaderOptions.TEST_SEND_ENDPOINT);
+      boolean isTestConfig = options.containsKey(EventLogUploaderOptions.TEST_CONFIG);
       boolean isEAP = options.containsKey(EventLogUploaderOptions.EAP_OPTION);
       return new EventLogExternalApplicationInfo(
-        url, productCode, productVersion, userAgent, isInternal, isTest, isEAP, extraHeaders, logger, eventLogger
-      );
+        url, productCode, productVersion, userAgent, isInternal, isTestConfig, isTestSendEndpoint, isEAP, extraHeaders, logger, eventLogger,
+        baselineVersion);
     }
     return null;
   }

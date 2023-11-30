@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIEL
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics.findAnnotation
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
-import org.jetbrains.kotlin.idea.j2k.post.processing.*
+import org.jetbrains.kotlin.idea.j2k.post.processing.ElementsBasedPostProcessing
+import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens.DATA_KEYWORD
 import org.jetbrains.kotlin.name.FqName
@@ -30,17 +31,18 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPostProcessing() {
     override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
         for (klass in runReadAction { elements.descendantsOfType<KtClass>() }) {
-            convertClass(klass)
+            klass.convert()
         }
     }
 
-    private fun convertClass(klass: KtClass) {
-        val initializations = runReadAction { collectPropertyInitializations(klass) }
+    private fun KtClass.convert() {
+        val initializations = runReadAction { collectPropertyInitializations(this) }
         runUndoTransparentActionInEdt(inWriteAction = true) {
             initializations.forEach(::convertInitialization)
-            klass.removeEmptyInitBlocks()
-            klass.removeRedundantEnumSemicolon()
-            klass.removeIllegalDataModifierIfNeeded()
+            removeEmptyInitBlocks()
+            removeRedundantEnumSemicolon()
+            removeIllegalDataModifierIfNeeded()
+            removeEmptyClassBody()
         }
     }
 
@@ -107,6 +109,8 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
                 restoreCommentsTarget = property
             }
         }
+
+        initialization.assignment.getExplicitLabelComment()?.delete()
         initialization.assignment.delete()
         commentSaver.restore(restoreCommentsTarget, forceAdjustIndent = false)
     }
@@ -118,7 +122,7 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
         parameter.addAfter(KtPsiFactory(property.project).createWhiteSpace(), parameter.valOrVarKeyword!!)
         parameter.rename(property.name!!)
         parameter.setVisibility(property.visibilityModifierTypeOrDefault())
-        val commentSaver = CommentSaver(property, saveLineBreaks = true)
+        val commentSaver = CommentSaver(property)
 
         parameter.annotationEntries.forEach {
             if (it.useSiteTarget == null) it.addUseSiteTarget(CONSTRUCTOR_PARAMETER, property.project)
@@ -180,6 +184,15 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
         ) {
             removeModifier(DATA_KEYWORD)
             findAnnotation(declaration = this, FqName("kotlin.jvm.JvmRecord"))?.delete()
+        }
+    }
+
+    private fun KtClass.removeEmptyClassBody() {
+        val body = body ?: return
+        if (body.declarations.isEmpty()) {
+            val commentSaver = CommentSaver(body)
+            body.delete()
+            commentSaver.restore(resultElement = this)
         }
     }
 }

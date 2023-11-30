@@ -4,10 +4,23 @@ package com.intellij.java.codeInsight.daemon.valuebased;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.valuebased.SynchronizeOnValueBasedClassInspection;
+import com.intellij.lang.annotation.HighlightSeverity;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class SynchronizeOnValueBasedClassFixTest extends LightQuickFixParameterizedTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    @Language("JAVA")
+    String valueBased = """
+      package jdk.internal;
+      public @interface ValueBased {
+      }
+      """;
+    createAndSaveFile("jdk/internal/ValueBased.java", valueBased);
+  }
 
   @Override
   protected @NonNls String getBasePath() {
@@ -19,4 +32,8 @@ public class SynchronizeOnValueBasedClassFixTest extends LightQuickFixParameteri
     return new LocalInspectionTool[]{ new SynchronizeOnValueBasedClassInspection() };
   }
 
+  @Override
+  protected void beforeActionStarted(String testName, String contents) {
+    assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+  }
 }

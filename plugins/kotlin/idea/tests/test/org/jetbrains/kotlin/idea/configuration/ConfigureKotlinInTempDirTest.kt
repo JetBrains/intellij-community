@@ -6,10 +6,10 @@ import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion

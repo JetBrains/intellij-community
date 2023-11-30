@@ -15,27 +15,27 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTestEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData) : ModuleTestEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java,
                                                                                 ContentRootTestEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_MANY, false)
     internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java, FacetTestEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CONTENTROOTS_CONNECTION_ID,
       FACETS_CONNECTION_ID,
     )
@@ -57,6 +57,7 @@ open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTe
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ModuleTestEntityData?) : ModifiableWorkspaceEntityBase<ModuleTestEntity, ModuleTestEntityData>(
     result), ModuleTestEntity.Builder {
@@ -86,7 +87,7 @@ open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTe
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -246,7 +247,7 @@ open class ModuleTestEntityImpl(val dataSource: ModuleTestEntityData) : ModuleTe
 class ModuleTestEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleTestEntity>() {
   lateinit var name: String
 
-  fun isNameInitialized(): Boolean = ::name.isInitialized
+  internal fun isNameInitialized(): Boolean = ::name.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ModuleTestEntity> {
     val modifiable = ModuleTestEntityImpl.Builder(null)
@@ -263,6 +264,11 @@ class ModuleTestEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Module
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntity") as EntityMetadata
   }
 
   override fun symbolicId(): SymbolicEntityId<*> {
@@ -320,9 +326,5 @@ class ModuleTestEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Module
     var result = javaClass.hashCode()
     result = 31 * result + name.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

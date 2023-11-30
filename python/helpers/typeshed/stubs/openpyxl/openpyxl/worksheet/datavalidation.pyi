@@ -1,72 +1,106 @@
-from typing import Any
+from _typeshed import Incomplete
+from typing import ClassVar
+from typing_extensions import Literal, TypeAlias
 
+from openpyxl.descriptors.base import (
+    Alias,
+    Bool,
+    Convertible,
+    Integer,
+    NoneSet,
+    String,
+    _ConvertibleToBool,
+    _ConvertibleToInt,
+    _ConvertibleToMultiCellRange,
+)
+from openpyxl.descriptors.nested import NestedText
 from openpyxl.descriptors.serialisable import Serialisable
+from openpyxl.worksheet.cell_range import MultiCellRange
 
-def collapse_cell_addresses(cells, input_ranges=...): ...
+_DataValidationType: TypeAlias = Literal["whole", "decimal", "list", "date", "time", "textLength", "custom"]
+_DataValidationErrorStyle: TypeAlias = Literal["stop", "warning", "information"]
+_DataValidationImeMode: TypeAlias = Literal[
+    "noControl",
+    "off",
+    "on",
+    "disabled",
+    "hiragana",
+    "fullKatakana",
+    "halfKatakana",
+    "fullAlpha",
+    "halfAlpha",
+    "fullHangul",
+    "halfHangul",
+]
+_DataValidationOperator: TypeAlias = Literal[
+    "between", "notBetween", "equal", "notEqual", "lessThan", "lessThanOrEqual", "greaterThan", "greaterThanOrEqual"
+]
+
+def collapse_cell_addresses(cells, input_ranges=()): ...
 def expand_cell_ranges(range_string): ...
 
 class DataValidation(Serialisable):
-    tagname: str
-    sqref: Any
-    cells: Any
-    ranges: Any
-    showErrorMessage: Any
-    showDropDown: Any
-    hide_drop_down: Any
-    showInputMessage: Any
-    allowBlank: Any
-    allow_blank: Any
-    errorTitle: Any
-    error: Any
-    promptTitle: Any
-    prompt: Any
-    formula1: Any
-    formula2: Any
-    type: Any
-    errorStyle: Any
-    imeMode: Any
-    operator: Any
-    validation_type: Any
+    tagname: ClassVar[str]
+    sqref: Convertible[MultiCellRange, Literal[False]]
+    cells: Alias
+    ranges: Alias
+    showDropDown: Bool[Literal[True]]
+    hide_drop_down: Alias
+    showInputMessage: Bool[Literal[True]]
+    showErrorMessage: Bool[Literal[True]]
+    allowBlank: Bool[Literal[True]]
+    allow_blank: Alias
+    errorTitle: String[Literal[True]]
+    error: String[Literal[True]]
+    promptTitle: String[Literal[True]]
+    prompt: String[Literal[True]]
+    formula1: NestedText[str, Literal[True]]
+    formula2: NestedText[str, Literal[True]]
+    type: NoneSet[_DataValidationType]
+    errorStyle: NoneSet[_DataValidationErrorStyle]
+    imeMode: NoneSet[_DataValidationImeMode]
+    operator: NoneSet[_DataValidationOperator]
+    validation_type: Alias
     def __init__(
         self,
-        type: Any | None = ...,
-        formula1: Any | None = ...,
-        formula2: Any | None = ...,
-        showErrorMessage: bool = ...,
-        showInputMessage: bool = ...,
-        showDropDown: Any | None = ...,
-        allowBlank: Any | None = ...,
-        sqref=...,
-        promptTitle: Any | None = ...,
-        errorStyle: Any | None = ...,
-        error: Any | None = ...,
-        prompt: Any | None = ...,
-        errorTitle: Any | None = ...,
-        imeMode: Any | None = ...,
-        operator: Any | None = ...,
-        allow_blank: Any | None = ...,
+        type: _DataValidationType | Literal["none"] | None = None,
+        formula1: object = None,
+        formula2: object = None,
+        showErrorMessage: _ConvertibleToBool | None = False,
+        showInputMessage: _ConvertibleToBool | None = False,
+        showDropDown: _ConvertibleToBool | None = False,
+        allowBlank: _ConvertibleToBool | None = False,
+        sqref: _ConvertibleToMultiCellRange = (),
+        promptTitle: str | None = None,
+        errorStyle: _DataValidationErrorStyle | Literal["none"] | None = None,
+        error: str | None = None,
+        prompt: str | None = None,
+        errorTitle: str | None = None,
+        imeMode: _DataValidationImeMode | Literal["none"] | None = None,
+        operator: _DataValidationOperator | Literal["none"] | None = None,
+        allow_blank: Incomplete | None = False,
     ) -> None: ...
     def add(self, cell) -> None: ...
     def __contains__(self, cell): ...
 
 class DataValidationList(Serialisable):
-    tagname: str
-    disablePrompts: Any
-    xWindow: Any
-    yWindow: Any
-    dataValidation: Any
-    __elements__: Any
-    __attrs__: Any
+    tagname: ClassVar[str]
+    disablePrompts: Bool[Literal[True]]
+    xWindow: Integer[Literal[True]]
+    yWindow: Integer[Literal[True]]
+    dataValidation: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    __attrs__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        disablePrompts: Any | None = ...,
-        xWindow: Any | None = ...,
-        yWindow: Any | None = ...,
-        count: Any | None = ...,
-        dataValidation=...,
+        disablePrompts: _ConvertibleToBool | None = None,
+        xWindow: _ConvertibleToInt | None = None,
+        yWindow: _ConvertibleToInt | None = None,
+        count: Incomplete | None = None,
+        dataValidation=(),
     ) -> None: ...
     @property
-    def count(self): ...
-    def __len__(self): ...
+    def count(self) -> int: ...
+    def __len__(self) -> int: ...
     def append(self, dv) -> None: ...
-    def to_tree(self, tagname: Any | None = ...): ...  # type: ignore[override]
+    def to_tree(self, tagname: str | None = None): ...  # type: ignore[override]

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger.breakpoints
@@ -25,12 +25,14 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinReentrantSourcePosition
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
+import org.jetbrains.kotlin.idea.debugger.getContainingMethod
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -112,7 +114,7 @@ class KotlinLineBreakpointType :
         if (lambdas.isEmpty() && condRet == null) return emptyList()
 
         val result = LinkedList<JavaLineBreakpointType.JavaBreakpointVariant>()
-        val elementAt = pos.elementAt.parentsWithSelf.firstIsInstance<KtElement>()
+        val elementAt = pos.elementAt?.parentsWithSelf?.firstIsInstance<KtElement>() ?: return emptyList()
         val mainMethod = elementAt.getContainingMethod(excludingElement = false)
         var mainMethodAdded = false
         if (mainMethod != null) {
@@ -127,7 +129,7 @@ class KotlinLineBreakpointType :
         }
 
         lambdas.forEachIndexed { ordinal, lambda ->
-            val positionImpl = XSourcePositionImpl.createByElement(lambda.bodyExpression)
+            val positionImpl = XSourcePositionImpl.createByElement(lambda)
             if (positionImpl != null) {
                 result.add(LambdaJavaBreakpointVariant(positionImpl, lambda, ordinal))
             }
@@ -157,7 +159,7 @@ class KotlinLineBreakpointType :
         val lambdaOrdinal = properties.lambdaOrdinal ?: return null
         // Since lambda breakpoints are placed on the first lambda statement,
         // we should find the function parent to highlight lambda breakpoints properly
-        val function = position.elementAt.parentOfType<KtFunction>() ?: return null
+        val function = position.elementAt?.parentOfType<KtFunction>() ?: return null
         val updatedPosition = SourcePosition.createFromElement(function) ?: return null
         return getLambdaByOrdinal(updatedPosition, lambdaOrdinal)?.textRange
     }
@@ -179,7 +181,7 @@ class KotlinLineBreakpointType :
 
         val lambdaOrdinal = javaBreakpointProperties.lambdaOrdinal ?: return null
         val function = getLambdaByOrdinal(sourcePosition, lambdaOrdinal) ?: return null
-        val firstStatement = function.bodyBlockExpression?.statements?.firstOrNull() ?: return null
+        val firstStatement = function.bodyBlockExpression?.statements?.firstOrNull() ?: function.bodyExpression ?: return null
         return runReadAction {
             val linePosition = SourcePosition.createFromElement(firstStatement) ?: return@runReadAction null
             DebuggerUtilsEx.toXSourcePosition(
@@ -191,10 +193,6 @@ class KotlinLineBreakpointType :
 
 private val LineBreakpoint<*>.javaBreakpointProperties
     get() = xBreakpoint?.properties as? JavaBreakpointProperties<*>
-
-private fun PsiElement.getContainingMethod(excludingElement: Boolean = true): PsiElement? =
-  PsiTreeUtil.getParentOfType(this, excludingElement,
-                              KtFunction::class.java, KtClassInitializer::class.java, KtPropertyAccessor::class.java)
 
 private fun PsiElement?.isInlineOnlyDeclaration(): Boolean =
     this is KtCallableDeclaration && isInlineOnly()

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -14,25 +14,22 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class FileAppearanceServiceImpl extends FileAppearanceService {
+public final class FileAppearanceServiceImpl extends FileAppearanceService {
   private static final CellAppearanceEx EMPTY = new CellAppearanceEx() {
     @Override
     public void customize(@NotNull SimpleColoredComponent component) { }
 
-    @NotNull
     @Override
-    public String getText() { return ""; }
+    public @NotNull String getText() { return ""; }
   };
 
-  @NotNull
   @Override
-  public CellAppearanceEx empty() {
+  public @NotNull CellAppearanceEx empty() {
     return EMPTY;
   }
 
-  @NotNull
   @Override
-  public CellAppearanceEx forVirtualFile(@NotNull final VirtualFile file) {
+  public @NotNull CellAppearanceEx forVirtualFile(final @NotNull VirtualFile file) {
     if (!file.isValid()) {
       return forInvalidUrl(file.getPresentableUrl());
     }
@@ -50,9 +47,8 @@ public class FileAppearanceServiceImpl extends FileAppearanceService {
     return new ValidFileCellAppearance(file);
   }
 
-  @NotNull
   @Override
-  public CellAppearanceEx forIoFile(@NotNull final File file) {
+  public @NotNull CellAppearanceEx forIoFile(final @NotNull File file) {
     final String absolutePath = file.getAbsolutePath();
     if (!file.exists()) {
       return forInvalidUrl(absolutePath);
@@ -71,8 +67,7 @@ public class FileAppearanceServiceImpl extends FileAppearanceService {
   }
 
   @Override
-  @NotNull
-  public CellAppearanceEx forInvalidUrl(@NotNull final String text) {
+  public @NotNull CellAppearanceEx forInvalidUrl(final @NotNull String text) {
     return SimpleTextCellAppearance.invalid(text, PlatformIcons.INVALID_ENTRY_ICON);
   }
 }

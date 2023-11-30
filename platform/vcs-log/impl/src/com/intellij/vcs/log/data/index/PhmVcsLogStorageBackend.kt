@@ -56,6 +56,7 @@ internal class PhmVcsLogStorageBackend(
 
   @Volatile
   override var isFresh = false
+  override val isEmpty: Boolean get() = messages.keysCountApproximately() == 0
 
   init {
     Disposer.register(disposable, this)
@@ -122,7 +123,8 @@ internal class PhmVcsLogStorageBackend(
       trigrams = VcsLogMessagesTrigramIndex(storageId, storageLockContext, errorHandler, this)
 
       reportEmpty()
-    } catch (t: Throwable) {
+    }
+    catch (t: Throwable) {
       Disposer.dispose(this)
       throw t
     }
@@ -160,8 +162,19 @@ internal class PhmVcsLogStorageBackend(
         messages.put(commitId, details.fullMessage)
       }
 
+      private fun force() {
+        parents.force()
+        committers.force()
+        timestamps.force()
+        trigrams.flush()
+        users.flush()
+        paths.flush()
+        messages.force()
+      }
+
       override fun flush() = force()
       override fun close(performCommit: Boolean) = force()
+      override fun interrupt() = force()
     }
   }
 
@@ -169,7 +182,8 @@ internal class PhmVcsLogStorageBackend(
     try {
       messages.markCorrupted()
       messages.force()
-    } catch (t: Throwable) {
+    }
+    catch (t: Throwable) {
       LOG.warn(t)
     }
   }
@@ -196,36 +210,6 @@ internal class PhmVcsLogStorageBackend(
     }
   }
 
-  fun force() {
-    parents.force()
-    committers.force()
-    timestamps.force()
-    trigrams.flush()
-    users.flush()
-    paths.flush()
-    messages.force()
-  }
-
-  override fun getMessage(commitId: Int): String? = messages.get(commitId)
-
-  override fun getCommitterOrAuthorForCommit(commitId: Int): VcsUser? {
-    val committer = committers.get(commitId)
-    if (committer != null) {
-      return users.getUserById(committer)
-    }
-    else {
-      return if (messages.containsMapping(commitId)) getAuthorForCommit(commitId) else null
-    }
-  }
-
-  override fun getCommitterForCommits(commitIds: Iterable<Int>): Map<Int, VcsUser> {
-    return commitIds.mapNotNull { commitId ->
-      committers.get(commitId)?.let { committer ->
-        users.getUserById(committer)?.let { user -> commitId to user }
-      }
-    }.toMap()
-  }
-
   override fun getTimestamp(commitId: Int): LongArray? = timestamps.get(commitId)
 
   override fun getParents(commitId: Int): IntArray? = parents.get(commitId)
@@ -238,12 +222,12 @@ internal class PhmVcsLogStorageBackend(
     }.toMap()
   }
 
+  override fun getMessage(commitId: Int): String? = messages.get(commitId)
+
   @Throws(IOException::class)
   override fun processMessages(processor: (Int, String) -> Boolean) {
     messages.processKeysWithExistingMapping(Processor { commit -> processor(commit, messages.get(commit) ?: return@Processor true) })
   }
-
-  override fun getRename(parent: Int, child: Int): IntArray? = renames.get(intArrayOf(parent, child))
 
   override fun getCommitsForSubstring(string: String,
                                       candidates: IntSet?,
@@ -268,9 +252,27 @@ internal class PhmVcsLogStorageBackend(
     }
   }
 
+  override fun getAuthorForCommit(commitId: Int): VcsUser? {
+    return users.getAuthorForCommit(commitId)
+  }
+
+  override fun getCommitterForCommit(commitId: Int): VcsUser? {
+    val committer = committers.get(commitId)
+    if (committer != null) {
+      return users.getUserById(committer)
+    }
+    else {
+      return if (messages.containsMapping(commitId)) getAuthorForCommit(commitId) else null
+    }
+  }
+
+  override fun getCommitsForUsers(users: Set<VcsUser>): IntSet {
+    return this.users.getCommitsForUsers(users)
+  }
+
   @Throws(IOException::class)
   override fun findRename(parent: Int, child: Int, root: VirtualFile, path: FilePath, isChildPath: Boolean): EdgeData<FilePath?>? {
-    val renames = getRename(parent, child)
+    val renames = renames.get(intArrayOf(parent, child))
     if (renames == null || renames.isEmpty()) {
       return null
     }
@@ -296,8 +298,8 @@ internal class PhmVcsLogStorageBackend(
     paths.iterateCommitIdsAndValues(pathId, consumer)
   }
 
-  override fun getPathsEncoder(): PathsEncoder =
-    PathsEncoder { root, relativePath, _ ->
+  override fun getPathsEncoder(): PathsEncoder {
+    return PathsEncoder { root, relativePath, _ ->
       try {
         paths.getPathId(LightFilePath(root, relativePath))
       }
@@ -306,13 +308,6 @@ internal class PhmVcsLogStorageBackend(
         return@PathsEncoder 0
       }
     }
-
-  override fun getAuthorForCommit(commitId: Int): VcsUser? {
-    return users.getAuthorForCommit(commitId)
-  }
-
-  override fun getCommitsForUsers(users: Set<VcsUser>): IntSet {
-    return this.users.getCommitsForUsers(users)
   }
 
   private inline fun catchAndWarn(runnable: () -> Unit) {
@@ -339,22 +334,21 @@ internal class PhmVcsLogStorageBackend(
     private const val INDEX = "index"
     private const val VERSION = 1
 
+    @Throws(IOException::class)
     @JvmStatic
-    fun create(project: Project, storage: VcsLogStorage, roots: Set<VirtualFile>, logId: String,
-               errorHandler: VcsLogErrorHandler, parent: Disposable): PhmVcsLogStorageBackend? {
-      val storageId = StorageId.Directory(project.name, INDEX, logId, VcsLogStorageImpl.VERSION + VcsLogPersistentIndex.VERSION + VERSION)
+    fun create(project: Project, storage: VcsLogStorage, indexStorageId: StorageId.Directory, roots: Set<VirtualFile>,
+               errorHandler: VcsLogErrorHandler, parent: Disposable): PhmVcsLogStorageBackend {
       val userRegistry = project.getService(VcsUserRegistry::class.java)
-      try {
-        return IOUtil.openCleanOrResetBroken({ PhmVcsLogStorageBackend(storageId, storage, roots, userRegistry, errorHandler, parent) }) {
-          if (!storageId.cleanupAllStorageFiles()) {
-            LOG.error("Could not clean up storage files in " + storageId.storagePath)
-          }
+      return IOUtil.openCleanOrResetBroken({ PhmVcsLogStorageBackend(indexStorageId, storage, roots, userRegistry, errorHandler, parent) }) {
+        if (!indexStorageId.cleanupAllStorageFiles()) {
+          LOG.error("Could not clean up storage files in " + indexStorageId.storagePath)
         }
       }
-      catch (e: IOException) {
-        errorHandler.handleError(VcsLogErrorHandler.Source.Index, e)
-      }
-      return null
+    }
+
+    @JvmStatic
+    fun getIndexStorageId(project: Project, logId: String): StorageId.Directory {
+      return StorageId.Directory(project.name, INDEX, logId, VcsLogStorageImpl.VERSION + VcsLogPersistentIndex.VERSION + VERSION)
     }
   }
 }

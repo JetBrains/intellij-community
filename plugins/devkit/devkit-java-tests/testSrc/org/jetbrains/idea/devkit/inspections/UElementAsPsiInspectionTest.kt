@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 class UElementAsPsiInspectionTest : PluginModuleTestCase() {
@@ -186,4 +184,31 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
     myFixture.testHighlighting("UastUsage.java")
   }
 
+  // there was a bug reporting warning for nested methods multiple times (during analyzing top-level method and all nested)
+  fun testNestedMethods() {
+    myFixture.addClass("""
+      import com.intellij.psi.PsiElement;
+      import org.jetbrains.uast.UClass;
+      import org.jetbrains.uast.UElement;
+
+      class UastUsage {
+        void method(UClass uClass) {
+          new Runnable() {
+            public void run() {
+              new Runnable() {
+                public void run() {
+                  new Runnable() {
+                    public void run() {
+                      <warning descr="Usage of UElement as PsiElement is not recommended">uClass.getParent()</warning>;
+                    }
+                  };
+                }
+              };
+            }
+          };
+        }
+      }
+      """.trimIndent())
+    myFixture.testHighlighting("UastUsage.java")
+  }
 }

@@ -22,7 +22,7 @@ public class JBDefaultTreeCellRenderer extends DefaultTreeCellRenderer {
     this(true);
   }
 
-  public JBDefaultTreeCellRenderer(@NotNull final JTree tree) {
+  public JBDefaultTreeCellRenderer(final @NotNull JTree tree) {
     this(WideSelectionTreeUI.isWideSelection(tree));
   }
 
@@ -39,7 +39,7 @@ public class JBDefaultTreeCellRenderer extends DefaultTreeCellRenderer {
     return myWideSelection ? null : super.getBorderSelectionColor();
   }
 
-  protected Color getSelectionForeground(@NotNull final JTree tree) {
+  protected Color getSelectionForeground(final @NotNull JTree tree) {
     return myWideSelection && !tree.hasFocus() ? UIUtil.getTreeForeground() : UIUtil.getTreeSelectionForeground();
   }
 }

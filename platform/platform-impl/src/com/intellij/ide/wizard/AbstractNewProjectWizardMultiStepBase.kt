@@ -35,10 +35,10 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   }
 
   protected open fun createAndSetupSwitcher(builder: Row): SegmentedButton<String> {
-    return builder.segmentedButton(steps.keys) { it }
+    return builder.segmentedButton(steps.keys) { text = it }
       .bind(stepProperty)
       .gap(RightGap.SMALL)
-      .apply { stepsProperty.afterChange { items(steps.keys) } }
+      .apply { stepsProperty.afterChange { items = steps.keys } }
   }
 
   override fun setupUI(builder: Panel) {

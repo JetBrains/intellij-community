@@ -15,6 +15,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
+import org.jetbrains.kotlin.idea.configuration.getJvmTargetNumber
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 
@@ -27,9 +29,9 @@ val FOOJAY_RESOLVER_NAME = "org.gradle.toolchains.foojay-resolver"
 val FOOJAY_RESOLVER_CONVENTION_NAME = "org.gradle.toolchains.foojay-resolver-convention"
     @ApiStatus.Internal get
 
-typealias ChangedFiles = HashSet<PsiFile>
-
-typealias ChangedSettingsFile = PsiFile?
+class DefinedKotlinPluginManagementVersion(
+    val parsedVersion: IdeKotlinVersion?
+)
 
 interface GradleBuildScriptManipulator<out Psi : PsiFile> {
     fun isApplicable(file: PsiFile): Boolean
@@ -46,12 +48,25 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
         stdlibArtifactName: String,
         addVersion: Boolean,
         version: IdeKotlinVersion,
-        jvmTarget: String?
-    ): ChangedFiles
+        jvmTarget: String?,
+        changedFiles: ChangedConfiguratorFiles
+    )
 
     fun configureProjectBuildScript(kotlinPluginName: String, version: IdeKotlinVersion): Boolean
 
-    fun isKotlinConfiguredInBuildScript(): Boolean
+    fun configureSettingsFile(kotlinPluginName: String, version: IdeKotlinVersion): Boolean
+
+    fun getKotlinVersionFromBuildScript(): IdeKotlinVersion?
+
+    fun hasExplicitlyDefinedKotlinVersion(): Boolean
+
+    fun findAndRemoveKotlinVersionFromBuildScript(): Boolean
+
+    /**
+     * Returns a non-null value if the Kotlin version was defined in the pluginManagement block.
+     * The returned object contains the parsedVersion, or null if the expression used to define the version could not be parsed.
+     */
+    fun findKotlinPluginManagementVersion(): DefinedKotlinPluginManagementVersion?
 
     fun changeLanguageFeatureConfiguration(feature: LanguageFeature, state: LanguageFeature.State, forTests: Boolean): PsiElement?
 
@@ -113,13 +128,16 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
     fun PsiElement.configureToolchainOrKotlinOptions(
         jvmTarget: String?,
         kotlinVersion: IdeKotlinVersion,
-        gradleVersion: GradleVersionInfo
-    ): ChangedSettingsFile {
-        var changedSettingsFile: ChangedSettingsFile = null
+        gradleVersion: GradleVersionInfo,
+        changedFiles: ChangedConfiguratorFiles
+    ) {
         if (hasJavaToolchain() || jvmTarget == null) {
             // Java toolchain does the same as the Kotlin toolchain,
             // jvmTarget equals null for old Kotlin versions, see KotlinProjectConfigurationUtils.kt#getDefaultJvmTarget()
-            return changedSettingsFile
+            return
+        }
+        containingFile?.let {
+            changedFiles.storeOriginalFileContent(it)
         }
         val useToolchain =
             gradleVersion >= GradleVersionProvider.getVersion(Versions.GRADLE_PLUGINS.MIN_GRADLE_FOOJAY_VERSION.text)
@@ -136,16 +154,15 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
             } else {
                 addKotlinExtendedDslToolchain(targetVersion)
             }
-            changedSettingsFile = addFoojayPlugin()
+            addFoojayPlugin(changedFiles)
         } else {
             changeKotlinTaskParameter("jvmTarget", targetVersion, forTests = false)
             changeKotlinTaskParameter("jvmTarget", targetVersion, forTests = true)
         }
-        return changedSettingsFile
     }
 
     private fun jvmTargetIsAtLeast(jvmTarget: String, minimum: Int): Boolean {
-        val targetVersionNumber = jvmTarget.removePrefix("1.").toIntOrNull() ?: return false
+        val targetVersionNumber = getJvmTargetNumber(jvmTarget) ?: return false
         return targetVersionNumber >= minimum
     }
 
@@ -156,7 +173,7 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
     ): String {
         var targetVersion = jvmTarget
 
-        val targetVersionNumber = jvmTarget.removePrefix("1.").toIntOrNull() ?: return targetVersion
+        val targetVersionNumber = getJvmTargetNumber(jvmTarget) ?: return targetVersion
 
         // Kotlin 1.7.0+ and toolchains only support JVM target = 1.8+
         if (version.compare("1.7.0") >= 0 || useToolchain) {
@@ -178,7 +195,9 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
 
     fun addResolutionStrategy(pluginId: String)
 
-    fun addFoojayPlugin(): ChangedSettingsFile
+    fun addFoojayPlugin(changedFiles: ChangedConfiguratorFiles)
+
+    fun addFoojayPlugin(settingsFile: PsiFile)
 }
 
 fun GradleBuildScriptManipulator<*>.usesNewMultiplatform(): Boolean {

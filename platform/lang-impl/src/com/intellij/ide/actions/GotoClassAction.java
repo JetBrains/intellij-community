@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.event.InputEvent;
 
-public class GotoClassAction extends SearchEverywhereBaseAction implements DumbAware {
+public final class GotoClassAction extends SearchEverywhereBaseAction implements DumbAware {
 
   public GotoClassAction() {
     //we need to change the template presentation to show the proper text for the action in Settings | Keymap
@@ -38,7 +38,7 @@ public class GotoClassAction extends SearchEverywhereBaseAction implements DumbA
       showInSearchEverywherePopup(tabID, e, true, true);
     }
     else {
-      invokeGoToFile(project, e);
+      invokeGoToFile(project, e, this);
     }
   }
 
@@ -46,11 +46,11 @@ public class GotoClassAction extends SearchEverywhereBaseAction implements DumbA
     return new GotoClassModel2(e.getRequiredData(CommonDataKeys.PROJECT)).isDumbAware();
   }
 
-  static void invokeGoToFile(@NotNull Project project, @NotNull AnActionEvent e) {
+  static void invokeGoToFile(@NotNull Project project, @NotNull AnActionEvent e, @NotNull AnAction failedAction) {
     String actionTitle = StringUtil.trimEnd(ObjectUtils.notNull(
       e.getPresentation().getText(), GotoClassPresentationUpdater.getActionTitle()), "...");
     String message = IdeBundle.message("go.to.class.dumb.mode.message", actionTitle);
-    DumbService.getInstance(project).showDumbModeNotification(message);
+    DumbService.getInstance(project).showDumbModeNotificationForAction(message, ActionManager.getInstance().getId(failedAction));
     AnAction action = ActionManager.getInstance().getAction(GotoFileAction.ID);
     InputEvent event = ActionCommand.getInputEvent(GotoFileAction.ID);
     Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);

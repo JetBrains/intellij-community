@@ -4,5 +4,6 @@ fun foo(list: List<String?>) {
     for (i: Int in 0..9) {
         array[i] = i
     }
+
     for (s: String? in list) print(s)
 }

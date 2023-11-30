@@ -5,11 +5,11 @@ import com.intellij.credentialStore.gpg.GpgToolWrapper
 import com.intellij.credentialStore.gpg.Pgp
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.readBytes
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.readBytes
 
 internal class PgpTest {
   @Test

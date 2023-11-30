@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 // EXPECTED_DUPLICATED_HIGHLIGHTING
 
 <symbolName descr="null">data</symbolName> class <symbolName descr="null">Box</symbolName>(val <symbolName descr="null">v</symbolName>: <symbolName descr="null">Int</symbolName>)

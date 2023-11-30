@@ -513,6 +513,46 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("it", resolved.name)
     }
 
+    fun checkResolveImplicitLambdaParameter_binary(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                package test.pkg;
+                
+                public class Foo {
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                package test.pkg
+
+                inline fun <T, R> T.use(block: (T) -> R): R {
+                  return block(this)
+                }
+                
+                class Test {
+                  lateinit var x: Foo
+                    private set
+                    
+                  init {
+                    Foo().use {
+                      x = it
+                    }
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val assign = myFixture.file.findUElementByTextFromPsi<UBinaryExpression>("x = it", strict = false)
+            .orFail("cant convert to UBinaryExpression")
+        val ref = assign.rightOperand as USimpleNameReferenceExpression
+        TestCase.assertEquals("it", ref.identifier)
+        // No source for implicit lambda parameter. Expect to be resolved to fake PsiParameter used inside ULambdaExpression
+        val resolved = (ref.resolve() as? PsiParameter)
+            .orFail("cant resolve implicit lambda parameter")
+        TestCase.assertEquals("it", resolved.name)
+    }
+
     fun checkResolveSyntheticMethod(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """
@@ -1440,7 +1480,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         }
         TestCase.assertTrue(call is KotlinUFunctionCallExpression)
         val ktCall = call as KotlinUFunctionCallExpression
-        TestCase.assertTrue("expected method name to be one of ${names}", ktCall.methodNameCanBeOneOf(names))
+        TestCase.assertTrue("expected method name to be one of ${names}", ktCall.isMethodNameOneOf(names))
     }
 
     fun checkParentOfParameterOfCatchClause(myFixture: JavaCodeInsightTestFixture) {
@@ -1468,6 +1508,55 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
                 return super.visitSimpleNameReferenceExpression(node)
             }
         })
+    }
+
+    fun checkCompanionConstantAsVarargAnnotationValue(myFixture: JavaCodeInsightTestFixture, isK2: Boolean = false) {
+        myFixture.configureByText(
+            "main.kt", """
+                package test.pkg
+
+                @Retention(AnnotationRetention.SOURCE)
+                @Target(AnnotationTarget.ANNOTATION_CLASS)
+                annotation class MyIntDef(
+                  vararg val value: Int = [],
+                  val flag: Boolean = false,
+                )
+
+                class RemoteAuthClient internal constructor(
+                  private val packageName: String,
+                ) {
+                  companion object {
+                    const val NO_ERROR: Int = -1
+                    const val ERROR_UNSUPPORTED: Int = 0
+                    const val ERROR_PHONE_UNAVAILABLE: Int = 1
+
+                    @MyIntDef(NO_ERROR, ERROR_UNSUPPORTED, ERROR_PHONE_UNAVAILABLE)
+                    @Retention(AnnotationRetention.SOURCE)
+                    annotation class ErrorCode
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        val remote = uFile.classes.find { it.name == "RemoteAuthClient" }
+            .orFail("cant find RemoteAuthClient")
+        // RemoteAuthClient -> .Companion -> .ErrorCode
+        val errorCode = remote.innerClasses.single().innerClasses.single()
+        val metaAnnotation = errorCode.uAnnotations.find { it.qualifiedName?.endsWith("MyIntDef") == true }
+            .orFail("cant find @MyIntDef annotation")
+        // NO_ERROR, ERROR_UNSUPPORTED, ERROR_PHONE_UNAVAILABLE
+        val varargs = metaAnnotation.attributeValues.single().expression as UCallExpression
+        for (value in varargs.valueArguments) {
+            TestCase.assertTrue(value is USimpleNameReferenceExpression)
+            val resolved = (value as USimpleNameReferenceExpression).resolve()
+            // TODO(KT-61497): should be resolved
+            TestCase.assertEquals(isK2, resolved == null)
+            if (!isK2) {
+                // TODO(KT-61497): and resolution should point to const properties
+                TestCase.assertEquals(remote.javaPsi, (resolved as PsiField).containingClass)
+            }
+        }
     }
 
 }

@@ -1,5 +1,6 @@
 class TestNumberConversionsInTernary {
     fun intOrDoubleAsDouble(flag: Boolean, x: Int, y: Double): Double {
-        return if (flag) x.toDouble() else y
+        val result = if (flag) x.toDouble() else y
+        return result
     }
 }

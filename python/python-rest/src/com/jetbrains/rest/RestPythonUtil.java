@@ -9,12 +9,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.jetbrains.python.PyPsiPackageUtil;
-import com.jetbrains.python.packaging.PyPackage;
-import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.management.PythonPackageManager;
+import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-
-import java.util.List;
 
 /**
  * User : catherine
@@ -35,9 +32,8 @@ public final class RestPythonUtil {
       if (module != null) {
         final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
         if (sdk != null) {
-          final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
-          final PyPackage sphinx = packages != null ? PyPsiPackageUtil.findPackage(packages, "Sphinx") : null;
-          presentation.setEnabled(sphinx != null);
+          PythonPackageManager manager = PythonPackageManager.Companion.forSdk(project, sdk);
+          presentation.setEnabled(PythonPackageManagerExt.isInstalled(manager, "Sphinx"));
         }
       }
     }

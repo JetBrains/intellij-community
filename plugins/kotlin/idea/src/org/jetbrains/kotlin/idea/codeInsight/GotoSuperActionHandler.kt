@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.generation.actions.PresentableCodeInsightActionHandler
+import com.intellij.codeInsight.navigation.PsiTargetNavigator
 import com.intellij.codeInsight.navigation.actions.GotoSuperAction
-import com.intellij.codeInsight.navigation.getPsiElementPopup
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.idea.ActionsBundle
@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -68,23 +67,24 @@ class GotoSuperActionHandler : PresentableCodeInsightActionHandler {
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(GotoSuperAction.FEATURE_ID)
 
-        val (allDeclarations, descriptor) = SuperDeclarationsAndDescriptor.forDeclarationAtCaret(editor, file)
-        if (allDeclarations.isEmpty()) return
-        if (allDeclarations.size == 1) {
-            val navigatable = EditSourceUtil.getDescriptor(allDeclarations[0])
+        val declarationAtCaret = SuperDeclarationsAndDescriptor.forDeclarationAtCaret(editor, file)
+        val supers = declarationAtCaret.supers
+        if (supers.isEmpty()) return
+        if (supers.size == 1) {
+            val navigatable = EditSourceUtil.getDescriptor(supers[0])
             if (navigatable != null && navigatable.canNavigate()) {
                 navigatable.navigate(true)
             }
         } else {
+            val descriptor = declarationAtCaret.descriptor
             val message = getTitle(descriptor!!)
-            val superDeclarationsArray = PsiUtilCore.toPsiElementArray(allDeclarations)
-            val popup = if (descriptor is ClassDescriptor) {
-                getPsiElementPopup(elements = superDeclarationsArray, title = message)
-            } else {
-                getPsiElementPopup(elements = superDeclarationsArray, renderer = KtFunctionPsiElementCellRenderer(), title = message)
-            }
-
-            popup.showInBestPositionFor(editor)
+            PsiTargetNavigator { supers }
+                .also {
+                    if (descriptor !is ClassDescriptor) {
+                        it.presentationProvider(KtFunctionPsiElementCellRenderer())
+                    }
+                }
+                .navigate(editor, message)
         }
     }
 

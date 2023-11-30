@@ -22,3 +22,5 @@ fun main() {
 
 // EXPRESSION: a + b
 // RESULT: 300: I
+
+// IGNORE_K2

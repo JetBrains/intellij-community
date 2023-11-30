@@ -21,8 +21,9 @@ import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated as KtAnnotatedH
  * This is K2 implementation which is very similar to [org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptInAllowed].
  * One difference is that check of [kotlin.SubclassOptInRequired] is not implemented here since it is not needed for current method usages.
  */
+context(KtAnalysisSession)
 @ApiStatus.Internal
-fun KtAnalysisSession.isOptInAllowed(psi: PsiElement, annotationClassId: ClassId, languageVersionSettings: LanguageVersionSettings): Boolean {
+fun isOptInAllowed(psi: PsiElement, annotationClassId: ClassId, languageVersionSettings: LanguageVersionSettings): Boolean {
     if (annotationClassId.asFqNameString() in languageVersionSettings.getFlag(AnalysisFlags.optIn)) return true
 
     return psi.parentsWithSelf.any { element ->
@@ -31,7 +32,8 @@ fun KtAnalysisSession.isOptInAllowed(psi: PsiElement, annotationClassId: ClassId
     }
 }
 
-private fun KtAnalysisSession.isDeclarationAnnotatedWith(element: PsiElement, annotationClassId: ClassId): Boolean {
+context(KtAnalysisSession)
+private fun isDeclarationAnnotatedWith(element: PsiElement, annotationClassId: ClassId): Boolean {
     if (element !is KtDeclaration) return false
     return true == (element.getSymbol() as? KtAnnotatedHighLevelApi)?.hasAnnotation(annotationClassId)
 }
@@ -40,7 +42,8 @@ private fun KtAnalysisSession.isDeclarationAnnotatedWith(element: PsiElement, an
  * Checks whether [element] is annotated with @[OptIn]`(X1::class, X2::class, ..., X_N::class)`,
  * where some of `X1, X2, ..., X_N` is [annotationClassId].
  */
-private fun KtAnalysisSession.isElementAnnotatedWithOptIn(element: PsiElement, annotationClassId: ClassId): Boolean {
+context(KtAnalysisSession)
+private fun isElementAnnotatedWithOptIn(element: PsiElement, annotationClassId: ClassId): Boolean {
     return element is KtAnnotated && element.annotationEntries.any { entry ->
         val ktType = entry.typeReference?.getKtType()
         if (true == ktType?.isClassTypeWithClassId(OptInNames.OPT_IN_CLASS_ID)) {
@@ -52,7 +55,8 @@ private fun KtAnalysisSession.isElementAnnotatedWithOptIn(element: PsiElement, a
     }
 }
 
-private fun KtAnalysisSession.isClassLiteralExpressionOfClass(expression: KtExpression, classId: ClassId): Boolean {
+context(KtAnalysisSession)
+private fun isClassLiteralExpressionOfClass(expression: KtExpression, classId: ClassId): Boolean {
     val receiverExpression = (expression as? KtClassLiteralExpression)?.receiverExpression as? KtNameReferenceExpression
     return true == receiverExpression?.getKtType()?.isClassTypeWithClassId(classId)
 }

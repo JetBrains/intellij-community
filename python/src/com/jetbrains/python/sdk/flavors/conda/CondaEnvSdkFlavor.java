@@ -2,17 +2,16 @@
 package com.jetbrains.python.sdk.flavors.conda;
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.readableFs.PathInfo;
-import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.pathValidation.PathValidatorKt;
+import com.jetbrains.python.pathValidation.PlatformAndRoot;
+import com.jetbrains.python.pathValidation.ValidationRequest;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.sdk.add.target.PathValidatorKt;
-import com.jetbrains.python.sdk.add.target.ValidationRequest;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
@@ -108,22 +107,15 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
     return PythonIcons.Python.Anaconda;
   }
 
-  /**
-   * @deprecated use {@link #validateCondaPath(String, TargetConfigurationReadableFs)}
-   */
-  @Deprecated
-  public static ValidationInfo validateCondaPath(@Nullable @SystemDependent String condaExecutable) {
-    return validateCondaPath(condaExecutable, PathInfo.Companion.getLocalPathInfoProvider());
-  }
-
   @Nullable
+  @RequiresBackgroundThread
   public static ValidationInfo validateCondaPath(@Nullable @SystemDependent String condaExecutable,
-                                                 @Nullable TargetConfigurationReadableFs pathInfoProvider) {
+                                                 @NotNull PlatformAndRoot platformAndRoot) {
     return PathValidatorKt.validateExecutableFile(
       new ValidationRequest(
         condaExecutable,
         PyBundle.message("python.add.sdk.conda.executable.path.is.empty"),
-        pathInfoProvider,
+        platformAndRoot,
         null
       ));
   }

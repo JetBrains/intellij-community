@@ -38,7 +38,7 @@ class X {
   }
 
   void main(int x) {
-    test(<warning descr="String 'hello world' is not properly capitalized. It should have title capitalization">message("property.lowercase")</warning>);
+    test(<warning descr="String 'hello world' is not properly capitalized. It should have title capitalization"><caret>message("property.lowercase")</warning>);
     test(message("property.titlecase"));
     test(message("property.unknown"));
     test(message("property.parameterized", "World"));

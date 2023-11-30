@@ -20,7 +20,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -36,8 +35,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +146,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   @Nullable
   @Override
   public DebuggerSession getSession(DebugProcess process) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return ContainerUtil.find(getSessions(), debuggerSession -> process == debuggerSession.getProcess());
   }
 
@@ -178,7 +179,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   @Override
   @Nullable
   public DebuggerSession attachVirtualMachine(@NotNull DebugEnvironment environment) throws ExecutionException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
     DebuggerSession session = DebuggerSession.create(debugProcess, environment);
     ExecutionResult executionResult = session.getProcess().getExecutionResult();
@@ -186,9 +186,13 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       return null;
     }
     session.getContextManager().addListener(mySessionListener);
-    getContextManager()
-      .setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()),
-                session.getState(), DebuggerSession.Event.CONTEXT, null);
+
+    // the whole method may still be called from EDT, we need to update the state immediately in this case
+    UIUtil.invokeLaterIfNeeded(() -> {
+      getContextManager()
+        .setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()),
+                  session.getState(), DebuggerSession.Event.CONTEXT, null);
+    });
 
     final ProcessHandler processHandler = executionResult.getProcessHandler();
 
@@ -359,7 +363,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
                          DebuggerSession.State state,
                          DebuggerSession.Event event,
                          String description) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       myDebuggerSession = context.getDebuggerSession();
       if (myDebuggerSession != null) {
         myDebuggerSession.getContextManager().setState(context, state, event, description);

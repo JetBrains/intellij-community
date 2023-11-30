@@ -22,7 +22,9 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.util.*
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.ResourceUtil
+import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -41,6 +43,8 @@ import java.util.function.Consumer
 
 internal val LOG = logger<ComponentStoreImpl>()
 private val SAVE_MOD_LOG = Logger.getInstance("#configurationStore.save.skip")
+
+private val isUseLoadedStateAsExistingVmProperty = System.getProperty("use.loaded.state.as.existing", "true").toBoolean()
 
 internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
   val w1 = if (o1.deprecated) 1 else 0
@@ -80,6 +84,12 @@ abstract class ComponentStoreImpl : IComponentStore {
     get() = StateLoadPolicy.LOAD
 
   abstract override val storageManager: StateStorageManager
+
+  private val featureUsageSettingManager by lazy {
+    val project = project
+    @Suppress("IfThenToElvis")
+    if (project == null) service<FeatureUsageSettingsEvents>() else project.service<FeatureUsageSettingsEvents>()
+  }
 
   internal fun getComponents(): Map<String, ComponentInfo> = components
 
@@ -350,27 +360,11 @@ abstract class ComponentStoreImpl : IComponentStore {
       else {
         if (!stateRequested) {
           stateRequested = true
-          state = when {
-            component is SerializablePersistentStateComponent<*> -> {
-              component.state
-            }
-            stateSpec.getStateRequiresEdt -> {
-              withContext(Dispatchers.EDT) {
-                (component as PersistentStateComponent<*>).state
-              }
-            }
-            else -> {
-              readAction {
-                (component as PersistentStateComponent<*>).state
-              }
-            }
-          }
+          state = getStateForComponent(component = component, stateSpec = stateSpec)
         }
 
         if (modificationCountChanged && state != null && isReportStatisticAllowed(stateSpec, storageSpec)) {
-          runCatching {
-            FeatureUsageSettingsEvents.logConfigurationChanged(effectiveComponentName, state, project)
-          }.getOrLogException(LOG)
+          featureUsageSettingManager.logConfigurationChanged(effectiveComponentName, state)
         }
 
         setStateToSaveSessionProducer(state = state,
@@ -463,10 +457,18 @@ abstract class ComponentStoreImpl : IComponentStore {
 
         // if storage marked as changed,
         // it means that analyzeExternalChangesAndUpdateIfNeeded was called for it and storage is already reloaded
-        val isReloadDataForStorage = if (reloadData == ThreeState.UNSURE) isStorageChanged(changedStorages!!, storage)
-        else reloadData.toBoolean()
+        val isReloadDataForStorage = if (reloadData == ThreeState.UNSURE) {
+          isStorageChanged(changedStorages!!, storage)
+        }
+        else {
+          reloadData.toBoolean()
+        }
 
-        val stateGetter = doCreateStateGetter(isReloadDataForStorage, storage, info, name, stateClass)
+        val stateGetter = doCreateStateGetter(reloadData = isReloadDataForStorage,
+                                              storage = storage,
+                                              info = info,
+                                              name = name,
+                                              stateClass = stateClass)
         var state = stateGetter.getState(defaultState)
         if (state == null) {
           if (changedStorages != null && isStorageChanged(changedStorages, storage)) {
@@ -476,7 +478,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
           else {
             if (isReportStatisticAllowed(stateSpec, storageSpec)) {
-              FeatureUsageSettingsEvents.logDefaultConfigurationState(name, stateClass, project)
+              featureUsageSettingManager.logDefaultConfigurationState(name, stateClass)
             }
             continue
           }
@@ -488,9 +490,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         component.loadState(state)
         val stateAfterLoad = stateGetter.archiveState()
         if (isReportStatisticAllowed(stateSpec, storageSpec)) {
-          LOG.runAndLogException {
-            FeatureUsageSettingsEvents.logConfigurationState(name, stateAfterLoad ?: state, project)
-          }
+          featureUsageSettingManager.logConfigurationState(name, stateAfterLoad ?: state)
         }
 
         if (postLoadStateUpdateModificationCount) {
@@ -532,16 +532,18 @@ abstract class ComponentStoreImpl : IComponentStore {
                                          info: ComponentInfo,
                                          name: String,
                                          stateClass: Class<Any>): StateGetter<Any> {
-    // use.loaded.state.as.existing used in upsource
     val isUseLoadedStateAsExisting = info.stateSpec!!.useLoadedStateAsExisting && isUseLoadedStateAsExisting(storage)
     @Suppress("UNCHECKED_CAST")
-    return createStateGetter(isUseLoadedStateAsExisting, storage, info.component as PersistentStateComponent<Any>, name, stateClass,
-                             reloadData)
+    return createStateGetter(isUseLoadedStateAsExisting = isUseLoadedStateAsExisting,
+                             storage = storage,
+                             component = info.component as PersistentStateComponent<Any>,
+                             componentName = name,
+                             stateClass = stateClass,
+                             reloadData = reloadData)
   }
 
   protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean {
-    return (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED
-           && SystemProperties.getBooleanProperty("use.loaded.state.as.existing", true)
+    return (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED && isUseLoadedStateAsExistingVmProperty
   }
 
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
@@ -736,7 +738,7 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
     for (notification in manager.getNotificationsOfType(
       UnknownMacroNotification::class.java, project)) {
       if (notified == null) {
-        notified = SmartList()
+        notified = ArrayList()
       }
       notified.addAll(notification.macros)
     }
@@ -768,5 +770,24 @@ internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: Save
 }
 
 private fun getComponentName(component: Any): String {
+  @Suppress("DEPRECATION")
   return if (component is NamedComponent) component.componentName else component.javaClass.name
+}
+
+internal suspend fun getStateForComponent(component: PersistentStateComponent<*>, stateSpec: State): Any? {
+  return when {
+    component is SerializablePersistentStateComponent<*> -> {
+      component.state
+    }
+    stateSpec.getStateRequiresEdt -> {
+      withContext(Dispatchers.EDT) {
+        component.state
+      }
+    }
+    else -> {
+      readAction {
+        component.state
+      }
+    }
+  }
 }

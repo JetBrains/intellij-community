@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("DebuggerUtil")
 
@@ -6,7 +6,9 @@ package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.StackFrameProxyImpl
@@ -66,9 +68,20 @@ fun ReferenceType.containsKotlinStrata() = availableStrata().contains(KOTLIN_STR
 fun ReferenceType.containsKotlinStrataAsync(): CompletableFuture<Boolean> =
     DebuggerUtilsAsync.availableStrata(this).thenApply { it.contains(KOTLIN_STRATA_NAME) }
 
-fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debugProcess: DebugProcessImpl): Boolean {
-    val visibleVariables = location.visibleVariables(debugProcess)
-    val markerLocalVariables = visibleVariables.filter { it.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
+fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debugProcess: DebugProcessImpl): Boolean =
+  isInlinedArgument(location.visibleVariables(debugProcess), inlineArgument)
+
+/**
+ * Check whether [inlineArgument] is a lambda that is inlined in bytecode
+ * by looking for a marker inline variable corresponding to this lambda.
+ *
+ * For crossinline lambdas inlining depends on whether the lambda is passed further to a non-inline context.
+ */
+fun isInlinedArgument(inlineArgument: KtFunction, location: Location): Boolean =
+  isInlinedArgument(location.method().safeVariables() ?: emptyList(), inlineArgument)
+
+private fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgument: KtFunction): Boolean {
+    val markerLocalVariables = localVariables.filter { it.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
 
     return runReadAction {
         val lambdaOrdinal = lambdaOrdinalByArgument(inlineArgument)
@@ -91,25 +104,26 @@ fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debug
 
 fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) -> T?): T? {
     var result: T? = null
-    val command: DebuggerCommandImpl = object : DebuggerCommandImpl() {
-        override fun action() {
-            result = f(debuggerContext)
-        }
+    if (DebuggerManagerThreadImpl.isManagerThread()) {
+        managerThread.invoke(object : DebuggerCommandImpl() {
+            override fun action() {
+                result = f(debuggerContext)
+            }
+        })
     }
-
-    when {
-        DebuggerManagerThreadImpl.isManagerThread() ->
-            managerThread.invoke(command)
-        else ->
-            managerThread.invokeAndWait(command)
+    else {
+        managerThread.invokeAndWait(object : DebuggerContextCommandImpl(debuggerContext) {
+            override fun threadAction(suspendContext: SuspendContextImpl) {
+                result = f(debuggerContext)
+            }
+        })
     }
-
     return result
 }
 
 private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
     val className = ClassNameCalculator.getClassName(elementAt) ?: return 0
-    return className.substringAfterLast("$").toInt()
+    return className.substringAfterLast("$").toIntOrNull() ?: 0
 }
 
 private fun functionNameByArgument(elementAt: KtFunction): String? =

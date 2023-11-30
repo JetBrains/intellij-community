@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.visitor
 
 import com.intellij.cce.core.*
@@ -9,7 +10,7 @@ import com.intellij.refactoring.suggested.startOffset
 import kotlin.math.min
 
 
-interface CompletionGolfEvaluationVisitor : CompletionEvaluationVisitor
+interface CompletionGolfEvaluationVisitor : EvaluationVisitor
 
 
 interface CompletionGolfAllEvaluationVisitor : CompletionGolfEvaluationVisitor {
@@ -49,7 +50,8 @@ interface CompletionGolfAllEvaluationVisitor : CompletionGolfEvaluationVisitor {
             safeCodeFragment.addChild(CodeLine(line, offset).apply { addChild(CodeToken(text, start, prop)) })
           }
           start += text.length + 1
-        } else if (offset > element.endOffset) {
+        }
+        else if (offset > element.endOffset) {
           break
         }
         offset += line.length + 1
@@ -72,7 +74,8 @@ interface CompletionGolfAllEvaluationVisitor : CompletionGolfEvaluationVisitor {
   }
 
 
-  class Default(override val language: Language = Language.ANOTHER) : CompletionGolfAllEvaluationVisitor, PsiRecursiveElementVisitor() {
+  class Default(override val feature: String, override val language: Language = Language.ANOTHER)
+    : CompletionGolfAllEvaluationVisitor, PsiRecursiveElementVisitor() {
     override val processor = Processor()
     override fun visitComment(comment: PsiComment) {
       processor.skipElement(comment)

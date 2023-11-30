@@ -4,4 +4,4 @@ import dependency.topLevelFun
 // ERROR: Unresolved reference: topLevelFun
 val v = ::topLevelFun<caret>
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */

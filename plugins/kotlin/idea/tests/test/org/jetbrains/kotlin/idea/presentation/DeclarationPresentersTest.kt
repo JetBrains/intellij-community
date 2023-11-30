@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.presentation
 
 import com.intellij.ide.IconProvider
@@ -20,7 +20,7 @@ class DeclarationPresentersTest : KotlinLightCodeInsightFixtureTestCase() {
         val element = myFixture.elementAtCaret as KtNamedDeclaration
 
         // By default, we expect whatever the first KotlinIconProvider returns.
-        val firstProvider = IconProvider.EXTENSION_POINT_NAME.findFirstSafe { it is KotlinIconProvider }!!
+        val firstProvider = IconProvider.EXTENSION_POINT_NAME.findFirstAssignableExtension(KotlinIconProvider::class.java)!!
         val expectedIcon = firstProvider.getIcon(element, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
 
         assertEquals(expectedIcon, KotlinDefaultNamedDeclarationPresentation(element).getIcon(false))

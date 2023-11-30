@@ -55,7 +55,7 @@ class KotlinChangeSignatureConflictSearcher(
             refUsages.set(adjustedUsages.toTypedArray())
         }
 
-        changeInfo = originalInfo.asKotlinChangeInfo ?: return result
+        changeInfo = originalInfo as? KotlinChangeInfo ?: return result
 
         doFindConflicts()
 

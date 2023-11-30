@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.Disposable;
@@ -129,7 +129,7 @@ public abstract class JBListTable {
     return panel;
   }
 
-  private class MyCellEditor extends AbstractTableCellEditor {
+  private final class MyCellEditor extends AbstractTableCellEditor {
     private final JBTableRowEditor myEditor;
 
     MyCellEditor(JBTableRowEditor editor) {
@@ -305,7 +305,7 @@ public abstract class JBListTable {
     }
   }
 
-  private class MyTable extends JBTable {
+  private final class MyTable extends JBTable {
 
     MyTable() {
       super(new MyTableModel(myInternalTable.getModel()));
@@ -487,7 +487,7 @@ public abstract class JBListTable {
     }
   }
 
-  private class MyTableModel extends JBListTableModel {
+  private final class MyTableModel extends JBListTableModel {
 
     MyTableModel(TableModel model) {
       super(model);

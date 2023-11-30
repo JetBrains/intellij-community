@@ -38,10 +38,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.PlatformIcons;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.IconUtil;
@@ -291,6 +288,7 @@ public final class EditPropertyValueAction extends BaseRefactoringAction {
     if (key != null) {
       panel.add(new JLabel(key, IconManager.getInstance().getPlatformIcon(PlatformIcons.Property), SwingConstants.LEFT));
     }
+    panel.setOpaque(!ExperimentalUI.isNewUI());
     return EditPropertyValueTooltipManager.showTooltip(editor, panel, true);
   }
 

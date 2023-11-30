@@ -4,10 +4,9 @@ package com.intellij.platform.workspace.jps.serialization.impl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
-import com.intellij.platform.workspace.jps.serialization.SerializationContext
-import com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.serialization.SerializationContext
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.TestOnly

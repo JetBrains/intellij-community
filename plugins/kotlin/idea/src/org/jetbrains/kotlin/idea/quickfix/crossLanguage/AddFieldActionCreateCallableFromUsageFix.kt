@@ -38,6 +38,7 @@ class AddFieldActionCreateCallableFromUsageFix(
             } else if (!lateinit) {
                 psiFactory.createExpression("TODO(\"initialize me\")")
             } else null
+            if (!request.isValid) null else
             PropertyInfo(
                 request.fieldName,
                 TypeInfo.Empty,

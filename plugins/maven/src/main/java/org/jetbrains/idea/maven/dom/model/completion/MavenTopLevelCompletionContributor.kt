@@ -27,7 +27,7 @@ abstract class MavenTopLevelCompletionContributor(val myName: String) : Completi
     if (parameters.completionType != CompletionType.BASIC) {
       return
     }
-    val element = parameters.getPosition()
+    val element = parameters.position
     val xmlText = element.parent as? XmlText ?: return
     val parent = xmlText.parent
     if (parent !is XmlTag || parent.name != myName) {

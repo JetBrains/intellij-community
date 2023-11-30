@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
-public class LightEditNewFileAction extends DumbAwareAction implements LightEditCompatible {
+public final class LightEditNewFileAction extends DumbAwareAction implements LightEditCompatible {
   public LightEditNewFileAction() {
     super(ActionsBundle.messagePointer("action.LightEditNewFileAction.text"));
   }

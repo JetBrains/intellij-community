@@ -45,13 +45,11 @@ class KotlinBasicModuleDataInitializer : ModuleDataInitializer {
             }
         }
     }
-
-    companion object {
-        private val IdeaModule.jdkNameIfAny
-            get() = try {
-                jdkName
-            } catch (e: UnsupportedMethodException) {
-                null
-            }
-    }
 }
+
+private val IdeaModule.jdkNameIfAny
+    get() = try {
+        jdkName
+    } catch (e: UnsupportedMethodException) {
+        null
+    }

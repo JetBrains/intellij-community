@@ -11,6 +11,6 @@ interface DeferredIconListener {
   companion object {
     @JvmField
     @Topic.AppLevel
-    val TOPIC: Topic<DeferredIconListener> = Topic("Deferred icon topic", DeferredIconListener::class.java, BroadcastDirection.NONE)
+    val TOPIC: Topic<DeferredIconListener> = Topic(DeferredIconListener::class.java, BroadcastDirection.NONE)
   }
 }

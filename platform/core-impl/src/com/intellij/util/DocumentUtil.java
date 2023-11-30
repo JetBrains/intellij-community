@@ -156,12 +156,7 @@ public final class DocumentUtil {
     return true;
   }
 
-  /**
-   * Calculates indent of the line containing {@code offset}
-   * @return Whitespaces at the beginning of the line
-   */
-  public static CharSequence getIndent(@NotNull Document document, int offset) {
-    int lineOffset = getLineStartOffset(offset, document);
+  private static int getIndentLengthAtLineStart(@NotNull Document document, int lineOffset) {
     int result = 0;
     while (lineOffset + result < document.getTextLength() &&
            Character.isWhitespace(document.getCharsSequence().charAt(lineOffset + result))) {
@@ -170,7 +165,32 @@ public final class DocumentUtil {
     if (result + lineOffset > document.getTextLength()) {
       result--;
     }
-    return document.getCharsSequence().subSequence(lineOffset, lineOffset + Math.max(result, 0));
+    return Math.max(result, 0);
+  }
+
+  /**
+   * Calculates size of indent of the line containing {@code offset}
+   * @return Number of whitespace characters at the beginning of the line
+   */
+  public static int getIndentLength(@NotNull Document document, int offset) {
+    return getIndentLengthAtLineStart(document, getLineStartOffset(offset, document));
+  }
+
+  /**
+   * Calculates indent of the line containing {@code offset}
+   * @return Whitespaces at the beginning of the line
+   */
+  public static CharSequence getIndent(@NotNull Document document, int offset) {
+    int lineOffset = getLineStartOffset(offset, document);
+    return document.getCharsSequence().subSequence(lineOffset, lineOffset + getIndentLengthAtLineStart(document, lineOffset));
+  }
+
+  /**
+   * Calculates offset of the first non-whitespace character of the {@code line}
+   */
+  public static int getLineStartIndentedOffset(@NotNull Document document, int line) {
+    int lineStartOffset = document.getLineStartOffset(line);
+    return lineStartOffset + getIndentLengthAtLineStart(document, lineStartOffset);
   }
 
   public static int calculateOffset(@NotNull Document document, int line, int column, int tabSize) {

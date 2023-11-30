@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.cellvalidators;
 
 import com.intellij.icons.AllIcons;
@@ -10,10 +10,10 @@ import org.jetbrains.annotations.Nullable;
 public final class ValidationUtils {
   private ValidationUtils() {}
 
-  public final static ExtendableTextComponent.Extension ERROR_EXTENSION =
+  public static final ExtendableTextComponent.Extension ERROR_EXTENSION =
     ExtendableTextComponent.Extension.create(AllIcons.General.BalloonError, null, null);
 
-  public final static ExtendableTextComponent.Extension WARNING_EXTENSION =
+  public static final ExtendableTextComponent.Extension WARNING_EXTENSION =
     ExtendableTextComponent.Extension.create(AllIcons.General.BalloonWarning, null, null);
 
   public static void setExtension(@NotNull ExtendableTextComponent editor, @NotNull ExtendableTextComponent.Extension extension, boolean set) {

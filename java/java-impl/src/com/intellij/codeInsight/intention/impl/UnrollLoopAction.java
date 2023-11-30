@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -16,7 +18,6 @@ import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.CommonJavaInlineUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -30,7 +31,7 @@ import java.util.function.IntFunction;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public class UnrollLoopAction extends PsiElementBaseIntentionAction {
+public class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopStatement> {
   private static class Holder {
     private static final CallMatcher LIST_CONSTRUCTOR = anyOf(staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "asList"),
                                                               staticCall(CommonClassNames.JAVA_UTIL_LIST, "of"));
@@ -43,43 +44,45 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
    * accidental code blow up or out-of-memory error
    */
   private static final int MAX_BODY_SIZE_ESTIMATE = 5_000;
+  
+  public UnrollLoopAction() {
+    super(PsiLoopStatement.class);
+  }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull final PsiElement element) {
-    PsiLoopStatement loop = PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiLoopStatement loop) {
     PsiVariable iterationParameter = getVariable(loop);
-    if (iterationParameter == null || !(loop.getParent() instanceof PsiCodeBlock)) return false;
+    if (iterationParameter == null || !(loop.getParent() instanceof PsiCodeBlock)) return null;
     List<PsiExpression> expressions = extractExpressions(loop);
     PsiStatement body = loop.getBody();
-    if (body == null) return false;
+    if (body == null) return null;
     if (expressions.isEmpty() || expressions.size() > MAX_BODY_SIZE_ESTIMATE ||
         (expressions.size() - 1) * body.getTextLength() > MAX_BODY_SIZE_ESTIMATE){
-      return false;
+      return null;
     }
     PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);
-    if (statements.length == 0) return false;
-    if (Arrays.stream(statements).anyMatch(PsiDeclarationStatement.class::isInstance)) return false;
-    if (VariableAccessUtils.variableIsAssigned(iterationParameter, body)) return false;
+    if (statements.length == 0) return null;
+    if (VariableAccessUtils.variableIsAssigned(iterationParameter, body)) return null;
     for (PsiStatement statement : statements) {
       if (isLoopBreak(statement)) continue;
       boolean acceptable = PsiTreeUtil.processElements(statement, e -> {
-        if (e instanceof PsiBreakStatement && ((PsiBreakStatement)e).findExitedStatement() == loop) return false;
-        if (e instanceof PsiContinueStatement && ((PsiContinueStatement)e).findContinuedStatement() == loop) return false;
+        if (e instanceof PsiBreakStatement breakStatement && breakStatement.findExitedStatement() == loop) return false;
+        if (e instanceof PsiContinueStatement continueStatement && continueStatement.findContinuedStatement() == loop) return false;
         return true;
       });
-      if (!acceptable) return false;
+      if (!acceptable) return null;
     }
-    return true;
+    return Presentation.of(getFamilyName());
   }
 
   @Contract("null -> null")
   @Nullable
   private static PsiVariable getVariable(PsiLoopStatement loop) {
-    if (loop instanceof PsiForeachStatement) {
-      return ((PsiForeachStatement)loop).getIterationParameter();
+    if (loop instanceof PsiForeachStatement foreachStatement) {
+      return foreachStatement.getIterationParameter();
     }
-    if (loop instanceof PsiForStatement) {
-      CountingLoop countingLoop = CountingLoop.from((PsiForStatement)loop);
+    if (loop instanceof PsiForStatement forStatement) {
+      CountingLoop countingLoop = CountingLoop.from(forStatement);
       if (countingLoop != null) {
         return countingLoop.getCounter();
       }
@@ -89,14 +92,14 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
 
   @NotNull
   private static List<PsiExpression> extractExpressions(PsiLoopStatement loop) {
-    if (loop instanceof PsiForeachStatement) {
-      PsiExpression expression = ExpressionUtils.resolveExpression(((PsiForeachStatement)loop).getIteratedValue());
+    if (loop instanceof PsiForeachStatement foreachStatement) {
+      PsiExpression expression = ExpressionUtils.resolveExpression(foreachStatement.getIteratedValue());
       expression = PsiUtil.skipParenthesizedExprDown(expression);
-      if (expression instanceof PsiArrayInitializerExpression) {
-        return Arrays.asList(((PsiArrayInitializerExpression)expression).getInitializers());
+      if (expression instanceof PsiArrayInitializerExpression arrayInitializer) {
+        return Arrays.asList(arrayInitializer.getInitializers());
       }
-      if (expression instanceof PsiNewExpression) {
-        PsiArrayInitializerExpression initializer = ((PsiNewExpression)expression).getArrayInitializer();
+      if (expression instanceof PsiNewExpression newExpression) {
+        PsiArrayInitializerExpression initializer = newExpression.getArrayInitializer();
         return initializer == null ? Collections.emptyList() : Arrays.asList(initializer.getInitializers());
       }
       if (expression instanceof PsiMethodCallExpression call) {
@@ -111,8 +114,8 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
         }
         if (CallMatcher.enumValues().test(call)) {
           PsiType type = call.getType();
-          if (type instanceof PsiArrayType) {
-            PsiClass enumClass = PsiUtil.resolveClassInClassTypeOnly(((PsiArrayType)type).getComponentType());
+          if (type instanceof PsiArrayType arrayType) {
+            PsiClass enumClass = PsiUtil.resolveClassInClassTypeOnly(arrayType.getComponentType());
             if (enumClass != null && enumClass.isEnum()) {
               List<PsiEnumConstant> constants = ContainerUtil.filterIsInstance(enumClass.getFields(), PsiEnumConstant.class);
               return generatedList(loop, constants.size(), index -> enumClass.getQualifiedName() + "." + constants.get(index).getName());
@@ -142,8 +145,8 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
         }
       }
     }
-    if (loop instanceof PsiForStatement) {
-      CountingLoop countingLoop = CountingLoop.from((PsiForStatement)loop);
+    if (loop instanceof PsiForStatement forStatement) {
+      CountingLoop countingLoop = CountingLoop.from(forStatement);
       if (countingLoop != null) {
         boolean descending = countingLoop.isDescending();
         long multiplier = descending ? -1 : 1;
@@ -181,12 +184,6 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     };
   }
 
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
-  }
-
   @Override
   @NotNull
   public String getFamilyName() {
@@ -194,17 +191,16 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    PsiLoopStatement loop = PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class);
-    if (loop == null) return;
-    if (!(loop.getParent() instanceof PsiCodeBlock)) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiLoopStatement loop, @NotNull ModPsiUpdater updater) {
+    if (!(loop.getParent() instanceof PsiCodeBlock parentBlock)) return;
     List<PsiExpression> expressions = extractExpressions(loop);
     if (expressions.isEmpty()) return;
+    Project project = context.project();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CommentTracker ct = new CommentTracker();
     PsiElement anchor = loop;
     for (PsiExpression expression : expressions) {
-      PsiLoopStatement copy = (PsiLoopStatement)factory.createStatementFromText(loop.getText(), element);
+      PsiLoopStatement copy = (PsiLoopStatement)factory.createStatementFromText(loop.getText(), loop);
       PsiVariable variable = Objects.requireNonNull(getVariable(copy));
       for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(copy))) {
         final PsiElement referenceElement = reference.getElement();
@@ -218,14 +214,19 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
       PsiElement[] children;
       if (body instanceof PsiBlockStatement) {
         PsiCodeBlock block = ((PsiBlockStatement)Objects.requireNonNull(loop.getBody())).getCodeBlock();
-        PsiElement firstBodyElement = block.getFirstBodyElement();
-        PsiElement lastBodyElement = block.getLastBodyElement();
-        if (firstBodyElement != null && lastBodyElement != null) {
-          ct.markRangeUnchanged(firstBodyElement, lastBodyElement);
+        if (canUnwrapBlock(block, parentBlock, expressions)) {
+          PsiElement firstBodyElement = block.getFirstBodyElement();
+          PsiElement lastBodyElement = block.getLastBodyElement();
+          if (firstBodyElement != null && lastBodyElement != null) {
+            ct.markRangeUnchanged(firstBodyElement, lastBodyElement);
+          }
+          children = ((PsiBlockStatement)body).getCodeBlock().getChildren();
+          // Skip {braces}
+          children = Arrays.copyOfRange(children, 1, children.length-1);
+        } else {
+          ct.markUnchanged(loop.getBody());
+          children = new PsiElement[]{body};
         }
-        children = ((PsiBlockStatement)body).getCodeBlock().getChildren();
-        // Skip {braces}
-        children = Arrays.copyOfRange(children, 1, children.length-1);
       } else {
         ct.markUnchanged(loop.getBody());
         children = new PsiElement[]{body};
@@ -248,6 +249,30 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
       if (variable != null && PsiTreeUtil.isAncestor(variable, expressions.get(0), true)) ct.delete(variable);
     }
     ct.deleteAndRestoreComments(loop);
+  }
+
+  private static boolean canUnwrapBlock(@NotNull PsiCodeBlock block, PsiCodeBlock parentBlock, List<PsiExpression> expressions) {
+    for (PsiStatement statement : block.getStatements()) {
+      if (statement instanceof PsiDeclarationStatement declaration) {
+        if (expressions.size() > 1) return false;
+        for (PsiElement element : declaration.getDeclaredElements()) {
+          PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(block.getProject());
+          if (element instanceof PsiVariable variable) {
+            String name = variable.getName();
+            if (name != null && resolveHelper.resolveReferencedVariable(name, parentBlock) != null) {
+              return false;
+            }
+          }
+          if (element instanceof PsiClass psiClass) {
+            String name = psiClass.getName();
+            if (name != null && resolveHelper.resolveReferencedClass(name, parentBlock) != null) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+    return true;
   }
 
   private static boolean isLoopBreak(PsiStatement statement) {

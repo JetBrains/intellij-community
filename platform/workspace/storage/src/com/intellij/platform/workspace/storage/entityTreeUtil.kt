@@ -1,10 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
-import com.intellij.util.containers.FList
-import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.AbstractEntityStorage
 import com.intellij.platform.workspace.storage.impl.EntityId
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.asParent
+import com.intellij.util.containers.FList
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * via [com.intellij.platform.workspace.storage.MutableEntityStorage.addEntity] function.
  */
 @Experimental
-fun <T : WorkspaceEntity> T.createEntityTreeCopy(requireTopLevelEntity: Boolean = false): WorkspaceEntity.Builder<T> {
+public fun <T : WorkspaceEntity> T.createEntityTreeCopy(requireTopLevelEntity: Boolean = false): WorkspaceEntity.Builder<T> {
   //copying entity from another snapshot
   val originalSnapshot = (this as WorkspaceEntityBase).snapshot as AbstractEntityStorage
   val entityData = originalSnapshot.entityDataByIdOrDie(id)

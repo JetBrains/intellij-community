@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -247,6 +247,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
   void addPresentationCustomizer(@NotNull ItemPresentationCustomizer customizer) {
     myCustomizers.add(customizer);
+    updateIconWidth(EmptyIcon.ICON_0); // Need to make sure we've got at least enough space for the customizations alone.
   }
 
   private static int calcSpacing(@NotNull SimpleColoredComponent component, @Nullable Icon icon) {
@@ -419,7 +420,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
    * Splits the nameComponent into fragments based on the offsets of the decorated text ranges,
    * then applies the appropriate decorations to each fragment.
    */
-  private void renderItemNameDecoration(SimpleColoredComponent nameComponent,
+  private static void renderItemNameDecoration(SimpleColoredComponent nameComponent,
                                                @NotNull List<LookupElementPresentation.DecoratedTextRange> itemNameDecorations,
                                                @NotNull LookupElement item) {
     if (nameComponent.getFragmentCount() == 0 || itemNameDecorations.isEmpty()) {
@@ -455,19 +456,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
         //must be last
         if (decoration == LookupElementPresentation.LookupItemDecoration.HIGHLIGHT_MATCHED) {
-          final String prefix = item instanceof EmptyLookupItem ? "" : myLookup.itemPattern(item);
-          String fragment = iterator.getFragment();
-          Iterable<TextRange> ranges = getMatchingFragments(prefix, fragment);
-          if (ranges != null) {
-            SimpleTextAttributes highlighted = new SimpleTextAttributes(iterator.getTextAttributes().getStyle(), MATCHED_FOREGROUND_COLOR);
-            int nextStartPoint = 0;
-            for (TextRange nextHighlightedRange : ranges) {
-              iterator.split(nextHighlightedRange.getStartOffset() - nextStartPoint, iterator.getTextAttributes());
-              nextStartPoint = nextHighlightedRange.getStartOffset();
-              iterator.split(nextHighlightedRange.getEndOffset() - nextStartPoint, highlighted);
-              nextStartPoint = nextHighlightedRange.getEndOffset();
-            }
-          }
+          SimpleTextAttributes highlighted = new SimpleTextAttributes(iterator.getTextAttributes().getStyle(), MATCHED_FOREGROUND_COLOR);
+          iterator.setTextAttributes(highlighted);
         }
       }
     }
@@ -550,8 +540,6 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
     if (icon == null) {
       return standard;
-    } else if (icon instanceof IconDecorator decoratorIcon) {
-      return decoratorIcon.withDelegate(augmentIcon(editor, decoratorIcon.getDelegate(), standard));
     }
 
     icon = removeVisibilityIfNeeded(editor, icon, standard);
@@ -630,7 +618,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   void itemAdded(@NotNull LookupElement element, @NotNull LookupElementPresentation fastPresentation) {
-    updateIconWidth(fastPresentation);
+    updateIconWidth(fastPresentation.getIcon());
     scheduleUpdateLookupWidthFromVisibleItems();
     AsyncRendering.rememberPresentation(element, fastPresentation);
 
@@ -644,14 +632,25 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
   }
 
-  private void updateIconWidth(LookupElementPresentation p){
-    Icon icon = p.getIcon();
-    if (icon != null && (icon.getIconWidth() > myEmptyIcon.getIconWidth() || icon.getIconHeight() > myEmptyIcon.getIconHeight())) {
-      if (icon instanceof DeferredIcon) {
-        icon = ((DeferredIcon)icon).getBaseIcon();
-      }
-      icon = removeVisibilityIfNeeded(myLookup.getEditor(), icon, myEmptyIcon);
+  void refreshUi() {
+    // Something has changed, possibly the customizers are affected, make sure the icon area is still large enough.
+    updateIconWidth(EmptyIcon.ICON_0);
+  }
 
+  private void updateIconWidth(@Nullable Icon baseIcon) {
+    Icon icon = baseIcon;
+    if (icon == null) {
+      return;
+    }
+    if (icon instanceof DeferredIcon) {
+      icon = ((DeferredIcon)icon).getBaseIcon();
+    }
+    icon = removeVisibilityIfNeeded(myLookup.getEditor(), icon, myEmptyIcon);
+    icon = EmptyIcon.create(icon);
+    for (ItemPresentationCustomizer customizer : myCustomizers) {
+      icon = customizer.customizeEmptyIcon(icon);
+    }
+    if (icon.getIconWidth() > myEmptyIcon.getIconWidth() || icon.getIconHeight() > myEmptyIcon.getIconHeight()) {
       myEmptyIcon = EmptyIcon.create(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()),
                                      Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
       setIconInsets(myNameComponent);
@@ -663,13 +662,13 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   private int updateMaximumWidth(LookupElementPresentation p, LookupElement item) {
-    updateIconWidth(p);
+    updateIconWidth(p.getIcon());
     return calculateWidth(p, getRealFontMetrics(item, false, CUSTOM_NAME_FONT), getRealFontMetrics(item, true, CUSTOM_NAME_FONT)) +
            calcSpacing(myTailComponent, null) + calcSpacing(myTypeLabel, null);
   }
 
   int getTextIndent() {
-    return myNameComponent.getIpad().left + myEmptyIcon.getIconWidth() + myNameComponent.getIconTextGap();
+    return myPanel.getInsets().left + myNameComponent.getIpad().left + myEmptyIcon.getIconWidth() + myNameComponent.getIconTextGap();
   }
 
   private static int calculateWidth(LookupElementPresentation presentation, FontMetrics normalMetrics, FontMetrics boldMetrics) {
@@ -709,7 +708,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
   }
 
-  private class LookupPanel extends SelectablePanel {
+  private final class LookupPanel extends SelectablePanel {
     boolean myUpdateExtender;
     LookupPanel() {
       setLayout(new BorderLayout());
@@ -751,7 +750,10 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   /**
    * Allows to update element's presentation during completion session.
    * <p>
-   * Be careful, the lookup won't be resized according to the changes inside {@link #customizePresentation}.
+   * Be careful, the lookup won't be resized according to the changes inside {@link #customizePresentation}
+   * except for the customization of the icon size, which needs to be properly implemented in
+   * {@link #customizeEmptyIcon(Icon)} for the completion popup to be aligned properly with
+   * the text in the editor.
    */
   @ApiStatus.Internal
   public interface ItemPresentationCustomizer {
@@ -763,6 +765,17 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     @NotNull
     LookupElementPresentation customizePresentation(@NotNull LookupElement item,
                                                     @NotNull LookupElementPresentation presentation);
+
+    /**
+     * Invoked to compute the size of the icon area to ensure proper popup alignment.
+     * <p>
+     *   Should mimic what {@link #customizePresentation(LookupElement, LookupElementPresentation)} does
+     *   to the presentation's icon as close as far as the icon size is concerned.
+     * </p>
+     * @param emptyIcon the empty icon, possibly already customized by the previous customizers
+     * @return the modified empty icon, or {@code emptyIcon} if the size doesn't need to be changed
+     */
+    @NotNull Icon customizeEmptyIcon(@NotNull Icon emptyIcon);
   }
 
   /**

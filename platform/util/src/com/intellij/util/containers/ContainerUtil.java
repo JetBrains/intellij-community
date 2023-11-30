@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
 
 import java.util.WeakHashMap;
@@ -46,7 +45,7 @@ public final class ContainerUtil {
   @SafeVarargs
   @Contract(pure = true)
   @Deprecated
-  public static @NotNull <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, Pair<? extends K,? extends V> @NotNull ... entries) {
+  public static @NotNull <K, V> Map<K, V> newHashMap(@NotNull Pair<? extends K, ? extends V> first, @NotNull Pair<? extends K,? extends V> @NotNull ... entries) {
     Map<K, V> map = new HashMap<>(entries.length + 1);
     map.put(first.getFirst(), first.getSecond());
     for (Pair<? extends K, ? extends V> entry : entries) {
@@ -95,6 +94,7 @@ public final class ContainerUtil {
    * The former method is here to highlight incorrect usages of the latter.
    */
   @Contract(pure = true)
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NotNull <T> LinkedList<T> newLinkedList() {
     return new LinkedList<>();
@@ -279,6 +279,7 @@ public final class ContainerUtil {
    * DO NOT remove this method until {@link #newHashSet(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
   public static @NotNull <T> HashSet<T> newHashSet(@NotNull Collection<? extends T> iterable) {
@@ -344,15 +345,6 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <T> LinkedHashSet<T> newLinkedHashSet(T @NotNull ... elements) {
     return new LinkedHashSet<>(Arrays.asList(elements));
-  }
-
-  /**
-   * @deprecated Use {@link HashSet#HashSet()}
-   */
-  @Deprecated
-  @Contract(pure = true)
-  public static @NotNull <T> THashSet<T> newTroveSet() {
-    return new THashSet<>();
   }
 
   /**
@@ -455,6 +447,7 @@ public final class ContainerUtil {
    * The former method is here to highlight incorrect usages of the latter.
    */
   @Contract(pure = true)
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @Unmodifiable @NotNull <E> List<E> immutableList() {
     return Collections.emptyList();
@@ -656,30 +649,36 @@ public final class ContainerUtil {
     return res;
   }
 
+  public enum MergeResult { COPIED_FROM_LIST1, MERGED_EQUAL_FROM_BOTH, COPIED_FROM_LIST2 }
   /**
    * Process both sorted lists in order defined by {@code comparator}, call {@code processor} for each element in the merged list result.
    * When equal elements occurred, then if {@code mergeEqualItems} then output only the element from the {@code list1} and ignore the second,
    * else output them both in unspecified order.
-   * {@code processor} is invoked for each (output element, is the element from {@code list1}) pair.
-   * Both {@code list1} and {@code list2} must be sorted according to {@code comparator}
+   * {@code processor} is invoked for each output element, with the following arguments:
+   * <ul>
+   * <li> When the element {@code e} from the {@code list1} was copied to the result list, then {@code processor.consume(e, MergeResult.COPIED_FROM_LIST1)} will be invoked.</li>
+   * <li> When the element {@code e} from the {@code list2} was copied to the result list, then {@code processor.consume(e, MergeResult.COPIED_FROM_LIST2)} will be invoked.</li>
+   * <li> When both elements {@code e1} from the {@code list1} and {@code e2} from the {@code list2} were merged into one, then {@code processor.consume(e, MergeResult.MERGED_EQUAL_FROM_BOTH)} will be invoked.</li>
+   * </ul>
+   * Both {@code list1} and {@code list2} must be sorted according to the {@code comparator}
    */
   public static <T> void processSortedListsInOrder(@NotNull List<? extends T> list1,
                                                    @NotNull List<? extends T> list2,
                                                    @NotNull Comparator<? super T> comparator,
                                                    boolean mergeEqualItems,
                                                    // (`element in the result`, `is the element from the list1`)
-                                                   @NotNull PairConsumer<? super T, ? super Boolean> processor) {
+                                                   @NotNull PairConsumer<? super T, ? super MergeResult> processor) {
     int index1 = 0;
     int index2 = 0;
     while (index1 < list1.size() || index2 < list2.size()) {
       T e;
       if (index1 >= list1.size()) {
         e = list2.get(index2++);
-        processor.consume(e, false);
+        processor.consume(e, MergeResult.COPIED_FROM_LIST2);
       }
       else if (index2 >= list2.size()) {
         e = list1.get(index1++);
-        processor.consume(e, true);
+        processor.consume(e, MergeResult.COPIED_FROM_LIST1);
       }
       else {
         T element1 = list1.get(index1);
@@ -690,23 +689,23 @@ public final class ContainerUtil {
           index2++;
           if (mergeEqualItems) {
             e = element1;
-            processor.consume(e, true);
+            processor.consume(e, MergeResult.MERGED_EQUAL_FROM_BOTH);
           }
           else {
-            processor.consume(element1, true);
+            processor.consume(element1, MergeResult.COPIED_FROM_LIST1);
             e = element2;
-            processor.consume(e, false);
+            processor.consume(e, MergeResult.COPIED_FROM_LIST2);
           }
         }
         else if (c < 0) {
           e = element1;
           index1++;
-          processor.consume(e, true);
+          processor.consume(e, MergeResult.COPIED_FROM_LIST1);
         }
         else {
           e = element2;
           index2++;
-          processor.consume(e, false);
+          processor.consume(e, MergeResult.COPIED_FROM_LIST2);
         }
       }
     }
@@ -883,7 +882,12 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T, K, V> Map<K, V> map2Map(T @NotNull [] collection, @NotNull Function<? super T, ? extends Pair<? extends K, ? extends V>> mapper) {
-    return map2Map(Arrays.asList(collection), mapper);
+    Map<K, V> set = new HashMap<>(collection.length);
+    for (T t : collection) {
+      Pair<? extends K, ? extends V> pair = mapper.fun(t);
+      set.put(pair.first, pair.second);
+    }
+    return set;
   }
 
   @Contract(pure = true)
@@ -899,21 +903,28 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T, K, V> Map<K, V> map2MapNotNull(T @NotNull [] collection,
-                                                            @NotNull Function<? super T, ? extends Pair<? extends K, ? extends V>> mapper) {
-    return map2MapNotNull(Arrays.asList(collection), mapper);
+                                                            @NotNull Function<? super T, ? extends @Nullable Pair<? extends K, ? extends V>> mapper) {
+    Map<K, V> result = new HashMap<>(collection.length);
+    for (T t : collection) {
+      Pair<? extends K, ? extends V> pair = mapper.fun(t);
+      if (pair != null) {
+        result.put(pair.first, pair.second);
+      }
+    }
+    return result;
   }
 
   @Contract(pure = true)
   public static @NotNull <T, K, V> Map<K, V> map2MapNotNull(@NotNull Collection<? extends T> collection,
-                                                            @NotNull Function<? super T, ? extends Pair<? extends K, ? extends V>> mapper) {
-    Map<K, V> set = new HashMap<>(collection.size());
+                                                            @NotNull Function<? super T, ? extends @Nullable Pair<? extends K, ? extends V>> mapper) {
+    Map<K, V> result = new HashMap<>(collection.size());
     for (T t : collection) {
       Pair<? extends K, ? extends V> pair = mapper.fun(t);
       if (pair != null) {
-        set.put(pair.first, pair.second);
+        result.put(pair.first, pair.second);
       }
     }
-    return set;
+    return result;
   }
 
   @Contract(pure = true)
@@ -1109,7 +1120,12 @@ public final class ContainerUtil {
     collection.removeIf(t -> !collected.add(t));
   }
 
+  /**
+   * @deprecated use {@link Map#of}
+   */
   @Contract(pure = true)
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static @NotNull Map<String, String> stringMap(String @NotNull ... keyValues) {
     Map<String, String> result = new HashMap<>();
     for (int i = 0; i < keyValues.length - 1; i+=2) {
@@ -1322,8 +1338,12 @@ public final class ContainerUtil {
    * @return read-only list consisting of the elements from the {@code collection} of the specified {@code aClass}
    */
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T, V> List<T> concat(V @NotNull [] array, @NotNull Function<? super V, ? extends Collection<? extends T>> fun) {
-    return concat(Arrays.asList(array), fun);
+  public static @Unmodifiable @NotNull <T, V> List<T> concat(V @NotNull [] array, @NotNull Function<? super V, ? extends Collection<? extends T>> listGenerator) {
+    List<T> result = new ArrayList<>();
+    for (V v : array) {
+      result.addAll(listGenerator.fun(v));
+    }
+    return result.isEmpty() ? emptyList() : result;
   }
 
   /**
@@ -1349,7 +1369,21 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> append(@NotNull List<? extends T> list, T @NotNull ... values) {
     //noinspection unchecked
-    return values.length == 0 ? (List<T>)list : concat(list, Arrays.asList(values));
+    if (values.length == 0) {
+      return (List<T>)list;
+    }
+
+    return new AbstractList<T>() {
+      @Override
+      public T get(int index) {
+        return index < list.size() ? list.get(index) : values[index - list.size()];
+      }
+
+      @Override
+      public int size() {
+        return list.size() + values.length;
+      }
+    };
   }
 
   /**
@@ -1360,7 +1394,20 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> List<T> prepend(@NotNull List<? extends T> list, T @NotNull ... values) {
     //noinspection unchecked
-    return values.length == 0 ? (List<T>)list : concat(Arrays.asList(values), list);
+    if (values.length == 0) {
+      return (List<T>)list;
+    }
+    return new AbstractList<T>() {
+      @Override
+      public T get(int index) {
+        return index < values.length? values[index] : list.get(index - values.length);
+      }
+
+      @Override
+      public int size() {
+        return list.size() + values.length;
+      }
+    };
   }
 
   /**
@@ -1386,11 +1433,7 @@ public final class ContainerUtil {
     return new AbstractList<T>() {
       @Override
       public T get(int index) {
-        if (index < size1) {
-          return list1.get(index);
-        }
-
-        return list2.get(index - size1);
+        return index < size1 ? list1.get(index) : list2.get(index - size1);
       }
 
       @Override
@@ -1442,7 +1485,7 @@ public final class ContainerUtil {
 
   @SafeVarargs
   @Contract(pure = true)
-  public static @NotNull <T> Iterable<T> concat(Iterable<? extends T> @NotNull ... iterables) {
+  public static @NotNull <T> Iterable<T> concat(@NotNull Iterable<? extends T> @NotNull ... iterables) {
     if (iterables.length == 0) return Collections.emptyList();
     if (iterables.length == 1) {
       //noinspection unchecked
@@ -1461,7 +1504,7 @@ public final class ContainerUtil {
 
   @SafeVarargs
   @Contract(pure = true)
-  public static @NotNull <T> Iterator<T> concatIterators(Iterator<? extends T> @NotNull ... iterators) {
+  public static @NotNull <T> Iterator<T> concatIterators(@NotNull Iterator<? extends T> @NotNull ... iterators) {
     return new SequenceIterator<>(iterators);
   }
 
@@ -1488,7 +1531,10 @@ public final class ContainerUtil {
    */
   @SafeVarargs
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T> List<T> concat(List<? extends T> @NotNull ... lists) {
+  public static @Unmodifiable @NotNull <T> List<T> concat(@NotNull List<? extends T> @NotNull ... lists) {
+    if (lists.length == 1) {
+      return (List<T>)lists[0];
+    }
     int size = 0;
     for (List<? extends T> each : lists) {
       size += each.size();
@@ -1651,6 +1697,7 @@ public final class ContainerUtil {
    * DO NOT remove this method until {@link #iterateAndGetLastItem(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
   public static <T> T iterateAndGetLastItem(@NotNull List<? extends T> items) {
@@ -1956,7 +2003,7 @@ public final class ContainerUtil {
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T, V> List<@NotNull V> mapNotNull(T @NotNull [] array,
-                                                            @NotNull Function<? super T, ? extends @Nullable V> mapping) {
+                                                                          @NotNull Function<? super T, ? extends @Nullable V> mapping) {
     if (array.length == 0) {
       return emptyList();
     }
@@ -2002,7 +2049,7 @@ public final class ContainerUtil {
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T, V> List<@NotNull V> mapNotNull(@NotNull Iterable<? extends T> iterable,
-                                                            @NotNull Function<? super T, ? extends @Nullable V> mapping) {
+                                                                          @NotNull Function<? super T, ? extends @Nullable V> mapping) {
     List<V> result = new ArrayList<>();
     for (T t : iterable) {
       V o = mapping.fun(t);
@@ -2020,7 +2067,7 @@ public final class ContainerUtil {
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T, V> List<@NotNull V> mapNotNull(@NotNull Collection<? extends T> collection,
-                                                            @NotNull Function<? super T, ? extends @Nullable V> mapping) {
+                                                                          @NotNull Function<? super T, ? extends @Nullable V> mapping) {
     if (collection.isEmpty()) {
       return emptyList();
     }
@@ -2081,6 +2128,7 @@ public final class ContainerUtil {
    * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> Set<T> set() {
@@ -2524,16 +2572,6 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link Stack#Stack()}
-   */
-  @Contract(value = " -> new", pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull <T> Stack<T> newStack() {
-    return new Stack<>();
-  }
-
-  /**
    * @return read-only empty list
    * The only difference from {@link Collections#emptyList()} is that this list doesn't produce garbage in its {@link List#toArray()} method
    */
@@ -2561,7 +2599,7 @@ public final class ContainerUtil {
    */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <T> List<T> createLockFreeCopyOnWriteList() {
-    return createConcurrentList();
+    return new LockFreeCopyOnWriteArrayList<>();
   }
 
   /**
@@ -2573,16 +2611,6 @@ public final class ContainerUtil {
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull <T> List<T> createLockFreeCopyOnWriteList(@NotNull Collection<? extends T> c) {
     return new LockFreeCopyOnWriteArrayList<>(c);
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentLongObjectMap()} instead
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @Contract(value = " -> new", pure = true)
-  public static @NotNull <V> ConcurrentLongObjectMap<@NotNull V> createConcurrentLongObjectMap() {
-    return new ConcurrentLongObjectHashMap<>();
   }
 
   /**
@@ -2663,16 +2691,6 @@ public final class ContainerUtil {
   }
 
   /**
-   * @return read-only list consisting of results of {@code mapper.fun} for each element in {@code array}
-   * @deprecated use {@link #map(Object[], Function)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @Unmodifiable @NotNull <T, V> List<V> map2List(T @NotNull [] array, @NotNull Function<? super T, ? extends V> mapper) {
-    return map(array, mapper);
-  }
-
-  /**
    * @deprecated use {@link #map(Collection, Function)}
    */
   @Contract(pure = true)
@@ -2724,7 +2742,7 @@ public final class ContainerUtil {
    * @return read-only set consisting of not null results of {@code mapper.fun} for each element in {@code collection}
    */
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T, V> Set<V> map2SetNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
+  public static @Unmodifiable @NotNull <T, V> Set<@NotNull V> map2SetNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
     if (collection.isEmpty()) return Collections.emptySet();
     Set <V> set = new HashSet<>(collection.size());
     for (T t : collection) {
@@ -2796,6 +2814,7 @@ public final class ContainerUtil {
    * DO NOT remove this method until {@link #toCollection(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
   public static @NotNull <T> Collection<T> toCollection(@NotNull Collection<? extends T> iterable) {

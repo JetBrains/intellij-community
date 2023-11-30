@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.InsertHandlerDecorator;
@@ -54,7 +54,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
   public static final Key<Boolean> WORD_COMPLETION_COMPATIBLE = Key.create("WORD_COMPLETION_COMPATIBLE");
   public static final EntityRefInsertHandler ENTITY_INSERT_HANDLER = new EntityRefInsertHandler();
 
-  @NonNls public static final String TAG_NAME_COMPLETION_FEATURE = "tag.name.completion";
+  public static final @NonNls String TAG_NAME_COMPLETION_FEATURE = "tag.name.completion";
   private static final InsertHandler<LookupElementDecorator<LookupElement>> QUOTE_EATER = new InsertHandlerDecorator<>() {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
@@ -114,7 +114,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
              @Override
              protected void addCompletions(@NotNull CompletionParameters parameters,
                                            @NotNull ProcessingContext context,
-                                           @NotNull final CompletionResultSet result) {
+                                           final @NotNull CompletionResultSet result) {
                final PsiElement position = parameters.getPosition();
                if (!position.getLanguage().isKindOf(XMLLanguage.INSTANCE)) {
                  return;
@@ -181,7 +181,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
     super.fillCompletionVariants(parameters, result);
     if (result.isStopped()) {
       return;
@@ -243,7 +243,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public String advertise(@NotNull final CompletionParameters parameters) {
+  public String advertise(final @NotNull CompletionParameters parameters) {
     if (isXmlNameCompletion(parameters) && parameters.getCompletionType() == CompletionType.BASIC) {
       if (FeatureUsageTracker.getInstance().isToBeAdvertisedInLookup(TAG_NAME_COMPLETION_FEATURE, parameters.getPosition().getProject())) {
         final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION);
@@ -254,7 +254,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
   }
 
   @Override
-  public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
+  public void beforeCompletion(final @NotNull CompletionInitializationContext context) {
     final int offset = context.getStartOffset();
     final PsiFile file = context.getFile();
     final XmlAttributeValue attributeValue = PsiTreeUtil.findElementOfClassAtOffset(file, offset, XmlAttributeValue.class, true);
@@ -290,7 +290,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
     final boolean acceptSystemEntities = containingFile.getFileType() == XmlFileType.INSTANCE;
     final PsiElementProcessor<PsiElement> processor = new PsiElementProcessor<>() {
       @Override
-      public boolean execute(@NotNull final PsiElement element) {
+      public boolean execute(final @NotNull PsiElement element) {
         if (element instanceof XmlEntityDecl xmlEntityDecl) {
           if (xmlEntityDecl.isInternalReference() || acceptSystemEntities) {
             final LookupElementBuilder _item = buildEntityLookupItem(xmlEntityDecl);
@@ -315,8 +315,7 @@ public final class XmlCompletionContributor extends CompletionContributor {
     }
   }
 
-  @Nullable
-  private static LookupElementBuilder buildEntityLookupItem(@NotNull final XmlEntityDecl decl) {
+  private static @Nullable LookupElementBuilder buildEntityLookupItem(final @NotNull XmlEntityDecl decl) {
     final String name = decl.getName();
     if (name == null) {
       return null;

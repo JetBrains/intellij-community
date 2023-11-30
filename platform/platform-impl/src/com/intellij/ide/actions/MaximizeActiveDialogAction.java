@@ -1,11 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,7 +16,8 @@ public final class MaximizeActiveDialogAction extends WindowAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Window window = UIUtil.getWindow(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+    @Nullable Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    Window window = ComponentUtil.getWindow(component);
     if (!(window instanceof JDialog)) return;
     doMaximize((JDialog)window);
   }

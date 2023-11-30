@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -348,16 +348,14 @@ final class TrafficLightPopup {
                                 myPopup.setSize(size);
                               },
                               true) {
-      @NotNull
       @Override
-      protected String itemToString(@NotNull InspectionsLevel item) {
+      protected @NotNull String itemToString(@NotNull InspectionsLevel item) {
         return prefix + item;
       }
     };
   }
 
-  @NotNull
-  private static JLabel createNoChangeLabel(@NotNull LanguageHighlightLevel level, @NotNull @Nls String prefix, @NotNull @Nls String msg) {
+  private static @NotNull JLabel createNoChangeLabel(@NotNull LanguageHighlightLevel level, @NotNull @Nls String prefix, @NotNull @Nls String msg) {
     JLabel label = new JLabel(prefix + level.getLevel());
     new HelpTooltip().setDescription(msg).installOn(label);
     return label;

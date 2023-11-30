@@ -39,7 +39,7 @@ public class PyForceStepIntoAction extends ForceStepIntoAction {
         session.forceStepInto();
       }
 
-      private boolean isPythonConfig(final DataContext dataContext) {
+      private static boolean isPythonConfig(final DataContext dataContext) {
         Project project = CommonDataKeys.PROJECT.getData(dataContext);
         if (project == null) return false;
         RunnerAndConfigurationSettings settings = RunManager.getInstance(project).getSelectedConfiguration();

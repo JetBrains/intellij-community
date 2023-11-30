@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.util.match
  * [org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SharedK1LocalInspectionTestGenerated.AmbiguousNonLocalJump]
  * [org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.SharedK2LocalInspectionTestGenerated.AmbiguousNonLocalJump]
  */
-class AmbiguousNonLocalJumpInspection : AbstractKotlinInspection() {
+internal class AmbiguousNonLocalJumpInspection : AbstractKotlinInspection() {
     // The inspection only makes sense when BreakContinueInInlineLambdas feature is on
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         if (holder.file.languageVersionSettings.supportsFeature(LanguageFeature.BreakContinueInInlineLambdas)) MyVisitor(holder)

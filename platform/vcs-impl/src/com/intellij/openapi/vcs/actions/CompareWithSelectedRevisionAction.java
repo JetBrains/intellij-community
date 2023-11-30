@@ -306,6 +306,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
     builder.setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
         setItemChosenCallback(runnable).
         setResizable(true).
+        setMovable(true).
         setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").setMinSize(new JBDimension(300, 300));
     final JBPopup popup = builder.createPopup();
 

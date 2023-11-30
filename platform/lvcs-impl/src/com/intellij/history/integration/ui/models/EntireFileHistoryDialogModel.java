@@ -7,7 +7,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class EntireFileHistoryDialogModel extends FileHistoryDialogModel {
+public final class EntireFileHistoryDialogModel extends FileHistoryDialogModel {
   public EntireFileHistoryDialogModel(Project p, IdeaGateway gw, LocalHistoryFacade vcs, VirtualFile f) {
     super(p, gw, vcs, f);
   }

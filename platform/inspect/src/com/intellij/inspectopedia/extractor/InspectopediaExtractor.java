@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.intellij.codeInspection.InspectionEP;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.codeInspection.options.*;
@@ -23,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,20 +35,12 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public final class InspectopediaExtractor implements ApplicationStarter {
+final class InspectopediaExtractor implements ApplicationStarter {
   private static final Logger LOG = Logger.getInstance(InspectopediaExtractor.class);
-  public static final String IDE_CODE = ApplicationInfo.getInstance().getBuild().getProductCode().toLowerCase(Locale.getDefault());
-  public static final String IDE_NAME = ApplicationInfo.getInstance().getVersionName();
-  public static final String IDE_VERSION = ApplicationInfo.getInstance().getShortVersion();
-  private static final String ASSET_FILENAME = IDE_CODE + "-inspections.";
   private static final Map<String, ObjectMapper> ASSETS = new HashMap<>();
 
   static {
-/*    final XmlMapper xmlMapper = new XmlMapper();
-    xmlMapper.configure(ToXmlGenerator.Feature.WRITE_XML_DECLARATION, true);
-    xmlMapper.enable(SerializationFeature.INDENT_OUTPUT);
-    ASSETS.put("xml", xmlMapper);*/
-    final JsonMapper jsonMapper = JsonMapper.builder()
+    JsonMapper jsonMapper = JsonMapper.builder()
       .enable(SerializationFeature.INDENT_OUTPUT)
       .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
       .build();
@@ -65,6 +59,12 @@ public final class InspectopediaExtractor implements ApplicationStarter {
       LOG.error("Usage: %s <output directory>".formatted(getCommandName()));
       System.exit(-1);
     }
+
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    String IDE_CODE = appInfo.getBuild().getProductCode().toLowerCase(Locale.getDefault());
+    String IDE_NAME = appInfo.getVersionName();
+    String IDE_VERSION = appInfo.getShortVersion();
+    String ASSET_FILENAME = IDE_CODE + "-inspections.";
 
     final String outputDirectory = args.get(1);
     final Path rootOutputPath = Path.of(outputDirectory).toAbsolutePath();
@@ -107,11 +107,12 @@ public final class InspectopediaExtractor implements ApplicationStarter {
 
         List<OptionsPanelInfo> panelInfo = null;
         try {
-          final OptPane panel = wrapper.getTool().getOptionsPane();
+          InspectionProfileEntry tool = wrapper.getTool();
+          final OptPane panel = tool.getOptionsPane();
 
           if (!panel.equals(OptPane.EMPTY)) {
             LOG.info("Saving options panel for " + wrapper.getShortName());
-            panelInfo = retrievePanelStructure(panel);
+            panelInfo = retrievePanelStructure(panel, tool.getOptionController());
           }
         }
         catch (Throwable t) {
@@ -203,17 +204,26 @@ public final class InspectopediaExtractor implements ApplicationStarter {
     }
   }
 
-  private static @NotNull List<@NotNull OptionsPanelInfo> retrievePanelStructure(final @NotNull OptPane pane) {
+  private static @NotNull List<@NotNull OptionsPanelInfo> retrievePanelStructure(@NotNull OptPane pane,
+                                                                                 @NotNull OptionController controller) {
     List<OptionsPanelInfo> children = new ArrayList<>();
     for (OptRegularComponent component : pane.components()) {
-      children.add(retrievePanelStructure(component));
+      children.add(retrievePanelStructure(component, controller));
     }
     return children;
   }
 
-  private static @NotNull OptionsPanelInfo retrievePanelStructure(@NotNull OptComponent component) {
+  private static @NotNull OptionsPanelInfo retrievePanelStructure(@NotNull OptComponent component, @NotNull OptionController controller) {
     final OptionsPanelInfo result = new OptionsPanelInfo();
     result.type = component.getClass().getSimpleName();
+    result.value = component instanceof OptControl control ? controller.getOption(control.bindId()) : null;
+    if (component instanceof OptDropdown dropdown) {
+      if (result.value != null) {
+        OptDropdown.Option option = dropdown.findOption(result.value);
+        result.value = option == null ? null : option.label().label();
+      }
+      result.content = ContainerUtil.map(dropdown.options(), opt -> opt.label().label());
+    }
     LocMessage text = getMyText(component);
     result.text = text == null ? null : text.label();
     if (component instanceof OptDescribedComponent describedComponent) {
@@ -222,7 +232,7 @@ public final class InspectopediaExtractor implements ApplicationStarter {
     }
     List<OptionsPanelInfo> children = new ArrayList<>();
     for (OptComponent child : component.children()) {
-      children.add(retrievePanelStructure(child));
+      children.add(retrievePanelStructure(child, controller));
     }
     if (!children.isEmpty()) {
       result.children = children;

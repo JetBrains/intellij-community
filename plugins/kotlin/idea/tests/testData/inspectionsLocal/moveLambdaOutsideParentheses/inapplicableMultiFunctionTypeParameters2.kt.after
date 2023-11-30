@@ -1,3 +1,5 @@
+// HIGHLIGHT: INFORMATION
+
 fun test(a: (String) -> Unit = {}, b: (String) -> Unit = {}) {
     a("a")
     b("b")

@@ -24,7 +24,8 @@ public final class UpdateRequestParameters {
     }
   }
 
-  static @NotNull Url amendUpdateRequest(@NotNull Url url) {
+  @ApiStatus.Internal
+  public static @NotNull Url amendUpdateRequest(@NotNull Url url) {
     synchronized (ourParameters) {
       return url.addParameters(ourParameters);
     }

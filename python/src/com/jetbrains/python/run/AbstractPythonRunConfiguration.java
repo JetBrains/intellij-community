@@ -35,10 +35,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 
 /**
  * @author Leonid Shalupov
@@ -231,6 +230,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   @Override
   @Nullable
+  @Transient
   public Sdk getSdk() {
     if (myUseModuleSdk) {
       return PythonSdkUtil.findPythonSdk(getModule());
@@ -241,6 +241,20 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     else {
       return PythonSdkUtil.findSdkByPath(getSdkHome());
     }
+  }
+
+  @NotNull
+  private List<String> myEnvFiles = Collections.emptyList();
+
+  @NotNull
+  @Override
+  public List<String> getEnvFilePaths() {
+    return myEnvFiles;
+  }
+
+  @Override
+  public void setEnvFilePaths(@NotNull List<String> envFiles) {
+    myEnvFiles = envFiles;
   }
 
   @Override
@@ -254,6 +268,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     if (sdkName != null) {
       mySdk = PythonSdkUtil.findSdkByKey(sdkName);
     }
+
+    var output = JDOMExternalizerUtil.readField(element, "ENV_FILES");
+    myEnvFiles = output != null ? StringUtil.split(output, File.pathSeparator) : Collections.emptyList();
 
     myWorkingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY");
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
@@ -281,6 +298,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
+    JDOMExternalizerUtil.writeField(element, "ENV_FILES", String.join(File.pathSeparator, myEnvFiles));
     JDOMExternalizerUtil.writeField(element, "INTERPRETER_OPTIONS", myInterpreterOptions);
     writeEnvs(element);
     JDOMExternalizerUtil.writeField(element, "SDK_HOME", mySdkHome);
@@ -332,6 +350,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
+  @Transient
   public void setSdk(@Nullable Sdk sdk) {
     mySdk = sdk;
   }
@@ -374,6 +393,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   public static void copyParams(AbstractPythonRunConfigurationParams source, AbstractPythonRunConfigurationParams target) {
+    target.setEnvFilePaths(source.getEnvFilePaths());
     target.setEnvs(new LinkedHashMap<>(source.getEnvs()));
     target.setInterpreterOptions(source.getInterpreterOptions());
     target.setPassParentEnvs(source.isPassParentEnvs());
@@ -407,7 +427,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   /**
    * Patches command line before virtualenv patchers.
    * Default implementation does nothing.
-   *
    */
   protected void patchCommandLineFirst(GeneralCommandLine commandLine, String sdkHome) {
     // override
@@ -416,7 +435,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   /**
    * Patches command line after virtualenv patchers.
    * Default implementation does nothing.
-   *
    */
   protected void patchCommandLineLast(GeneralCommandLine commandLine, String sdkHome) {
     // override
@@ -424,7 +442,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   /**
    * Alters PATH so that a virtualenv is activated, if present.
-   *
    */
   protected void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine, @NotNull Sdk sdk) {
     PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdk);
@@ -456,7 +473,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    */
   @NotNull
   public String getWorkingDirectorySafe() {
-    final String result = StringUtil.isEmpty(myWorkingDirectory) ? getProject().getBasePath() : myWorkingDirectory;
+    final String result = StringUtil.isEmpty(myWorkingDirectory) ? getProject().getBasePath() : getExpandedWorkingDir(this);
     if (result != null) {
       return result;
     }

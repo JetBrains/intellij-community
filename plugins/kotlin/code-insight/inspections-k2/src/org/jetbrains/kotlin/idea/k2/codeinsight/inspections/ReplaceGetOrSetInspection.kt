@@ -1,18 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
+import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -24,14 +26,20 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSuperExpression
+import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal class ReplaceGetOrSetInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtDotQualifiedExpression, ReplaceGetOrSetInspection.Context>(
-        KtDotQualifiedExpression::class
-    ) {
+    AbstractKotlinApplicableInspectionWithContext<KtDotQualifiedExpression, ReplaceGetOrSetInspection.Context>() {
 
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+        return object : KtVisitorVoid() {
+            override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
+                visitTargetElement(expression, holder, isOnTheFly)
+            }
+        }
+    }
     class Context(val calleeName: Name, val problemHighlightType: ProblemHighlightType)
 
     override fun getProblemDescription(element: KtDotQualifiedExpression, context: Context): String =
@@ -64,10 +72,7 @@ internal class ReplaceGetOrSetInspection :
         val receiverExpression = element.receiverExpression
         if (receiverExpression is KtSuperExpression || receiverExpression.getKtType()?.isUnit != false) return null
 
-        if (functionSymbol.name == OperatorNameConventions.SET &&
-            element.getPossiblyQualifiedCallExpression()?.getKtType()?.isUnit != true &&
-            element.isUsedAsExpression()
-        ) return null
+        if (functionSymbol.name == OperatorNameConventions.SET && element.isUsedAsExpression()) return null
 
         val problemHighlightType = if (functionSymbol.isExplicitOperator()) GENERIC_ERROR_OR_WARNING else INFORMATION
 

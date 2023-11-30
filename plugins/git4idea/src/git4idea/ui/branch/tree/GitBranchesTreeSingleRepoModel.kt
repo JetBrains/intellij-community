@@ -46,10 +46,14 @@ open class GitBranchesTreeSingleRepoModel(
     val localBranches = repository.localBranchesOrCurrent
     val remoteBranches = repository.branches.remoteBranches
     val recentCheckoutBranches = repository.recentCheckoutBranches
-    localBranchesTree = LazyBranchesSubtreeHolder(localBranches, listOf(repository), matcher, ::isPrefixGrouping,
+
+    val localFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.LOCAL)
+    val remoteFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.REMOTE)
+    localBranchesTree = LazyBranchesSubtreeHolder(listOf(repository), localBranches, localFavorites, matcher, ::isPrefixGrouping,
                                                   recentCheckoutBranches::contains)
-    remoteBranchesTree = LazyBranchesSubtreeHolder(remoteBranches, listOf(repository), matcher, ::isPrefixGrouping)
-    recentCheckoutBranchesTree = LazyBranchesSubtreeHolder(recentCheckoutBranches, listOf(repository), matcher, ::isPrefixGrouping,
+    remoteBranchesTree = LazyBranchesSubtreeHolder(listOf(repository), remoteBranches, remoteFavorites, matcher, ::isPrefixGrouping)
+    recentCheckoutBranchesTree = LazyBranchesSubtreeHolder(listOf(repository), recentCheckoutBranches, localFavorites, matcher,
+                                                           ::isPrefixGrouping,
                                                            branchComparatorGetter = ::emptyBranchComparator)
     treeStructureChanged(TreePath(arrayOf(root)), null, null)
   }
@@ -74,7 +78,10 @@ open class GitBranchesTreeSingleRepoModel(
       is BranchType -> branchesTreeCache.getOrPut(parent) { getBranchTreeNodes(parent, emptyList()) }
       is BranchesPrefixGroup -> {
         branchesTreeCache
-          .getOrPut(parent) { getBranchTreeNodes(parent.type, parent.prefix).sortedWith(getSubTreeComparator(listOf(repository))) }
+          .getOrPut(parent) {
+            getBranchTreeNodes(parent.type, parent.prefix).sortedWith(
+              getSubTreeComparator(project.service<GitBranchManager>().getFavoriteBranches(parent.type), listOf(repository)))
+          }
       }
       else -> emptyList()
     }

@@ -1,0 +1,10 @@
+fragment refUpdateRule on RefUpdateRule {
+  allowsDeletions
+  allowsForcePushes
+  pattern
+  requiredApprovingReviewCount
+  requiredStatusCheckContexts
+  requiresLinearHistory
+  requiresSignatures
+  viewerCanPush
+}

@@ -16,13 +16,21 @@ class KotlinFirRefactoringsSettings : PersistentStateComponent<KotlinFirRefactor
     var RENAME_SEARCH_IN_COMMENTS_FOR_FUNCTION: Boolean = false
     var RENAME_SEARCH_IN_COMMENTS_FOR_CLASS: Boolean = false
     var RENAME_SEARCH_IN_COMMENTS_FOR_PARAMETER: Boolean = false
+
+    var renameFileNames: Boolean = true
+    var renameVariables: Boolean = true
+    var renameParameterInHierarchy: Boolean = true
+    var renameInheritors: Boolean = true
+    var renameOverloads: Boolean = true
+
     var MOVE_PREVIEW_USAGES: Boolean = true
     var MOVE_SEARCH_IN_COMMENTS: Boolean = true
     var MOVE_SEARCH_FOR_TEXT: Boolean = true
     var MOVE_SEARCH_REFERENCES: Boolean = true
-    var MOVE_DELETE_EMPTY_SOURCE_FILES: Boolean = true
     var MOVE_MPP_DECLARATIONS: Boolean = true
-    
+    var INTRODUCE_DECLARE_WITH_VAR: Boolean = false
+    var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean = false
+
     override fun getState() = this
 
     override fun loadState(state: KotlinFirRefactoringsSettings) = XmlSerializerUtil.copyBean(state, this)

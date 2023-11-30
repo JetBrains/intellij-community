@@ -150,7 +150,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     LOG.debug("== end of screen ==");
   }
 
-  private List<CommittedChangeList> fragmentsToLists(final List<Fragment> fragments) {
+  private static List<CommittedChangeList> fragmentsToLists(final List<Fragment> fragments) {
     final List<CommittedChangeList> result = new ArrayList<>();
     for (Fragment fragment : fragments) {
       result.addAll(fragment.getList());

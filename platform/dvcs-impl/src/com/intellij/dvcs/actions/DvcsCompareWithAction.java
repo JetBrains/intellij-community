@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -30,6 +31,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.CompareWithLocalDialog;
@@ -97,9 +99,11 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
     return JBPopupFactory.getInstance()
       .createPopupChooserBuilder(options)
       .setTitle(title)
+      .setMovable(true)
       .setItemChosenCallback(onChosen::accept)
       .setAutoselectOnMouseMove(true)
       .setNamerForFiltering(o -> o)
+      .setRenderer(BuilderKt.textListCellRenderer((@NlsSafe var name) -> name))
       .withFixedRendererSize(new Dimension(JBUI.scale(350), JBUI.CurrentTheme.List.rowHeight())) // do not freeze on huge lists
       .createPopup();
   }

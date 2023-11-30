@@ -8,6 +8,8 @@ import com.intellij.credentialStore.isFulfilled
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.serialization.Serializable
 
 @Service
@@ -20,8 +22,12 @@ internal class ErrorReportConfigurable : PersistentStateComponent<DeveloperList>
     @JvmStatic
     fun getInstance(): ErrorReportConfigurable = service<ErrorReportConfigurable>()
 
+    @RequiresBackgroundThread
     @JvmStatic
-    fun getCredentials(): Credentials? = PasswordSafe.instance.get(CredentialAttributes(SERVICE_NAME))
+    fun getCredentials(): Credentials? {
+      ThreadingAssertions.assertBackgroundThread();
+      return PasswordSafe.instance.get(CredentialAttributes(SERVICE_NAME))
+    }
 
     @JvmStatic
     fun saveCredentials(userName: String?, password: CharArray?) {
@@ -31,13 +37,16 @@ internal class ErrorReportConfigurable : PersistentStateComponent<DeveloperList>
     }
 
     val userName: String?
+      @RequiresBackgroundThread
       get() = getCredentialsState().userName
 
     val credentialsFulfilled: Boolean
+      @RequiresBackgroundThread
       get() = getCredentialsState().isFulfilled
 
     private var lastCredentialsState: CredentialsState? = null
 
+    @RequiresBackgroundThread
     private fun getCredentialsState(): CredentialsState = lastCredentialsState ?: credentialsState(getCredentials())
   }
 

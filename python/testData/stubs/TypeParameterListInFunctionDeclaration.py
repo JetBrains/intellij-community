@@ -1,2 +1,2 @@
-def foo[T, U: str](a: T, b: U):
+def foo[T, U: str, *Ts, **P](a: T, b: U):
     pass

@@ -240,7 +240,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
       reloadInstanceFilters();
       updateInstanceFilterEditor(false);
       String toolTipText = super.getToolTipText(event);
-      return getToolTipText().length() == 0 ? null : toolTipText;
+      return getToolTipText().isEmpty() ? null : toolTipText;
     }
 
     @Override

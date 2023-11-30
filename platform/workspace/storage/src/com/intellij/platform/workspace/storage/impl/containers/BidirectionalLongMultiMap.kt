@@ -9,7 +9,7 @@ import java.util.*
 /**
  * Bidirectional multimap that has longs as keys
  */
-class BidirectionalLongMultiMap<V> {
+internal class BidirectionalLongMultiMap<V> {
   private val keyToValues: Long2ObjectMap<ObjectOpenHashSet<V>>
   private val valueToKeys: MutableMap<V, LongOpenHashSet>
 

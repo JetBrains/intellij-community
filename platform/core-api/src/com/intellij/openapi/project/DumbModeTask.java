@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * A task that should be executed in IDE dumb mode, via {@link DumbService#queueTask(DumbModeTask)}.
  */
 public abstract class DumbModeTask implements Disposable, MergeableQueueTask<DumbModeTask> {
-  @Nullable
-  private final Object myEquivalenceObject;
+  private final @Nullable Object myEquivalenceObject;
 
   /**
    * Consider implementing {@link DumbModeTask#tryMergeWith(DumbModeTask)} to allow alike tasks to merge while waiting in queue
@@ -53,8 +52,7 @@ public abstract class DumbModeTask implements Disposable, MergeableQueueTask<Dum
    *         some other task - then it would be added to the queue, and {@code taskFromQueue} would be removed.
    */
   @Override
-  @Nullable
-  public DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
+  public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
     if (myEquivalenceObject != null && myEquivalenceObject.equals(taskFromQueue.myEquivalenceObject)) {
       return this;
     }

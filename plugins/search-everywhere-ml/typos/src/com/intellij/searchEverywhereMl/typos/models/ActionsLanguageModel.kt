@@ -1,28 +1,36 @@
 package com.intellij.searchEverywhereMl.typos.models
 
 import ai.grazie.spell.lists.FrequencyMetadata
-import com.intellij.ide.actions.ShowSettingsUtilImpl
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar
+import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.searchEverywhereMl.typos.SearchEverywhereStringToken
+import com.intellij.searchEverywhereMl.typos.TyposBundle
 import com.intellij.searchEverywhereMl.typos.isTypoFixingEnabled
 import com.intellij.searchEverywhereMl.typos.splitText
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider
+import com.intellij.util.alsoIfNull
+import com.intellij.util.asSafely
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.util.regex.Pattern
 
 @Service(Service.Level.APP)
 internal class ActionsLanguageModel @NonInjectable constructor(private val actionDictionary: ActionDictionary,
@@ -44,11 +52,20 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
     }
   }
 
+  // Accept any word that consist of only alphabetical characters, that are between 3 and 45 characters long
+  private val acceptableWordsPattern = Pattern.compile("^[a-zA-Z]{3,45}\$")
+
   private val languageModelComputationJob: Job
 
   init {
     languageModelComputationJob = coroutineScope.launch {
-      asyncInit()
+      guessProject()?.also {
+        withBackgroundProgress(project = it,
+                               title = TyposBundle.getMessage("progress.title.computing.actions.language.model"),
+                               cancellable = false) { init() }
+      }.alsoIfNull {
+        init()
+      }
     }
   }
 
@@ -64,10 +81,13 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
       .mapNotNull { it.templateText }
   }
 
-  private fun getWordsFromSettings(): Sequence<@NlsContexts.ConfigurableName String> {
-    return ShowSettingsUtilImpl.configurables(project = null, withIdeSettings = true, checkNonDefaultProject = false)
-      .filterIsInstance<SearchableConfigurable>()
-      .mapNotNull { it.displayNameFast }
+  private fun getWordsFromSettings(): Sequence<@NlsContexts.ConfigurableName CharSequence> {
+    return SearchableOptionsRegistrar.getInstance()
+             .asSafely<SearchableOptionsRegistrarImpl>()
+             .alsoIfNull { thisLogger().warn("Failed to cast SearchableOptionsRegistrar") }
+             ?.also { it.initialize() }
+             ?.allOptionNames?.asSequence()
+           ?: emptySequence()
   }
 
   internal interface ActionDictionary : Dictionary, FrequencyMetadata {
@@ -75,7 +95,7 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
   }
 
   private class ActionDictionaryImpl : ActionDictionary {
-    private val words = Object2IntOpenHashMap<String>(1500)
+    private val words = Object2IntOpenHashMap<String>(12_000)
 
     override fun addWord(word: String) {
       words.addTo(word, 1)
@@ -95,23 +115,26 @@ internal class ActionsLanguageModel @NonInjectable constructor(private val actio
     override fun getFrequency(word: String): Int? = if (words.containsKey(word)) words.getInt(word) else null
   }
 
-  private fun asyncInit() {
+  private fun guessProject(): Project? {
+    val recentFocusedWindow = WindowManagerEx.getInstanceEx().mostRecentFocusedWindow
+    if (recentFocusedWindow is IdeFrame) {
+      return (recentFocusedWindow as IdeFrame).project
+    }
+    else {
+      return ProjectManager.getInstance().openProjects.firstOrNull { o -> o.isInitialized && !o.isDisposed }
+    }
+  }
+
+  private fun init() {
     (getWordsFromActions() + getWordsFromSettings())
       .flatMap {
         splitText(it)
           .filter { token -> token is SearchEverywhereStringToken.Word }
           .map { token -> token.value }
       }
-      .map { it.filter { c -> c.isLetterOrDigit() } }
-      .filterNot { it.isEmpty() || it.isSingleCharacter() }
+      .filter { acceptableWordsPattern.matcher(it).matches() }
       .map { it.lowercase() }
       .forEach(actionDictionary::addWord)
-  }
-}
-
-private class ModelComputationStarter : ProjectActivity {
-  override suspend fun execute(project: Project) {
-    ActionsLanguageModel.getInstance()
   }
 }
 
@@ -121,5 +144,3 @@ private class RuntimeActionsDictionaryProvider : RuntimeDictionaryProvider {
     return serviceIfCreated<ActionsLanguageModel>()?.let { arrayOf(it) } ?: arrayOf()
   }
 }
-
-private fun String.isSingleCharacter(): Boolean = this.length == 1

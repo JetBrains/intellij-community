@@ -5,7 +5,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,16 +41,4 @@ public interface QuickFix<D extends CommonProblemDescriptor> extends WriteAction
    * @param descriptor problem reported by the tool which provided this quick fix action
    */
   void applyFix(@NotNull Project project, @NotNull D descriptor);
-
-  /**
-   * Apply fix in non-interactive mode (e.g., when applying many fixes in batch).
-   * By default, does the same as {@link #applyFix(Project, CommonProblemDescriptor)}
-   *
-   * @param project    {@link Project}
-   * @param descriptor problem reported by the tool which provided this quick fix action
-   */
-  @ApiStatus.Experimental
-  default void applyFixNonInteractively(@NotNull Project project, @NotNull D descriptor) {
-    applyFix(project, descriptor);
-  }
 }

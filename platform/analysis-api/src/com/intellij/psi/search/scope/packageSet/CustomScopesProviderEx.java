@@ -44,7 +44,7 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
     SETTING, ACTION
   }
 
-  private static class AllScopeHolder {
+  private static final class AllScopeHolder {
     private static final @NotNull String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";
     private static final @NotNull NamedScope ALL = new NamedScope("All", () -> AnalysisBundle.message("all.scope.name"), AllIcons.Ide.LocalScope, new AbstractPackageSet(TEXT, 0) {
       @Override

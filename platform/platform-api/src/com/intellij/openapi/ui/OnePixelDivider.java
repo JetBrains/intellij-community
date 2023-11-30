@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -55,7 +55,7 @@ public class OnePixelDivider extends Divider {
       final Supplier<Insets> blindZone = ((OnePixelSplitter)mySplitter).getBlindZone();
       if (blindZone != null) {
         final Insets insets = blindZone.get();
-        if (insets != null) {
+        if (insets != null && bounds != null) {
           bounds.x += insets.left;
           bounds.y += insets.top;
           bounds.width -= insets.left + insets.right;
@@ -202,8 +202,7 @@ public class OnePixelDivider extends Divider {
     return false;
   }
 
-  @Nullable
-  private MouseEvent getTargetEvent(MouseEvent e) {
+  private @Nullable MouseEvent getTargetEvent(MouseEvent e) {
     Component eventComponent = e.getComponent();
     if (eventComponent == null) return null;
     Component deepestComponentAt = UIUtil.getDeepestComponentAt(eventComponent, e.getX(), e.getY());

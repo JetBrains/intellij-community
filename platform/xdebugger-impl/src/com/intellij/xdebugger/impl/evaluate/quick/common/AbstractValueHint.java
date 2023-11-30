@@ -60,6 +60,7 @@ import java.util.function.Function;
 
 public abstract class AbstractValueHint {
   private static final Logger LOG = Logger.getInstance(AbstractValueHint.class);
+  private static final Key<AbstractValueHint> HINT_KEY = Key.create("allows only one value hint per editor");
 
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     @Override
@@ -82,7 +83,7 @@ public abstract class AbstractValueHint {
   private LightweightHint myCurrentHint;
   private JBPopup myCurrentPopup;
 
-  private boolean myHintHidden;
+  private volatile boolean myHintHidden;
   private TextRange myCurrentRange;
   private Runnable myHideRunnable;
 
@@ -95,7 +96,9 @@ public abstract class AbstractValueHint {
     myCurrentRange = textRange;
   }
 
-  protected abstract boolean canShowHint();
+  protected boolean canShowHint() {
+    return true;
+  }
 
   protected abstract void evaluateAndShowHint();
 
@@ -224,10 +227,28 @@ public abstract class AbstractValueHint {
 
   private boolean myInsideShow = false; // to avoid invoking myHideRunnable for new popups with updated presentation
 
-  private void invokeHideRunnableIfNeeded() {
-    if (myHideRunnable != null && !myInsideShow) {
-      myHideRunnable.run();
+  private void processHintHidden() {
+    if (!myInsideShow) {
+      if (myHideRunnable != null) {
+        myHideRunnable.run();
+      }
+      myHintHidden = true;
     }
+
+    disposeHighlighter();
+    if (getEditor().getUserData(HINT_KEY) == this) {
+      getEditor().putUserData(HINT_KEY, null);
+    }
+
+    onHintHidden();
+  }
+
+  private void setCurrentEditorHint() {
+    AbstractValueHint prev = getEditor().getUserData(HINT_KEY);
+    if (prev != null) {
+      prev.hideHint();
+    }
+    getEditor().putUserData(HINT_KEY, this);
   }
 
   protected boolean showHint(final JComponent component) {
@@ -258,13 +279,12 @@ public abstract class AbstractValueHint {
       myCurrentHint.addHintListener(new HintListener() {
         @Override
         public void hintHidden(@NotNull EventObject event) {
-          invokeHideRunnableIfNeeded();
-          onHintHidden();
+          processHintHidden();
         }
       });
 
       // editor may be disposed before later invokator process this action
-      if (myEditor.isDisposed() || myEditor.getComponent().getRootPane() == null) {
+      if (myEditor.isDisposed()) {
         return false;
       }
 
@@ -281,6 +301,7 @@ public abstract class AbstractValueHint {
         createHighlighter();
       }
       setHighlighterAttributes();
+      setCurrentEditorHint();
     }
     finally {
       myInsideShow = false;
@@ -293,7 +314,6 @@ public abstract class AbstractValueHint {
   }
 
   protected void onHintHidden() {
-    disposeHighlighter();
   }
 
   protected boolean isHintHidden() {
@@ -430,10 +450,10 @@ public abstract class AbstractValueHint {
         popup.addListener(new JBPopupListener() {
           @Override
           public void onClosed(@NotNull LightweightWindowEvent event) {
-            invokeHideRunnableIfNeeded();
-            onHintHidden();
+            processHintHidden();
           }
         });
+        setCurrentEditorHint();
       }
     }
     finally {

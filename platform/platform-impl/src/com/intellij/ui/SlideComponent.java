@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-class SlideComponent extends JComponent {
+final class SlideComponent extends JComponent {
   private static final int OFFSET = 11;
   private int myPointerValue = 0;
   private int myValue = 0;
@@ -204,7 +204,7 @@ class SlideComponent extends JComponent {
   }
 
   @Override
-  public final void setToolTipText(String text) {
+  public void setToolTipText(String text) {
     //disable tooltips
   }
 

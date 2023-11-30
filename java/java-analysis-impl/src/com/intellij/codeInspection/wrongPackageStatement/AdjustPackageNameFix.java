@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.wrongPackageStatement;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
@@ -35,8 +34,8 @@ public class AdjustPackageNameFix extends ModCommandQuickFix {
     PsiElement element = descriptor.getStartElement();
     PsiFile origFile = element.getContainingFile();
     PsiDirectory directory = origFile.getContainingDirectory();
-    if (directory == null) return ModCommands.nop();
-    return ModCommands.psiUpdate(element, (e, updater) -> applyFix(e, origFile, directory));
+    if (directory == null) return ModCommand.nop();
+    return ModCommand.psiUpdate(element, (e, updater) -> applyFix(e, origFile, directory));
   }
 
   private static void applyFix(@NotNull PsiElement element, @NotNull PsiFile origFile, @NotNull PsiDirectory directory) {

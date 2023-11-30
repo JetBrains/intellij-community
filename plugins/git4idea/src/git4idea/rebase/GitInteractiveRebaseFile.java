@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
 import com.intellij.openapi.project.Project;
@@ -15,9 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 class GitInteractiveRebaseFile {
-  @NotNull private final Project myProject;
-  @NotNull private final VirtualFile myRoot;
-  @NotNull private final File myFile;
+  private final @NotNull Project myProject;
+  private final @NotNull VirtualFile myRoot;
+  private final @NotNull File myFile;
 
   GitInteractiveRebaseFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull File file) {
     myProject = project;
@@ -25,8 +25,7 @@ class GitInteractiveRebaseFile {
     myFile = file;
   }
 
-  @NotNull
-  public List<GitRebaseEntry> load() throws IOException, NoopException {
+  public @NotNull List<GitRebaseEntry> load() throws IOException, NoopException {
     String encoding = GitConfigUtil.getLogEncoding(myProject, myRoot);
     List<GitRebaseEntry> entries = new ArrayList<>();
     final StringScanner s = new StringScanner(FileUtil.loadFile(myFile, encoding));
@@ -41,10 +40,11 @@ class GitInteractiveRebaseFile {
         s.nextLine();
         continue;
       }
-      String action = s.spaceToken();
+      String command = s.spaceToken();
       String hash = s.spaceToken();
       String comment = s.line();
 
+      GitRebaseEntry.Action action = GitRebaseEntry.parseAction(command);
       entries.add(new GitRebaseEntry(action, hash, comment));
     }
     if (noop && entries.isEmpty()) {

@@ -102,7 +102,7 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
 
     myClassFilterEditor.setFilters(getCoveragePatterns(configuration, true));
     myExcludeClassFilterEditor.setFilters(getCoveragePatterns(configuration, false));
-    setUpBranchCoverage(runner, configuration.isTracingEnabled(), configuration.isTrackPerTestCoverage());
+    setUpBranchCoverage(runner, configuration.isBranchCoverageEnabled(), configuration.isTrackPerTestCoverage());
     myTrackTestSourcesCb.setSelected(configuration.isTrackTestFolders());
   }
 
@@ -143,7 +143,7 @@ public final class CoverageConfigurable extends SettingsEditor<RunConfigurationB
     }
     configuration.setCoverageRunner(getSelectedRunner());
     configuration.setTrackPerTestCoverage(myTrackPerTestCoverageCb.isSelected());
-    configuration.setTracingEnabled(myBranchCoverageCb.isSelected());
+    configuration.setBranchCoverage(myBranchCoverageCb.isSelected());
     configuration.setTrackTestFolders(myTrackTestSourcesCb.isSelected());
   }
 

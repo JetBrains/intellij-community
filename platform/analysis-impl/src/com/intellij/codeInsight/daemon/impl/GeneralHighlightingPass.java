@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -7,6 +7,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.RainbowVisitor;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.highlighting.PassRunningAssert;
@@ -71,8 +72,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     new PassRunningAssert("the expensive method should not be called inside the highlighting pass");
 
   final boolean myUpdateAll;
-  @NotNull
-  final ProperTextRange myPriorityRange;
+  final @NotNull ProperTextRange myPriorityRange;
 
   final List<HighlightInfo> myHighlights = new ArrayList<>();
 
@@ -182,9 +182,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       List<Divider.DividedElements> dividedElements = new ArrayList<>();
       Divider.divideInsideAndOutsideAllRoots(getFile(), myRestrictRange, myPriorityRange, SHOULD_HIGHLIGHT_FILTER,
                                              new CommonProcessors.CollectProcessor<>(dividedElements));
-      List<PsiElement> allInsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(dividedElements,
+      List<PsiElement> allInsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
                                             dividedForRoot -> {
-                                              List<PsiElement> inside = dividedForRoot.inside;
+                                              List<? extends PsiElement> inside = dividedForRoot.inside();
                                               PsiElement lastInside = ContainerUtil.getLastItem(inside);
                                               return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? inside
                                                 .subList(0, inside.size() - 1) : inside;
@@ -193,26 +193,26 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
       List<LongList> map = ContainerUtil.map(dividedElements,
                                              dividedForRoot -> {
-                                               LongList insideRanges = dividedForRoot.insideRanges;
-                                               PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside);
+                                               LongList insideRanges = dividedForRoot.insideRanges();
+                                               PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
                                                return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment)
                                                       ? insideRanges.subList(0, insideRanges.size() - 1) : insideRanges;
                                              });
 
       LongList allInsideRanges = ContainerUtil.reduce(map, new LongArrayList(map.isEmpty() ? 1 : map.get(0).size()), (l1, l2)->{ l1.addAll(l2); return l1;});
 
-      List<PsiElement> allOutsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(dividedElements,
+      List<PsiElement> allOutsideElements = ContainerUtil.concat(ContainerUtil.map(dividedElements,
                                                   dividedForRoot -> {
-                                                    List<PsiElement> outside = dividedForRoot.outside;
-                                                    PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside);
+                                                    List<? extends PsiElement> outside = dividedForRoot.outside();
+                                                    PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
                                                     return lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) ? ContainerUtil.append(outside,
                                                       lastInside) : outside;
                                                   }));
       List<LongList> map1 = ContainerUtil.map(dividedElements,
                                                            dividedForRoot -> {
-                                                             LongList outsideRanges = dividedForRoot.outsideRanges;
-                                                             PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside);
-                                                             long lastInsideRange = dividedForRoot.insideRanges.isEmpty() ? -1 : dividedForRoot.insideRanges.getLong(dividedForRoot.insideRanges.size()-1);
+                                                             LongList outsideRanges = dividedForRoot.outsideRanges();
+                                                             PsiElement lastInside = ContainerUtil.getLastItem(dividedForRoot.inside());
+                                                             long lastInsideRange = dividedForRoot.insideRanges().isEmpty() ? -1 : dividedForRoot.insideRanges().getLong(dividedForRoot.insideRanges().size()-1);
                                                              if (lastInside instanceof PsiFile && !(lastInside instanceof PsiCodeFragment) && lastInsideRange != -1) {
                                                                LongArrayList r = new LongArrayList(outsideRanges);
                                                                r.add(lastInsideRange);
@@ -266,6 +266,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @Override
   protected void applyInformationWithProgress() {
+    ((HighlightingSessionImpl)myHighlightingSession).applyFileLevelHighlightsRequests();
     getFile().putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
   }
 
@@ -285,7 +286,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     Set<PsiElement> skipParentsSet = new HashSet<>();
 
     HighlightInfoHolder holder = createInfoHolder(getFile());
-    holder.getAnnotationSession().setVR(myPriorityRange);
+    ((AnnotationSessionImpl)holder.getAnnotationSession()).setVR(myPriorityRange);
 
     int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
 
@@ -299,7 +300,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
 
       boolean priorityIntersectionHasElements = myPriorityRange.intersectsStrict(myRestrictRange);
-      if ((!elements1.isEmpty() || !insideResult.isEmpty()) && priorityIntersectionHasElements) { // do not apply when there were no elements to highlight
+      if ((!elements1.isEmpty() || !insideResult.isEmpty()) || priorityIntersectionHasElements) { // do not apply when there were no elements to highlight
         myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), insideResult, myPriorityRange, myRestrictRange, getId());
       }
       runVisitors(elements2, ranges2, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
@@ -475,11 +476,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   protected @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile file) {
     HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
     EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
-    return new HighlightInfoHolder(file, filters) {
+    HighlightInfoHolder infoHolder = new HighlightInfoHolder(file, filters) {
       @Override
       public @NotNull TextAttributesScheme getColorsScheme() {
         return actualScheme;
       }
+
       @Override
       public boolean add(@Nullable HighlightInfo info) {
         boolean added = super.add(info);
@@ -489,6 +491,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         return added;
       }
     };
+    AnnotationSessionImpl annotationSession = (AnnotationSessionImpl)infoHolder.getAnnotationSession();
+    HighlightSeverity minimumSeverity = ((HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(file)).getMinimumSeverity();
+    annotationSession.setMinimumSeverity(minimumSeverity);
+    return infoHolder;
   }
 
   void queueInfoToUpdateIncrementally(@NotNull HighlightInfo info, int group) {

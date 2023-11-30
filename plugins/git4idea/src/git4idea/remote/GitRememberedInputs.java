@@ -1,9 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remote;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,8 +21,7 @@ import org.jetbrains.annotations.NotNull;
 )
 public class GitRememberedInputs extends DvcsRememberedInputs implements PersistentStateComponent<DvcsRememberedInputs.State> {
 
-  @NotNull
-  public static DvcsRememberedInputs getInstance() {
+  public static @NotNull DvcsRememberedInputs getInstance() {
     return ApplicationManager.getApplication().getService(GitRememberedInputs.class);
   }
 }

@@ -52,7 +52,7 @@ public final class Annotation implements Segment {
   private List<QuickFixInfo> myBatchFixes;
   private PsiReference unresolvedReference;
 
-  public static class QuickFixInfo {
+  public static final class QuickFixInfo {
     public final @NotNull IntentionAction quickFix;
     public final @NotNull TextRange textRange;
     public final HighlightDisplayKey key;
@@ -442,7 +442,7 @@ public final class Annotation implements Segment {
    *
    * @param problemGroup the problem group
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setProblemGroup(@Nullable ProblemGroup problemGroup) {
     myProblemGroup = problemGroup;
   }
@@ -459,7 +459,7 @@ public final class Annotation implements Segment {
    * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setUnresolvedReference(PsiReference reference) {
     unresolvedReference = reference;
   }
@@ -467,7 +467,7 @@ public final class Annotation implements Segment {
    * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PsiReference getUnresolvedReference() {
     return unresolvedReference;
   }

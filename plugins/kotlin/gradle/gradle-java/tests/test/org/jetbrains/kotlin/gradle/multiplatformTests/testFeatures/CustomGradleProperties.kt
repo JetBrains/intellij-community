@@ -6,6 +6,8 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.writeAccess
 
+const val enableKgpDependencyResolutionParam = "kotlin.mpp.import.enableKgpDependencyResolution"
+
 object CustomGradlePropertiesTestFeature : TestFeature<CustomGradleProperties> {
     override fun createDefaultConfiguration(): CustomGradleProperties = CustomGradleProperties(mutableMapOf())
 

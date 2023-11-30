@@ -15,6 +15,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.io.File
 import java.util.*
 import java.util.logging.Logger
+import kotlin.io.path.pathString
 
 class ClassPathBuilder(private val paths: PathsProvider, private val modules: ModulesProvider) {
   private val logger = Logger.getLogger(ClassPathBuilder::class.java.name)
@@ -93,7 +94,7 @@ class ClassPathBuilder(private val paths: PathsProvider, private val modules: Mo
       .recursively()
       .satisfying { if (it is JpsModuleDependency) !isModuleExcluded(it.module) else true }
       .includedIn(JpsJavaClasspathKind.runtime(modules.includeTestDependencies))
-      .classes().roots.filter { it.exists() }.map { it.path }.toList()
+      .classes().roots.filter { it.exists() }.map { it.toPath().toRealPath().pathString }.toList()
   }
 
   private fun isModuleExcluded(module: JpsModule?): Boolean {

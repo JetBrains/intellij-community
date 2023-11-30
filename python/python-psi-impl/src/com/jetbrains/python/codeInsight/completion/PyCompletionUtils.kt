@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.completion
 
-import com.intellij.codeInsight.TailType
+import com.intellij.codeInsight.TailTypes
 import com.intellij.codeInsight.completion.AutoCompletionContext
 import com.intellij.codeInsight.completion.AutoCompletionDecision
 import com.intellij.codeInsight.completion.CompletionParameters
@@ -68,7 +68,7 @@ fun addMethodToResult(result: CompletionResultSet,
   if (pyClass?.findMethodByName(methodName, false, typeEvalContext) != null) return
 
   val item = LookupElementBuilder.create(methodName + methodParentheses).withIcon(PythonPsiApiIcons.Nodes.CyanDot)
-  result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailType.CASE_COLON))
+  result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailTypes.caseColonType()))
 }
 
 /**
@@ -85,7 +85,7 @@ fun addFunctionToResult(result: CompletionResultSet,
   if (pyFile?.findTopLevelFunction(functionName) != null) return
 
   val item = LookupElementBuilder.create(functionName + functionParentheses).withIcon(PythonPsiApiIcons.Nodes.CyanDot)
-  result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailType.CASE_COLON))
+  result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailTypes.caseColonType()))
 }
 
 /**

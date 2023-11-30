@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -14,9 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public abstract class TestFrameworks {
   public static TestFrameworks getInstance() {
@@ -68,24 +67,39 @@ public abstract class TestFrameworks {
 
   private static Set<TestFramework> computeFrameworks(PsiElement psiClass) {
     Set<TestFramework> frameworks = new LinkedHashSet<>();
-    Set<String> frameworkNames = new HashSet<>();
-    for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
-      String frameworkName = framework.getName();
-      if (frameworkNames.contains(frameworkName)) continue;
-      if (framework.isTestClass(psiClass)) {
-        frameworks.add(framework);
-        frameworkNames.add(frameworkName);
-      }
-    }
+
+    Language classLanguage = psiClass.getLanguage();
+    Map<String, Language> checkedFrameworksByName = new HashMap<>();
 
     for (TestFramework framework : TestFramework.EXTENSION_NAME.getExtensionList()) {
       String frameworkName = framework.getName();
-      if (frameworkNames.contains(frameworkName)) continue;
-      if (framework.findSetUpMethod(psiClass) != null || framework.findTearDownMethod(psiClass) != null) {
+      Language frameworkLanguage = framework.getLanguage();
+
+      Language checkedFrameworkLanguage = checkedFrameworksByName.get(frameworkName);
+      // if we've checked framework for more specific language - no reasons to check it again for more general language
+      if (checkedFrameworkLanguage != null && isSubLanguage(checkedFrameworkLanguage, frameworkLanguage)) continue;
+
+      if (!isSubLanguage(classLanguage, frameworkLanguage))
+        continue;
+
+      if (framework.isTestClass(psiClass) ||
+          framework.findSetUpMethod(psiClass) != null ||
+          framework.findTearDownMethod(psiClass) != null) {
         frameworks.add(framework);
-        frameworkNames.add(frameworkName);
       }
+      checkedFrameworksByName.put(frameworkName, frameworkLanguage);
     }
     return frameworks;
+  }
+
+  /**
+   * @return <code>true</code> if <code>framework</code> could handle element by its language
+   */
+  public static boolean isSuitableByLanguage(PsiElement element, TestFramework framework) {
+    return element.getContainingFile() != null && isSubLanguage(element.getLanguage(), framework.getLanguage());
+  }
+
+  private static boolean isSubLanguage(@NotNull Language language, @NotNull Language parentLanguage) {
+    return parentLanguage == Language.ANY || language.isKindOf(parentLanguage);
   }
 }

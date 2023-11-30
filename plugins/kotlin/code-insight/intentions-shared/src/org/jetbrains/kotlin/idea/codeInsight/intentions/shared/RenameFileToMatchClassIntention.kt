@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
-class RenameFileToMatchClassIntention : SelfTargetingRangeIntention<KtClassOrObject>(
+internal class RenameFileToMatchClassIntention : SelfTargetingRangeIntention<KtClassOrObject>(
     KtClassOrObject::class.java,
     KotlinBundle.lazyMessage("rename.file.to.match.top.level.class.name")
 ) {

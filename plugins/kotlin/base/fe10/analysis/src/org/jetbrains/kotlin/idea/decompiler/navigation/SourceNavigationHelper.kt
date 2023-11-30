@@ -19,8 +19,6 @@ import org.jetbrains.kotlin.fileClasses.fileClassInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.LibrarySourceScopeService
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -34,6 +32,7 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.debugText.getDebugText
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
 
@@ -134,7 +133,7 @@ object SourceNavigationHelper {
     private fun Collection<GlobalSearchScope>.union(): List<GlobalSearchScope> =
         if (this.isNotEmpty()) listOf(GlobalSearchScope.union(this)) else emptyList()
 
-    private fun haveRenamesInImports(files: Collection<KtFile>) = files.any { file -> file.importDirectives.any { it.aliasName != null } }
+    private fun haveRenamesInImports(files: Collection<KtFile>) = files.any(KtFile::hasImportAlias)
 
     private fun findSpecialProperty(memberName: Name, containingClass: KtClass): KtNamedDeclaration? {
         // property constructor parameters
@@ -228,7 +227,8 @@ object SourceNavigationHelper {
 
             val candidateDescriptor = candidate.resolveToDescriptorIfAny() as? CallableDescriptor ?: continue
             if (declaration is KtCallableDeclaration &&
-                ByDescriptorIndexer.isSameCallable(declaration, candidateDescriptor)) {
+                ByDescriptorIndexer.isSameCallable(declaration, candidateDescriptor) &&
+                declaration.isExpectDeclaration() == candidate.isExpectDeclaration()) {
                 return candidate
             }
         }
@@ -244,7 +244,10 @@ object SourceNavigationHelper {
         val classFqName = entity.fqName ?: return null
         return targetScopes(entity, navigationKind).firstNotNullOfOrNull { scope ->
             ProgressManager.checkCanceled()
-            helper[classFqName.asString(), entity.project, scope].minByOrNull { it.isExpectDeclaration() }
+            val declarations = helper[classFqName.asString(), entity.project, scope]
+            declarations.firstOrNull { declaration ->
+                entity.isExpectDeclaration() == declaration.isExpectDeclaration()
+            } ?: declarations.firstOrNull()
         }
     }
 
@@ -265,7 +268,7 @@ object SourceNavigationHelper {
 
         return scopes.flatMap { scope ->
             ProgressManager.checkCanceled()
-            helper[declaration.fqName!!.asString(), declaration.project, scope].sortedBy { it.isExpectDeclaration() }
+            helper[declaration.fqName!!.asString(), declaration.project, scope]
         }
     }
 

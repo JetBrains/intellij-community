@@ -46,7 +46,7 @@ interface TreeMultiparentRootEntity : WorkspaceEntityWithSymbolicId {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: TreeMultiparentRootEntity,
-                                      modification: TreeMultiparentRootEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: TreeMultiparentRootEntity.Builder.() -> Unit): TreeMultiparentRootEntity = modifyEntity(
   TreeMultiparentRootEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -84,7 +84,7 @@ interface TreeMultiparentLeafEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: TreeMultiparentLeafEntity,
-                                      modification: TreeMultiparentLeafEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: TreeMultiparentLeafEntity.Builder.() -> Unit): TreeMultiparentLeafEntity = modifyEntity(
   TreeMultiparentLeafEntity.Builder::class.java, entity, modification)
 //endregion
 

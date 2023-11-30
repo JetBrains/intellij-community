@@ -25,8 +25,7 @@ final class JitWatcher {
   private final AtomicBoolean myJitProblemReported = new AtomicBoolean();
   private Method myIsCompilationEnabledMethod;
   private Method myIsCompilationStoppedForeverMethod;
-  @NotNull
-  private CompilerState myCompilationStateLastValue = CompilerState.STATE_UNKNOWN;
+  private @NotNull CompilerState myCompilationStateLastValue = CompilerState.STATE_UNKNOWN;
 
   JitWatcher() {
     // jit compilation check preparations

@@ -5,6 +5,8 @@ fun test() {
     val kk: KK = <caret>KK()
 }
 
-class KK()
+class KK() {
+    val d = ::KK
+}
 
 

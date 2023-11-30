@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.firefox;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,13 +19,12 @@ import java.util.List;
 
 public final class FirefoxUtil {
   private static final Logger LOG = Logger.getInstance(FirefoxUtil.class);
-  @NonNls public static final String PROFILES_INI_FILE = "profiles.ini";
+  public static final @NonNls String PROFILES_INI_FILE = "profiles.ini";
 
   private FirefoxUtil() {
   }
 
-  @Nullable
-  public static File getDefaultProfileIniPath() {
+  public static @Nullable File getDefaultProfileIniPath() {
     File[] roots = getProfilesDirs();
     for (File profilesDir : roots) {
       File profilesFile = new File(profilesDir, PROFILES_INI_FILE);
@@ -36,8 +35,7 @@ public final class FirefoxUtil {
     return null;
   }
 
-  @Nullable
-  public static File getFirefoxExtensionsDir(FirefoxSettings settings) {
+  public static @Nullable File getFirefoxExtensionsDir(FirefoxSettings settings) {
     File profilesFile = settings.getProfilesIniFile();
     if (profilesFile != null && profilesFile.exists()) {
       List<FirefoxProfile> profiles = computeProfiles(profilesFile);
@@ -52,8 +50,7 @@ public final class FirefoxUtil {
     return null;
   }
 
-  @Nullable
-  public static FirefoxProfile findProfileByNameOrDefault(@Nullable String name, @NotNull List<? extends FirefoxProfile> profiles) {
+  public static @Nullable FirefoxProfile findProfileByNameOrDefault(@Nullable String name, @NotNull List<? extends FirefoxProfile> profiles) {
     for (FirefoxProfile profile : profiles) {
       if (profile.getName().equals(name)) {
         return profile;
@@ -62,8 +59,7 @@ public final class FirefoxUtil {
     return getDefaultProfile(profiles);
   }
 
-  @Nullable
-  public static FirefoxProfile getDefaultProfile(List<? extends FirefoxProfile> profiles) {
+  public static @Nullable FirefoxProfile getDefaultProfile(List<? extends FirefoxProfile> profiles) {
     if (profiles.isEmpty()) {
       return null;
     }
@@ -76,8 +72,7 @@ public final class FirefoxUtil {
     return profiles.get(0);
   }
 
-  @NotNull
-  public static List<FirefoxProfile> computeProfiles(@Nullable File profilesFile) {
+  public static @NotNull List<FirefoxProfile> computeProfiles(@Nullable File profilesFile) {
     if (profilesFile == null || !profilesFile.isFile()) {
       return Collections.emptyList();
     }

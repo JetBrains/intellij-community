@@ -213,7 +213,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     return getGlobalInspectionContext(project).getCurrentProfile();
   }
 
-  private static class MySingleConfigurableEditor extends SingleConfigurableEditor {
+  private static final class MySingleConfigurableEditor extends SingleConfigurableEditor {
     private final InspectionManagerEx myManager;
 
     MySingleConfigurableEditor(final Project project, final ErrorsConfigurable configurable, InspectionManagerEx manager) {

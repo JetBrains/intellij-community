@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -24,7 +24,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-public class ImportSchemeChooserDialog extends DialogWrapper {
+public final class ImportSchemeChooserDialog extends DialogWrapper {
   private JPanel contentPane;
   private JBList<String> mySchemeList;
   private JTextField myTargetNameField;
@@ -51,7 +51,7 @@ public class ImportSchemeChooserDialog extends DialogWrapper {
         return myNames.get(index);
       }
     });
-    mySchemeList.setCellRenderer(BuilderKt.simpleListCellRenderer(
+    mySchemeList.setCellRenderer(BuilderKt.textListCellRenderer(
       value -> value == null ? '<' + ApplicationBundle.message("code.style.scheme.import.unnamed") + '>' : value));
     mySchemeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     mySchemeList.addListSelectionListener(new ListSelectionListener() {

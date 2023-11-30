@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
@@ -33,7 +33,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
    */
   private final MostlyUShortIntList myStubData;
 
-  @Nullable private TempState myTempState = new TempState();
+  private @Nullable TempState myTempState = new TempState();
 
   StubList(int initialCapacity) {
     myStubData = new MostlyUShortIntList(initialCapacity * 3);
@@ -133,8 +133,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     myTempState.prepareForChildren(parentId, childrenCount);
   }
 
-  @Nullable
-  abstract StubBase<?> getCachedStub(int index);
+  abstract @Nullable StubBase<?> getCachedStub(int index);
 
   List<StubBase<?>> getChildrenStubs(int id) {
     int count = getChildrenCount(id);
@@ -179,10 +178,9 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     }
   }
 
-  @Nullable
-  private <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IStubElementType<S, P> elementType,
-                                                                                 IntUnaryOperator idList,
-                                                                                 int start, int end) {
+  private @Nullable <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(IStubElementType<S, P> elementType,
+                                                                                           IntUnaryOperator idList,
+                                                                                           int start, int end) {
     for (int i = start; i < end; ++i) {
       int id = idList.applyAsInt(i);
       if (elementType.getIndex() == getStubTypeIndex(id)) {
@@ -336,8 +334,7 @@ final class MaterialStubList extends StubList {
     return super.finalizeLoadingStage();
   }
 
-  @NotNull
-  private StubList createOptimizedCopy() {
+  private @NotNull StubList createOptimizedCopy() {
     MaterialStubList copy = new MaterialStubList(size());
     new Object() {
       void visitStub(StubBase<?> stub, int parentId) {

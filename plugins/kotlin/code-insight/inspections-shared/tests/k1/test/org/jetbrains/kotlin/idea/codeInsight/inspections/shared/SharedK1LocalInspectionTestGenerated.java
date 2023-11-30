@@ -96,6 +96,49 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument")
+    public static class FilterIsInstanceCallWithClassLiteralArgument extends AbstractSharedK1LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("array.kt")
+        public void testArray() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/array.kt");
+        }
+
+        @TestMetadata("generic.kt")
+        public void testGeneric() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/generic.kt");
+        }
+
+        @TestMetadata("genericQualified.kt")
+        public void testGenericQualified() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/genericQualified.kt");
+        }
+
+        @TestMetadata("list.kt")
+        public void testList() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/list.kt");
+        }
+
+        @TestMetadata("notClassLiteralArgument.kt")
+        public void testNotClassLiteralArgument() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/notClassLiteralArgument.kt");
+        }
+
+        @TestMetadata("qualifiedName.kt")
+        public void testQualifiedName() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/qualifiedName.kt");
+        }
+
+        @TestMetadata("withExistingTypeArgument.kt")
+        public void testWithExistingTypeArgument() throws Exception {
+            runTest("../testData/inspectionsLocal/filterIsInstanceCallWithClassLiteralArgument/withExistingTypeArgument.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve")
     public static class JavaIoSerializableObjectMustHaveReadResolve extends AbstractSharedK1LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -455,6 +498,31 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("ifElse.kt")
         public void testIfElse() throws Exception {
             runTest("../testData/inspectionsLocal/redundantSemicolon/ifElse.kt");
+        }
+
+        @TestMetadata("localClass.kt")
+        public void testLocalClass() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSemicolon/localClass.kt");
+        }
+
+        @TestMetadata("localClass2.kt")
+        public void testLocalClass2() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSemicolon/localClass2.kt");
+        }
+
+        @TestMetadata("localClass3.kt")
+        public void testLocalClass3() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSemicolon/localClass3.kt");
+        }
+
+        @TestMetadata("localClass4.kt")
+        public void testLocalClass4() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSemicolon/localClass4.kt");
+        }
+
+        @TestMetadata("localClass5.kt")
+        public void testLocalClass5() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSemicolon/localClass5.kt");
         }
 
         @TestMetadata("startOfLine.kt")
@@ -834,6 +902,31 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/removeEmptyClassBody/lastEnumEntry3.kt");
         }
 
+        @TestMetadata("localClass.kt")
+        public void testLocalClass() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/localClass.kt");
+        }
+
+        @TestMetadata("localClass2.kt")
+        public void testLocalClass2() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/localClass2.kt");
+        }
+
+        @TestMetadata("localClass3.kt")
+        public void testLocalClass3() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/localClass3.kt");
+        }
+
+        @TestMetadata("localClass4.kt")
+        public void testLocalClass4() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/localClass4.kt");
+        }
+
+        @TestMetadata("localClass5.kt")
+        public void testLocalClass5() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/localClass5.kt");
+        }
+
         @TestMetadata("nestedAnonymous.kt")
         public void testNestedAnonymous() throws Exception {
             runTest("../testData/inspectionsLocal/removeEmptyClassBody/nestedAnonymous.kt");
@@ -910,6 +1003,11 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("nextLine.kt")
         public void testNextLine() throws Exception {
             runTest("../testData/inspectionsLocal/removeEmptyParenthesesFromLambdaCall/nextLine.kt");
+        }
+
+        @TestMetadata("noValueForParameter.kt")
+        public void testNoValueForParameter() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyParenthesesFromLambdaCall/noValueForParameter.kt");
         }
 
         @TestMetadata("simple.kt")

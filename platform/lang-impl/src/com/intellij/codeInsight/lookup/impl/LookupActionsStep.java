@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -16,7 +16,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> implements ClosableByLeftArrow {
+public final class LookupActionsStep extends BaseListPopupStep<LookupElementAction> implements ClosableByLeftArrow {
   private final LookupImpl myLookup;
   private final LookupElement myLookupElement;
   private final Icon myEmptyIcon;

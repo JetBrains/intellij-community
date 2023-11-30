@@ -105,6 +105,14 @@ project.macosX64Main
 
 project.macosX64Test
 
+project.mingwMain
+
+project.mingwTest
+
+project.mingwX64Main
+
+project.mingwX64Test
+
 project.nativeMain
 
 project.nativeTest

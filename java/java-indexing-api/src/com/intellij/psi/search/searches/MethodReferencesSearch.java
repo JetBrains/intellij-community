@@ -71,15 +71,6 @@ public final class MethodReferencesSearch extends ExtensibleQueryFactory<PsiRefe
     }
 
 
-    /**
-     * @deprecated Same as {@link #getScopeDeterminedByUser()}. Searchers most likely need to use {@link #getEffectiveSearchScope()}.
-     */
-    @Deprecated(forRemoval = true)
-    @NotNull
-    public SearchScope getScope() {
-      return getScopeDeterminedByUser();
-    }
-
     @NotNull
     public SearchScope getEffectiveSearchScope () {
       SearchScope scope = myEffectiveScope;

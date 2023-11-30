@@ -23,6 +23,7 @@ import java.util.List;
 
 public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
   private final Collection<? extends AbstractTreeNode<?>> myMandatoryChildren;
+  private boolean isAlwaysExpand;
 
   public ClassTreeNode(Project project, @NotNull PsiClass value, ViewSettings viewSettings) {
     this(project, value, viewSettings, ContainerUtil.emptyList());
@@ -82,6 +83,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
     if (aClass != null) {
       data.setPresentableText(aClass.getName());
     }
+    isAlwaysExpand = getParentValue() instanceof PsiFile;
   }
 
   public boolean isTopLevel() {
@@ -100,7 +102,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
 
   @Override
   public boolean isAlwaysExpand() {
-    return getParentValue() instanceof PsiFile;
+    return isAlwaysExpand;
   }
 
   @Override

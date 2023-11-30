@@ -1,4 +1,6 @@
-from typing import Any
+from _typeshed import Unused
+from collections.abc import Callable, Iterable
+from typing import Any, TypeVar, overload
 
 from psycopg2._psycopg import (
     BINARYARRAY as BINARYARRAY,
@@ -53,6 +55,8 @@ from psycopg2._psycopg import (
     TimestampFromPy as TimestampFromPy,
     TransactionRollbackError as TransactionRollbackError,
     Xid as Xid,
+    _ISQLQuoteProto,
+    _type,
     adapt as adapt,
     adapters as adapters,
     binary_types as binary_types,
@@ -95,20 +99,27 @@ TRANSACTION_STATUS_INTRANS: int
 TRANSACTION_STATUS_INERROR: int
 TRANSACTION_STATUS_UNKNOWN: int
 
-def register_adapter(typ, callable) -> None: ...
+_T = TypeVar("_T")
+
+def register_adapter(typ: type[_T], callable: Callable[[_T], _ISQLQuoteProto]) -> None: ...
 
 class SQL_IN:
-    def __init__(self, seq) -> None: ...
-    def prepare(self, conn) -> None: ...
-    def getquoted(self): ...
+    def __init__(self, seq: Iterable[object]) -> None: ...
+    def prepare(self, conn: connection | None) -> None: ...
+    def getquoted(self) -> bytes: ...
 
 class NoneAdapter:
-    def __init__(self, obj) -> None: ...
-    def getquoted(self, _null: bytes = ...): ...
+    def __init__(self, obj: Unused) -> None: ...
+    def getquoted(self, _null: bytes = b"NULL") -> bytes: ...
 
-def make_dsn(dsn: Any | None = ..., **kwargs): ...
+@overload
+def make_dsn(dsn: bytes) -> bytes: ...  # type: ignore[misc]
+@overload
+def make_dsn(dsn: None = None) -> str: ...
+@overload
+def make_dsn(dsn: str | bytes | None = None, **kwargs: Any) -> str: ...
 
-JSON: Any
-JSONARRAY: Any
-JSONB: Any
-JSONBARRAY: Any
+JSON: _type
+JSONARRAY: _type | None
+JSONB: _type
+JSONBARRAY: _type | None

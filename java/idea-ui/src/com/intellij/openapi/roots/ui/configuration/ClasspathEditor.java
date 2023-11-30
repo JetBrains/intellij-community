@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -56,7 +55,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     super(state);
 
     final Disposable disposable = Disposer.newDisposable();
-    state.getProject().getMessageBus().connect(disposable).subscribe(ProjectTopics.PROJECT_ROOTS, this);
+    state.getProject().getMessageBus().connect(disposable).subscribe(TOPIC, this);
     registerDisposable(disposable);
   }
 

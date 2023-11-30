@@ -7,17 +7,16 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ChildContext;
 import com.intellij.util.concurrency.Propagation;
-import kotlin.Pair;
 import kotlin.coroutines.CoroutineContext;
-import kotlinx.coroutines.CompletableJob;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
-  public static class SubmissionReceipt {
+  public static final class SubmissionReceipt {
     private final long submittedTaskCount;
 
     private SubmissionReceipt(long submittedTaskCount) {
@@ -67,7 +66,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   /**
    * A thread context for each task
    */
-  private final Map<T, CoroutineContext> myThreadContexts = new HashMap<>();
+  private final Map<T, ChildContext> myThreadContexts = new HashMap<>();
 
   /**
    * Disposes tasks, cancel underlying progress indicators, clears tasks queue
@@ -126,15 +125,16 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     T newTask = task;
     SubmissionReceipt receipt;
 
-    Pair<CoroutineContext, CompletableJob> pair = AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : new Pair<>(null, null);
-    CoroutineContext currentContext = pair.getFirst();
-    @Nullable CompletableJob job = pair.getSecond();
+    var childContext = AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : null;
+    CoroutineContext currentContext = childContext == null ? null : childContext.getContext();
+    Job job = childContext == null ? null : childContext.getJob();
 
     synchronized (myLock) {
       for (int i = myTasksQueue.size() - 1; i >= 0; i--) {
         T oldTask = myTasksQueue.get(i);
         ProgressIndicatorBase indicator = myProgresses.get(oldTask);
-        CoroutineContext otherContext = myThreadContexts.get(oldTask);
+        ChildContext otherChildContext = myThreadContexts.get(oldTask);
+        CoroutineContext otherContext = otherChildContext == null ? null : otherChildContext.getContext();
         //dispose cancelled tasks
         if (indicator == null || indicator.isCanceled()) {
           myTasksQueue.remove(i);
@@ -188,7 +188,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
         mySubmittedTasksCount.incrementAndGet();
         ProgressIndicatorBase progress = new ProgressIndicatorBase();
         myProgresses.put(taskToAdd, progress);
-        myThreadContexts.put(taskToAdd, currentContext);
+        myThreadContexts.put(taskToAdd, childContext);
         Disposer.register(taskToAdd, () -> {
           //a removed progress means the task would be ignored on queue processing
           synchronized (myLock) {
@@ -219,8 +219,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  @Nullable
-  public MergingTaskQueue.QueuedTask<T> extractNextTask() {
+  public @Nullable MergingTaskQueue.QueuedTask<T> extractNextTask() {
     List<Disposable> disposeQueue = new ArrayList<>(1);
 
     try {
@@ -236,9 +235,8 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
             disposeQueue.add(task);
             continue;
           }
-          CoroutineContext context = myThreadContexts.get(task);
-
-          return wrapTask(task, indicator, context);
+          var childContext = myThreadContexts.get(task);
+          return wrapTask(task, indicator, childContext);
         }
       }
     }
@@ -247,8 +245,8 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  protected MergingTaskQueue.QueuedTask<T> wrapTask(T task, ProgressIndicatorBase indicator, CoroutineContext context) {
-    return new QueuedTask<>(task, indicator, context);
+  protected MergingTaskQueue.QueuedTask<T> wrapTask(T task, ProgressIndicatorBase indicator, @Nullable ChildContext childContext) {
+    return new QueuedTask<>(task, indicator, childContext);
   }
 
   public boolean isEmpty() {
@@ -296,12 +294,12 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   public static class QueuedTask<T extends MergeableQueueTask<T>> implements AutoCloseable {
     private final T myTask;
     private final ProgressIndicatorEx myIndicator;
-    private final @Nullable CoroutineContext myContext;
+    private final @Nullable ChildContext myChildContext;
 
-    QueuedTask(@NotNull T task, @NotNull ProgressIndicatorEx progress, @Nullable CoroutineContext context) {
+    QueuedTask(@NotNull T task, @NotNull ProgressIndicatorEx progress, @Nullable ChildContext childContext) {
       myTask = task;
       myIndicator = progress;
-      myContext = context;
+      myChildContext = childContext;
     }
 
     @Override
@@ -309,8 +307,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       Disposer.dispose(myTask);
     }
 
-    @NotNull
-    public ProgressIndicatorEx getIndicator() {
+    public @NotNull ProgressIndicatorEx getIndicator() {
       return myIndicator;
     }
 
@@ -327,16 +324,12 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       indicator.checkCanceled();
 
       beforeTask();
-      if (AppExecutorUtil.propagateContextOrCancellation() && myContext != null) {
-        try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
-          CompletableJob job = Cancellation.getJob(myContext);
-          if (job != null) {
-            Propagation.runAsCoroutine(job, () -> myTask.perform(indicator));
-          } else {
-            myTask.perform(indicator);
-          }
+      if (AppExecutorUtil.propagateContextOrCancellation() && myChildContext != null) {
+        try (AccessToken ignored = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
+          myChildContext.runAsCoroutine(() -> myTask.perform(indicator));
         }
-      } else {
+      }
+      else {
         myTask.perform(indicator);
       }
     }

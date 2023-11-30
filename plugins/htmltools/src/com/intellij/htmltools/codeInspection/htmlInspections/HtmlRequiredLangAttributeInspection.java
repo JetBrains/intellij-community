@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HtmlRequiredLangAttributeInspection extends HtmlLocalInspectionTool {
+public final class HtmlRequiredLangAttributeInspection extends HtmlLocalInspectionTool {
 
   private static final String LANG = "lang";
   private static final String HTML = "html";
@@ -60,9 +60,8 @@ public class HtmlRequiredLangAttributeInspection extends HtmlLocalInspectionTool
                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "HtmlRequiredLangAttribute";
   }
 }

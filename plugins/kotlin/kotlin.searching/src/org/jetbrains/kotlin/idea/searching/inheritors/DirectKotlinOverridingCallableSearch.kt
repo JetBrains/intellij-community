@@ -12,9 +12,9 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
 import org.jetbrains.kotlin.idea.search.ideaExtensions.JavaOverridingMethodsSearcherFromKotlinParameters
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch.SearchParameters
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -75,8 +75,9 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
 
                     analyze(classOrObject) {
                         val superFunction = superDeclarationPointer.element ?: return@runReadAction false
+                        val symbolWithMembers = classOrObject.getSymbol().getSymbolContainingMemberDeclarations() ?: return@runReadAction true
 
-                        (classOrObject.getSymbol() as KtSymbolWithMembers).getDeclaredMemberScope()
+                        symbolWithMembers.getDeclaredMemberScope()
                             .getCallableSymbols(ktCallableDeclarationName)
                             .all { overridingSymbol ->
                                 val function = overridingSymbol.psi

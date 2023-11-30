@@ -19,16 +19,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class TableUtil {
-  @NonNls static final String TD = "td";
-  @NonNls static final String TH = "th";
-  @NonNls static final String TR = "tr";
-  @NonNls static final String TABLE = "table";
-  @NonNls static final String COLSPAN = "colspan";
-  @NonNls static final String ROWSPAN = "rowspan";
-  @NonNls static final String THEAD = "thead";
+  static final @NonNls String TD = "td";
+  static final @NonNls String TH = "th";
+  static final @NonNls String TR = "tr";
+  static final @NonNls String TABLE = "table";
+  static final @NonNls String COLSPAN = "colspan";
+  static final @NonNls String ROWSPAN = "rowspan";
+  static final @NonNls String THEAD = "thead";
 
-  @Nullable
-  static PsiElement getParentWithName(PsiElement element, String[] tagNames) {
+  static @Nullable PsiElement getParentWithName(PsiElement element, String[] tagNames) {
     while (element != null) {
       if (element instanceof XmlTag) {
         if (tagNames != null) {
@@ -196,23 +195,20 @@ public final class TableUtil {
     return Pair.create(table, cell);
   }
 
-  @Nullable
-  static PsiElement getCurrentPsiElement(final Editor editor, final PsiFile file) {
+  static @Nullable PsiElement getCurrentPsiElement(final Editor editor, final PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement psiElement = file.findElementAt(offset);
     return PsiTreeUtil.getParentOfType(psiElement, XmlTag.class);
   }
 
-  @Nullable
-  static PsiElement getTablePsiElement(PsiElement root) {
+  static @Nullable PsiElement getTablePsiElement(PsiElement root) {
     while (root != null && !(root instanceof XmlTag && TABLE.equals(StringUtil.toLowerCase(((XmlTag)root).getName())))) {
       root = root.getParent();
     }
     return root;
   }
 
-  @Nullable
-  static PsiElement findClosingToken(XmlTag tag) {
+  static @Nullable PsiElement findClosingToken(XmlTag tag) {
     PsiElement[] children = tag.getChildren();
     for (int i = 0; i < children.length; i++) {
       PsiElement element = children[i];
@@ -226,7 +222,7 @@ public final class TableUtil {
     return null;
   }
 
-  static void moveCaretTo(@NotNull final Editor editor, final PsiElement element) {
+  static void moveCaretTo(final @NotNull Editor editor, final PsiElement element) {
     editor.getCaretModel().moveToOffset(element.getTextOffset());
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
   }
@@ -240,7 +236,7 @@ public final class TableUtil {
     return HtmlUtil.isHtmlTagContainingFile(element);
   }
 
-  static class TableCell {
+  static final class TableCell {
     final int startColumn;
     final int startRow;
     final int cols;
@@ -264,7 +260,7 @@ public final class TableUtil {
     }
   }
 
-  static class TableRow {
+  static final class TableRow {
     final XmlTag rowTag;
     final List<TableCell> list;
     final boolean insideHeader;

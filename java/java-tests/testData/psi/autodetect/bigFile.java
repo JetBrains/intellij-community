@@ -33,6 +33,8 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -5215,7 +5217,7 @@ public final class XXXXX extends UserDataHolderBase implements EditorEx, Highlig
   }
 
   static void assertIsDispatchThread() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
   }
 
   private static void assertReadAccess() {

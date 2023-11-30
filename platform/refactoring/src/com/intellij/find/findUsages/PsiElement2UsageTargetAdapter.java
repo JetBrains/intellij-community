@@ -65,9 +65,8 @@ public class PsiElement2UsageTargetAdapter
   }
 
   /**
-   * Consider to use {@link PsiElement2UsageTargetAdapter(PsiElement, boolean)} to avoid
+   * Consider to use {@link #PsiElement2UsageTargetAdapter(PsiElement, boolean)} to avoid
    * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
-   *
    */
   @Deprecated(forRemoval = true)
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element) {

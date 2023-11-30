@@ -11,7 +11,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.context.Context
-import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -521,6 +520,11 @@ private data class CompilationPartsMetadata(
   val files: Map<String, String>,
 )
 
+@PublishedApi
+internal val THREAD_NAME: AttributeKey<String> = AttributeKey.stringKey("thread.name")
+@PublishedApi
+internal val THREAD_ID: AttributeKey<Long> = AttributeKey.longKey("thread.id")
+
 /**
  * Returns a new [ForkJoinTask] that performs the given function as its action within a trace, and returns
  * a null result upon [ForkJoinTask.join].
@@ -533,8 +537,8 @@ inline fun <T> forkJoinTask(spanBuilder: SpanBuilder, crossinline operation: () 
     val thread = Thread.currentThread()
     spanBuilder
       .setParent(context)
-      .setAttribute(SemanticAttributes.THREAD_NAME, thread.name)
-      .setAttribute(SemanticAttributes.THREAD_ID, thread.id)
+      .setAttribute(THREAD_NAME, thread.name)
+      .setAttribute(THREAD_ID, thread.id)
       .useWithScope {
         operation()
       }

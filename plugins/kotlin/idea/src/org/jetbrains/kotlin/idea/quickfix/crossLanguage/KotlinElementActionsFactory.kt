@@ -218,7 +218,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         val action = if (shouldBePresent) {
             AddModifierFixFE10.createIfApplicable(modifierListOwners, token)
         } else {
-            RemoveModifierFixBase(modifierListOwners, token, false)
+            RemoveModifierFixBase(modifierListOwners, token, false).asIntention()
         }
         return listOfNotNull(action)
     }
@@ -445,8 +445,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         @IntentionFamilyName private val familyName: String
     ) : IntentionAction {
 
-        private val pointer: SmartPsiElementPointer<KtAnnotationEntry>
-        private val qualifiedName: String
+        private val pointer: SmartPsiElementPointer<KtAnnotationEntry> = annotationEntry.createSmartPointer()
+        private val qualifiedName: String = annotationEntry.toLightAnnotation()?.qualifiedName ?: throw IllegalStateException("r")
 
         override fun startInWriteAction(): Boolean = true
 
@@ -500,11 +500,6 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             }
             val valueArgument = arguments.getOrNull(index) ?: return null
             return IndexedValue(index, valueArgument)
-        }
-
-        init {
-            pointer = annotationEntry.createSmartPointer()
-            qualifiedName = annotationEntry.toLightAnnotation()?.qualifiedName ?: throw IllegalStateException("r")
         }
     }
 

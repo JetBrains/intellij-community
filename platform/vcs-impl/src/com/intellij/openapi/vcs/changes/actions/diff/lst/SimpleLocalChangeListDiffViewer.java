@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.simple.SimpleDiffChange;
@@ -16,10 +17,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LineFragmentData;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.LocalTrackerChange;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalTrackerDiffUtil.SelectedTrackerLine;
@@ -30,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +42,9 @@ import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
+
+import static com.intellij.openapi.vcs.ex.DocumentTrackerKt.countAffectedVisibleChanges;
+import static com.intellij.openapi.vcs.ex.LineStatusClientIdTrackerKt.createClientIdGutterIconRenderer;
 
 public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   @NotNull private final LocalChangeListDiffRequest myLocalRequest;
@@ -48,7 +55,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   private final LocalTrackerDiffUtil.ExcludeAllCheckboxPanel myExcludeAllCheckboxPanel;
   private final GutterCheckboxMouseMotionListener myGutterCheckboxMouseMotionListener;
 
-  private final @NotNull List<RangeHighlighter> myToggleExclusionsHighlighters = new ArrayList<>();
+  private final @NotNull List<RangeHighlighter> myHighlighters = new ArrayList<>();
 
   public SimpleLocalChangeListDiffViewer(@NotNull DiffContext context,
                                          @NotNull LocalChangeListDiffRequest localRequest) {
@@ -64,6 +71,10 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
     myGutterCheckboxMouseMotionListener = new GutterCheckboxMouseMotionListener();
     myGutterCheckboxMouseMotionListener.install();
+
+    for (AnAction action : LocalTrackerDiffUtil.createTrackerShortcutOnlyActions(myTrackerActionProvider)) {
+      DiffUtil.registerAction(action, myPanel);
+    }
   }
 
   @NotNull
@@ -83,7 +94,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   @Override
   protected List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>(super.createEditorPopupActions());
-    group.addAll(LocalTrackerDiffUtil.createTrackerActions(myTrackerActionProvider));
+    group.addAll(LocalTrackerDiffUtil.createTrackerEditorPopupActions(myTrackerActionProvider));
     return group;
   }
 
@@ -92,6 +103,37 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   protected SimpleDiffChangeUi createUi(@NotNull SimpleDiffChange change) {
     if (change instanceof MySimpleDiffChange) return new MySimpleDiffChangeUi(this, (MySimpleDiffChange)change);
     return super.createUi(change);
+  }
+
+  @Override
+  @Nullable
+  protected @Nls String getStatusTextMessage() {
+    if (myAllowExcludeChangesFromCommit) {
+      int totalCount = 0;
+      int includedIntoCommitCount = 0;
+      int excludedCount = 0;
+
+      for (SimpleDiffChange change : getDiffChanges()) {
+        RangeExclusionState exclusionState;
+        if (change instanceof MySimpleDiffChange myChange) {
+          exclusionState = myChange.getExclusionState();
+        }
+        else {
+          exclusionState = RangeExclusionState.Included.INSTANCE;
+        }
+
+        totalCount += countAffectedVisibleChanges(exclusionState, false);
+        if (change.isSkipped()) {
+          excludedCount += countAffectedVisibleChanges(exclusionState, false);
+        }
+        else {
+          includedIntoCommitCount += countAffectedVisibleChanges(exclusionState, true);
+        }
+      }
+
+      return LocalTrackerDiffUtil.getStatusText(totalCount, includedIntoCommitCount, excludedCount, myModel.isContentsEqual());
+    }
+    return super.getStatusTextMessage();
   }
 
   @NotNull
@@ -188,23 +230,30 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   protected void clearDiffPresentation() {
     super.clearDiffPresentation();
 
-    for (RangeHighlighter operation : myToggleExclusionsHighlighters) {
+    for (RangeHighlighter operation : myHighlighters) {
       operation.dispose();
     }
-    myToggleExclusionsHighlighters.clear();
+    myHighlighters.clear();
 
     myGutterCheckboxMouseMotionListener.destroyHoverHighlighter();
   }
 
   private @NotNull Runnable applyGutterOperations(@NotNull List<ToggleableLineRange> toggleableLineRanges) {
-    if (!myAllowExcludeChangesFromCommit) return EmptyRunnable.INSTANCE;
-
     return () -> {
-      for (ToggleableLineRange toggleableLineRange : toggleableLineRanges) {
-        myToggleExclusionsHighlighters.addAll(createGutterToggleRenderers(toggleableLineRange));
+      if (myAllowExcludeChangesFromCommit) {
+        for (ToggleableLineRange toggleableLineRange : toggleableLineRanges) {
+          myHighlighters.addAll(createGutterToggleRenderers(toggleableLineRange));
+        }
       }
-      getEditor1().getGutterComponentEx().revalidateMarkup();
-      getEditor2().getGutterComponentEx().revalidateMarkup();
+
+      for (ToggleableLineRange range : toggleableLineRanges) {
+        ContainerUtil.addIfNotNull(myHighlighters, createClientIdHighlighter(range));
+      }
+
+      if (!myHighlighters.isEmpty()) {
+        getEditor1().getGutterComponentEx().revalidateMarkup();
+        getEditor2().getGutterComponentEx().revalidateMarkup();
+      }
     };
   }
 
@@ -271,6 +320,33 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     return LocalTrackerDiffUtil.createToggleAreaThumb(editor, line1, line2, () -> {
       LocalTrackerDiffUtil.toggleBlockExclusion(myTrackerActionProvider, lineRange.start1, isExcludedFromCommit);
     });
+  }
+
+  private @Nullable RangeHighlighter createClientIdHighlighter(@NotNull ToggleableLineRange range) {
+    List<ClientId> clientIds = range.getFragmentData().getClientIds();
+    if (clientIds.isEmpty()) return null;
+
+    GutterIconRenderer iconRenderer = createClientIdGutterIconRenderer(myLocalRequest.getProject(), clientIds);
+    if (iconRenderer == null) return null;
+
+    Range lineRange = range.getLineRange();
+    Side side = Side.fromLeft(lineRange.start2 == lineRange.end2);
+    int line1 = side.select(lineRange.start1, lineRange.start2);
+    int line2 = side.select(lineRange.end1, lineRange.end2);
+
+    EditorEx editor = getEditor(side);
+    TextRange textRange = DiffUtil.getLinesRange(editor.getDocument(), line1, line2);
+    return editor.getMarkupModel()
+      .addRangeHighlighterAndChangeAttributes(null,
+                                              textRange.getStartOffset(), textRange.getEndOffset(),
+                                              DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                              HighlighterTargetArea.LINES_IN_RANGE,
+                                              false, rangeHighlighterEx -> {
+          rangeHighlighterEx.setGreedyToLeft(true);
+          rangeHighlighterEx.setGreedyToRight(true);
+
+          rangeHighlighterEx.setGutterIconRenderer(iconRenderer);
+        });
   }
 
   public static class MySimpleDiffChange extends SimpleDiffChange {
@@ -449,7 +525,8 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         .select(MySimpleDiffChange.class)
         .map(it -> new LocalTrackerChange(it.getStartLine(Side.RIGHT),
                                           it.getEndLine(Side.RIGHT),
-                                          it.getChangelistId()))
+                                          it.getChangelistId(),
+                                          it.getExclusionState()))
         .toList();
     }
 

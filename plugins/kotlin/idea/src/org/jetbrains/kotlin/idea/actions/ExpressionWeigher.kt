@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.actions
 
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.descriptors.*
@@ -11,6 +10,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.inspections.dfa.getArrayElementType
 import org.jetbrains.kotlin.idea.intentions.receiverType
+import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -24,6 +24,9 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.types.typeUtil.replaceArgumentsWithStarProjections
 
+/**
+ * Implementation in K2: [org.jetbrains.kotlin.idea.quickfix.importFix.ExpressionImportWeigher]
+ */
 internal interface ExpressionWeigher {
 
     fun weigh(descriptor: DeclarationDescriptor): Int
@@ -45,28 +48,8 @@ internal object EmptyExpressionWeigher: ExpressionWeigher {
 
 internal abstract class AbstractExpressionWeigher: ExpressionWeigher {
     override fun weigh(descriptor: DeclarationDescriptor): Int {
-        val base = descriptor.importableFqName?.asString()?.let { fqName ->
-            when {
-                /**
-                 * package rating calculation rule:
-                 * - (highest) current project source
-                 * - `kotlin.` and `kotlinx.`
-                 * - `java.`
-                 * - (lowest) all other 3rd party libs
-                 */
-                fqName.startsWith("kotlin.") -> 6
-                fqName.startsWith("kotlinx.") -> 5
-                fqName.startsWith("java.") -> 2
-                descriptor is DeclarationDescriptorWithSource -> run {
-                    val psiElement = descriptor.psiElement
-                    val virtualFile = psiElement?.containingFile?.virtualFile ?: return@run 0
-                    val fileIndex = ProjectRootManager.getInstance(psiElement.project).fileIndex
-                    // project source higher than libs
-                    if (fileIndex.isInSourceContent(virtualFile)) 7 else 0
-                }
-
-                else -> 0
-            }
+        val base = descriptor.importableFqName?.let { fqName ->
+            ImportFixHelper.calculateWeightBasedOnFqName(fqName, (descriptor as? DeclarationDescriptorWithSource)?.psiElement)
         } ?: 0
 
         return base + ownWeigh(descriptor)

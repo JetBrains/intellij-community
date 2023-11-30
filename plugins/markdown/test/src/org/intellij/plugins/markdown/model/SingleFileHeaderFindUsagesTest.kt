@@ -1,13 +1,13 @@
 package org.intellij.plugins.markdown.model
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.util.io.readText
 import junit.framework.TestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import kotlin.io.path.Path
+import kotlin.io.path.readText
 
 @RunWith(JUnit4::class)
 class SingleFileHeaderFindUsagesTest: BasePlatformTestCase() {
@@ -34,4 +34,3 @@ class SingleFileHeaderFindUsagesTest: BasePlatformTestCase() {
     return "${MarkdownTestingUtil.TEST_DATA_PATH}/model/headers/usages/file"
   }
 }
-

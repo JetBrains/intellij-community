@@ -71,4 +71,14 @@ public abstract class FilePatch {
   public void setNewFileMode(int newFileMode) {
     myNewFileMode = newFileMode;
   }
+
+  @Override
+  public String toString() {
+    return "FilePatch{" +
+           "myBeforeName='" + myBeforeName + '\'' +
+           ", myAfterName='" + myAfterName + '\'' +
+           ", myBeforeVersionId='" + myBeforeVersionId + '\'' +
+           ", myAfterVersionId='" + myAfterVersionId + '\'' +
+           '}';
+  }
 }

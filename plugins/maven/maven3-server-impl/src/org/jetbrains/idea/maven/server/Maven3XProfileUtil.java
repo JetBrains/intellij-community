@@ -110,11 +110,11 @@ public final class Maven3XProfileUtil {
   }
 
   @NotNull
-  public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
+  public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir, File pomDir) {
     Model nativeModel = Maven3ModelConverter.toNativeModel(model);
     Model result = doInterpolate(nativeModel, basedir);
     org.apache.maven.project.path.PathTranslator pathTranslator = new DefaultPathTranslator();
-    pathTranslator.alignToBaseDirectory(result, basedir);
+    pathTranslator.alignToBaseDirectory(result, pomDir);
     return Maven3ModelConverter.convertModel(result, null);
   }
 
@@ -161,7 +161,7 @@ public final class Maven3XProfileUtil {
       config.setBuildStartTime(new Date());
 
       Properties userProperties = new Properties();
-      userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigProperties(basedir));
+      userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForBaseDir(basedir));
       config.setUserProperties(userProperties);
 
       result = interpolator.interpolate(result, basedir, config, false);
@@ -196,7 +196,7 @@ public final class Maven3XProfileUtil {
       //interpolator.initialize();
 
       Properties userProperties = new Properties();
-      userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigProperties(basedir));
+      userProperties.putAll(MavenServerConfigUtil.getMavenAndJvmConfigPropertiesForBaseDir(basedir));
       ModelBuildingRequest request = new DefaultModelBuildingRequest();
       request.setUserProperties(userProperties);
       request.setSystemProperties(MavenServerUtil.collectSystemProperties());

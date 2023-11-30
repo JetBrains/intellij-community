@@ -13,10 +13,11 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class InlayPassTest : BasePlatformTestCase() {
   private val noSettings = SettingsKey<NoSettings>("no")
-
+  private lateinit var sharedSink: InlayHintsSinkImpl
   override fun setUp() {
     super.setUp()
     myFixture.configureByText("file.java", "class A{ }")
+    sharedSink = InlayHintsSinkImpl(myFixture.editor)
   }
 
   fun testTurnedOffHintsDisappear() {
@@ -173,17 +174,18 @@ class InlayPassTest : BasePlatformTestCase() {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
         return collector(element, editor, sink)
       }
-    }, noSettings, Language.ANY, InlayHintsSinkImpl(myFixture.editor))
+    }, noSettings, Language.ANY, sharedSink)
   }
 
   private fun createPass(collectors: List<CollectorWithSettings<*>>): InlayHintsPass {
-    return InlayHintsPass(myFixture.file, collectors, myFixture.editor)
+    return InlayHintsPass(myFixture.file, collectors, myFixture.editor, myFixture.editor.calculateVisibleRange(), sharedSink)
   }
 
   private fun InlayHintsPass.collectAndApply() {
     val dumbProgressIndicator = DumbProgressIndicator()
     doCollectInformation(dumbProgressIndicator)
     applyInformationToEditor()
+    sharedSink.reset()
   }
 
   private val inlayModel

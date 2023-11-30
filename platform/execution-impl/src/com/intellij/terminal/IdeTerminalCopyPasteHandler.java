@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
-public class IdeTerminalCopyPasteHandler extends DefaultTerminalCopyPasteHandler {
+public final class IdeTerminalCopyPasteHandler extends DefaultTerminalCopyPasteHandler {
 
   @Override
   protected void setSystemClipboardContents(@NotNull String text) {

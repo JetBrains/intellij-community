@@ -6,19 +6,15 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerPlace
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerType
 
-internal class MarkdownUsageCollector : CounterUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("markdown.events", 1)
+internal object MarkdownUsageCollector : CounterUsagesCollector() {
+  private val GROUP = EventLogGroup("markdown.events", 1)
 
-    @JvmField
-    val RUNNER_EXECUTED = GROUP.registerEvent(
-      "runner.executed",
-      EventFields.Enum("place", RunnerPlace::class.java),
-      EventFields.Enum("type", RunnerType::class.java),
-      EventFields.Class("runner")
-    )
-
-  }
+  val RUNNER_EXECUTED = GROUP.registerEvent(
+    "runner.executed",
+    EventFields.Enum("place", RunnerPlace::class.java),
+    EventFields.Enum("type", RunnerType::class.java),
+    EventFields.Class("runner")
+  )
 
   override fun getGroup(): EventLogGroup {
     return GROUP

@@ -48,9 +48,6 @@ private class MockModuleExtension : ModuleExtension() {
   override fun commit() {
   }
 
-  override fun dispose() {
-  }
-
   override fun isChanged(): Boolean {
     return false
   }

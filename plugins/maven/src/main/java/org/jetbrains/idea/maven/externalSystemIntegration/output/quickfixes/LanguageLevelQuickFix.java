@@ -26,8 +26,6 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.util.Collections;
-
 public abstract class LanguageLevelQuickFix {
   protected final Project project;
   private final MavenProject mavenProject;
@@ -101,7 +99,7 @@ public abstract class LanguageLevelQuickFix {
   private class TemplateFinishedEditing extends TemplateEditingAdapter {
     @Override
     public void templateFinished(@NotNull Template template, boolean brokenOff) {
-      MavenProjectsManager.getInstance(project).forceUpdateProjects(Collections.singleton(mavenProject));
+      MavenProjectsManager.getInstance(project).scheduleForceUpdateMavenProject(mavenProject);
     }
   }
 }

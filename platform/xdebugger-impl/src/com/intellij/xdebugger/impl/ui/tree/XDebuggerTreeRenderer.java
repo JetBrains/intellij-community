@@ -23,8 +23,9 @@ import java.util.function.Supplier;
 
 import static com.intellij.util.ui.tree.TreeUtil.getNodeRowX;
 
-class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
+public class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private final MyColoredTreeCellRenderer myLink = new MyColoredTreeCellRenderer();
+  private final Project myProject;
   private boolean myHaveLink;
   private int myLinkOffset;
   private int myLinkWidth;
@@ -34,7 +35,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   private final MyLongTextHyperlink myLongTextLink = new MyLongTextHyperlink();
 
-  XDebuggerTreeRenderer() {
+  public XDebuggerTreeRenderer(@NotNull Project project) {
+    myProject = project;
     getIpad().right = 0;
     myLink.getIpad().left = 0;
     myUsedCustomSpeedSearchHighlighting = true;
@@ -76,7 +78,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
           Rectangle screen = ScreenUtil.getScreenRectangle(treeRightSideOnScreen);
           // text may fit the screen in ExpandableItemsHandler
           if (screen.x + screen.width < treeRightSideOnScreen.x + notFittingWidth) {
-            myLongTextLink.setupComponent(rawValue, ((XDebuggerTree)tree).getProject());
+            myLongTextLink.setupComponent(rawValue, myProject);
             append(myLongTextLink.getLinkText(), myLongTextLink.getTextAttributes(), myLongTextLink);
             setupLinkDimensions(treeVisibleRect, rowX);
             myLinkWidth = 0;
@@ -85,7 +87,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       }
     }
     putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
-    SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, (SimpleColoredComponent)this, false, selected);
+    SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, this, false, selected);
   }
 
   @Override

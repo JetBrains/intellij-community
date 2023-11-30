@@ -4,7 +4,9 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
+import com.intellij.util.keyFMap.KeyFMap
 import java.util.*
 
 val NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY = DataKey.create<NotebookCellLines.Interval>("NOTEBOOK_CELL_LINES_INTERVAL")
@@ -36,8 +38,12 @@ interface NotebookCellLines {
     val type: CellType,
     val lines: IntRange,
     val markers: MarkersAtLines,
-    val language: Language,
+    val data: KeyFMap, // different notebook implementations could store their own values in this map
   ) : Comparable<Interval> {
+    val language: Language = data.get(INTERVAL_LANGUAGE_KEY)!!
+
+    operator fun <V> get(key: Key<V>): V? = data.get(key)
+
     override fun compareTo(other: Interval): Int = lines.first - other.lines.first
   }
 
@@ -78,5 +84,7 @@ interface NotebookCellLines {
 
     fun hasSupport(editor: Editor): Boolean =
       hasSupport(editor.document)
+
+    val INTERVAL_LANGUAGE_KEY = Key.create<Language>("org.jetbrains.plugins.notebooks.visualization.NotebookCellLines.Interval.language")
   }
 }

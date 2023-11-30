@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist;
 
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -23,8 +24,11 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XDebuggerManagerListener;
 import com.intellij.xdebugger.impl.dfaassist.DfaAssistBase;
 import com.intellij.xdebugger.impl.dfaassist.DfaResult;
 import com.sun.jdi.*;
@@ -38,14 +42,18 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.xdebugger.impl.dfaassist.DfaAssistBase.AssistMode.*;
 
-public final class DfaAssist extends DfaAssistBase implements DebuggerContextListener {
+public final class DfaAssist extends DfaAssistBase implements DebuggerContextListener, XDebuggerManagerListener {
   private static final int CLEANUP_DELAY_MILLIS = 300;
+  private final @NotNull MessageBusConnection myConnection;
   private volatile CancellablePromise<?> myComputation;
   private volatile ScheduledFuture<?> myScheduledCleanup;
+  private volatile boolean myInactive = false;
   private final DebuggerStateManager myManager;
 
   private DfaAssist(@NotNull Project project, @NotNull DebuggerStateManager manager) {
     super(project);
+    myConnection = project.getMessageBus().connect();
+    myConnection.subscribe(XDebuggerManager.TOPIC, this);
     myManager = manager;
     updateFromSettings();
   }
@@ -54,14 +62,36 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
     AssistMode newMode = fromSettings();
     if (myMode != newMode) {
       myMode = newMode;
-      if (newMode == NONE) {
-        cleanUp();
-      }
-      else {
-        DebuggerSession session = myManager.getContext().getDebuggerSession();
-        if (session != null) {
+      update();
+    }
+  }
+
+  private void update() {
+    if (myMode == NONE || myInactive) {
+      cleanUp();
+    }
+    else {
+      DebuggerSession session = myManager.getContext().getDebuggerSession();
+      if (session != null) {
+        DebuggerInvocationUtil.invokeLater(myProject, () -> {
           session.refresh(false);
-        }
+        });
+      }
+    }
+  }
+
+  @Override
+  public void currentSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {
+    DebuggerSession session = myManager.getContext().getDebuggerSession();
+    if (session != null) {
+      XDebugSession xDebugSession = session.getXDebugSession();
+      if (xDebugSession == previousSession && !myInactive) {
+        myInactive = true;
+        update();
+      }
+      else if (xDebugSession == currentSession && myInactive) {
+        myInactive = false;
+        update();
       }
     }
   }
@@ -125,6 +155,7 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
   @Override
   public void dispose() {
     myManager.removeListener(this);
+    myConnection.disconnect();
     cleanUp();
   }
 

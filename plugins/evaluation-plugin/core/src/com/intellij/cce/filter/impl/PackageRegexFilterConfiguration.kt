@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.filter.impl
 
 import com.google.gson.JsonElement
@@ -9,7 +10,7 @@ import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.filter.EvaluationFilterConfiguration
 
 class PackageRegexFilter(pattern: String) : EvaluationFilter {
-  val regex = Regex(pattern)
+  private val regex = Regex(pattern)
   override fun shouldEvaluate(properties: TokenProperties): Boolean {
     return PropertyAdapters.Jvm.adapt(properties)?.packageName?.matches(regex) ?: false
   }

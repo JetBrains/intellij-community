@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.*;
@@ -33,12 +34,13 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileWithAssignedFileType;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import kotlinx.coroutines.CoroutineScope;
@@ -66,12 +68,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
-  static final int VERSION = 18;
+  static final int VERSION = 19;
 
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
-  static final List<String> DEFAULT_IGNORED = List.of("*.pyc", "*.pyo", "*.rbc", "*.yarb", "*~", ".DS_Store", ".git", ".hg", ".svn", "CVS",
-                                                      "__pycache__", "_svn", "vssver.scc", "vssver2.scc");
+  static final List<String> DEFAULT_IGNORED = List.of("*.pyc", "*.pyo", "*.rbc", "*.yarb", "*~", ".DS_Store", ".git", ".hg",
+                                                      ".mypy_cache", ".pytest_cache", ".ruff_cache",
+                                                      ".svn", "CVS", "__pycache__", "_svn", "vssver.scc", "vssver2.scc");
 
   static final String FILE_SPEC = "filetypes";
   private static final String ELEMENT_EXTENSION_MAP = "extensionMap";
@@ -103,9 +106,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final ReadWriteLock myPendingInitializationLock = new ReentrantReadWriteLock();
 
   // maps pluginId -> duplicates for this plugin
-  private final Map<PluginDescriptor, Map<String, FileTypeWithDescriptor>> myNames = new ConcurrentHashMap<>();
-  private final Map<PluginDescriptor, Map<String, FileTypeWithDescriptor>> myDescriptions = new ConcurrentHashMap<>();
-  private final Map<PluginDescriptor, Map<String, FileTypeWithDescriptor>> myDisplayNames = new ConcurrentHashMap<>();
+  private final Map<PluginDescriptor, Set<FileTypeWithDescriptor>> myFileTypesPerPlugin = new ConcurrentHashMap<>();
+  private final Alarm myCheckDuplicatedAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   private @Nullable Consumer<? super ConflictingFileTypeMappingTracker.ResolveConflictResult> myConflictResultConsumer;
 
@@ -384,9 +386,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void removeFromDuplicates(@NotNull FileType type, @NotNull PluginDescriptor pluginDescriptor) {
-    myNames.computeIfAbsent(pluginDescriptor, __ -> new ConcurrentHashMap<>()).remove(type.getName());
-    myDisplayNames.computeIfAbsent(pluginDescriptor, __ -> new ConcurrentHashMap<>()).remove(type.getDisplayName());
-    myDescriptions.computeIfAbsent(pluginDescriptor, __ -> new ConcurrentHashMap<>()).remove(type.getDescription());
+    myFileTypesPerPlugin
+      .computeIfAbsent(pluginDescriptor, __ -> ConcurrentCollectionFactory.createConcurrentSet())
+      .removeIf(descriptor -> descriptor.fileType.equals(type));
   }
 
   private void loadFileTypeBeans() {
@@ -643,7 +645,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   public void removePlainTextAssociationsForFile(@NotNull CharSequence fileName) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myPendingInitializationLock.writeLock().lock();
     try {
       makeFileTypesChange("removePlainTextAssociationsForFile("+fileName+")", () ->
@@ -703,8 +705,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       return overriddenFileType.equals(requestedFileType);
     }
 
-    if (file instanceof LightVirtualFile) {
-      FileType fileType = ((LightVirtualFile)file).getAssignedFileType();
+    if (file instanceof VirtualFileWithAssignedFileType) {
+      FileType fileType = ((VirtualFileWithAssignedFileType)file).getAssignedFileType();
       if (fileType != null) {
         return fileType.equals(requestedFileType);
       }
@@ -780,8 +782,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     FileType temporarilyFixedFileType = getTemporarilyFixedFileType(file);
     if (temporarilyFixedFileType != null) return temporarilyFixedFileType;
 
-    if (file instanceof LightVirtualFile) {
-      FileType fileType = ((LightVirtualFile)file).getAssignedFileType();
+    if (file instanceof VirtualFileWithAssignedFileType) {
+      FileType fileType = ((VirtualFileWithAssignedFileType)file).getAssignedFileType();
       if (fileType != null) {
         return fileType;
       }
@@ -986,12 +988,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  public String @NotNull [] getAssociatedExtensions(@NotNull FileType type) {
-    instantiatePendingFileTypeByName(type.getName());
-    return withReadLock(() -> myPatternsTable.getAssociatedExtensions(FileTypeWithDescriptor.allFor(type)));
-  }
-
-  @Override
   public @NotNull List<FileNameMatcher> getAssociations(@NotNull FileType type) {
     instantiatePendingFileTypeByName(type.getName());
     return withReadLock(() -> myPatternsTable.getAssociations(FileTypeWithDescriptor.allFor(type)));
@@ -1128,6 +1124,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     if (savedVersion < 18) {
       // we want .hprof back, we can open it in our profiler
       unignoreMask("*.hprof");
+    }
+
+    if (savedVersion < 19) {
+      addIgnore(".mypy_cache");
+      addIgnore(".ruff_cache");
+      addIgnore(".pytest_cache");
     }
   }
 
@@ -1387,8 +1389,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     FileTypeWithDescriptor newFtd = new FileTypeWithDescriptor(newFileType, newPluginDescriptor);
     if (addScheme) {
       FileTypeWithDescriptor oldFileType = mySchemeManager.findSchemeByName(newFileType.getName());
-      if (oldFileType != null && !(oldFileType.fileType instanceof AbstractFileType)) {
-        throw new IllegalArgumentException(newFileType + " already registered");
+      if (oldFileType != null) {
+        if (!(oldFileType.fileType instanceof AbstractFileType)) {
+          throw new IllegalArgumentException(newFileType + " already registered");
+        }
+        removeFromDuplicates(oldFileType.fileType, oldFileType.pluginDescriptor);
       }
       mySchemeManager.addScheme(newFtd);
       myPendingFileTypes.remove(newFileType.getName());
@@ -1443,9 +1448,33 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void checkFileTypeNamesUniqueness(@NotNull FileTypeWithDescriptor newFtd) {
-    checkUnique(newFtd, myNames.computeIfAbsent(newFtd.pluginDescriptor, __ -> new ConcurrentHashMap<>()), "getName", FileType::getName);
-    checkUnique(newFtd, myDisplayNames.computeIfAbsent(newFtd.pluginDescriptor, __ -> new ConcurrentHashMap<>()), "getDisplayName", FileType::getDisplayName);
-    checkUnique(newFtd, myDescriptions.computeIfAbsent(newFtd.pluginDescriptor, __ -> new ConcurrentHashMap<>()), "getDescription", FileType::getDescription);
+    myFileTypesPerPlugin.computeIfAbsent(newFtd.pluginDescriptor, __ -> ConcurrentCollectionFactory.createConcurrentSet()).add(newFtd);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      checkUnique();
+    }
+    else {
+      myCheckDuplicatedAlarm.cancelAllRequests();
+      myCheckDuplicatedAlarm.addRequest(() -> {
+        checkUnique();
+      }, 400);
+    }
+  }
+
+  private void checkUnique() {
+    for (Map.Entry<PluginDescriptor, Set<FileTypeWithDescriptor>> entry : myFileTypesPerPlugin.entrySet()) {
+      checkUnique(entry.getValue());
+    }
+  }
+
+  private static void checkUnique(Set<FileTypeWithDescriptor> descriptors) {
+    ConcurrentHashMap<String, FileTypeWithDescriptor> names = new ConcurrentHashMap<>();
+    ConcurrentHashMap<String, FileTypeWithDescriptor> displayNames = new ConcurrentHashMap<>();
+    ConcurrentHashMap<String, FileTypeWithDescriptor> descriptions = new ConcurrentHashMap<>();
+    for (FileTypeWithDescriptor descriptor : descriptors) {
+      checkUnique(descriptor, names, "getName", FileType::getName);
+      checkUnique(descriptor, displayNames, "getDisplayName", FileType::getDisplayName);
+      checkUnique(descriptor, descriptions, "getDescription", FileType::getDescription);
+    }
   }
 
   // check that method "getter" returns unique strings across all file types
@@ -1695,7 +1724,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return null;
   }
 
-  private class PluginFileTypeConsumer implements FileTypeConsumer {
+  private final class PluginFileTypeConsumer implements FileTypeConsumer {
     private final PluginDescriptor myPluginDescriptor;
 
     PluginFileTypeConsumer(@NotNull PluginDescriptor pluginDescriptor) {

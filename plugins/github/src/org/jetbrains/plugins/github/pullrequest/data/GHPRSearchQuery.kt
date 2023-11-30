@@ -1,18 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchSort
-import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import java.text.ParseException
 import java.text.SimpleDateFormat
 
-internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
-  fun buildApiSearchQuery(searchQueryBuilder: GithubApiSearchQueryBuilder) {
-    for (term in terms) {
-      searchQueryBuilder.term(term)
-    }
-  }
+@ApiStatus.Experimental
+class GHPRSearchQuery(val terms: List<Term<*>>) {
 
   fun isEmpty() = terms.isEmpty()
 
@@ -87,7 +83,7 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
 
       override fun toString(): String = "$name:$value"
 
-      class Simple internal constructor(name: QualifierName, value: String) : Qualifier<String>(name, value) {
+      class Simple(name: QualifierName, value: String) : Qualifier<String>(name, value) {
         override val apiValue = this.value
 
         private var not: Boolean = false
@@ -103,7 +99,7 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
         }
       }
 
-      class Enum<T : kotlin.Enum<T>> internal constructor(name: QualifierName, value: T) : Qualifier<kotlin.Enum<T>>(name, value) {
+      class Enum<T : kotlin.Enum<T>>(name: QualifierName, value: T) : Qualifier<kotlin.Enum<T>>(name, value) {
         override val apiValue = this.value.name
 
         companion object {
@@ -123,7 +119,7 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
 
         override fun toString(): String = "$name:${formatDate()}"
 
-        class Before internal constructor(name: QualifierName, value: java.util.Date) : Date(name, value) {
+        class Before(name: QualifierName, value: java.util.Date) : Date(name, value) {
           override val apiValue = "<${formatDate()}"
 
           companion object {
@@ -139,7 +135,7 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
           }
         }
 
-        class After internal constructor(name: QualifierName, value: java.util.Date) : Date(name, value) {
+        class After(name: QualifierName, value: java.util.Date) : Date(name, value) {
           override val apiValue = ">${formatDate()}"
 
           companion object {

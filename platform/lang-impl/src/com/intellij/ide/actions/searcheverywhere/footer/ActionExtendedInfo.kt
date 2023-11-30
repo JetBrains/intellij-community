@@ -7,11 +7,15 @@ import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
+import java.util.function.Supplier
 
-fun createActionExtendedInfo(project: Project?): ExtendedInfo {
+internal fun createActionExtendedInfo(project: Project?): ExtendedInfo {
   val description = fun(it: Any): String? {
     return when (val value = (it as? MatchedValue)?.value ?: return null) {
       is GotoActionModel.ActionWrapper -> value.action.templatePresentation.description
@@ -26,27 +30,20 @@ fun createActionExtendedInfo(project: Project?): ExtendedInfo {
   return ExtendedInfo(description, shortcut)
 }
 
-class AssignShortcutAction(val project: Project?, val value: MatchedValue) : AnAction() {
+private class AssignShortcutAction(val project: Project?, val value: MatchedValue) :
+  AnAction(Supplier { LangBundle.message("label.assign.shortcut") },
+           Supplier {
+             LangBundle.message("actions.tab.assign.a.shortcut", KeymapUtil.getFirstKeyboardShortcutText(
+               KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS))
+             )
+           }) {
+
+    init {
+      shortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)
+    }
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     ActionSearchEverywhereContributor.showAssignShortcutDialog(project, value)
   }
-
-  override fun update(e: AnActionEvent) {
-    val action = ActionSearchEverywhereContributor.getAction(value)
-    if (action != null) {
-      e.presentation.text =
-        if (KeymapUtil.getActiveKeymapShortcuts(ActionManager.getInstance().getId(action)).shortcuts.isEmpty()) {
-          LangBundle.message("label.assign.shortcut")
-        }
-        else {
-          LangBundle.message("label.change.shortcut")
-        }
-      e.presentation.description = LangBundle.message("actions.tab.assign.a.shortcut", altEnter())
-    }
-  }
-
-  private fun altEnter() = KeymapUtil.getFirstKeyboardShortcutText(
-    KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS))
 }

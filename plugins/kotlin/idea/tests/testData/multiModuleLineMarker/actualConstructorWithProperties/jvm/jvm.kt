@@ -1,11 +1,1 @@
-actual class <!LINE_MARKER("descr='Has expects in common module'")!>WithConstructor<!> actual constructor(actual val x: Int, actual val s: String)
-
-/*
-LINEMARKER: Has declaration in common module
-TARGETS:
-common.kt
-expect class <1>WithConstructor(x: Int, s: String) {
-    val <3>x: Int
-
-    val <2>s: String
-*/
+actual class <!LINE_MARKER("descr='Has expects in common module'; targets=[(text=WithConstructor; container=common; icon=nodes/Module.svg); (text=x; container=common; icon=nodes/Module.svg); (text=s; container=common; icon=nodes/Module.svg)]")!>WithConstructor<!> actual constructor(actual val x: Int, actual val s: String)

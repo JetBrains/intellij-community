@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package net.sf.cglib.proxy;
 
 import net.sf.cglib.core.Block;
@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * @author Gregory.Shrago
  */
-public class BridgeMethodGenerator implements CallbackGenerator {
+public final class BridgeMethodGenerator implements CallbackGenerator {
   public static final InvocationHandlerGenerator INSTANCE = new InvocationHandlerGenerator();
 
   private final Map<MethodInfo, MethodInfo> myCovariantInfoMap;

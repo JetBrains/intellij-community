@@ -12,7 +12,9 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +22,11 @@ import java.util.Collections;
 public abstract class SliceUsage extends UsageInfo2UsageAdapter {
   private final SliceUsage myParent;
   public final SliceAnalysisParams params;
+
+  // Store provider here to quickly access it from EDT later
+  // since the psi element won't be available at that time
+  @Nullable
+  private final SliceLanguageSupportProvider mySliceLanguageSupportProvider;
 
   public SliceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
     this(element, parent, parent.params);
@@ -29,6 +36,7 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
     super(new UsageInfo(element));
     myParent = parent;
     this.params = params;
+    mySliceLanguageSupportProvider = LanguageSlicing.getProvider(element);
   }
 
   // root usage
@@ -36,6 +44,13 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
     super(new UsageInfo(element));
     myParent = null;
     this.params = params;
+    mySliceLanguageSupportProvider = LanguageSlicing.getProvider(element);
+  }
+
+  @ApiStatus.Internal
+  @Nullable
+  public SliceLanguageSupportProvider getSliceLanguageSupportProvider() {
+    return mySliceLanguageSupportProvider;
   }
 
   @NotNull

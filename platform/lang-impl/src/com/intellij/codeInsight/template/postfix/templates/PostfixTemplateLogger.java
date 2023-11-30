@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -54,7 +54,7 @@ public final class PostfixTemplateLogger extends CounterUsagesCollector {
     EXPANDED.log(context.getProject(), events);
   }
 
-  public static class PostfixTemplateValidator extends CustomValidationRule {
+  public static final class PostfixTemplateValidator extends CustomValidationRule {
     @NotNull
     @Override
     public String getRuleId() {

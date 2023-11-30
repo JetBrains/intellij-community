@@ -10,6 +10,7 @@ docutils.nodes.Element.__getattr__
 docutils.nodes.NodeVisitor.__getattr__
 docutils.nodes.document.__getattr__
 docutils.nodes.document.__init__
+docutils.nodes.Element.__iter__ # doesn't exist at runtime, but the class is iterable due to __getitem__
 docutils.parsers.rst.Directive.__getattr__
 docutils.transforms.Transform.__getattr__
 docutils.transforms.Transformer.__getattr__

@@ -5,6 +5,8 @@
     <property name="ideVersion">2022.1.0.0</property>
     <property name="modified">2021-11-01T18:43:47</property>
     <property name="originalScheme">_@user_IntelliJ Light</property>
+    <property name="lcNameBundle">messages.EditorBundle</property>
+    <property name="lcNameKey">intellij.light.scheme.name</property>
   </metaInfo>
   <colors>
     <option name="ADDED_LINES_COLOR" value="7fc784" />
@@ -44,6 +46,25 @@
     <option name="PROMOTION_PANE" value="e7effd" />
     <option name="QUESTION_HINT" value="f5f8fe" />
     <option name="RECENT_LOCATIONS_SELECTION" value="E7EFFD" />
+
+    <option name="FILESTATUS_ADDED" value="067D17"/>
+    <option name="FILESTATUS_COPIED" value="067D17"/>
+    <option name="FILESTATUS_DELETED" value="6C707E"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM" value="6C707E"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_IGNORED" value="8C4F00"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS" value="DE1B2E"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_CONFLICTS" value="DE1B2E"/>
+    <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS" value="DE1B2E"/>
+    <option name="FILESTATUS_MERGED" value="643CB8"/>
+    <option name="FILESTATUS_MODIFIED" value="0033B3"/>
+    <option name="FILESTATUS_RENAMED" value="0033B3"/>
+    <option name="FILESTATUS_NOT_CHANGED_IMMEDIATE" value="0033B3"/>
+    <option name="FILESTATUS_NOT_CHANGED_RECURSIVE" value="0033B3"/>
+    <option name="FILESTATUS_UNKNOWN" value="B23247"/>
+    <option name="FILESTATUS_addedOutside" value="067D17"/>
+    <option name="FILESTATUS_changelistConflict" value="DE1B2E"/>
+    <option name="FILESTATUS_modifiedOutside" value="0033B3"/>
+
   </colors>
   <attributes>
     <option name="ANNOTATION_NAME_ATTRIBUTES" baseAttributes="DEFAULT_METADATA" />
@@ -345,6 +366,11 @@
         <option name="FOREGROUND" value="830091" />
       </value>
     </option>
+    <option name="JS.JSX_CLIENT_COMPONENT">
+      <value>
+        <option name="FOREGROUND" value="AD6339" />
+      </value>
+    </option>
     <option name="JS.LOCAL_VARIABLE">
       <value>
         <option name="FOREGROUND" value="248f8f" />
@@ -434,6 +460,11 @@
     <option name="WRONG_REFERENCES_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="f50000" />
+      </value>
+    </option>
+    <option name="XML_CUSTOM_TAG_NAME">
+      <value>
+        <option name="FOREGROUND" value="008077" />
       </value>
     </option>
     <option name="XPATH.FUNCTION">

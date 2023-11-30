@@ -106,7 +106,7 @@ public final class BackgroundUpdateHighlightersUtil {
 
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     HighlightersRecycler toReuse = new HighlightersRecycler();
-    ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_START_OFFSET_NO_DUPS);
+    ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_ACTUAL_START_OFFSET_NO_DUPS);
     Set<HighlightInfo> infoSet = new HashSet<>(filteredInfos);
 
     Processor<HighlightInfo> processor = info -> {
@@ -131,6 +131,7 @@ public final class BackgroundUpdateHighlightersUtil {
     boolean[] changed = {false};
     SweepProcessor.Generator<HighlightInfo> generator = proc -> ContainerUtil.process(filteredInfos, proc);
     List<HighlightInfo> fileLevelHighlights = new ArrayList<>();
+    List<HighlightInfo> infosToCreateHighlightersFor = new ArrayList<>(filteredInfos.size());
 
     try {
       DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(document, project, priorityRange.getStartOffset(), priorityRange.getEndOffset(), processor);
@@ -149,14 +150,16 @@ public final class BackgroundUpdateHighlightersUtil {
           return true;
         }
         if (info.getStartOffset() < priorityRange.getStartOffset() || info.getEndOffset() > priorityRange.getEndOffset()) {
-          EditorColorsScheme colorsScheme = session.getColorsScheme();
-          createOrReuseHighlighterFor(info, colorsScheme, document, group, psiFile, (MarkupModelEx)markup, toReuse,
-                                        range2markerCache, severityRegistrar);
+          // have to create RangeHighlighter later, to avoid exposing them to the markup model immediately,
+          // thus messing the HighlightInfo.getStartOffset() leading to "sweep generator supplied infos in a wrong order" exception
+          infosToCreateHighlightersFor.add(info);
           changed[0] = true;
         }
         return true;
       });
-
+      for (HighlightInfo info : infosToCreateHighlightersFor) {
+        createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, (MarkupModelEx)markup, toReuse, range2markerCache, severityRegistrar);
+      }
       boolean shouldClean = restrictedRange.getStartOffset() == 0 && restrictedRange.getEndOffset() == document.getTextLength();
       session.updateFileLevelHighlights(fileLevelHighlights, group, shouldClean);
       changed[0] |= UpdateHighlightersUtil.incinerateObsoleteHighlighters(toReuse, session);
@@ -200,9 +203,10 @@ public final class BackgroundUpdateHighlightersUtil {
       });
 
       List<HighlightInfo> filteredInfos = UpdateHighlightersUtil.HighlightInfoPostFilters.applyPostFilter(project, infos);
-      ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_START_OFFSET_NO_DUPS);
+      ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_ACTUAL_START_OFFSET_NO_DUPS);
       SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredInfos, processor);
       List<HighlightInfo> fileLevelHighlights = new ArrayList<>();
+      List<HighlightInfo> infosToCreateHighlightersFor = new ArrayList<>(filteredInfos.size());
       SweepProcessor.sweep(generator, (__, info, atStart, overlappingIntervals) -> {
         if (!atStart) {
           return true;
@@ -214,12 +218,16 @@ public final class BackgroundUpdateHighlightersUtil {
         }
 
         if (range.contains(info) && !UpdateHighlightersUtil.isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
-          createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, toReuse, range2markerCache, severityRegistrar);
+          // have to create RangeHighlighter later, to avoid exposing them to the markup model immediately,
+          // thus messing the HighlightInfo.getStartOffset() leading to "sweep generator supplied infos in a wrong order" exception
+          infosToCreateHighlightersFor.add(info);
           changed[0] = true;
         }
         return true;
       });
-
+      for (HighlightInfo info : infosToCreateHighlightersFor) {
+        createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, toReuse, range2markerCache, severityRegistrar);
+      }
       session.updateFileLevelHighlights(fileLevelHighlights, group, range.equalsToRange(0, document.getTextLength()));
       changed[0] |= UpdateHighlightersUtil.incinerateObsoleteHighlighters(toReuse, session);
     }
@@ -288,8 +296,9 @@ public final class BackgroundUpdateHighlightersUtil {
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
-    RangeHighlighterEx highlighter = infosToRemove == null ? null : infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
-    if (highlighter == null) {
+    RangeHighlighterEx salvagedFromBin = infosToRemove == null ? null : infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
+    RangeHighlighterEx highlighter;
+    if (salvagedFromBin == null) {
       highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                                   HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);
       if (HighlightInfoType.VISIBLE_IF_FOLDED.contains(info.type)) {
@@ -297,6 +306,7 @@ public final class BackgroundUpdateHighlightersUtil {
       }
     }
     else {
+      highlighter = salvagedFromBin;
       markup.changeAttributesInBatch(highlighter, changeAttributes);
     }
 
@@ -306,11 +316,14 @@ public final class BackgroundUpdateHighlightersUtil {
       if (!attributesSet) {
         highlighter.setTextAttributes(infoAttributes);
         TextAttributes afterSet = highlighter.getTextAttributes(colorsScheme);
-        LOG.error("Expected to set " + infoAttributes + " but actual attributes are: "+actualAttributes+
+        LOG.error("Expected to set " + infoAttributes + " but actual attributes are: " + actualAttributes +
                   "; colorsScheme: '" + (colorsScheme == null ? "[global]" : colorsScheme.getName()) + "'" +
-                  "; highlighter:" + highlighter +" ("+highlighter.getClass()+")" +
-                  "; markup: "+markup+" ("+markup.getClass()+")"+
-                  "; attributes after the second .setAttributes(): "+afterSet);
+                  "; highlighter:" + highlighter + " (" + highlighter.getClass() + ")" +
+                  "; was reused from the bin: " + (salvagedFromBin != null) +
+                  "; is being recycled: " + HighlightersRecycler.isBeingRecycled(highlighter)+
+                  "; markup: " + markup + " (" + markup.getClass() + ")" +
+                  "; attributes after the second .setAttributes(): " + afterSet +
+                  " (set " + (infoAttributes.equals(afterSet) ? "successfully" : "not successfully") + ")");
       }
     }
   }

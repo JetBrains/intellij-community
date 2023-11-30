@@ -430,6 +430,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../completion/testData/weighers/basic/ExactMatchForKeyword.kt");
         }
 
+        @TestMetadata("ImportDirective.kt")
+        public void testImportDirective() throws Exception {
+            runTest("../completion/testData/weighers/basic/ImportDirective.kt");
+        }
+
         @TestMetadata("ImportedFirst.kt")
         public void testImportedFirst() throws Exception {
             runTest("../completion/testData/weighers/basic/ImportedFirst.kt");
@@ -600,6 +605,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../completion/testData/weighers/basic/PropertiesBeforeKeywords.kt");
         }
 
+        @TestMetadata("RecursiveCall.kt")
+        public void testRecursiveCall() throws Exception {
+            runTest("../completion/testData/weighers/basic/RecursiveCall.kt");
+        }
+
         @TestMetadata("StaticMembers.kt")
         public void testStaticMembers() throws Exception {
             runTest("../completion/testData/weighers/basic/StaticMembers.kt");
@@ -618,6 +628,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
         @TestMetadata("UnavailableDslReceiver.kt")
         public void testUnavailableDslReceiver() throws Exception {
             runTest("../completion/testData/weighers/basic/UnavailableDslReceiver.kt");
+        }
+
+        @TestMetadata("WhenWithSubject.kt")
+        public void testWhenWithSubject() throws Exception {
+            runTest("../completion/testData/weighers/basic/WhenWithSubject.kt");
         }
     }
 }

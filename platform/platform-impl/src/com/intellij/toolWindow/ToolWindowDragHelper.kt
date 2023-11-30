@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.ide.HelpTooltip
@@ -31,6 +31,7 @@ import java.lang.ref.WeakReference
 import javax.swing.JComponent
 import javax.swing.JDialog
 import javax.swing.JLabel
+import javax.swing.JLayeredPane
 import javax.swing.SwingUtilities
 
 private fun Dimension.isNotEmpty(): Boolean = width > 0 && height > 0
@@ -286,7 +287,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
   private fun relocate(event: MouseEvent) {
     if (dragMoreButton != null) {
-      val bounds = Rectangle(Point(), UIUtil.getWindow(myDragComponent)!!.size)
+      val bounds = Rectangle(Point(), ComponentUtil.getWindow(myDragComponent)!!.size)
       if (event.x > bounds.width / 2) {
         bounds.x = 1 + 2 * bounds.width / 3
         dragMoreButtonNewSide = RIGHT
@@ -557,9 +558,28 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
   private fun getToolWindow() = toolWindowRef?.get()
 
-  private fun getComponentFromDragSourcePane(point: RelativePoint) : Component? =
-    point.getPoint(dragSourcePane).let { SwingUtilities.getDeepestComponentAt(dragSourcePane, it.x, it.y) } ?:
-    point.getPoint(dragSourcePane.parent).let { SwingUtilities.getDeepestComponentAt(dragSourcePane.parent, it.x, it.y) }
+  private fun getComponentFromDragSourcePane(point: RelativePoint) : Component? {
+    // This is VERY tricky. Can't use dragSourcePane directly here because it can be obscured by a popup (IDEA-329995).
+    // Can't use the window (IdeFrame) either because in that case we can mistakenly end up selecting the glass pane,
+    // because we place that drop target highlight component on it (see createDropTargetHighlightComponent).
+    // So we have to walk the middle ground here and start searching from the layered pane instead.
+    // Moreover, we want the topmost layered pane, as there may be others, like the tool window pane itself.
+    val layeredPane = getTopmostLayeredPane(dragSourcePane) ?: return null
+    val pointOnWindow = point.getPoint(layeredPane)
+    return SwingUtilities.getDeepestComponentAt(layeredPane, pointOnWindow.x, pointOnWindow.y)
+  }
+
+  private fun getTopmostLayeredPane(dragSourcePane: ToolWindowPane): JLayeredPane? {
+    var result: JLayeredPane? = null
+    var component: Component? = dragSourcePane
+    while (component != null) {
+      if (component is JLayeredPane) {
+        result = component
+      }
+      component = component.parent
+    }
+    return result
+  }
 
   private fun getToolWindowAtPoint(point: RelativePoint): ToolWindowImpl? {
     val clickedComponent = getComponentFromDragSourcePane(point)

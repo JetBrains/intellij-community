@@ -68,7 +68,7 @@ interface ClassLoadingAdapter {
                             return info.copy(containsLoops = true)
                         }
                     }
-                    is TableSwitchInsnNode, is LookupSwitchInsnNode -> {
+                    is TableSwitchInsnNode, is LookupSwitchInsnNode, is InvokeDynamicInsnNode -> {
                         return info.copy(containsCodeUnsupportedInEval4J = true)
                     }
                     is InsnNode -> {

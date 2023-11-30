@@ -4,13 +4,14 @@
 package org.jetbrains.intellij.build.io
 
 import com.fasterxml.jackson.jr.ob.JSON
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import java.io.File
+import java.nio.charset.MalformedInputException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration
@@ -71,9 +72,15 @@ suspend fun runJava(mainClass: String,
             span.setAttribute("processArgs", processArgs.joinToString(separator = " "))
             span.setAttribute("output", runCatching { Files.readString(outputFile) }.getOrNull() ?: "output file doesn't exist")
             val errorOutput = runCatching { Files.readString(errorOutputFile) }.getOrNull()
+            val output = runCatching { Files.readString(outputFile) }.getOrNull()
             span.setAttribute("errorOutput", errorOutput ?: "error output file doesn't exist")
             onError?.invoke()
-            throw RuntimeException("Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}\n$errorOutput")
+            throw RuntimeException("Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}" +
+                                   "\n--- error output ---\n" +
+                                   "$errorOutput" +
+                                   "\n--- output ---" +
+                                   "$output\n" +
+                                   "\n--- ---")
           }
 
           try {
@@ -115,7 +122,12 @@ suspend fun runJava(mainClass: String,
 
 private fun checkOutput(outputFile: Path, span: Span, errorConsumer: (String) -> Unit) {
   val out = try {
-    Files.readString(outputFile)
+    try {
+      Files.readString(outputFile)
+    }
+    catch (_: MalformedInputException) {
+      Files.readString(outputFile, Charsets.ISO_8859_1)
+    }
   }
   catch (e: NoSuchFieldException) {
     span.setAttribute("output", "output file doesn't exist")
@@ -170,14 +182,23 @@ private fun createClassPathFile(classPath: List<String>, classpathFile: Path): S
   return classPathStringBuilder
 }
 
-fun runProcessBlocking(args: List<String>, workingDir: Path? = null) {
+@JvmOverloads
+fun runProcessBlocking(args: List<String>, workingDir: Path? = null, timeoutMillis: Long = DEFAULT_TIMEOUT.inWholeMilliseconds) {
   runBlocking {
     runProcess(args = args,
                workingDir = workingDir,
-               timeout = DEFAULT_TIMEOUT,
+               timeout = timeoutMillis.milliseconds,
                additionalEnvVariables = emptyMap(),
                inheritOut = false)
   }
+}
+
+suspend fun runProcess(vararg args: String,
+                       workingDir: Path? = null,
+                       timeout: Duration = DEFAULT_TIMEOUT,
+                       additionalEnvVariables: Map<String, String> = emptyMap(),
+                       inheritOut: Boolean = false) {
+  runProcess(args.toList(), workingDir, timeout, additionalEnvVariables, inheritOut)
 }
 
 suspend fun runProcess(args: List<String>,

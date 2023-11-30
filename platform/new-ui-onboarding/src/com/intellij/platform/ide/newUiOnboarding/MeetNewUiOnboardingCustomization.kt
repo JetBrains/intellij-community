@@ -9,7 +9,7 @@ import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStatistics.Onboa
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 
-class MeetNewUiOnboardingCustomization : MeetNewUiCustomization {
+private class MeetNewUiOnboardingCustomization : MeetNewUiCustomization {
   override fun addButtons(project: Project, row: Row) {
     if (NewUiOnboardingUtil.isOnboardingEnabled) {
       @Suppress("DialogTitleCapitalization")
@@ -19,6 +19,10 @@ class MeetNewUiOnboardingCustomization : MeetNewUiCustomization {
         NewUiOnboardingStatistics.logOnboardingStarted(project, OnboardingStartingPlace.CONFIGURE_NEW_UI_TOOLWINDOW)
       }.customize(UnscaledGaps(left = 16))
     }
+  }
+
+  override fun shouldCreateToolWindow(): Boolean {
+    return NewUiOnboardingUtil.shouldProposeOnboarding()
   }
 
   override fun showToolWindowOnStartup(): Boolean {

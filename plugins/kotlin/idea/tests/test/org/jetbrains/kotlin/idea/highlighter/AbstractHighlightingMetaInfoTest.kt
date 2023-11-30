@@ -12,8 +12,10 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration.DescriptionRenderingOption
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration.SeverityRenderingOption
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.util.*
 
@@ -22,7 +24,12 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
 
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         val expectedHighlighting = dataFile().getExpectedHighlightingFile()
-        checkHighlighting(files.first(), expectedHighlighting, globalDirectives)
+        val psiFile = files.first()
+        if (psiFile is KtFile && psiFile.isScript()) {
+            ScriptConfigurationManager.updateScriptDependenciesSynchronously(psiFile)
+        }
+
+        checkHighlighting(psiFile, expectedHighlighting, globalDirectives)
     }
 
     private fun checkHighlighting(file: PsiFile, expectedHighlightingFile: File, globalDirectives: Directives) {

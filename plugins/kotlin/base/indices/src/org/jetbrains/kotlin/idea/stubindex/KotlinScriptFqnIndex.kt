@@ -18,6 +18,7 @@ class KotlinScriptFqnIndex internal constructor() : StringStubIndexExtension<KtS
 
     override fun getKey() = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinScriptFqnIndex[fqName, project, scope]"))
     override fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtScript> {
         return Helper[fqName, project, scope]
     }

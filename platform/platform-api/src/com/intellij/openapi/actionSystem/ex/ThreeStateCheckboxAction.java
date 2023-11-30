@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.actionSystem.ex;
 
@@ -16,7 +16,7 @@ import javax.swing.*;
 import java.util.function.Supplier;
 
 public abstract class ThreeStateCheckboxAction extends AnAction implements CustomComponentAction {
-  @NonNls public static final Key<ThreeStateCheckBox.State> STATE_PROPERTY = Key.create("three_state_selected");
+  public static final @NonNls Key<ThreeStateCheckBox.State> STATE_PROPERTY = Key.create("three_state_selected");
 
   protected ThreeStateCheckboxAction() {}
 
@@ -37,14 +37,13 @@ public abstract class ThreeStateCheckboxAction extends AnAction implements Custo
     super(dynamicText, dynamicDescription, icon);
   }
 
-  @NotNull
-  public abstract ThreeStateCheckBox.State isSelected(AnActionEvent e);
+  public abstract @NotNull ThreeStateCheckBox.State isSelected(AnActionEvent e);
 
   public abstract void setSelected(AnActionEvent e, @NotNull ThreeStateCheckBox.State state);
 
 
   @Override
-  public final void actionPerformed(@NotNull final AnActionEvent e) {
+  public final void actionPerformed(final @NotNull AnActionEvent e) {
     ThreeStateCheckBox.State state = isSelected(e);
 
     Presentation presentation = e.getPresentation();
@@ -54,16 +53,15 @@ public abstract class ThreeStateCheckboxAction extends AnAction implements Custo
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     ThreeStateCheckBox.State state = isSelected(e);
 
     Presentation presentation = e.getPresentation();
     presentation.putClientProperty(STATE_PROPERTY, state);
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     // this component cannot be stored right here because of the action system architecture:
     // one action can be shown on multiple toolbars simultaneously
     ThreeStateCheckBox checkBox = new ThreeStateCheckBox();

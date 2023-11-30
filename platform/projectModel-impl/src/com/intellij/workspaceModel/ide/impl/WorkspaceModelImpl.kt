@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -14,13 +14,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.*
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
-import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
-import com.intellij.platform.workspace.storage.impl.assertConsistency
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -79,7 +79,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
         val previousStorage: MutableEntityStorage?
         val previousStorageForUnloaded: EntityStorageSnapshot
         val loadingCacheTime = measureTimeMillis {
-          previousStorage = cache.loadCache()?.toBuilder()
+          previousStorage = cache.loadCache()
           previousStorageForUnloaded = cache.loadUnloadedEntitiesCache()?.toSnapshot() ?: EntityStorageSnapshot.empty()
         }
         val storage = if (previousStorage == null) {
@@ -144,7 +144,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
       val changes: Map<Class<*>, List<EntityChange<*>>>
       collectChangesTimeMillis = measureTimeMillis {
-        changes = builder.collectChanges(before)
+        changes = builder.collectChanges()
       }
       initializingTimeMillis = measureTimeMillis {
         this.initializeBridges(changes, builder)
@@ -219,7 +219,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
 
       // We don't send changes to the WorkspaceModelChangeListener during the silent update.
       // But the concept of silent update is getting deprecated, and the list of changes will be sent to the new async listeners
-      val changes = builder.collectChanges(before)
+      val changes = builder.collectChanges()
 
       toSnapshotTimeMillis = measureTimeMillis {
         newStorage = builder.toSnapshot()
@@ -274,7 +274,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       val builder = MutableEntityStorage.from(before)
       updater(builder)
       startPreUpdateHandlers(before, builder)
-      val changes = builder.collectChanges(before)
+      val changes = builder.collectChanges()
       val newStorage = builder.toSnapshot()
       unloadedEntitiesStorage.replace(newStorage, changes, {}, ::onUnloadedEntitiesChanged)
     }.apply { updateUnloadedEntitiesTimeMs.addAndGet(this) }
@@ -421,11 +421,11 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     private val initializeBridgesTimeMs: AtomicLong = AtomicLong()
 
     /**
-     * This setup is in static part because meters will not be collected if the same instrument (gauge, counter ...) are registered more then once.
+     * This setup is in static part because meters will not be collected if the same instrument (gauge, counter ...) are registered more than once.
      * In that case WARN by OpenTelemetry will be logged 'Instrument XYZ has recorded multiple values for the same attributes.'
      * https://github.com/airbytehq/airbyte-platform/pull/213/files
      */
-    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+    private fun setupOpenTelemetryReporting(meter: Meter) {
       val loadingTotalGauge = meter.gaugeBuilder("workspaceModel.loading.total.ms")
         .ofLongs().setDescription("Total time spent in method").buildObserver()
 

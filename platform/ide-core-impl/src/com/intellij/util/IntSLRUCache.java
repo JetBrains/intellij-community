@@ -18,8 +18,7 @@ public final class IntSLRUCache<T> {
     myProbationalQueue = new IntObjectLRUMap<>(probationalQueueSize);
   }
 
-  @NotNull
-  public IntObjectLRUMap.MapEntry<T> cacheEntry(int key, T value) {
+  public @NotNull IntObjectLRUMap.MapEntry<T> cacheEntry(int key, T value) {
     IntObjectLRUMap.MapEntry<T> cached = myProtectedQueue.getEntry(key);
     if (cached == null) {
       cached = myProbationalQueue.getEntry(key);
@@ -33,13 +32,11 @@ public final class IntSLRUCache<T> {
     return entry;
   }
 
-  @Nullable
-  public IntObjectLRUMap.MapEntry<T> getCachedEntry(int id) {
+  public @Nullable IntObjectLRUMap.MapEntry<T> getCachedEntry(int id) {
     return getCachedEntry(id, true);
   }
 
-  @Nullable
-  public IntObjectLRUMap.MapEntry<T> getCachedEntry(int id, boolean allowMutation) {
+  public @Nullable IntObjectLRUMap.MapEntry<T> getCachedEntry(int id, boolean allowMutation) {
     IntObjectLRUMap.MapEntry<T> entry = myProtectedQueue.getEntry(id);
     if (entry != null) {
       protectedHits++;

@@ -35,7 +35,7 @@ class GitLabServerPath : ServerPath {
     get() = toURI().resolveRelative("api/v4/")
 
   val isDefault: Boolean
-    get() = uri.startsWith("gitlab.com", true) || uri.contains("/gitlab.com", true)
+    get() = toURI().host.startsWith("gitlab.com", true) || uri.contains("/gitlab.com", true)
 
   fun toURL(): URL = URL("$uri/")
 

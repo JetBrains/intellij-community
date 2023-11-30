@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.application.Application;
@@ -27,6 +27,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
     return app == null ? new MockFileTypeManager() : app.getService(FileTypeManager.class);
   });
 
+  @Topic.AppLevel
   public static final @NotNull Topic<FileTypeListener> TOPIC = new Topic<>(FileTypeListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   /**
@@ -49,10 +50,6 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    * @return {@code true} if the file is ignored, {@code false} otherwise.
    */
   public abstract boolean isFileIgnored(@NotNull String name);
-
-  /** @deprecated obsolete - file type associations aren't limited to a mere extensions list (see {@link #getAssociations}) */
-  @Deprecated(forRemoval = true)
-  public abstract String @NotNull [] getAssociatedExtensions(@NotNull FileType type);
 
   public abstract @NotNull List<FileNameMatcher> getAssociations(@NotNull FileType type);
 

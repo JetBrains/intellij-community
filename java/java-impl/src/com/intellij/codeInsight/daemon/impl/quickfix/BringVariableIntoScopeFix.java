@@ -5,10 +5,11 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -110,7 +111,7 @@ public final class BringVariableIntoScopeFix implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    return ModCommands.psiUpdate(myOutOfScopeVariable, (outOfScopeVariable, updater) -> {
+    return ModCommand.psiUpdate(myOutOfScopeVariable, (outOfScopeVariable, updater) -> {
       PsiReferenceExpression reference = updater.getWritable(myUnresolvedReference);
       invoke(outOfScopeVariable, reference);
     });

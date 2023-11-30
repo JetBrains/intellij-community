@@ -24,11 +24,10 @@ internal class ModuleContentScope(private val module: Module) : GlobalSearchScop
 }
 
 internal class ModuleWithDependenciesContentScope(private val rootModule: Module) : GlobalSearchScope(rootModule.project) {
-  private val moduleToOrder : Object2IntMap<Module>
+  private val moduleToOrder : Object2IntMap<Module> = Object2IntOpenHashMap()
   private val projectFileIndex = ProjectFileIndex.getInstance(rootModule.project)
 
   init {
-    moduleToOrder = Object2IntOpenHashMap()
     var i = 1
     ModuleRootManager.getInstance(rootModule).orderEntries().recursively().withoutLibraries().withoutSdk().productionOnly().forEachModule {
       moduleToOrder.put(it, i++)

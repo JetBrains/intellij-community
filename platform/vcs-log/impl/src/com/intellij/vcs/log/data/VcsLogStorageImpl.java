@@ -6,16 +6,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.index.PhmVcsLogStorageBackend;
+import com.intellij.vcs.log.data.index.VcsLogStorageBackend;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsRefImpl;
-import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -26,10 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -53,30 +52,51 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   private final @NotNull VcsLogErrorHandler myErrorHandler;
   private volatile boolean myDisposed = false;
 
-  public VcsLogStorageImpl(@NotNull Project project,
-                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                           @NotNull VcsLogErrorHandler errorHandler,
-                           @NotNull Disposable parent) throws IOException {
+  private VcsLogStorageImpl(@NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+                            @NotNull StorageId.Directory hashesStorageId,
+                            @NotNull StorageId.Directory refsStorageId,
+                            @NotNull VcsLogErrorHandler errorHandler,
+                            @NotNull Disposable parent) throws IOException {
     myErrorHandler = errorHandler;
 
-    String logId = PersistentUtil.calcLogId(project, logProviders);
-
-    List<VirtualFile> roots = logProviders.keySet().stream().sorted(Comparator.comparing(VirtualFile::getPath)).toList();
-    MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
-    myHashesStorageId = new StorageId.Directory(project.getName(), HASHES_STORAGE, logId, VERSION);
-    StorageLockContext storageLockContext = new StorageLockContext();
-
-    myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(myHashesStorageId, commitIdKeyDescriptor,
-                                                                                               storageLockContext),
-                                                         myHashesStorageId.getStorageFile(STORAGE));
-
-    VcsRefKeyDescriptor refsKeyDescriptor = new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor);
-    myRefsStorageId = new StorageId.Directory(project.getName(), REFS_STORAGE, logId, VERSION + REFS_VERSION);
-    myRefsEnumerator = IOUtil.openCleanOrResetBroken(() -> new PersistentEnumerator<>(myRefsStorageId.getStorageFile(STORAGE),
-                                                                                      refsKeyDescriptor, AbstractStorage.PAGE_SIZE,
-                                                                                      storageLockContext, myRefsStorageId.getVersion()),
-                                                     myRefsStorageId.getStorageFile(STORAGE).toFile());
     Disposer.register(parent, this);
+
+    try {
+      StorageLockContext storageLockContext = new StorageLockContext();
+
+      List<VirtualFile> roots = logProviders.keySet().stream().sorted(Comparator.comparing(VirtualFile::getPath)).toList();
+      MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
+      myHashesStorageId = hashesStorageId;
+      myCommitIdEnumerator = new MyPersistentBTreeEnumerator(myHashesStorageId, commitIdKeyDescriptor, storageLockContext);
+      Disposer.register(this, () -> {
+        try {
+          myCommitIdEnumerator.close();
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
+      });
+
+      VcsRefKeyDescriptor refsKeyDescriptor = new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor);
+      myRefsStorageId = refsStorageId;
+      myRefsEnumerator = new PersistentEnumerator<>(myRefsStorageId.getStorageFile(STORAGE), refsKeyDescriptor, AbstractStorage.PAGE_SIZE,
+                                                    storageLockContext, myRefsStorageId.getVersion());
+      Disposer.register(this, () -> {
+        try {
+          myRefsEnumerator.close();
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
+      });
+
+      Disposer.register(this, () -> myDisposed = true);
+    }
+    catch (Throwable t) {
+      myDisposed = true;
+      Disposer.dispose(this);
+      throw t;
+    }
   }
 
   public static @NotNull Function<Integer, Hash> createHashGetter(@NotNull VcsLogStorage storage) {
@@ -191,14 +211,6 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public void dispose() {
-    try {
-      myDisposed = true;
-      myCommitIdEnumerator.close();
-      myRefsEnumerator.close();
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
   }
 
   private void checkDisposed() {
@@ -295,5 +307,38 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     public boolean contains(@NotNull CommitId id) throws IOException {
       return tryEnumerate(id) != NULL_ID;
     }
+  }
+
+  public static @NotNull Pair<VcsLogStorage, @Nullable VcsLogStorageBackend> createStorageAndIndexBackend(@NotNull Project project,
+                                                                                                          @NotNull String logId,
+                                                                                                          @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+                                                                                                          @NotNull Set<VirtualFile> indexingRoots,
+                                                                                                          @NotNull VcsLogErrorHandler errorHandler,
+                                                                                                          @NotNull Disposable parent)
+    throws IOException {
+    StorageId.Directory hashesStorageId = new StorageId.Directory(project.getName(), HASHES_STORAGE, logId, VERSION);
+    StorageId.Directory refsStorageId = new StorageId.Directory(project.getName(), REFS_STORAGE, logId, VERSION + REFS_VERSION);
+    StorageId.Directory indexStorageId = PhmVcsLogStorageBackend.getIndexStorageId(project, logId);
+
+    List<StorageId.Directory> storageIds = List.of(hashesStorageId, refsStorageId, indexStorageId);
+
+    return IOUtil.openCleanOrResetBroken(() -> {
+      VcsLogStorageImpl storage = new VcsLogStorageImpl(logProviders, hashesStorageId, refsStorageId, errorHandler, parent);
+      if (indexingRoots.isEmpty()) return new Pair<>(storage, null);
+
+      try {
+        VcsLogStorageBackend indexBackend = PhmVcsLogStorageBackend.create(project, storage, indexStorageId, indexingRoots, errorHandler, parent);
+        return new Pair<>(storage, indexBackend);
+      } catch (IOException e) {
+        LOG.error("Could not create index storage backend", e);
+        return new Pair<>(storage, null);
+      }
+    }, () -> {
+      for (StorageId.Directory storageId : storageIds) {
+        if (!storageId.cleanupAllStorageFiles()) {
+          LOG.error("Could not clean up storage files in " + storageId.getStoragePath());
+        }
+      }
+    });
   }
 }

@@ -53,7 +53,7 @@ import kotlin.io.path.notExists
 import kotlin.system.measureTimeMillis
 
 class JavaToKotlinAction : AnAction() {
-    companion object {
+    object Handler {
         private fun uniqueKotlinFileName(javaFile: VirtualFile): String {
             val nioFile = javaFile.fileSystem.getNioPath(javaFile)
 
@@ -227,10 +227,24 @@ class JavaToKotlinAction : AnAction() {
                 newFiles
             }
         }
+
+        internal fun selectedJavaFiles(e: AnActionEvent): Sequence<PsiJavaFile> {
+            val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return sequenceOf()
+            val project = e.project ?: return sequenceOf()
+            return allJavaFiles(virtualFiles, project)
+        }
+
+        private fun allJavaFiles(filesOrDirs: Array<VirtualFile>, project: Project): Sequence<PsiJavaFile> {
+            val manager = PsiManager.getInstance(project)
+            return getAllFilesRecursively(filesOrDirs)
+                .asSequence()
+                .mapNotNull { manager.findFile(it) as? PsiJavaFile }
+                .filter { it.fileType == JavaFileType.INSTANCE } // skip .jsp files
+        }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        val javaFiles = selectedJavaFiles(e).filter { it.isWritable }.toList()
+        val javaFiles = Handler.selectedJavaFiles(e).filter { it.isWritable }.toList()
         val project = CommonDataKeys.PROJECT.getData(e.dataContext) ?: return
         val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return
 
@@ -262,7 +276,7 @@ class JavaToKotlinAction : AnAction() {
             if (Messages.showOkCancelDialog(
                     project,
                     question,
-                    title,
+                    Handler.title,
                     okText,
                     cancelText,
                     Messages.getWarningIcon()
@@ -273,7 +287,7 @@ class JavaToKotlinAction : AnAction() {
             }
         }
 
-        convertFiles(javaFiles, project, module)
+        Handler.convertFiles(javaFiles, project, module)
     }
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -308,19 +322,5 @@ class JavaToKotlinAction : AnAction() {
         }
 
         return files.any(::isWritableJavaFile)
-    }
-
-    private fun selectedJavaFiles(e: AnActionEvent): Sequence<PsiJavaFile> {
-        val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return sequenceOf()
-        val project = e.project ?: return sequenceOf()
-        return allJavaFiles(virtualFiles, project)
-    }
-
-    private fun allJavaFiles(filesOrDirs: Array<VirtualFile>, project: Project): Sequence<PsiJavaFile> {
-        val manager = PsiManager.getInstance(project)
-        return getAllFilesRecursively(filesOrDirs)
-            .asSequence()
-            .mapNotNull { manager.findFile(it) as? PsiJavaFile }
-            .filter { it.fileType == JavaFileType.INSTANCE } // skip .jsp files
     }
 }

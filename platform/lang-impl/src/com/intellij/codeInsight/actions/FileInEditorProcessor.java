@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.application.options.CodeStyle;
@@ -48,7 +48,7 @@ import java.util.Objects;
 import static com.intellij.codeInsight.actions.TextRangeType.SELECTED_TEXT;
 import static com.intellij.codeInsight.actions.TextRangeType.VCS_CHANGED_TEXT;
 
-public class FileInEditorProcessor {
+public final class FileInEditorProcessor {
   private static final Logger LOG = Logger.getInstance(FileInEditorProcessor.class);
 
   private final @NotNull Editor myEditor;
@@ -244,7 +244,7 @@ public class FileInEditorProcessor {
     return application.isUnitTestMode() || application.isHeadlessEnvironment();
   }
 
-  private class DisabledFormattingMessageBuilder extends MessageBuilder {
+  private final class DisabledFormattingMessageBuilder extends MessageBuilder {
     @NotNull
     @Override
     public String getMessage() {
@@ -266,7 +266,7 @@ public class FileInEditorProcessor {
     }
   }
 
-  private class FormattedMessageBuilder extends MessageBuilder {
+  private final class FormattedMessageBuilder extends MessageBuilder {
     @Override
     @NotNull
     public String getMessage() {
@@ -326,7 +326,7 @@ public class FileInEditorProcessor {
     }
   }
 
-  private static class ShowReformatDialogRunnable implements Runnable {
+  private static final class ShowReformatDialogRunnable implements Runnable {
     private final Editor myEditor;
 
     private ShowReformatDialogRunnable(Editor editor) {

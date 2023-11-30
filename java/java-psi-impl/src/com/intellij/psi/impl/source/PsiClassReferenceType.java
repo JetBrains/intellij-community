@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -243,7 +243,16 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     PsiJavaCodeReferenceElement ref = getReference();
     if (!annotated) return PsiNameHelper.getPresentableText(ref);
     PsiAnnotation[] annotations;
-    if (ref.getQualifier() != null) {
+    PsiElement qualifier = ref.getQualifier();
+    String qualifierInfo = "";
+    if (qualifier != null) {
+      PsiAnnotation[] qualifierAnnotations = getAnnotations(false);
+      if (qualifierAnnotations.length > 0 && qualifier instanceof PsiJavaCodeReferenceElement &&
+          ((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiClass) {
+        // Display qualifier if it's annotated
+        qualifierInfo = PsiNameHelper.getPresentableText(qualifier.getText(), qualifierAnnotations,
+                                                         ((PsiJavaCodeReferenceElement)qualifier).getTypeParameters()) + ".";
+      }
       // like java.lang.@Anno String
       annotations = notNull(PsiTreeUtil.getChildrenOfType(ref, PsiAnnotation.class), PsiAnnotation.EMPTY_ARRAY);
     }
@@ -251,7 +260,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
       annotations = getAnnotations(false);
     }
 
-    return PsiNameHelper.getPresentableText(ref.getReferenceName(), annotations, ref.getTypeParameters());
+    return qualifierInfo + PsiNameHelper.getPresentableText(ref.getReferenceName(), annotations, ref.getTypeParameters());
   }
 
   @Override

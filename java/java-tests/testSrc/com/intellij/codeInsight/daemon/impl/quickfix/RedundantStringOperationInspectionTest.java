@@ -21,7 +21,7 @@ public class RedundantStringOperationInspectionTest extends LightJavaInspectionT
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_11;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_21;
   }
 
   public void testShouldReplaceStripByIsBlank() {doTest();}
@@ -34,6 +34,19 @@ public class RedundantStringOperationInspectionTest extends LightJavaInspectionT
   public void testNewStringNewChar() {doTest();}
   public void testStringValueOfNewChar() {doTest();}
   public void testRedundantStringOperation() {doTest();}
+
+  public void testRedundantStrTemplateProcessorFix() {
+    doQuickFixTest();
+  }
+
+  protected void doTest21() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, this::doTest);
+  }
+
+  protected void doQuickFixTest() {
+    doTest21();
+    checkQuickFixAll();
+  }
 
   @Override
   protected String getBasePath() {

@@ -10,7 +10,7 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-class BadgeIcon(icon: Icon, private val paint: Paint, private val provider: BadgeShapeProvider) : HoledIcon(icon) {
+class BadgeIcon(icon: Icon, val paint: Paint, val provider: BadgeShapeProvider) : HoledIcon(icon) {
   constructor(icon: Icon, paint: Paint) : this(icon, paint, BadgeDotProvider())
 
   override fun copyWith(icon: Icon) = BadgeIcon(icon, paint, provider)

@@ -52,7 +52,7 @@ suspend fun <Y> runTaskAndLogTime(
   action: suspend CoroutineScope.(TimeCookie) -> Y
 ): Y = coroutineScope {
   val cookie = TimeCookie()
-  WarmupLogger.logInfo("Waiting for '$progressName'...")
+  WarmupLogger.logInfo("Started waiting for '$progressName'...")
 
   val stackElement = coroutineContext[TaskAndLogTimeKey] ?: TaskAndLogTimeElement()
   stackElement.push(progressName)

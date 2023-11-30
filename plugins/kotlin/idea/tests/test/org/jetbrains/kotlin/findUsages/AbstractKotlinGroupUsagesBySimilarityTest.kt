@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.findUsages
 import com.intellij.openapi.application.ReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.assertEqualsToFile
+import com.intellij.usages.UsageInfo2UsageAdapter
 import com.intellij.usages.UsageInfoToUsageConverter
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -17,7 +18,8 @@ abstract class AbstractKotlinGroupUsagesBySimilarityTest: AbstractFindUsagesTest
         val session = ClusteringSearchSession()
         ReadAction.nonBlocking(Callable {
             findUsages.forEach { usage ->
-                UsageInfoToUsageConverter.convertToSimilarUsage(arrayOf(myFixture.elementAtCaret), usage, session)
+                val u = UsageInfoToUsageConverter.convertToSimilarUsage(arrayOf(myFixture.elementAtCaret), usage, session)
+                (u as UsageInfo2UsageAdapter).updateCachedPresentation()
             }
         }
         ).submit(AppExecutorUtil.getAppExecutorService()).get()

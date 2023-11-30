@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.openapi.fileEditor.FileEditor
@@ -26,7 +26,7 @@ import javax.swing.JComponent
  * JComponentEditorProvider.openEditor(project, "Title", jComponent, fileType)
  * }</pre>
  */
-class JComponentEditorProvider : FileEditorProvider, DumbAware {
+internal class JComponentEditorProvider : FileEditorProvider, DumbAware {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val fileEditor = file.getUserData(EDITOR_KEY)
     return if (fileEditor != null) {
@@ -41,6 +41,8 @@ class JComponentEditorProvider : FileEditorProvider, DumbAware {
   }
 
   override fun accept(project: Project, file: VirtualFile): Boolean = isJComponentFile(file)
+
+  override fun acceptRequiresReadAction() = false
 
   override fun getEditorTypeId(): String = "jcomponent-editor"
 

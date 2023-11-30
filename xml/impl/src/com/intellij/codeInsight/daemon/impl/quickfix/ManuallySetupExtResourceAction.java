@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -19,7 +19,7 @@ public class ManuallySetupExtResourceAction extends BaseExtResourceAction {
   }
 
   @Override
-  protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
+  protected void doInvoke(final @NotNull PsiFile file, final int offset, final @NotNull String uri, final Editor editor) throws IncorrectOperationException {
     final MapExternalResourceDialog dialog = new MapExternalResourceDialog(uri, file.getProject(), file, null);
     if (dialog.showAndGet()) {
       ApplicationManager.getApplication().runWriteAction(() -> {

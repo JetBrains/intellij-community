@@ -6,6 +6,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.WhatsNewAction;
+import com.intellij.ide.actions.WhatsNewUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
@@ -25,6 +26,8 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
+import com.intellij.util.Url;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +46,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Math.max;
 
-@SuppressWarnings("LightServiceMigrationCode")
 final class UpdateCheckerService {
   public static UpdateCheckerService getInstance() {
     return ApplicationManager.getApplication().getService(UpdateCheckerService.class);
@@ -78,7 +80,9 @@ final class UpdateCheckerService {
 
   public void cancelChecks() {
     ScheduledFuture<?> future = myScheduledCheck;
-    if (future != null) future.cancel(false);
+    if (future != null) {
+      future.cancel(false);
+    }
   }
 
   private void appStarted() {
@@ -186,10 +190,12 @@ final class UpdateCheckerService {
   }
 
   private static void showWhatsNew(Project project, BuildNumber current) {
-    String url = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
-    if (url != null && WhatsNewAction.isAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
+    Url url = ExternalProductResourceUrls.getInstance().getWhatIsNewPageUrl();
+    if (url != null && WhatsNewUtil.isWhatsNewAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
       if (UpdateSettings.getInstance().isShowWhatsNewEditor()) {
-        ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url));
+        ApplicationManager.getApplication().invokeLater(
+          () -> WhatsNewAction.openWhatsNewPage(project, url.toExternalForm(), true),
+          project.getDisposed());
         IdeUpdateUsageTriggerCollector.majorUpdateHappened(true);
       }
       else {
@@ -375,7 +381,7 @@ final class UpdateCheckerService {
       if (cleaned) {
         LOG.info("Some obsolete TBE custom repositories have been removed");
       }
-      settings.setObsoleteCustomRepositoriesCleaned(false);
+      settings.setObsoleteCustomRepositoriesCleanNeeded(false);
     }
   }
 }

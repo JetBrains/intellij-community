@@ -5,7 +5,12 @@ import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.vfs.impl.wsl.WslConstants
 
-data class WslPath(private val prefix: String, val distributionId: String, val linuxPath: String) {
+data class WslPath internal constructor(private val prefix: String = WslConstants.UNC_PREFIX,
+                                        val distributionId: String,
+                                        val linuxPath: String) {
+
+  constructor(distributionId: String, linuxPath: String) : this(WslConstants.UNC_PREFIX, distributionId, linuxPath)
+
   init {
     if (!prefix.endsWith("\\")) {
       throw AssertionError("$prefix should end with \\")
@@ -18,6 +23,8 @@ data class WslPath(private val prefix: String, val distributionId: String, val l
 
   val wslRoot: String
     get() = prefix + distributionId
+
+  fun toWindowsUncPath(): String = prefix + distributionId + toSystemDependentName(linuxPath)
 
   companion object {
     @JvmStatic

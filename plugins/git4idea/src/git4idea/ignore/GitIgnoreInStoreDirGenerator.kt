@@ -215,14 +215,14 @@ internal class GitIgnoreInStoreDirGenerator(private val project: Project, privat
   }
 
   private fun haveNotGitVcs(project: Project, projectConfigDirPath: Path): Boolean {
-    val projectConfigDir = VcsUtil.getFilePath(projectConfigDirPath.toFile())
+    val projectConfigDir = VcsUtil.getFilePath(projectConfigDirPath.toFile(), true)
     val vcs = VcsUtil.getVcsFor(project, projectConfigDir) ?: return false
     return vcs.keyInstanceMethod != GitVcs.getKey()
   }
 
   private fun isProjectSharedInGit(project: Project): Boolean {
     val storeDir: @SystemIndependent String = project.stateStore.directoryStorePath?.systemIndependentPath ?: return false
-    val storeDirPath = VcsUtil.getFilePath(storeDir)
+    val storeDirPath = VcsUtil.getFilePath(storeDir, true)
     val vcsRoot = VcsUtil.getVcsRootFor(project, storeDirPath) ?: return false
 
     return try {

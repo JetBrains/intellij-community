@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-public class SelectionReverter extends Reverter {
+public final class SelectionReverter extends Reverter {
   private final SelectionCalculator myCalculator;
   private final Revision myLeftRevision;
   private final Entry myRightEntry;

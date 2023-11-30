@@ -1,19 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.testFramework.RunAll
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.testFramework.replaceService
-import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectResolver
-import org.jetbrains.idea.maven.utils.MavenUtil
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
+import org.jetbrains.idea.maven.project.*
 import org.junit.Test
 
 class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
 
   @Test
-  fun `test maven import modules properly named`() {
+  fun `test maven import modules properly named`() = runBlocking {
     val parentFile = createProjectPom("""
                 <groupId>group</groupId>
                 <artifactId>parent</artifactId>
@@ -33,7 +33,7 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
                 </parent>
                 """.trimIndent())
 
-    importProject()
+    importProjectAsync()
 
     val moduleManager = ModuleManager.getInstance(myProject)
     val modules = moduleManager.modules
@@ -47,7 +47,7 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun `test do not resolve dependencies for ignored poms`() {
+  fun `test do not resolve dependencies for ignored poms`() = runBlocking {
     val parentFile = createProjectPom("""
                 <groupId>group</groupId>
                 <artifactId>parent</artifactId>
@@ -67,20 +67,30 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
                 </parent>
                 """.trimIndent())
 
-    myProjectsManager.initForTests()
-    myProjectsManager.setIgnoredStateForPoms(listOf(projectFile.path), true)
-    assertTrue(myProjectsManager.projectsTree.isIgnored(MavenProject(projectFile)))
+    projectsManager.initForTests()
+    projectsManager.setIgnoredStateForPoms(listOf(projectFile.path), true)
+    assertTrue(projectsManager.projectsTree.isIgnored(MavenProject(projectFile)))
 
     val resolvedProjects = mutableListOf<MavenProject>()
 
-    val resolverMock = MavenProjectResolver { mavenProjects, _, _, _, _, _, _ ->
-      resolvedProjects.addAll(mavenProjects)
-      MavenProjectResolver.MavenProjectResolutionResult(mapOf())
+    val resolverMock: MavenProjectResolver = object : MavenProjectResolver {
+      override suspend fun resolve(
+        mavenProjects: Collection<MavenProject>,
+        tree: MavenProjectsTree,
+        generalSettings: MavenGeneralSettings,
+        embeddersManager: MavenEmbeddersManager,
+        console: MavenConsole,
+        progressReporter: RawProgressReporter,
+        syncConsole: MavenSyncConsole?
+      ): MavenProjectResolver.MavenProjectResolutionResult {
+        resolvedProjects.addAll(mavenProjects)
+        return MavenProjectResolver.MavenProjectResolutionResult(emptyMap())
+      }
     }
 
     myProject.replaceService(MavenProjectResolver::class.java, resolverMock, testRootDisposable)
 
-    importProject()
+    importProjectAsync()
 
     assertEquals(1, resolvedProjects.size)
     assertEquals(parentFile.path, resolvedProjects[0].path)

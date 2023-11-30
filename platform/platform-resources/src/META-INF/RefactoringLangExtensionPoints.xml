@@ -35,5 +35,9 @@
     <extensionPoint qualifiedName="com.intellij.suggestedRefactoringSupport" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.suggested.SuggestedRefactoringSupport"/>
     </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.changeSignature.usageProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.changeSignature.ChangeSignatureUsageProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

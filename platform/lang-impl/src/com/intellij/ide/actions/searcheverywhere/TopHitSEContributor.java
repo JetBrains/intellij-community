@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class TopHitSEContributor implements SearchEverywhereContributor<Object> {
+public final class TopHitSEContributor implements SearchEverywhereContributor<Object> {
 
   public static final int TOP_HIT_ELEMENT_PRIORITY = 15000;
 
@@ -293,7 +293,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Object> 
     return text;
   }
 
-  public static class Factory implements SearchEverywhereContributorFactory<Object> {
+  public static final class Factory implements SearchEverywhereContributorFactory<Object> {
     @Override
     public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
       Project project = initEvent.getProject();

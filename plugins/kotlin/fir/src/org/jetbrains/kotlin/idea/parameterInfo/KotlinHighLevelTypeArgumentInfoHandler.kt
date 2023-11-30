@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.filterCandidateByReceiverTypeAndVisibility
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
@@ -25,7 +26,8 @@ import org.jetbrains.kotlin.types.Variance
  * Presents type argument info for class type references (e.g., property type in declaration, base class in super types list).
  */
 class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentInfoHandlerBase() {
-    override fun KtAnalysisSession.findParameterOwners(argumentList: KtTypeArgumentList): Collection<KtSymbolWithTypeParameters>? {
+    context(KtAnalysisSession)
+    override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KtSymbolWithTypeParameters>? {
         val typeReference = argumentList.parentOfType<KtTypeReference>() ?: return null
         val ktType = typeReference.getKtType() as? KtClassType ?: return null
         return when (ktType) {
@@ -49,7 +51,8 @@ class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentI
  * Presents type argument info for function calls (including constructor calls).
  */
 class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentInfoHandlerBase() {
-    override fun KtAnalysisSession.findParameterOwners(argumentList: KtTypeArgumentList): Collection<KtSymbolWithTypeParameters>? {
+    context(KtAnalysisSession)
+    override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KtSymbolWithTypeParameters>? {
         val callElement = argumentList.parentOfType<KtCallElement>() ?: return null
         // A call element may not be syntactically complete (e.g., missing parentheses: `foo<>`). In that case, `callElement.resolveCall()`
         // will NOT return a KtCall because there is no FirFunctionCall there. We find the symbols using the callee name instead.
@@ -69,7 +72,8 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
 }
 
 abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeArgumentInfoHandler() {
-    protected abstract fun KtAnalysisSession.findParameterOwners(argumentList: KtTypeArgumentList): Collection<KtSymbolWithTypeParameters>?
+    context(KtAnalysisSession)
+    protected abstract fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KtSymbolWithTypeParameters>?
 
     override fun fetchCandidateInfos(argumentList: KtTypeArgumentList): List<CandidateInfo>? {
         analyze(argumentList) {
@@ -78,11 +82,13 @@ abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeAr
         }
     }
 
-    protected fun KtAnalysisSession.fetchCandidateInfo(parameterOwner: KtSymbolWithTypeParameters): CandidateInfo {
+    context(KtAnalysisSession)
+    protected fun fetchCandidateInfo(parameterOwner: KtSymbolWithTypeParameters): CandidateInfo {
         return CandidateInfo(parameterOwner.typeParameters.map { fetchTypeParameterInfo(it) })
     }
 
-    private fun KtAnalysisSession.fetchTypeParameterInfo(parameter: KtTypeParameterSymbol): TypeParameterInfo {
+    context(KtAnalysisSession)
+    private fun fetchTypeParameterInfo(parameter: KtTypeParameterSymbol): TypeParameterInfo {
         val upperBounds = parameter.upperBounds.map {
             val isNullableAnyOrFlexibleAny = if (it is KtFlexibleType) {
                 it.lowerBound.isAny && !it.lowerBound.isMarkedNullable && it.upperBound.isAny && it.upperBound.isMarkedNullable

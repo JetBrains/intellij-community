@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -24,7 +24,7 @@ import java.util.List;
  * User: anna
  * Checks that a non-public field is referenced in fx:id attribute or a non-public method is referenced as an event handler in FXML
  */
-public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
+public final class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitUsage(@NotNull PsiElement element) {

@@ -48,8 +48,8 @@
                         serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"
                         headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.ide.ui.ThemesListProvider"
-                        serviceImplementation="com.intellij.ide.ui.laf.ThemesListProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.ide.ui.ThemeListProvider"
+                        serviceImplementation="com.intellij.ide.ui.laf.ThemeListProviderImpl"/>
 
     <applicationService serviceInterface="com.intellij.ide.environment.EnvironmentService"
                         serviceImplementation="com.intellij.ide.environment.impl.DefaultEnvironmentService"
@@ -113,12 +113,19 @@
     <projectService serviceInterface="com.intellij.openapi.fileEditor.ex.IdeDocumentHistory"
                     serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl" preload="await"/>
 
+    <projectService serviceImplementation="com.intellij.codeInsight.daemon.MarkupGraveSuppressor"/>
+
     <applicationService serviceImplementation="com.intellij.ide.actionMacro.ActionMacroManager"/>
     <!--suppress PluginXmlDynamicPlugin -->
     <actionConfigurationCustomizer implementation="com.intellij.ide.actionMacro.ActionMacroManager$MyActionTuner"/>
 
-    <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.DaemonListeners" preload="await"/>
-    <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.HighlightingMarkupGrave" preload="await"/>
+    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.HighlighterTextEditorInitializer" order="first"/>
+    <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.FoldingTextEditorInitializer"/>
+    <textEditorInitializer implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionTextEditorInitializer"/>
+    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.InlayHintsEditorInitializer"/>
+    <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.DocRenderTextEditorInitializer"/>
+    <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.FocusZoneTextEditorInitializer"/>
+
     <postStartupActivity implementation="com.intellij.codeInsight.navigation.InitCtrlMouseHandlerActivity"/>
 
     <projectService serviceImplementation="com.intellij.facet.impl.pointers.FacetPointersManagerImpl"
@@ -176,14 +183,14 @@
 
     <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
               topic="com.intellij.notification.Notifications"/>
-    <listener class="com.intellij.notification.impl.NotificationsManagerImpl$MyNotificationListener"
+    <listener class="com.intellij.notification.impl.NotificationsListener"
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.notification.impl.NotificationsConfigurationImpl$MyNotificationListener"
               topic="com.intellij.notification.Notifications"/>
 
-    <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
+    <listener class="com.intellij.ide.ui.html.GlobalStyleSheetUpdateListener"
               topic="com.intellij.ide.ui.LafManagerListener" activeInHeadlessMode="false"/>
-    <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
+    <listener class="com.intellij.ide.ui.html.GlobalStyleSheetUpdateListener"
               topic="com.intellij.openapi.editor.colors.EditorColorsListener" activeInHeadlessMode="false"/>
 
     <listener class="com.intellij.openapi.editor.actions.ResetFontSizeEditorActionHandler"
@@ -203,7 +210,7 @@
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.notification.impl.NotificationsBeeper" topic="com.intellij.notification.Notifications"
               activeInHeadlessMode="false"/>
-    <listener class="com.intellij.notification.impl.NotificationsAnnouncer$MyListener" topic="com.intellij.notification.Notifications"
+    <listener class="com.intellij.notification.impl.NotificationsAnnouncerListener" topic="com.intellij.notification.Notifications"
               activeInHeadlessMode="false"/>
 
     <listener class="com.intellij.internal.performance.LatenciometerListener"
@@ -246,7 +253,7 @@
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.notification.impl.NotificationsBeeper" topic="com.intellij.notification.Notifications"
               activeInHeadlessMode="false"/>
-    <listener class="com.intellij.notification.impl.NotificationsAnnouncer$MyListener" topic="com.intellij.notification.Notifications"
+    <listener class="com.intellij.notification.impl.NotificationsAnnouncerListener" topic="com.intellij.notification.Notifications"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.codeInsight.actions.ReaderModeSettingsListener"
               topic="com.intellij.codeInsight.actions.ReaderModeListener" activeInHeadlessMode="false"/>

@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -92,6 +94,12 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
     return null;
   }
 
+  /**
+   * Check if the given text starts with an HTML block tag.
+   *
+   * @param text the text to check
+   * @return true if the text starts with an HTML block tag, false otherwise
+   */
   private static boolean startsWithHtmlBlockTag(String text) {
     String startTag = HtmlUtil.getStartTag(text);
     if (startTag == null) return false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.notification.Notification;
@@ -28,7 +28,7 @@ public final class GitExecutableProblemsNotifier {
     return project.getService(GitExecutableProblemsNotifier.class);
   }
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public GitExecutableProblemsNotifier(@NotNull Project project) {
     myProject = project;
@@ -97,9 +97,7 @@ public final class GitExecutableProblemsNotifier {
   /**
    * Convert validation exception to pretty error message
    */
-  @Nls
-  @NotNull
-  public static String getPrettyErrorMessage(@NotNull Throwable exception) {
+  public static @Nls @NotNull String getPrettyErrorMessage(@NotNull Throwable exception) {
     String errorMessage = null;
     if (exception instanceof GitVersionIdentificationException) {
       if (exception.getCause() != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -19,8 +19,8 @@ public final class PluginPathManager {
   private PluginPathManager() {
   }
 
-  private static class SubRepoHolder {
-    @NonNls private static final List<String> ROOT_NAMES =
+  private static final class SubRepoHolder {
+    private static final @NonNls List<String> ROOT_NAMES =
       List.of(
         "android",
         "community",
@@ -97,8 +97,7 @@ public final class PluginPathManager {
     return "/plugins/" + pluginName;
   }
 
-  @Nullable
-  public static File getPluginResource(@NotNull Class<?> pluginClass, @NotNull String resourceName) {
+  public static @Nullable File getPluginResource(@NotNull Class<?> pluginClass, @NotNull String resourceName) {
     try {
       String jarPath = PathUtil.getJarPathForClass(pluginClass);
       if (!jarPath.endsWith(".jar")) {

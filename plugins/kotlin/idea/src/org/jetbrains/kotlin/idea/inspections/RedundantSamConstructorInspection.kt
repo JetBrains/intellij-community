@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.*
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.codegen.SamCodegenUtil
@@ -43,13 +42,15 @@ import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.utils.keysToMapExceptNulls
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 class RedundantSamConstructorInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return callExpressionVisitor(fun(expression) {
             if (expression.valueArguments.isEmpty()) return
 
-            val samConstructorCalls = samConstructorCallsToBeConverted(expression)
+            val samConstructorCalls = Util.samConstructorCallsToBeConverted(expression)
             if (samConstructorCalls.isEmpty()) return
             val single = samConstructorCalls.singleOrNull()
             if (single != null) {
@@ -79,35 +80,39 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
     }
 
     private fun createQuickFix(expression: KtCallExpression): LocalQuickFix {
+        val pointer = expression.createSmartPointer()
         return object : LocalQuickFix {
             override fun getName() = KotlinBundle.message("remove.redundant.sam.constructor")
             override fun getFamilyName() = name
             override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                if (!FileModificationService.getInstance().preparePsiElementForWrite(expression)) return
-                replaceSamConstructorCall(expression)
+                val callExpression = pointer.element ?: return
+                if (!FileModificationService.getInstance().preparePsiElementForWrite(callExpression)) return
+                Util.replaceSamConstructorCall(callExpression)
             }
         }
     }
 
     private fun createQuickFix(expressions: Collection<KtCallExpression>): LocalQuickFix {
+        val pointers = expressions.map { it.createSmartPointer() }
         return object : LocalQuickFix {
             override fun getName() = KotlinBundle.message("remove.redundant.sam.constructors")
             override fun getFamilyName() = name
             override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                for (callExpression in expressions) {
-                    if (!FileModificationService.getInstance().preparePsiElementForWrite(callExpression)) return
-                    replaceSamConstructorCall(callExpression)
+                val callExpressions = pointers.mapNotNull { it.element }
+                if (!FileModificationService.getInstance().preparePsiElementsForWrite(callExpressions)) return
+                for (callExpression in callExpressions) {
+                    Util.replaceSamConstructorCall(callExpression)
                 }
             }
         }
     }
 
-    companion object {
+    object Util {
         fun replaceSamConstructorCall(callExpression: KtCallExpression): KtLambdaExpression {
             val functionalArgument = callExpression.samConstructorValueArgument()?.getArgumentExpression()
                 ?: throw AssertionError("SAM-constructor should have a FunctionLiteralExpression as single argument: ${callExpression.getElementTextWithContext()}")
             val ktExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
-            return runWriteAction { ktExpression.replace(functionalArgument) as KtLambdaExpression }
+            return runWriteActionIfPhysical(ktExpression) { ktExpression.replace(functionalArgument) as KtLambdaExpression }
         }
 
         private fun canBeReplaced(

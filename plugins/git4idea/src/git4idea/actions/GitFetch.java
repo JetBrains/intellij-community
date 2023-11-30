@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -25,10 +25,20 @@ public class GitFetch extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) {
       e.getPresentation().setEnabledAndVisible(false);
+      return;
     }
-    else {
-      e.getPresentation().setEnabled(hasRemotes(project));
+    if (!hasRemotes(project)) {
+      e.getPresentation().setEnabled(false);
+      return;
     }
+    if (fetchSupport(project).isFetchRunning()) {
+      e.getPresentation().setEnabled(false);
+      e.getPresentation().setDescription(GitBundle.message("action.Git.Fetch.description.fetch.in.progress"));
+      return;
+    }
+
+    e.getPresentation().setDescription("");
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   @Override

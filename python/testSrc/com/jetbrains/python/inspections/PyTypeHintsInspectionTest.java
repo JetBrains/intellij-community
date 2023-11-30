@@ -1349,6 +1349,53 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-53105
+  public void testNoVariadicGenericErrorInClassDeclaration() {
+    doTestByText("""
+                   from typing import Generic, TypeVarTuple
+
+                   Shape = TypeVarTuple('Shape')
+
+
+                   class Array(Generic[*Shape]):
+                       ...
+                   """);
+  }
+
+  // PY-53105
+  public void testTypeVarTupleNameAsLiteral() {
+    doTestByText("""
+                   from typing import TypeVarTuple
+
+                   name = 'Ts'
+                   Ts = TypeVarTuple(<warning descr="'TypeVarTuple()' expects a string literal as first argument">name</warning>)
+                   Ts1 = TypeVarTuple('Ts1')""");
+  }
+
+  // PY-53105
+  public void testTypeVarTupleNameAndTargetNameEquality() {
+    doTestByText("""
+                   from typing import TypeVarTuple
+
+                   Ts = TypeVarTuple(<warning descr="The argument to 'TypeVarTuple()' must be a string equal to the variable name to which it is assigned">'T'</warning>)
+                   Ts1 = TypeVarTuple('Ts1')""");
+  }
+
+  // PY-53105
+  public void testTypeVarTupleMoreThanOneUnpacking() {
+    doTestByText("""
+                    from typing import TypeVarTuple
+                    from typing import Generic
+                    
+                    Ts1 = TypeVarTuple("Ts1")
+                    Ts2 = TypeVarTuple("Ts2")
+                    
+                    
+                    class Array(Generic[*Ts1, <error descr="Parameters to generic cannot contain more than one unpacking">*Ts2</error>]):
+                        ...
+                    """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -159,7 +159,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     @Language("JSON") final String schema = "{\"type\": \"object\", \"properties\": {\"a\": {}, \"b\": {}}, \"required\": [\"a\"]}";
     doTest(schema, "{\"a\": 11}");
     doTest(schema, "{\"a\": 1, \"b\": true}");
-    doTest(schema, "<warning descr=\"Missing required property 'a'\">{\"b\": \"alarm\"}</warning>");
+    doTest(schema, "{<warning descr=\"Missing required property 'a'\" textAttributesKey=\"WARNING_ATTRIBUTES\">\"b\": \"alarm\"</warning>}");
   }
 
   public void testInnerRequired() {
@@ -204,7 +204,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     @Language("JSON") final String schema = "{\"type\": \"object\", \"minProperties\": 1, \"maxProperties\": 2}";
     doTest(schema, "<warning descr=\"Number of properties is less than 1\">{}</warning>");
     doTest(schema, "{\"a\": 1}");
-    doTest(schema, "<warning descr=\"Number of properties is greater than 2\">{\"a\": 1, \"b\": 22, \"c\": 33}</warning>");
+    doTest(schema, "{<warning descr=\"Number of properties is greater than 2\" textAttributesKey=\"WARNING_ATTRIBUTES\">\"a\": 1</warning>, \"b\": 22, \"c\": 33}");
   }
 
   public void testOneOf() {
@@ -757,10 +757,10 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schema, "<warning>{}</warning>");
     doTest(schema, "{\"c\": <warning>5</warning>}");
     doTest(schema, "{\"c\": true}");
-    doTest(schema, "<warning>{\"a\": 5, \"b\": 5}</warning>");
+    doTest(schema, "{<warning descr=\"Missing required property 'c'\" textAttributesKey=\"WARNING_ATTRIBUTES\">\"a\": 5</warning>, \"b\": 5}");
     doTest(schema, "{\"a\": 5, \"c\": <warning>5</warning>}");
     doTest(schema, "{\"a\": 5, \"c\": true}");
-    doTest(schema, "<warning>{\"a\": \"a\", \"c\": true}</warning>");
+    doTest(schema, "{<warning descr=\"Missing required property 'b'\" textAttributesKey=\"WARNING_ATTRIBUTES\">\"a\": \"a\"</warning>, \"c\": true}");
     doTest(schema, "{\"a\": \"a\", \"b\": <warning>true</warning>}");
     doTest(schema, "{\"a\": \"a\", \"b\": 5}");
   }
@@ -983,9 +983,9 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   public void testIntersectingHighlightingRanges() throws Exception {
     @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/avroSchema.json"));
     doTest(schemaText, """
-      <warning descr="Missing required property 'items'">{
-        "type": "array"
-      }</warning>""");
+      {
+        <warning descr="Missing required property 'items'" textAttributesKey="WARNING_ATTRIBUTES">"type": "array"</warning>
+      }""");
     doTest(schemaText, """
       {
         "type": <warning descr="Value should be one of: \\"record\\", \\"enum\\", \\"array\\", \\"map\\", \\"fixed\\"">"array2"</warning>
@@ -1284,5 +1284,15 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                "sampled": 15123456789\s
              }
              """);
+  }
+
+  public void testReducedTopLevelRangeHighlighting() {
+    doTest("{ \"required\": [\"test3\"]}",
+           "{ <warning descr=\"Missing required property 'test3'\">\"test1\": 123</warning>, \"test2\": 456}");
+  }
+
+  public void testTopLevelRangeHighlighting() {
+    doTest("{ \"required\": [\"test3\"]}",
+           "<warning descr=\"Missing required property 'test3'\">{}</warning>");
   }
 }

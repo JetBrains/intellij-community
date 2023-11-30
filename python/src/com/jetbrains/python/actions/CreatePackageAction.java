@@ -77,7 +77,7 @@ public final class CreatePackageAction extends DumbAwareAction {
                            view.selectElement(item);
                          }
                        });
-                       PyNamespacePackagesStatisticsCollector.Companion.logNamespacePackageCreatedByUser();
+                       PyNamespacePackagesStatisticsCollector.logNamespacePackageCreatedByUser();
                      }
                      return directory;
                    }

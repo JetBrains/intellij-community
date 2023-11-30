@@ -7,9 +7,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.util.onTerminationOrNow
-import com.intellij.util.io.inputStream
-import com.intellij.util.io.isFile
-import com.intellij.util.io.size
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Signal
 import com.sun.net.httpserver.HttpHandler
@@ -148,15 +145,13 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
     val traceCategories = listOf("#com.jetbrains.rdserver.joinLinks", "#com.jetbrains.rd.platform.codeWithMe.network")
 
-    val debugOptions = run {
-      if (isDebugEnabled) {
-        val suspendOnStart = if (debugSuspendOnStart) "y" else "n"
+    val debugOptions = if (isDebugEnabled) {
+      val suspendOnStart = if (debugSuspendOnStart) "y" else "n"
 
-        // changed in Java 9, now we have to use *: to listen on all interfaces
-          "-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=$debugPort"
-      }
-      else ""
+      // changed in Java 9, now we have to use *: to listen on all interfaces
+      "-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=*:$debugPort"
     }
+    else ""
 
     val testVmOptions = listOf(
       "-Djb.consents.confirmation.enabled=false", // hz
@@ -177,7 +172,7 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
       "-Didea.log.trace.categories=${traceCategories.joinToString(",")}",
       debugOptions).joinToString(separator = "\n", prefix = "\n")
 
-    require(vmOptionsFile.isFile() && vmOptionsFile.exists())
+    require(vmOptionsFile.isRegularFile() && vmOptionsFile.exists())
 
     val originalContent = vmOptionsFile.readText(Charsets.UTF_8)
     thisLogger().info("Original .vmoptions=\n$originalContent")
@@ -222,13 +217,13 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
 
   fun serveFile(file: Path) {
     require(file.exists())
-    require(file.isFile())
+    require(file.isRegularFile())
 
     val server = tarGzServer
     require(server != null)
 
     server.createContext("/${file.name}", HttpHandler { httpExchange ->
-      httpExchange.sendResponseHeaders(200, file.size())
+      httpExchange.sendResponseHeaders(200, file.fileSize())
       httpExchange.responseBody.use { responseBody ->
         file.inputStream().use {
           it.copyTo(responseBody, 1024 * 1024)

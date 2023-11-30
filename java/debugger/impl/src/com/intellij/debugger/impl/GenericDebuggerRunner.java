@@ -18,6 +18,7 @@ import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -147,17 +148,17 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
                                                       @NotNull ExecutionEnvironment env,
                                                       RemoteConnection connection,
                                                       long pollTimeout) throws ExecutionException {
+    DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, pollTimeout);
+    DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
+    if (debuggerSession == null) {
+      return null;
+    }
+
     AtomicReference<ExecutionException> ex = new AtomicReference<>();
     AtomicReference<RunContentDescriptor> result = new AtomicReference<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, pollTimeout);
       try {
-        final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
-        if (debuggerSession == null) {
-          return;
-        }
-
-        final DebugProcessImpl debugProcess = debuggerSession.getProcess();
+        DebugProcessImpl debugProcess = debuggerSession.getProcess();
         result.set(XDebuggerManager.getInstance(env.getProject()).startSession(env, new XDebugProcessStarter() {
           @Override
           @NotNull
@@ -177,7 +178,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
       catch (ExecutionException e) {
         ex.set(e);
       }
-    });
+    }, ModalityState.any());
     if (ex.get() != null) throw ex.get();
     return result.get();
   }

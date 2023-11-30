@@ -2,8 +2,8 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterEach

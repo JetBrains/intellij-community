@@ -7,7 +7,6 @@ import com.intellij.nastradamus.model.*
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.tool.NastradamusCache
 import com.intellij.tool.withErrorThreshold
-import com.intellij.util.io.readText
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.*
@@ -20,6 +19,7 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.readText
 
 class NastradamusClientTest {
   init {
@@ -299,7 +299,7 @@ class NastradamusClientTest {
     )
 
     val xxHash3TestClassResult = testResultRequestEntity.testRunResults
-      .single { it.fullName == "org.jetbrains.xxh3.XxHash3Test" }
+      .single { it.fullName == "com.intellij.util.lang.XxHash3Test" }
 
     Assert.assertTrue("""
       XxHash3Test class must have 184 tests and be with correct duration and bucket attributes.

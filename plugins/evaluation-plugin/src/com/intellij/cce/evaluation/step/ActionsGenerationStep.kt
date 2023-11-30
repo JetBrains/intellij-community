@@ -1,10 +1,17 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation.step
 
-import com.intellij.cce.actions.*
-import com.intellij.cce.core.*
+import com.intellij.cce.actions.ActionsGenerator
+import com.intellij.cce.actions.CallFeature
+import com.intellij.cce.actions.FileActions
+import com.intellij.cce.core.JvmProperties
+import com.intellij.cce.core.PropertyAdapters
+import com.intellij.cce.core.SymbolLocation
+import com.intellij.cce.core.TokenProperties
 import com.intellij.cce.evaluation.EvaluationRootInfo
 import com.intellij.cce.processor.DefaultEvaluationRootProcessor
 import com.intellij.cce.processor.EvaluationRootByRangeProcessor
+import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.util.FilesHelper
 import com.intellij.cce.util.Progress
@@ -18,25 +25,29 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 class ActionsGenerationStep(
-  private val config: Config.ActionsGeneration,
+  private val config: Config,
   private val language: String,
   private val evaluationRootInfo: EvaluationRootInfo,
   project: Project,
-  isHeadless: Boolean) : BackgroundEvaluationStep(project, isHeadless) {
+  private val processor: GenerateActionsProcessor,
+  private val featureName: String
+) : BackgroundEvaluationStep(project) {
   override val name: String = "Generating actions"
 
   override val description: String = "Generating actions by selected files"
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
-    val filesForEvaluation = ReadAction.compute<List<VirtualFile>, Throwable> { FilesHelper.getFilesOfLanguage(project, config.evaluationRoots, language) }
-    generateActions(workspace, language, filesForEvaluation, config.strategy, evaluationRootInfo, progress)
+    val filesForEvaluation = ReadAction.compute<List<VirtualFile>, Throwable> {
+      FilesHelper.getFilesOfLanguage(project, config.actions.evaluationRoots, language)
+    }
+    generateActions(workspace, language, filesForEvaluation, evaluationRootInfo, progress)
     return workspace
   }
 
   private fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
-                              strategy: CompletionStrategy, evaluationRootInfo: EvaluationRootInfo, indicator: Progress) {
-    val actionsGenerator = ActionsGenerator(strategy, Language.resolve(languageName))
-    val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName, strategy.completionGolf)
+                              evaluationRootInfo: EvaluationRootInfo, indicator: Progress) {
+    val actionsGenerator = ActionsGenerator(processor)
+    val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName, featureName, config.strategy)
 
     val errors = mutableListOf<FileErrorInfo>()
     var totalSessions = 0
@@ -58,7 +69,7 @@ class ActionsGenerationStep(
             ?: evaluationRootInfo.parentPsi.textOffset + evaluationRootInfo.parentPsi.textLength)
           else -> throw IllegalStateException("Parent psi and offset are null.")
         }
-        val codeFragment = codeFragmentBuilder.build(file, rootVisitor)
+        val codeFragment = codeFragmentBuilder.build(file, rootVisitor, featureName)
         val fileActions = actionsGenerator.generate(codeFragment)
         actionsSummarizer.update(fileActions)
         workspace.actionsStorage.saveActions(fileActions)
@@ -97,7 +108,7 @@ class ActionsGenerationStep(
           }
         }
         group("sessions") {
-          for (action in fileActions.actions.asSessionStarts()) {
+          for (action in fileActions.actions.filterIsInstance<CallFeature>()) {
             inc("total")
             val properties = action.nodeProperties
             group("common (frequent expected text by token type)") {
@@ -126,22 +137,6 @@ class ActionsGenerationStep(
       }
     }
 
-    private fun List<Action>.asSessionStarts(): Iterable<CallCompletion> {
-      val result = mutableListOf<CallCompletion>()
-      var insideSession = false
-      for (action in this) {
-        if (!insideSession && action is CallCompletion) {
-          result.add(action)
-          insideSession = true
-        }
-        else if (action is FinishSession) {
-          insideSession = false
-        }
-      }
-
-      return result
-    }
-
     fun save(workspace: EvaluationWorkspace) {
       workspace.saveAdditionalStats("actions", rootSummary.asSerializable())
     }
@@ -150,7 +145,7 @@ class ActionsGenerationStep(
       PROJECT, JRE, THIRD_PARTY, UNKNOWN_LOCATION, UNKNOWN_PACKAGE
     }
 
-    private fun CallCompletion.kind(): CompletionKind {
+    private fun CallFeature.kind(): CompletionKind {
       if (nodeProperties.location == SymbolLocation.PROJECT) return CompletionKind.PROJECT
       if (nodeProperties.location == SymbolLocation.UNKNOWN) return CompletionKind.UNKNOWN_LOCATION
       val packageName = nodeProperties.java()?.packageName ?: return CompletionKind.UNKNOWN_PACKAGE

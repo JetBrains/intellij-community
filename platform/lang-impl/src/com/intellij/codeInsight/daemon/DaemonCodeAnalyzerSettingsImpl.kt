@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon
 
+import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
-import com.intellij.codeInspection.ex.DEFAULT_PROFILE_NAME
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.configurationStore.serializeObjectInto
 import com.intellij.openapi.components.PersistentStateComponent
@@ -32,7 +32,7 @@ open class DaemonCodeAnalyzerSettingsImpl : DaemonCodeAnalyzerSettings(), Persis
     val element = Element("state")
     serializeObjectInto(this, element)
     val profile = ApplicationInspectionProfileManager.getInstanceImpl().rootProfileName
-    if (DEFAULT_PROFILE_NAME != profile) {
+    if (profile != InspectionProfile.DEFAULT_PROFILE_NAME) {
       element.setAttribute("profile", profile)
     }
     return element

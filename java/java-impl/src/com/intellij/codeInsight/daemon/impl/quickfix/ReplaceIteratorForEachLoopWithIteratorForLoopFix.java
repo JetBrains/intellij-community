@@ -3,36 +3,19 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements IntentionAction {
-  private final PsiForeachStatement myStatement;
-
+public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix extends PsiUpdateModCommandAction<PsiForeachStatement> {
   public ReplaceIteratorForEachLoopWithIteratorForLoopFix(@NotNull PsiForeachStatement statement) {
-    myStatement = statement;
-  }
-
-  @Override
-  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new ReplaceIteratorForEachLoopWithIteratorForLoopFix(PsiTreeUtil.findSameElementInCopy(myStatement, target));
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
+    super(statement);
   }
 
   @Nls
@@ -43,18 +26,8 @@ public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements I
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myStatement.isValid() && BaseIntentionAction.canModify(myStatement);
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiExpression iteratedValue = myStatement.getIteratedValue();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiForeachStatement statement, @NotNull ModPsiUpdater updater) {
+    final PsiExpression iteratedValue = statement.getIteratedValue();
     if (iteratedValue == null) {
       return;
     }
@@ -62,16 +35,17 @@ public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements I
     if (iteratedValueType == null) {
       return;
     }
-    final PsiParameter iterationParameter = myStatement.getIterationParameter();
+    final PsiParameter iterationParameter = statement.getIterationParameter();
     final String iterationParameterName = iterationParameter.getName();
-    final PsiStatement forEachBody = myStatement.getBody();
+    final PsiStatement forEachBody = statement.getBody();
 
+    Project project = context.project();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final JavaCodeStyleManager javaStyleManager = JavaCodeStyleManager.getInstance(project);
-    final String name = new VariableNameGenerator(myStatement, VariableKind.LOCAL_VARIABLE)
+    final String name = new VariableNameGenerator(statement, VariableKind.LOCAL_VARIABLE)
       .byName("it", "iter", "iterator").generate(true);
     PsiForStatement newForLoop = (PsiForStatement)elementFactory.createStatementFromText(
-      "for (Iterator " + name + " = initializer; " + name + ".hasNext();) { var next = " + name + ".next(); }", myStatement);
+      "for (Iterator " + name + " = initializer; " + name + ".hasNext();) { var next = " + name + ".next(); }", statement);
 
     final PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)newForLoop.getInitialization();
     if (newDeclaration == null) return;
@@ -92,7 +66,7 @@ public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements I
       newItemVariable.getTypeElement().replace(newItemTypeElement);
     }
     newItemVariable.setName(iterationParameterName);
-    final CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
+    final CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(context.file());
     if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
       final PsiModifierList modifierList = newItemVariable.getModifierList();
       if (modifierList != null) modifierList.setModifierProperty(PsiModifier.FINAL, true);
@@ -113,6 +87,6 @@ public final class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements I
       newBodyBlock.addAfter(forEachBody, newFirstStatement);
     }
 
-    myStatement.replace(newForLoop);
+    statement.replace(newForLoop);
   }
 }

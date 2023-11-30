@@ -25,7 +25,7 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public class GutterIntentionAction extends AbstractIntentionAction implements Comparable<IntentionAction>, Iconable, ShortcutProvider,
-                                                                       PriorityAction {
+                                                                                    PriorityAction {
   private final AnAction myAction;
   private final int myOrder;
   private final Icon myIcon;
@@ -52,7 +52,7 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
 
   @Override
   public @NotNull Priority getPriority() {
-    return myAction instanceof PriorityAction ? ((PriorityAction)myAction).getPriority() : Priority.NORMAL;
+    return myAction instanceof PriorityAction priority ? priority.getPriority() : Priority.NORMAL;
   }
 
   @Override
@@ -62,8 +62,8 @@ public class GutterIntentionAction extends AbstractIntentionAction implements Co
 
   @Override
   public int compareTo(@NotNull IntentionAction o) {
-    if (o instanceof GutterIntentionAction) {
-      return myOrder - ((GutterIntentionAction)o).myOrder;
+    if (o instanceof GutterIntentionAction gutter) {
+      return myOrder - gutter.myOrder;
     }
     return 0;
   }

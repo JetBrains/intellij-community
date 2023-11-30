@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.terminal.ui.TerminalWidget;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -57,6 +58,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
   private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
   private static final String ZDOTDIR = "ZDOTDIR";
+  private static final String IJ_ZSH_DIR = "JETBRAINS_INTELLIJ_ZSH_DIR";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
   private static final String LOGIN_CLI_OPTION = "--login";
@@ -80,7 +82,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static String findRCFile(@NotNull String shellName) {
     String rcfile = switch (shellName) {
       case BASH_NAME, SH_NAME -> "shell-integrations/bash/bash-integration.bash";
-      case ZSH_NAME -> "zsh/.zshenv";
+      case ZSH_NAME -> "shell-integrations/zsh/.zshenv";
       case FISH_NAME -> "shell-integrations/fish/fish-integration.fish";
       default -> null;
     };
@@ -156,11 +158,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
     envs.put("TERM_SESSION_ID", UUID.randomUUID().toString());
-    // Prevent sourcing non-existent 'terminal/fish/config.fish' and 'terminal/.zshenv' by Fig.io
-    envs.put("FIG_JETBRAINS_SHELL_INTEGRATION", "1");
 
-    if (Registry.is(BLOCK_TERMINAL_REGISTRY, false)) {
+    if (isBlockTerminalEnabled()) {
       envs.put("INTELLIJ_TERMINAL_COMMAND_BLOCKS", "1");
+      // Pretend to be Fig.io terminal to avoid it breaking IntelliJ shell integration:
+      // at startup it runs a sub-shell without IntelliJ shell integration
+      envs.put("FIG_TERM", "1");
     }
 
     TerminalEnvironment.INSTANCE.setCharacterEncoding(envs);
@@ -179,7 +182,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent, @NotNull ShellStartupOptions startupOptions) {
-    if (Registry.is(BLOCK_TERMINAL_REGISTRY, false)) {
+    if (isBlockTerminalEnabled()) {
       return new TerminalWidgetImpl(myProject, getSettingsProvider(), parent);
     }
     return super.createShellTerminalWidget(parent, startupOptions);
@@ -454,7 +457,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         if (StringUtil.isNotEmpty(zdotdir)) {
           envs.put("_INTELLIJ_ORIGINAL_ZDOTDIR", zdotdir);
         }
-        envs.put(ZDOTDIR, PathUtil.getParentPath(rcFilePath));
+        String zshDir = PathUtil.getParentPath(rcFilePath);
+        envs.put(ZDOTDIR, zshDir);
+        envs.put(IJ_ZSH_DIR, zshDir);
         shellType = ShellType.ZSH;
         withCommandBlocks = true;
       }
@@ -535,5 +540,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   private static boolean isLogin(@NotNull List<String> command) {
     return ContainerUtil.exists(command, LOGIN_CLI_OPTIONS::contains);
+  }
+
+  private static boolean isBlockTerminalEnabled() {
+    return (ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode())
+           && Registry.is(BLOCK_TERMINAL_REGISTRY, false);
   }
 }

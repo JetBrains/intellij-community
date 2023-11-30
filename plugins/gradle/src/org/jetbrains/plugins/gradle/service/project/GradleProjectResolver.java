@@ -42,7 +42,6 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.execution.target.TargetBuildLauncher;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.model.*;
@@ -69,6 +68,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static org.jetbrains.plugins.gradle.issue.UnsupportedGradleJvmIssueChecker.Util.isJavaHomeUnsupportedByIdea;
+import static org.jetbrains.plugins.gradle.service.project.ArtifactMappingServiceKt.OWNER_BASE_GRADLE;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getDefaultModuleTypeId;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId;
 
@@ -88,8 +88,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   public static final Key<Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>>> MODULES_OUTPUTS =
     Key.create("moduleOutputsMap");
   public static final Key<MultiMap<ExternalSystemSourceType, String /* output path*/>> GRADLE_OUTPUTS = Key.create("gradleOutputs");
-  public static final Key<Map<String/* artifact path */, String /* module id*/>> CONFIGURATION_ARTIFACTS =
-    Key.create("gradleArtifactsMap");
 
   private static final Key<File> GRADLE_HOME_DIR = Key.create("gradleHomeDir");
 
@@ -205,22 +203,16 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                      boolean isBuildSrcProject)
     throws IllegalArgumentException, IllegalStateException {
     final long activityId = resolverCtx.getExternalSystemTaskId().getId();
-    final PerformanceTrace performanceTrace = new PerformanceTrace();
-    performanceTrace.setId(activityId);
+    final PerformanceTrace performanceTrace = new PerformanceTrace(activityId);
     final GradleProjectResolverExtension tracedResolverChain = new TracedProjectResolverExtension(projectResolverChain, performanceTrace);
 
     final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(resolverCtx);
     GradleVersion gradleVersion = null;
 
     boolean useCustomSerialization = Registry.is("gradle.tooling.custom.serializer", true);
-    boolean isCompositeBuildsSupported = false;
     if (buildEnvironment != null) {
       gradleVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
-      isCompositeBuildsSupported = gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
       resolverCtx.setBuildEnvironment(buildEnvironment);
-      if (!isCustomSerializationSupported(resolverCtx, gradleVersion, isCompositeBuildsSupported)) {
-        useCustomSerialization = false;
-      }
       if (!GradleJvmSupportMatrix.isGradleSupportedByIdea(gradleVersion)) {
         throw new IllegalStateException("Unsupported Gradle version");
       }
@@ -231,11 +223,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     final ProjectImportAction projectImportAction =
       useCustomSerialization
-      ? new ProjectImportActionWithCustomSerializer(resolverCtx.isPreviewMode(), isCompositeBuildsSupported)
-      : new ProjectImportAction(resolverCtx.isPreviewMode(), isCompositeBuildsSupported);
+      ? new ProjectImportActionWithCustomSerializer(resolverCtx.isPreviewMode())
+      : new ProjectImportAction(resolverCtx.isPreviewMode());
 
-    boolean useParallelModelsFetch = Registry.is("gradle.tooling.models.parallel.fetch", false);
-    projectImportAction.setParallelModelsFetch(useParallelModelsFetch);
     GradleExecutionSettings executionSettings = resolverCtx.getSettings();
     if (executionSettings == null) {
       executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
@@ -255,14 +245,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       // register classes of extra gradle project models required for extensions (e.g. com.android.builder.model.AndroidProject)
       try {
-        ProjectImportModelProvider modelProvider = resolverExtension.getModelProvider();
-        if (modelProvider != null) {
-          projectImportAction.addProjectImportModelProvider(modelProvider);
-        }
-        ProjectImportModelProvider projectsLoadedModelProvider = resolverExtension.getProjectsLoadedModelProvider();
-        if (projectsLoadedModelProvider != null) {
-          projectImportAction.addProjectImportModelProvider(projectsLoadedModelProvider, true);
-        }
+        projectImportAction.addProjectImportModelProviders(resolverExtension.getModelProviders());
       }
       catch (Throwable t) {
         LOG.warn(t);
@@ -280,6 +263,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
     var initScript = GradleInitScriptUtil.createMainInitScript(isBuildSrcProject, toolingExtensionClasses);
     executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScript.toString());
+
+    if (!executionSettings.isDownloadSources()) {
+      GradleExecutionHelper.attachIdeaPluginConfigurator(executionSettings);
+    }
 
     BuildActionRunner buildActionRunner = new BuildActionRunner(resolverCtx, projectImportAction, executionSettings, myHelper);
     resolverCtx.checkCancelled();
@@ -409,8 +396,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>> moduleOutputsMap =
       CollectionFactory.createFilePathMap();
     projectDataNode.putUserData(MODULES_OUTPUTS, moduleOutputsMap);
-    final Map<String/* artifact path */, String /* module id*/> artifactsMap = CollectionFactory.createFilePathMap();
-    projectDataNode.putUserData(CONFIGURATION_ARTIFACTS, artifactsMap);
+
+    final ArtifactMappingService artifactsMap = resolverCtx.getArtifactsMap();
 
     // import modules data
     for (IdeaModule gradleModule : ContainerUtil.concat(gradleModules, includedModules)) {
@@ -484,9 +471,20 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
         if (moduleData instanceof GradleSourceSetData) {
           for (File artifactFile : moduleData.getArtifacts()) {
-            artifactsMap.put(toCanonicalPath(artifactFile.getPath()), moduleData.getId());
+            artifactsMap.storeModuleId(toCanonicalPath(artifactFile.getPath()), moduleData.getId());
           }
         }
+      }
+
+      ExternalProject externalProject = resolverCtx.getExtraProject(ideaModule, ExternalProject.class);
+      if (externalProject != null) {
+        externalProject.getSourceSetModel().getAdditionalArtifacts().forEach((artifactFile) -> {
+          String path = toCanonicalPath(artifactFile.getPath());
+          ModuleMappingInfo mapping = artifactsMap.getModuleMapping(path);
+          if (mapping != null && OWNER_BASE_GRADLE.equals(mapping.getOwnerId())) {
+            artifactsMap.markArtifactPath(path, true);
+          }
+        });
       }
     }
     // reuse same gradle home (for auto-discovered buildSrc projects) also for partial imports which doesn't request BuildScriptClasspathModel
@@ -514,7 +512,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     projectDataNode.putUserData(RESOLVED_SOURCE_SETS, null);
     projectDataNode.putUserData(MODULES_OUTPUTS, null);
-    projectDataNode.putUserData(CONFIGURATION_ARTIFACTS, null);
 
     // ensure unique library names
     Collection<DataNode<LibraryData>> libraries = getChildren(projectDataNode, ProjectKeys.LIBRARY);
@@ -566,20 +563,16 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
   }
 
-  private static boolean isCustomSerializationSupported(@NotNull DefaultProjectResolverContext resolverCtx,
-                                                        GradleVersion gradleVersion,
-                                                        boolean isCompositeBuildsSupported) {
-    return isCompositeBuildsSupported ||
-           resolverCtx.getConnection().newBuild() instanceof TargetBuildLauncher ||
-           gradleVersion.getBaseVersion().compareTo(GradleVersion.version("3.0")) >= 0;
-  }
-
   private static void configureExecutionArgumentsAndVmOptions(@NotNull GradleExecutionSettings executionSettings,
                                                               @NotNull DefaultProjectResolverContext resolverCtx,
                                                               boolean isBuildSrcProject) {
+    executionSettings.withArgument("-Didea.gradle.download.sources=" + executionSettings.isDownloadSources());
     executionSettings.withArgument("-Didea.sync.active=true");
     if (resolverCtx.isResolveModulePerSourceSet()) {
       executionSettings.withArgument("-Didea.resolveSourceSetDependencies=true");
+    }
+    if (executionSettings.isParallelModelFetch() && isGradleVersionAtLeast("7.4", resolverCtx)) {
+      executionSettings.withArgument("-Didea.parallelModelFetch.enabled=true");
     }
     if (!isBuildSrcProject) {
       for (GradleBuildParticipant buildParticipant : executionSettings.getExecutionWorkspace().getBuildParticipants()) {
@@ -600,6 +593,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       // collect extra command-line arguments
       executionSettings.withArguments(extension.getExtraCommandLineArgs());
     });
+  }
+
+  private static boolean isGradleVersionAtLeast(@NotNull String requiredVersion, @NotNull DefaultProjectResolverContext ctx) {
+    String versionStr = ctx.getProjectGradleVersion();
+    if (versionStr != null) {
+      return GradleVersion.version(versionStr).compareTo(GradleVersion.version(requiredVersion)) >= 0;
+    }
+    return false;
   }
 
   @NotNull
@@ -656,7 +657,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       projectDataNode.getUserData(MODULES_OUTPUTS);
     assert moduleOutputsMap != null;
 
-    final Map<String, String> artifactsMap = projectDataNode.getUserData(CONFIGURATION_ARTIFACTS);
+    final ArtifactMappingService artifactsMap = context.getArtifactsMap();
     assert artifactsMap != null;
 
     final Collection<DataNode<LibraryDependencyData>> libraryDependencies =

@@ -13,7 +13,7 @@ class MyService {
     companion object {
 
         @MyAnnotation
-        val <warning descr="Application service must not be assigned to a static final field">companionObjectAppService<caret></warning> = ApplicationManager.getApplication().getService(MyService::class.java)
+        val <warning descr="Provide explicit 'getInstance()' method to access application service instead of a property">companionObjectAppService<caret></warning> = ApplicationManager.getApplication().getService(MyService::class.java)
 
 
         // to test naming conflicts

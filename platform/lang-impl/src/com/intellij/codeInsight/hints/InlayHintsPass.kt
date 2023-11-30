@@ -1,72 +1,83 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
+import com.intellij.codeInsight.daemon.impl.Divider
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.concurrency.JobLauncher
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
-import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Predicates
+import com.intellij.openapi.util.ProperTextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.SyntaxTraverser
+import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
+import com.intellij.util.containers.ConcurrentIntObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.stream.IntStream
 
 class InlayHintsPass(
   private val rootElement: PsiElement,
   private val enabledCollectors: List<CollectorWithSettings<out Any>>,
-  private val editor: Editor
+  private val editor: Editor,
+  private val priorityRange: ProperTextRange,
+  private val sharedSink: InlayHintsSinkImpl,
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true), DumbAware {
-  private var allHints: HintsBuffer? = null
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     if (!HighlightingLevelManager.getInstance(myFile.project).shouldHighlight(myFile)) return
     if (enabledCollectors.isEmpty()) return
-    val buffers = ConcurrentLinkedQueue<HintsBuffer>()
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      enabledCollectors,
-      progress,
-      true,
-      false,
-      Processor { collector ->
-        // TODO [roman.ivanov] it is not good to create separate traverser here as there may be many hints providers
-        val traverser = SyntaxTraverser.psiTraverser(rootElement)
-        for (element in traverser.preOrderDfsTraversal()) {
-          if (!collector.collectHints(element, myEditor)) break
+
+    val allDivided = mutableListOf<Divider.DividedElements>()
+    progress.checkCanceled()
+
+    Divider.divideInsideAndOutsideAllRoots(myFile, myFile.textRange,
+                                           priorityRange,
+                                           Predicates.alwaysTrue(),
+                                           CommonProcessors.CollectProcessor(allDivided))
+    val elementsInside = allDivided.flatMap(Divider.DividedElements::inside)
+    val elementsOutside = allDivided.flatMap(Divider.DividedElements::outside)
+    val skippedCollectors = ConcurrentCollectionFactory.createConcurrentSet<Int>()
+
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+        (elementsInside + elementsOutside),
+        progress,
+        true,
+        false,
+        Processor { element ->
+          for (collectorInd in enabledCollectors.indices.minus(skippedCollectors)) {
+            val collector = enabledCollectors[collectorInd]
+            if (!collector.collectHints(element, editor)) {
+              skippedCollectors.add(collectorInd)
+              continue
+            }
+            progress.checkCanceled()
+          }
+          true
         }
-        val hints = collector.sink.complete()
-        buffers.add(hints)
-        true
-      }
-    )
-    val iterator = buffers.iterator()
-    if (!iterator.hasNext()) return
-    val allHintsAccumulator = iterator.next()
-    for (hintsBuffer in iterator) {
-      allHintsAccumulator.mergeIntoThis(hintsBuffer)
+      )) {
+      throw ProcessCanceledException()
     }
-    allHints = allHintsAccumulator
+
   }
 
   override fun doApplyInformationToEditor() {
-    if (editor !is EditorImpl) return
     val positionKeeper = EditorScrollingPositionKeeper(editor)
     positionKeeper.savePosition()
-    applyCollected(allHints, rootElement, editor)
+    applyCollected(sharedSink.complete(), rootElement, editor)
     positionKeeper.restorePosition(false)
     if (rootElement === myFile) {
-      InlayHintsPassFactory.putCurrentModificationStamp(myEditor, myFile)
+      InlayHintsPassFactoryInternal.putCurrentModificationStamp(myEditor, myFile)
     }
   }
 
@@ -95,7 +106,7 @@ class InlayHintsPass(
       }
 
       val isBulk = shouldBeBulk(hints, existingInlineInlays, existingBlockAboveInlays, existingBlockBelowInlays)
-      val factory = PresentationFactory(editor as EditorImpl)
+      val factory = PresentationFactory(editor)
       inlayModel.execute(isBulk) {
         updateOrDispose(existingInlineInlays, hints, Inlay.Placement.INLINE, factory, editor)
         updateOrDispose(existingAfterLineEndInlays, hints, Inlay.Placement.INLINE /* 'hints' consider them as INLINE*/, factory, editor)
@@ -118,15 +129,15 @@ class InlayHintsPass(
 
 
     private fun addInlineHints(hints: HintsBuffer, inlayModel: InlayModel) {
-      for (entry in Int2ObjectMaps.fastIterable(hints.inlineHints)) {
+      for (entry in hints.inlineHints.entrySet()) {
         val renderer = InlineInlayRenderer(entry.value)
 
         val toBePlacedAtTheEndOfLine = entry.value.any { it.constraints?.placedAtTheEndOfLine ?: false }
         val isRelatedToPrecedingText = entry.value.all { it.constraints?.relatesToPrecedingText ?: false }
         val inlay = if (toBePlacedAtTheEndOfLine) {
-          inlayModel.addAfterLineEndElement(entry.intKey, true, renderer)
+          inlayModel.addAfterLineEndElement(entry.key, true, renderer)
         } else {
-          inlayModel.addInlineElement(entry.intKey, isRelatedToPrecedingText, renderer) ?: break
+          inlayModel.addInlineElement(entry.key, isRelatedToPrecedingText, renderer)
         }
 
         inlay?.let { postprocessInlay(it, false) }
@@ -136,15 +147,15 @@ class InlayHintsPass(
     private fun addBlockHints(
       factory: PresentationFactory,
       inlayModel: InlayModel,
-      map: Int2ObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>,
+      map: ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>,
       showAbove: Boolean,
       isPlaceholder: Boolean
     ) {
-      for (entry in Int2ObjectMaps.fastIterable(map)) {
+      for (entry in map.entrySet()) {
         val presentations = entry.value
         val constraints = presentations.first().constraints
         val inlay = inlayModel.addBlockElement(
-          entry.intKey,
+          entry.key,
           constraints?.relatesToPrecedingText ?: true,
           showAbove,
           constraints?.priority ?: 0,

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.execution.*;
@@ -48,8 +48,8 @@ public final class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   @Override
-  protected void attachToProcess(@NotNull final RunConfigurationBase configuration,
-                                 @NotNull final ProcessHandler handler,
+  protected void attachToProcess(@NotNull RunConfigurationBase configuration,
+                                 @NotNull ProcessHandler handler,
                                  @Nullable RunnerSettings runnerSettings) {
     if (runnerSettings == null && isApplicableFor(configuration)) {
       Disposable disposable = Disposer.newDisposable();
@@ -96,8 +96,7 @@ public final class TestDiscoveryExtension extends RunConfigurationExtension {
     }
   }
 
-  @NotNull
-  private static String getTraceFilePath(RunConfigurationBase<?> configuration) {
+  private static @NotNull String getTraceFilePath(RunConfigurationBase<?> configuration) {
     return baseTestDiscoveryPathForProject(configuration.getProject()) + File.separator + configuration.getUniqueID() + ".tr";
   }
 
@@ -107,12 +106,11 @@ public final class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   @Override
-  public boolean isApplicableFor(@NotNull final RunConfigurationBase configuration) {
+  public boolean isApplicableFor(final @NotNull RunConfigurationBase configuration) {
     return configuration instanceof JavaTestConfigurationBase && Registry.is(TEST_DISCOVERY_REGISTRY_KEY);
   }
 
-  @NotNull
-  public static Path baseTestDiscoveryPathForProject(Project project) {
+  public static @NotNull Path baseTestDiscoveryPathForProject(Project project) {
     return ProjectUtil.getProjectCachePath(project, "testDiscovery");
   }
 
@@ -149,13 +147,11 @@ public final class TestDiscoveryExtension extends RunConfigurationExtension {
     }
   }
 
-  @NotNull
-  private static String getConfigurationModuleName(JavaTestConfigurationBase configuration) {
+  private static @NotNull String getConfigurationModuleName(JavaTestConfigurationBase configuration) {
     return configuration.getConfigurationModule().getModuleName();
   }
 
-  @Nullable
-  private static TestDiscoveryDataSocketListener tryInstallSocketListener(@NotNull RunConfigurationBase<?> configuration) {
+  private static @Nullable TestDiscoveryDataSocketListener tryInstallSocketListener(@NotNull RunConfigurationBase<?> configuration) {
     TestDiscoveryDataSocketListener listener = null;
     if (USE_SOCKET) {
       try {

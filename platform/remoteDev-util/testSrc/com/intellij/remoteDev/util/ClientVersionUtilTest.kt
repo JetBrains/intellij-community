@@ -15,7 +15,7 @@ class ClientVersionUtilTest {
   @TestDisposable
   lateinit var disposable: Disposable
   
-  @ValueSource(strings = ["232.9544", "232.SNAPSHOT", "233.2350", "233.SNAPSHOT", "241.1", "241.SNAPSHOT"])
+  @ValueSource(strings = ["232.9552", "232.9559.2", "232.SNAPSHOT", "233.2350", "233.SNAPSHOT", "241.1", "241.SNAPSHOT"])
   @ParameterizedTest
   fun `separate config supported and enabled`(version: String) {
     assertTrue(isJBCSeparateConfigSupported(version))

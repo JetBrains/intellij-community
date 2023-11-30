@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
@@ -92,7 +93,7 @@ object GHShareProjectUtil {
         while (true) {
           try {
             return progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
-              val token = runBlocking {
+              val token = runBlockingCancellable {
                 service<GHAccountManager>().findCredentials(account) ?: throw GithubMissingTokenException(account)
               }
               val requestExecutor = GithubApiRequestExecutor.Factory.getInstance().create(token)
@@ -232,23 +233,31 @@ object GHShareProjectUtil {
           allFiles.addAll(trackedFiles)
           allFiles.addAll(untrackedFiles)
 
-          val dialog = invokeAndWaitIfNeeded(indicator.modalityState) {
-            GithubUntrackedFilesDialog(project, allFiles).apply {
+          val data = invokeAndWaitIfNeeded(indicator.modalityState) {
+            val dialog = GithubUntrackedFilesDialog(project, allFiles).apply {
               if (!trackedFiles.isEmpty()) {
                 selectedFiles = trackedFiles
               }
               DialogManager.show(this)
             }
+
+            if (dialog.isOK && dialog.selectedFiles.isNotEmpty()) {
+              dialog.selectedFiles to dialog.commitMessage
+            }
+            else {
+              null
+            }
           }
 
-          val files2commit = dialog.selectedFiles
-          if (!dialog.isOK || files2commit.isEmpty()) {
+
+          if (data == null) {
             GithubNotifications.showInfoURL(project,
                                             GithubNotificationIdsHolder.SHARE_EMPTY_REPO_CREATED,
                                             GithubBundle.message("share.process.empty.project.created"),
                                             name, url)
             return false
           }
+          val (files2commit, commitMessage) = data
 
           val files2add = ContainerUtil.intersection(untrackedFiles, files2commit)
           val files2rm = ContainerUtil.subtract(trackedFiles, files2commit)
@@ -263,7 +272,7 @@ object GHShareProjectUtil {
           indicator.text = GithubBundle.message("share.process.performing.commit")
           val handler = GitLineHandler(project, root, GitCommand.COMMIT)
           handler.setStdoutSuppressed(false)
-          handler.addParameters("-m", dialog.commitMessage)
+          handler.addParameters("-m", commitMessage)
           handler.endOptions()
           Git.getInstance().runCommand(handler).throwOnError()
 

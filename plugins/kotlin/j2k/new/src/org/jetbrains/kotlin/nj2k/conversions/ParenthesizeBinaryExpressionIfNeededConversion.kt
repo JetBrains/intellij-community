@@ -18,7 +18,7 @@ class ParenthesizeBinaryExpressionIfNeededConversion(override val context: NewJ2
             if (operator == parentOperator) return recurse(element)
             if (operator !is JKKtWordOperatorToken && parentOperator !is JKKtWordOperatorToken) return recurse(element)
             recurse(element.parenthesised())
-        } else if (element.left.hasLeadingLineBreak) {
+        } else if (element.left.hasLineBreakAfter) {
             element.parenthesised()
         } else recurse(element)
     }

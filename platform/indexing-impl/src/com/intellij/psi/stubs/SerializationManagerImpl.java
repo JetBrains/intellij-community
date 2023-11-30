@@ -91,8 +91,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     }
   }
 
-  @NotNull
-  private DataEnumeratorEx<String> openNameStorage() throws IOException {
+  private @NotNull DataEnumeratorEx<String> openNameStorage() throws IOException {
     myOpenFile = myFile.get();
     if (myOpenFile == null) {
       return new InMemoryDataEnumerator<>();
@@ -204,9 +203,8 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     }
   }
 
-  @NotNull
   @Override
-  public Stub deserialize(@NotNull InputStream stream) throws SerializerNotFoundException {
+  public @NotNull Stub deserialize(@NotNull InputStream stream) throws SerializerNotFoundException {
     initSerializers();
 
     try {
@@ -280,8 +278,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     return mySerializerEnumerator.getSerializer(name);
   }
 
-  @Nullable
-  public String getSerializerName(@NotNull ObjectStubSerializer<?, ? extends Stub> serializer) {
+  public @Nullable String getSerializerName(@NotNull ObjectStubSerializer<?, ? extends Stub> serializer) {
     return mySerializerEnumerator.getSerializerName(serializer);
   }
 

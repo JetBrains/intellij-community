@@ -22,7 +22,8 @@ import javax.swing.Icon
 object KtIconProvider {
     private val LOG = Logger.getInstance(KtIconProvider::class.java)
 
-    fun KtAnalysisSession.getIcon(ktSymbol: KtSymbol): Icon? {
+    context(KtAnalysisSession)
+    fun getIcon(ktSymbol: KtSymbol): Icon? {
         // logic copied from org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
         val declaration = ktSymbol.psi
         return if (declaration?.isValid == true) {
@@ -41,7 +42,8 @@ object KtIconProvider {
         }
     }
 
-    private fun KtAnalysisSession.getIcon(symbol: KtSymbol, flags: Int): Icon? {
+    context(KtAnalysisSession)
+    private fun getIcon(symbol: KtSymbol, flags: Int): Icon? {
         var result: Icon = getBaseIcon(symbol) ?: return null
 
         if (flags and Iconable.ICON_FLAG_VISIBILITY > 0) {
@@ -53,7 +55,8 @@ object KtIconProvider {
         return result
     }
 
-    fun KtAnalysisSession.getBaseIcon(symbol: KtSymbol): Icon? {
+    context(KtAnalysisSession)
+    fun getBaseIcon(symbol: KtSymbol): Icon? {
         val isAbstract = (symbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT
         return when (symbol) {
             is KtPackageSymbol -> AllIcons.Nodes.Package
@@ -99,7 +102,8 @@ object KtIconProvider {
         }
     }
 
-    private fun KtAnalysisSession.getVisibilityIcon(symbol: KtSymbol): Icon? {
+    context(KtAnalysisSession)
+    private fun getVisibilityIcon(symbol: KtSymbol): Icon? {
         return when ((symbol as? KtSymbolWithVisibility)?.visibility?.normalize()) {
             Visibilities.Public -> PlatformIcons.PUBLIC_ICON
             Visibilities.Protected -> IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Protected)

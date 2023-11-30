@@ -13,19 +13,14 @@ import org.jetbrains.annotations.Nls
 open class QuickFixWithDelegateFactory(
     delegateFactory: () -> IntentionAction?
 ) : IntentionAction, ReportingClassSubstitutor {
-    @Nls
-    private val familyName: String
-    @Nls
-    private val text: String
-    private val startInWriteAction: Boolean
-    private val delegate: IntentionAction?
+    private val delegate: IntentionAction? = delegateFactory()
 
-    init {
-        delegate = delegateFactory()
-        familyName = delegate?.familyName ?: ""
-        text = delegate?.text ?: ""
-        startInWriteAction = delegate != null && delegate.startInWriteAction()
-    }
+    @Nls
+    private val familyName: String = delegate?.familyName ?: ""
+
+    @Nls
+    private val text: String = delegate?.text ?: ""
+    private val startInWriteAction: Boolean = delegate != null && delegate.startInWriteAction()
 
     override fun getSubstitutedClass(): Class<*> = delegate?.javaClass ?: javaClass
 

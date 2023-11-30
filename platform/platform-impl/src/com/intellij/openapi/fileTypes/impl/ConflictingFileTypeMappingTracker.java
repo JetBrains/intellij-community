@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-class ConflictingFileTypeMappingTracker {
+final class ConflictingFileTypeMappingTracker {
   /**
    * Somebody tries to assign matcher (which was previously assigned to the oldFileType) to the newFileType.
    * If there is a conflict, show notification "some plugin is going to override file type".
@@ -58,11 +58,10 @@ class ConflictingFileTypeMappingTracker {
                                boolean approved) {
   }
 
-  @NotNull
   @VisibleForTesting
-  static ResolveConflictResult resolveConflict(@NotNull FileNameMatcher matcher,
-                                               @NotNull FileTypeManagerImpl.FileTypeWithDescriptor oldFtd,
-                                               @NotNull FileTypeManagerImpl.FileTypeWithDescriptor newFtd) {
+  static @NotNull ResolveConflictResult resolveConflict(@NotNull FileNameMatcher matcher,
+                                                        @NotNull FileTypeManagerImpl.FileTypeWithDescriptor oldFtd,
+                                                        @NotNull FileTypeManagerImpl.FileTypeWithDescriptor newFtd) {
     assert !oldFtd.equals(newFtd) : oldFtd;
     if (newFtd.pluginDescriptor.isBundled() &&
         (!oldFtd.pluginDescriptor.isBundled() || isCorePlugin(newFtd.pluginDescriptor) && !isCorePlugin(oldFtd.pluginDescriptor))) {

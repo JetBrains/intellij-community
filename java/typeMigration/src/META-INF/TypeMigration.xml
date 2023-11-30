@@ -43,7 +43,7 @@
 
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" 
                      language="JAVA" shortName="Guava" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.refactoring.typeMigration.inspections.GuavaInspection"
                      bundle="messages.TypeMigrationBundle" key="inspection.guava.name"/>
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention$ConvertNonFinalLocalToAtomicFix"/>

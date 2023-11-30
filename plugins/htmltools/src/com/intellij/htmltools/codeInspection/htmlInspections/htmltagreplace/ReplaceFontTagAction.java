@@ -15,9 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ReplaceFontTagAction implements LocalQuickFix {
-  private static class Holder {
-    @NonNls private static final Map<String, String> ourSizesMap = new HashMap<>();
+public final class ReplaceFontTagAction implements LocalQuickFix {
+  private static final class Holder {
+    private static final @NonNls Map<String, String> ourSizesMap = new HashMap<>();
 
     static {
       ourSizesMap.put("-3", "59%");
@@ -38,15 +38,12 @@ public class ReplaceFontTagAction implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return HtmlToolsBundle.message("html.replace.tag.with.css.quickfix.text", "font");
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getFamilyName() {
+  public @NonNls @NotNull String getFamilyName() {
     return "ReplaceDepracatedTag";
   }
 
@@ -57,7 +54,7 @@ public class ReplaceFontTagAction implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     PsiElement parent = descriptor.getPsiElement();
     while (parent != null) {
       if (parent instanceof XmlTag && "font".equals(StringUtil.toLowerCase(((XmlTag)parent).getLocalName()))) {

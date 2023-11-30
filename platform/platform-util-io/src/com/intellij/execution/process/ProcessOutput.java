@@ -10,21 +10,27 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ProcessOutput {
-  private final StringBuilder myStdoutBuilder = new StringBuilder();
-  private final StringBuilder myStderrBuilder = new StringBuilder();
-  private @Nullable Integer myExitCode;
-  private boolean myTimeout;
-  private boolean myCancelled;
+  private final StringBuilder myStdoutBuilder;
+  private final StringBuilder myStderrBuilder;
+  private volatile @Nullable Integer myExitCode;
+  private volatile boolean myTimeout;
+  private volatile boolean myCancelled;
 
-  public ProcessOutput() { }
+  public ProcessOutput() {
+    this("", "", null, false, false);
+  }
 
   public ProcessOutput(int exitCode) {
-    myExitCode = exitCode;
+    this("", "", exitCode, false, false);
   }
 
   public ProcessOutput(@NotNull String stdout, @NotNull String stderr, int exitCode, boolean timeout, boolean cancelled) {
-    myStdoutBuilder.append(stdout);
-    myStderrBuilder.append(stderr);
+    this(stdout, stderr, Integer.valueOf(exitCode), timeout, cancelled);
+  }
+
+  private ProcessOutput(@NotNull String stdout, @NotNull String stderr, @Nullable Integer exitCode, boolean timeout, boolean cancelled) {
+    myStdoutBuilder = new StringBuilder(stdout);
+    myStderrBuilder = new StringBuilder(stderr);
     myExitCode = exitCode;
     myTimeout = timeout;
     myCancelled = cancelled;

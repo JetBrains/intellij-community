@@ -48,7 +48,7 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
 
   @Override
   public String getDisplayName() {
-    return myProxyGroup.getName();
+    return myProxyGroup.getDisplayName();
   }
 
   @Override

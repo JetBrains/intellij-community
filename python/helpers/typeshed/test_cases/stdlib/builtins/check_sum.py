@@ -1,26 +1,28 @@
+from __future__ import annotations
+
 from typing import Any, List, Union
 from typing_extensions import Literal, assert_type
 
 
 class Foo:
-    def __add__(self, other: Any) -> "Foo":
+    def __add__(self, other: Any) -> Foo:
         return Foo()
 
 
 class Bar:
-    def __radd__(self, other: Any) -> "Bar":
+    def __radd__(self, other: Any) -> Bar:
         return Bar()
 
 
 class Baz:
-    def __add__(self, other: Any) -> "Baz":
+    def __add__(self, other: Any) -> Baz:
         return Baz()
 
-    def __radd__(self, other: Any) -> "Baz":
+    def __radd__(self, other: Any) -> Baz:
         return Baz()
 
 
-literal_list: List[Literal[0, 1]] = [0, 1, 1]
+literal_list: list[Literal[0, 1]] = [0, 1, 1]
 
 assert_type(sum([2, 4]), int)
 assert_type(sum([3, 5], 4), int)

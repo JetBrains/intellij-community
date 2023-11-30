@@ -15,6 +15,7 @@ import com.intellij.ui.Gray;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,13 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   public PackageDependenciesNode(@NotNull Project project) {
     myProject = project;
+  }
+
+  /**
+   * Called in background to perform potentially slow updates.
+   */
+  @ApiStatus.Experimental
+  public void update() {
   }
 
   public void setEquals(final boolean equals) {
@@ -197,5 +205,16 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     if (isSorted()) return;
     TreeUtil.sortChildren(this, new DependencyNodeComparator());
     setSorted(true);
+  }
+
+  public void updateAndSortChildren() {
+    if (isSorted()) return;
+    update();
+    TreeUtil.listChildren(this).forEach(node -> {
+      if (node instanceof PackageDependenciesNode packageDependenciesNode) {
+        packageDependenciesNode.update();
+      }
+    });
+    sortChildren();
   }
 }

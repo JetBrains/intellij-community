@@ -7,6 +7,7 @@ import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.MavenConfigurationProducer
 import org.jetbrains.idea.maven.execution.MavenGoalLocation
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
@@ -26,15 +27,15 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
     myNavigator.setGroupModules(true)
   }
 
-  @Test fun testCreateMavenRunConfigurationFromToolWindow() {
+  @Test fun testCreateMavenRunConfigurationFromToolWindow() = runBlocking {
     val projectPom = createProjectPom("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    myProjectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom), MavenExplicitProfiles.NONE)
-    importProject()
-    myProjectsManager.fireActivatedInTests()
+    projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom), MavenExplicitProfiles.NONE)
+    importProjectAsync()
+    projectsManager.fireActivatedInTests()
 
     val runConfiguration = createRunConfiguration(projectPom, "validate")
     TestCase.assertNotNull(runConfiguration)
@@ -42,15 +43,15 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testCheckMavenRunConfigurationFromToolWindow() {
+  fun testCheckMavenRunConfigurationFromToolWindow() = runBlocking {
     val projectPom = createProjectPom("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    myProjectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom), MavenExplicitProfiles.NONE)
-    importProject()
-    myProjectsManager.fireActivatedInTests()
+    projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom), MavenExplicitProfiles.NONE)
+    importProjectAsync()
+    projectsManager.fireActivatedInTests()
 
     val psiFile = PsiManager.getInstance(myProject).findFile(projectPom)
     val context = ConfigurationContext.createEmptyContextForLocation(
@@ -65,7 +66,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   }
 
 
-  @Test fun testMavenRunConfigurationFromToolWindowShouldBeDifferent() {
+  @Test fun testMavenRunConfigurationFromToolWindowShouldBeDifferent() = runBlocking {
     createProjectPom("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
@@ -88,9 +89,9 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    myProjectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom, m2, m2), MavenExplicitProfiles.NONE)
-    importProject()
-    myProjectsManager.fireActivatedInTests()
+    projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom, m2, m2), MavenExplicitProfiles.NONE)
+    importProjectAsync()
+    projectsManager.fireActivatedInTests()
 
     val psiFile = PsiManager.getInstance(myProject).findFile(m1)
     val context = ConfigurationContext.createEmptyContextForLocation(
@@ -120,7 +121,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
   }
 
 
-  @Test fun testMavenRunConfigurationFromToolWindowForMultimodule() {
+  @Test fun testMavenRunConfigurationFromToolWindowForMultimodule() = runBlocking {
     createProjectPom("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
@@ -143,9 +144,9 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    myProjectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom, m2, m2), MavenExplicitProfiles.NONE)
-    importProject()
-    myProjectsManager.fireActivatedInTests()
+    projectsManager.resetManagedFilesAndProfilesInTests(listOf(myProjectPom, m2, m2), MavenExplicitProfiles.NONE)
+    importProjectAsync()
+    projectsManager.fireActivatedInTests()
 
     val runConfiguration1 = createRunConfiguration(m1, "validate")
     TestCase.assertNotNull(runConfiguration1)

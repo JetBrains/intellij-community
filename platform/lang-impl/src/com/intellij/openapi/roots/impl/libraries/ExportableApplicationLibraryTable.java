@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.components.RoamingType;
@@ -11,5 +11,5 @@ import com.intellij.util.ThreeState;
   name = "libraryTable",
   storages = @Storage(value = "applicationLibraries.xml", roamingType = RoamingType.DISABLED, useSaveThreshold = ThreeState.NO)
 )
-public class ExportableApplicationLibraryTable extends ApplicationLibraryTable {
+public final class ExportableApplicationLibraryTable extends ApplicationLibraryTable {
 }

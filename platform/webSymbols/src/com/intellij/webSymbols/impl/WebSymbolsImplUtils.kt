@@ -12,6 +12,7 @@ import com.intellij.util.containers.Interner
 import com.intellij.util.ui.JBUI
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment
+import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.query.WebSymbolsQueryParams
 import com.intellij.webSymbols.webTypes.json.WebTypes
@@ -83,6 +84,8 @@ internal fun List<WebSymbol>.sortSymbolsByPriority(extensionsLast: Boolean = tru
 internal fun <T : WebSymbol> Sequence<T>.filterByQueryParams(params: WebSymbolsQueryParams): Sequence<T> =
   this.filter { symbol ->
     symbol.origin.framework.let { it == null || it == params.framework }
-    && ((params as? WebSymbolsNameMatchQueryParams)?.abstractSymbols == true || !symbol.abstract)
-    && ((params as? WebSymbolsNameMatchQueryParams)?.virtualSymbols != false || !symbol.virtual)
+    && ((params as? WebSymbolsNameMatchQueryParams)?.abstractSymbols == true
+        || (params as? WebSymbolsListSymbolsQueryParams)?.abstractSymbols == true
+        || !symbol.abstract)
+    && ((params as? WebSymbolsQueryParams)?.virtualSymbols != false || !symbol.virtual)
   }

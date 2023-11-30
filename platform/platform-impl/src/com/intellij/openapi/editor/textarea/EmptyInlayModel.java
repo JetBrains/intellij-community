@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.openapi.Disposable;
@@ -11,11 +11,10 @@ import java.util.Collections;
 import java.util.List;
 
 public final class EmptyInlayModel implements InlayModel {
-  @Nullable
   @Override
-  public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
-                                                                           boolean relatesToPrecedingText,
-                                                                           @NotNull T renderer) {
+  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                                     boolean relatesToPrecedingText,
+                                                                                     @NotNull T renderer) {
     return null;
   }
 
@@ -34,13 +33,12 @@ public final class EmptyInlayModel implements InlayModel {
     return null;
   }
 
-  @Nullable
   @Override
-  public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
-                                                                          boolean relatesToPrecedingText,
-                                                                          boolean showAbove,
-                                                                          int priority,
-                                                                          @NotNull T renderer) {
+  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                                    boolean relatesToPrecedingText,
+                                                                                    boolean showAbove,
+                                                                                    int priority,
+                                                                                    @NotNull T renderer) {
     return null;
   }
 
@@ -51,11 +49,10 @@ public final class EmptyInlayModel implements InlayModel {
     return null;
   }
 
-  @Nullable
   @Override
-  public <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
-                                                                                 boolean relatesToPrecedingText,
-                                                                                 @NotNull T renderer) {
+  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
+                                                                                           boolean relatesToPrecedingText,
+                                                                                           @NotNull T renderer) {
     return null;
   }
 
@@ -66,21 +63,18 @@ public final class EmptyInlayModel implements InlayModel {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {
+  public @NotNull List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public List<Inlay<?>> getBlockElementsInRange(int startOffset, int endOffset) {
+  public @NotNull List<Inlay<?>> getBlockElementsInRange(int startOffset, int endOffset) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public List<Inlay<?>> getBlockElementsForVisualLine(int visualLine, boolean above) {
+  public @NotNull List<Inlay<?>> getBlockElementsForVisualLine(int visualLine, boolean above) {
     return Collections.emptyList();
   }
 
@@ -89,27 +83,23 @@ public final class EmptyInlayModel implements InlayModel {
     return false;
   }
 
-  @Nullable
   @Override
-  public Inlay<?> getInlineElementAt(@NotNull VisualPosition visualPosition) {
+  public @Nullable Inlay<?> getInlineElementAt(@NotNull VisualPosition visualPosition) {
     return null;
   }
 
-  @Nullable
   @Override
-  public Inlay<?> getElementAt(@NotNull Point point) {
+  public @Nullable Inlay<?> getElementAt(@NotNull Point point) {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<Inlay<?>> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
+  public @NotNull List<Inlay<?>> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public List<Inlay<?>> getAfterLineEndElementsForLogicalLine(int logicalLine) {
+  public @NotNull List<Inlay<?>> getAfterLineEndElementsForLogicalLine(int logicalLine) {
     return Collections.emptyList();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
 import com.intellij.icons.AllIcons
@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.content.Content
 import git4idea.i18n.GitBundle
+import git4idea.index.showToolWindowTab
 import git4idea.stash.GitStashTracker
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -92,7 +93,7 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
 
   companion object {
     @NonNls
-    val TAB_NAME = "Stash"
+    const val TAB_NAME = "Stash"
   }
 }
 
@@ -136,4 +137,12 @@ internal fun stashToolWindowRegistryOption(): RegistryValue = Registry.get("git.
 
 internal fun isStashToolWindowEnabled(project: Project): Boolean {
   return ShelvedChangesViewManager.hideDefaultShelfTab(project)
+}
+
+internal fun showStashes(project: Project) {
+  showToolWindowTab(project, GitStashContentProvider.TAB_NAME) { component ->
+    val savedPatchesUi = component as? SavedPatchesUi ?: return@showToolWindowTab
+    val provider = savedPatchesUi.providers.filterIsInstance<GitStashProvider>().firstOrNull() ?: return@showToolWindowTab
+    savedPatchesUi.expandPatchesByProvider(provider)
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.CommonBundle;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 // overridden in Rider
-public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifier {
+public final class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifier {
   private final MultiMap<ConfigurationErrorType, ConfigurationErrorDescription> myErrors = new MultiMap<>();
   private final Object myLock = new Object();
   private final Project myProject;

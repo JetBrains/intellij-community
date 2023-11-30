@@ -8,9 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 public final class NotNullLazyKey<T, H extends UserDataHolder> extends Key<T> {
-  private final Function<? super H, @NotNull T> myFunction;
+  private final @NotNull Function<? super H, ? extends @NotNull T> myFunction;
 
-  private NotNullLazyKey(@NotNull @NonNls String name, @NotNull Function<? super H, @NotNull T> function) {
+  private NotNullLazyKey(@NotNull @NonNls String name, @NotNull Function<? super H, ? extends @NotNull T> function) {
     super(name);
 
     myFunction = function;
@@ -43,7 +43,7 @@ public final class NotNullLazyKey<T, H extends UserDataHolder> extends Key<T> {
   }
 
   public static @NotNull <T, H extends UserDataHolder> NotNullLazyKey<T, H> createLazyKey(@NonNls @NotNull String name,
-                                                                                          @NotNull Function<? super H, @NotNull T> function) {
+                                                                                          @NotNull Function<? super H, ? extends @NotNull T> function) {
     return new NotNullLazyKey<>(name, function);
   }
 }

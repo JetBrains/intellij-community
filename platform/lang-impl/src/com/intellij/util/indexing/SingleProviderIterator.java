@@ -11,12 +11,11 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.indexing.FilesScanningTaskBase.CheckCancelOnlyProgressIndicator;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
-import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleContentOrigin;
-import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -27,22 +26,20 @@ import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.ge
 final class SingleProviderIterator implements ContentIterator {
   private final Project project;
   private final PerProjectIndexingQueue.PerProviderSink perProviderSink;
-  private final SubTaskProgressIndicator subTaskIndicator;
-  private final List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors;
+  private final CheckCancelOnlyProgressIndicator indicator;
   private final List<FilePropertyPusher<?>> pushers;
   private final List<FilePropertyPusherEx<?>> pusherExs;
   private final Object[] moduleValues;
   private final UnindexedFilesFinder unindexedFileFinder;
   private final ScanningStatistics scanningStatistics;
   private final PushedFilePropertiesUpdater pushedFilePropertiesUpdater;
+  private final boolean mayBeUsed;
 
-  SingleProviderIterator(Project project, SubTaskProgressIndicator subTaskIndicator, IndexableFilesIterator provider,
-                         List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors,
+  SingleProviderIterator(Project project, @NotNull CheckCancelOnlyProgressIndicator indicator, IndexableFilesIterator provider,
                          UnindexedFilesFinder unindexedFileFinder, ScanningStatistics scanningStatistics,
                          PerProjectIndexingQueue.PerProviderSink perProviderSink) {
     this.project = project;
-    this.subTaskIndicator = subTaskIndicator;
-    this.fileScannerVisitors = fileScannerVisitors;
+    this.indicator = indicator;
     this.unindexedFileFinder = unindexedFileFinder;
     this.scanningStatistics = scanningStatistics;
 
@@ -55,7 +52,11 @@ final class SingleProviderIterator implements ContentIterator {
     if (origin instanceof ModuleContentOrigin && !((ModuleContentOrigin)origin).getModule().isDisposed()) {
       pushers = FilePropertyPusher.EP_NAME.getExtensionList();
       pusherExs = null;
-      moduleValues = ReadAction.compute(() -> getModuleImmediateValues(pushers, ((ModuleContentOrigin)origin).getModule()));
+      moduleValues = ReadAction.compute(() -> {
+        if (((ModuleContentOrigin)origin).getModule().isDisposed()) return null;
+        return getModuleImmediateValues(pushers, ((ModuleContentOrigin)origin).getModule());
+      });
+      mayBeUsed = moduleValues != null;
     }
     else {
       pushers = null;
@@ -73,13 +74,23 @@ final class SingleProviderIterator implements ContentIterator {
         pusherExs = extendedPushers;
         moduleValues = ReadAction.compute(() -> getImmediateValuesEx(extendedPushers, origin));
       }
+      mayBeUsed = true;
     }
+  }
+
+  /**
+   * Introduced to check if providers are still not obviously broken to the level they should not be used, as they didn't spend their life
+   * under read lock
+   */
+  boolean mayBeUsed() {
+    return mayBeUsed;
   }
 
   @Override
   public boolean processFile(@NotNull VirtualFile fileOrDir) {
-    ProgressManager.checkCanceled(); // give a chance to suspend indexing
-    if (subTaskIndicator.isCanceled()) {
+    indicator.freezeIfPaused(); // give a chance to suspend indexing
+    ProgressManager.checkCanceled();
+    if (indicator.isCanceled()) {
       return false;
     }
 
@@ -97,8 +108,6 @@ final class SingleProviderIterator implements ContentIterator {
   }
 
   private void processFileRethrowExceptions(@NotNull VirtualFile fileOrDir) {
-    long scanningStart = System.nanoTime();
-    PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
     if (pushers != null && pushedFilePropertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
       ((PushedFilePropertiesUpdaterImpl)pushedFilePropertiesUpdater).applyPushersToFile(fileOrDir, pushers, moduleValues);
     }
@@ -121,6 +130,5 @@ final class SingleProviderIterator implements ContentIterator {
       }
       scanningStatistics.addStatus(fileOrDir, status, statusTime, project);
     }
-    scanningStatistics.addScanningTime(System.nanoTime() - scanningStart);
   }
 }

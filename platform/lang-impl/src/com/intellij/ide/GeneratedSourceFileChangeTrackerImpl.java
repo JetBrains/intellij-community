@@ -1,8 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
-import com.intellij.AppTopics;
-import com.intellij.ProjectTopics;
 import com.intellij.ide.impl.ProjectUtilCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -18,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
@@ -76,7 +75,7 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
       }
 
       VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
-      if (file == null) {
+      if (file == null || LightVirtualFile.shouldSkipEventSystem(file)) {
         return;
       }
 
@@ -112,7 +111,7 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
 
   private void projectOpened() {
     MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    connection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
         myFilesToCheck.remove(file);
@@ -127,7 +126,7 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
         myEditedGeneratedFiles.remove(file);
       }
     });
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         resetOnRootsChanged();

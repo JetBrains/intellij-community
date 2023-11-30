@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -40,34 +40,27 @@ public class OptionDescription implements Comparable<OptionDescription> {
     myGroupName = groupName;
   }
 
-  @Nls
-  public String getOption() {
+  public @Nls String getOption() {
     return myOption;
   }
 
-  @NlsSafe
-  @Nullable
-  public final String getHit() {
+  public final @NlsSafe @Nullable String getHit() {
     return myHit;
   }
 
-  @Nullable
-  public final String getPath() {
+  public final @Nullable String getPath() {
     return myPath;
   }
 
-  @NonNls
-  public final String getConfigurableId() {
+  public final @NonNls String getConfigurableId() {
     return myConfigurableId;
   }
 
-  @Nls
-  public final String getGroupName() {
+  public final @Nls String getGroupName() {
     return myGroupName;
   }
 
-  @NlsSafe
-  public String getValue() {
+  public @NlsSafe String getValue() {
     return null;
   }
 

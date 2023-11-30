@@ -1,9 +1,9 @@
-from typing import Any
+from _typeshed import Incomplete
 
 from .FontFile import FontFile
 
-bdf_slant: Any
-bdf_spacing: Any
+bdf_slant: Incomplete
+bdf_spacing: Incomplete
 
 def bdf_char(f): ...
 

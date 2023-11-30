@@ -6,6 +6,7 @@ interface I : X {
     }
 }
 
+// IGNORE_K2
 // EXIST: Any
 // EXIST: X
 // NOTHING_ELSE

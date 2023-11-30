@@ -2,20 +2,20 @@
 
 package org.jetbrains.kotlin.idea.highlighter.markers
 
-import com.intellij.codeInsight.daemon.*
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
+import com.intellij.codeInsight.daemon.LineMarkerInfo
+import com.intellij.codeInsight.daemon.NavigateAction
 import com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
 import com.intellij.codeInsight.daemon.impl.LineMarkerNavigator
 import com.intellij.codeInsight.daemon.impl.MarkerType
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.editor.colors.CodeInsightColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.editor.markup.SeparatorPlacement
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiIdentifier
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -24,11 +24,14 @@ import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
-import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.AbstractKotlinLineMarkerProvider
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.LineMarkerInfos
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.NavigationPopupDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.areMarkersForbidden
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.expectOrActualAnchor
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.markerDeclaration
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
@@ -38,53 +41,11 @@ import org.jetbrains.kotlin.idea.util.isEffectivelyActual
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import java.awt.event.MouseEvent
 
-class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
-    override fun getName() = KotlinBundle.message("highlighter.name.kotlin.line.markers")
+class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
 
-    override fun getOptions(): Array<Option> = KotlinLineMarkerOptions.options
-
-    override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<PsiElement>? {
-        if (DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS) {
-            if (element.canHaveSeparator()) {
-                val prevSibling = element.getPrevSiblingIgnoringWhitespaceAndComments()
-                if (prevSibling.canHaveSeparator() &&
-                    (element.wantsSeparator() || prevSibling?.wantsSeparator() == true)
-                ) {
-                    return createLineSeparatorByElement(element)
-                }
-            }
-        }
-
-        return null
-    }
-
-    private fun PsiElement?.canHaveSeparator() =
-        this is KtFunction
-                || this is KtClassInitializer
-                || (this is KtProperty && !isLocal)
-                || ((this is KtObjectDeclaration && this.isCompanion()))
-
-    private fun PsiElement.wantsSeparator() = this is KtFunction || StringUtil.getLineBreakCount(text) > 0
-
-    private fun createLineSeparatorByElement(element: PsiElement): LineMarkerInfo<PsiElement> {
-        val anchor = PsiTreeUtil.getDeepestFirst(element)
-
-        val info = LineMarkerInfo(anchor, anchor.textRange)
-        info.separatorColor = EditorColorsManager.getInstance().globalScheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
-        info.separatorPlacement = SeparatorPlacement.TOP
-        return info
-    }
-
-    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
-        if (elements.isEmpty()) return
-        if (KotlinLineMarkerOptions.options.none { option -> option.isEnabled }) return
-
-        val first = elements.first()
-        if (DumbService.getInstance(first.project).isDumb || !RootKindFilter.projectAndLibrarySources.matches(first)) return
-
+    override fun doCollectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
         val functions = hashSetOf<KtNamedFunction>()
         val properties = hashSetOf<KtNamedDeclaration>()
         val declarations = hashSetOf<KtNamedDeclaration>()
@@ -123,28 +84,28 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
     }
 }
 
-val SUBCLASSED_CLASS = MarkerType(
+val SUBCLASSED_CLASS: MarkerType = MarkerType(
     "SUBCLASSED_CLASS",
     { getPsiClass(it)?.let(::getModuleSpecificSubclassedClassTooltip) },
     object : InheritorsLineMarkerNavigator() {
         override fun getMessageForDumbMode() = JavaBundle.message("notification.navigation.to.overriding.classes")
     })
 
-val OVERRIDDEN_FUNCTION = MarkerType(
+val OVERRIDDEN_FUNCTION: MarkerType = MarkerType(
     "OVERRIDDEN_FUNCTION",
     { getPsiMethod(it)?.let(::getOverriddenMethodTooltip) },
     object : InheritorsLineMarkerNavigator() {
         override fun getMessageForDumbMode() = KotlinBundle.message("highlighter.notification.text.navigation.to.overriding.classes.is.not.possible.during.index.update")
     })
 
-val OVERRIDDEN_PROPERTY = MarkerType(
+val OVERRIDDEN_PROPERTY: MarkerType = MarkerType(
     "OVERRIDDEN_PROPERTY",
     { it?.let { getOverriddenPropertyTooltip(it.parent as KtNamedDeclaration) } },
     object : InheritorsLineMarkerNavigator() {
         override fun getMessageForDumbMode() = KotlinBundle.message("highlighter.notification.text.navigation.to.overriding.classes.is.not.possible.during.index.update")
     })
 
-private val PLATFORM_ACTUAL = object : MarkerType(
+private val PLATFORM_ACTUAL: MarkerType = object : MarkerType(
     "PLATFORM_ACTUAL",
     { element -> element?.markerDeclaration?.let { getPlatformActualTooltip(it) } },
     object : LineMarkerNavigator() {
@@ -166,7 +127,7 @@ private val PLATFORM_ACTUAL = object : MarkerType(
     }
 }
 
-private val EXPECTED_DECLARATION = object : MarkerType(
+private val EXPECTED_DECLARATION: MarkerType = object : MarkerType(
     "EXPECTED_DECLARATION",
     { element -> element?.markerDeclaration?.let { getExpectedDeclarationTooltip(it) } },
     object : LineMarkerNavigator() {

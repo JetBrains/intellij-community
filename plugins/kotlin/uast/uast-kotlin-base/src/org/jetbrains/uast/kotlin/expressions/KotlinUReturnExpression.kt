@@ -11,9 +11,13 @@ class KotlinUReturnExpression(
     override val sourcePsi: KtReturnExpression,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UReturnExpression, KotlinUElementWithType {
-    override val returnExpression by lz {
-        baseResolveProviderService.baseKotlinConverter.convertOrNull(sourcePsi.returnedExpression, this)
-    }
+
+    private val returnExpressionPart = UastLazyPart<UExpression?>()
+
+    override val returnExpression: UExpression?
+        get() = returnExpressionPart.getOrBuild {
+            baseResolveProviderService.baseKotlinConverter.convertOrNull(sourcePsi.returnedExpression, this)
+        }
 
     override val label: String?
         get() = sourcePsi.getTargetLabel()?.getReferencedName()

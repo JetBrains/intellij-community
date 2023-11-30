@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.laf.macos;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
@@ -55,7 +56,10 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
     JButton button = new BasicArrowButton(SwingConstants.SOUTH, bg, fg, fg, fg) {
       @Override
       public void paint(Graphics g) {
-        if (!MacIntelliJLaf.Companion.isMacLaf()) return; // Paint events may still arrive after UI switch until entire UI is updated.
+        // paint events may still arrive after UI switch until the entire UI is updated
+        if (!LafManager.getInstance().getCurrentUIThemeLookAndFeel().getId().equals("macOSLight")) {
+          return;
+        }
 
         Icon icon = MacIconLookup.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
         if (getWidth() != icon.getIconWidth() || getHeight() != icon.getIconHeight()) {

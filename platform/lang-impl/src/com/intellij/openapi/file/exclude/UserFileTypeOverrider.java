@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Substitutes type for files which users explicitly marked with "Override File Type" action
  */
-class UserFileTypeOverrider implements FileTypeOverrider {
+final class UserFileTypeOverrider implements FileTypeOverrider {
   @Nullable
   @Override
   public FileType getOverriddenFileType(@NotNull VirtualFile file) {

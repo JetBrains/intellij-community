@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
@@ -55,9 +56,8 @@ import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.DefaultBundleService
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.createChildContext
-import com.intellij.util.concurrency.runAsCoroutine
+import com.intellij.util.childScope
+import com.intellij.util.concurrency.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.xml.dom.XmlElement
@@ -65,14 +65,17 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentHashSetOf
-import kotlinx.coroutines.CompletableJob
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.AWTEvent
 import java.awt.Component
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
 import java.awt.event.InputEvent
 import java.awt.event.WindowEvent
 import java.util.*
@@ -80,18 +83,26 @@ import java.util.concurrent.CancellationException
 import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Supplier
-import javax.swing.*
-import javax.swing.Timer
-import kotlin.coroutines.CoroutineContext
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.KeyStroke
+import javax.swing.SwingUtilities
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
-open class ActionManagerImpl protected constructor() : ActionManagerEx(), Disposable {
+private val DEFAULT_ACTION_GROUP_CLASS_NAME = DefaultActionGroup::class.java.name
+
+open class ActionManagerImpl protected constructor(private val coroutineScope: CoroutineScope) : ActionManagerEx(), Disposable {
   private val lock = Any()
+
   @Volatile
   private var idToAction = persistentHashMapOf<String, AnAction>()
   private val pluginToId = HashMap<PluginId, MutableList<String>>()
   private val idToIndex = Object2IntOpenHashMap<String>()
+
   @Volatile
   private var prohibitedActionIds = persistentHashSetOf<String>()
+
   @Suppress("SSBasedInspection")
   private val actionToId = Object2ObjectOpenHashMap<Any, String>()
   private val idToGroupId = HashMap<String, MutableList<String>>()
@@ -150,8 +161,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
   override fun dispose() {
-    if (timer != null) {
-      timer!!.stop()
+    timer?.let {
+      it.stop()
       timer = null
     }
   }
@@ -162,30 +173,29 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     }
 
     if (timer == null) {
-      timer = MyTimer()
-      timer!!.start()
+      timer = MyTimer(coroutineScope.childScope())
     }
-    val wrappedListener = if (AppExecutorUtil.propagateContextOrCancellation() && listener !is CapturingListener) CapturingListener(listener) else listener
+    val wrappedListener = if (AppExecutorUtil.propagateContextOrCancellation() && listener !is CapturingListener) CapturingListener(
+      listener)
+    else listener
     timer!!.listeners.add(wrappedListener)
   }
-
 
   @Experimental
   @Internal
   fun reinitializeTimer() {
-    if (timer != null) {
-      val oldListeners = timer!!.listeners
-      timer!!.stop()
-      timer = null
-      for (listener in oldListeners) {
-        addTimerListener(listener)
-      }
+    val timer = timer ?: return
+    val oldListeners = timer.listeners
+    timer.stop()
+    this.timer = null
+    for (listener in oldListeners) {
+      addTimerListener(listener)
     }
   }
 
   override fun removeTimerListener(listener: TimerListener) {
     if (listener is CapturingListener) {
-      listener.myJob?.cancel(null)
+      listener.childContext.continuation?.context?.job?.cancel()
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -193,7 +203,9 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     }
 
     if (LOG.assertTrue(timer != null)) {
-      timer!!.listeners.removeIf { it == listener || (it is CapturingListener && it.myTimerListener == listener)  }
+      timer!!.listeners.removeIf {
+        it == listener || (it is CapturingListener && it.timerListener == listener)
+      }
     }
   }
 
@@ -244,7 +256,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       return
     }
 
-    val startTime = StartUpMeasurer.getCurrentTime()
+    val startTime = System.nanoTime()
     var lastBundleName: String? = null
     var lastBundle: ResourceBundle? = null
     for (descriptor in elements) {
@@ -296,7 +308,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         }
       }
     }
-    StartUpMeasurer.addPluginCost(module.pluginId.idString, "Actions", StartUpMeasurer.getCurrentTime() - startTime)
+    StartUpMeasurer.addPluginCost(module.pluginId.idString, "Actions", System.nanoTime() - startTime)
   }
 
   override fun getAction(id: String): AnAction? = getActionImpl(id = id, canReturnStub = false)
@@ -393,18 +405,14 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     val iconPath = element.attributes.get(ICON_ATTR_NAME)
     val projectType = element.attributes.get(PROJECT_TYPE)
     val textValue = element.attributes.get(TEXT_ATTR_NAME)
+
     @Suppress("HardCodedStringLiteral")
     val descriptionValue = element.attributes.get(DESCRIPTION)
     val stub = ActionStub(className, id, module, iconPath, ProjectType.create(projectType)) {
-      val text = Supplier {
-        computeActionText(bundle = bundle, id = id, elementType = ACTION_ELEMENT_NAME, textValue = textValue, classLoader = classLoader)
-      }
-      if (text.get() == null) {
-        LOG.error(PluginException("'text' attribute is mandatory (actionId=$id, module= $module)", module.pluginId))
-      }
-
       val presentation = Presentation.newTemplatePresentation()
-      presentation.setText(text)
+      presentation.setText(Supplier {
+        computeActionText(bundle = bundle, id = id, elementType = ACTION_ELEMENT_NAME, textValue = textValue, classLoader = classLoader)
+      })
       if (bundle == null) {
         presentation.description = descriptionValue
       }
@@ -454,9 +462,14 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
 
     synchronized(lock) {
       if (element.attributes.get(OVERRIDES_ATTR_NAME).toBoolean()) {
-        if (getActionOrStub(id) == null) {
-          LOG.error("$element '$id' doesn't override anything")
+        val actionOrStub = getActionOrStub(id)
+        if (actionOrStub == null) {
+          LOG.error("'$id' action group in '${plugin.name}' does not override anything")
           return
+        }
+        if (action is ActionGroup && actionOrStub is ActionGroup &&
+            action.isPopup != actionOrStub.isPopup) {
+          LOG.info("'$id' action group in '${plugin.name}' sets isPopup=$action.isPopup")
         }
 
         val prev = replaceAction(actionId = id, newAction = action, pluginId = plugin.pluginId)
@@ -476,7 +489,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     }
   }
 
-  private fun processGroupElement(className: String,
+  private fun processGroupElement(className: String?,
                                   id: String?,
                                   element: XmlElement,
                                   module: IdeaPluginDescriptorImpl,
@@ -488,10 +501,18 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         return null
       }
 
+      // icon
+      val iconPath = element.attributes.get(ICON_ATTR_NAME)
+
       val group: ActionGroup
       var customClass = false
-      if (className == DefaultActionGroup::class.java.name) {
-        group = DefaultActionGroup()
+      if (className == null || className == DEFAULT_ACTION_GROUP_CLASS_NAME) {
+        if (id == null || iconPath == null) {
+          group = DefaultActionGroup()
+        }
+        else {
+          group = ActionGroupStub(id = id, actionClass = DEFAULT_ACTION_GROUP_CLASS_NAME, plugin = module, iconPath = iconPath)
+        }
       }
       else if (className == DefaultCompactActionGroup::class.java.name) {
         group = DefaultCompactActionGroup()
@@ -499,13 +520,13 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       else if (id == null) {
         val obj = ApplicationManager.getApplication().instantiateClass<Any>(className, module)
         if (obj !is ActionGroup) {
-          reportActionError(module, "class with name \"" + className + "\" should be instance of " + ActionGroup::class.java.name)
+          reportActionError(module, "class with name \"$className\" should be instance of ${ActionGroup::class.java.name}")
           return null
         }
 
         if (element.children.size != element.count(ADD_TO_GROUP_ELEMENT_NAME)) {
           if (obj !is DefaultActionGroup) {
-            reportActionError(module, "class with name \"$className\" should be instance of ${DefaultActionGroup::class.java.name}" +
+            reportActionError(module, "class with name \"$className\" should be instance of $DEFAULT_ACTION_GROUP_CLASS_NAME" +
                                       " because there are children specified")
             return null
           }
@@ -514,7 +535,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         group = obj
       }
       else {
-        group = ActionGroupStub(id, className, module)
+        group = ActionGroupStub(id = id, actionClass = className, plugin = module, iconPath = iconPath)
         customClass = true
       }
 
@@ -526,56 +547,6 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
 
       @Suppress("NAME_SHADOWING")
       val id = id ?: "<anonymous-group-${anonymousGroupIdCounter++}>"
-      registerOrReplaceActionInner(element = element, id = id, action = group, plugin = module)
-
-      val presentation = group.templatePresentation
-      val finalId: String = id
-
-      // text
-      val text = Supplier {
-        computeActionText(bundle = bundle,
-                          id = finalId,
-                          elementType = GROUP_ELEMENT_NAME,
-                          textValue = element.attributes.get(TEXT_ATTR_NAME),
-                          classLoader = classLoader)
-      }
-      // don't override value which was set in API with empty value from xml descriptor
-      if (!presentation.hasText() || !text.get().isNullOrEmpty()) {
-        presentation.setText(text)
-      }
-
-      // description
-      val description = element.attributes.get(DESCRIPTION) //NON-NLS
-      if (bundle == null) {
-        // don't override value which was set in API with empty value from xml descriptor
-        if (!description.isNullOrEmpty() || presentation.description == null) {
-          presentation.description = description
-        }
-      }
-      else {
-        val descriptionSupplier = Supplier {
-          computeDescription(bundle = bundle,
-                             id = finalId,
-                             elementType = GROUP_ELEMENT_NAME,
-                             descriptionValue = description,
-                             classLoader = classLoader)
-        }
-        // don't override value which was set in API with empty value from xml descriptor
-        if (!descriptionSupplier.get().isNullOrEmpty() || presentation.description == null) {
-          presentation.setDescription(descriptionSupplier)
-        }
-      }
-
-      // icon
-      val iconPath = element.attributes.get(ICON_ATTR_NAME)
-      if (group is ActionGroupStub) {
-        group.iconPath = iconPath
-      }
-      else if (iconPath != null) {
-        presentation.icon = loadIcon(module = module, iconPath = iconPath, requestor = className)
-      }
-
-      // popup
       val popup = element.attributes.get("popup")
       if (popup != null) {
         group.isPopup = popup.toBoolean()
@@ -583,6 +554,20 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
           group.popupDefinedInXml = true
         }
       }
+
+      registerOrReplaceActionInner(element = element, id = id, action = group, plugin = module)
+
+      configureGroupDescriptionAndIcon(presentation = group.templatePresentation,
+                                       description = element.attributes.get(DESCRIPTION),
+                                       textValue = element.attributes.get(TEXT_ATTR_NAME),
+                                       group = group,
+                                       bundle = bundle,
+                                       id = id,
+                                       classLoader = classLoader,
+                                       iconPath = iconPath,
+                                       module = module,
+                                       className = className)
+
       val searchable = element.attributes.get("searchable")
       if (searchable != null) {
         group.isSearchable = searchable.toBoolean()
@@ -597,7 +582,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         when (child.name) {
           ACTION_ELEMENT_NAME -> {
             val childClassName = child.attributes.get(CLASS_ATTR_NAME)
-            if (childClassName == null || className.isEmpty()) {
+            if (childClassName.isNullOrEmpty()) {
               reportActionError(module = module, message = "action element should have specified \"class\" attribute")
             }
             else {
@@ -627,7 +612,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                 DefaultCompactActionGroup::class.java.name
               }
               else {
-                DefaultActionGroup::class.java.name
+                DEFAULT_ACTION_GROUP_CLASS_NAME
               }
             }
             val childId = child.attributes.get(ID_ATTR_NAME)
@@ -635,7 +620,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
               reportActionError(module, "ID of the group cannot be an empty string")
             }
             else {
-              val action = processGroupElement(className = childClassName!!,
+              val action = processGroupElement(className = childClassName,
                                                id = childId,
                                                element = child,
                                                module = module,
@@ -671,6 +656,9 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         }
       }
       return group
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
       reportActionError(module = module, message = "cannot create class \"$className\"", cause = e)
@@ -758,16 +746,16 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       return null
     }
 
-    var parentGroup = getActionImpl(id = groupId, canReturnStub = true)
+    val parentGroup = getActionImpl(id = groupId, canReturnStub = true)
     if (parentGroup == null) {
       reportActionError(module = module,
-                        message = "$actionName: group with id \"$groupId\" isn't registered; action will be added to the \"Other\" group",
+                        message = "$actionName: group with id \"$groupId\" isn't registered so the action won't be added to it; the action can be invoked via \"Find Action\"",
                         cause = null)
-      parentGroup = getActionImpl(id = IdeActions.GROUP_OTHER_MENU, canReturnStub = true)
+      return null
     }
     if (parentGroup !is DefaultActionGroup) {
       reportActionError(module, "$actionName: group with id \"$groupId\" should be instance of ${DefaultActionGroup::class.java.name}" +
-                                " but was ${parentGroup?.javaClass ?: "[null]"}")
+                                " but was ${parentGroup.javaClass}")
       return null
     }
     return parentGroup
@@ -998,11 +986,6 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
         return
       }
 
-      // diagnostics for IDEA-283781
-      if (actionId == "CommentByLineComment") {
-        LOG.info("Unregistering line comment action", Throwable())
-      }
-
       idToAction = idToAction.remove(actionId)
 
       actionToId.remove(actionToRemove)
@@ -1069,7 +1052,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   @TestOnly
   fun resetProhibitedActions() {
     synchronized(lock) {
-      prohibitedActionIds  = prohibitedActionIds.clear()
+      prohibitedActionIds = prohibitedActionIds.clear()
     }
   }
 
@@ -1154,11 +1137,6 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     actionListeners.add(listener)
   }
 
-  @Suppress("removal", "OVERRIDE_DEPRECATION")
-  override fun removeAnActionListener(listener: AnActionListener) {
-    actionListeners.remove(listener)
-  }
-
   override fun fireBeforeActionPerformed(action: AnAction, event: AnActionEvent) {
     // Android Studio: approximate measure of user activity
     if (action.javaClass != com.intellij.openapi.editor.actions.BackspaceAction::class.java) {
@@ -1239,7 +1217,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
                             contextComponent: Component?,
                             place: String?,
                             now: Boolean): ActionCallback {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val result = ActionCallback()
     val doRunnable = {
       tryToExecuteNow(action = action, inputEvent = inputEvent, contextComponent = contextComponent, place = place, result = result)
@@ -1295,32 +1273,24 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
   }
 
 
-  private class CapturingListener(val myTimerListener: TimerListener) : TimerListener by myTimerListener {
-    private val myContext: CoroutineContext
-
-    val myJob: CompletableJob?
-
-    init {
-      val (context, job) = createChildContext()
-      myContext = context
-      myJob = job
-    }
+  private class CapturingListener(@JvmField val timerListener: TimerListener) : TimerListener by timerListener {
+    val childContext: ChildContext = createChildContext()
 
     override fun run() {
-      installThreadContext(myContext).use {
-        if (myJob != null) {
-          // this is a periodic runnable that is invoked on timer, it should not complete parent job
-          runAsCoroutine(myJob, false, myTimerListener::run)
-        }
-        else {
-          myTimerListener.run()
-        }
+      installThreadContext(childContext.context).use {
+        // this is periodic runnable that is invoked on timer; it should not complete a parent job
+        childContext.runAsCoroutine(completeOnFinish = false, timerListener::run)
       }
     }
   }
 
+  private val _timerEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
-  private inner class MyTimer : Timer(TIMER_DELAY, null), ActionListener {
+  @Internal
+  @Experimental
+  override val timerEvents: Flow<Unit> = _timerEvents.asSharedFlow()
+
+  private inner class MyTimer(private val coroutineScope: CoroutineScope) {
     @JvmField
     val listeners: MutableList<TimerListener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
@@ -1328,24 +1298,40 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
     private val clientId = ClientId.current
 
     init {
-      addActionListener(this)
-      isRepeats = true
       val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
+
+      val delayFlow = MutableSharedFlow<Duration>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
       connection.subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
         override fun applicationActivated(ideFrame: IdeFrame) {
-          delay = TIMER_DELAY
-          restart()
+          delayFlow.tryEmit(TIMER_DELAY.milliseconds)
         }
 
         override fun applicationDeactivated(ideFrame: IdeFrame) {
-          delay = DEACTIVATED_TIMER_DELAY
+          delayFlow.tryEmit(DEACTIVATED_TIMER_DELAY.milliseconds)
         }
       })
+
+      delayFlow.tryEmit(TIMER_DELAY.milliseconds)
+
+      coroutineScope.launch {
+        delayFlow.collectLatest { delay ->
+          while (true) {
+            delay(delay)
+            // RawSwingDispatcher - as old javax.swing.Timer does
+            withContext(RawSwingDispatcher) {
+              tick()
+            }
+          }
+        }
+      }
     }
 
-    override fun toString(): String = "Action manager timer"
+    fun stop() {
+      coroutineScope.cancel()
+    }
 
-    override fun actionPerformed(e: ActionEvent) {
+    private fun tick() {
       if (lastTimeEditorWasTypedIn + UPDATE_DELAY_AFTER_TYPING > System.currentTimeMillis()) {
         return
       }
@@ -1355,6 +1341,8 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
       if (lastTimePerformed == lastEventCount) {
         return
       }
+
+      _timerEvents.tryEmit(Unit)
 
       withClientId(clientId).use {
         for (listener in listeners) {
@@ -1367,7 +1355,7 @@ open class ActionManagerImpl protected constructor() : ActionManagerEx(), Dispos
 
 private fun runListenerAction(listener: TimerListener) {
   val modalityState = listener.modalityState ?: return
-  LOG.debug("notify ", listener)
+  LOG.debug { "notify $listener" }
   if (!ModalityState.current().dominates(modalityState)) {
     runCatching {
       listener.run()
@@ -1408,10 +1396,6 @@ private fun publisher(): AnActionListener {
   return ApplicationManager.getApplication().messageBus.syncPublisher(AnActionListener.TOPIC)
 }
 
-private fun managerPublisher(): ActionManagerListener {
-  return ApplicationManager.getApplication().messageBus.syncPublisher(ActionManagerListener.TOPIC)
-}
-
 private fun <T> instantiate(stubClassName: String,
                             pluginDescriptor: PluginDescriptor,
                             expectedClass: Class<T>,
@@ -1445,8 +1429,11 @@ private fun <T> instantiate(stubClassName: String,
 private fun updateIconFromStub(stub: ActionStubBase, anAction: AnAction, componentManager: ComponentManager) {
   val iconPath = stub.iconPath
   if (iconPath != null) {
-    val icon = loadIcon(module = stub.plugin, iconPath = iconPath, requestor = anAction.javaClass.name)
-    anAction.templatePresentation.icon = icon
+    val module = stub.plugin
+    val requestor = anAction.javaClass.name
+    anAction.templatePresentation.setIconSupplier(SynchronizedClearableLazy {
+      loadIcon(module = module, iconPath = iconPath, requestor = requestor)
+    })
   }
 
   val customActionsSchema = componentManager.serviceIfCreated<CustomActionsSchema>()
@@ -1460,11 +1447,16 @@ private fun updateIconFromStub(stub: ActionStubBase, anAction: AnAction, compone
 
 private fun convertGroupStub(stub: ActionGroupStub, actionManager: ActionManager): ActionGroup? {
   val componentManager = ApplicationManager.getApplication()
-  val group = instantiate(stubClassName = stub.actionClass,
-                          pluginDescriptor = stub.plugin,
-                          expectedClass = ActionGroup::class.java,
-                          componentManager = componentManager)
-              ?: return null
+  val group = if (stub.actionClass === DEFAULT_ACTION_GROUP_CLASS_NAME) {
+    DefaultActionGroup()
+  }
+  else {
+    instantiate(stubClassName = stub.actionClass,
+                pluginDescriptor = stub.plugin,
+                expectedClass = ActionGroup::class.java,
+                componentManager = componentManager)
+    ?: return null
+  }
   stub.initGroup(group, actionManager)
   updateIconFromStub(stub = stub, anAction = group, componentManager = componentManager)
   return group
@@ -1511,15 +1503,16 @@ private fun computeActionText(bundle: ResourceBundle?,
                               textValue: String?,
                               classLoader: ClassLoader): @NlsActions.ActionText String? {
   var effectiveBundle = bundle
-  val defaultValue = textValue ?: ""
   if (effectiveBundle != null && DefaultBundleService.isDefaultBundle()) {
     effectiveBundle = DynamicBundle.getResourceBundle(classLoader, effectiveBundle.baseBundleName)
   }
   if (effectiveBundle == null) {
-    return defaultValue
+    return textValue
   }
   else {
-    return AbstractBundle.messageOrDefault(effectiveBundle, "$elementType.$id.$TEXT_ATTR_NAME", defaultValue)
+    // messageOrDefault doesn't like default value as null
+    // (it counts it as a lack of default value, that's why we use empty string instead of null)
+    return AbstractBundle.messageOrDefault(effectiveBundle, "$elementType.$id.$TEXT_ATTR_NAME", textValue ?: "")?.takeIf { it.isNotEmpty() }
   }
 }
 
@@ -1595,9 +1588,7 @@ private fun createActionToolbarImpl(place: String,
                                     horizontal: Boolean,
                                     decorateButtons: Boolean,
                                     customizable: Boolean): ActionToolbarImpl {
-  val toolbar = ActionToolbarImpl(place, group, horizontal, decorateButtons, customizable)
-  managerPublisher().toolbarCreated(place, group, horizontal, toolbar)
-  return toolbar
+  return ActionToolbarImpl(place, group, horizontal, decorateButtons, customizable)
 }
 
 private fun obtainActionId(element: XmlElement, className: String?): String {
@@ -1751,4 +1742,47 @@ internal fun convertStub(stub: ActionStub): AnAction? {
   stub.initAction(anAction)
   updateIconFromStub(stub = stub, anAction = anAction, componentManager = componentManager)
   return anAction
+}
+
+private fun configureGroupDescriptionAndIcon(presentation: Presentation,
+                                             @NlsSafe description: String?,
+                                             textValue: String?,
+                                             group: ActionGroup,
+                                             bundle: ResourceBundle?,
+                                             id: String,
+                                             classLoader: ClassLoader,
+                                             iconPath: String?,
+                                             module: IdeaPluginDescriptorImpl,
+                                             className: String?) {
+  // don't override value which was set in API with empty value from xml descriptor
+  presentation.setFallbackPresentationText {
+    computeActionText(bundle = bundle, id = id, elementType = GROUP_ELEMENT_NAME, textValue = textValue, classLoader = classLoader)
+  }
+
+  // description
+  if (bundle == null) {
+    // don't override value which was set in API with empty value from xml descriptor
+    if (!description.isNullOrEmpty() || presentation.description == null) {
+      presentation.description = description
+    }
+  }
+  else {
+    val descriptionSupplier = Supplier {
+      computeDescription(bundle = bundle,
+                         id = id,
+                         elementType = GROUP_ELEMENT_NAME,
+                         descriptionValue = description,
+                         classLoader = classLoader)
+    }
+    // don't override value which was set in API with empty value from xml descriptor
+    if (!descriptionSupplier.get().isNullOrEmpty() || presentation.description == null) {
+      presentation.setDescription(descriptionSupplier)
+    }
+  }
+
+  if (iconPath != null && group !is ActionGroupStub) {
+    presentation.setIconSupplier(SynchronizedClearableLazy {
+      loadIcon(module = module, iconPath = iconPath, requestor = className)
+    })
+  }
 }

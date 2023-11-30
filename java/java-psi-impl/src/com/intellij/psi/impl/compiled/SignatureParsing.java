@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.cache.TypeInfo.TypeKind;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
@@ -24,6 +24,60 @@ import java.util.List;
 
 public final class SignatureParsing {
   private SignatureParsing() { }
+
+  /**
+   * A function to map JVM class names to {@link com.intellij.psi.impl.cache.TypeInfo.RefTypeInfo}.
+   * Normally, this function should take into account probable inner classes. This is done by {@link FirstPassData} implementation.
+   * If inner classes information is unavailable, use {@link StubBuildingVisitor#GUESSING_PROVIDER} for heuristic-based mapping
+   */
+  @FunctionalInterface
+  public interface TypeInfoProvider {
+    @NotNull TypeInfo.RefTypeInfo toTypeInfo(@NotNull String jvmClassName);
+
+    /**
+     * @param fn function that returns Java-style FQN by JVM class name
+     * @return a provider that delegates to the supplied function. Note that the returned provider never has the inner classes' information.
+     */
+    static TypeInfoProvider from(Function<? super String, String> fn) {
+      return internalName -> new TypeInfo.RefTypeInfo(fn.apply(internalName));
+    }
+  }
+  
+  public static final class CharIterator {
+    static final int DONE = '\uFFFF';
+    private final String myData;
+    private final int myEnd;
+    private int myPos = 0;
+
+    public CharIterator(String data) {
+      myData = data;
+      myEnd = data.length();
+    }
+
+    char current() {
+      if (myPos == myEnd) return DONE;
+      return myData.charAt(myPos);
+    }
+    
+    void next() {
+      if (myPos < myEnd) {
+        ++myPos;
+      }
+    }
+    
+    int pos() {
+      return myPos;
+    }
+    
+    String substring(int fromIndex) {
+      return myData.substring(fromIndex, myPos);
+    }
+
+    @Override
+    public String toString() {
+      return myData;
+    }
+  }
   
   static class TypeParametersDeclaration {
     static final TypeParametersDeclaration EMPTY = new TypeParametersDeclaration(Collections.emptyList());
@@ -55,9 +109,11 @@ public final class SignatureParsing {
     }
 
     void fillInTypeParameterList(StubElement<?> parent) {
+      List<TypeParameterDeclaration> declarations = this.myDeclarations;
+      if (declarations.isEmpty()) return;
       PsiTypeParameterListStub listStub = parent.findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST);
       if (listStub == null) return;
-      for (TypeParameterDeclaration parameter : this.myDeclarations) {
+      for (TypeParameterDeclaration parameter : declarations) {
         parameter.createTypeParameter(listStub);
       }
     }
@@ -68,15 +124,15 @@ public final class SignatureParsing {
     private final TypeInfo[] myBounds;
 
     private TypeParameterDeclaration(String parameter, TypeInfo[] bounds) {
-      myTypeParameter = new TypeInfo(parameter);
+      myTypeParameter = new TypeInfo.RefTypeInfo(parameter);
       myBounds = bounds;
     }
 
     private void createTypeParameter(PsiTypeParameterListStub listStub) {
-      PsiTypeParameterStub stub = new PsiTypeParameterStubImpl(listStub, this.myTypeParameter.text);
+      PsiTypeParameterStub stub = new PsiTypeParameterStubImpl(listStub, this.myTypeParameter.text());
       myTypeParameter.getTypeAnnotations().createAnnotationStubs(stub);
       TypeInfo[] info = this.myBounds;
-      if (info.length > 0 && info[0].text == null) {
+      if (info.length > 0 && info[0] == null) {
         info = Arrays.copyOfRange(info, 1, info.length);
       }
       new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_BOUND_LIST, stub, info);
@@ -84,7 +140,7 @@ public final class SignatureParsing {
   }
 
   @NotNull
-  static TypeParametersDeclaration parseTypeParametersDeclaration(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+  static TypeParametersDeclaration parseTypeParametersDeclaration(CharIterator signature, TypeInfoProvider mapping) throws ClsFormatException {
     if (signature.current() != '<') {
       return TypeParametersDeclaration.EMPTY;
     }
@@ -98,136 +154,149 @@ public final class SignatureParsing {
     return new TypeParametersDeclaration(typeParameters);
   }
 
-  private static TypeParameterDeclaration parseTypeParameter(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
-    StringBuilder name = new StringBuilder();
-    while (signature.current() != ':' && signature.current() != CharacterIterator.DONE) {
-      name.append(signature.current());
+  private static TypeParameterDeclaration parseTypeParameter(CharIterator signature, TypeInfoProvider mapping) throws ClsFormatException {
+    int from = signature.pos();
+    while (signature.current() != ':' && signature.current() != CharIterator.DONE) {
       signature.next();
     }
-    if (signature.current() == CharacterIterator.DONE) {
+    String name = signature.substring(from);
+    if (signature.current() == CharIterator.DONE) {
       throw new ClsFormatException();
     }
-    String parameterName = mapping.fun(name.toString());
+    String parameterName = mapping.toTypeInfo(name).text();
 
     List<TypeInfo> bounds = new SmartList<>();
     while (signature.current() == ':') {
       signature.next();
-      String bound = parseTopLevelClassRefSignature(signature, mapping);
+      TypeInfo bound = parseTopLevelClassRefSignatureToTypeInfo(signature, mapping);
       if (!bounds.isEmpty() && bound == null) continue;
-      bounds.add(new TypeInfo(bound));
+      bounds.add(bound);
     }
 
     return new TypeParameterDeclaration(parameterName, bounds.toArray(TypeInfo.EMPTY_ARRAY));
   }
 
   @Nullable
-  public static String parseTopLevelClassRefSignature(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+  static TypeInfo parseTopLevelClassRefSignatureToTypeInfo(CharIterator signature, TypeInfoProvider mapping) throws ClsFormatException {
     switch (signature.current()) {
       case 'L':
-        return parseParameterizedClassRefSignature(signature, mapping);
+        return parseParameterizedClassRefSignatureToTypeInfo(signature, mapping);
       case 'T':
-        return parseTypeVariableRefSignature(signature);
+        return new TypeInfo.RefTypeInfo(parseTypeVariableRefSignature(signature));
       default:
         return null;
     }
   }
 
-  private static String parseTypeVariableRefSignature(CharacterIterator signature) throws ClsFormatException {
-    StringBuilder id = new StringBuilder();
-
+  private static String parseTypeVariableRefSignature(CharIterator signature) throws ClsFormatException {
     signature.next();
-    while (signature.current() != ';' && signature.current() != '>' && signature.current() != CharacterIterator.DONE) {
-      id.append(signature.current());
+    int from = signature.pos();
+    while (signature.current() != ';' && signature.current() != '>' && signature.current() != CharIterator.DONE) {
       signature.next();
     }
+    String id = signature.substring(from);
 
-    if (signature.current() == CharacterIterator.DONE) {
+    if (signature.current() == CharIterator.DONE) {
       throw new ClsFormatException();
     }
     if (signature.current() == ';') {
       signature.next();
     }
 
-    return id.toString();
+    return id;
   }
 
-  private static String parseParameterizedClassRefSignature(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
-    StringBuilder canonicalText = new StringBuilder();
-    boolean mapped = false, firstArg;
-
+  private static @NotNull TypeInfo parseParameterizedClassRefSignatureToTypeInfo(CharIterator signature, TypeInfoProvider mapping)
+    throws ClsFormatException {
     signature.next();
-    while (signature.current() != ';' && signature.current() != CharacterIterator.DONE) {
-      char c = signature.current();
-      if (c == '<') {
-        canonicalText = new StringBuilder(mapping.fun(canonicalText.toString()));
-        mapped = true;
-        firstArg = true;
-        signature.next();
-        do {
-          canonicalText.append(firstArg ? '<' : ',').append(parseClassOrTypeVariableElement(signature, mapping));
-          firstArg = false;
+    int start = signature.pos();
+    boolean hasSpace = false;
+    while (true) {
+      switch (signature.current()) {
+        case ';': {
+          String jvmName = signature.substring(start);
+          if (hasSpace) {
+            jvmName = jvmName.replace(" ", "");
+          }
+          TypeInfo type = mapping.toTypeInfo(jvmName);
+          signature.next();
+          return type;
         }
-        while (signature.current() != '>');
-        canonicalText.append('>');
-      }
-      else if (c != ' ') {
-        canonicalText.append(c);
+        case CharIterator.DONE:
+          throw new ClsFormatException("Malformed signature: " + signature);
+        case '<': {
+          String jvmName = signature.substring(start);
+          if (hasSpace) {
+            jvmName = jvmName.replace(" ", "");
+          }
+          TypeInfo.RefTypeInfo type = mapping.toTypeInfo(jvmName);
+          signature.next();
+          List<TypeInfo> components = new ArrayList<>();
+          do {
+            components.add(parseClassOrTypeVariableElementToTypeInfo(signature, mapping));
+          }
+          while (signature.current() != '>');
+          type = type.withComponents(components);
+          signature.next();
+          switch (signature.current()) {
+            case ';':
+              signature.next();
+              return type;
+            case '.':
+              TypeInfo inner = parseParameterizedClassRefSignatureToTypeInfo(signature, mapping);
+              if (!(inner instanceof TypeInfo.RefTypeInfo)) {
+                throw new ClsFormatException("Malformed signature: " + signature);
+              }
+              return ((TypeInfo.RefTypeInfo)inner).withOuter(type);
+            default:
+              throw new ClsFormatException("Malformed signature: " + signature);
+          }
+        }
+        case ' ':
+          hasSpace = true;
+          break;
+        default:
       }
       signature.next();
     }
-
-    if (signature.current() == CharacterIterator.DONE) {
-      throw new ClsFormatException();
-    }
-    signature.next();
-
-    String text = canonicalText.toString();
-    if (!mapped) text = mapping.fun(text);
-    return text;
   }
 
-  private static String parseClassOrTypeVariableElement(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+  private static @NotNull TypeInfo parseClassOrTypeVariableElementToTypeInfo(@NotNull CharIterator signature, TypeInfoProvider mapping)
+    throws ClsFormatException {
     char variance = parseVariance(signature);
     if (variance == '*') {
-      return decorateTypeText(null, variance);
+      return new TypeInfo.SimpleTypeInfo(TypeKind.WILDCARD);
     }
 
     int dimensions = parseDimensions(signature);
 
-    String text = parseTypeWithoutVariance(signature, mapping);
-    if (text == null) throw new ClsFormatException();
-
-    if (dimensions > 0) {
-      text += StringUtil.repeat("[]", dimensions);
+    TypeInfo info = parseTypeWithoutVarianceToTypeInfo(signature, mapping);
+    if (info == null) {
+      throw new ClsFormatException("Unable to parse signature: " + signature);
     }
 
-    return decorateTypeText(text, variance);
+    while (dimensions > 0) {
+      dimensions--;
+      info = info.arrayOf();
+    }
+
+    switch (variance) {
+      case VARIANCE_NONE:
+        return info;
+      case VARIANCE_EXTENDS:
+        return new TypeInfo.DerivedTypeInfo(TypeKind.EXTENDS, info);
+      case VARIANCE_SUPER:
+        return new TypeInfo.DerivedTypeInfo(TypeKind.SUPER, info);
+      default:
+        throw new ClsFormatException("Unable to parse signature: " + signature);
+    }
   }
 
   private static final char VARIANCE_NONE = '\0';
   private static final char VARIANCE_EXTENDS = '+';
   private static final char VARIANCE_SUPER = '-';
-  private static final char VARIANCE_INVARIANT = '*';
-  private static final String VARIANCE_EXTENDS_PREFIX = "? extends ";
-  private static final String VARIANCE_SUPER_PREFIX = "? super ";
 
-  private static String decorateTypeText(String canonical, char variance) {
-    switch (variance) {
-      case VARIANCE_NONE:
-        return canonical;
-      case VARIANCE_EXTENDS:
-        return VARIANCE_EXTENDS_PREFIX + canonical;
-      case VARIANCE_SUPER:
-        return VARIANCE_SUPER_PREFIX + canonical;
-      case VARIANCE_INVARIANT:
-        return "?";
-      default:
-        assert false : "unknown variance";
-        return null;
-    }
-  }
-
-  private static char parseVariance(CharacterIterator signature) {
+  private static char parseVariance(CharIterator signature) {
     char variance;
     switch (signature.current()) {
       case '+':
@@ -246,7 +315,7 @@ public final class SignatureParsing {
     return variance;
   }
 
-  private static int parseDimensions(CharacterIterator signature) {
+  private static int parseDimensions(CharIterator signature) {
     int dimensions = 0;
     while (signature.current() == '[') {
       dimensions++;
@@ -255,79 +324,84 @@ public final class SignatureParsing {
     return dimensions;
   }
 
+  /**
+   * @deprecated use {@link #parseTypeStringToTypeInfo(CharIterator, TypeInfoProvider)}, it's more optimal and produces structured
+   * object instead of simple string
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @NotNull
   public static String parseTypeString(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
+    StringBuilder sb = new StringBuilder();
+    int pos = signature.getIndex();
+    while(true) {
+      char ch = signature.current();
+      if (ch == CharacterIterator.DONE) {
+        break;
+      }
+      sb.append(ch);
+      signature.next();
+    }
+    CharIterator iterator = new CharIterator(sb.toString());
+    String result = parseTypeStringToTypeInfo(iterator, TypeInfoProvider.from(mapping)).text();
+    signature.setIndex(iterator.pos() + pos);
+    return result;
+  }
+
+  /**
+   * @param signature iterator for signature. It will be moved to the end of parsed signature
+   * @param mapping provider to map JVM types to {@link TypeInfo} objects
+   * @return a parsed {@link TypeInfo} object
+   * @throws ClsFormatException if signature cannot be parsed
+   */
+  public static @NotNull TypeInfo parseTypeStringToTypeInfo(@NotNull CharIterator signature, @NotNull TypeInfoProvider mapping) throws ClsFormatException {
     int dimensions = parseDimensions(signature);
 
-    String text = parseTypeWithoutVariance(signature, mapping);
-    if (text == null) throw new ClsFormatException();
+    TypeInfo type = parseTypeWithoutVarianceToTypeInfo(signature, mapping);
+    if (type == null) throw new ClsFormatException();
 
-    if (dimensions > 0) {
-      text += StringUtil.repeat("[]", dimensions);
+    while (dimensions > 0) {
+      dimensions--;
+      type = type.arrayOf();
     }
-
-    return text;
+    return type;
   }
 
   @Nullable
-  private static String parseTypeWithoutVariance(CharacterIterator signature, Function<? super String, String> mapping) throws ClsFormatException {
-    String text = null;
-
+  private static TypeInfo parseTypeWithoutVarianceToTypeInfo(CharIterator signature, TypeInfoProvider mapping) throws ClsFormatException {
     switch (signature.current()) {
       case 'L':
-        text = parseParameterizedClassRefSignature(signature, mapping);
-        break;
-
+        return parseParameterizedClassRefSignatureToTypeInfo(signature, mapping);
       case 'T':
-        text = parseTypeVariableRefSignature(signature);
-        break;
-
+        return new TypeInfo.RefTypeInfo(parseTypeVariableRefSignature(signature));
       case 'B':
-        text = "byte";
         signature.next();
-        break;
-
+        return new TypeInfo.SimpleTypeInfo(TypeKind.BYTE);
       case 'C':
-        text = "char";
         signature.next();
-        break;
-
+        return new TypeInfo.SimpleTypeInfo(TypeKind.CHAR);
       case 'D':
-        text = "double";
         signature.next();
-        break;
-
+        return new TypeInfo.SimpleTypeInfo(TypeKind.DOUBLE);
       case 'F':
-        text = "float";
         signature.next();
-        break;
-
+        return new TypeInfo.SimpleTypeInfo(TypeKind.FLOAT);
       case 'I':
-        text = "int";
         signature.next();
-        break;
-
+        return new TypeInfo.SimpleTypeInfo(TypeKind.INT);
       case 'J':
-        text = "long";
         signature.next();
-        break;
-
+        return new TypeInfo.SimpleTypeInfo(TypeKind.LONG);
       case 'S':
-        text = "short";
         signature.next();
-        break;
-
+        return new TypeInfo.SimpleTypeInfo(TypeKind.SHORT);
       case 'Z':
-        text = "boolean";
         signature.next();
-        break;
-
+        return new TypeInfo.SimpleTypeInfo(TypeKind.BOOLEAN);
       case 'V':
-        text = "void";
         signature.next();
-        break;
+        return new TypeInfo.SimpleTypeInfo(TypeKind.VOID);
     }
-
-    return text;
+    return null;
   }
 }

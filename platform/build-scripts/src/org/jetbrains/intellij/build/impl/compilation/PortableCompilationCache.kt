@@ -3,15 +3,18 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
+import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.time.Duration.Companion.minutes
 
 class PortableCompilationCache(private val context: CompilationContext) {
   companion object {
@@ -38,6 +41,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
     val dir: Path get() = context.compilationData.dataStorageRoot
 
     val isIncrementalCompilationDataAvailable: Boolean by lazy {
+      context.options.incrementalCompilation &&
       context.compilationData.isIncrementalCompilationDataAvailable()
     }
   }
@@ -110,9 +114,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
       CompilationTasks.create(context).resolveProjectDependencies()
       if (isCompilationRequired()) {
         context.options.incrementalCompilation = !forceRebuild
-        context.messages.block("Compiling project") {
-          compileProject(context)
-        }
+        compileProject(context)
       }
       isAlreadyUpdated = true
       context.options.incrementalCompilation = true
@@ -172,11 +174,24 @@ class PortableCompilationCache(private val context: CompilationContext) {
     context.compilationData.statisticsReported = false
     val jps = JpsCompilationRunner(context)
     try {
-      jps.buildAll()
-      when {
-        forceRebuild -> context.messages.buildStatus("Forced rebuild")
-        remoteCache.shouldBeDownloaded && downloader.availableCommitDepth > 0 -> context.messages.buildStatus(remoteCacheUsage())
+      val (status, isIncrementalCompilation) = when {
+        forceRebuild -> "Forced rebuild" to false
+        remoteCache.shouldBeDownloaded && downloader.availableCommitDepth > 0 -> remoteCacheUsage() to true
+        jpsCaches.isIncrementalCompilationDataAvailable -> "Compiled using local cache" to true
+        else -> "Clean build" to false
       }
+      context.messages.block(status) {
+        if (isIncrementalCompilation) runBlocking {
+          // workaround for KT-55695
+          withTimeout(context.options.incrementalCompilationTimeout.minutes) {
+            launch {
+              jps.buildAll(CanceledStatus { !isActive })
+            }
+          }
+        }
+        else jps.buildAll()
+      }
+      context.messages.buildStatus(status)
     }
     catch (e: Exception) {
       if (!context.options.incrementalCompilation) {
@@ -188,25 +203,32 @@ class PortableCompilationCache(private val context: CompilationContext) {
         throw e
       }
       var successMessage = "Clean build retry"
-      if (forceDownload) {
-        context.messages.warning("Incremental compilation using Remote Cache failed. Re-trying without any caches.")
-        clean()
-        context.options.incrementalCompilation = false
-      }
-      else {
-        // Portable Compilation Cache is rebuilt from scratch on CI and re-published every night to avoid possible incremental compilation issues.
-        // If download isn't forced then locally available cache will be used which may suffer from those issues.
-        // Hence, compilation failure. Replacing local cache with remote one may help.
-        context.messages.warning("Incremental compilation using locally available caches failed. Re-trying using Remote Cache.")
-        downloadCache()
-        if (downloader.availableCommitDepth >= 0) {
-          successMessage = remoteCacheUsage()
+      when {
+        e is TimeoutCancellationException -> {
+          context.messages.reportBuildProblem("Incremental compilation timed out. Re-trying with clean build.")
+          successMessage = "$successMessage after timeout"
+          clean()
+          context.options.incrementalCompilation = false
+        }
+        forceDownload -> {
+          context.messages.warning("Incremental compilation using Remote Cache failed. Re-trying with clean build.")
+          clean()
+          context.options.incrementalCompilation = false
+        }
+        else -> {
+          // Portable Compilation Cache is rebuilt from scratch on CI and re-published every night to avoid possible incremental compilation issues.
+          // If download isn't forced then locally available cache will be used which may suffer from those issues.
+          // Hence, compilation failure. Replacing local cache with remote one may help.
+          context.messages.warning("Incremental compilation using locally available caches failed. Re-trying using Remote Cache.")
+          downloadCache()
+          if (downloader.availableCommitDepth >= 0) {
+            successMessage = remoteCacheUsage()
+          }
         }
       }
       context.compilationData.reset()
-      jps.buildAll()
-      context.messages.info(successMessage)
-      println("##teamcity[buildStatus status='SUCCESS' text='$successMessage']")
+      context.messages.block(successMessage, jps::buildAll)
+      context.messages.changeBuildStatusToSuccess(successMessage)
       context.messages.reportStatisticValue("Incremental compilation failures", "1")
     }
   }
@@ -217,6 +239,9 @@ class PortableCompilationCache(private val context: CompilationContext) {
         downloader.download()
       }
       catch (e: Exception) {
+        if (downloader.availableForHeadCommit && jpsCaches.downloadCompilationOutputsOnly) {
+          throw e
+        }
         e.printStackTrace()
         context.messages.warning("Failed to download Compilation Cache. Re-trying without any caches.")
         forceRebuild = true

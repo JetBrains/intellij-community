@@ -35,7 +35,8 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
                  }
                },
                "required": ["a", "b"]
-             }""", "<warning>{<caret>\"c\": 5}</warning>", "Add missing properties 'a', 'b'", """
+             }""", "{<warning descr=\"Missing required properties 'a', 'b'\" textAttributesKey=\"WARNING_ATTRIBUTES\">\"c<caret>\": 5</warning>}",
+           "Add missing properties 'a', 'b'", """
              {"c": 5,
                "a": "q",
                "b":

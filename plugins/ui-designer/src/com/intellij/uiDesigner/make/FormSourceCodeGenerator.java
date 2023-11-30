@@ -514,7 +514,7 @@ public final class FormSourceCodeGenerator {
     return bundle.getString(key);
   }
   */
-  private void generateGetMessageFromBundle(PsiClass aClass, PsiMethod anchor, PsiElementFactory elementFactory, boolean condition) {
+  private static void generateGetMessageFromBundle(PsiClass aClass, PsiMethod anchor, PsiElementFactory elementFactory, boolean condition) {
     String dynamicBundleClassName = DynamicBundle.class.getName();
 
     String methodName = AsmCodeGenerator.GET_MESSAGE_FROM_BUNDLE;

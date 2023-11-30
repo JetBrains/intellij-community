@@ -8,11 +8,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsCommitMetadata;
-import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.history.FileHistoryUi;
@@ -78,10 +75,7 @@ public abstract class FileHistorySingleCommitAction<T extends VcsCommitMetadata>
       if (!details.isEmpty()) {
         performAction(project, ui, Objects.requireNonNull(getFirstItem(details)), e);
       }
-    }, t -> VcsBalloonProblemNotifier.showOverChangesView(project,
-                                                          VcsLogBundle.message(
-                                                            "file.history.action.could.not.load.selected.commits.message", t.getMessage()),
-                                                          MessageType.ERROR), null);
+    }, t -> FileHistoryOneCommitActionKt.showError(project, t), null);
   }
 
   protected abstract @NotNull List<T> getSelection(@NotNull FileHistoryUi ui);

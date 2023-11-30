@@ -14,7 +14,7 @@ open class CodeVisionStringPainter(val text: String, val theme: CodeVisionTheme?
     editor: Editor, textAttributes: TextAttributes, g: Graphics,
     point: Point, state: RangeCodeVisionModel.InlayState, hovered: Boolean
   ) {
-    painter.paint(editor, textAttributes, g, text, point, state, hovered)
+    painter.paint(editor, textAttributes, g, text, point, state, hovered, null)
   }
 
   override fun size(editor: Editor, state: RangeCodeVisionModel.InlayState): Dimension {

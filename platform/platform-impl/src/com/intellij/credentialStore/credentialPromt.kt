@@ -5,6 +5,7 @@ package com.intellij.credentialStore
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.Tooltip
@@ -14,7 +15,6 @@ import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
 import com.intellij.util.text.nullize
 import javax.swing.JCheckBox
 import javax.swing.JPasswordField
@@ -84,7 +84,7 @@ fun askCredentials(project: Project?,
 
     val credentials = Credentials(attributes.userName, passwordField.getTrimmedChars())
     if (isSaveOnOk && rememberCheckBox.isSelected) {
-      store.set(attributes, credentials)
+      ProgressManager.getInstance().runProcessWithProgressSynchronously({ store.set(attributes, credentials) }, dialogTitle, false, project)
       credentials.getPasswordAsString()
     }
 

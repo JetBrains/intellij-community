@@ -1,0 +1,115 @@
+UFile (package = )
+    UClass (name = Build_gradle)
+        UMethod (name = Build_gradle)
+            UParameter (name = args)
+            UBlockExpression
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (plugins))
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                    ULambdaExpression
+                        UBlockExpression
+                            UBinaryExpression (operator = <other>)
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                    UIdentifier (Identifier (id))
+                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                    ULiteralExpression (value = "com.android.application")
+                                ULiteralExpression (value = "2.3.3")
+                            UBinaryExpression (operator = <other>)
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                    UIdentifier (Identifier (id))
+                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                    ULiteralExpression (value = "android")
+                                ULiteralExpression (value = "2.3.3")
+                            UReturnExpression
+                                UBinaryExpression (operator = <other>)
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                        UIdentifier (Identifier (kotlin))
+                                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                        ULiteralExpression (value = "android")
+                                    ULiteralExpression (value = "1.1.51")
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (android))
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                    ULambdaExpression
+                        UBlockExpression
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                UIdentifier (Identifier (compileSdkVersion))
+                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                ULiteralExpression (value = 23)
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                UIdentifier (Identifier (defaultConfig))
+                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                ULambdaExpression
+                                    UBlockExpression
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                            UIdentifier (Identifier (minSdkVersion))
+                                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                            ULiteralExpression (value = 7)
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                            UIdentifier (Identifier (targetSdkVersion))
+                                            USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                            ULiteralExpression (value = 23)
+                                        UBinaryExpression (operator = =)
+                                            USimpleNameReferenceExpression (identifier = applicationId)
+                                            ULiteralExpression (value = "com.example.kotlingradle")
+                                        UBinaryExpression (operator = =)
+                                            USimpleNameReferenceExpression (identifier = versionCode)
+                                            ULiteralExpression (value = 1)
+                                        UReturnExpression
+                                            UBinaryExpression (operator = =)
+                                                USimpleNameReferenceExpression (identifier = versionName)
+                                                ULiteralExpression (value = "1.0")
+                            UReturnExpression
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                    UIdentifier (Identifier (buildTypes))
+                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                    ULambdaExpression
+                                        UBlockExpression
+                                            UReturnExpression
+                                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                                                    UIdentifier (Identifier (getByName))
+                                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                                    ULiteralExpression (value = "release")
+                                                    ULambdaExpression
+                                                        UBlockExpression
+                                                            UBinaryExpression (operator = =)
+                                                                USimpleNameReferenceExpression (identifier = isMinifyEnabled)
+                                                                ULiteralExpression (value = false)
+                                                            UReturnExpression
+                                                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                                                    UIdentifier (Identifier (proguardFiles))
+                                                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                                                    ULiteralExpression (value = "proguard-rules.pro")
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (dependencies))
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                    ULambdaExpression
+                        UBlockExpression
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                UIdentifier (Identifier (compile))
+                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                ULiteralExpression (value = "com.android.support:appcompat-v7:23.4.0")
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                UIdentifier (Identifier (compile))
+                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                ULiteralExpression (value = "com.android.support.constraint:constraint-layout:1.0.0-alpha8")
+                            UReturnExpression
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                    UIdentifier (Identifier (compile))
+                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                                        UIdentifier (Identifier (kotlin))
+                                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                        ULiteralExpression (value = "stdlib")
+                                        ULiteralExpression (value = "1.1.51")
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (repositories))
+                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                    ULambdaExpression
+                        UBlockExpression
+                            UReturnExpression
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                    UIdentifier (Identifier (jcenter))
+                                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+        UMethod (name = main)
+            UParameter (name = args)

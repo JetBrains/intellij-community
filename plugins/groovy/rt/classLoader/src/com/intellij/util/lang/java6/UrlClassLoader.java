@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang.java6;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -23,17 +23,15 @@ import java.util.*;
  * A class loader that allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
  * Should be constructed using {@link #build()} method.
  */
-public class UrlClassLoader extends ClassLoader {
+public final class UrlClassLoader extends ClassLoader {
   static final String CLASS_EXTENSION = ".class";
   private static final ThreadLocal<Boolean> ourSkipFindingResource = new ThreadLocal<>();
   private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
   private static final Set<Class<?>> ourParallelCapableLoaders;
   static {
-    //this class is compiled for Java 6 so it's enough to check that it isn't running under Java 6
-    boolean isAtLeastJava7 = !System.getProperty("java.runtime.version", "unknown").startsWith("1.6.");
     boolean ibmJvm = System.getProperty("java.vm.vendor", "unknown").toLowerCase(Locale.ENGLISH).contains("ibm");
-    boolean capable = isAtLeastJava7 && !ibmJvm;
+    boolean capable = !ibmJvm;
     if (capable) {
       ourParallelCapableLoaders = Collections.synchronizedSet(new HashSet<Class<?>>());
       try {
@@ -74,14 +72,14 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @NotNull
-  protected ClassPath getClassPath() {
+  private ClassPath getClassPath() {
     return myClassPath;
   }
 
   // called via reflection
   @SuppressWarnings({"unused", "MethodMayBeStatic"})
   @NotNull
-  public final long[] getLoadingStats() {
+  public long[] getLoadingStats() {
     return new long[]{ClassPath.getTotalTime(), ClassPath.getTotalRequests()};
   }
 
@@ -92,13 +90,8 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myLockJars;
     private boolean myUseCache;
     private boolean myUsePersistentClasspathIndex;
-    private boolean myAcceptUnescaped;
     private boolean myAllowBootstrapResources;
     private boolean myLazyClassloadingCaches;
-    @Nullable
-    private CachePoolImpl myCachePool;
-    @Nullable
-    private CachingCondition myCachingCondition;
 
     Builder() { }
 
@@ -112,7 +105,7 @@ public class UrlClassLoader extends ClassLoader {
       if (classLoader instanceof URLClassLoader) {
         return urls(((URLClassLoader)classLoader).getURLs());
       }
-      String[] parts = System.getProperty("java.class.path").split(System.getProperty("path.separator"));
+      String[] parts = System.getProperty("java.class.path").split(File.pathSeparator);
       myURLs = new ArrayList<>(parts.length);
       for (String s : parts) {
         try {
@@ -154,27 +147,6 @@ public class UrlClassLoader extends ClassLoader {
       myUsePersistentClasspathIndex = ourClassPathIndexEnabled;
       return this;
     }
-
-    /**
-     * Requests the class loader being built to use cache and, if possible, retrieve and store the cached data from a special cache pool
-     * that can be shared between several loaders.
-
-     * @param pool cache pool
-     * @param condition a custom policy to provide a possibility to prohibit caching for some URLs.
-     * @return this instance
-     *
-     * @see #createCachePool()
-     */
-    @NotNull
-    public Builder useCache(@NotNull CachePool pool, @NotNull CachingCondition condition) {
-      myUseCache = true;
-      myCachePool = (CachePoolImpl)pool;
-      myCachingCondition = condition;
-      return this;
-    }
-
-    @NotNull
-    public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
 
     @NotNull
     public Builder allowBootstrapResources(boolean allowBootstrapResources) { myAllowBootstrapResources = allowBootstrapResources; return this; }
@@ -240,7 +212,7 @@ public class UrlClassLoader extends ClassLoader {
     }
   }
 
-  protected UrlClassLoader(@NotNull Builder builder) {
+  private UrlClassLoader(@NotNull Builder builder) {
     super(builder.myParent);
 
     myURLs = builder.myURLs;
@@ -251,21 +223,20 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @NotNull
-  protected final ClassPath createClassPath(@NotNull Builder builder) {
+  private ClassPath createClassPath(@NotNull Builder builder) {
     Set<URL> urlsWithProtectionDomain = builder.myURLsWithProtectionDomain;
     if (urlsWithProtectionDomain == null) {
       urlsWithProtectionDomain = Collections.emptySet();
     }
 
-    return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped,
-                         builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
-                         true, builder.myLazyClassloadingCaches, urlsWithProtectionDomain
+    return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache,
+                         builder.myUsePersistentClasspathIndex, true, builder.myLazyClassloadingCaches, urlsWithProtectionDomain
     );
   }
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
   @Deprecated
-  public final void addURL(@NotNull URL url) {
+  public void addURL(@NotNull URL url) {
     getClassPath().addURL(url);
     myURLs.add(url);
   }
@@ -279,7 +250,8 @@ public class UrlClassLoader extends ClassLoader {
     return clazz;
   }
 
-  protected @Nullable final Class<?> _findClass(@NotNull String name) {
+  @Nullable
+  private Class<?> _findClass(@NotNull String name) {
     Resource resource = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
     if (resource == null) {
       return null;
@@ -325,11 +297,11 @@ public class UrlClassLoader extends ClassLoader {
     return _defineClass(name, b);
   }
 
-  protected Class<?> _defineClass(final String name, final byte[] b) {
+  private Class<?> _defineClass(final String name, final byte[] b) {
     return defineClass(name, b, 0, b.length);
   }
 
-  protected Class<?> _defineClass(final String name, final byte[] b, @Nullable ProtectionDomain protectionDomain) {
+  private Class<?> _defineClass(final String name, final byte[] b, @Nullable ProtectionDomain protectionDomain) {
     return defineClass(name, b, 0, b.length, protectionDomain);
   }
 
@@ -382,42 +354,9 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   // called by a parent class on Java 7+
+  @Override
   @NotNull
   protected Object getClassLoadingLock(String className) {
     return myClassLoadingLocks == null ? this : myClassLoadingLocks.getOrCreateLock(className);
-  }
-
-  /**
-   * An interface for a pool to store internal caches that can be shared between different class loaders,
-   * if they contain the same URLs in their class paths.<p/>
-   *
-   * The implementation is subject to change so one shouldn't rely on it.
-   *
-   * @see #createCachePool()
-   * @see Builder#useCache(CachePool, CachingCondition)
-   */
-  public interface CachePool { }
-
-  /**
-   * A condition to customize the caching policy when using {@link CachePool}. This might be needed when a class loader is used on a directory
-   * that's being written into, to avoid the situation when a resource path is cached as nonexistent but then a file actually appears there,
-   * and other class loaders with the same caching pool should have access to these new resources. This can happen during compilation process
-   * with several module outputs.
-   */
-  public interface CachingCondition {
-    /**
-     * @return whether the internal information should be cached for files in a specific classpath component URL: inside the directory or
-     * a jar.
-     */
-    boolean shouldCacheData(@NotNull URL url);
-  }
-
-  /**
-   * @return a new pool to be able to share internal caches between different class loaders, if they contain the same URLs
-   * in their class paths.
-   */
-  @NotNull
-  public static CachePool createCachePool() {
-    return new CachePoolImpl();
   }
 }

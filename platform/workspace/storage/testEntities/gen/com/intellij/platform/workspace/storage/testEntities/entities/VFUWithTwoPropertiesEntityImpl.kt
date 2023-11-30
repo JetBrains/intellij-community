@@ -11,11 +11,11 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlin.jvm.JvmName
@@ -23,13 +23,14 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class VFUWithTwoPropertiesEntityImpl(val dataSource: VFUWithTwoPropertiesEntityData) : VFUWithTwoPropertiesEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class VFUWithTwoPropertiesEntityImpl(private val dataSource: VFUWithTwoPropertiesEntityData) : VFUWithTwoPropertiesEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -49,6 +50,7 @@ open class VFUWithTwoPropertiesEntityImpl(val dataSource: VFUWithTwoPropertiesEn
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: VFUWithTwoPropertiesEntityData?) : ModifiableWorkspaceEntityBase<VFUWithTwoPropertiesEntity, VFUWithTwoPropertiesEntityData>(
     result), VFUWithTwoPropertiesEntity.Builder {
@@ -80,7 +82,7 @@ open class VFUWithTwoPropertiesEntityImpl(val dataSource: VFUWithTwoPropertiesEn
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -157,9 +159,9 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
   lateinit var fileProperty: VirtualFileUrl
   lateinit var secondFileProperty: VirtualFileUrl
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
-  fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
-  fun isSecondFilePropertyInitialized(): Boolean = ::secondFileProperty.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
+  internal fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
+  internal fun isSecondFilePropertyInitialized(): Boolean = ::secondFileProperty.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<VFUWithTwoPropertiesEntity> {
     val modifiable = VFUWithTwoPropertiesEntityImpl.Builder(null)
@@ -176,6 +178,11 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.VFUWithTwoPropertiesEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -237,11 +244,5 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
     result = 31 * result + fileProperty.hashCode()
     result = 31 * result + secondFileProperty.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.fileProperty?.let { collector.add(it::class.java) }
-    this.secondFileProperty?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

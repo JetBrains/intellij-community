@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.loader;
 
 import com.google.gson.Gson;
@@ -19,7 +20,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Map;
 
-public class JpsMetadataLoader {
+public final class JpsMetadataLoader {
   private static final Logger LOG = Logger.getInstance(JpsMetadataLoader.class);
   private static final String SOURCES_STATE_FILE_NAME = "target_sources_state.json";
   private final File mySourceStateFile;

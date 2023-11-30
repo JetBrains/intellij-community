@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.LiveTemplateContext;
@@ -158,9 +158,8 @@ public final class TemplateContext {
   }
 
   @VisibleForTesting
-  @Nullable
-  public Element writeTemplateContext(@Nullable TemplateContext defaultContext,
-                                      @NotNull Lazy<? extends Map<String, TemplateContextType>> idToType) {
+  public @Nullable Element writeTemplateContext(@Nullable TemplateContext defaultContext,
+                                                @NotNull Lazy<? extends Map<String, TemplateContextType>> idToType) {
     if (myContextStates.isEmpty()) {
       return null;
     }
@@ -186,8 +185,7 @@ public final class TemplateContext {
     return element;
   }
 
-  @NotNull
-  public static Lazy<Map<String, TemplateContextType>> getIdToType() {
+  public static @NotNull Lazy<Map<String, TemplateContextType>> getIdToType() {
     return LazyKt.lazy(new Function0<>() {
       @Override
       public Map<String, TemplateContextType> invoke() {

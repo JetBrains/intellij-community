@@ -50,6 +50,22 @@ public interface ModelBuilderService extends Serializable {
 
   Object buildAll(String modelName, Project project);
 
-  @NotNull
-  ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e);
+  default void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    @SuppressWarnings("deprecation")
+    ErrorMessageBuilder builder = getErrorMessageBuilder(project, exception);
+    context.getMessageReporter().reportMessage(project, builder.buildMessage());
+  }
+
+  /**
+   * @deprecated use buildErrorMessage instead
+   */
+  @Deprecated
+  default @NotNull ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
+    throw new UnsupportedOperationException("Please, implement reportErrorMessage method");
+  }
 }

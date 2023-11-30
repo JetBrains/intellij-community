@@ -5,9 +5,8 @@ import com.intellij.idea.AppMode;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
-import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +16,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class EAPUsageCollector extends ApplicationUsagesCollector implements AllowedDuringStartupCollector {
+public final class EAPUsageCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("user.advanced.info", 5);
   private static final EventId1<BuildType> BUILD = GROUP.registerEvent("build", EventFields.Enum("value", BuildType.class));
   private static final EnumEventField<LicenceType> LICENSE_VALUE = EventFields.Enum("value", LicenceType.class);
@@ -31,18 +30,16 @@ public class EAPUsageCollector extends ApplicationUsagesCollector implements All
     return GROUP;
   }
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics() {
+  public @NotNull Set<MetricEvent> getMetrics() {
     return collectMetrics();
   }
 
-  @NotNull
-  private static Set<MetricEvent> collectMetrics() {
+  private static @NotNull Set<MetricEvent> collectMetrics() {
     try {
       if (!AppMode.isHeadless()) {
         final Set<MetricEvent> result = new HashSet<>();
-        if (ApplicationInfoEx.getInstanceEx().isEAP()) {
+        if (ApplicationInfo.getInstance().isEAP()) {
           result.add(BUILD.metric(BuildType.eap));
         }
         else {
@@ -67,8 +64,7 @@ public class EAPUsageCollector extends ApplicationUsagesCollector implements All
     return Collections.emptySet();
   }
 
-  @NotNull
-  private static MetricEvent newLicencingMetric(@NotNull LicenceType value, @NotNull LicensingFacade licensingFacade) {
+  private static @NotNull MetricEvent newLicencingMetric(@NotNull LicenceType value, @NotNull LicensingFacade licensingFacade) {
     List<EventPair<?>> data = new ArrayList<>();
     String licensedToMessage = licensingFacade.getLicensedToMessage();
     if (licensedToMessage != null && licensedToMessage.contains("JetBrains Team")) {

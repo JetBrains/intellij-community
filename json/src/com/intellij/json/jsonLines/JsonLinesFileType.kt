@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.jsonLines
 
 import com.intellij.icons.AllIcons
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
+@Suppress("CompanionObjectInExtension", "ExtensionClassShouldBeFinalAndNonPublic")
 class JsonLinesFileType private constructor() : JsonFileType(JsonLinesLanguage) {
   override fun getName(): @NonNls String = "JSON-lines"
 

@@ -14,6 +14,7 @@ import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
+import com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 import com.intellij.webSymbols.refactoring.impl.WebSymbolDelegatedRenameTargetImpl
@@ -81,22 +82,24 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     (delegate as? NavigatableSymbol)?.getNavigationTargets(project) ?: emptyList()
 
-  override fun getSymbols(namespace: SymbolNamespace,
-                          kind: SymbolKind,
-                          name: String?,
-                          params: WebSymbolsNameMatchQueryParams,
-                          scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
-    delegate.getSymbols(namespace, kind, name, params, scope)
+  override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+                                  params: WebSymbolsNameMatchQueryParams,
+                                  scope: Stack<WebSymbolsScope>): List<WebSymbol> =
+    delegate.getMatchingSymbols(qualifiedName, params, scope)
 
-  override fun getCodeCompletions(namespace: SymbolNamespace,
-                                  kind: SymbolKind,
-                                  name: String?,
+
+  override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+                          params: WebSymbolsListSymbolsQueryParams,
+                          scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+    delegate.getSymbols(qualifiedKind, params, scope)
+
+  override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-    delegate.getCodeCompletions(namespace, kind, name, params, scope)
+    delegate.getCodeCompletions(qualifiedName, params, scope)
 
-  override fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
-    delegate.isExclusiveFor(namespace, kind)
+  override fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+    delegate.isExclusiveFor(qualifiedKind)
 
   override val searchTarget: WebSymbolSearchTarget?
     get() = when (delegate) {

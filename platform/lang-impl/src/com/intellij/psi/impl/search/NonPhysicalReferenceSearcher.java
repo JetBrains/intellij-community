@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * This searcher does the job for various console and fragment editors and other non-physical files.
  * We need this because ScopeEnlarger functionality will not work for nonphysical files.
  */
-public class NonPhysicalReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+public final class NonPhysicalReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
 
   public static final Key<Boolean> ENABLE_IN_TESTS = Key.create("enable.NonPhysicalReferenceSearcher.in.tests");
 

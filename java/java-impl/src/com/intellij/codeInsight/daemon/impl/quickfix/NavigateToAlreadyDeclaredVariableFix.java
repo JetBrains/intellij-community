@@ -2,8 +2,9 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
@@ -29,6 +30,6 @@ public class NavigateToAlreadyDeclaredVariableFix extends PsiBasedModCommandActi
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiVariable variable) {
     PsiElement element = variable.getNameIdentifier();
-    return ModCommands.select(element == null ? variable : element);
+    return ModCommand.select(element == null ? variable : element);
   }
 }

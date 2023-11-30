@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.ml;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -24,8 +24,7 @@ import java.util.Map;
 public interface ContextFeatureProvider {
   LanguageExtension<ContextFeatureProvider> EP_NAME = new LanguageExtension<>("com.intellij.completion.ml.contextFeatures");
 
-  @NotNull
-  static List<ContextFeatureProvider> forLanguage(@NotNull Language language) {
+  static @NotNull List<ContextFeatureProvider> forLanguage(@NotNull Language language) {
     return EP_NAME.allForLanguageOrAny(language);
   }
 
@@ -38,9 +37,8 @@ public interface ContextFeatureProvider {
   /**
    * @deprecated Use {@link #calculateFeatures(CompletionEnvironment)} instead
    */
-  @NotNull
   @Deprecated(forRemoval = true)
-  default Map<String, MLFeatureValue> calculateFeatures(@NotNull Lookup lookup) {
+  default @NotNull Map<String, MLFeatureValue> calculateFeatures(@NotNull Lookup lookup) {
     return Collections.emptyMap();
   }
 
@@ -50,8 +48,7 @@ public interface ContextFeatureProvider {
    * @param environment describes code completion session
    * @return container with all features calculated
    */
-  @NotNull
-  default Map<String, MLFeatureValue> calculateFeatures(@NotNull CompletionEnvironment environment) {
+  default @NotNull Map<String, MLFeatureValue> calculateFeatures(@NotNull CompletionEnvironment environment) {
     return calculateFeatures(environment.getLookup());
   }
 }

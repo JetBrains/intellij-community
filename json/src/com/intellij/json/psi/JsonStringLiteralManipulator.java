@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi;
 
 import com.intellij.openapi.util.TextRange;
@@ -5,7 +6,7 @@ import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonStringLiteralManipulator extends AbstractElementManipulator<JsonStringLiteral> {
+public final class JsonStringLiteralManipulator extends AbstractElementManipulator<JsonStringLiteral> {
 
   @Override
   public JsonStringLiteral handleContentChange(@NotNull JsonStringLiteral element, @NotNull TextRange range, String newContent)
@@ -21,9 +22,8 @@ public class JsonStringLiteralManipulator extends AbstractElementManipulator<Jso
     return (JsonStringLiteral)element.replace(generator.createStringLiteral(replacement));
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement(@NotNull JsonStringLiteral element) {
+  public @NotNull TextRange getRangeInElement(@NotNull JsonStringLiteral element) {
     final String content = element.getText();
     final int startOffset = content.startsWith("'") || content.startsWith("\"") ? 1 : 0;
     final int endOffset = content.length() > 1 && (content.endsWith("'") || content.endsWith("\"")) ? -1 : 0;

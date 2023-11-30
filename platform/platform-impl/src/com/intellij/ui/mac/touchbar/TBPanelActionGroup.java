@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.DataManager;
@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -20,8 +19,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 import javax.swing.Timer;
 import java.util.*;
 
-class TBPanelActionGroup extends TBPanel {
-  private static final boolean DISABLE_ASYNC_UPDATE = Boolean.getBoolean("touchbar.actions.disable.async.update");
+final class TBPanelActionGroup extends TBPanel {
   private static final boolean USE_CACHED_PRESENTATIONS = Boolean.getBoolean("touchbar.actions.use.cached.presentations");
   private static final int DELAY_FOR_CACHED_PRESENTATIONS_MS = Integer.getInteger("touchbar.actions.delay.for.cached.presentations", 750);
   private static final long DELAY_FOR_CACHED_PRESENTATIONS_NS = DELAY_FOR_CACHED_PRESENTATIONS_MS*1000000L;
@@ -282,13 +280,13 @@ class TBPanelActionGroup extends TBPanel {
       if (!butt.myIsVisible)
         continue;
 
-      final long startNs = butt.myActionStats != null ? System.nanoTime() : 0;
+      final long startNs = butt.actionStats != null ? System.nanoTime() : 0;
       butt.setDisabled(!presentation.isEnabled());
 
       boolean isSelected = false;
       if (butt.getAnAction() instanceof Toggleable) {
         isSelected = Toggleable.isSelected(presentation);
-        butt.myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS; // permanent update of toggleable-buttons (do we really need this ??)
+        butt.updateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS; // permanent update of toggleable-buttons (do we really need this ??)
       }
       butt.setSelected(isSelected);
 
@@ -296,13 +294,13 @@ class TBPanelActionGroup extends TBPanel {
       if (myCustomizer == null || !myCustomizer.applyCustomizations(butt, presentation)) {
         // Customizations weren't found, so use default view style: only icon (if presented, otherwise text)
         butt.setIconFromPresentation(presentation);
-        final boolean hideText = butt.myOriginIcon != null;
+        final boolean hideText = butt.originIcon != null;
         final String text = hideText ? null : presentation.getText();
         butt.setText(text);
       }
 
-      if (butt.myActionStats != null)
-        butt.myActionStats.updateViewNs += System.nanoTime() - startNs;
+      if (butt.actionStats != null)
+        butt.actionStats.updateViewNs += System.nanoTime() - startNs;
 
       // 6. All visual data (img/text/flags) is set now, schedule async update for native peers (and collect buttons with updates)
       butt.updateLater(false);
@@ -428,22 +426,10 @@ class TBPanelActionGroup extends TBPanel {
 
     // NOTE: some of buttons (from dialogs for example) has custom component (used in _performAction, as event source (i.e. DataContext))
     // but here we expand actions with current-focus-component (theoretically it can cause that some actions will be updated incorrectly)
-    DataContext dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(Helpers.getCurrentFocusComponent()));
-    if (!DISABLE_ASYNC_UPDATE && Utils.isAsyncDataContext(dataContext)) {
-      if (myLastUpdate != null) myLastUpdate.cancel();
-      myLastUpdate = Utils.expandActionGroupAsync(
-          myActionGroup, myFactory, dataContext, ActionPlaces.TOUCHBAR_GENERAL);
-      myLastUpdate.onSuccess(actions -> _applyPresentationChanges(actions)).onProcessed(__ -> myLastUpdate = null);
-    }
-    else {
-      List<AnAction> actions = Utils.expandActionGroupWithTimeout(
-        myActionGroup,
-        myFactory, dataContext,
-        ActionPlaces.TOUCHBAR_GENERAL,
-        Registry.intValue("actionSystem.update.touchbar.timeout.ms"));
-      _applyPresentationChanges(actions);
-    }
-
+    DataContext dataContext = Utils.createAsyncDataContext(DataManager.getInstance().getDataContext(Helpers.getCurrentFocusComponent()));
+    if (myLastUpdate != null) myLastUpdate.cancel();
+    myLastUpdate = Utils.expandActionGroupAsync(myActionGroup, myFactory, dataContext, ActionPlaces.TOUCHBAR_GENERAL);
+    myLastUpdate.onSuccess(actions -> _applyPresentationChanges(actions)).onProcessed(__ -> myLastUpdate = null);
     if (myStats != null) {
       myStats.incrementCounter(StatsCounters.totalUpdateDurationNs, System.nanoTime() - timeNs);
     }
@@ -487,7 +473,7 @@ class TBPanelActionGroup extends TBPanel {
 
   // check that all autoClose actions are presented in actionGroup
   private static void validateAutoCloseActions(@NotNull ActionGroup actionGroup, @NotNull Collection<AnAction> autoCloseActions) {
-    List<AnAction> actionsFromGroup = new ArrayList<>();
+    Collection<AnAction> actionsFromGroup = new HashSet<>();
     Helpers.collectLeafActions(actionGroup, actionsFromGroup);
     if (!actionsFromGroup.containsAll(autoCloseActions)) {
       autoCloseActions.removeIf(a -> !actionsFromGroup.contains(a));

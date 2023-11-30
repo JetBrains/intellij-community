@@ -1,3 +1,5 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 /*
  * @author max
  */
@@ -11,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.json.JsonTokenSets.JSON_KEYWORDS;
 
-public class JsonNamesValidator implements NamesValidator {
+public final class JsonNamesValidator implements NamesValidator {
 
   private final JsonLexer myLexer = new JsonLexer();
 

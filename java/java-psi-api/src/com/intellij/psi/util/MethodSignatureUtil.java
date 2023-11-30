@@ -218,6 +218,7 @@ public final class MethodSignatureUtil {
   @Nullable
   public static PsiMethod findMethodBySignature(@NotNull PsiClass aClass, @NotNull MethodSignature methodSignature, boolean checkBases) {
     String name = methodSignature.isConstructor() ? aClass.getName() : methodSignature.getName();
+    if (name == null) return null;
     List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(name, checkBases);
     for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
       PsiMethod method = pair.first;
@@ -231,6 +232,7 @@ public final class MethodSignatureUtil {
   @Nullable
   public static PsiMethod findMethodBySuperSignature(@NotNull PsiClass aClass, @NotNull MethodSignature methodSignature, final boolean checkBases) {
     String name = methodSignature.isConstructor() ? aClass.getName() : methodSignature.getName();
+    if (name == null) return null;
     List<Pair<PsiMethod, PsiSubstitutor>> pairs = aClass.findMethodsAndTheirSubstitutorsByName(name, checkBases);
     for (Pair<PsiMethod, PsiSubstitutor> pair : pairs) {
       PsiMethod method = pair.first;

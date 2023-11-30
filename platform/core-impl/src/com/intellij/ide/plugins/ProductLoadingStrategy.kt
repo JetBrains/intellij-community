@@ -18,10 +18,8 @@ import java.nio.file.Paths
 abstract class ProductLoadingStrategy {
   companion object {
     @Volatile
-    @JvmStatic
     private var ourStrategy: ProductLoadingStrategy? = null
     
-    @JvmStatic
     var strategy: ProductLoadingStrategy
       get() {
         if (ourStrategy == null) {
@@ -34,14 +32,29 @@ abstract class ProductLoadingStrategy {
       }
   }
 
+  /**
+   * Adds roots of all modules from the main module group and their dependencies to the classpath of [bootstrapClassLoader].
+   */
+  abstract fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader)
+
   abstract fun loadBundledPluginDescriptors(scope: CoroutineScope,
                                             bundledPluginDir: Path?,
                                             isUnitTestMode: Boolean,
                                             context: DescriptorListLoadingContext,
                                             zipFilePool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>>
+
+  abstract fun isOptionalProductModule(moduleName: String): Boolean
+
+  /**
+   * Returns `true` if the loader should search for META-INF/plugin.xml files in the core application classpath and load them.  
+   */
+  abstract val shouldLoadDescriptorsFromCoreClassPath: Boolean
 }
 
 private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
+  override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
+  }
+
   override fun loadBundledPluginDescriptors(scope: CoroutineScope,
                                             bundledPluginDir: Path?,
                                             isUnitTestMode: Boolean,
@@ -61,4 +74,11 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
       scope.loadDescriptorsFromDir(dir = effectiveBundledPluginDir, context = context, isBundled = true, pool = zipFilePool)
     }
   }
+
+  override fun isOptionalProductModule(moduleName: String): Boolean {
+    return false
+  }
+
+  override val shouldLoadDescriptorsFromCoreClassPath: Boolean
+    get() = true
 }  

@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
 
 internal object FirClassifierProvider {
-    fun KtAnalysisSession.getAvailableClassifiersCurrentScope(
+    context(KtAnalysisSession)
+    fun getAvailableClassifiersCurrentScope(
         originalKtFile: KtFile,
         position: KtElement,
         scopeNameFilter: KtScopeNameFilter,
@@ -26,7 +27,8 @@ internal object FirClassifierProvider {
             classifiers
         }
 
-    fun KtAnalysisSession.getAvailableClassifiersFromIndex(
+    context(KtAnalysisSession)
+    fun getAvailableClassifiersFromIndex(
         symbolProvider: KtSymbolFromIndexProvider,
         scopeNameFilter: KtScopeNameFilter,
         visibilityChecker: CompletionVisibilityChecker

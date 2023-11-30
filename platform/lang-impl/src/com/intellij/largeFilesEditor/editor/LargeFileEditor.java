@@ -6,6 +6,7 @@ import com.intellij.largeFilesEditor.search.LfeSearchManager;
 import com.intellij.largeFilesEditor.search.SearchResult;
 import com.intellij.largeFilesEditor.search.searchTask.FileDataProviderForSearch;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -40,4 +41,6 @@ public interface LargeFileEditor extends FileEditor {
   EditorModel getEditorModel();
 
   int getPageSize();
+
+  void trySetHighlighter(@NotNull EditorHighlighter editorHighlighter);
 }

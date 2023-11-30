@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
 import kotlinx.collections.immutable.persistentMapOf
@@ -27,6 +27,7 @@ class PyCharmCommunityProperties(communityHome: Path) : PyCharmPropertiesBase() 
 
     productLayout.mainModules = listOf("intellij.pycharm.community.main")
     productLayout.productApiModules = listOf("intellij.xml.dom")
+    productLayout.compatiblePluginsToIgnore = productLayout.compatiblePluginsToIgnore.add("intellij.evaluationPlugin")
     productLayout.productImplementationModules = listOf(
       "intellij.xml.dom.impl",
       "intellij.platform.main",
@@ -45,6 +46,7 @@ class PyCharmCommunityProperties(communityHome: Path) : PyCharmPropertiesBase() 
       )
       ))
     productLayout.pluginModulesToPublish = persistentSetOf("intellij.python.community.plugin")
+    baseDownloadUrl = "https://download.jetbrains.com/python/"
   }
 
   override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
@@ -85,8 +87,8 @@ class PyCharmCommunityProperties(communityHome: Path) : PyCharmPropertiesBase() 
 
 private class PyCharmCommunityWindowsDistributionCustomizer(projectHome: Path) : PyCharmWindowsDistributionCustomizer() {
   init {
-    icoPath = "$projectHome/python/resources/PyCharmCore.ico"
-    icoPathForEAP = "$projectHome/python/resources/PyCharmCore_EAP.ico"
+    icoPath = "$projectHome/python/build/resources/PyCharmCore.ico"
+    icoPathForEAP = "$projectHome/python/build/resources/PyCharmCore_EAP.ico"
     installerImagesPath = "$projectHome/python/build/resources"
     fileAssociations = listOf("py")
   }
@@ -96,8 +98,8 @@ private class PyCharmCommunityWindowsDistributionCustomizer(projectHome: Path) :
 
 private open class PyCharmCommunityLinuxDistributionCustomizer(projectHome: Path) : LinuxDistributionCustomizer() {
   init {
-    iconPngPath = "$projectHome/python/resources/PyCharmCore128.png"
-    iconPngPathForEAP = "$projectHome/python/resources/PyCharmCore128_EAP.png"
+    iconPngPath = "$projectHome/python/build/resources/PyCharmCore128.png"
+    iconPngPathForEAP = "$projectHome/python/build/resources/PyCharmCore128_EAP.png"
   }
 
   override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
@@ -107,10 +109,10 @@ private open class PyCharmCommunityLinuxDistributionCustomizer(projectHome: Path
 
 private class PyCharmCommunityMacDistributionCustomizer(projectHome: Path) : PyCharmMacDistributionCustomizer() {
   init {
-    icnsPath = "$projectHome/python/resources/PyCharmCore.icns"
-    icnsPathForEAP = "$projectHome/python/resources/PyCharmCore_EAP.icns"
+    icnsPath = "$projectHome/python/build/resources/PyCharmCore.icns"
+    icnsPathForEAP = "$projectHome/python/build/resources/PyCharmCore_EAP.icns"
     bundleIdentifier = "com.jetbrains.pycharm.ce"
-    dmgImagePath = "$projectHome/python/build/dmg_background.tiff"
+    dmgImagePath = "$projectHome/python/build/resources/dmg_background.tiff"
   }
 
   override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.usages.UsageNodePresentation;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -141,7 +142,7 @@ abstract class Node extends DefaultMutableTreeNode {
 
   // same as DefaultMutableTreeNode.insert() except it doesn't try to remove the newChild from its parent since we know it's new
   void insertNewNode(@NotNull Node newChild, int childIndex) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (children == null) {
       //obsolete type is required by platform superclass
       //noinspection UseOfObsoleteCollectionType

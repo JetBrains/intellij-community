@@ -1,17 +1,16 @@
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.impl.writer.isRefType
-import com.intellij.workspaceModel.codegen.impl.writer.hasSetter
-import com.intellij.workspaceModel.codegen.impl.writer.isOverride
-import com.intellij.workspaceModel.codegen.impl.writer.javaName
+import com.intellij.workspaceModel.codegen.impl.writer.*
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 
-val ObjProperty<*, *>.implWsDataFieldCode: String
-  get() = buildString {
+fun ObjProperty<*, *>.implWsDataFieldCode(type: ObjClass<*>): String {
+  return buildString {
     if (hasSetter) {
       if (isOverride && name !in listOf("name", "entitySource")) append(implWsBlockingCodeOverride)
-      else append(implWsDataBlockingCode)
+      else append("${type.generatedCodeVisibilityModifier} $implWsDataBlockingCode")
     }
     else {
       val expression = when (val kind = valueKind) {
@@ -20,12 +19,14 @@ val ObjProperty<*, *>.implWsDataFieldCode: String
         else -> error(kind)
       }
       if (expression.startsWith("=")) {
-        append("var $javaName: ${valueType.javaType} $expression")
-      } else {
-        append("var $javaName: ${valueType.javaType} = $expression")
+        append("${type.generatedCodeVisibilityModifier} var $javaName: ${valueType.javaType} $expression")
+      }
+      else {
+        append("${type.generatedCodeVisibilityModifier} var $javaName: ${valueType.javaType} = $expression")
       }
     }
   }
+}
 private val ObjProperty<*, *>.implWsDataBlockingCode: String
   get() = implWsDataBlockCode(valueType, name)
 
@@ -73,7 +74,7 @@ val ObjProperty<*, *>.implWsDataFieldInitializedCode: String
     is ValueType.Int, is ValueType.Boolean -> ""
     is ValueType.String, is ValueType.JvmClass, is ValueType.Collection<*, *>, is ValueType.Map<*, *> -> {
       val capitalizedFieldName = javaName.replaceFirstChar { it.titlecaseChar() }
-      "fun is${capitalizedFieldName}Initialized(): Boolean = ::${javaName}.isInitialized"
+      "internal fun is${capitalizedFieldName}Initialized(): Boolean = ::${javaName}.isInitialized"
     }
     else -> error("Unsupported field type: $this")
   }

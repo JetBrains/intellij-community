@@ -130,10 +130,10 @@ public class CyclicDependenciesBuilder{
     myCyclicDependencies = getCycles(myPackages.values());
   }
 
-  private void constractFilesInDependenciesPackagesMap(final PsiPackage pack,
-                                                       final PsiPackage depPackage,
-                                                       final PsiFile file,
-                                                       final Map<PsiPackage, Map<PsiPackage, Set<PsiFile>>> filesInDependentPackages) {
+  private static void constractFilesInDependenciesPackagesMap(final PsiPackage pack,
+                                                              final PsiPackage depPackage,
+                                                              final PsiFile file,
+                                                              final Map<PsiPackage, Map<PsiPackage, Set<PsiFile>>> filesInDependentPackages) {
     Map<PsiPackage, Set<PsiFile>> dependentPackages2Files = filesInDependentPackages.get(pack);
     if (dependentPackages2Files == null) {
       dependentPackages2Files = new HashMap<>();

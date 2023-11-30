@@ -1,15 +1,16 @@
 internal class C {
-    var a = 0
+    var a: Int = 0
 
     init {
         a = 2
     }
 
+
     init {
         a = 4
     }
 
-    var c = 4
+    var c: Int = 4
 
     init {
         a++
@@ -22,7 +23,7 @@ internal class C {
     }
 
     companion object {
-        var b = 0
+        var b: Int = 0
 
         init {
             b++

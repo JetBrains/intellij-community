@@ -2,10 +2,10 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.javac.Iterators.BooleanFunction;
+import org.jetbrains.jps.javac.Iterators.Function;
 
 import javax.tools.*;
 import java.io.File;

@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.java.test
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.TestCaseWithConstructorInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.TestCaseWithConstructorInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspectionTestBase() {
   fun `test no highlighting parameterized test case`() {

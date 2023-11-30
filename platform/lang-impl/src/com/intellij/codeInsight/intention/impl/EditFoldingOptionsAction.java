@@ -14,7 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("IntentionDescriptionNotFoundInspection")
-public class EditFoldingOptionsAction implements IntentionAction, LowPriorityAction {
+public final class EditFoldingOptionsAction implements IntentionAction, LowPriorityAction {
   @Override
   public @NotNull String getText() {
     return ApplicationBundle.message("edit.code.folding.options");

@@ -16,7 +16,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.util.HashSet;
 import java.util.Set;
 
-public class GlassPanel extends JComponent {
+public final class GlassPanel extends JComponent {
   private final Set<JComponent> myLightComponents = new HashSet<>();
   private final JComponent myPanel;
   private static final Insets EMPTY_INSETS = new Insets(0, 0, 0, 0);
@@ -34,7 +34,7 @@ public class GlassPanel extends JComponent {
     paintSpotlights(g);
   }
 
-  protected void paintSpotlights(Graphics g) {
+  private void paintSpotlights(Graphics g) {
     paintSpotlight(g, this);
   }
 
@@ -84,8 +84,7 @@ public class GlassPanel extends JComponent {
     }
   }
 
-  @Nullable
-  private Area getComponentArea(final JComponent surfaceComponent, final JComponent lightComponent, int offset) {
+  private static @Nullable Area getComponentArea(final JComponent surfaceComponent, final JComponent lightComponent, int offset) {
     if (!lightComponent.isShowing()) return null;
 
     final Point panelPoint = SwingUtilities.convertPoint(lightComponent, new Point(0, 0), surfaceComponent);
@@ -115,11 +114,11 @@ public class GlassPanel extends JComponent {
                                                 Math.min(height, 30), Math.min(height, 30)));
   }
 
-  protected int getComponentHInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
+  private static int getComponentHInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
     return isWithBorder ? 7 : isLabelFromTabbedPane ? 20 : 7;
   }
 
-  protected int getComponentVInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
+  private static int getComponentVInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
     return isWithBorder ? 1 : isLabelFromTabbedPane ? 10 : 5;
   }
 

@@ -32,14 +32,14 @@ public final class ActionUrl implements JDOMExternalizable {
 
   public int myInitialPosition = -1;
 
-  @NonNls private static final String IS_GROUP = "is_group";
-  @NonNls private static final String SEPARATOR = "seperator";
-  @NonNls private static final String IS_ACTION = "is_action";
-  @NonNls private static final String VALUE = "value";
-  @NonNls private static final String PATH = "path";
-  @NonNls private static final String ACTION_TYPE = "action_type";
-  @NonNls private static final String POSITION = "position";
-  @NonNls private static final String FORCE_POPUP = "forse_popup";
+  private static final @NonNls String IS_GROUP = "is_group";
+  private static final @NonNls String SEPARATOR = "seperator";
+  private static final @NonNls String IS_ACTION = "is_action";
+  private static final @NonNls String VALUE = "value";
+  private static final @NonNls String PATH = "path";
+  private static final @NonNls String ACTION_TYPE = "action_type";
+  private static final @NonNls String POSITION = "position";
+  private static final @NonNls String FORCE_POPUP = "forse_popup";
 
 
   public ActionUrl() {
@@ -72,8 +72,7 @@ public final class ActionUrl implements JDOMExternalizable {
     return myComponent;
   }
 
-  @Nullable
-  public AnAction getComponentAction() {
+  public @Nullable AnAction getComponentAction() {
     if (myComponent instanceof Separator) {
       return Separator.getInstance();
     }
@@ -121,7 +120,7 @@ public final class ActionUrl implements JDOMExternalizable {
     for (Element o : element.getChildren(PATH)) {
       myGroupPath.add(o.getAttributeValue(VALUE));
     }
-    @NlsSafe final String attributeValue = element.getAttributeValue(VALUE);
+    final @NlsSafe String attributeValue = element.getAttributeValue(VALUE);
     if (element.getAttributeValue(IS_ACTION) != null) {
       myComponent = attributeValue;
     }
@@ -132,7 +131,7 @@ public final class ActionUrl implements JDOMExternalizable {
       final AnAction action = ActionManager.getInstance().getAction(attributeValue);
       Group group = action instanceof ActionGroup
                     ? ActionsTreeUtil.createGroup((ActionGroup)action, true, null)
-                    : new Group(attributeValue, attributeValue, null);
+                    : new Group(attributeValue, attributeValue);
       group.setForceShowAsPopup(Boolean.parseBoolean(element.getAttributeValue(FORCE_POPUP)));
       myComponent = group;
     }
@@ -276,8 +275,7 @@ public final class ActionUrl implements JDOMExternalizable {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "ActionUrl{" +
            "myGroupPath=" + myGroupPath +
            ", myComponent=" + myComponent +

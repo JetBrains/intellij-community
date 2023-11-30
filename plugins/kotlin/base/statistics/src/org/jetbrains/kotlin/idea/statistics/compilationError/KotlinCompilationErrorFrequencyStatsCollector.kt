@@ -8,28 +8,27 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinCompilationErrorFrequencyStatsCollector : CounterUsagesCollector() {
-    override fun getGroup(): EventLogGroup = Companion.group
+object KotlinCompilationErrorFrequencyStatsCollector : CounterUsagesCollector() {
+    override fun getGroup(): EventLogGroup = group
 
-    companion object {
-        private const val CODE_IS_TOTALLY_BROKEN_NUMBER_OF_COMPILATION_ERRORS_IN_FILE_LOWER_BOUND = 21
+    private const val CODE_IS_TOTALLY_BROKEN_NUMBER_OF_COMPILATION_ERRORS_IN_FILE_LOWER_BOUND = 21
 
-        private val group = EventLogGroup("kotlin.compilation.error", 2)
+    private val group = EventLogGroup("kotlin.compilation.error", 2)
 
-        private val compilationErrorIdField = EventFields.StringValidatedByCustomRule("error_id", KotlinCompilationErrorIdValidationRule::class.java)
+    private val compilationErrorIdField =
+        EventFields.StringValidatedByCustomRule("error_id", KotlinCompilationErrorIdValidationRule::class.java)
 
-        private val event = group.registerEvent("error.happened", compilationErrorIdField)
+    private val event = group.registerEvent("error.happened", compilationErrorIdField)
 
-        fun recordCompilationErrorsHappened(diagnosticsFactoryNames: Sequence<String>, psiFile: KtFile) {
-            if (!isEnabled) return
-            if (!psiFile.isWritable) return // We are interested only in compilation errors users make themselves
-            val collected =
-                diagnosticsFactoryNames.take(CODE_IS_TOTALLY_BROKEN_NUMBER_OF_COMPILATION_ERRORS_IN_FILE_LOWER_BOUND).toList()
-            if (collected.size >= CODE_IS_TOTALLY_BROKEN_NUMBER_OF_COMPILATION_ERRORS_IN_FILE_LOWER_BOUND) return
-            KotlinCompilationErrorProcessedFilesTimeStampRecorder.getInstance(psiFile.project)
-                .keepOnlyIfHourPassedAndRecordTimestamps(psiFile.virtualFile, collected)
-                .forEach(event::log)
-        }
+    fun recordCompilationErrorsHappened(diagnosticsFactoryNames: Sequence<String>, psiFile: KtFile) {
+        if (!isEnabled) return
+        if (!psiFile.isWritable) return // We are interested only in compilation errors users make themselves
+        val collected =
+            diagnosticsFactoryNames.take(CODE_IS_TOTALLY_BROKEN_NUMBER_OF_COMPILATION_ERRORS_IN_FILE_LOWER_BOUND).toList()
+        if (collected.size >= CODE_IS_TOTALLY_BROKEN_NUMBER_OF_COMPILATION_ERRORS_IN_FILE_LOWER_BOUND) return
+        KotlinCompilationErrorProcessedFilesTimeStampRecorder.getInstance(psiFile.project)
+            .keepOnlyIfHourPassedAndRecordTimestamps(psiFile.virtualFile, collected)
+            .forEach(event::log)
     }
 }
 

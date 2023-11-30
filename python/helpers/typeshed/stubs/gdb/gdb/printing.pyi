@@ -1,19 +1,17 @@
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 
 import gdb
 from gdb import _PrettyPrinterLookupFunction
 
 class PrettyPrinter:
-
     name: str
-    subprinters: list[SubPrettyPrinter]
+    subprinters: list[SubPrettyPrinter] | None
     enabled: bool
 
     def __init__(self, name: str, subprinters: Iterable[SubPrettyPrinter] | None = ...) -> None: ...
     def __call__(self, val: gdb.Value) -> gdb._PrettyPrinter | None: ...
 
 class SubPrettyPrinter:
-
     name: str
     enabled: bool
 
@@ -26,4 +24,8 @@ class RegexpCollectionPrettyPrinter(PrettyPrinter):
 class FlagEnumerationPrinter(PrettyPrinter):
     def __init__(self, enum_type: str) -> None: ...
 
-def register_pretty_printer(obj: gdb.Objfile | gdb.Progspace | None, printer: PrettyPrinter, replace: bool = ...) -> None: ...
+def register_pretty_printer(
+    obj: gdb.Objfile | gdb.Progspace | None,
+    printer: PrettyPrinter | Callable[[gdb.Value], gdb._PrettyPrinter | None],
+    replace: bool = ...,
+) -> None: ...

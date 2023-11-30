@@ -1,10 +1,10 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
@@ -12,6 +12,7 @@ import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -23,7 +24,7 @@ import java.util.List;
  * @author Tomasz Kalkosiński
  * @author Michail Plushnikov
  */
-public class BuilderProcessor extends AbstractClassProcessor {
+public final class BuilderProcessor extends AbstractClassProcessor {
 
   static final String SINGULAR_CLASS = LombokClassNames.SINGULAR;
   static final String BUILDER_DEFAULT_CLASS = LombokClassNames.BUILDER_DEFAULT;
@@ -37,7 +38,16 @@ public class BuilderProcessor extends AbstractClassProcessor {
   }
 
   private static AllArgsConstructorProcessor getAllArgsConstructorProcessor() {
-    return ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class);
+    return LombokProcessorManager.getInstance().getAllArgsConstructorProcessor();
+  }
+
+  @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return nameHint.equals(BuilderHandler.TO_BUILDER_METHOD_NAME) ||
+           nameHint.equals(psiClass.getName()) ||
+           nameHint.equals(getBuilderHandler().getBuilderMethodName(psiAnnotation));
   }
 
   @Override
@@ -72,7 +82,8 @@ public class BuilderProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     if (!psiClass.isRecord()) {
       if (PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR,
         LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR, LombokClassNames.NO_ARGS_CONSTRUCTOR)) {

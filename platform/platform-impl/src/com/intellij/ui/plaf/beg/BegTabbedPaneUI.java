@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -12,7 +12,7 @@ import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import javax.swing.text.View;
 import java.awt.*;
 
-public class BegTabbedPaneUI extends MetalTabbedPaneUI {
+public final class BegTabbedPaneUI extends MetalTabbedPaneUI {
   private static final Color LIGHT = new Color(247, 243, 239);
   private static final Color DARK = new Color(189, 187, 182);
 

@@ -1,7 +1,6 @@
 // FILE: main.before.kt
 // "Import function 'Foo.foobar'" "true"
 // ERROR: Unresolved reference: foobar
-/* IGNORE_FIR */
 //KT-9009
 
 package foo
@@ -22,7 +21,6 @@ object Foo {
 // FILE: main.after.kt
 // "Import function 'Foo.foobar'" "true"
 // ERROR: Unresolved reference: foobar
-/* IGNORE_FIR */
 //KT-9009
 
 package foo

@@ -2,13 +2,12 @@
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.ide.plugins.PluginUtilImpl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.mock.*;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.EditorFactory;
@@ -24,7 +23,6 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -39,9 +37,6 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
-import com.intellij.psi.impl.source.tree.injected.EditorWindowTracker;
-import com.intellij.psi.impl.source.tree.injected.EditorWindowTrackerImpl;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
@@ -145,6 +140,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     // That's for reparse routines
     project.registerService(PomModel.class, new PomModelImpl(project));
     Registry.markAsLoaded();
+    LoadingState.setCurrentState(LoadingState.PROJECT_OPENED);
   }
 
   protected final void registerParserDefinition(@NotNull ParserDefinition definition) {
@@ -221,7 +217,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
   @NotNull
   // easy debug of not disposed extension
-  private PluginDescriptor getPluginDescriptor() {
+  protected PluginDescriptor getPluginDescriptor() {
     PluginDescriptor pluginDescriptor = this.pluginDescriptor;
     if (pluginDescriptor == null) {
       pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId(getClass().getName() + "." + getName()), ParsingTestCase.class.getClassLoader());
@@ -348,7 +344,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
         }
       }
 
-      private int checkChildRangeConsistency(PsiFile file, int parentOffset, int childOffset, ASTNode child) {
+      private static int checkChildRangeConsistency(PsiFile file, int parentOffset, int childOffset, ASTNode child) {
         assertEquals(child.getStartOffsetInParent(), childOffset);
         assertEquals(child.getStartOffset(), childOffset + parentOffset);
         int childLength = child.getTextLength();
@@ -416,7 +412,11 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   protected void checkResult(@NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) throws IOException {
-    doCheckResult(myFullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges(), allTreesInSingleFile());
+    checkResult(myFullDataPath, targetDataName, file);
+  }
+
+  protected void checkResult(String fullDataPath, @NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) throws IOException {
+    doCheckResult(fullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges(), allTreesInSingleFile());
     if (SystemProperties.getBooleanProperty("dumpAstTypeNames", false)) {
       printAstTypeNamesTree(targetDataName, file);
     }
@@ -542,14 +542,5 @@ public abstract class ParsingTestCase extends UsefulTestCase {
                                      });
 
     assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false));
-  }
-
-  public void registerMockInjectedLanguageManager() {
-    registerExtensionPoint(project.getExtensionArea(), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
-
-    registerExtensionPoint(app.getExtensionArea(), LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
-    project.registerService(DumbService.class, new MockDumbService(project));
-    getApplication().registerService(EditorWindowTracker.class, new EditorWindowTrackerImpl());
-    project.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(project));
   }
 }

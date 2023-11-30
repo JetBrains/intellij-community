@@ -3,14 +3,15 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.openapi.actionSystem.DataKey
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 
 interface GitLabMergeRequestViewModel {
   val number: String
   val author: GitLabUserDTO
-  val title: Flow<@Nls String>
-  val descriptionHtml: Flow<@Nls String>
+  val title: SharedFlow<@Nls String>
+  val descriptionHtml: SharedFlow<@Nls String>
   val url: String
 
   fun refreshData()

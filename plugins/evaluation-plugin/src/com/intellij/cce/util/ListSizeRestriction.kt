@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.util
 
 import com.intellij.openapi.application.ApplicationManager
@@ -39,7 +40,8 @@ class ListSizeRestriction private constructor(private val list: List<*>) {
       currentSize = list.size
       if (currentSize > previousSize) {
         attemptsToWait += 1
-      } else {
+      }
+      else {
         attemptsToWait = 0
       }
     }

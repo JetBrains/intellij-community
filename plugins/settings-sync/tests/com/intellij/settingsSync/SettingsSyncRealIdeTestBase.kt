@@ -15,7 +15,7 @@ import java.lang.reflect.Constructor
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 
-internal open class SettingsSyncRealIdeTestBase: SettingsSyncTestBase() {
+internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
   protected lateinit var componentStore: TestComponentStore
 
   @Before
@@ -31,7 +31,7 @@ internal open class SettingsSyncRealIdeTestBase: SettingsSyncTestBase() {
 
   protected fun initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit) {
     val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, configDir, enabledCondition = { true })
-    val controls = SettingsSyncMain.init(application, disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
+    val controls = SettingsSyncMain.init(disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
     bridge.initialize(initMode)

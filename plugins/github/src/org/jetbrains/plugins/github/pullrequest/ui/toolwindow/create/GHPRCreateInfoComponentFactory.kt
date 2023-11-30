@@ -22,7 +22,6 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import git4idea.GitLocalBranch
 import git4idea.GitPushUtil
@@ -48,7 +47,8 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHIOExecutorLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowRepositoryContentController
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTab
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.awt.Component
@@ -62,7 +62,7 @@ import javax.swing.text.Document
 internal class GHPRCreateInfoComponentFactory(private val project: Project,
                                               private val settings: GithubPullRequestsProjectUISettings,
                                               private val dataContext: GHPRDataContext,
-                                              private val viewController: GHPRToolWindowRepositoryContentController) {
+                                              private val projectVm: GHPRToolWindowProjectViewModel) {
 
   fun create(directionModel: MergeDirectionModel<GHGitRepositoryMapping>,
              titleDocument: Document,
@@ -88,8 +88,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         if (discard == Messages.NO) return
 
         progressIndicator.cancel()
-        viewController.viewList()
-        viewController.resetNewPullRequestView()
+        projectVm.closeTab(GHPRToolWindowTab.NewPullRequest)
         createLoadingModel.future = null
         existenceCheckLoadingModel.reset()
       }
@@ -214,7 +213,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         val headBranch = findCurrentRemoteHead(directionModel)
         if (baseBranch == null || headRepo == null || headBranch == null) existenceCheckLoadingModel.reset()
         else existenceCheckLoadingModel.load(ProgressWrapper.wrap(existenceCheckProgressIndicator)) {
-          dataContext.creationService.findPullRequest(it, baseBranch, headRepo, headBranch)
+          dataContext.creationService.findPullRequest(it, baseBranch, headRepo, headBranch)?.prId
         }
       }
       update()
@@ -281,9 +280,9 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
           .thenCompose { adjustLabels(it, labels) }
           .successOnEdt {
             if (!progressIndicator.isCanceled) {
-              viewController.viewPullRequest(it)
+              projectVm.viewPullRequest(it.prId)
               settings.recentNewPullRequestHead = headRepo.repository
-              viewController.resetNewPullRequestView()
+              projectVm.closeTab(GHPRToolWindowTab.NewPullRequest)
             }
             it
           }
@@ -294,7 +293,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     private fun adjustReviewers(pullRequest: GHPullRequestShort, reviewers: List<GHPullRequestRequestedReviewer>)
       : CompletableFuture<GHPullRequestShort> {
       return if (reviewers.isNotEmpty()) {
-        dataContext.detailsService.adjustReviewers(ProgressWrapper.wrap(progressIndicator), pullRequest,
+        dataContext.detailsService.adjustReviewers(ProgressWrapper.wrap(progressIndicator), pullRequest.prId,
                                                    CollectionDelta(emptyList(), reviewers))
           .thenApply { pullRequest }
       }
@@ -304,7 +303,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     private fun adjustAssignees(pullRequest: GHPullRequestShort, assignees: List<GHUser>)
       : CompletableFuture<GHPullRequestShort> {
       return if (assignees.isNotEmpty()) {
-        dataContext.detailsService.adjustAssignees(ProgressWrapper.wrap(progressIndicator), pullRequest,
+        dataContext.detailsService.adjustAssignees(ProgressWrapper.wrap(progressIndicator), pullRequest.prId,
                                                    CollectionDelta(emptyList(), assignees))
           .thenApply { pullRequest }
       }
@@ -314,7 +313,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
     private fun adjustLabels(pullRequest: GHPullRequestShort, labels: List<GHLabel>)
       : CompletableFuture<GHPullRequestShort> {
       return if (labels.isNotEmpty()) {
-        dataContext.detailsService.adjustLabels(ProgressWrapper.wrap(progressIndicator), pullRequest,
+        dataContext.detailsService.adjustLabels(ProgressWrapper.wrap(progressIndicator), pullRequest.prId,
                                                 CollectionDelta(emptyList(), labels))
           .thenApply { pullRequest }
       }
@@ -332,7 +331,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       addHyperlinkListener(object : HyperlinkAdapter() {
         override fun hyperlinkActivated(e: HyperlinkEvent) {
           if (e.description == "VIEW") {
-            loadingModel.result?.let(viewController::viewPullRequest)
+            loadingModel.result?.let(projectVm::viewPullRequest)
           }
           else {
             BrowserUtil.browse(e.description)

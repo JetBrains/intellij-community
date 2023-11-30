@@ -52,8 +52,8 @@ internal class LoggingUtil {
 
     private val LEGACY_METHODS_WITH_LEVEL = setOf("log", "l7dlog", "logp", "logrb")
 
-    private val LEVEL_MAP: Map<String, LevelType> = LevelType.values().associateBy { it.name }
-    private val LEGACY_LEVEL_MAP: Map<String, LegacyLevelType> = LegacyLevelType.values().associateBy { it.name }
+    private val LEVEL_MAP: Map<String, LevelType> = LevelType.entries.associateBy { it.name }
+    private val LEGACY_LEVEL_MAP: Map<String, LegacyLevelType> = LegacyLevelType.entries.associateBy { it.name }
 
     private val LEVEL_CLASSES = setOf("org.apache.logging.log4j.Level", "org.slf4j.event.Level")
     private val LEGACY_LEVEL_CLASSES = setOf("org.apache.logging.log4j.Level", "org.apache.log4j.Priority", "java.util.logging.Level")
@@ -153,7 +153,7 @@ internal class LoggingUtil {
       return getGuardedCondition(condition, loggerSource)
     }
 
-    internal fun getReferencesForVariable(variable: UElement, context: UElement): List<UQualifiedReferenceExpression> {
+    private fun getReferencesForVariable(variable: UElement, context: UElement): List<UQualifiedReferenceExpression> {
       val sourcePsi = variable.sourcePsi ?: return emptyList()
       val result = mutableListOf<UQualifiedReferenceExpression>()
       val visitor = object : AbstractUastVisitor() {

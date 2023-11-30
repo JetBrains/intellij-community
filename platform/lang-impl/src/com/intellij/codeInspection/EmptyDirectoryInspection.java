@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class EmptyDirectoryInspection extends GlobalInspectionTool {
+public final class EmptyDirectoryInspection extends GlobalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean onlyReportDirectoriesUnderSourceRoots = false;
@@ -89,7 +89,7 @@ public class EmptyDirectoryInspection extends GlobalInspectionTool {
     return null;
   }
 
-  private static class EmptyPackageFix implements QuickFix<CommonProblemDescriptor> {
+  private static final class EmptyPackageFix implements QuickFix<CommonProblemDescriptor> {
 
     private final String url;
     private final String name;

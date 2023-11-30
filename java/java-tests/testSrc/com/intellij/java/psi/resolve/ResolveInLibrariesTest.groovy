@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.resolve
 
 import com.intellij.openapi.application.WriteAction
@@ -24,11 +24,13 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import groovy.transform.CompileStatic
 
+import java.util.stream.Stream
+
 class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
   void "test inheritance transitivity"() {
     def protobufJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("protobuf")
     VirtualFile jarCopy = WriteAction.compute {
-      JarFileSystem.instance.getLocalVirtualFileFor(protobufJar).copy(this, myFixture.getTempDirFixture().findOrCreateDir("lib"), "protoJar.jar")
+      JarFileSystem.instance.getLocalByEntry(protobufJar).copy(this, myFixture.getTempDirFixture().findOrCreateDir("lib"), "protoJar.jar")
     }
 
     PsiTestUtil.addProjectLibrary(module, 'proto1', [protobufJar], [])
@@ -144,9 +146,10 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     def pkg = facade.findPackage("")
     assert pkg.classes.size() == 1
 
-    Collection<VirtualFile> pkgDirs = pkg.directories.collect { it.virtualFile }
-    Collection<VirtualFile> pkgChildren = pkgDirs.collect { it.children as List }.flatten()
-    VirtualFile javaSrc = pkgChildren.find { it.name == 'LibraryClass.java' }
+    def javaSrc = Stream.of(pkg.directories)
+      .flatMap {Stream.of(it.virtualFile.children) }
+      .filter {it.name == 'LibraryClass.java' }
+      .findFirst().orElseThrow()
     checkFileIsNotLoadedAndHasNoIndexedStub(javaSrc)
 
     assert pkg.containsClassNamed('LibraryClass')
@@ -305,7 +308,7 @@ public abstract class Child<T> extends Parent<T> {
     IdeaTestUtil.compileFile(VfsUtil.virtualToIoFile(libSrc), VfsUtil.virtualToIoFile(classesDir))
     VfsUtil.markDirtyAndRefresh(false, true, true, classesDir)
 
-    WriteAction.run { libSrc.delete() }
+    WriteAction.run { libSrc.delete(null) }
 
     assert myFixture.findClass("p.Parent")
     assert myFixture.findClass("p.Child")

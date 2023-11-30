@@ -166,11 +166,12 @@ interface PyPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondit
 
     override fun value(element: PyExpression): Boolean {
       var expression: PyExpression? = element
-      if (!element.containingFile.isPhysical) { // Template engine creates a copy of the psi file and uses an element from the copy.
-        // We need to use original expression because type compatibility check relies
+      if (!element.containingFile.isPhysical) {
+        // Template engine creates a copy of the psi file and uses an element from the copy.
+        // We need to use the original expression because type compatibility check relies
         // on `PsiElement.isEquivalentTo` which fails if a type of the expression is defined
-        // in the same file as an expression (we get unequal (!=) objects after resolve: desired
-        // type is in the real file and the expressionType is not).
+        // in the same file as an expression (we get unequal (!=) objects after resolve: the desired
+        // type is in the real file, and the expressionType is not).
         val at = CompletionUtil.getOriginalElement(element)
         expression = PsiTreeUtil.getParentOfType(at, PyExpression::class.java, false)
       }

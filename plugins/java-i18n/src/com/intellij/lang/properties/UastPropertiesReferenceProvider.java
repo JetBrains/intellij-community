@@ -7,10 +7,7 @@ import com.intellij.codeInspection.restriction.StringFlowUtil;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.UastInjectionHostReferenceProvider;
+import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.*;
@@ -28,6 +25,12 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
     return PropertyReferenceBase.isPropertyPsi(target);
   }
 
+  @Override
+  public boolean acceptsHint(@NotNull PsiReferenceService.Hints hints) {
+    if (hints == PsiReferenceService.Hints.HIGHLIGHTED_REFERENCES) return false;
+
+    return super.acceptsHint(hints);
+  }
 
   @Override
   public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression element,

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls
  * The preferable way to work with this class is to store its instances in a static field after calling [create].
  *
  * To get a value for a key, use [EnvironmentService].
- * **Note**: every key must be registered in some [EnvironmentKeyProvider.getKnownKeys].
+ * **Note**: every key must be registered in some [EnvironmentKeyProvider.knownKeys].
  */
 sealed interface EnvironmentKey {
 
@@ -42,5 +42,5 @@ sealed interface EnvironmentKey {
 
 val EnvironmentKey.description: @Nls String
   get() = EnvironmentKeyProvider.EP_NAME.extensionList.firstNotNullOfOrNull { provider ->
-    provider.getKnownKeys()[this]
+    provider.knownKeys[this]?.get()
   } ?: error("Key ${this.id} must be registered in some ${EnvironmentKeyProvider}")

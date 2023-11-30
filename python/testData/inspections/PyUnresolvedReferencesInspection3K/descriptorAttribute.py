@@ -25,7 +25,7 @@ class C:
 # Instance level
 c = C()
 c.foo.upper()
-c.foo.<warning descr="Unresolved attribute reference 'non_existent' for class 'LiteralString'">non_existent</warning>()
+c.foo.<warning descr="Unresolved attribute reference 'non_existent' for class 'str'">non_existent</warning>()
 c.bar.upper()
 c.bar.non_existent()
 c.baz.append()
@@ -34,6 +34,6 @@ c.baz.<warning descr="Unresolved attribute reference 'non_existent' for class 'l
 
 # Class level
 C.foo.upper()
-C.foo.<warning descr="Unresolved attribute reference 'non_existent' for class 'LiteralString'">non_existent</warning>()
+C.foo.<warning descr="Unresolved attribute reference 'non_existent' for class 'str'">non_existent</warning>()
 C.bar.upper()
 C.bar.non_existent()

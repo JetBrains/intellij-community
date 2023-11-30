@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.facet
 
 import com.intellij.facet.FacetConfiguration
-import org.jetbrains.kotlin.config.KotlinFacetSettings
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 
 interface KotlinFacetConfiguration : FacetConfiguration {
-    val settings: KotlinFacetSettings
+    val settings: IKotlinFacetSettings
 }

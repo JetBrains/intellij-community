@@ -311,7 +311,7 @@ final class WatchRootsManager {
     });
   }
 
-  private static class WatchRequestImpl implements WatchRequest {
+  private static final class WatchRequestImpl implements WatchRequest {
     private final String myFSRootPath;
     private final boolean myWatchRecursively;
 
@@ -336,7 +336,7 @@ final class WatchRootsManager {
     }
   }
 
-  private static class WatchSymlinkRequest implements WatchRequest {
+  private static final class WatchSymlinkRequest implements WatchRequest {
     private final SymlinkData mySymlinkData;
     private final boolean myWatchRecursively;
     private boolean myRegistered = false;
@@ -374,7 +374,7 @@ final class WatchRootsManager {
     }
   }
 
-  private static class SymlinkData {
+  private static final class SymlinkData {
     final int id;
     final @NotNull @SystemIndependent String path;
     final @Nullable @SystemIndependent String target;

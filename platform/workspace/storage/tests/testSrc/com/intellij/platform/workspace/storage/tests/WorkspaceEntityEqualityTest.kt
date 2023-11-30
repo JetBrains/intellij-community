@@ -1,24 +1,24 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests
 
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.toBuilder
-import org.junit.Assert.*
-import org.junit.Before
-import org.junit.Ignore
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
+import kotlin.test.*
 
 class WorkspaceEntityEqualityTest {
 
   private lateinit var builderOne: MutableEntityStorage
   private lateinit var builderTwo: MutableEntityStorage
 
-  @Before
+  @BeforeEach
   fun setUp() {
     builderOne = MutableEntityStorage.create()
     builderTwo = MutableEntityStorage.create()
@@ -113,13 +113,13 @@ class WorkspaceEntityEqualityTest {
     assertFalse(entityThree in checkSet)
   }
 
-  @Ignore
+  @Disabled
   @Test
   fun `equality for entity from event and from updated snapshot after dummy modification`() {
     builderOne addEntity SampleEntity(false, "Data", ArrayList(), HashMap(), VirtualFileUrlManagerImpl().fromUrl("file:///tmp"),
                                       SampleEntitySource("test"))
     builderTwo.addDiff(builderOne)
-    val entityInEvent = builderTwo.collectChanges(EntityStorageSnapshot.empty())[SampleEntity::class.java]!!.single().newEntity!!
+    val entityInEvent = builderTwo.collectChanges()[SampleEntity::class.java]!!.single().newEntity!!
     val snapshot = builderTwo.toSnapshot()
     val entityInSnapshot = snapshot.singleSampleEntity()
     assertEquals(entityInEvent, entityInSnapshot)
@@ -130,7 +130,7 @@ class WorkspaceEntityEqualityTest {
       stringProperty = "Data"
     }
     //no events will be fired because nothing was changed
-    assertEquals(emptySet<Map.Entry<*, *>>(), newBuilder.collectChanges(snapshot).entries)
+    assertEquals(emptySet<Map.Entry<*, *>>(), newBuilder.collectChanges().entries)
 
     val newSnapshot = newBuilder.toSnapshot()
     assertEquals(entityInEvent, newSnapshot.singleSampleEntity())

@@ -27,7 +27,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
@@ -150,7 +152,7 @@ public class ExecutionPointHighlighter {
   }
 
   private void doShow(boolean navigate) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     removeHighlighter();
@@ -164,7 +166,7 @@ public class ExecutionPointHighlighter {
         }
       }
       else {
-        myEditor = XDebuggerUtilImpl.createEditor(myOpenFileDescriptor);
+        myEditor = XDebuggerUtil.getInstance().openTextEditor(myOpenFileDescriptor);
       }
     }
     if (myEditor != null) {
@@ -219,7 +221,7 @@ public class ExecutionPointHighlighter {
   }
 
   public boolean isFullLineHighlighter() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myRangeHighlighter != null && myRangeHighlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
@@ -241,9 +241,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     return new ArrayList<>(ids);
   }
 
-  @NotNull
   @Override
-  public Iterable<DirtyScopeTrackingHighlightingPassFactory> getDirtyScopeTrackingFactories() {
+  public @NotNull Iterable<DirtyScopeTrackingHighlightingPassFactory> getDirtyScopeTrackingFactories() {
     return myDirtyScopeTrackingFactories;
   }
 }

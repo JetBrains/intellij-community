@@ -61,7 +61,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
     List<? super PsiElement> result = new ArrayList<>();
     // apply only to inner BuilderClass
     if (builderClassName.equals(psiClass.getName())
-      && possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)) {
+      && noHintOrPossibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)) {
       result.addAll(generatePsiElements(psiParentClass, psiParentMethod, psiAnnotation, psiClass));
     }
     return result;
@@ -86,7 +86,8 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     //do nothing
   }
 }

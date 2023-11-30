@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup;
 
@@ -47,8 +47,7 @@ public abstract class LookupArranger implements WeighingContext {
   }
 
   @Override
-  @NotNull
-  public String itemPattern(@NotNull LookupElement element) {
+  public @NotNull String itemPattern(@NotNull LookupElement element) {
     // This method is not synchronized in BaseCompletionLookupArranger.
     // The only shared state accessed here is myAdditionalPrefix,
     // which is declared as volatile and accessed atomically.
@@ -58,8 +57,7 @@ public abstract class LookupArranger implements WeighingContext {
   }
 
   @Override
-  @NotNull
-  public PrefixMatcher itemMatcher(@NotNull LookupElement item) {
+  public @NotNull PrefixMatcher itemMatcher(@NotNull LookupElement item) {
     PrefixMatcher matcher = item.getUserData(myMatcherKey);
     if (matcher == null) {
       throw new AssertionError("Item not in lookup: item=" + item + "; lookup items=" + myItems);
@@ -152,8 +150,7 @@ public abstract class LookupArranger implements WeighingContext {
    * @return for each item, an (ordered) map of criteria used for lookup relevance sorting
    * along with the objects representing the weights in these criteria
    */
-  @NotNull
-  public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> items,
+  public @NotNull Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> items,
                                                                                boolean hideSingleValued) {
     return Collections.emptyMap();
   }

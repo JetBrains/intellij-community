@@ -1,16 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.aether;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.jetbrains.idea.maven.aether.RetryProvider.disabled;
 import static org.jetbrains.idea.maven.aether.RetryProvider.withExponentialBackOff;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RetryProviderTest {
-  private final Logger logger = LoggerFactory.getLogger(RetryProviderTest.class);
+  private final Logger logger = Logger.getInstance(RetryProviderTest.class);
   private final Retry retryDisabled = disabled();
   private final Retry retryWithExpBackOff = withExponentialBackOff(1000, 5000, 5);
 
@@ -88,9 +88,14 @@ class RetryProviderTest {
 
   @Test
   public void expBackOff_testRethrowsException() {
-    String expected = "Value42";
-    assertThrows(Exception.class, () -> retryWithExpBackOff.retry(() -> {
-      throw new Exception(expected);
-    }, logger), expected);
+    Throwable error = LoggedErrorProcessor.executeAndReturnLoggedError(
+      () -> {
+        String expected = "Value42";
+        assertThrows(Exception.class, () -> retryWithExpBackOff.retry(() -> {
+          throw new Exception(expected);
+        }, logger), expected);
+      });
+
+    assertNotNull(error);
   }
 }

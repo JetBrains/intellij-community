@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.icons.AllIcons;
@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ExperimentalFeature;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.ComboBox;
@@ -220,15 +221,16 @@ public class RegistryUi implements Disposable {
     }
   }
 
-
   private static final class MyTableModel extends AbstractTableModel {
-
     private final List<RegistryValue> myAll;
 
     private MyTableModel() {
       myAll = Registry.getAll();
-      myAll.addAll(ContainerUtil.map(Experiments.EP_NAME.getExtensionList(), ExperimentalFeatureRegistryValueWrapper::new));
-      final List<String> recent = getRecent();
+      for (ExperimentalFeature feature : Experiments.EP_NAME.getExtensionList()) {
+        myAll.add(new ExperimentalFeatureRegistryValueWrapper(feature));
+      }
+
+      List<String> recent = getRecent();
 
       myAll.sort((o1, o2) -> {
         final String key1 = o1.getKey();
@@ -428,7 +430,7 @@ public class RegistryUi implements Disposable {
     return options;
   }
 
-  private static class MyRenderer implements TableCellRenderer {
+  private static final class MyRenderer implements TableCellRenderer {
     private final JLabel myLabel = new JLabel();
     private final SimpleColoredComponent myComponent = new SimpleColoredComponent();
 
@@ -533,7 +535,7 @@ public class RegistryUi implements Disposable {
     return icon;
   }
 
-  private class MyEditor extends AbstractCellEditor implements TableCellEditor {
+  private final class MyEditor extends AbstractCellEditor implements TableCellEditor {
 
     private final JTextField myField = new JTextField();
     private final JCheckBox myCheckBox = new JCheckBox();
@@ -600,7 +602,7 @@ public class RegistryUi implements Disposable {
     }
   }
 
-  private class RestoreDefaultsAction extends AbstractAction {
+  private final class RestoreDefaultsAction extends AbstractAction {
     RestoreDefaultsAction() {
       super(IdeBundle.message("registry.restore.defaults.action.text"));
     }

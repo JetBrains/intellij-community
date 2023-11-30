@@ -1,14 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Contract;
@@ -24,7 +22,7 @@ import static com.intellij.psi.util.PsiTreeUtil.getNextSiblingOfType;
 import static com.intellij.psi.util.PsiTreeUtil.getPrevSiblingOfType;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.statementMayCompleteNormally;
 
-public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBaseIntentionAction {
+public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandAction {
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
@@ -34,23 +32,23 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    PsiSwitchLabelStatementBase labelStatement = findLabelStatement(editor, element);
-    if (labelStatement == null || labelStatement.getEnclosingSwitchBlock() == null) return false;
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    PsiElement element = context.findLeaf();
+    if (element == null) return null;
+    PsiSwitchLabelStatementBase labelStatement = findLabelStatement(context, element);
+    if (labelStatement == null || labelStatement.getEnclosingSwitchBlock() == null) return null;
     if (labelStatement instanceof PsiSwitchLabelStatement) {
       if (isMultiValueCase(labelStatement)) {
         // mixed syntax "case 1, 2: some code"
         if (isAvailableForLabel(labelStatement)) {
-          setText(JavaBundle.message("intention.split.switch.branch.with.several.case.values.split.text"));
-          return true;
+          return Presentation.of(JavaBundle.message("intention.split.switch.branch.with.several.case.values.split.text"));
         }
       }
       else if (hasSiblingLabel(labelStatement)) {
         // traditional syntax "case 1: case 2: some code"
         PsiSwitchLabelStatement lastSiblingLabel = findLastSiblingLabel(labelStatement, false);
         if (isAvailableForLabel(lastSiblingLabel)) {
-          setText(JavaBundle.message("intention.split.switch.branch.with.several.case.values.copy.text"));
-          return true;
+          return Presentation.of(JavaBundle.message("intention.split.switch.branch.with.several.case.values.copy.text"));
         }
       }
     }
@@ -59,12 +57,11 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
       if (isMultiValueCase(labelStatement)) {
         PsiStatement body = ruleStatement.getBody();
         if (body != null && element.getTextOffset() < body.getTextOffset()) {
-          setText(JavaBundle.message("intention.split.switch.branch.with.several.case.values.split.text"));
-          return true;
+          return Presentation.of(JavaBundle.message("intention.split.switch.branch.with.several.case.values.split.text"));
         }
       }
     }
-    return false;
+    return null;
   }
 
   private static boolean isAvailableForLabel(@Nullable PsiSwitchLabelStatementBase label) {
@@ -87,25 +84,31 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
    * Handle the case where the caret is on the right side of the element we're interested in
    */
   @Nullable
-  private static PsiElement getPreviousElement(@NotNull Editor editor, @NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    int caretOffset = editor.getCaretModel().getOffset();
+  private static PsiElement getPreviousElement(@NotNull ActionContext context, @NotNull PsiElement element) {
+    int caretOffset = context.offset();
     int elementOffset = element.getTextRange().getStartOffset();
     if (caretOffset == elementOffset && caretOffset > 0) {
-      return file.findElementAt(caretOffset - 1);
+      return context.findLeafOnTheLeft();
     }
     return null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    PsiSwitchLabelStatementBase statement = findLabelStatement(editor, element);
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    return ModCommand.psiUpdate(context, updater -> invoke(context, updater));
+  }
+  
+  private static void invoke(@NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
+    context = context.withFile(updater.getWritable(context.file()));
+    PsiElement element = context.findLeaf();
+    if (element == null) return;
+    PsiSwitchLabelStatementBase statement = findLabelStatement(context, element);
 
     PsiElement result = null;
     if (statement instanceof PsiSwitchLabelStatement labelStatement) {
       PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
       if (labelElementList != null && labelElementList.getElementCount() > 1) {
-        PsiCaseLabelElement labelElement = findLabelElement(element, labelElementList, editor);
+        PsiCaseLabelElement labelElement = findLabelElement(element, labelElementList, context);
         Branch branch = Branch.fromLabel(labelStatement);
         if (branch != null) {
           if (isInList(labelElement, labelElementList)) {
@@ -132,7 +135,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
     else if (statement instanceof PsiSwitchLabeledRuleStatement labeledRule) {
       PsiCaseLabelElementList labelElementList = labeledRule.getCaseLabelElementList();
       if (labelElementList != null) {
-        PsiCaseLabelElement labelElement = findLabelElement(element, labelElementList, editor);
+        PsiCaseLabelElement labelElement = findLabelElement(element, labelElementList, context);
         if (isInList(labelElement, labelElementList)) {
           result = moveRuleAfter(labelElement, labeledRule);
         }
@@ -142,16 +145,16 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
       }
     }
     if (result != null) {
-      editor.getCaretModel().moveToOffset(result.getTextOffset());
+      updater.moveTo(result);
     }
   }
 
   private static PsiCaseLabelElement findLabelElement(@NotNull PsiElement element,
                                                       @NotNull PsiCaseLabelElementList labelElementList,
-                                                      @NotNull Editor editor) {
+                                                      @NotNull ActionContext context) {
     PsiCaseLabelElement labelElement = PsiTreeUtil.getNonStrictParentOfType(element, PsiCaseLabelElement.class);
     if (!isInList(labelElement, labelElementList)) {
-      PsiElement previousElement = getPreviousElement(editor, element);
+      PsiElement previousElement = getPreviousElement(context, element);
       labelElement = PsiTreeUtil.getNonStrictParentOfType(previousElement, PsiCaseLabelElement.class);
     }
     PsiElement caseLabel = PsiTreeUtil.findFirstParent(labelElement, parent ->
@@ -166,14 +169,12 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction extends PsiElementBase
   }
 
   @Nullable
-  private static PsiSwitchLabelStatementBase findLabelStatement(@NotNull Editor editor,
-                                                                @NotNull PsiElement element) {
-    // Can't use BaseElementAtCaretIntentionAction, because there's ambiguity when the caret is after the list of case values before the arrow
+  private static PsiSwitchLabelStatementBase findLabelStatement(@NotNull ActionContext context, PsiElement element) {
     PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     if (statement instanceof PsiSwitchLabelStatementBase labelStatement) {
       return labelStatement;
     }
-    PsiElement previousElement = getPreviousElement(editor, element);
+    PsiElement previousElement = getPreviousElement(context, element);
     statement = PsiTreeUtil.getParentOfType(previousElement, PsiStatement.class);
     return ObjectUtils.tryCast(statement, PsiSwitchLabelStatementBase.class);
   }

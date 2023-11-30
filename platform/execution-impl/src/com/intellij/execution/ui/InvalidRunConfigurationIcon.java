@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.icons.IconReplacer;
 import com.intellij.ui.icons.IconWithOverlay;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ import java.util.Objects;
 /**
  * @author Konstantin Bulenkov
  */
-public class InvalidRunConfigurationIcon extends IconWithOverlay {
+public final class InvalidRunConfigurationIcon extends IconWithOverlay {
   public InvalidRunConfigurationIcon(@NotNull Icon runConfigurationIcon) {
     this(runConfigurationIcon, AllIcons.RunConfigurations.InvalidConfigurationLayer);
   }
@@ -34,10 +35,14 @@ public class InvalidRunConfigurationIcon extends IconWithOverlay {
     return null;
   }
 
-  @NotNull
   @Override
-  public InvalidRunConfigurationIcon replaceBy(@NotNull IconReplacer replacer) {
+  public @NotNull InvalidRunConfigurationIcon replaceBy(@NotNull IconReplacer replacer) {
     return new InvalidRunConfigurationIcon(replacer.replaceIcon(Objects.requireNonNull(getIcon(0))),
                                            replacer.replaceIcon(Objects.requireNonNull(getIcon(1))));
+  }
+
+  @Override
+  public @NotNull LayeredIcon copy() {
+    return new InvalidRunConfigurationIcon(Objects.requireNonNull(getIcon(0)), Objects.requireNonNull(getIcon(1)));
   }
 }

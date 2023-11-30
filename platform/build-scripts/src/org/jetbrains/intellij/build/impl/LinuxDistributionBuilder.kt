@@ -7,12 +7,11 @@ import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope2
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.impl.BundledRuntimeImpl.Companion.getProductPrefix
+import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
@@ -26,7 +25,11 @@ import kotlin.time.Duration.Companion.minutes
 
 class LinuxDistributionBuilder(override val context: BuildContext,
                                private val customizer: LinuxDistributionCustomizer,
-                               private val ideaProperties: Path?) : OsSpecificDistributionBuilder {
+                               private val ideaProperties: CharSequence?) : OsSpecificDistributionBuilder {
+  internal companion object {
+    const val NO_RUNTIME_SUFFIX = "-no-jbr"
+  }
+
   private val iconPngPath: Path?
 
   override val targetOs: OsFamily
@@ -42,27 +45,23 @@ class LinuxDistributionBuilder(override val context: BuildContext,
       withContext(Dispatchers.IO) {
         val distBinDir = targetPath.resolve("bin")
         val sourceBinDir = context.paths.communityHomeDir.resolve("bin/linux")
-        copyFileToDir(sourceBinDir.resolve("restart.py"), distBinDir)
-        if (arch == JvmArchitecture.x64 || arch == JvmArchitecture.aarch64) {
-          @Suppress("SpellCheckingInspection")
-          listOf("fsnotifier", "libdbm.so").forEach {
-            copyFileToDir(sourceBinDir.resolve("${arch.dirName}/${it}"), distBinDir)
-          }
-        }
+        copyFileToDir(NativeBinaryDownloader.downloadRestarter(context = context, os = OsFamily.LINUX, arch = arch), distBinDir)
+        copyFileToDir(sourceBinDir.resolve("${arch.dirName}/fsnotifier"), distBinDir)
+        copyFileToDir(sourceBinDir.resolve("${arch.dirName}/libdbm.so"), distBinDir)
         generateBuildTxt(context, targetPath)
         copyDistFiles(context = context, newDir = targetPath, os = OsFamily.LINUX, arch = arch)
-        Files.copy(ideaProperties!!, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
-        //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
+
+        //todo converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
         // for real installers we need to checkout all text files with 'lf' separators anyway
-        convertLineSeparators(targetPath.resolve("bin/idea.properties"), "\n")
+        Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), ideaProperties!!.lineSequence().joinToString("\n"))
+
         if (iconPngPath != null) {
           Files.copy(iconPngPath, distBinDir.resolve("${context.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
         }
-        generateVMOptions(distBinDir)
+        writeVmOptions(distBinDir)
         generateScripts(distBinDir, arch)
         generateReadme(targetPath)
         generateVersionMarker(targetPath, context)
-        RepairUtilityBuilder.bundle(context = context, os = OsFamily.LINUX, arch = arch, distributionDir = targetPath)
         customizer.copyAdditionalFiles(context = context, targetDir = targetPath, arch = arch)
       }
     }
@@ -71,25 +70,24 @@ class LinuxDistributionBuilder(override val context: BuildContext,
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
     setLastModifiedTime(osAndArchSpecificDistPath, context)
-    val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
+    val executableFileMatchers = generateExecutableFilesMatchers(true, arch).keys
+    updateExecutablePermissions(osAndArchSpecificDistPath, executableFileMatchers)
     context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
-      if (customizer.buildTarGzWithoutBundledRuntime) {
+      if (customizer.buildArtifactWithoutRuntime) {
         launch {
           context.executeStep(spanBuilder("Build Linux .tar.gz without bundled Runtime").setAttribute("arch", arch.name),
                               BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP) {
             buildTarGz(runtimeDir = null,
                        unixDistPath = osAndArchSpecificDistPath,
-                       suffix = NO_JBR_SUFFIX + suffix,
+                       suffix = NO_RUNTIME_SUFFIX + suffix(arch),
                        arch = arch)
           }
         }
       }
-      if (customizer.buildOnlyBareTarGz) {
-        return@executeStep
-      }
 
-      val runtimeDir = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
-      val tarGzPath = buildTarGz(arch = arch, runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, suffix = suffix)
+      val runtimeDir = context.bundledRuntime.extract(os = OsFamily.LINUX, arch = arch)
+      updateExecutablePermissions(runtimeDir, executableFileMatchers)
+      val tarGzPath = buildTarGz(arch = arch, runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, suffix = suffix(arch))
       launch {
         if (arch == JvmArchitecture.x64) {
           buildSnapPackage(runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, arch = arch)
@@ -120,14 +118,16 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     generateProductJson(targetDir, context, arch)
   }
 
-  private fun generateVMOptions(distBinDir: Path) {
-    val fileName = "${context.productProperties.baseFileName}64.vmoptions"
+  override fun writeVmOptions(distBinDir: Path): Path {
+    val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.vmoptions")
 
     @Suppress("SpellCheckingInspection")
-    val vmOptions = VmOptionsGenerator.computeVmOptions(context.applicationInfo.isEAP, context.productProperties) +
+    val vmOptions = VmOptionsGenerator.computeVmOptions(context) +
                     listOf("-Dsun.tools.attach.tmp.only=true",
                            "-Dawt.lock.fair=true")
-    VmOptionsGenerator.writeVmOptions(distBinDir.resolve(fileName), vmOptions, "\n")
+    VmOptionsGenerator.writeVmOptions(vmOptionsPath, vmOptions, "\n")
+
+    return vmOptionsPath
   }
 
   private fun generateReadme(unixDistPath: Path) {
@@ -135,23 +135,22 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     val sourceFile = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
     val targetFile = unixDistPath.resolve("Install-Linux-tar.txt")
     substituteTemplatePlaceholders(sourceFile, targetFile, "@@", listOf(
-      Pair("product_full", fullName),
-      Pair("product", context.productProperties.baseFileName),
-      Pair("product_vendor", context.applicationInfo.shortCompanyName),
-      Pair("system_selector", context.systemSelector)
+      "product_full" to fullName,
+      "product" to context.productProperties.baseFileName,
+      "product_vendor" to context.applicationInfo.shortCompanyName,
+      "system_selector" to context.systemSelector
     ), convertToUnixLineEndings = true)
   }
 
-  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
-    return customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
-  }
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> =
+    customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
 
   private val rootDirectoryName: String
     get() = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
 
   private suspend fun buildTarGz(arch: JvmArchitecture, runtimeDir: Path?, unixDistPath: Path, suffix: String): Path = withContext(Dispatchers.IO) {
     val tarRoot = rootDirectoryName
-    val tarName = artifactName(context, suffix)
+    val tarName = context.productProperties.getBaseArtifactName(context) + suffix + ".tar.gz"
     val tarPath = context.paths.artifactDir.resolve(tarName)
     val dirs = mutableListOf(context.paths.distAllDir, unixDistPath)
 
@@ -177,9 +176,25 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     tarPath
   }
 
+  private val snapVersion: String by lazy {
+    val appInfo = context.applicationInfo
+    val versionSuffix = appInfo.versionSuffix?.replace(' ', '-') ?: ""
+    "${appInfo.majorVersion}.${appInfo.minorVersion}${if (versionSuffix.isEmpty()) "" else "-${versionSuffix}"}"
+  }
+
+  internal val snapArtifactName: String? by lazy {
+    "${customizer.snapName ?: return@lazy null}_${snapVersion}_amd64.snap"
+  }
+
   private suspend fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture) {
-    val snapName = customizer.snapName ?: return
+    val snapName = customizer.snapName
+    val snapArtifactName = this.snapArtifactName
+    if (snapName == null || snapArtifactName == null) {
+      Span.current().addEvent("Linux .snap package build skipped because of missing snapName in ${customizer::class.java.simpleName}")
+      return
+    }
     if (!context.options.buildUnixSnaps) {
+      Span.current().addEvent("Linux .snap package build is disabled")
       return
     }
 
@@ -196,8 +211,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
         span.addEvent("prepare files")
 
-        val unixSnapDistPath = context.paths.buildOutputDir.resolve("dist.unix.snap")
-        copyDir(unixDistPath, unixSnapDistPath)
         val appInfo = context.applicationInfo
         val productName = appInfo.productNameWithEdition
         substituteTemplatePlaceholders(
@@ -205,30 +218,28 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           outputFile = snapDir.resolve("$snapName.desktop"),
           placeholder = "$",
           values = listOf(
-            Pair("NAME", productName),
-            Pair("ICON", "\${SNAP}/bin/${context.productProperties.baseFileName}.png"),
-            Pair("SCRIPT", snapName),
-            Pair("COMMENT", appInfo.motto ?: ""),
-            Pair("WM_CLASS", getLinuxFrameClass(context))
+            "NAME" to productName,
+            "ICON" to "\${SNAP}/bin/${context.productProperties.baseFileName}.png",
+            "SCRIPT" to snapName,
+            "COMMENT" to (appInfo.motto ?: ""),
+            "WM_CLASS" to getLinuxFrameClass(context)
           )
         )
         copyFile(iconPngPath, snapDir.resolve("$snapName.png"))
         val snapcraftTemplate = context.paths.communityHomeDir.resolve(
           "platform/build-scripts/resources/linux/snap/snapcraft-template.yaml")
-        val versionSuffix = appInfo.versionSuffix?.replace(' ', '-') ?: ""
-        val version = "${appInfo.majorVersion}.${appInfo.minorVersion}${if (versionSuffix.isEmpty()) "" else "-${versionSuffix}"}"
         val snapcraftConfig = snapDir.resolve("snapcraft.yaml")
         substituteTemplatePlaceholders(
           inputFile = snapcraftTemplate,
           outputFile = snapcraftConfig,
           placeholder = "$",
           values = listOf(
-            Pair("NAME", snapName),
-            Pair("VERSION", version),
-            Pair("SUMMARY", productName),
-            Pair("DESCRIPTION", customizer.snapDescription ?: ""),
-            Pair("GRADE", if (appInfo.isEAP) "devel" else "stable"),
-            Pair("SCRIPT", "bin/${context.productProperties.baseFileName}.sh")
+            "NAME" to snapName,
+            "VERSION" to snapVersion,
+            "SUMMARY" to productName,
+            "DESCRIPTION" to (customizer.snapDescription ?: ""),
+            "GRADE" to if (appInfo.isEAP) "devel" else "stable",
+            "SCRIPT" to "bin/${context.productProperties.baseFileName}.sh"
           )
         )
         context.messages.info("""
@@ -237,42 +248,39 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           |# </${snapcraftConfig.name}>
         """.trimMargin())
 
-        coroutineScope {
-          val executableFilesMatchers = generateExecutableFilesMatchers(includeRuntime = true, arch).keys
-          for (distPath in listOf(unixSnapDistPath, context.paths.distAllDir, runtimeDir)) {
-            launch {
-              updateExecutablePermissions(distPath, executableFilesMatchers)
-            }
-          }
-        }
-        val jsonText = generateProductJson(unixSnapDistPath, context, arch)
+        val productJsonDir = context.paths.tempDir.resolve("linux.dist.snap.product-info.json")
+        val jsonText = generateProductJson(productJsonDir, context, arch)
         validateProductJson(jsonText = jsonText,
                             relativePathToProductJson = "",
-                            installationDirectories = listOf(context.paths.distAllDir, unixSnapDistPath, runtimeDir),
+                            installationDirectories = listOf(context.paths.distAllDir, unixDistPath, runtimeDir),
                             installationArchives = listOf(),
                             context = context)
         val resultDir = snapDir.resolve("result")
         Files.createDirectories(resultDir)
         span.addEvent("build package")
-        val snapArtifact = snapName + "_" + version + "_amd64.snap"
+        check(Docker.isAvailable) {
+          "Docker is required to build snaps"
+        }
         runProcess(
           args = listOf(
-            "docker", "run", "--rm", "--volume=$snapcraftConfig:/build/snapcraft.yaml:ro",
+            "docker", "run", "--rm",
+            "--volume=$snapcraftConfig:/build/snapcraft.yaml:ro",
             "--volume=$snapDir/$snapName.desktop:/build/snap/gui/$snapName.desktop:ro",
             "--volume=$snapDir/$snapName.png:/build/prime/meta/gui/icon.png:ro",
             "--volume=$snapDir/result:/build/result",
-            "--volume=${context.paths.getDistAll()}:/build/dist.all:ro",
-            "--volume=$unixSnapDistPath:/build/dist.unix:ro",
+            "--volume=${context.paths.distAllDir}:/build/dist.all:ro",
+            "--volume=$productJsonDir:/build/dist.product-json:ro",
+            "--volume=$unixDistPath:/build/dist.unix:ro",
             "--volume=$runtimeDir:/build/jre:ro",
             "--workdir=/build",
             context.options.snapDockerImage,
             "snapcraft",
-            "snap", "-o", "result/$snapArtifact"
+            "snap", "-o", "result/$snapArtifactName"
           ),
           workingDir = snapDir,
           timeout = context.options.snapDockerBuildTimeoutMin.minutes,
         )
-        val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifact), context.paths.artifactDir)
+        val snapArtifactPath = moveFileToDir(resultDir.resolve(snapArtifactName), context.paths.artifactDir)
         context.notifyArtifactBuilt(snapArtifactPath)
         checkExecutablePermissions(unSquashSnap(snapArtifactPath), root = "", includeRuntime = true, arch = arch)
       }
@@ -334,8 +342,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
 }
 
-private const val NO_JBR_SUFFIX = "-no-jbr"
-
 private fun generateProductJson(targetDir: Path, context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
   val json = generateProductInfoJson(
     relativePathToBin = "bin",
@@ -359,11 +365,6 @@ private fun generateVersionMarker(unixDistPath: Path, context: BuildContext) {
   val targetDir = unixDistPath.resolve("lib")
   Files.createDirectories(targetDir)
   Files.writeString(targetDir.resolve("build-marker-" + context.fullBuildNumber), context.fullBuildNumber)
-}
-
-private fun artifactName(buildContext: BuildContext, suffix: String?): String {
-  val baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-  return "$baseName$suffix.tar.gz"
 }
 
 private fun copyScript(sourceFile: Path,

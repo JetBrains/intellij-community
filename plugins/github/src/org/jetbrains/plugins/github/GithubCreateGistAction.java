@@ -6,6 +6,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -67,6 +68,12 @@ public class GithubCreateGistAction extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
+
+    if (project.getService(GHHostedRepositoriesManager.class).getKnownRepositoriesState().getValue().isEmpty()) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
@@ -76,6 +83,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
+
     e.getPresentation().setEnabledAndVisible(true);
   }
 

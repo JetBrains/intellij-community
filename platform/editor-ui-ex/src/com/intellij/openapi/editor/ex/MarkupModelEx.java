@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.Disposable;
@@ -68,8 +68,7 @@ public interface MarkupModelEx extends MarkupModel {
    * Using the overload taking a {@link TextAttributesKey} will make the platform take care of all these cases.
    */
   @Deprecated
-  @NotNull
-  default RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+  default @NotNull RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
                                                                     int endOffset,
                                                                     int layer,
                                                                     TextAttributes textAttributes,

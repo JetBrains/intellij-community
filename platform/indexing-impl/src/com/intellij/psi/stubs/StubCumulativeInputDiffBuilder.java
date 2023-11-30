@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,10 +17,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<Integer, SerializedStubTree> {
+final class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<Integer, SerializedStubTree> {
   private static final Logger LOG = Logger.getInstance(SerializedStubTree.class);
-  @Nullable
-  private final SerializedStubTree myCurrentTree;
+  private final @Nullable SerializedStubTree myCurrentTree;
 
   StubCumulativeInputDiffBuilder(int inputId, @Nullable SerializedStubTree currentTree) {
     super(inputId);
@@ -130,8 +129,7 @@ class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<Integer,
              oldTreeDump + newTreeDump, new Exception());
   }
 
-  @NotNull
-  private static String dumpStub(@NotNull SerializedStubTree tree) {
+  private static @NotNull String dumpStub(@NotNull SerializedStubTree tree) {
     String deserialized;
     try {
       deserialized = "stub: " + DebugUtil.stubTreeToString(tree.getStub());

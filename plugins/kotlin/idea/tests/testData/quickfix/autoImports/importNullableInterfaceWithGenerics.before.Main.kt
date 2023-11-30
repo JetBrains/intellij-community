@@ -4,4 +4,3 @@
 fun test() {
     val a: <caret>TestInterface<String, Int>? = null
 }
-/* IGNORE_FIR */

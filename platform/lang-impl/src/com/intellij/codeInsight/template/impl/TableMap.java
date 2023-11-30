@@ -19,9 +19,9 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
-public class TableMap extends AbstractTableModel
+public final class TableMap extends AbstractTableModel
                       implements TableModelListener {
-    protected TableModel model;
+    TableModel model;
 
     public TableModel getModel() {
         return model;

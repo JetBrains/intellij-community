@@ -32,4 +32,15 @@ public interface ObjectStubSerializer<T extends Stub, P extends Stub> {
   T deserialize(@NotNull StubInputStream dataStream, P parentStub) throws IOException;
 
   void indexStub(@NotNull T stub, @NotNull IndexSink sink);
+
+  /**
+   * @param root root of the stub tree (normally, {@link PsiFileStub}).
+   * @return true if elements serialized by this serializer inside this tree are known to never have children.
+   * In this case, writing child count to the output stream can be skipped, saving space in the index.
+   * Note that if you override this and return true, you should update the index version,
+   * as the serialized representation will change.
+   */
+  default boolean isAlwaysLeaf(@NotNull StubBase<?> root) {
+    return false;
+  }
 }

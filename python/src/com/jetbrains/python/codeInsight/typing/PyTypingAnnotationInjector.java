@@ -63,6 +63,9 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
       if (isInsideValueOfExplicitTypeAnnotation(expr)) {
         return PyTypeHintDialect.INSTANCE;
       }
+      if (isInsideNewStyleTypeVarBound(context)) {
+        return PyTypeHintDialect.INSTANCE;
+      }
     }
     return null;
   }
@@ -131,6 +134,10 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
   private static boolean isFunctionTypeComment(@NotNull PsiElement comment) {
    final PyFunction function = PsiTreeUtil.getParentOfType(comment, PyFunction.class);
     return function != null && function.getTypeComment() == comment;
+  }
+
+  private static boolean isInsideNewStyleTypeVarBound(@NotNull PsiElement element) {
+    return PsiTreeUtil.getParentOfType(element, PyTypeParameter.class, true, PyTypeParameterListOwner.class) != null;
   }
 
   private static boolean isTypingAnnotation(@NotNull String s) {

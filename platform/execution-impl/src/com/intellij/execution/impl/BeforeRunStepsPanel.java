@@ -307,6 +307,10 @@ public final class BeforeRunStepsPanel extends JPanel {
     myModel.add(task);
   }
 
+  public void replaceTasks(@NotNull List<BeforeRunTask<?>> tasks) {
+    myModel.replaceAll(tasks);
+  }
+
   private @NotNull Set<Key<?>> getActiveProviderKeys() {
     List<BeforeRunTask<?>> items = myModel.getItems();
     Set<Key<?>> result = CollectionFactory.createSmallMemoryFootprintSet(items.size());

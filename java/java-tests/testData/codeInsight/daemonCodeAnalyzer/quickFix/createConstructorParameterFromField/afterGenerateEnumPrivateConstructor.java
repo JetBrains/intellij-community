@@ -1,7 +1,7 @@
 // "Add constructor parameter" "true"
 public enum MyEnum
 {
-  VALUE_ONE(myField);
+  VALUE_ONE(0);
   private final int myField;
 
     MyEnum(int myField) {

@@ -2,9 +2,9 @@ package org.jetbrains.plugins.textmate.configuration;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.textmate.TextMateBundleToLoad;
 import org.jetbrains.plugins.textmate.TextMateServiceImpl;
 
-import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -32,11 +32,8 @@ public final class TextMateSettings implements PersistentStateComponent<TextMate
     TextMateBuiltinBundlesSettings builtinBundlesSettings = TextMateBuiltinBundlesSettings.getInstance();
     if (builtinBundlesSettings != null) {
       Set<String> turnedOffBundleNames = builtinBundlesSettings.getTurnedOffBundleNames();
-      for (Path bundlePath : TextMateServiceImpl.discoverBuiltinBundles(builtinBundlesSettings)) {
-        String bundleName = bundlePath.getFileName().toString();
-        bundles.add(new BundleConfigBean(bundleName,
-                                         bundlePath.toString(),
-                                         !turnedOffBundleNames.contains(bundleName)));
+      for (TextMateBundleToLoad bundle : TextMateServiceImpl.discoverBuiltinBundles(builtinBundlesSettings)) {
+        bundles.add(new BundleConfigBean(bundle.getName(), bundle.getPath(), !turnedOffBundleNames.contains(bundle.getName())));
       }
     }
     state.setBundles(bundles);

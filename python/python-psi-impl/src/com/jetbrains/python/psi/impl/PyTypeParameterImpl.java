@@ -7,13 +7,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyTypeParameter;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.stubs.PyTypeParameterElementType;
 import com.jetbrains.python.psi.stubs.PyTypeParameterStub;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,6 +71,19 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   @Override
+  @NotNull
+  public PyTypeParameter.Kind getKind() {
+    PyTypeParameterStub stub = getStub();
+
+    if (stub != null) {
+      return stub.getKind();
+    }
+    else {
+      return PyTypeParameterElementType.getTypeParameterKindFromPsi(this);
+    }
+  }
+
+  @Override
   @Nullable
   public PsiElement getNameIdentifier() {
     ASTNode nameNode = getNode().findChildByType(PyTokenTypes.IDENTIFIER);
@@ -94,6 +105,16 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   @Override
   @Nullable
   public PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
+    PyPsiFacade facade = PyPsiFacade.getInstance(this.getProject());
+    Kind kind = this.getKind();
+    PyClass pyClass = switch (kind) {
+      case TypeVar -> facade.createClassByQName(PyTypingTypeProvider.TYPE_VAR, this);
+      case TypeVarTuple -> facade.createClassByQName(PyTypingTypeProvider.TYPE_VAR_TUPLE, this);
+      case ParamSpec -> facade.createClassByQName(PyTypingTypeProvider.TYPING_PARAM_SPEC, this);
+    };
+    if (pyClass != null) {
+      return new PyClassTypeImpl(pyClass, false);
+    }
     return null;
   }
 }

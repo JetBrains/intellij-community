@@ -1,19 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings
 
-import com.intellij.openapi.components.SimplePersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.messages.Topic
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
 
+@Service(Service.Level.PROJECT)
 @State(name = "MarkdownSettings", storages = [(Storage("markdown.xml"))])
 class MarkdownSettings(internal val project: Project): SimplePersistentStateComponent<MarkdownSettingsState>(MarkdownSettingsState()) {
   var areInjectionsEnabled
@@ -151,9 +148,5 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
 
     @JvmStatic
     fun getInstance(project: Project): MarkdownSettings = project.service()
-
-    fun getInstanceForDefaultProject(): MarkdownSettings {
-      return ProjectManager.getInstance().defaultProject.service()
-    }
   }
 }

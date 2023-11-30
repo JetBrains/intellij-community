@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class NamedPackageSetReference extends PackageSetBase {
+public final class NamedPackageSetReference extends PackageSetBase {
   private final String myName;
 
   public NamedPackageSetReference(String name) {

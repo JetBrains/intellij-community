@@ -3,10 +3,11 @@ package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import it.unimi.dsi.fastutil.ints.IntSet
+import org.jetbrains.annotations.ApiStatus
 
-fun EntityStorage.assertConsistency() {
+@ApiStatus.Internal
+public fun EntityStorage.assertConsistency() {
   (this as AbstractEntityStorage).assertConsistency()
 }
 
@@ -98,14 +99,14 @@ internal fun AbstractEntityStorage.assertConsistency() {
 }
 
 private fun assertCorrectEntityClass(connectionClass: Int, entityId: EntityId) {
-  assert(connectionClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(entityId.clazz.findEntityClass<WorkspaceEntity>())) {
-    "Entity storage with connection class ${connectionClass.findEntityClass<WorkspaceEntity>()} contains entity data of wrong type $entityId"
+  assert(connectionClass.findWorkspaceEntity().isAssignableFrom(entityId.clazz.findWorkspaceEntity())) {
+    "Entity storage with connection class ${connectionClass.findWorkspaceEntity()} contains entity data of wrong type $entityId"
   }
 }
 
 private fun assertResolvable(storage: AbstractEntityStorage, clazz: Int, id: Int) {
   assert(storage.entitiesByType[clazz]?.get(id) != null) {
-    "Reference to ${clazz.findEntityClass<WorkspaceEntity>()}-:-$id cannot be resolved"
+    "Reference to ${clazz.findWorkspaceEntity()}-:-$id cannot be resolved"
   }
 }
 

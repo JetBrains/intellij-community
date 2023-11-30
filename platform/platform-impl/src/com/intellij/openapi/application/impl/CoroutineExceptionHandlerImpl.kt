@@ -3,13 +3,15 @@ package com.intellij.openapi.application.impl
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
-private val LOG: Logger = Logger.getInstance(CoroutineExceptionHandlerImpl::class.java)
+private val LOG: Logger
+  get() = logger<CoroutineExceptionHandlerImpl>()
 
 /**
  * This is loaded using [java.util.ServiceLoader] and invoked by the Kotlin Coroutines machinery

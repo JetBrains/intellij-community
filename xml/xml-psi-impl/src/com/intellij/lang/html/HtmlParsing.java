@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.html;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public class HtmlParsing {
   private final PsiBuilder myBuilder;
@@ -84,7 +85,7 @@ public class HtmlParsing {
       }
     }
 
-    flushOpenTags();
+    flushOpenItemsWhile((item) -> true);
     myItemsStack.clear();
 
     if (error != null) {
@@ -94,12 +95,29 @@ public class HtmlParsing {
     document.done(XmlElementType.HTML_DOCUMENT);
   }
 
-  protected void flushOpenTags() {
-    while (!myItemsStack.isEmpty() && myItemsStack.peek() instanceof HtmlTagInfo tag) {
+  protected final void flushOpenItemsWhile(Predicate<HtmlParserStackItem> itemFilter) {
+    flushOpenItemsWhile(null, itemFilter);
+  }
+
+  protected final void flushOpenItemsWhile(@Nullable PsiBuilder.Marker beforeMarker, Predicate<HtmlParserStackItem> itemFilter) {
+    while (!myItemsStack.isEmpty() && itemFilter.test(myItemsStack.peek())) {
+      autoCloseItem(myItemsStack.pop(), beforeMarker);
+    }
+  }
+
+  protected void autoCloseItem(@NotNull HtmlParserStackItem item, @Nullable PsiBuilder.Marker beforeMarker) {
+    if (item instanceof HtmlTagInfo tag) {
       if (isEndTagRequired(tag)) {
-        error(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", tag.getOriginalName()));
+        if (beforeMarker != null) {
+          var errorMarker = beforeMarker.precede();
+          errorMarker.errorBefore(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", tag.getOriginalName()), beforeMarker);
+        } else {
+          error(XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", tag.getOriginalName()));
+        }
       }
-      doneTag();
+      doneTag(tag, beforeMarker);
+    } else {
+      throw new IllegalStateException("Support for stack item of class " + item.getClass().getName() + " is not implemented");
     }
   }
 
@@ -126,8 +144,7 @@ public class HtmlParsing {
   protected void parseCustomTagHeaderContent() {
   }
 
-  @Nullable
-  protected static PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
+  protected static @Nullable PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
     if (error != null) {
       error.error(XmlPsiBundle.message("xml.parsing.unexpected.tokens"));
     }
@@ -304,14 +321,12 @@ public class HtmlParsing {
     terminateText(xmlText);
   }
 
-  @NotNull
-  protected HtmlTagInfo createHtmlTagInfo(@NotNull String originalTagName, @NotNull PsiBuilder.Marker startMarker) {
+  protected @NotNull HtmlTagInfo createHtmlTagInfo(@NotNull String originalTagName, @NotNull PsiBuilder.Marker startMarker) {
     String normalizedTagName = normalizeTagName(originalTagName);
     return new HtmlTagInfoImpl(normalizedTagName, originalTagName, startMarker);
   }
 
-  @NotNull
-  protected String parseOpenTagName() {
+  protected @NotNull String parseOpenTagName() {
     String originalTagName;
     if (token() != XmlTokenType.XML_NAME) {
       error(XmlPsiBundle.message("xml.parsing.tag.name.expected"));
@@ -324,8 +339,7 @@ public class HtmlParsing {
     return originalTagName;
   }
 
-  @Nullable
-  protected String parseEndTagName() {
+  protected @Nullable String parseEndTagName() {
     String endName;
     if (token() == XmlTokenType.XML_NAME) {
       endName = Objects.requireNonNull(myBuilder.getTokenText());
@@ -429,15 +443,20 @@ public class HtmlParsing {
   }
 
   protected void doneTag() {
-    var tag = (HtmlTagInfo)myItemsStack.pop();
-    var elementType = getHtmlTagElementType(tag, myItemsStack.size() + 1);
-    tag.getStartMarker().done(elementType);
+    doneTag((HtmlTagInfo)popItemFromStack(), null);
   }
 
-  protected void doneTagBefore(PsiBuilder.Marker tagStart) {
-    HtmlTagInfo top = (HtmlTagInfo)myItemsStack.pop();
-    IElementType tagElementType = getHtmlTagElementType(top, myItemsStack.size() + 1);
-    top.getStartMarker().doneBefore(tagElementType, tagStart);
+  protected void doneTagBefore(@Nullable PsiBuilder.Marker beforeMarker) {
+    doneTag((HtmlTagInfo)popItemFromStack(), beforeMarker);
+  }
+
+  protected void doneTag(HtmlTagInfo tag, @Nullable PsiBuilder.Marker beforeMarker) {
+    var elementType = getHtmlTagElementType(tag, myItemsStack.size() + 1);
+    if (beforeMarker != null) {
+      tag.getStartMarker().doneBefore(elementType, beforeMarker);
+    } else {
+      tag.getStartMarker().done(elementType);
+    }
   }
 
   protected IElementType getHtmlTagElementType(@NotNull HtmlTagInfo info, int tagLevel) {
@@ -499,8 +518,7 @@ public class HtmlParsing {
     return xmlText;
   }
 
-  @Nullable
-  protected static PsiBuilder.Marker terminateText(@Nullable PsiBuilder.Marker xmlText) {
+  protected static @Nullable PsiBuilder.Marker terminateText(@Nullable PsiBuilder.Marker xmlText) {
     if (xmlText != null) {
       xmlText.done(XmlElementType.XML_TEXT);
     }
@@ -737,11 +755,12 @@ public class HtmlParsing {
   protected void maybeRemapCurrentToken(@NotNull IElementType tokenType) {
   }
 
-  protected interface HtmlParserStackItem {
-    @NotNull PsiBuilder.Marker getStartMarker();
+  public interface HtmlParserStackItem {
   }
 
-  protected interface HtmlTagInfo extends HtmlParserStackItem {
+  public interface HtmlTagInfo extends HtmlParserStackItem {
+    @NotNull PsiBuilder.Marker getStartMarker();
+
     @NotNull String getNormalizedName();
 
     @NotNull String getOriginalName();

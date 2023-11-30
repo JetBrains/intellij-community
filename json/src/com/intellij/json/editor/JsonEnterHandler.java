@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor;
 
 import com.intellij.codeInsight.editorActions.EnterHandler;
@@ -21,7 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonEnterHandler extends EnterHandlerDelegateAdapter {
+public final class JsonEnterHandler extends EnterHandlerDelegateAdapter {
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,
                                 @NotNull Editor editor,

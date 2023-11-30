@@ -11,11 +11,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
-import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.testFramework.workspaceModel.updateProjectModel
+import com.intellij.workspaceModel.ide.getInstance
 import java.nio.file.Files
 import java.nio.file.Path
 

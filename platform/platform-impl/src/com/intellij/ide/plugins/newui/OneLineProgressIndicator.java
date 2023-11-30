@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
@@ -30,7 +30,7 @@ public class OneLineProgressIndicator extends InlineProgressIndicator {
     super(true, task(withText ? IdeBundle.message("progress.text.downloading") : "", canBeCancelled));
 
     if (!withText) {
-      myText.getParent().remove(myText);
+      text.getParent().remove(text);
     }
     updateProgressNow();
     getComponent().setToolTipText(null);
@@ -48,8 +48,7 @@ public class OneLineProgressIndicator extends InlineProgressIndicator {
     }
   }
 
-  @NotNull
-  public JComponent createBaselineWrapper() {
+  public @NotNull JComponent createBaselineWrapper() {
     return new Wrapper(getComponent()) {
       @Override
       public int getBaseline(int width, int height) {
@@ -58,13 +57,11 @@ public class OneLineProgressIndicator extends InlineProgressIndicator {
     };
   }
 
-  @NotNull
-  public static TaskInfo task(@NotNull @NlsContexts.DialogTitle String title) {
+  public static @NotNull TaskInfo task(@NotNull @NlsContexts.DialogTitle String title) {
     return task(title, true);
   }
 
-  @NotNull
-  private static TaskInfo task(@NotNull @NlsContexts.DialogTitle String title, boolean canBeCancelled) {
+  private static @NotNull TaskInfo task(@NotNull @NlsContexts.DialogTitle String title, boolean canBeCancelled) {
     return new Task.Modal(null, title, canBeCancelled) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

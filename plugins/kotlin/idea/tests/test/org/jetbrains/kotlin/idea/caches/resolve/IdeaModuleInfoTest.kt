@@ -1145,7 +1145,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         js.addDependency(stdlibJs)
         js.addDependency(KotlinSdk, testRootDisposable)
 
-        val stdlibWasm = projectLibrary("stdlibWasm", classesRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibWasm))
+        val stdlibWasm = projectLibrary("stdlibWasm", classesRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibWasmJs))
         val stdlibWasmInfo = stdlibWasm.toLibraryInfo()
 
         wasm.addDependency(stdlibWasm)
@@ -1796,7 +1796,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val stdlibCommon = stdlibCommon()
         val stdlibJvm = stdlibJvm()
         val stdlibJs = stdlibJs()
-        val stdlibWasm = stdlibWasm()
+        val stdlibWasm = stdlibWasmJs()
 
         val a = module("a")
         a.addDependency(stdlibCommon)
@@ -2319,14 +2319,14 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private fun stdlibJvm(): LibraryEx = projectLibrary("kotlin-stdlib", TestKotlinArtifacts.kotlinStdlib.jarRoot)
 
     private fun stdlibJs(): LibraryEx = projectLibrary(
-      "kotlin-stdlib-js",
-      TestKotlinArtifacts.kotlinStdlibJs.jarRoot,
-      kind = KotlinJavaScriptLibraryKind
+        "kotlin-stdlib-js",
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibJs),
+        kind = KotlinJavaScriptLibraryKind
     )
 
-    private fun stdlibWasm(): LibraryEx = projectLibrary(
-        "kotlin-stdlib-wasm",
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibWasm),
+    private fun stdlibWasmJs(): LibraryEx = projectLibrary(
+        "kotlin-stdlib-wasm-js",
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibWasmJs),
         kind = KotlinWasmLibraryKind
     )
 

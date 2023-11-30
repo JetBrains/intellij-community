@@ -15,10 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.codeStyle;
 
+import com.intellij.application.options.CodeStyleImportsBaseUI;
 import com.intellij.application.options.CodeStyleImportsPanelBase;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.ui.*;
 
 import javax.swing.*;
 
@@ -26,12 +26,15 @@ import javax.swing.*;
  * @author Max Medvedev
  */
 public class GrCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
+
   private JCheckBox myCbUseFQClassNamesInJavaDoc;
-  
+
   @Override
-  protected void fillCustomOptions(OptionGroup group) {
+  protected CodeStyleImportsBaseUI createKotlinUI(JComponent packages, JComponent importLayout) {
     myCbUseFQClassNamesInJavaDoc = new JCheckBox(ApplicationBundle.message("checkbox.use.fully.qualified.class.names.in.javadoc"));
-    group.add(myCbUseFQClassNamesInJavaDoc);
+    GroovyCodeStyleImportsUI result = new GroovyCodeStyleImportsUI(packages, importLayout, myCbUseFQClassNamesInJavaDoc);
+    result.init();
+    return result;
   }
 
   @Override
@@ -58,5 +61,4 @@ public class GrCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     return isModified(myCbUseFQClassNamesInJavaDoc, grSettings.USE_FQ_CLASS_NAMES_IN_JAVADOC) 
            || isModifiedLayoutSettings(grSettings);
   }
-  
 }

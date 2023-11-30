@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.CommonBundle;
@@ -66,7 +66,7 @@ import java.util.regex.Pattern;
 /**
  * @author Dmitry Avdeev
  */
-public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
+public final class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(SaveProjectAsTemplateAction.class);
   private static final @NonNls String PROJECT_TEMPLATE_XML = "project-template.xml";
 
@@ -390,7 +390,7 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     return ActionUpdateThread.BGT;
   }
 
-  private static class MyContentIterator implements ContentIterator {
+  private static final class MyContentIterator implements ContentIterator {
     private static final Set<String> ALLOWED_FILES = ContainerUtil.newHashSet(
       "description.html", PROJECT_TEMPLATE_XML, LocalArchivedTemplate.TEMPLATE_META_XML, "misc.xml", "modules.xml", "workspace.xml");
 

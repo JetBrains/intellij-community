@@ -26,14 +26,12 @@ public class PatchSpec {
   private String myNewFolder;
   private String myPatchFile;
   private String myJarFile;
-  private boolean myIsBinary;
   private boolean myIsStrict;
   private List<String> myIgnoredFiles = Collections.emptyList();
   private List<String> myCriticalFiles = Collections.emptyList();
   // A conflict in an essential file makes a patch update impossible; the IDE must be reinstalled from scratch.
   private List<String> myStrictFiles = Collections.emptyList();
   private List<String> myOptionalFiles = Collections.emptyList();
-  private boolean myIsNormalized;
   private Map<String, String> myWarnings = Collections.emptyMap();
   private List<String> myDeleteFiles = Collections.emptyList();
   private String myRoot = "";
@@ -135,24 +133,6 @@ public class PatchSpec {
 
   public PatchSpec setOptionalFiles(List<String> optionalFiles) {
     myOptionalFiles = optionalFiles;
-    return this;
-  }
-
-  public PatchSpec setBinary(boolean binary) {
-    myIsBinary = binary;
-    return this;
-  }
-
-  public boolean isBinary() {
-    return myIsBinary;
-  }
-
-  public boolean isNormalized() {
-    return myIsNormalized;
-  }
-
-  public PatchSpec setNormalized(boolean normalized) {
-    myIsNormalized = normalized;
     return this;
   }
 

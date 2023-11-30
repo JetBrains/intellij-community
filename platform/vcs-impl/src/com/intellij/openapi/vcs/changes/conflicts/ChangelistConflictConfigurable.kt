@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import javax.swing.DefaultListModel
 import javax.swing.event.ListDataEvent
@@ -74,11 +75,12 @@ class ChangelistConflictConfigurable(val project: Project)
 
         row(message("settings.label.when.empty.changelist.becomes.inactive")) {
           comboBox(EnumComboBoxModel(VcsShowConfirmationOption.Value::class.java),
-                   renderer = listCellRenderer {
-                     text = when (it) {
+                   renderer = textListCellRenderer {
+                     when (it) {
                        VcsShowConfirmationOption.Value.SHOW_CONFIRMATION -> message("remove.changelist.combobox.show.options")
                        VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY -> message("remove.changelist.combobox.remove.silently")
                        VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY -> message("remove.changelist.combobox.do.not.remove")
+                       null -> ""
                      }
                    }
           ).bindItem(vcsConfiguration::REMOVE_EMPTY_INACTIVE_CHANGELISTS.toNullableProperty())

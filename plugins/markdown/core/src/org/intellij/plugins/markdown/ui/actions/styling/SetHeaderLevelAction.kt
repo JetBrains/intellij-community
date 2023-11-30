@@ -152,7 +152,7 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
           }
         }
       }
-      popup.setShowSubmenuOnHover(true)
+      popup.isShowSubmenuOnHover = true
       popup.showUnderneathOf(event.inputEvent!!.component)
       return popup
     }

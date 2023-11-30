@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from stripe.api_resources import *
@@ -19,4 +20,6 @@ max_network_retries: int
 ca_bundle_path: Any
 log: Any
 
-def set_app_info(name, partner_id: Any | None = ..., url: Any | None = ..., version: Any | None = ...) -> None: ...
+def set_app_info(
+    name, partner_id: Incomplete | None = None, url: Incomplete | None = None, version: Incomplete | None = None
+) -> None: ...

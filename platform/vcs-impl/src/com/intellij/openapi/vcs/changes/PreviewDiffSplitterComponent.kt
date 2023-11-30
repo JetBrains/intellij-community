@@ -13,7 +13,7 @@ class PreviewDiffSplitterComponent(
 
   private var isPreviewVisible = false
 
-  override fun updatePreview(fromModelRefresh: Boolean) {
+  fun updatePreview(fromModelRefresh: Boolean) {
     if (isPreviewVisible) {
       updatePreviewProcessor.refresh(fromModelRefresh)
     }

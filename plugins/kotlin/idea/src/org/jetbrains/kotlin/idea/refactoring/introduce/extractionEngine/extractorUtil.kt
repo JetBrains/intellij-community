@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
@@ -38,7 +39,6 @@ import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConver
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValueBoxer.AsTuple
-import org.jetbrains.kotlin.idea.refactoring.removeTemplateEntryBracesIfPossible
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
@@ -643,6 +643,10 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
                     if (!(targetContainer is KtClassBody && (targetContainer.parent as? KtClass)?.isEnum() == true)) {
                         targetContainer.addAfter(emptyLines, anchor)
                     }
+                    val insertedDeclaration = this
+                    PostInsertDeclarationCallback.EP_NAME.forEachExtensionSafe { extension ->
+                        extension.declarationInserted(insertedDeclaration, targetContainer, psiFactory)
+                    }
                 }
             }
         }
@@ -713,7 +717,7 @@ fun ExtractionGeneratorConfiguration.generateDeclaration(
         }
         if ((declaration.descriptor as? PropertyDescriptor)?.let { DescriptorUtils.isOverride(it) } == true) {
             val scope = declaration.getResolutionScope()
-            val newName = Fe10KotlinNameSuggester.suggestNameByName(descriptor.name) {
+            val newName = KotlinNameSuggester.suggestNameByName(descriptor.name) {
                 it != descriptor.name && scope.getAllAccessibleVariables(Name.identifier(it)).isEmpty()
             }
             declaration.setName(newName)

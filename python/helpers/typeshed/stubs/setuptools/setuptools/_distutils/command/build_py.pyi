@@ -1,23 +1,23 @@
-from typing import Any
+from _typeshed import Incomplete
 
 from ..cmd import Command
 
 class build_py(Command):
     description: str
-    user_options: Any
-    boolean_options: Any
-    negative_opt: Any
-    build_lib: Any
-    py_modules: Any
-    package: Any
-    package_data: Any
-    package_dir: Any
+    user_options: Incomplete
+    boolean_options: Incomplete
+    negative_opt: Incomplete
+    build_lib: Incomplete
+    py_modules: Incomplete
+    package: Incomplete
+    package_data: Incomplete
+    package_dir: Incomplete
     compile: int
     optimize: int
-    force: Any
+    force: Incomplete
     def initialize_options(self) -> None: ...
-    packages: Any
-    data_files: Any
+    packages: Incomplete
+    data_files: Incomplete
     def finalize_options(self) -> None: ...
     def run(self) -> None: ...
     def get_data_files(self): ...

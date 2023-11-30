@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.Disposable;
@@ -22,9 +22,8 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
 
   protected ExtensibleQueryFactory(@NotNull ExtensionPointName<QueryExecutor<Result, Parameters>> epName) {
     myPoint = new SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>() {
-      @NotNull
       @Override
-      protected ExtensionPoint<QueryExecutor<Result, Parameters>> getExtensionPoint() {
+      protected @NotNull ExtensionPoint<QueryExecutor<Result, Parameters>> getExtensionPoint() {
         return Extensions.getRootArea().getExtensionPoint(epName);
       }
     };
@@ -35,11 +34,10 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  protected ExtensibleQueryFactory(@NonNls final String epNamespace) {
+  protected ExtensibleQueryFactory(final @NonNls String epNamespace) {
     myPoint = new SimpleSmartExtensionPoint<QueryExecutor<Result, Parameters>>() {
       @Override
-      @NotNull
-      protected ExtensionPoint<QueryExecutor<Result, Parameters>> getExtensionPoint() {
+      protected @NotNull ExtensionPoint<QueryExecutor<Result, Parameters>> getExtensionPoint() {
         @NonNls String epName = ExtensibleQueryFactory.this.getClass().getName();
         int pos = epName.lastIndexOf('.');
         if (pos >= 0) {
@@ -62,18 +60,17 @@ public class ExtensibleQueryFactory<Result, Parameters> extends QueryFactory<Res
   }
 
   @Override
-  public void registerExecutor(@NotNull final QueryExecutor<Result, Parameters> queryExecutor) {
+  public void registerExecutor(final @NotNull QueryExecutor<Result, Parameters> queryExecutor) {
     myPoint.addExplicitExtension(queryExecutor);
   }
 
   @Override
-  public void unregisterExecutor(@NotNull final QueryExecutor<Result, Parameters> queryExecutor) {
+  public void unregisterExecutor(final @NotNull QueryExecutor<Result, Parameters> queryExecutor) {
     myPoint.removeExplicitExtension(queryExecutor);
   }
 
   @Override
-  @NotNull
-  protected List<QueryExecutor<Result, Parameters>> getExecutors() {
+  protected @NotNull List<QueryExecutor<Result, Parameters>> getExecutors() {
     return myPoint.getExtensions();
   }
 }

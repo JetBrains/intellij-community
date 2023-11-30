@@ -17,7 +17,9 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
+import java.awt.Frame
 import java.awt.Graphics
 import java.awt.Insets
 import java.awt.Rectangle
@@ -56,6 +58,9 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   @JvmField
   internal var togglingFullScreenInProgress: Boolean = false
 
+  @Internal
+  var mouseReleaseCountSinceLastActivated = 0
+
   override fun getData(dataId: String): Any? = frameHelper?.getData(dataId)
 
   interface FrameHelper : DataProvider {
@@ -69,6 +74,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
 
   internal fun doSetRootPane(rootPane: JRootPane?) {
     super.setRootPane(rootPane)
+
     if (rootPane != null && isVisible && SystemInfoRt.isMac) {
       MacUtil.updateRootPane(this, rootPane)
     }
@@ -88,15 +94,25 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   }
 
   override fun setExtendedState(state: Int) {
+    val maximized = isMaximized(state)
+
     // do not load FrameInfoHelper class
-    if (LoadingState.COMPONENTS_REGISTERED.isOccurred && extendedState == NORMAL && isMaximized(state)) {
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred && extendedState == NORMAL && maximized) {
       normalBounds = bounds
       screenBounds = graphicsConfiguration?.bounds
       if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
         IDE_FRAME_EVENT_LOG.debug("Saved bounds for IDE frame ${normalBounds} and screen ${screenBounds} before maximizing")
       }
     }
-    super.setExtendedState(state)
+
+    if (maximized && SystemInfoRt.isXWindow && X11UiUtil.isInitialized()
+        && (state and Frame.ICONIFIED == 0) && isShowing) {
+      // Ubuntu (and may be other linux distros) doesn't set maximized correctly if the frame is MAXIMIZED_VERT already. Use X11 API
+      X11UiUtil.setMaximized(this, true)
+    }
+    else {
+      super.setExtendedState(state)
+    }
   }
 
   override fun paint(g: Graphics) {

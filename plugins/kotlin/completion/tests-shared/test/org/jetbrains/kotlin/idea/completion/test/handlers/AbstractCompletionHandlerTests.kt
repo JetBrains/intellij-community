@@ -14,6 +14,9 @@ import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.test.utils.IgnoreTests.runTestIfNotDisabledByFileDirective
+import org.jetbrains.kotlin.test.utils.withExtension
 import org.jetbrains.kotlin.utils.addToStdlib.indexOfOrNull
 
 abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: CompletionType) : CompletionHandlerTestBase() {
@@ -28,6 +31,28 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
     }
 
     protected open fun doTest(testPath: String) {
+        if (isFirPlugin) {
+            runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_K2, ".after") {
+                test(testPath)
+                val originalTestFile = dataFile()
+                val extension = originalTestFile.extension
+                val originalAfterFile = originalTestFile.withExtension("$extension.after")
+                val firAfterFile = originalTestFile.withExtension("fir.$extension.after")
+                IgnoreTests.cleanUpIdenticalFirTestFile(
+                    originalTestFile,
+                    additionalFileToMarkFirIdentical = originalAfterFile,
+                    additionalFileToDeleteIfIdentical = firAfterFile,
+                    additionalFilesToCompare = listOf(originalAfterFile to firAfterFile)
+                )
+            }
+        } else {
+            runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_K1, ".after") {
+                test(testPath)
+            }
+        }
+    }
+
+    private fun test(testPath: String) {
         val testFile = dataFile()
         setUpFixture(testFile.name)
         try {

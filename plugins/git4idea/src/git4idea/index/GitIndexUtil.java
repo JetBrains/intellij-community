@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -39,15 +39,13 @@ public final class GitIndexUtil {
   private static final String EXECUTABLE_MODE = "100755";
   private static final String DEFAULT_MODE = "100644";
 
-  @Nullable
-  public static StagedFile listStaged(@NotNull GitRepository repository, @NotNull FilePath filePath) throws VcsException {
+  public static @Nullable StagedFile listStaged(@NotNull GitRepository repository, @NotNull FilePath filePath) throws VcsException {
     List<StagedFile> result = listStaged(repository, Collections.singleton(filePath));
     if (result.size() != 1) return null;
     return result.get(0);
   }
 
-  @NotNull
-  public static List<StagedFile> listStaged(@NotNull GitRepository repository, @NotNull Collection<? extends FilePath> filePaths)
+  public static @NotNull List<StagedFile> listStaged(@NotNull GitRepository repository, @NotNull Collection<? extends FilePath> filePaths)
     throws VcsException {
     Project project = repository.getProject();
     VirtualFile root = repository.getRoot();
@@ -55,10 +53,9 @@ public final class GitIndexUtil {
     return listStaged(project, root, filePaths);
   }
 
-  @NotNull
-  public static List<StagedFile> listStaged(@NotNull Project project,
-                                            @NotNull VirtualFile root,
-                                            @NotNull Collection<? extends FilePath> filePaths) throws VcsException {
+  public static @NotNull List<StagedFile> listStaged(@NotNull Project project,
+                                                     @NotNull VirtualFile root,
+                                                     @NotNull Collection<? extends FilePath> filePaths) throws VcsException {
     List<StagedFile> result = new ArrayList<>();
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LS_FILES);
     h.addParameters("-s");
@@ -77,19 +74,17 @@ public final class GitIndexUtil {
     return result;
   }
 
-  @Nullable
-  public static StagedFile listTree(@NotNull GitRepository repository,
-                                    @NotNull FilePath filePath,
-                                    @NotNull VcsRevisionNumber revision) throws VcsException {
+  public static @Nullable StagedFile listTree(@NotNull GitRepository repository,
+                                              @NotNull FilePath filePath,
+                                              @NotNull VcsRevisionNumber revision) throws VcsException {
     List<StagedFileOrDirectory> result = listTree(repository, Collections.singleton(filePath), revision);
     if (result.size() != 1 || !(result.get(0) instanceof StagedFile)) return null;
     return (StagedFile)result.get(0);
   }
 
-  @NotNull
-  public static List<StagedFileOrDirectory> listTree(@NotNull GitRepository repository,
-                                                     @NotNull Collection<? extends FilePath> filePaths,
-                                                     @NotNull VcsRevisionNumber revision) throws VcsException {
+  public static @NotNull List<StagedFileOrDirectory> listTree(@NotNull GitRepository repository,
+                                                              @NotNull Collection<? extends FilePath> filePaths,
+                                                              @NotNull VcsRevisionNumber revision) throws VcsException {
     List<StagedFileOrDirectory> result = new ArrayList<>();
     for (List<String> paths : VcsFileUtil.chunkPaths(repository.getRoot(), filePaths)) {
       result.addAll(listTreeForRawPaths(repository, paths, revision));
@@ -97,10 +92,9 @@ public final class GitIndexUtil {
     return result;
   }
 
-  @NotNull
-  public static List<StagedFileOrDirectory> listTreeForRawPaths(@NotNull GitRepository repository,
-                                                                @NotNull List<String> filePaths,
-                                                                @NotNull VcsRevisionNumber revision) throws VcsException {
+  public static @NotNull List<StagedFileOrDirectory> listTreeForRawPaths(@NotNull GitRepository repository,
+                                                                         @NotNull List<String> filePaths,
+                                                                         @NotNull VcsRevisionNumber revision) throws VcsException {
     List<StagedFileOrDirectory> result = new ArrayList<>();
     VirtualFile root = repository.getRoot();
 
@@ -121,8 +115,7 @@ public final class GitIndexUtil {
     return result;
   }
 
-  @Nullable
-  private static StagedFile parseListFilesStagedRecord(@NotNull VirtualFile root, @NotNull String line) {
+  private static @Nullable StagedFile parseListFilesStagedRecord(@NotNull VirtualFile root, @NotNull String line) {
     try {
       StringScanner s = new StringScanner(line);
       String permissions = s.spaceToken();
@@ -142,8 +135,7 @@ public final class GitIndexUtil {
     }
   }
 
-  @Nullable
-  public static StagedFileOrDirectory parseListTreeRecord(@NotNull VirtualFile root, @NotNull String line) {
+  public static @Nullable StagedFileOrDirectory parseListTreeRecord(@NotNull VirtualFile root, @NotNull String line) {
     try {
       StringScanner s = new StringScanner(line);
       String permissions = s.spaceToken();
@@ -164,9 +156,8 @@ public final class GitIndexUtil {
     }
   }
 
-  @NotNull
-  public static Hash loadStagedSubmoduleHash(@NotNull GitRepository submodule,
-                                             @NotNull GitRepository parentRepo) throws VcsException {
+  public static @NotNull Hash loadStagedSubmoduleHash(@NotNull GitRepository submodule,
+                                                      @NotNull GitRepository parentRepo) throws VcsException {
     GitLineHandler h = new GitLineHandler(parentRepo.getProject(), parentRepo.getRoot(), GitCommand.SUBMODULE);
     h.addParameters("status", "--cached");
     h.addRelativeFiles(Collections.singletonList(submodule.getRoot()));
@@ -178,10 +169,9 @@ public final class GitIndexUtil {
     return HashImpl.build(hash);
   }
 
-  @Nullable
-  public static Hash loadSubmoduleHashAt(@NotNull GitRepository submodule,
-                                         @NotNull GitRepository parentRepo,
-                                         @NotNull VcsRevisionNumber revisionNumber) throws VcsException {
+  public static @Nullable Hash loadSubmoduleHashAt(@NotNull GitRepository submodule,
+                                                   @NotNull GitRepository parentRepo,
+                                                   @NotNull VcsRevisionNumber revisionNumber) throws VcsException {
     FilePath filePath = VcsUtil.getFilePath(submodule.getRoot());
     List<StagedFileOrDirectory> lsTree = listTree(parentRepo, Collections.singletonList(filePath), revisionNumber);
     if (lsTree.size() != 1) {
@@ -200,39 +190,34 @@ public final class GitIndexUtil {
     return HashImpl.build(tree.getBlobHash());
   }
 
-  @NotNull
-  public static Hash write(@NotNull GitRepository repository,
-                           @NotNull FilePath filePath,
-                           byte @NotNull [] bytes,
-                           boolean executable) throws VcsException {
+  public static @NotNull Hash write(@NotNull GitRepository repository,
+                                    @NotNull FilePath filePath,
+                                    byte @NotNull [] bytes,
+                                    boolean executable) throws VcsException {
     return write(repository, filePath, new ByteArrayInputStream(bytes), executable);
   }
 
-  @NotNull
-  public static Hash write(@NotNull GitRepository repository, @NotNull FilePath filePath, @NotNull InputStream content,
-                           boolean executable) throws VcsException {
+  public static @NotNull Hash write(@NotNull GitRepository repository, @NotNull FilePath filePath, @NotNull InputStream content,
+                                    boolean executable) throws VcsException {
     return write(repository.getProject(), repository.getRoot(), filePath, content, executable);
   }
 
-  @NotNull
-  public static Hash write(@NotNull Project project, @NotNull VirtualFile root,
-                           @NotNull FilePath filePath, @NotNull InputStream content,
-                           boolean executable) throws VcsException {
+  public static @NotNull Hash write(@NotNull Project project, @NotNull VirtualFile root,
+                                    @NotNull FilePath filePath, @NotNull InputStream content,
+                                    boolean executable) throws VcsException {
     return write(project, root, filePath, content, executable, false);
   }
 
-  @NotNull
-  public static Hash write(@NotNull Project project, @NotNull VirtualFile root,
-                           @NotNull FilePath filePath, @NotNull InputStream content,
-                           boolean executable, boolean addNewFiles) throws VcsException {
+  public static @NotNull Hash write(@NotNull Project project, @NotNull VirtualFile root,
+                                    @NotNull FilePath filePath, @NotNull InputStream content,
+                                    boolean executable, boolean addNewFiles) throws VcsException {
     Hash hash = hashObject(project, root, filePath, content);
     updateIndex(project, root, filePath, hash, executable, addNewFiles);
     return hash;
   }
 
-  @NotNull
-  private static Hash hashObject(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath filePath,
-                                 @NotNull InputStream content) throws VcsException {
+  private static @NotNull Hash hashObject(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath filePath,
+                                          @NotNull InputStream content) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.HASH_OBJECT);
     h.setSilent(true);
     h.addParameters("-w", "--stdin");
@@ -283,26 +268,24 @@ public final class GitIndexUtil {
   }
 
   public static class StagedFileOrDirectory {
-    @NotNull protected final FilePath myPath;
+    protected final @NotNull FilePath myPath;
 
     public StagedFileOrDirectory(@NotNull FilePath path) {
       myPath = path;
     }
 
-    @NotNull
-    public FilePath getPath() {
+    public @NotNull FilePath getPath() {
       return myPath;
     }
 
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "StagedFileOrDirectory[" + myPath + "]";
     }
   }
 
   public static class StagedFile extends StagedFileOrDirectory {
-    @NotNull private final String myBlobHash;
+    private final @NotNull String myBlobHash;
     private final boolean myExecutable;
 
     public StagedFile(@NotNull FilePath path, @NotNull String blobHash, boolean executable) {
@@ -311,8 +294,7 @@ public final class GitIndexUtil {
       myExecutable = executable;
     }
 
-    @NotNull
-    public String getBlobHash() {
+    public @NotNull String getBlobHash() {
       return myBlobHash;
     }
 
@@ -320,9 +302,8 @@ public final class GitIndexUtil {
       return myExecutable;
     }
 
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "StagedFile[" + myPath + "] at [" + myBlobHash + "]";
     }
   }
@@ -334,21 +315,19 @@ public final class GitIndexUtil {
   }
 
   public static class StagedSubrepo extends StagedFileOrDirectory {
-    @NotNull private final String myBlobHash;
+    private final @NotNull String myBlobHash;
 
     public StagedSubrepo(@NotNull FilePath path, @NotNull String blobHash) {
       super(path);
       myBlobHash = blobHash;
     }
 
-    @NotNull
-    public String getBlobHash() {
+    public @NotNull String getBlobHash() {
       return myBlobHash;
     }
 
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "StagedSubRepo[" + myPath + "] at [" + myBlobHash + "]";
     }
   }

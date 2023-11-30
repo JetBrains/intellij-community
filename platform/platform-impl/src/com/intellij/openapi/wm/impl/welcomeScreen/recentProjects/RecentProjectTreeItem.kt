@@ -8,10 +8,9 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
@@ -19,6 +18,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.launch
@@ -59,8 +59,7 @@ internal data class RecentProjectItem(
 
   companion object {
     fun openProjectAndLogRecent(file: Path, options: OpenProjectTask, projectGroup: ProjectGroup?) {
-      @Suppress("DEPRECATION")
-      ApplicationManager.getApplication().coroutineScope.launch {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
         RecentProjectsManagerBase.getInstanceEx().openProject(file, options)
         for (extension in ProjectDetector.EXTENSION_POINT_NAME.extensions) {
           extension.logRecentProjectOpened(projectGroup)
@@ -91,11 +90,8 @@ internal data class RecentProjectItem(
     }
 
     if (event.place == ActionPlaces.WELCOME_SCREEN) {
-      val welcomeFrame = SwingUtilities.getAncestorOfClass(FlatWelcomeFrame::class.java,
-                                                           event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) as FlatWelcomeFrame?
-      if (welcomeFrame != null) {
-        Disposer.dispose(welcomeFrame)
-      }
+      (SwingUtilities.getAncestorOfClass(FlatWelcomeFrame::class.java,
+                                         event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) as FlatWelcomeFrame?)?.dispose()
     }
 
     val forceOpenInNewFrame = BitUtil.isSet(event.modifiers, ActionEvent.CTRL_MASK) ||

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight;
 
@@ -12,6 +12,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ public final class PsiEquivalenceUtil {
   /**
    * @deprecated use {@link #areEquivalent(PsiElement, PsiElement, BiPredicate, boolean)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean areElementsEquivalent(@NotNull PsiElement element1,
                                               @NotNull PsiElement element2,
@@ -38,6 +40,8 @@ public final class PsiEquivalenceUtil {
   /**
    * @deprecated use {@link #areEquivalent(PsiElement, PsiElement, BiPredicate, BiPredicate)}
    */
+  
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean areElementsEquivalent(@NotNull PsiElement element1,
                                               @NotNull PsiElement element2,
@@ -61,7 +65,7 @@ public final class PsiEquivalenceUtil {
   }
 
   private static class ReferenceComparator implements BiPredicate<PsiReference, PsiReference> {
-    private @Nullable final BiPredicate<? super PsiElement, ? super PsiElement> myResolvedElementsComparator;
+    private final @Nullable BiPredicate<? super PsiElement, ? super PsiElement> myResolvedElementsComparator;
 
     ReferenceComparator(@Nullable BiPredicate<? super PsiElement, ? super PsiElement> resolvedElementsComparator) {
       myResolvedElementsComparator = resolvedElementsComparator;
@@ -79,6 +83,7 @@ public final class PsiEquivalenceUtil {
   /**
    * @deprecated use {@link #areEquivalent(PsiElement, PsiElement, BiPredicate, BiPredicate, Predicate, boolean)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean areElementsEquivalent(@NotNull PsiElement element1,
                                               @NotNull PsiElement element2,
@@ -141,7 +146,7 @@ public final class PsiEquivalenceUtil {
     return areEquivalent(element1, element2, null, false);
   }
 
-  public static PsiElement @NotNull [] getFilteredChildren(@NotNull final PsiElement element,
+  public static PsiElement @NotNull [] getFilteredChildren(final @NotNull PsiElement element,
                                                            @Nullable Predicate<? super PsiElement> isElementSignificantCondition,
                                                            boolean areCommentsSignificant) {
     ASTNode[] children1 = element.getNode().getChildren(null);

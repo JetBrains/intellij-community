@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.quickfix.KotlinCrossLanguageQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
-import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
+import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeCommand
@@ -306,7 +306,7 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
                         val hasCompanionObject = receiverClass.companionObjects.isNotEmpty()
                         val companionObject = runWriteAction {
                             val companionObject = receiverClass.getOrCreateCompanionObject()
-                            if (!hasCompanionObject && this@CreateCallableFromUsageFixBase.isExtension) companionObject.body?.delete()
+                            if (!hasCompanionObject && isExtension) companionObject.body?.delete()
 
                             companionObject
                         }

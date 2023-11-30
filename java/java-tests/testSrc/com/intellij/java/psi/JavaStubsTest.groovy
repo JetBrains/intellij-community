@@ -386,7 +386,9 @@ class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
   void "test remove extends reference before dot"() {
     def file = myFixture.addFileToProject("a.java", "class A extends B. { int a; }")
     WriteCommandAction.runWriteCommandAction(project) {
-      myFixture.findClass("A").extendsList.referenceElements[0].delete()
+      def javaFile = file as PsiJavaFile
+      def clazz = (javaFile.classes[0] as PsiUnnamedClass).innerClasses[0]
+      clazz.extendsList.referenceElements[0].delete()
     }
     PsiTestUtil.checkStubsMatchText(file)
   }
@@ -415,7 +417,9 @@ class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
   void "test add reference into broken extends list"() {
     def file = myFixture.addFileToProject("a.java", "class A extends.ends Foo { int a; }")
     WriteCommandAction.runWriteCommandAction(project) {
-      myFixture.findClass("A").extendsList.add(JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, file.resolveScope))
+      def javaFile = file as PsiJavaFile
+      def clazz = (javaFile.classes[0] as PsiUnnamedClass).innerClasses[0]
+      clazz.extendsList.add(JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, file.resolveScope))
     }
     PsiTestUtil.checkStubsMatchText(file)
   }
@@ -457,6 +461,18 @@ class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
     def clazz = myFixture.findClass("A")
     assert PsiFieldImpl.getDetachedInitializer(clazz.fields[0]) == null
     assert !(file as PsiFileImpl).contentsLoaded
+  }
+
+  void "test unnamed class"() {
+    def psiFile = myFixture.addFileToProject("a.java", """\
+      void test() {
+      }
+      
+      String s = "foo";
+      int i = 10;
+      static {} // not allowed by spec, but we parse
+      """.stripIndent())
+    PsiTestUtil.checkStubsMatchText(psiFile)
   }
 
   void "test array type use annotation stubbing"() {

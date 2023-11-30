@@ -2,10 +2,10 @@ MODULES
 my-app
 
 my-app.commonMain
-    targetPlatform = JS/JVM (1.8)/Native (general)
+    targetPlatform = JS/JVM (17)/Native (general)
 
 my-app.commonTest
-    targetPlatform = JS/JVM (1.8)/Native (general)
+    targetPlatform = JS/JVM (17)/Native (general)
 
 my-app.jsMain
     targetPlatform = JS
@@ -14,10 +14,10 @@ my-app.jsTest
     targetPlatform = JS
 
 my-app.jvmAndJsMain
-    targetPlatform = JS/JVM (1.8)
+    targetPlatform = JS/JVM (17)
 
 my-app.jvmAndJsTest
-    targetPlatform = JS/JVM (1.8)
+    targetPlatform = JS/JVM (17)
 
 my-app.jvmMain
     targetPlatform = JVM (17)

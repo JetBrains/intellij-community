@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 interface T
 interface B: T
 interface C: T
@@ -23,6 +22,7 @@ fun usage(b: B) {
     b.foo<caret>
 }
 
+// IGNORE_K2
 // EXIST: { lookupString: "fooForAny", itemText: "fooForAny", icon: "Function"}
 
 // EXIST: { lookupString: "fooForT", itemText: "fooForT", icon: "Function"}

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,12 +10,16 @@ import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.storage.BuildTargetStorages;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.builders.storage.StorageProvider;
 import org.jetbrains.jps.cmdline.BuildRunner;
+import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.impl.Containers;
+import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 
@@ -30,7 +34,7 @@ import java.util.function.Consumer;
 /**
  * @author Eugene Zhuravlev
  */
-public class BuildDataManager {
+public final class BuildDataManager {
   private static final int VERSION = 39 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
   private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
   private static final String SRC_TO_FORM_STORAGE = "src-form";
@@ -41,6 +45,8 @@ public class BuildDataManager {
   private final ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>(16, 0.75f, getConcurrencyLevel());
   private final OneToManyPathsMapping mySrcToFormMap;
   private final Mappings myMappings;
+  private final Object myGraphLock = new Object();
+  private DependencyGraph myDepGraph;
   private final BuildDataPaths myDataPaths;
   private final BuildTargetsState myTargetsState;
   private final OutputToTargetRegistry myOutputToTargetRegistry;
@@ -48,15 +54,13 @@ public class BuildDataManager {
   private final PathRelativizerService myRelativizer;
 
   private final StorageProvider<SourceToOutputMappingImpl> SRC_TO_OUT_MAPPING_PROVIDER = new StorageProvider<>() {
-    @NotNull
     @Override
-    public SourceToOutputMappingImpl createStorage(File targetDataDir) throws IOException {
+    public @NotNull SourceToOutputMappingImpl createStorage(File targetDataDir) throws IOException {
       return createStorage(targetDataDir, myRelativizer);
     }
 
-    @NotNull
     @Override
-    public SourceToOutputMappingImpl createStorage(File targetDataDir, PathRelativizerService relativizer) throws IOException {
+    public @NotNull SourceToOutputMappingImpl createStorage(File targetDataDir, PathRelativizerService relativizer) throws IOException {
       return new SourceToOutputMappingImpl(new File(new File(targetDataDir, SRC_TO_OUTPUT_STORAGE), SRC_TO_OUTPUT_FILE_NAME), relativizer);
     }
   };
@@ -66,7 +70,14 @@ public class BuildDataManager {
     myTargetsState = targetsState;
     mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"), relativizer);
     myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"), relativizer);
-    myMappings = new Mappings(getMappingsRoot(myDataPaths.getDataStorageRoot()), relativizer);
+    File mappingsRoot = getMappingsRoot(myDataPaths.getDataStorageRoot());
+    if (JavaBuilderUtil.isDepGraphEnabled()) {
+      myMappings = null;
+      createDependencyGraph(mappingsRoot, false);
+    }
+    else {
+      myMappings = new Mappings(mappingsRoot, relativizer);
+    }
     myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
     myRelativizer = relativizer;
   }
@@ -88,8 +99,7 @@ public class BuildDataManager {
     return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
   }
 
-  @NotNull
-  public <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
+  public @NotNull <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
     final BuildTargetStorages targetStorages = myTargetStorages.computeIfAbsent(target, t -> new BuildTargetStorages(t, myDataPaths));
     return targetStorages.getOrCreateStorage(provider, myRelativizer);
   }
@@ -100,6 +110,12 @@ public class BuildDataManager {
 
   public Mappings getMappings() {
     return myMappings;
+  }
+
+  public DependencyGraph getDependencyGraph() {
+    synchronized (myGraphLock) {
+      return myDepGraph;
+    }
   }
 
   public void cleanTargetStorages(BuildTarget<?> target) throws IOException {
@@ -137,6 +153,7 @@ public class BuildDataManager {
           wipeStorage(getOutputToSourceRegistryRoot(), myOutputToTargetRegistry);
         }
         finally {
+          File mappingsRoot = getMappingsRoot(myDataPaths.getDataStorageRoot());
           final Mappings mappings = myMappings;
           if (mappings != null) {
             synchronized (mappings) {
@@ -144,13 +161,38 @@ public class BuildDataManager {
             }
           }
           else {
-            FileUtil.delete(getMappingsRoot(myDataPaths.getDataStorageRoot()));
+            FileUtil.delete(mappingsRoot);
           }
+
+          createDependencyGraph(mappingsRoot, true);
         }
       }
       myTargetsState.clean();
     }
     saveVersion();
+  }
+
+  public void createDependencyGraph(File mappingsRoot, boolean deleteExisting) throws IOException {
+    synchronized (myGraphLock) {
+      DependencyGraph depGraph = myDepGraph;
+      if (depGraph == null) {
+        if (deleteExisting) {
+          FileUtil.delete(mappingsRoot);
+        }
+        myDepGraph = asSynchronizableGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())), myGraphLock);
+      }
+      else {
+        try {
+          depGraph.close();
+        }
+        finally {
+          if (deleteExisting) {
+            FileUtil.delete(mappingsRoot);
+          }
+          myDepGraph = asSynchronizableGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.getAbsolutePath())), myGraphLock);
+        }
+      }
+    }
   }
 
   public void flush(boolean memoryCachesOnly) {
@@ -191,6 +233,19 @@ public class BuildDataManager {
             }
             catch (BuildDataCorruptedException e) {
               throw e.getCause();
+            }
+          }
+
+          synchronized (myGraphLock) {
+            DependencyGraph depGraph = myDepGraph;
+            if (depGraph != null) {
+              myDepGraph = null;
+              try {
+                depGraph.close();
+              }
+              catch (BuildDataCorruptedException e) {
+                throw e.getCause();
+              }
             }
           }
         }
@@ -246,7 +301,7 @@ public class BuildDataManager {
   }
 
   public static File getMappingsRoot(final File dataStorageRoot) {
-    return new File(dataStorageRoot, MAPPINGS_STORAGE);
+    return new File(dataStorageRoot, JavaBuilderUtil.isDepGraphEnabled()? MAPPINGS_STORAGE + "-graph" : MAPPINGS_STORAGE);
   }
 
   private static void wipeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {
@@ -360,14 +415,12 @@ public class BuildDataManager {
     }
 
     @Override
-    @NotNull
-    public Collection<String> getSources() throws IOException {
+    public @NotNull Collection<String> getSources() throws IOException {
       return myDelegate.getSources();
     }
 
     @Override
-    @Nullable
-    public Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
+    public @Nullable Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
       return myDelegate.getOutputs(srcPath);
     }
 
@@ -377,14 +430,12 @@ public class BuildDataManager {
     }
 
     @Override
-    @NotNull
-    public Iterator<String> getSourcesIterator() throws IOException {
+    public @NotNull Iterator<String> getSourcesIterator() throws IOException {
       return myDelegate.getSourcesIterator();
     }
   }
 
-  @NotNull
-  private StorageOwner allTargetStorages() {
+  private @NotNull StorageOwner allTargetStorages() {
     return allTargetStorages(f -> {});
   }
   
@@ -403,6 +454,78 @@ public class BuildDataManager {
       @Override
       protected Iterable<BuildTargetStorages> getChildStorages() {
         return () -> myTargetStorages.values().iterator();
+      }
+    };
+  }
+
+  private static DependencyGraph asSynchronizableGraph(DependencyGraph graph, Object lock) {
+    return new DependencyGraph() {
+      @Override
+      public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources) {
+        synchronized (lock) {
+          return graph.createDelta(sourcesToProcess, deletedSources);
+        }
+      }
+
+      @Override
+      public DifferentiateResult differentiate(Delta delta, boolean calculateAffected) {
+        synchronized (lock) {
+          return graph.differentiate(delta, calculateAffected);
+        }
+      }
+
+      @Override
+      public void integrate(@NotNull DifferentiateResult diffResult) {
+        synchronized (lock) {
+          graph.integrate(diffResult);
+        }
+      }
+
+      @Override
+      public Iterable<BackDependencyIndex> getIndices() {
+        return graph.getIndices();
+      }
+
+      @Override
+      public @Nullable BackDependencyIndex getIndex(String name) {
+        return graph.getIndex(name);
+      }
+
+      @Override
+      public Iterable<NodeSource> getSources(@NotNull ReferenceID id) {
+        return graph.getSources(id);
+      }
+
+      @Override
+      public Iterable<ReferenceID> getRegisteredNodes() {
+        return graph.getRegisteredNodes();
+      }
+
+      @Override
+      public Iterable<NodeSource> getSources() {
+        return graph.getSources();
+      }
+
+      @Override
+      public Iterable<Node<?, ?>> getNodes(@NotNull NodeSource source) {
+        return graph.getNodes(source);
+      }
+
+      @Override
+      public <T extends Node<T, ?>> Iterable<T> getNodes(NodeSource src, Class<T> nodeSelector) {
+        return graph.getNodes(src, nodeSelector);
+      }
+
+      @Override
+      public @NotNull Iterable<ReferenceID> getDependingNodes(@NotNull ReferenceID id) {
+        return graph.getDependingNodes(id);
+      }
+
+      @Override
+      public void close() throws IOException {
+        synchronized (lock) {
+          graph.close();
+        }
       }
     };
   }

@@ -33,8 +33,7 @@ public abstract class AbstractAccessibleContextDelegate extends AccessibleContex
   /**
    * Subclasses provide the {@link AccessibleContext} to forward calls to.
    */
-  @NotNull
-  protected abstract AccessibleContext getDelegate();
+  protected abstract @NotNull AccessibleContext getDelegate();
 
   @Override
   public void setAccessibleName(String s) {

@@ -16,9 +16,11 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
@@ -34,7 +36,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -47,13 +48,13 @@ import static java.util.concurrent.TimeUnit.MINUTES;
  * Implementation stores small gists (<= {@link #MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES} in VFS file attributes,
  * and uses dedicated files in a {system}/huge-hists/ folder to store larger gists.
  */
-public class GistStorageImpl extends GistStorage {
+public final class GistStorageImpl extends GistStorage {
   private static final Logger LOG = Logger.getInstance(GistStorageImpl.class);
 
   /**
    * If  > 0: only store in VFS attributes gists <= this size. Store larger gists in dedicated files.
    * If == 0: store all gists in VFS attributes.
-   * Value should be < {@link com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage#MAX_ATTRIBUTE_VALUE_SIZE}
+   * Value should be < {@link AbstractAttributesStorage#MAX_ATTRIBUTE_VALUE_SIZE}
    */
   @VisibleForTesting
   public static final int MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES = getIntProperty("idea.gist.max-size-to-store-in-attributes", 50 * KiB);
@@ -63,7 +64,7 @@ public class GistStorageImpl extends GistStorage {
   /** `{caches}/huge-gists/{FSRecords.createdTimestamp}/' */
   private static final NotNullLazyValue<Path> DIR_FOR_HUGE_GISTS = NotNullLazyValue.atomicLazy(() -> {
     final String vfsStamp = Long.toString(FSRecords.getCreationTimestamp());
-    Path gistsDir = Paths.get(FSRecords.getCachesDir(), HUGE_GISTS_DIR_NAME, vfsStamp);
+    Path gistsDir = FSRecords.getCacheDir().resolve(HUGE_GISTS_DIR_NAME + "/" + vfsStamp);
     try {
       if (Files.isRegularFile(gistsDir)) {
         FileUtil.delete(gistsDir);
@@ -77,7 +78,7 @@ public class GistStorageImpl extends GistStorage {
     }
   });
 
-  private static final Map<String, GistImpl<?>> knownGists = ContainerUtil.createConcurrentWeakValueMap();
+  private static final Map<String, GistImpl<?>> knownGists = CollectionFactory.createConcurrentWeakValueMap();
 
   private static final Map<Pair<String, Integer>, FileAttribute> knownAttributes = FactoryMap.create(
     key -> new FileAttribute(key.first, key.second, false)
@@ -128,39 +129,46 @@ public class GistStorageImpl extends GistStorage {
    * there {fsrecords-timestamp} != FSRecords.creationTimestamp
    */
   private static void cleanupAncientGistsDirs() {
-    long currentVFSTimestamp = FSRecords.getCreationTimestamp();
-    Path hugeGistsDir = DIR_FOR_HUGE_GISTS.get();
-    Path hugeGistsParentDir = hugeGistsDir.getParent();
-    LOG.info("Cleaning old huge-gists dirs from [" + hugeGistsParentDir.toAbsolutePath() + "] ...");
-    try (var children = Files.list(hugeGistsParentDir)) {
-      children
-        .filter(Files::isDirectory)
-        .filter(dir -> {
-          String dirName = dir.getFileName().toString();
-          try {
-            long dirTimestamp = Long.parseLong(dirName);
-            return dirTimestamp != currentVFSTimestamp;
-          }
-          catch (NumberFormatException e) {
-            //intentionally don't remove dirs that looks like not created by us:
-            return false;
-          }
-        })
-        .forEach(outdatedHugeGistsDir -> {
-          try {
-            FileUtilRt.deleteRecursively(outdatedHugeGistsDir);
-          }
-          catch (IOException e) {
-            LOG.info("Can't delete old huge-gists dir [" + outdatedHugeGistsDir.toAbsolutePath() + "]", e);
-          }
-        });
+    try {
+      FSRecordsImpl vfs = FSRecords.getInstance();
+      long currentVFSTimestamp = vfs.getCreationTimestamp();
+      Path hugeGistsDir = DIR_FOR_HUGE_GISTS.get();
+      Path hugeGistsParentDir = hugeGistsDir.getParent();
+      LOG.info("Cleaning old huge-gists dirs from [" + hugeGistsParentDir.toAbsolutePath() + "] ...");
+      try (var children = Files.list(hugeGistsParentDir)) {
+        children
+          .filter(Files::isDirectory)
+          .filter(dir -> {
+            String dirName = dir.getFileName().toString();
+            try {
+              long dirTimestamp = Long.parseLong(dirName);
+              return dirTimestamp < currentVFSTimestamp;
+            }
+            catch (NumberFormatException e) {
+              //intentionally don't remove dirs that looks like not created by us:
+              return false;
+            }
+          })
+          .forEach(outdatedHugeGistsDir -> {
+            try {
+              FileUtilRt.deleteRecursively(outdatedHugeGistsDir);
+            }
+            catch (IOException e) {
+              LOG.info("Can't delete old huge-gists dir [" + outdatedHugeGistsDir.toAbsolutePath() + "]", e);
+            }
+          });
+        LOG.info("Cleaning old huge-gists dirs finished");
+      }
+      catch (IOException e) {
+        LOG.info("Can't list huge-gists dir [" + hugeGistsParentDir.toAbsolutePath() + "] children", e);
+      }
     }
-    catch (IOException e) {
-      LOG.info("Can't list huge-gists dir [" + hugeGistsParentDir.toAbsolutePath() + "] children", e);
+    catch (AlreadyDisposedException e) {
+      LOG.info("Can't cleanup old huge-gists: vfs is disposed -> try next time", e);
     }
   }
 
-  public static class GistImpl<Data> implements Gist<Data> {
+  public static final class GistImpl<Data> implements Gist<Data> {
     /**
      * Version of Gist persistent format: must be incremented each time Gist persistent
      * format is changed so that older records can't be read with new code.
@@ -234,7 +242,7 @@ public class GistStorageImpl extends GistStorage {
             else {
               Path gistPath = dedicatedGistFilePath(file, gistRecord.externalFileSuffix);
               if (!Files.exists(gistPath)) {
-                if (VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
+                if (VfsLog.isVfsTrackingEnabled()) {
                   // maybe there was a recovery: gists were lost, but attributes were recovered
                   LOG.warn("Gist file [" + gistPath + "] doesn't exist, probably a vfs recovery has happened recently?");
                   return GistData.empty();
@@ -481,7 +489,7 @@ public class GistStorageImpl extends GistStorage {
     }
   }
 
-  private static class GistRecord<T> {
+  private static final class GistRecord<T> {
     private final @NotNull String projectId;
     private final int gistStamp;
 

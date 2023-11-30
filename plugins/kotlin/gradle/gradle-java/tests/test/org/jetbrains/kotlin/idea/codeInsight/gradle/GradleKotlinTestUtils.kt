@@ -51,7 +51,9 @@ object GradleKotlinTestUtils {
             }
         """.trimIndent()
 
-        if (kotlinVersion.isSnapshot) {
+        // Artefact with `snapshot` in name or with pattern like `1.9.0-341` doesn't publish in public repositories
+        // and must be searched in local maven
+        if (kotlinVersion.isSnapshot || kotlinVersion.isStable && kotlinVersion.classifier != null ) {
             +mavenLocal
         }
 

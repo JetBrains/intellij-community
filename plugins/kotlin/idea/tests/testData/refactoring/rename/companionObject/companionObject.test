@@ -2,5 +2,6 @@
   "type": "KOTLIN_CLASS",
   "classId": "/Foo.Bar",
   "newName": "Baz",
-  "mainFile": "toBeRenamed.kt"
+  "mainFile": "toBeRenamed.kt",
+  "enabledInK2": true
 }

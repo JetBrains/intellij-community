@@ -10,7 +10,7 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-abstract class HoledIcon(protected val icon: Icon) : JBScalableIcon(), ReplaceableIcon {
+abstract class HoledIcon(val icon: Icon) : JBScalableIcon(), ReplaceableIcon {
   protected abstract fun copyWith(icon: Icon):Icon
 
   protected abstract fun createHole(width: Int, height: Int): Shape?

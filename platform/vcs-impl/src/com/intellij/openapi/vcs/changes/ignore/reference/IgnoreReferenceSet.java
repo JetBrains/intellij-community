@@ -309,7 +309,7 @@ public class IgnoreReferenceSet extends FileReferenceSet {
      * @return Psi item
      */
     @Nullable
-    private PsiFileSystemItem getPsiFileSystemItem(@NotNull PsiManager manager, @NotNull VirtualFile file) {
+    private static PsiFileSystemItem getPsiFileSystemItem(@NotNull PsiManager manager, @NotNull VirtualFile file) {
       if (!file.isValid()) {
         return null;
       }

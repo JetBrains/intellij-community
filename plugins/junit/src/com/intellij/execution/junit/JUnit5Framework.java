@@ -29,7 +29,7 @@ public class JUnit5Framework extends JUnitTestFramework {
   }
 
   @Override
-  protected boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
+  public boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
     return isFrameworkApplicable(clazz, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION) ||
            //check explicit jupiter to support library with broken dependency       
            isFrameworkApplicable(clazz, JUnitUtil.TEST5_ANNOTATION);
@@ -55,6 +55,7 @@ public class JUnit5Framework extends JUnitTestFramework {
   @Override
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
     if (canBePotential) return isUnderTestSources(clazz);
+    if (!isFrameworkAvailable(clazz)) return false;
     return JUnitUtil.isJUnit5TestClass(clazz, false);
   }
 

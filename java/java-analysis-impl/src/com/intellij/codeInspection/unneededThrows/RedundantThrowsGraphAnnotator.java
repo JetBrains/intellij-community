@@ -40,7 +40,8 @@ public final class RedundantThrowsGraphAnnotator extends RefGraphAnnotatorEx {
       else if (expression instanceof PsiMethodReferenceExpression) {
         PsiMethod resolved = ObjectUtils.tryCast(((PsiMethodReferenceExpression)expression).resolve(), PsiMethod.class);
         if (resolved != null) {
-          exceptionTypes = Arrays.asList(resolved.getThrowsList().getReferencedTypes());
+          PsiClassType[] types = resolved.getThrowsList().getReferencedTypes();
+          exceptionTypes = types.length == 0 ? Collections.emptyList() : Arrays.asList(types);
         }
         method = LambdaUtil.getFunctionalInterfaceMethod(expression);
       }

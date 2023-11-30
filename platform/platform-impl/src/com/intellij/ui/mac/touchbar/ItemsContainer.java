@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -136,8 +136,7 @@ final class ItemsContainer {
     myItems.clear();
   }
 
-  @Nullable
-  synchronized TBItem findItem(String uid) {
+  synchronized @Nullable TBItem findItem(String uid) {
     for (TBItem item : myItems) {
       final String itemUid = item.getUid();
       if (itemUid != null && itemUid.equals(uid)) {

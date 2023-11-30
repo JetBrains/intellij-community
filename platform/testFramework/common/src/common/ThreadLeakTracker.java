@@ -10,6 +10,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -71,6 +72,7 @@ public final class ThreadLeakTracker {
       "Coroutines Debugger Cleaner", // kotlinx.coroutines.debug.internal.DebugProbesImpl.startWeakRefCleanerThread
       "dockerjava-netty",
       "External compiler",
+      FilePageCacheLockFree.DEFAULT_HOUSEKEEPER_THREAD_NAME,
       "Finalizer",
       FlushingDaemon.NAME,
       "HttpClient-",
@@ -216,7 +218,8 @@ public final class ThreadLeakTracker {
            || isFutureTaskAboutToFinish(stackTrace)
            || isIdleDefaultCoroutineExecutorThread(thread, stackTrace)
            || isCoroutineSchedulerPoolThread(thread, stackTrace)
-           || isKotlinCIOSelector(stackTrace);
+           || isKotlinCIOSelector(stackTrace)
+           || isStarterTestFramework(stackTrace);
   }
 
   private static boolean isWellKnownOffender(@NotNull String threadName) {
@@ -317,6 +320,24 @@ public final class ThreadLeakTracker {
                  && element.getClassName().equals("kotlinx.coroutines.scheduling.CoroutineScheduler$Worker")
     );
     return insideCpuWorkerIdle;
+  }
+
+  /**
+   * Starter framework [intellij.ide.starter] / [intellij.ide.starter.extended] register its own JUnit listeners.
+   * Order of execution of listeners isn't defined, so when thread leak detector detects a leak the listener from starter
+   * might not have a chance to clean up after tests.
+   */
+  private static boolean isStarterTestFramework(StackTraceElement @NotNull [] stackTrace) {
+    // java.lang.AssertionError: Thread leaked: Thread[Redirect stderr,5,main] (alive) RUNNABLE
+    //--- its stacktrace:
+    // ...
+    // at app//com.intellij.ide.starter.process.exec.ProcessExecutor$redirectProcessOutput$1.invoke(ProcessExecutor.kt:40)
+    // at app//kotlin.concurrent.ThreadsKt$thread$thread$1.run(Thread.kt:30)
+
+    return ContainerUtil.exists(
+      stackTrace,
+      element -> element.getClassName().contains("com.intellij.ide.starter")
+    );
   }
 
   private static @NotNull CharSequence dumpThreadsToString(

@@ -3,6 +3,7 @@ package com.jetbrains.python.run.configuration
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ui.CommandLinePanel
+import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.SettingsEditorFragmentType
 import com.intellij.ide.macro.MacrosDialog
@@ -15,8 +16,6 @@ import com.intellij.ui.RawCommandLineEditor
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonRunConfiguration
 import java.awt.BorderLayout
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 
 class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfiguration) :
   AbstractPythonConfigurationFragmentedEditor<PythonRunConfiguration>(runConfiguration) {
@@ -35,10 +34,11 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
       { config: PythonRunConfiguration, field: RawCommandLineEditor -> config.scriptParameters = field.text.trim() },
       { true })
     MacrosDialog.addMacroSupport(parametersEditor.editorField, MacrosDialog.Filters.ALL) { false }
+    parametersEditor.editorField.emptyText.setText(PyBundle.message("python.run.configuration.fragments.script.parameters.hint"))
+    FragmentedSettingsUtil.setupPlaceholderVisibility(parametersEditor.editorField)
     scriptParametersFragment.setHint(PyBundle.message("python.run.configuration.fragments.script.parameters.hint"))
     scriptParametersFragment.actionHint = PyBundle.message("python.run.configuration.fragments.script.parameters.hint")
     fragments.add(scriptParametersFragment)
-
 
     val runWithConsole = SettingsEditorFragment.createTag<PythonRunConfiguration>(
       "py.run.with.python.console",
@@ -68,38 +68,24 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
         "py.redirect.input",
         ExecutionBundle.message("redirect.input.from.name"),
         ExecutionBundle.message("group.operating.system"),
-        labeledComponent, SettingsEditorFragmentType.COMMAND_LINE,
-        { config: PythonRunConfiguration, component: LabeledComponent<TextFieldWithBrowseButton> ->
+        labeledComponent,
+        SettingsEditorFragmentType.EDITOR,
+        { config, component ->
           component.component.text = config.inputFile
         },
-        { config: PythonRunConfiguration, component: LabeledComponent<TextFieldWithBrowseButton> ->
+        { config, component ->
           val filePath = component.component.text
           config.isRedirectInput = component.isVisible && StringUtil.isNotEmpty(filePath)
           config.inputFile = filePath
         },
-        { config: PythonRunConfiguration -> config.isRedirectInput })
+        { config -> config.isRedirectInput })
     redirectInputFrom.actionHint = ExecutionBundle.message("read.input.from.the.specified.file")
-    redirectInputFrom.setHint(ExecutionBundle.message("read.input.from.the.specified.file"))
-    fragments.add(redirectInputFrom)
+    addToFragmentsBeforeEditors(fragments, redirectInputFrom)
 
     val editors = mutableListOf<SettingsEditorFragment<PythonRunConfiguration, *>>()
     editors.add(runWithConsole)
     editors.add(emulateTerminal)
     editors.add(redirectInputFrom)
     addSingleSelectionListeners(editors)
-  }
-
-  private fun addSingleSelectionListeners(editors: MutableList<SettingsEditorFragment<PythonRunConfiguration, *>>) {
-    for ((i, editor) in editors.withIndex()) {
-      editor.component().addComponentListener(object : ComponentAdapter() {
-        override fun componentShown(e: ComponentEvent?) {
-          for ((j, otherEditor) in editors.withIndex()) {
-            if (i != j) {
-              otherEditor.isSelected = false
-            }
-          }
-        }
-      })
-    }
   }
 }

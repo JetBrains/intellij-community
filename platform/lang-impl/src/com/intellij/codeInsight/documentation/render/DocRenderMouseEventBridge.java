@@ -17,7 +17,7 @@ import sun.awt.AWTAccessor;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-class DocRenderMouseEventBridge implements EditorMouseListener, EditorMouseMotionListener {
+final class DocRenderMouseEventBridge implements EditorMouseListener, EditorMouseMotionListener {
   private final DocRenderSelectionManager mySelectionManager;
   private DocRenderer.EditorPane myMouseOverPane;
   private DocRenderer.EditorPane myDragPane;

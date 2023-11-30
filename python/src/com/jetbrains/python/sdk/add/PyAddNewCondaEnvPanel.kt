@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
@@ -26,7 +25,6 @@ import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.target.conda.condaSupportedLanguages
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import icons.PythonIcons
@@ -106,7 +104,7 @@ open class PyAddNewCondaEnvPanel(
   }
 
   override fun validateAll(): List<ValidationInfo> =
-    listOfNotNull(CondaEnvSdkFlavor.validateCondaPath(condaPathField.text), validateEnvironmentDirectoryLocation(pathField, PathInfo.localPathInfoProvider))
+    emptyList() // Pre target validation is not supported
 
   override fun getOrCreateSdk(): Sdk? {
     val condaPath = condaPathField.text

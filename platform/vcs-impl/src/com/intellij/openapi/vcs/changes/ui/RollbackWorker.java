@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -178,7 +177,8 @@ public class RollbackWorker {
             changesToRefresh.addAll(changes);
 
             if (myIndicator != null) {
-              myIndicator.setText(VcsBundle.message("changes.progress.text.vcs.name.performing.operation.name", vcs.getDisplayName(), StringUtil.toLowerCase(myOperationName)));
+              myIndicator.setText(VcsBundle.message("changes.progress.text.vcs.name.performing.operation.name", vcs.getDisplayName(),
+                                                    StringUtil.toLowerCase(myOperationName)));
               myIndicator.setIndeterminate(false);
               myIndicator.checkCanceled();
             }
@@ -211,46 +211,33 @@ public class RollbackWorker {
     }
 
     private void doRefresh(final Project project, final List<? extends Change> changesToRefresh) {
-      final Runnable forAwtThread = () -> {
-        VcsDirtyScopeManager manager = VcsDirtyScopeManager.getInstance(myProject);
-        ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
-        for (Change change : changesToRefresh) {
-          final ContentRevision beforeRevision = change.getBeforeRevision();
-          final ContentRevision afterRevision = change.getAfterRevision();
-          if ((!change.isIsReplaced()) && beforeRevision != null && Comparing.equal(beforeRevision, afterRevision)) {
-            manager.fileDirty(beforeRevision.getFile());
-          }
-          else {
-            markDirty(manager, vcsManager, beforeRevision);
-            markDirty(manager, vcsManager, afterRevision);
-          }
-        }
-
-        myAfterRefresh.run();
-      };
+      VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+      ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
+      for (FilePath filePath : ChangesUtil.iteratePaths(changesToRefresh)) {
+        markDirty(filePath, vcsManager, dirtyScopeManager);
+      }
 
       RefreshVFsSynchronously.updateChangesForRollback(changesToRefresh);
 
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(forAwtThread, null, project);
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(myAfterRefresh, null, project);
     }
 
-    private void markDirty(@NotNull VcsDirtyScopeManager manager,
-                           @NotNull ProjectLevelVcsManager vcsManager,
-                           @Nullable ContentRevision revision) {
-      if (revision != null) {
-        FilePath parent = revision.getFile().getParentPath();
-        if (parent != null && couldBeMarkedDirty(vcsManager, parent)) {
-          manager.dirDirtyRecursively(parent);
-        }
-        else {
-          manager.fileDirty(revision.getFile());
+    private static void markDirty(@NotNull FilePath filePath,
+                                  @NotNull ProjectLevelVcsManager vcsManager,
+                                  @NotNull VcsDirtyScopeManager dirtyScopeManager) {
+      AbstractVcs vcs = vcsManager.getVcsFor(filePath);
+      if (vcs == null) return;
+
+      if (vcs.areDirectoriesVersionedItems()) {
+        FilePath parentPath = filePath.getParentPath();
+        if (parentPath != null && vcsManager.getVcsFor(parentPath) == vcs) {
+          dirtyScopeManager.dirDirtyRecursively(parentPath);
+          return;
         }
       }
-    }
 
-    private boolean couldBeMarkedDirty(@NotNull ProjectLevelVcsManager vcsGuess, @NotNull FilePath path) {
-      return vcsGuess.getVcsFor(path) != null;
+      dirtyScopeManager.fileDirty(filePath);
     }
 
     private void deleteAddedFilesLocally(final List<? extends Change> changes) {
@@ -267,7 +254,7 @@ public class RollbackWorker {
           final File ioFile = rev.getFile().getIOFile();
           if (myIndicator != null) {
             myIndicator.setText2(ioFile.getAbsolutePath());
-            myIndicator.setFraction(((double) i) / changesSize);
+            myIndicator.setFraction(((double)i) / changesSize);
           }
           FileUtil.delete(ioFile);
         }

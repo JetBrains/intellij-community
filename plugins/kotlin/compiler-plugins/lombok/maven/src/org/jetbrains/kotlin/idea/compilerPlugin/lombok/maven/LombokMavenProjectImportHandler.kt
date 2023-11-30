@@ -36,9 +36,7 @@ class LombokMavenProjectImportHandler : AbstractMavenImportHandler() {
             }
         }
     }
-
-    companion object {
-        private const val MAVEN_SUBPLUGIN_NAME = "lombok"
-        private val CONFIG_FILE_PREFIX = "$MAVEN_SUBPLUGIN_NAME:$CONFIG_OPTION_NAME="
-    }
 }
+
+private const val MAVEN_SUBPLUGIN_NAME = "lombok"
+private const val CONFIG_FILE_PREFIX = "$MAVEN_SUBPLUGIN_NAME:$CONFIG_OPTION_NAME="

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.value;
 
@@ -35,8 +35,7 @@ public class DfaValueFactory {
   /**
    * @return context (can be used to determine variable initial values)
    */
-  @Nullable
-  public PsiElement getContext() {
+  public @Nullable PsiElement getContext() {
     return myContext;
   }
 
@@ -65,8 +64,7 @@ public class DfaValueFactory {
     return myValues.get(id);
   }
 
-  @NotNull
-  public DfaTypeValue getUnknown() {
+  public @NotNull DfaTypeValue getUnknown() {
     return fromDfType(DfType.TOP);
   }
 
@@ -75,18 +73,15 @@ public class DfaValueFactory {
    * sometimes pushed on the stack as control flow implementation detail.
    * It's never assigned to the variable or merged with any other value.
    */
-  @NotNull
-  public DfaValue getSentinel() {
+  public @NotNull DfaValue getSentinel() {
     return mySentinelValue;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public DfaTypeValue fromDfType(@NotNull DfType dfType) {
+  public @NotNull DfaTypeValue fromDfType(@NotNull DfType dfType) {
     return myTypeValueFactory.create(dfType);
   }
 
@@ -94,8 +89,7 @@ public class DfaValueFactory {
     return Collections.unmodifiableCollection(myValues);
   }
 
-  @NotNull
-  public DfaControlTransferValue controlTransfer(TransferTarget kind, FList<Trap> traps) {
+  public @NotNull DfaControlTransferValue controlTransfer(TransferTarget kind, FList<Trap> traps) {
     return myControlTransfers.get(Pair.create(kind, traps));
   }
 
@@ -118,18 +112,15 @@ public class DfaValueFactory {
     }
   };
 
-  @NotNull
-  public DfaVariableValue.Factory getVarFactory() {
+  public @NotNull DfaVariableValue.Factory getVarFactory() {
     return myVarFactory;
   }
 
-  @NotNull
-  public DfaWrappedValue.Factory getWrapperFactory() {
+  public @NotNull DfaWrappedValue.Factory getWrapperFactory() {
     return myBoxedFactory;
   }
 
-  @NotNull
-  public DfaBinOpValue.Factory getBinOpFactory() {
+  public @NotNull DfaBinOpValue.Factory getBinOpFactory() {
     return myBinOpFactory;
   }
 

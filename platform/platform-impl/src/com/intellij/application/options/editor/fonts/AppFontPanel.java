@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -26,14 +26,14 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 
-public class AppFontPanel implements Disposable {
+public final class AppFontPanel implements Disposable {
 
-  @NotNull private final AppFontOptionsPanel myOptionsPanel;
-  @NotNull private final FontEditorPreview   myPreview;
-  @NotNull private final EditorColorsScheme  myPreviewScheme;
-  @NotNull private final JPanel              myTopPanel;
+  private final @NotNull AppFontOptionsPanel myOptionsPanel;
+  private final @NotNull FontEditorPreview   myPreview;
+  private final @NotNull EditorColorsScheme  myPreviewScheme;
+  private final @NotNull JPanel              myTopPanel;
   private                JLabel              myEditorFontLabel;
-  @NotNull private final JPanel              myWarningPanel;
+  private final @NotNull JPanel              myWarningPanel;
 
   public AppFontPanel(@NotNull FontOptionsPanelFactory fontOptionsPanelFactory) {
     myTopPanel = new JPanel(new BorderLayout());
@@ -79,8 +79,7 @@ public class AppFontPanel implements Disposable {
   }
 
 
-  @NotNull
-  private JLabel createHyperlinkLabel() {
+  private @NotNull JLabel createHyperlinkLabel() {
     HoverHyperlinkLabel label = new HoverHyperlinkLabel("");
     label.addHyperlinkListener(new HyperlinkListener() {
       @Override
@@ -93,7 +92,7 @@ public class AppFontPanel implements Disposable {
     return label;
   }
 
-  protected void navigateToColorSchemeFontConfigurable() {
+  private void navigateToColorSchemeFontConfigurable() {
     Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myTopPanel));
     if (allSettings != null) {
       final Configurable colorSchemeConfigurable = allSettings.find(ColorAndFontOptions.ID);
@@ -131,20 +130,17 @@ public class AppFontPanel implements Disposable {
     myPreview.disposeUIResources();
   }
 
-  @NotNull
-  private static EditorColorsScheme createPreviewScheme() {
+  private static @NotNull EditorColorsScheme createPreviewScheme() {
     EditorColorsScheme scheme = (EditorColorsScheme)EditorColorsManager.getInstance().getSchemeForCurrentUITheme().clone();
     scheme.setFontPreferences(new FontPreferencesImpl());
     return scheme;
   }
 
-  @NotNull
-  public JPanel getComponent() {
+  public @NotNull JPanel getComponent() {
     return myTopPanel;
   }
 
-  @NotNull
-  public AppFontOptionsPanel getOptionsPanel() {
+  public @NotNull AppFontOptionsPanel getOptionsPanel() {
     return myOptionsPanel;
   }
 

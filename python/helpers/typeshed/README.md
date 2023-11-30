@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/python/typeshed/actions/workflows/tests.yml/badge.svg)](https://github.com/python/typeshed/actions/workflows/tests.yml)
 [![Chat at https://gitter.im/python/typing](https://badges.gitter.im/python/typing.svg)](https://gitter.im/python/typing?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Pull Requests Welcome](https://img.shields.io/badge/pull%20requests-welcome-brightgreen.svg)](https://github.com/python/typeshed/blob/master/CONTRIBUTING.md)
+[![Pull Requests Welcome](https://img.shields.io/badge/pull%20requests-welcome-brightgreen.svg)](https://github.com/python/typeshed/blob/main/CONTRIBUTING.md)
 
 ## About
 
@@ -20,18 +20,24 @@ the project the stubs are for, but instead report them here to typeshed.**
 Further documentation on stub files, typeshed, and Python's typing system in
 general, can also be found at https://typing.readthedocs.io/en/latest/.
 
-Typeshed supports Python versions 2.7 and 3.7 and up.
+Typeshed fully supports Python versions 3.8 and up. Support for Python 3.7
+is limited: see https://github.com/python/typeshed/issues/10113
+for details.
 
 ## Using
 
-If you're just using mypy (or pytype or PyCharm), as opposed to
+If you're just using a type checker ([mypy](https://github.com/python/mypy/),
+[pyright](https://github.com/microsoft/pyright),
+[pytype](https://github.com/google/pytype/), PyCharm, ...), as opposed to
 developing it, you don't need to interact with the typeshed repo at
-all: a copy of standard library part of typeshed is bundled with mypy.
+all: a copy of standard library part of typeshed is bundled with type checkers.
 And type stubs for third party packages and modules you are using can
 be installed from PyPI. For example, if you are using `six` and `requests`,
 you can install the type stubs using
 
-    $ pip install types-six types-requests
+```bash
+$ pip install types-six types-requests
+```
 
 These PyPI packages follow [PEP 561](http://www.python.org/dev/peps/pep-0561/)
 and are automatically released (multiple times a day, when needed) by
@@ -40,12 +46,65 @@ and are automatically released (multiple times a day, when needed) by
 Type checkers should be able to use these stub packages when installed. For more
 details, see the documentation for your type checker.
 
+### Package versioning for third-party stubs
+
+Version numbers of third-party stub packages consist of at least four parts.
+All parts of the stub version, except for the last part, correspond to the
+version of the runtime package being stubbed. For example, if the `types-foo`
+package has version `1.2.0.7`, this guarantees that the `types-foo` package
+contains stubs targeted against `foo==1.2.*` and tested against the latest
+version of `foo` matching that specifier. In this example, the final element
+of the version (7) indicates that this is the eighth revision of the stubs for
+`foo==1.2.*`. If an update to the stubs were pushed (but the stubs were still
+aiming to provide annotations for `foo==1.2.*`), then the version of
+`types-foo` would increment to `1.2.0.8`.
+
+At typeshed, we try to keep breaking changes to a minimum. However, due to the
+nature of stubs, any version bump can introduce changes that might make your
+code fail to type check.
+
+There are several strategies available for specifying the version of a stubs
+package you're using, each with its own tradeoffs:
+
+1. Use the same bounds that you use for the package being stubbed. For example,
+   if you use `requests>=2.30.0,<2.32`, you can use
+   `types-requests>=2.30.0,<2.32`. This ensures that the stubs are compatible
+   with the package you are using, but it carries a small risk of breaking
+   type checking due to changes in the stubs.
+
+   Another risk of this strategy is that stubs often lag behind
+   the package being stubbed. You might want to force the package being stubbed
+   to a certain minimum version because it fixes a critical bug, but if
+   correspondingly updated stubs have not been released, your type
+   checking results may not be fully accurate.
+2. Pin the stubs to a known good version and update the pin from time to time
+   (either manually, or using a tool such as dependabot or renovate).
+
+   For example, if you use `types-requests==2.31.0.1`, you can have confidence
+   that upgrading dependencies will not break type checking. However, you will
+   miss out on improvements in the stubs that could potentially improve type
+   checking until you update the pin. This strategy also has the risk that the
+   stubs you are using might become incompatible with the package being stubbed.
+3. Don't pin the stubs. This is the option that demands the least work from
+   you when it comes to updating version pins, and has the advantage that you
+   will automatically benefit from improved stubs whenever a new version of the
+   stubs package is released. However, it carries the risk that the stubs
+   become incompatible with the package being stubbed.
+
+   For example, if a new major version of the package is released, there's a
+   chance the stubs might be updated to reflect the new version of the runtime
+   package before you update the package being stubbed.
+
+You can also switch between the different strategies as needed. For example,
+you could default to strategy (1), but fall back to strategy (2) when
+a problem arises that can't easily be fixed.
+
 ### The `_typeshed` package
 
 typeshed includes a package `_typeshed` as part of the standard library.
 This package and its submodules contains utility types, but is not
 available at runtime. For more information about how to use this package,
-[see the `stdlib/_typeshed` directory](https://github.com/python/typeshed/tree/master/stdlib/_typeshed).
+[see the `stdlib/_typeshed` directory](https://github.com/python/typeshed/tree/main/stdlib/_typeshed).
 
 ## Discussion
 

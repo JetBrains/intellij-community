@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -296,7 +296,7 @@ public final class FileBasedIndexScanUtil {
         InputData<K, V> inputData = map == null || map.isEmpty() ? InputData.empty() : new InputData<>(map) {};
         Computable<Boolean> computable = index.prepareUpdate(fileId, inputData);
         ProgressManager.getInstance().computeInNonCancelableSection(computable::compute);
-        IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
+        IndexingStamp.setFileIndexedStateCurrent(fileId, indexId, false);
         return map;
       }
       finally {
@@ -325,7 +325,7 @@ public final class FileBasedIndexScanUtil {
     return id == TodoIndex.NAME;
   }
 
-  private static class InThisThreadProcessor {
+  private static final class InThisThreadProcessor {
     final Thread thread = Thread.currentThread();
     final ConcurrentLinkedQueue<BooleanSupplier> queue = new ConcurrentLinkedQueue<>();
 

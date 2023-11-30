@@ -21,6 +21,7 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -215,4 +216,9 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   }
 
   open fun addSelectionRecord(file: VirtualFile, window: EditorWindow) {}
+
+  @Internal
+  @Experimental
+  open suspend fun waitForTextEditors() {
+  }
 }

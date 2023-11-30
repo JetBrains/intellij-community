@@ -13,22 +13,23 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ParentWithNullsMultipleImpl(val dataSource: ParentWithNullsMultipleData) : ParentWithNullsMultiple, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ParentWithNullsMultipleImpl(private val dataSource: ParentWithNullsMultipleData) : ParentWithNullsMultiple, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentWithNullsMultiple::class.java,
                                                                             ChildWithNullsMultiple::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
     )
 
@@ -46,6 +47,7 @@ open class ParentWithNullsMultipleImpl(val dataSource: ParentWithNullsMultipleDa
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ParentWithNullsMultipleData?) : ModifiableWorkspaceEntityBase<ParentWithNullsMultiple, ParentWithNullsMultipleData>(
     result), ParentWithNullsMultiple.Builder {
@@ -75,7 +77,7 @@ open class ParentWithNullsMultipleImpl(val dataSource: ParentWithNullsMultipleDa
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -178,7 +180,7 @@ open class ParentWithNullsMultipleImpl(val dataSource: ParentWithNullsMultipleDa
 class ParentWithNullsMultipleData : WorkspaceEntityData<ParentWithNullsMultiple>() {
   lateinit var parentData: String
 
-  fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
+  internal fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentWithNullsMultiple> {
     val modifiable = ParentWithNullsMultipleImpl.Builder(null)
@@ -195,6 +197,11 @@ class ParentWithNullsMultipleData : WorkspaceEntityData<ParentWithNullsMultiple>
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.ParentWithNullsMultiple") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -248,9 +255,5 @@ class ParentWithNullsMultipleData : WorkspaceEntityData<ParentWithNullsMultiple>
     var result = javaClass.hashCode()
     result = 31 * result + parentData.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

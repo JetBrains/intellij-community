@@ -56,4 +56,7 @@ public interface PydevConsoleRunner {
 
   @TestOnly
   void setSdk(Sdk sdk);
+
+  @TestOnly
+  @Nullable Sdk getSdk();
 }

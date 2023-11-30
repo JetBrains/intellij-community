@@ -8,30 +8,36 @@ import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 
 public class SizedReferenceInfo extends JavaReferenceInfo {
-  private final long mySize;
+  private final long myRetainedSize;
+  private final long myShallowSize;
 
-  public SizedReferenceInfo(@NotNull ObjectReference objectReference, long size) {
+  public SizedReferenceInfo(@NotNull ObjectReference objectReference, long shallowSize, long retainedSize) {
     super(objectReference);
-    mySize = size;
+    myRetainedSize = retainedSize;
+    myShallowSize = shallowSize;
   }
 
   @Override
   public ValueDescriptorImpl createDescriptor(@NotNull Project project) {
-    return new SizedValueDescriptor(project, getObjectReference());
+    return new SizedValueDescriptor(project, getObjectReference(), myShallowSize, myRetainedSize);
   }
 
-  public long size() {
-    return mySize;
-  }
+  public static class SizedValueDescriptor extends InstanceValueDescriptor {
+    private final long myRetainedSize;
+    private final long myShallowSize;
 
-  private class SizedValueDescriptor extends InstanceValueDescriptor {
-    protected SizedValueDescriptor(@NotNull Project project, @NotNull ObjectReference value) {
+    protected SizedValueDescriptor(@NotNull Project project, @NotNull ObjectReference value, long shallowSize, long retainedSize) {
       super(project, value);
+      myRetainedSize = retainedSize;
+      myShallowSize = shallowSize;
     }
 
-    @Override
-    public String calcValueName() {
-      return " [" + mySize + "] " + super.calcValueName();
+    public long getRetainedSize() {
+      return myRetainedSize;
+    }
+
+    public long getShallowSize() {
+      return myShallowSize;
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * Removes <a href="http://unicode.org/faq/utf_bom.html">file's BOM</a> (if any).
  */
-public class RemoveBomAction extends AnAction implements DumbAware {
+public final class RemoveBomAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(RemoveBomAction.class);
 
   public RemoveBomAction() {
@@ -133,8 +133,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
    * @param roots VFS roots to traverse
    * @return collection of detected files with defined {@link VirtualFile#getBOM() BOM} if any; empty collection otherwise
    */
-  @NotNull
-  private static List<VirtualFile> getFilesWithBom(VirtualFile @NotNull [] roots) {
+  private static @NotNull List<VirtualFile> getFilesWithBom(VirtualFile @NotNull [] roots) {
     List<VirtualFile> result = new ArrayList<>();
     for (VirtualFile root : roots) {
       VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>() {

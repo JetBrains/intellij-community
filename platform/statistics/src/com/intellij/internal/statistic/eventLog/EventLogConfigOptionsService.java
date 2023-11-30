@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.config.EventLogOptions;
@@ -16,8 +16,10 @@ import java.util.Set;
 
 import static com.intellij.internal.statistic.config.EventLogOptions.*;
 
-@Service(Service.Level.APP)
+@Service
 public final class EventLogConfigOptionsService {
+
+  @Topic.AppLevel
   public static final Topic<EventLogConfigOptionsListener> TOPIC
     = new Topic<>(EventLogConfigOptionsListener.class, Topic.BroadcastDirection.NONE);
   private static final Set<String> ourOptions = Set.of(DATA_THRESHOLD, GROUP_THRESHOLD, GROUP_ALERT_THRESHOLD,

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 
-public class KeymapUsageCollector extends ApplicationUsagesCollector {
+public final class KeymapUsageCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("keymaps.name", 2);
   private static final StringEventField KEYMAP_NAME = EventFields.StringValidatedByEnum("keymap_name", "keymaps");
   private static final StringEventField BASED_ON = EventFields.StringValidatedByEnum("based_on", "keymaps");
@@ -30,9 +30,8 @@ public class KeymapUsageCollector extends ApplicationUsagesCollector {
     return GROUP;
   }
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics() {
+  public @NotNull Set<MetricEvent> getMetrics() {
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager == null) return Collections.emptySet();
 
@@ -46,8 +45,7 @@ public class KeymapUsageCollector extends ApplicationUsagesCollector {
     return Collections.singleton(KEYMAP.metric(data));
   }
 
-  @NotNull
-  private static String getKeymapName(@Nullable Keymap keymap) {
+  private static @NotNull String getKeymapName(@Nullable Keymap keymap) {
     if (keymap == null) return "unknown";
     return keymap.canModify() ? "custom" : keymap.getName();
   }

@@ -4,7 +4,13 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinDiagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinDiagnosticModCommandFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactories
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPsiBasedFactory
@@ -51,6 +57,14 @@ class ChangeVariableMutabilityFix(
             quickFixesPsiBasedFactory { psiElement: KtPropertyAccessor ->
                 listOf(ChangeVariableMutabilityFix(psiElement.property, true))
             }
+
+        val VAL_REASSIGNMENT: KotlinDiagnosticFixFactory<KtFirDiagnostic.ValReassignment> = diagnosticFixFactory(KtFirDiagnostic.ValReassignment::class) { diagnostic ->
+            val property = diagnostic.variable.psi as? KtValVarKeywordOwner ?: return@diagnosticFixFactory emptyList()
+            listOf(
+                ChangeVariableMutabilityFix(property, makeVar = true)
+            )
+        }
+
 
         val VAR_OVERRIDDEN_BY_VAL_FACTORY: QuickFixesPsiBasedFactory<PsiElement> =
             quickFixesPsiBasedFactory { psiElement: PsiElement ->

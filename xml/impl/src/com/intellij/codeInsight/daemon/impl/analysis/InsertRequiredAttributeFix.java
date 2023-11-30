@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.editorActions.XmlEditUtil;
@@ -30,8 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private final String myAttrName;
   private final String[] myValues;
-  @NonNls
-  private static final String NAME_TEMPLATE_VARIABLE = "name";
+  private static final @NonNls String NAME_TEMPLATE_VARIABLE = "name";
 
   public InsertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName, String @NotNull ... values) {
     super(tag);
@@ -40,21 +39,19 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return XmlPsiBundle.message("xml.quickfix.insert.required.attribute.text", myAttrName);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlPsiBundle.message("xml.quickfix.insert.required.attribute.family");
   }
 
   @Override
-  public void invoke(@NotNull final Project project,
+  public void invoke(final @NotNull Project project,
                      @NotNull PsiFile file,
-                     @Nullable final Editor editor,
+                     final @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     XmlTag myTag = (XmlTag)startElement;

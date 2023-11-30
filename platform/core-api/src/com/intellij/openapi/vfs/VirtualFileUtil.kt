@@ -7,8 +7,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
-import com.intellij.openapi.util.io.getNormalizedBaseAndRelativePaths
-import com.intellij.openapi.util.io.toNioPath
+import com.intellij.openapi.util.io.relativizeToClosestAncestor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -19,6 +18,7 @@ import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
+fun VirtualFile.validOrNull() = if (isValid) this else null
 
 val VirtualFile.isFile: Boolean
   get() = isValid && !isDirectory
@@ -55,24 +55,39 @@ fun VirtualFile.findPsiFile(project: Project): PsiFile? {
   return PsiManager.getInstance(project).findFile(this)
 }
 
+private fun VirtualFile.relativizeToClosestAncestor(
+  relativePath: String
+): Pair<VirtualFile, Path> {
+  val basePath = Path.of(path)
+  val (normalizedBasePath, normalizedRelativePath) = basePath.relativizeToClosestAncestor(relativePath)
+  var baseVirtualFile = this
+  repeat(basePath.nameCount - normalizedBasePath.nameCount) {
+    baseVirtualFile = checkNotNull(baseVirtualFile.parent) {
+      """
+        |Cannot resolve base virtual file for $baseVirtualFile
+        |  basePath = $path
+        |  relativePath = $relativePath
+      """.trimMargin()
+    }
+  }
+  return baseVirtualFile to normalizedRelativePath
+}
+
 private inline fun VirtualFile.getResolvedVirtualFile(
   relativePath: String,
   getChild: VirtualFile.(String, Boolean) -> VirtualFile
 ): VirtualFile {
-  val basePath = path.toNioPath()
-  val (normalizedBasePath, normalizedRelativePath) = basePath.getNormalizedBaseAndRelativePaths(relativePath)
-  var baseVirtualFile = this
-  for (i in normalizedBasePath.nameCount until basePath.nameCount) {
-    baseVirtualFile = checkNotNull(baseVirtualFile.parent) {
-      "Cannot resolve base virtual file for: $path/$relativePath"
-    }
-  }
+  val (baseVirtualFile, normalizedRelativePath) = relativizeToClosestAncestor(relativePath)
   var virtualFile = baseVirtualFile
   if (normalizedRelativePath.pathString.isNotEmpty()) {
     val names = normalizedRelativePath.map { it.pathString }
     for ((i, name) in names.withIndex()) {
       if (!virtualFile.isDirectory) {
-        throw IOException("Expected directory instead of file: ${virtualFile.path}")
+        throw IOException("""
+          |Expected directory instead of file: $virtualFile
+          |  basePath = $path
+          |  relativePath = $relativePath
+        """.trimMargin())
       }
       virtualFile = virtualFile.getChild(name, i == names.lastIndex)
     }
@@ -91,7 +106,11 @@ fun VirtualFile.findFileOrDirectory(relativePath: @SystemIndependent String): Vi
 fun VirtualFile.findFile(relativePath: @SystemIndependent String): VirtualFile? {
   val file = findFileOrDirectory(relativePath) ?: return null
   if (!file.isFile) {
-    throw IOException("Expected file instead of directory: $path/$relativePath")
+    throw IOException("""
+      |Expected file instead of directory: $file
+      |  basePath = $path
+      |  relativePath = $relativePath
+    """.trimMargin())
   }
   return file
 }
@@ -100,7 +119,11 @@ fun VirtualFile.findFile(relativePath: @SystemIndependent String): VirtualFile? 
 fun VirtualFile.findDirectory(relativePath: @SystemIndependent String): VirtualFile? {
   val directory = findFileOrDirectory(relativePath) ?: return null
   if (!directory.isDirectory) {
-    throw IOException("Expected directory instead of file: $path/$relativePath")
+    throw IOException("""
+      |Expected directory instead of file: $directory
+      |  basePath = $path
+      |  relativePath = $relativePath
+    """.trimMargin())
   }
   return directory
 }
@@ -114,7 +137,11 @@ fun VirtualFile.findOrCreateFile(relativePath: @SystemIndependent String): Virtu
     }
   }
   if (!file.isFile) {
-    throw IOException("Expected file instead of directory: $path/$relativePath")
+    throw IOException("""
+      |Expected file instead of directory: $file
+      |  basePath = $path
+      |  relativePath = $relativePath
+    """.trimMargin())
   }
   return file
 }
@@ -125,14 +152,22 @@ fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): 
     findChild(name) ?: createChildDirectory(fileSystem, name)
   }
   if (!directory.isDirectory) {
-    throw IOException("Expected directory instead of file: $path/$relativePath")
+    throw IOException("""
+      |Expected directory instead of file: $directory
+      |  basePath = $path
+      |  relativePath = $relativePath
+    """.trimMargin())
   }
   return directory
 }
 
-fun Path.refreshAndFindVirtualFile(): VirtualFile? {
+fun Path.refreshAndFindVirtualFileOrDirectory(): VirtualFile? {
   val fileManager = VirtualFileManager.getInstance()
-  val file = fileManager.refreshAndFindFileByNioPath(this) ?: return null
+  return fileManager.refreshAndFindFileByNioPath(this)
+}
+
+fun Path.refreshAndFindVirtualFile(): VirtualFile? {
+  val file = refreshAndFindVirtualFileOrDirectory() ?: return null
   if (!file.isFile) {
     throw IOException("Expected file instead of directory: $this")
   }
@@ -140,8 +175,7 @@ fun Path.refreshAndFindVirtualFile(): VirtualFile? {
 }
 
 fun Path.refreshAndFindVirtualDirectory(): VirtualFile? {
-  val fileManager = VirtualFileManager.getInstance()
-  val file = fileManager.refreshAndFindFileByNioPath(this) ?: return null
+  val file = refreshAndFindVirtualFileOrDirectory() ?: return null
   if (!file.isDirectory) {
     throw IOException("Expected directory instead of file: $this")
   }

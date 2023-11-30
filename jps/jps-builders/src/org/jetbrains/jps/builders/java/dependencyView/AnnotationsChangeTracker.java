@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -75,9 +61,9 @@ public abstract class AnnotationsChangeTracker {
   /**
    * @deprecated Use {@link AnnotationsChangeTracker#methodAnnotationsChanged(NamingContext, ProtoMethodEntity, Difference.Specifier, Difference.Specifier)}
    */
-  @Deprecated(forRemoval = true) // Make sure that Kotlin JPS plugin (located in kotlin repo) doesn't use this API before removing the API
-  @NotNull
-  public Set<Recompile> methodAnnotationsChanged(
+  // Make sure that Kotlin JPS plugin (located in kotlin repo) doesn't use this API before removing the API
+  @Deprecated(forRemoval = true)
+  public @NotNull Set<Recompile> methodAnnotationsChanged(
     DependencyContext context, MethodRepr method,
     Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff,
     Difference.Specifier<ParamAnnotation, Difference> paramAnnotationsDiff
@@ -92,9 +78,8 @@ public abstract class AnnotationsChangeTracker {
    * @param paramAnnotationsDiff differences descriptor on method parameters annotations
    * @return a set of specifiers, determining what places in the program should be recompiled, see {@link Recompile}
    */
-  @NotNull
   @ApiStatus.Internal
-  public Set<Recompile> methodAnnotationsChanged(
+  public @NotNull Set<Recompile> methodAnnotationsChanged(
     NamingContext context, ProtoMethodEntity method,
     Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff,
     Difference.Specifier<ParamAnnotation, Difference> paramAnnotationsDiff
@@ -124,9 +109,8 @@ public abstract class AnnotationsChangeTracker {
    * @param annotationsDiff differences descriptor for annotations on the field
    * @return a set of specifiers, determining what places in the program should be recompiled, see {@link Recompile}
    */
-  @NotNull
   @ApiStatus.Internal
-  public Set<Recompile> fieldAnnotationsChanged(NamingContext context, ProtoFieldEntity field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
+  public @NotNull Set<Recompile> fieldAnnotationsChanged(NamingContext context, ProtoFieldEntity field, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
     if (field instanceof FieldRepr) {
       Set<Recompile> result = fieldAnnotationsChanged(context, (FieldRepr)field, annotationsDiff);
       if (!result.isEmpty()) {
@@ -143,8 +127,7 @@ public abstract class AnnotationsChangeTracker {
    * @param annotationsDiff differences descriptor for the class annotations
    * @return a set of specifiers, determining what places in the program should be recompiled, see {@link Recompile}
    */
-  @NotNull
-  public Set<Recompile> classAnnotationsChanged(NamingContext context, ClassRepr aClass, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
+  public @NotNull Set<Recompile> classAnnotationsChanged(NamingContext context, ClassRepr aClass, Difference.Specifier<TypeRepr.ClassType, Difference> annotationsDiff) {
     return RECOMPILE_NONE;
   }
 }

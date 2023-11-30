@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents Type Alias Statement added in <a href="https://peps.python.org/pep-0695/">PEP 695</a>
  */
 public interface PyTypeAliasStatement extends PyStatement, PsiNameIdentifierOwner, PyTypeParameterListOwner, PyTypedElement,
-                                              StubBasedPsiElement<PyTypeAliasStatementStub>, ScopeOwner {
+                                              StubBasedPsiElement<PyTypeAliasStatementStub>, PyQualifiedNameOwner, ScopeOwner {
 
   @Nullable
   PyExpression getTypeExpression();

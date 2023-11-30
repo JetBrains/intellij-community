@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.keyStorage;
 
 import com.intellij.openapi.Forceable;
@@ -7,9 +7,18 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Closeable;
 import java.io.IOException;
 
-/** Every single method call must be guarded by lockRead/lockWrite -- including .close() and .force()! */
+/**
+ * Every single method call must be guarded by lockRead/lockWrite -- including .close() and .force()!
+ * <p>
+ * TODO RC: there is inconsistency in interpreting offset/ids by this class: from the usage, all
+ * int params/return values here are kind of 'id'. I.e. append(value) returns valueId, something
+ * that could be used to access value later on -- read(valueId) it back, checkBytesAreTheSame(valueId, value),
+ * enumerate all values with processAll(). But all apt parameters are named 'addr' or 'offset',
+ * which implies it is physical offset in some storage -- which is inconsistent, especially because
+ * there are implementations there valueId is an id itself (see {@link InlinedKeyStorage})
+ */
 public interface AppendableObjectStorage<Data> extends Forceable, Closeable {
-  Data read(int addr, boolean checkAccess) throws IOException;
+  Data read(int valueId, boolean checkAccess) throws IOException;
 
   /**
    * Method now has quite convoluted semantics (inferred from implementation and use-cases):
@@ -20,16 +29,17 @@ public interface AppendableObjectStorage<Data> extends Forceable, Closeable {
    * the whole duration of (force+processAll) calls. But force() requires writeLock to be held,
    * since this 'some lock' must be the writeLock -- which is usually quite undesirable, since
    * processAll is a long call.
-   *
+   * <p/>
    * Hence, currently the method used as 'eventually consistent': i.e. callsites call {@link #force()}
    * under writeLock, and after that call processAll under readLock (or, sometimes, under no lock at all)
    * -- which means some items could be missed.
    */
   boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException;
 
+  /** @return ID of value appended, by which value could be referred later on */
   int append(Data value) throws IOException;
 
-  boolean checkBytesAreTheSame(int addr, Data value) throws IOException;
+  boolean checkBytesAreTheSame(int valueId, Data value) throws IOException;
 
   void clear() throws IOException;
 
@@ -50,6 +60,6 @@ public interface AppendableObjectStorage<Data> extends Forceable, Closeable {
 
   @FunctionalInterface
   interface StorageObjectProcessor<Data> {
-    boolean process(int offset, Data data);
+    boolean process(int valueId, Data value) throws IOException;
   }
 }

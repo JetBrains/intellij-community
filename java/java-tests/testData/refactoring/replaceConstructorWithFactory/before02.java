@@ -1,5 +1,5 @@
 class A {
-    public A(int i) {<caret>
+    public A<caret>(int i) {
     }
 
     A method() {

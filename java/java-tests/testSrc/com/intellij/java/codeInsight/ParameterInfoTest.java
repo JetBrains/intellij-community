@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoComponent;
@@ -11,6 +12,7 @@ import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.codeInspection.DataFlowInspection8Test;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -178,7 +180,6 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
     assertEquals(3, itemsToShow.length);
-    assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
     ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, -1);
     MockUpdateParameterInfoContext updateParameterInfoContext = updateParameterInfo(handler, list, itemsToShow);
     assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) ||
@@ -196,7 +197,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
     assertEquals(2, itemsToShow.length);
-    assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
+    MethodParameterInfoHandler.getMethodFromCandidate(itemsToShow[0]);
     ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, -1);
     MockUpdateParameterInfoContext updateParameterInfoContext = updateParameterInfo(handler, list, itemsToShow);
     assertTrue(updateParameterInfoContext.isUIComponentEnabled(0) || updateParameterInfoContext.isUIComponentEnabled(1));
@@ -223,7 +224,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
     assertEquals(1, itemsToShow.length);
-    assertEquals(0, ((MethodCandidateInfo)itemsToShow[0]).getElement().getParameterList().getParametersCount());
+    assertEquals(0, MethodParameterInfoHandler.getMethodFromCandidate(itemsToShow[0]).getParameterList().getParametersCount());
   }
 
   public void testAfterGenericsInsideCall() {
@@ -236,12 +237,9 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
     assertEquals(2, itemsToShow.length);
-    assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
-    PsiMethod method = ((MethodCandidateInfo)itemsToShow[0]).getElement();
     ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, 1);
     parameterContext.setUIComponentEnabled(true);
-    PsiSubstitutor substitutor = ((MethodCandidateInfo)itemsToShow[0]).getSubstitutor();
-    String presentation = MethodParameterInfoHandler.updateMethodPresentation(method, substitutor, parameterContext);
+    String presentation = MethodParameterInfoHandler.updateMethodPresentationFromCandidate(parameterContext, itemsToShow[0]);
     assertEquals("<html>Class&lt;T&gt; type, <b>boolean tags</b></html>", removeCurrentParameterColor(presentation));
   }
 
@@ -267,11 +265,8 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertNotNull(list);
     Object[] itemsToShow = context.getItemsToShow();
     assertNotNull(itemsToShow);
-    assertTrue(itemsToShow[lineIndex] instanceof MethodCandidateInfo);
-    PsiMethod method = ((MethodCandidateInfo)itemsToShow[lineIndex]).getElement();
     ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, getEditor(), handler, parameterIndex);
-    PsiSubstitutor substitutor = ((MethodCandidateInfo)itemsToShow[lineIndex]).getSubstitutor();
-    return MethodParameterInfoHandler.updateMethodPresentation(method, substitutor, parameterContext);
+    return MethodParameterInfoHandler.updateMethodPresentationFromCandidate(parameterContext, itemsToShow[lineIndex]);
   }
 
   private CreateParameterInfoContext createContext() {
@@ -532,6 +527,52 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     type('(');
     waitForAllAsyncStuff();
     checkHintContents(null);
+  }
+
+  @NeedsIndex.SmartMode(reason = "MethodParameterInfoHandler.appendModifierList doesn't work in dumb mode")
+  public void testInferredAnnotation() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("tu", myFixture);
+    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
+    String defaultNotNull = nnnManager.getDefaultNotNull();
+    nnnManager.setDefaultNotNull("tu.NotNull");
+    try {
+      configureJava("""
+                      class X {
+                          public static void main(String[] args) {
+                              System.out.println(getSomething(<caret>));
+                          }
+                                          
+                          public static String getSomething(Something l) {
+                              return l.toString();
+                          }
+                      }
+                      """);
+      showParameterInfo();
+      checkHintContents("<html><b>@NotNull Something l</b></html>");
+    }
+    finally {
+      nnnManager.setDefaultNotNull(defaultNotNull);
+    }
+  }
+
+  @NeedsIndex.SmartMode(reason = "MethodParameterInfoHandler.appendModifierList doesn't work in dumb mode")
+  public void testQualifierTypeUse() {
+    configureJava("""
+                    import java.lang.annotation.*;
+                    import java.util.Map;
+                    class X {
+                        void foo(@NotNull Map.Entry p, @NotNull Map m, Map.Entry p1, Map.@NotNull Entry p2) {
+                    
+                            foo(<caret>);
+                        }
+                    }
+                    
+                    @Documented
+                    @Target({ElementType.TYPE_USE, ElementType.PARAMETER})
+                    @interface NotNull {}
+                    """);
+    showParameterInfo();
+    checkHintContents("<html><b>@NotNull Map.Entry p</b>, @NotNull Map m, Entry p1, @NotNull Entry p2</html>");
   }
 
   public void testCustomHandlerHighlighterWithEscaping() {

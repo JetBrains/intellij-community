@@ -1,7 +1,9 @@
 package com.jetbrains.python.fixtures;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.inspections.PyInspection;
 import org.jetbrains.annotations.NotNull;
@@ -56,8 +58,14 @@ public abstract class PyInspectionTestCase extends PyTestCase {
 
   protected void doMultiFileTest(@NotNull String filename) {
     myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
-    final PsiFile currentFile = myFixture.configureFromTempProjectFile(filename);
+    PsiFile currentFile = myFixture.configureFromTempProjectFile(filename);
     configureInspection();
+    if (!currentFile.isValid()) {
+      VirtualFile virtualFile = currentFile.getVirtualFile();
+      currentFile = currentFile.getManager().findFile(virtualFile);
+    }
+    assertNotNull(currentFile);
+    assertTrue(currentFile.isValid());
     assertProjectFilesNotParsed(currentFile);
     assertSdkRootsNotParsed(currentFile);
   }

@@ -1,5 +1,4 @@
 0(1) element: null
 1(2) element: PyTypeAliasStatement
-2(3) READ ACCESS: str
-3(4) WRITE ACCESS: myType
-4() element: null
+2(3) WRITE ACCESS: myType
+3() element: null

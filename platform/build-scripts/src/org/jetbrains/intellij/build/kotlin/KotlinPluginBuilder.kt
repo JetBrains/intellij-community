@@ -23,11 +23,6 @@ object KotlinPluginBuilder {
    */
   const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
 
-  /**
-   * Version of Kotlin compiler which is used in the cooperative development setup in kt-master && kt-*-master branches
-   */
-  private const val KOTLIN_COOP_DEV_VERSION = "1.7.255"
-
   @SuppressWarnings("SpellCheckingInspection")
   val MODULES: List<String> = persistentListOf(
     "kotlin.plugin.common",
@@ -41,13 +36,11 @@ object KotlinPluginBuilder {
     "kotlin.base.kdoc",
     "kotlin.base.platforms",
     "kotlin.base.facet",
-    "kotlin.base.klib",
     "kotlin.base.project-structure",
     "kotlin.base.external-build-system",
     "kotlin.base.scripting",
     "kotlin.base.analysis-api-providers",
     "kotlin.base.analysis",
-    "kotlin.base.highlighting",
     "kotlin.base.code-insight",
     "kotlin.base.jps",
     "kotlin.base.analysis-api.utils",
@@ -59,9 +52,9 @@ object KotlinPluginBuilder {
     "kotlin.base.fe10.analysis",
     "kotlin.base.fe10.analysis-api-providers",
     "kotlin.base.fe10.kdoc",
-    "kotlin.base.fe10.highlighting",
     "kotlin.base.fe10.code-insight",
     "kotlin.base.fe10.obsolete-compat",
+    "kotlin.base.fe10.project-structure",
     "kotlin.core",
     "kotlin.idea",
     "kotlin.fir.frontend-independent",
@@ -117,19 +110,21 @@ Android Studio: workaround for b/218317110 */
     "kotlin.formatter",
     "kotlin.repl",
     "kotlin.git",
+    "kotlin.base.injection",
     "kotlin.injection",
+    "kotlin.injection-k2",
     "kotlin.scripting",
     "kotlin.coverage",
     "kotlin.ml-completion",
     "kotlin.copyright",
     "kotlin.spellchecker",
     "kotlin.jvm-decompiler",
-    "kotlin.properties",
     "kotlin.j2k.post-processing",
     "kotlin.j2k.idea",
     "kotlin.j2k.old",
     "kotlin.j2k.old.post-processing",
     "kotlin.j2k.new",
+    "kotlin.onboarding",
     "kotlin.plugin-updater",
     "kotlin.preferences",
     "kotlin.project-configuration",
@@ -159,6 +154,7 @@ Android Studio: workaround for b/218317110 */
     "kotlin.features-trainer",
     "kotlin.base.fir.analysis-api-providers",
     "kotlin.base.fir.code-insight",
+    "kotlin.base.fir.project-structure",
     "kotlin.code-insight.api",
     "kotlin.code-insight.utils",
     "kotlin.code-insight.intentions-shared",
@@ -167,7 +163,9 @@ Android Studio: workaround for b/218317110 */
     "kotlin.code-insight.descriptions",
     "kotlin.code-insight.intentions-k1",
     "kotlin.code-insight.intentions-k2",
+    "kotlin.code-insight.inspections-k1",
     "kotlin.code-insight.inspections-k2",
+    "kotlin.code-insight.k1",
     "kotlin.code-insight.k2",
     "kotlin.code-insight.override-implement-shared",
     "kotlin.code-insight.override-implement-k1",
@@ -178,17 +176,21 @@ Android Studio: workaround for b/218317110 */
     "kotlin.code-insight.postfix-templates-k1",
     "kotlin.code-insight.postfix-templates-k2",
     "kotlin.code-insight.structural-search-k1",
+    "kotlin.code-insight.structural-search-k2",
     "kotlin.code-insight.line-markers-shared",
     "kotlin.code-insight.line-markers-k2",
     "kotlin.fir",
     "kotlin.searching.k2",
     "kotlin.searching.base",
-    "kotlin.highlighting",
+    "kotlin.highlighting.shared",
+    "kotlin.highlighting.k1",
+    "kotlin.highlighting.k2",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",
     "kotlin.fir.fir-low-level-api-ide-impl",
     "kotlin.navigation",
     "kotlin.refactorings.common",
+    "kotlin.refactorings.introduce.k2",
     "kotlin.refactorings.k2",
     "kotlin.refactorings.move.k2",
     "kotlin.refactorings.rename.k2",
@@ -270,16 +272,27 @@ Android Studio: workaround for b/218317110 */
         spec.withProjectLibrary(library, LibraryPackMode.STANDALONE_MERGED)
       }
 
-      if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES && kind == KotlinPluginKind.IJ) {
-        spec.withModules(persistentListOf(
-          "kotlin-ultimate.common-native",
-          //noinspection SpellCheckingInspection
-          "kotlin-ultimate.javascript.debugger",
-          "kotlin-ultimate.javascript.nodeJs",
-          "kotlin-ultimate.ultimate-plugin",
-          "kotlin-ultimate.ultimate-native",
-          "kotlin-ultimate.profiler",
-        ))
+      if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES) {
+        val ultimateModules = when (kind) {
+          KotlinPluginKind.IJ -> persistentListOf(
+            "kotlin-ultimate.common-native",
+            "kotlin-ultimate.javascript.debugger",
+            "kotlin-ultimate.javascript.nodeJs",
+            "kotlin-ultimate.ultimate-plugin",
+            "kotlin-ultimate.ultimate-native",
+            "kotlin-ultimate.profiler",
+          )
+          KotlinPluginKind.Fleet -> persistentListOf(
+            "kotlin-ultimate.common-native",
+            "kotlin-ultimate.javascript.debugger",
+            "kotlin-ultimate.javascript.nodeJs",
+            "kotlin-ultimate.ultimate-fleet-plugin",
+            "kotlin-ultimate.ultimate-native",
+            //"kotlin-ultimate.profiler", FIXME: Causes perf problems in Fleet
+          )
+          else -> persistentListOf()
+        }
+        spec.withModules(ultimateModules)
       }
 
       val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
@@ -301,7 +314,6 @@ Android Studio: workaround for b/218317110 */
       spec.withProjectLibrary("kotlinc.kotlin-compiler-ir")
 
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
-      spec.withProjectLibrary("kotlinc.kotlin-stdlib", "kotlinc-lib.jar")
       spec.withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection
       spec.withProjectLibrary("javaslang", LibraryPackMode.STANDALONE_MERGED)
@@ -321,25 +333,18 @@ Android Studio: workaround for b/218317110 */
       spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
         override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
 /* Android Studio: our build number format differs from upstream.
-          val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|SNAPSHOT.*)\$").matcher(ideBuildVersion)
+          val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|\\d+\\.SNAPSHOT.*)\$").matcher(ideBuildVersion)
 */        val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+__BUILD_NUMBER__)\$").matcher(ideBuildVersion)
           if (ijBuildNumber.matches()) {
-            val major = ijBuildNumber.group(1)
-            val minor = ijBuildNumber.group(2)
-            val library = context.project.libraryCollection.libraries
-              .firstOrNull { it.name.startsWith("kotlinc.kotlin-jps-plugin-classpath") && it.type is JpsRepositoryLibraryType }
-
-            val kotlinVersion = System.getProperty("force.override.kotlin.compiler.version")
-                                ?: library?.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data?.version
-                                ?: KOTLIN_COOP_DEV_VERSION
-
-            val version = "${major}-${kotlinVersion}-${kind}${minor}"
-            context.messages.info("version: $version")
-            return version
+            // IJ installer configurations.
+            // In this environment, ideBuildVersion matches ^(\d+)\.([\d.]+|\d+\.SNAPSHOT.*)\$
+            return "$ideBuildVersion-$kind"
           }
-          // Build number isn't recognized as IJ build number then it means build
-          // number must be plain Kotlin plugin version (build configuration in kt-branch)
+
           if (ideBuildVersion.contains("IJ")) {
+            // TC configurations that are inherited from AbstractKotlinIdeArtifact.
+            // In this environment, ideBuildVersion equals to build number.
+            // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
             val version = ideBuildVersion.replace("IJ", kind.toString())
             context.messages.info("Kotlin plugin IJ version: $version")
             return version
@@ -362,7 +367,7 @@ Android Studio: workaround for b/218317110 */
         }
 
         when (kind) {
-          KotlinPluginKind.IJ ->
+          KotlinPluginKind.IJ, KotlinPluginKind.Fleet ->
             //noinspection SpellCheckingInspection
             replace(
               text,
@@ -380,18 +385,23 @@ Android Studio: workaround for b/218317110 */
         }
       }
 
-      if (kind == KotlinPluginKind.IJ && ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES) {
-        // TODO KTIJ-11539 change to `System.getenv("TEAMCITY_VERSION") == null` later but make sure
-        //  that `IdeaUltimateBuildTest.testBuild` passes on TeamCity
-        val skipIfDoesntExist = true
+      if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES) {
+        when (kind) {
+          KotlinPluginKind.IJ, KotlinPluginKind.Fleet -> {
+            // TODO KTIJ-11539 change to `System.getenv("TEAMCITY_VERSION") == null` later but make sure
+            //  that `IdeaUltimateBuildTest.testBuild` passes on TeamCity
+            val skipIfDoesntExist = true
 
-        // Use 'DownloadAppCodeDependencies' run configuration to download LLDBFrontend
-        spec.withBin("../CIDR/cidr-debugger/bin/lldb/linux/bin/LLDBFrontend", "bin/linux", skipIfDoesntExist)
-        spec.withBin("../CIDR/cidr-debugger/bin/lldb/mac/LLDBFrontend", "bin/macos", skipIfDoesntExist)
-        spec.withBin("../CIDR/cidr-debugger/bin/lldb/win/x64/bin/LLDBFrontend.exe", "bin/windows", skipIfDoesntExist)
-        spec.withBin("../CIDR/cidr-debugger/bin/lldb/renderers", "bin/lldb/renderers")
+            // Use 'DownloadAppCodeDependencies' run configuration to download LLDBFrontend
+            spec.withBin("../CIDR/cidr-debugger/bin/lldb/linux/bin/LLDBFrontend", "bin/linux", skipIfDoesntExist)
+            spec.withBin("../CIDR/cidr-debugger/bin/lldb/mac/LLDBFrontend", "bin/macos", skipIfDoesntExist)
+            spec.withBin("../CIDR/cidr-debugger/bin/lldb/win/x64/bin/LLDBFrontend.exe", "bin/windows", skipIfDoesntExist)
+            spec.withBin("../CIDR/cidr-debugger/bin/lldb/renderers", "bin/lldb/renderers")
 
-        spec.withBin("../mobile-ide/common-native/scripts", "scripts")
+            spec.withBin("../mobile-ide/common-native/scripts", "scripts")
+          }
+          else -> {}
+        }
       }
     }
   }
@@ -411,6 +421,7 @@ Android Studio: workaround for b/218317110 */
 
   suspend fun build(communityHome: BuildDependenciesCommunityRoot, home: Path, properties: ProductProperties) {
     val buildContext = BuildContextImpl.createContext(communityHome = communityHome, projectHome = home, productProperties = properties)
+    buildContext.options.enableEmbeddedJetBrainsClient = false
     BuildTasks.create(buildContext).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
   }
 
@@ -420,6 +431,6 @@ Android Studio: workaround for b/218317110 */
   }
 
   enum class KotlinPluginKind {
-    IJ, AS, MI,
+    IJ, AS, MI, Fleet,
   }
 }

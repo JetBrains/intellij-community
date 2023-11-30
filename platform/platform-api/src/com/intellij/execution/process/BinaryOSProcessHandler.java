@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -28,9 +28,8 @@ public class BinaryOSProcessHandler extends OSProcessHandler {
     return myOutput.toByteArray();
   }
 
-  @NotNull
   @Override
-  protected BaseDataReader createOutputDataReader() {
+  protected @NotNull BaseDataReader createOutputDataReader() {
     return new SimpleBinaryReader(myProcess.getInputStream(), readerOptions().policy());
   }
 
@@ -45,9 +44,8 @@ public class BinaryOSProcessHandler extends OSProcessHandler {
       myOutput.write(data, 0, size);
     }
 
-    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
+    protected @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
       return BinaryOSProcessHandler.this.executeTask(runnable);
     }
   }

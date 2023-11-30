@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.junit.JUnit3SuperTearDownInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.junit.JUnit3SuperTearDownInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinJUnit3SuperTearDownInspectionTest : JUnit3SuperTearDownInspectionTestBase() {
   fun `test teardown in finally no highlighting`() {

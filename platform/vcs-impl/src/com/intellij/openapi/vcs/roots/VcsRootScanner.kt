@@ -8,10 +8,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectInitialActivitiesNotifier
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -39,13 +40,13 @@ import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 import kotlin.time.Duration.Companion.seconds
 
-private val LOG = Logger.getInstance(VcsRootScanner::class.java)
+private val LOG = logger<VcsRootScanner>()
 
 @Service(Service.Level.PROJECT)
-class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScope) : Disposable {
+internal class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScope) : Disposable {
   private val rootProblemNotifier = VcsRootProblemNotifier.createInstance(project)
 
-  private val scanRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val scanRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     AsyncVfsEventsPostProcessor.getInstance().addListener(::filesChanged, this)
@@ -58,6 +59,8 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
         .debounce(1.seconds)
         .collectLatest {
           withContext(Dispatchers.IO) {
+            project.service<ProjectInitialActivitiesNotifier>().awaitInitialVfsRefreshFinished()
+
             coroutineToIndicator {
               rootProblemNotifier.rescanAndNotifyIfNeeded()
             }
@@ -181,6 +184,9 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
   }
 
   internal class DetectRootsStartupActivity : VcsStartupActivity {
+    override val order: Int
+      get() = VcsInitObject.AFTER_COMMON.order
+
     override fun runActivity(project: Project) {
       if (ApplicationManager.getApplication().isUnitTestMode) {
         return
@@ -193,8 +199,6 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
       ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG.debug("VcsRootScanner.start activity")
       getInstance(project).scheduleScan()
     }
-
-    override fun getOrder(): Int = VcsInitObject.AFTER_COMMON.order
   }
 
   internal class TrustListener : TrustedProjectsListener {

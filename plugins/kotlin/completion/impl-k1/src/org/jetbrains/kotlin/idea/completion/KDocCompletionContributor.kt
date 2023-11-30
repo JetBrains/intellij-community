@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.StandardPatterns
@@ -16,19 +15,13 @@ import org.jetbrains.kotlin.idea.kdoc.getParamDescriptors
 import org.jetbrains.kotlin.idea.kdoc.resolveKDocLink
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
-import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.utils.collectDescriptorsFiltered
-import java.util.*
 
 class KDocCompletionContributor : CompletionContributor() {
     init {
@@ -83,6 +76,8 @@ class KDocNameCompletionSession(
         position: KDocName,
         declarationDescriptor: DeclarationDescriptor
     ) {
+        if (position.getQualifier() != null) return
+
         val section = position.getContainingSection()
         val documentedParameters = section.findTagsByName("param").map { it.getSubjectName() }.toSet()
         getParamDescriptors(declarationDescriptor)
@@ -120,36 +115,5 @@ class KDocNameCompletionSession(
                 LookupElementDecorator.withDelegateInsertHandler(element, EmptyDeclarativeInsertHandler)
             )
         }
-    }
-}
-
-object KDocTagCompletionProvider : CompletionProvider<CompletionParameters>() {
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-        // findIdentifierPrefix() requires identifier part characters to be a superset of identifier start characters
-        val prefix = CompletionUtil.findIdentifierPrefix(
-            parameters.position.containingFile,
-            parameters.offset,
-            StandardPatterns.character().javaIdentifierPart() or singleCharPattern('@'),
-            StandardPatterns.character().javaIdentifierStart() or singleCharPattern('@')
-        )
-
-        if (parameters.isAutoPopup && prefix.isEmpty()) return
-        if (prefix.isNotEmpty() && !prefix.startsWith('@')) {
-            return
-        }
-        val kdocOwner = parameters.position.getNonStrictParentOfType<KDoc>()?.getOwner()
-        val resultWithPrefix = result.withPrefixMatcher(prefix)
-        KDocKnownTag.values().forEach {
-            if (kdocOwner == null || it.isApplicable(kdocOwner)) {
-                resultWithPrefix.addElement(LookupElementBuilder.create("@" + it.name.toLowerCase(Locale.US)))
-            }
-        }
-    }
-
-    private fun KDocKnownTag.isApplicable(declaration: KtDeclaration) = when (this) {
-        KDocKnownTag.CONSTRUCTOR, KDocKnownTag.PROPERTY -> declaration is KtClassOrObject
-        KDocKnownTag.RETURN -> declaration is KtNamedFunction
-        KDocKnownTag.RECEIVER -> declaration is KtNamedFunction && declaration.receiverTypeReference != null
-        else -> true
     }
 }

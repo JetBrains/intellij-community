@@ -60,7 +60,7 @@ enum class HintType(
         override fun isApplicable(e: PsiElement): Boolean =
             (e is KtProperty && e.getReturnTypeReference() == null && e.isLocal) ||
                     (e is KtParameter && e.isLoopParameter && e.typeReference == null) ||
-                    (e is KtDestructuringDeclarationEntry && e.getReturnTypeReference() == null)
+                    (e is KtDestructuringDeclarationEntry && e.getReturnTypeReference() == null && e.name != "_")
     },
 
     FUNCTION_HINT(

@@ -23,7 +23,7 @@ import java.util.List;
 
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
-public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
+public final class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   private final VirtualFile myFile;
   private final Project myProject;
   private final Document myDocument;

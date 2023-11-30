@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.application.ReadAction;
@@ -34,7 +34,7 @@ import java.io.File;
 import java.util.Objects;
 
 @State(name = "DevKit.ModuleBuildProperties")
-public class PluginBuildConfiguration implements PersistentStateComponent<PluginBuildConfiguration.State> {
+public final class PluginBuildConfiguration implements PersistentStateComponent<PluginBuildConfiguration.State> {
   private final Module myModule;
   private final ConfigFileContainer myPluginXmlContainer;
   private VirtualFilePointer myManifestFilePointer;

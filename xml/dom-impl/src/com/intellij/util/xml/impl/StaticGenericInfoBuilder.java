@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -118,8 +118,7 @@ public final class StaticGenericInfoBuilder {
     }
   }
 
-  @Nullable
-  private MultiValuesMap<XmlName, JavaMethod> getAddersMap(final JavaMethod method) {
+  private @Nullable MultiValuesMap<XmlName, JavaMethod> getAddersMap(final JavaMethod method) {
     final Class<?>[] parameterTypes = method.getParameterTypes();
     return switch (parameterTypes.length) {
       case 0 -> collectionAdders;
@@ -157,8 +156,7 @@ public final class StaticGenericInfoBuilder {
     return ADDER_PARAMETER_TYPES.containsAll(Arrays.asList(method.getParameterTypes()));
   }
 
-  @Nullable
-  private XmlName extractTagName(JavaMethod method, @NonNls String prefix) {
+  private @Nullable XmlName extractTagName(JavaMethod method, @NonNls String prefix) {
     final String name = method.getName();
     if (!name.startsWith(prefix)) return null;
 
@@ -261,8 +259,7 @@ public final class StaticGenericInfoBuilder {
     return aClass.equals(GenericAttributeValue.class) || aClass.equals(GenericDomValue.class) && "getConverter".equals(method.getName());
   }
 
-  @Nullable
-  private String getSubTagName(final JavaMethod method) {
+  private @Nullable String getSubTagName(final JavaMethod method) {
     final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
     if (subTagAnnotation == null || StringUtil.isEmpty(subTagAnnotation.value())) {
       return getNameFromMethod(method, false);
@@ -270,8 +267,7 @@ public final class StaticGenericInfoBuilder {
     return subTagAnnotation.value();
   }
 
-  @Nullable
-  private String getSubTagNameForCollection(final JavaMethod method) {
+  private @Nullable String getSubTagNameForCollection(final JavaMethod method) {
     final SubTagList subTagList = method.getAnnotation(SubTagList.class);
     if (subTagList == null || StringUtil.isEmpty(subTagList.value())) {
       final String propertyName = getPropertyName(method);
@@ -287,19 +283,16 @@ public final class StaticGenericInfoBuilder {
     return subTagList.value();
   }
 
-  @Nullable
-  private String getNameFromMethod(final JavaMethod method, boolean isAttribute) {
+  private @Nullable String getNameFromMethod(final JavaMethod method, boolean isAttribute) {
     final String propertyName = getPropertyName(method);
     return propertyName == null ? null : getNameStrategy(isAttribute).convertName(propertyName);
   }
 
-  @Nullable
-  private static String getPropertyName(JavaMethod method) {
+  private static @Nullable String getPropertyName(JavaMethod method) {
     return StringUtil.getPropertyName(method.getMethodName());
   }
 
-  @NotNull
-  private DomNameStrategy getNameStrategy(boolean isAttribute) {
+  private @NotNull DomNameStrategy getNameStrategy(boolean isAttribute) {
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ClassUtil.getRawType(myClass), isAttribute);
     return strategy != null ? strategy : DomNameStrategy.HYPHEN_STRATEGY;
   }

@@ -89,7 +89,6 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
 
     final Artifact artifact = parentsInfo.getGrandparentArtifact();
     final ArtifactEditorContext context = myArtifactEditor.getContext();
-    //todo[nik] improve
     final Runnable emptyRunnable = EmptyRunnable.getInstance();
     context.editLayout(artifact, emptyRunnable);
     context.editLayout(parentsInfo.getParentArtifact(), emptyRunnable);

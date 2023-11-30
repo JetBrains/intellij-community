@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -22,7 +24,7 @@ public class AddToPermitsListFix extends PsiUpdateModCommandAction<PsiClass> {
   public AddToPermitsListFix(@NotNull PsiClass subClass, @NotNull PsiClass superClass) {
     super(superClass);
     myParentName = Objects.requireNonNull(superClass.getName());
-    myClassQualifiedName = Objects.requireNonNull(subClass.getQualifiedName());
+    myClassQualifiedName = subClass.getQualifiedName();
     myClassName = Objects.requireNonNull(subClass.getName());
   }
 
@@ -37,6 +39,7 @@ public class AddToPermitsListFix extends PsiUpdateModCommandAction<PsiClass> {
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiClass element) {
+    if (myClassQualifiedName == null) return null;
     return Presentation.of(JavaBundle.message("add.to.permits.list", myClassName, myParentName)).withFixAllOption(this);
   }
 

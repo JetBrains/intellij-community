@@ -12,18 +12,17 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @SkipSlowTestLocally
 public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
@@ -70,28 +68,31 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
   }
 
   @SuppressWarnings("All") @Language("JAVA")
-  @NonNls private static final String text = "import java.util.*; class X { void f ( ) { \n"
-  + "List < String > ls = new ArrayList < String > ( 1 ) ; ls . toString ( ) ; \n"
-  + "List < Integer > is = new ArrayList < Integer > ( 1 ) ; is . toString ( ) ; \n"
-  + "List i = new ArrayList ( 1 ) ; i . toString ( ) ; \n"
-  + "Collection < Number > l2 = new ArrayList < Number > ( 10 ) ; l2 . toString ( ) ; \n"
-  + "Collection < Number > l22 = new ArrayList < Number > ( ) ; l22 . toString ( ) ; \n"
-  + "Map < Number , String > l3 = new HashMap < Number , String > ( 10 ) ; l3 . toString ( ) ; \n"
-  + "Map < String , String > m = new HashMap < String , String > ( ) ; m . toString ( ) ; \n"
-  + "Map < String , String > m1 = new HashMap < String , String > ( ) ; m1 . toString ( ) ; \n"
-  + "Map < String , String > m2 = new HashMap < String , String > ( ) ; m2 . toString ( ) ; \n"
-  + "Map < String , String > m3 = new HashMap < String , String > ( ) ; m3 . toString ( ) ; \n"
-  + "Map < String , String > mi = new HashMap < String , String > ( 1 ) ; mi . toString ( ) ; \n"
-  + "Map < String , String > mi1 = new HashMap < String , String > ( 1 ) ; mi1 . toString ( ) ; \n"
-  + "Map < String , String > mi2 = new HashMap < String , String > ( 1 ) ; mi2 . toString ( ) ; \n"
-  + "Map < String , String > mi3 = new HashMap < String , String > ( 1 ) ; mi3 . toString ( ) ; \n"
-  + "Map < Number , String > l4 = new HashMap < Number , String > ( ) ; l4 . toString ( ) ; \n"
-  + "Map < Number , String > l5 = new HashMap < Number , String > ( l4 ) ; l5 . toString ( ) ; \n"
-  + "HashMap < Number , String > l6 = new HashMap < Number , String > ( ) ; l6 . toString ( ) ; \n"
-  + "Map < List < Integer > , Map < String , List < String > > > l7 = new HashMap ( 1 ) ; l7 . toString ( ) ; \n"
-  + "java . util . Map < java . util . List < Integer > , java . util . Map < String , java . util . List < String > > > l77 = \n" +
-                                             "new java . util . HashMap ( 1 ) ; l77 . toString ( ) ; \n"
-  + " } } ";
+  @NonNls private static final String text =
+"""
+import java.util.*; class X { void f ( ) {
+List < String > ls = new ArrayList < String > ( 1 ) ; ls . toString ( ) ;
+List < Integer > is = new ArrayList < Integer > ( 1 ) ; is . toString ( ) ;
+List i = new ArrayList ( 1 ) ; i . toString ( ) ;
+Collection < Number > l2 = new ArrayList < Number > ( 10 ) ; l2 . toString ( ) ;
+Collection < Number > l22 = new ArrayList < Number > ( ) ; l22 . toString ( ) ;
+Map < Number , String > l3 = new HashMap < Number , String > ( 10 ) ; l3 . toString ( ) ;
+Map < String , String > m = new HashMap < String , String > ( ) ; m . toString ( ) ;
+Map < String , String > m1 = new HashMap < String , String > ( ) ; m1 . toString ( ) ;
+Map < String , String > m2 = new HashMap < String , String > ( ) ; m2 . toString ( ) ;
+Map < String , String > m3 = new HashMap < String , String > ( ) ; m3 . toString ( ) ;
+Map < String , String > mi = new HashMap < String , String > ( 1 ) ; mi . toString ( ) ;
+Map < String , String > mi1 = new HashMap < String , String > ( 1 ) ; mi1 . toString ( ) ;
+Map < String , String > mi2 = new HashMap < String , String > ( 1 ) ; mi2 . toString ( ) ;
+Map < String , String > mi3 = new HashMap < String , String > ( 1 ) ; mi3 . toString ( ) ;
+Map < Number , String > l4 = new HashMap < Number , String > ( ) ; l4 . toString ( ) ;
+Map < Number , String > l5 = new HashMap < Number , String > ( l4 ) ; l5 . toString ( ) ;
+HashMap < Number , String > l6 = new HashMap < Number , String > ( ) ; l6 . toString ( ) ;
+Map < List < Integer > , Map < String , List < String > > > l7 = new HashMap ( 1 ) ; l7 . toString ( ) ;
+java . util . Map < java . util . List < Integer > , java . util . Map < String , java . util . List < String > > > l77 =
+new java . util . HashMap ( 1 ) ; l77 . toString ( ) ;
+ } }
+""";
 
   public void testAllTheseConcurrentThreadsDoNotCrashAnything() {
     long time = System.currentTimeMillis();
@@ -106,37 +107,6 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
     }
     LOG.debug(System.currentTimeMillis() - time+"ms");
-  }
-
-  public void _testHugeFile() {
-    @NonNls String filePath =  "/psi/resolve/Thinlet.java";
-    configureByFile(filePath);
-    doHighlighting();
-
-    int N = 42;
-    long[] time = new long[N];
-    for (int i = 0; i < N; i++) {
-      DaemonCodeAnalyzer.getInstance(getProject()).restart();
-
-      long start = System.currentTimeMillis();
-      doHighlighting();
-      long end = System.currentTimeMillis();
-      time[i] = end - start;
-      LOG.debug("i = " + i + "; time= "+(end-start));
-
-      UIUtil.dispatchAllInvocationEvents();
-    }
-    LOG.debug("Average among the N/3 median times: " + ArrayUtil.averageAmongMedians(time, 3) + "ms");
-
-    //System.out.println("JobLauncher.COUNT   = " + JobLauncher.COUNT);
-    //System.out.println("JobLauncher.TINY    = " + JobLauncher.TINY_COUNT);
-    //System.out.println("JobLauncher.LENGTH  = " + JobLauncher.LENGTH);
-    //System.out.println("JobLauncher.ELAPSED = " + JobLauncher.ELAPSED);
-    //System.out.println("Ave length : "+(JobLauncher.LENGTH.get()/1.0/JobLauncher.COUNT.get()));
-    //System.out.println("Ave elapsed: "+(JobLauncher.ELAPSED.get()/1.0/JobLauncher.COUNT.get()));
-    //
-    //JobLauncher.lengths.sort();
-    //System.out.println("Lengths: "+JobLauncher.lengths);
   }
 
   public void testRandomEditingPerformance() {
@@ -189,6 +159,9 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
             break;
           }
         }
+        String oldText = StringUtil.join(oldWarningTexts, "\n");
+        String newText = StringUtil.join(infos, info->text(info), "\n");
+        assertEquals(oldText, newText);
         assertEquals(infos.toString(), oldWarningSize, infos.size());
       }
       for (HighlightInfo info : infos) {
@@ -209,7 +182,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
 
   @NotNull
   private static String text(@NotNull HighlightInfo info) {
-    return info.getText() + info.getDescription();
+    return "'"+info.getText()+"': " + info.getDescription();
   }
 
   public void testRandomEditingForUnused() {

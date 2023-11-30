@@ -17,6 +17,10 @@ data class AttachHostAndProvider(
   val project: Project,
   val dataHolder: UserDataHolder): AttachHostItem {
 
+  override fun getId(): String {
+    return getPresentation()
+  }
+
   @Nls
   override fun getPresentation(): String {
     val presentationGroup = provider.presentationGroup as XAttachPresentationGroup<XAttachHost>

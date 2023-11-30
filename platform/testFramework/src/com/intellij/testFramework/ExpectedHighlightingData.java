@@ -624,7 +624,7 @@ public class ExpectedHighlightingData {
       .filter(p -> p.first != null)
       .collect(Collectors.toList());
     boolean showAttributesKeys =
-      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(info -> info.forcedTextAttributesKey != null || info.type != HighlightInfoType.INFORMATION);
+      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(info -> info.forcedTextAttributesKey != null);
 
     String anyWrappedInHtml = XmlStringUtil.wrapInHtml(ANY_TEXT);
     boolean showTooltips =

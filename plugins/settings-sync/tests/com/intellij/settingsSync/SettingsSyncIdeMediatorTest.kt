@@ -9,7 +9,9 @@ import com.intellij.openapi.components.*
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
+import junit.framework.TestCase
 import org.junit.Assert
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

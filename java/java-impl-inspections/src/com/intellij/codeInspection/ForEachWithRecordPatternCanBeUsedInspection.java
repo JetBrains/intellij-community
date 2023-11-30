@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -171,16 +172,17 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
           int length = context.recordClass.getRecordComponents().length;
           if (length > 1) {
             fixes.add(
-              new SetInspectionOptionFix(ForEachWithRecordPatternCanBeUsedInspection.this, "maxComponentCounts",
-                                         InspectionGadgetsBundle.message(
-                                           "inspection.enhanced.for.with.record.pattern.can.be.used.maximum.number.disabled", length), length - 1));
+              LocalQuickFix.from(new UpdateInspectionOptionFix(
+                ForEachWithRecordPatternCanBeUsedInspection.this, "maxComponentCounts",
+                InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.maximum.number.disabled", length),
+                length - 1)));
           }
           Integer level = context.level;
           if (level != null && level > 0) {
-            fixes.add(
-              new SetInspectionOptionFix(ForEachWithRecordPatternCanBeUsedInspection.this, "maxLevel",
-                                         InspectionGadgetsBundle.message(
-                                           "inspection.enhanced.for.with.record.pattern.can.be.used.maximum.depth.disabled", level), level - 1));
+            fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+              ForEachWithRecordPatternCanBeUsedInspection.this, "maxLevel",
+              InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.maximum.depth.disabled", level), 
+              level - 1)));
           }
           holder.registerProblem(identifier,
                                  InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.message"),

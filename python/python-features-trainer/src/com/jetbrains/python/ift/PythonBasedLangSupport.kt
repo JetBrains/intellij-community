@@ -25,7 +25,8 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
-import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
+import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
+import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
 import com.jetbrains.python.statistics.modules
 import training.dsl.LessonContext
 import training.lang.AbstractLangSupport
@@ -79,7 +80,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
     val module = project.modules.first()
     val existingSdks = getExistingSdks()
     val baseSdks = findBaseSdks(existingSdks, module, project)
-    val preferredSdk = PyProjectVirtualEnvConfiguration.findPreferredVirtualEnvBaseSdk(baseSdks)
+    val preferredSdk = findPreferredVirtualEnvBaseSdk(baseSdks)
     invokeLater {
       val venvSdk = applyBaseSdk(project, preferredSdk, existingSdks, module)
       if (venvSdk != null) {
@@ -93,8 +94,7 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
                            existingSdks: List<Sdk>,
                            module: Module?): Sdk? {
     val venvRoot = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(project.basePath))
-    val venvSdk = PyProjectVirtualEnvConfiguration.createVirtualEnvSynchronously(preferredSdk, existingSdks, venvRoot,
-                                                                                 project.basePath, project, module, project)
+    val venvSdk = createVirtualEnvSynchronously(preferredSdk, existingSdks, venvRoot, project.basePath, project, module, project)
     return venvSdk?.also {
       SdkConfigurationUtil.addSdk(it)
     }
@@ -187,7 +187,8 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
                     problem = LearningInternalProblems.NO_SDK_CONFIGURED) {
           !isSdkConfigured(project)
         }
-      } else {
+      }
+      else {
         // for Scratch lessons in the non-learning project
         val openCallbackId = LearningUiManager.addCallback {
           CourseManager.instance.openLesson(project, lesson, LessonStartingWay.NO_SDK_RESTART,

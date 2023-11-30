@@ -30,7 +30,7 @@ class GradleProjectOpenProcessor : ProjectOpenProcessor() {
 
   override fun canImportProjectAfterwards(): Boolean = true
 
-  override fun importProjectAfterwards(project: Project, file: VirtualFile) {
+  override suspend fun importProjectAfterwardsAsync(project: Project, file: VirtualFile) {
     linkAndRefreshGradleProject(file.path, project)
   }
 }

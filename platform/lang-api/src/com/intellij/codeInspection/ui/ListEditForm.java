@@ -58,6 +58,15 @@ public class ListEditForm {
     this(title, label, stringList, defaultElement, null);
   }
 
+  /**
+   * Creates a form for editing a list of strings.
+   *
+   * @param title The title of the form.
+   * @param label The label for the content panel.
+   * @param stringList The list of strings to be edited.
+   * @param defaultElement The default element to be used in the list.
+   * @param newElementSupplier A function that supplies a new element for the list. If it returns null, defaultElement is used.
+   */
   public ListEditForm(@NlsContexts.ColumnName String title, @NlsContexts.Label String label, List<String> stringList, @NotNull String defaultElement,
                       @Nullable Function<@NotNull Project, @Nullable String> newElementSupplier) {
     table = new ListTable(new ListWrappingTableModel(stringList, title));
@@ -83,7 +92,10 @@ public class ListEditForm {
             final ListWrappingTableModel tableModel = table.getModel();
             if (project != null) {
               String newElement = myNewElementSupplier.apply(project);
-              if (newElement == null) return;
+              if (newElement == null) {
+                setDefaultElement();
+                return;
+              }
               final int index = tableModel.indexOf(newElement, 0);
               if (index < 0) {
                 tableModel.addRow(newElement);
@@ -96,6 +108,10 @@ public class ListEditForm {
               return;
             }
           }
+          setDefaultElement();
+        }
+
+        private void setDefaultElement() {
           final ListWrappingTableModel tableModel = table.getModel();
           tableModel.addRow(defaultElement);
           EventQueue.invokeLater(() -> {

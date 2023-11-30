@@ -3,22 +3,26 @@ package com.intellij.ui.jcef
 
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.ui.scale.TestScaleHelper
-import org.cef.misc.CefLog
+import kotlinx.coroutines.*
 import org.intellij.lang.annotations.Language
-import org.junit.After
+import org.junit.*
 import org.junit.Assert.*
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Test
+import org.junit.rules.TestName
 import java.util.concurrent.CountDownLatch
 
 /**
- * Tests the [JBCefBrowserJsCall] class and [executeJavaScriptAsync] method.
+ * Tests the [AsyncJBCefBrowserJsCall] class and [executeJavaScriptAsync] method.
  */
-class JBCefBrowserJsCallTest {
+abstract class JBCefBrowserJsCallTest {
   companion object {
-    @ClassRule @JvmStatic fun getAppRule() = ApplicationRule()
+    @ClassRule
+    @JvmStatic
+    fun getAppRule() = ApplicationRule()
   }
+
+  @Rule
+  @JvmField
+  val name = TestName()
 
   @Before
   fun before() {
@@ -31,7 +35,6 @@ class JBCefBrowserJsCallTest {
     TestScaleHelper.restoreProperties()
   }
 
-
   @Test
   fun `execute unresolved expression`() {
     doTest("""foo.bar""")
@@ -43,8 +46,7 @@ class JBCefBrowserJsCallTest {
       let r = 2 + 2
       throw 'error'
       return r
-""".trimIndent()
-    )
+""".trimIndent())
   }
 
   @Test
@@ -94,58 +96,11 @@ class JBCefBrowserJsCallTest {
     doTest(js, "4")
   }
 
-  @Test
-  fun `execute the same call twice and simultaneously`() {
-    val browser = prepareBrowser()
-    val jsCall = JBCefBrowserJsCall("""2+2""", browser)
-    val latch = CountDownLatch(2)
+  protected abstract fun doTest(@Language("JavaScript") javaScript: String,
+                                expectedResult: String? = null,
+                                isExpectedToSucceed: Boolean = expectedResult != null)
 
-    var r1: String? = null
-    var r2: String? = null
-
-    JBCefTestHelper.invokeAndWaitForLatch(latch) {
-      jsCall().onProcessed { latch.countDown() }.onSuccess { r1 = it }
-      jsCall().onProcessed { }.onSuccess {
-        r2 = it
-        latch.countDown()
-      }
-    }
-
-    assertEquals("4", r1)
-    assertEquals("4", r2)
-  }
-
-  private fun doTest(@Language("JavaScript") javaScript: String,
-                     expectedResult: String? = null,
-                     isExpectedToSucceed: Boolean = expectedResult != null) {
-
-    val latch = CountDownLatch(1)
-    val browser = prepareBrowser()
-
-    var isSucceeded: Boolean? = null
-    var actualResult: String? = null
-
-    JBCefTestHelper.invokeAndWaitForLatch(latch) {
-      browser.executeJavaScriptAsync(javaScript)
-        .onError {
-          println(it.message)
-          isSucceeded = false
-        }.onSuccess {
-          isSucceeded = true
-          actualResult = it
-        }.onProcessed {
-          latch.countDown()
-        }
-    }
-
-    assertEquals(isExpectedToSucceed, isSucceeded)
-
-    if (isExpectedToSucceed) {
-      assertEquals(expectedResult, actualResult)
-    }
-  }
-
-  private fun prepareBrowser(): JBCefBrowser {
+  protected fun prepareBrowser(): JBCefBrowser {
     // enable verbose logging in tests for investigating intermittent problems
     // see https://youtrack.jetbrains.com/issue/IDEA-312158
     System.setProperty("ide.browser.jcef.log.level", "verbose");
@@ -168,5 +123,86 @@ class JBCefBrowserJsCallTest {
     assertTrue(browser.isCefBrowserCreated)
 
     return browser
+  }
+}
+
+
+class AsyncJBCefBrowserJsCallTest : JBCefBrowserJsCallTest() {
+
+  @Test
+  fun `execute the same call twice and simultaneously`() {
+    val browser = prepareBrowser()
+    val jsCall = JBCefBrowserJsCall("""2+2""", browser, 0)
+    val latch = CountDownLatch(2)
+
+    var r1: String? = null
+    var r2: String? = null
+
+    JBCefTestHelper.invokeAndWaitForLatch(latch) {
+      jsCall().onProcessed { latch.countDown() }.onSuccess { r1 = it }
+      jsCall().onProcessed { }.onSuccess {
+        r2 = it
+        latch.countDown()
+      }
+    }
+
+    assertEquals("4", r1)
+    assertEquals("4", r2)
+  }
+
+
+  override fun doTest(@Language("JavaScript") javaScript: String, expectedResult: String?, isExpectedToSucceed: Boolean) {
+
+    val latch = CountDownLatch(1)
+    val browser = prepareBrowser()
+
+    var isSucceeded: Boolean? = null
+    var actualResult: String? = null
+
+    JBCefTestHelper.invokeAndWaitForLatch(latch) {
+      browser.executeJavaScriptAsync(javaScript)
+        .onError { error ->
+          println(error.message)
+          isSucceeded = false
+        }.onSuccess {
+          isSucceeded = true
+          actualResult = it
+        }.onProcessed {
+          latch.countDown()
+        }
+    }
+
+    assertEquals(isExpectedToSucceed, isSucceeded)
+
+    if (isExpectedToSucceed) {
+      assertEquals(expectedResult, actualResult)
+    }
+  }
+}
+
+
+class SuspendableJBCefBrowserJsCallTest : JBCefBrowserJsCallTest() {
+
+  override fun doTest(@Language("JavaScript") javaScript: String, expectedResult: String?, isExpectedToSucceed: Boolean) {
+    val browser = prepareBrowser()
+
+    runBlocking {
+      var actualResult: String? = null
+      var isSucceeded: Boolean? = null
+
+      try {
+        actualResult = browser.executeJavaScript(javaScript)
+        isSucceeded = true
+      }
+      catch (ex: Exception) {
+        isSucceeded = false
+      }
+
+      assertEquals(isExpectedToSucceed, isSucceeded)
+
+      if (isExpectedToSucceed) {
+        assertEquals(expectedResult, actualResult)
+      }
+    }
   }
 }

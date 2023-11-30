@@ -5,9 +5,7 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UTypeReferenceExpression
-import org.jetbrains.uast.UastErrorType
+import org.jetbrains.uast.*
 
 @ApiStatus.Internal
 class KotlinUTypeReferenceExpression(
@@ -15,9 +13,13 @@ class KotlinUTypeReferenceExpression(
     givenParent: UElement?,
     private val typeSupplier: (() -> PsiType)? = null
 ) : KotlinAbstractUExpression(givenParent), UTypeReferenceExpression, KotlinUElementWithType {
-    override val type: PsiType by lz {
-        typeSupplier?.invoke()
-            ?: sourcePsi?.let { baseResolveProviderService.resolveToType(it, uastParent ?: this, isBoxed = false) }
-            ?: UastErrorType
-    }
+
+    private val typePart = UastLazyPart<PsiType>()
+
+    override val type: PsiType
+        get() = typePart.getOrBuild {
+            typeSupplier?.invoke()
+                ?: sourcePsi?.let { baseResolveProviderService.resolveToType(it, uastParent ?: this, isBoxed = false) }
+                ?: UastErrorType
+        }
 }

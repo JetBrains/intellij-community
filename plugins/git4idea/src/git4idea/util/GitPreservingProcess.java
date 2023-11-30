@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,17 +40,17 @@ public class GitPreservingProcess {
 
   private static final Logger LOG = Logger.getInstance(GitPreservingProcess.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
-  @NotNull private final Collection<? extends VirtualFile> myRootsToSave;
-  @NotNull private final @Nls String myOperationTitle;
-  @NotNull private final @Nls String myDestinationName;
-  @NotNull private final ProgressIndicator myProgressIndicator;
-  @NotNull private final Runnable myOperation;
-  @NotNull private final @Nls String myStashMessage;
-  @NotNull private final GitChangesSaver mySaver;
+  private final @NotNull Project myProject;
+  private final @NotNull Git myGit;
+  private final @NotNull Collection<? extends VirtualFile> myRootsToSave;
+  private final @NotNull @Nls String myOperationTitle;
+  private final @NotNull @Nls String myDestinationName;
+  private final @NotNull ProgressIndicator myProgressIndicator;
+  private final @NotNull Runnable myOperation;
+  private final @NotNull @Nls String myStashMessage;
+  private final @NotNull GitChangesSaver mySaver;
 
-  @NotNull private final AtomicBoolean myLoaded = new AtomicBoolean();
+  private final @NotNull AtomicBoolean myLoaded = new AtomicBoolean();
 
   public GitPreservingProcess(@NotNull Project project,
                               @NotNull Git git,
@@ -79,7 +79,7 @@ public class GitPreservingProcess {
     execute(null);
   }
 
-  public void execute(@Nullable final Computable<Boolean> autoLoadDecision) {
+  public void execute(final @Nullable Computable<Boolean> autoLoadDecision) {
     Runnable operation = () -> {
       boolean savedSuccessfully = ProgressManager.getInstance().computeInNonCancelableSection(() -> save());
       LOG.debug("save result: " + savedSuccessfully);
@@ -108,13 +108,11 @@ public class GitPreservingProcess {
   /**
    * Configures the saver: i.e. notifications and texts for the GitConflictResolver used inside.
    */
-  @NotNull
-  private GitChangesSaver configureSaver(@NotNull GitSaveChangesPolicy saveMethod) {
+  private @NotNull GitChangesSaver configureSaver(@NotNull GitSaveChangesPolicy saveMethod) {
     GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myGit, myProgressIndicator, myStashMessage, saveMethod);
     MergeDialogCustomizer mergeDialogCustomizer = new MergeDialogCustomizer() {
-      @NotNull
       @Override
-      public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+      public @NotNull String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
         return wrapInHtml(
           GitBundle.message(
             "restore.conflict.dialog.description.label.text",
@@ -124,18 +122,16 @@ public class GitPreservingProcess {
         );
       }
 
-      @NotNull
       @Override
-      public String getLeftPanelTitle(@NotNull VirtualFile file) {
+      public @NotNull String getLeftPanelTitle(@NotNull VirtualFile file) {
         return saveMethod.selectBundleMessage(
           GitBundle.message("restore.conflict.diff.dialog.left.stash.title"),
           GitBundle.message("restore.conflict.diff.dialog.left.shelf.title")
         );
       }
 
-      @NotNull
       @Override
-      public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
+      public @NotNull String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
         return wrapInHtml(GitBundle.message("restore.conflict.diff.dialog.right.title", wrapInHtmlTag(myDestinationName, "b")));
       }
     };

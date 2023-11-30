@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.items;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class RunAnythingHelpItem extends RunAnythingItemBase {
+public final class RunAnythingHelpItem extends RunAnythingItemBase {
   @NotNull @Nls private final String myPlaceholder;
   @Nullable private final @NlsContexts.DetailedDescription String myDescription;
 

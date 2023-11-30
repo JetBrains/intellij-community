@@ -1,8 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.jna.JnaLoader;
-import com.sun.jna.*;
+import com.sun.jna.FromNativeContext;
+import com.sun.jna.Native;
+import com.sun.jna.NativeMapped;
+import com.sun.jna.Structure;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
@@ -10,8 +13,7 @@ import java.util.Collections;
 /**
  * see <a href="http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html">Documentation</a>
  */
-@NonNls
-public final class CoreGraphics {
+public final @NonNls class CoreGraphics {
   private static final CoreGraphicsLibrary myCoreGraphicsLibrary;
 
   static {
@@ -29,7 +31,7 @@ public final class CoreGraphics {
   }
 
   @Structure.FieldOrder({"origin", "size"})
-  public static class CGRect extends Structure implements Structure.ByValue {
+  public static final class CGRect extends Structure implements Structure.ByValue {
     public CGPoint origin;
     public CGSize size;
 
@@ -40,7 +42,7 @@ public final class CoreGraphics {
   }
 
   @Structure.FieldOrder({"x", "y"})
-  public static class CGPoint extends Structure implements Structure.ByValue {
+  public static final class CGPoint extends Structure implements Structure.ByValue {
     public CGFloat x;
     public CGFloat y;
 
@@ -56,7 +58,7 @@ public final class CoreGraphics {
   }
 
   @Structure.FieldOrder({"width", "height"})
-  public static class CGSize extends Structure implements Structure.ByValue {
+  public static final class CGSize extends Structure implements Structure.ByValue {
     public CGFloat width;
     public CGFloat height;
 
@@ -71,7 +73,7 @@ public final class CoreGraphics {
     }
   }
 
-  public static class CGFloat implements NativeMapped {
+  public static final class CGFloat implements NativeMapped {
     private final double value;
 
     @SuppressWarnings("UnusedDeclaration")

@@ -2,18 +2,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandService;
+import com.intellij.modcommand.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.ig.psiutils.TypeUtils;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,37 +47,25 @@ public final class ImplementOrExtendFix extends PsiUpdateModCommandAction<PsiCla
     return QuickFixBundle.message("implement.or.extend.fix.family");
   }
 
-  public static IntentionAction[] createActions(@NotNull PsiClass subclass,
-                                                @NotNull PsiClass parentClass) {
-    return StreamEx.of(createFixes(subclass, parentClass))
-      .map(fix -> {
-        if (fix instanceof IntentionAction action) return action;
-        ModCommandAction modCommandAction = ModCommandService.getInstance().unwrap(fix);
-        return modCommandAction == null ? null : modCommandAction.asIntention();
-      })
-      .nonNull()
-      .toArray(IntentionAction.EMPTY_ARRAY);
-  }
-
-  public static LocalQuickFix @NotNull [] createFixes(@NotNull PsiClass subclass,
+  public static @Nullable ModCommandAction createFix(@NotNull PsiClass subclass,
                                                       @NotNull PsiClass parentClass) {
     if (!parentClass.isInterface() && (subclass.isInterface() || subclass.isRecord() || subclass.isEnum())) {
-      return LocalQuickFix.EMPTY_ARRAY;
+      return null;
     }
-    if (subclass.isAnnotationType()) return LocalQuickFix.EMPTY_ARRAY;
+    if (subclass.isAnnotationType()) return null;
     PsiModifierList modifiers = subclass.getModifierList();
-    if (modifiers == null) return LocalQuickFix.EMPTY_ARRAY;
+    if (modifiers == null) return null;
     if (parentClass.isInterface()) {
       PsiReferenceList targetList = subclass.isInterface() ? subclass.getExtendsList() : subclass.getImplementsList();
-      if (targetList == null) return LocalQuickFix.EMPTY_ARRAY;
+      if (targetList == null) return null;
     }
     else if (subclass.getExtendsList() == null || hasNonObjectParent(subclass)) {
-      return LocalQuickFix.EMPTY_ARRAY;
+      return null;
     }
 
-    LocalQuickFix[] fixes = ExtendSealedClassFix.createFixes(parentClass, subclass);
-    if (fixes != null) return fixes;
-    return new LocalQuickFix[]{new ImplementOrExtendFix(subclass, parentClass).asQuickFix()};
+    ModCommandAction fix = ExtendSealedClassFix.createFix(parentClass, subclass);
+    if (fix != null) return fix;
+    return new ImplementOrExtendFix(subclass, parentClass);
   }
 
   static boolean hasNonObjectParent(@NotNull PsiClass psiClass) {

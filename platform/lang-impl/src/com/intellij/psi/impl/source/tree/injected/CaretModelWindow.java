@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +56,7 @@ final class CaretModelWindow implements CaretModel {
     }
   }
 
-  public void disposeModel() {
+  void disposeModel() {
     for (CaretListener wrapper : myCaretListeners.wrappers()) {
       myDelegate.removeCaretListener(wrapper);
     }
@@ -108,21 +107,21 @@ final class CaretModelWindow implements CaretModel {
   public @Nullable Caret getCaretAt(@NotNull VisualPosition pos) {
     LogicalPosition hostPos = myEditorWindow.injectedToHost(myEditorWindow.visualToLogicalPosition(pos));
     Caret caret = myDelegate.getCaretAt(myHostEditor.logicalToVisualPosition(hostPos));
-    return createInjectedCaret(caret);
+    return caret == null ? null : createInjectedCaret(caret);
   }
 
   @Override
   public @Nullable Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     LogicalPosition hostPos = myEditorWindow.injectedToHost(myEditorWindow.visualToLogicalPosition(pos));
     Caret caret = myDelegate.addCaret(myHostEditor.logicalToVisualPosition(hostPos));
-    return createInjectedCaret(caret);
+    return caret == null ? null : createInjectedCaret(caret);
   }
 
   @Override
   public @Nullable Caret addCaret(@NotNull LogicalPosition pos, boolean makePrimary) {
     LogicalPosition hostPos = myEditorWindow.injectedToHost(pos);
     Caret caret = myDelegate.addCaret(hostPos, makePrimary);
-    return createInjectedCaret(caret);
+    return caret == null ? null : createInjectedCaret(caret);
   }
 
   @Override
@@ -180,11 +179,8 @@ final class CaretModelWindow implements CaretModel {
     return position == null ? null : myEditorWindow.hostToInjected(position);
   }
 
-  @Contract("null -> null; !null -> !null")
-  private InjectedCaret createInjectedCaret(Caret caret) {
-    if (caret == null) {
-      return null;
-    }
+  @NotNull
+  private InjectedCaret createInjectedCaret(@NotNull Caret caret) {
     synchronized (myInjectedCaretMap) {
       return myInjectedCaretMap.computeIfAbsent(caret, c->new InjectedCaret(myEditorWindow, c));
     }

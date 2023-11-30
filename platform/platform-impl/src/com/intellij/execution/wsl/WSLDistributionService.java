@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,9 +35,7 @@ final class WSLDistributionService implements PersistentStateComponent<WSLDistri
   @Attribute("version")
   private int myVersion = 0;
 
-  @Tag("descriptors")
-  @NotNull
-  private final Set<WslDistributionDescriptor> myDescriptors = new LinkedHashSet<>();
+  @Tag("descriptors") private final @NotNull Set<WslDistributionDescriptor> myDescriptors = new LinkedHashSet<>();
 
   private static final List<WslDistributionDescriptor> DEFAULT_DESCRIPTORS = Arrays.asList(
     new WslDistributionDescriptor("DEBIAN", "Debian", "debian.exe", "Debian GNU/Linux"),
@@ -75,8 +73,7 @@ final class WSLDistributionService implements PersistentStateComponent<WSLDistri
   });
 
 
-  @NotNull
-  public Collection<WslDistributionDescriptor> getDescriptors() {
+  public @NotNull Collection<WslDistributionDescriptor> getDescriptors() {
     myDefaultsApplier.getValue();
     return myDescriptors;
   }
@@ -95,8 +92,7 @@ final class WSLDistributionService implements PersistentStateComponent<WSLDistri
     myDescriptors.removeIf(it -> !it.isValid());
   }
 
-  @NotNull
-  public static WSLDistributionService getInstance() {
+  public static @NotNull WSLDistributionService getInstance() {
     return ApplicationManager.getApplication().getService(WSLDistributionService.class);
   }
 }

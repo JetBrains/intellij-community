@@ -68,6 +68,11 @@ public class ReferenceResolveWithLibTestGenerated extends AbstractReferenceResol
         runTest("testData/resolve/referenceWithLib/multiDeclarationWithTypeParameters/");
     }
 
+    @TestMetadata("namedArguments")
+    public void testNamedArguments() throws Exception {
+        runTest("testData/resolve/referenceWithLib/namedArguments/");
+    }
+
     @TestMetadata("nestedClassFromLib")
     public void testNestedClassFromLib() throws Exception {
         runTest("testData/resolve/referenceWithLib/nestedClassFromLib/");

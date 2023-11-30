@@ -16,7 +16,9 @@ import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CompletableFuture
+import kotlin.io.path.createFile
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.notExists
 
@@ -122,7 +124,7 @@ class WindowsFileStorage(dir: Path,
     if (filesToRemove.isEmpty()) return
     for (file in filesToRemove) {
       val fileToDelete = dir.resolve(file.asWindowsPath)
-      assert(dir.isAncestor(fileToDelete))
+      assert(fileToDelete.startsWith(dir))
       Files.delete(fileToDelete)
     }
     LOGGER.info("${filesToRemove.size} files removed")
@@ -134,7 +136,7 @@ class WindowsFileStorage(dir: Path,
     for (file in files) {
       val filePath = dir.resolve(file.asWindowsPath)
       if (!filePath.exists()) {
-        filePath.createFile()
+        filePath.createParentDirectories().createFile()
       }
     }
   }

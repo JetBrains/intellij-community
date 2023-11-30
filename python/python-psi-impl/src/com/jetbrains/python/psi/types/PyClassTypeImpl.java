@@ -777,6 +777,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     @Override
     protected boolean tryAddResult(@Nullable PsiElement element, @Nullable PyImportedNameDefiner definer) {
       PsiElement psiElement = definer != null ? definer : element;
+      if (element instanceof PyTypeParameter) return false;
       if (inSameScope(psiElement, myLocation)) {
         if (PsiTreeUtil.isAncestor(psiElement, myLocation, false) ||
             PyDefUseUtil.isDefinedBefore(psiElement, myLocation) ||

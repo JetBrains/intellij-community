@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.impl.dataRules;
 
@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiAwareObject;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiElementFromSelectionsRule implements GetDataRule {
+public final class PsiElementFromSelectionsRule implements GetDataRule {
 
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -54,7 +54,6 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
     return myTracker.getModificationCount();
   }
 
-
   @Override
   public @NotNull F getState() {
     F preferences = createFontState(myFontPreferences);
@@ -109,7 +108,4 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
   public @NotNull FontPreferences getFontPreferences() {
     return myFontPreferences;
   }
-
-
-
 }

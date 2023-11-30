@@ -1,10 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.text.Strings
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -30,7 +29,7 @@ class BuildContextImpl(
   override val productProperties: ProductProperties,
   override val windowsDistributionCustomizer: WindowsDistributionCustomizer?,
   override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
-  internal val macDistributionCustomizer: MacDistributionCustomizer?,
+  override val macDistributionCustomizer: MacDistributionCustomizer?,
   override val proprietaryBuildTools: ProprietaryBuildTools,
 ) : BuildContext, CompilationContext by compilationContext {
   private val distFiles = ConcurrentLinkedQueue<DistFile>()
@@ -48,7 +47,7 @@ class BuildContextImpl(
   override val xBootClassPathJarNames: List<String>
     get() = productProperties.xBootClassPathJarNames
 
-  override var bootClassPathJarNames = persistentListOf("util.jar", "util_rt.jar")
+  override var bootClassPathJarNames: List<String> = java.util.List.of("util.jar", "util_rt.jar")
   
   override val ideMainClassName: String
     get() = if (useModularLoader) "com.intellij.platform.runtime.loader.IntellijLoader" else productProperties.mainClassName
@@ -56,11 +55,15 @@ class BuildContextImpl(
   override val useModularLoader: Boolean
     get() = productProperties.supportModularLoading && options.useModularLoader
 
-  override val applicationInfo = ApplicationInfoPropertiesImpl(this)
+  override val generateRuntimeModuleRepository: Boolean
+    get() = useModularLoader || isEmbeddedJetBrainsClientEnabled && options.generateRuntimeModuleRepository
+  
+  override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(context = this)
   private var builtinModulesData: BuiltinModulesFileData? = null
 
   internal val jarCacheManager: JarCacheManager by lazy {
-    options.jarCacheDir?.let { LocalDiskJarCacheManager(it) } ?: NonCachingJarCacheManager
+    options.jarCacheDir?.let { LocalDiskJarCacheManager(cacheDir = it, classOutDirectory = classesOutputDirectory) }
+    ?: NonCachingJarCacheManager
   }
 
   init {
@@ -164,22 +167,20 @@ class BuildContextImpl(
     return result
   }
 
-  override fun findApplicationInfoModule(): JpsModule {
-    return findRequiredModule(productProperties.applicationInfoModule)
-  }
+  override fun findApplicationInfoModule(): JpsModule = findRequiredModule(productProperties.applicationInfoModule)
 
   override fun notifyArtifactBuilt(artifactPath: Path) {
     compilationContext.notifyArtifactBuilt(artifactPath)
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String): Path? {
-    return findFileInModuleSources(findRequiredModule(moduleName), relativePath)
+    return findFileInModuleSources(module = findRequiredModule(moduleName), relativePath = relativePath)
   }
 
   override fun findFileInModuleSources(module: JpsModule, relativePath: String): Path? {
     for (info in getSourceRootsWithPrefixes(module)) {
       if (relativePath.startsWith(info.second)) {
-        val result = info.first.resolve(Strings.trimStart(Strings.trimStart(relativePath, info.second), "/"))
+        val result = info.first.resolve(relativePath.removePrefix(info.second).removePrefix("/"))
         if (Files.exists(result)) {
           return result
         }
@@ -191,7 +192,7 @@ class BuildContextImpl(
   override val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter by lazy {
     val mainModule = productProperties.embeddedJetBrainsClientMainModule
     if (mainModule != null && options.enableEmbeddedJetBrainsClient) {
-      JetBrainsClientModuleFilterImpl(mainModule, this)
+      JetBrainsClientModuleFilterImpl(clientMainModuleName = mainModule, context = this)
     }
     else {
       EmptyJetBrainsClientModuleFilter
@@ -240,7 +241,7 @@ class BuildContextImpl(
     get() = productProperties.productLayout.bundledPluginModules.contains("intellij.java.plugin")
 
   override fun patchInspectScript(path: Path) {
-    //todo[nik] use placeholder in inspect.sh/inspect.bat file instead
+    //todo use placeholder in inspect.sh/inspect.bat file instead
     Files.writeString(path, Files.readString(path).replace(" inspect ", " ${productProperties.inspectCommandName} "))
   }
 
@@ -266,9 +267,12 @@ class BuildContextImpl(
     jvmArgs.add("-Djna.nosys=true")
     jvmArgs.add("-Djna.noclasspath=true")
 
+    if (useModularLoader || generateRuntimeModuleRepository) {
+      jvmArgs.add("-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_JAR_PATH}".let { if (isScript) '"' + it + '"' else it })
+    }
     if (useModularLoader) {
-      jvmArgs.add("-Dintellij.platform.runtime.repository.path=$macroName/${RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME}")
       jvmArgs.add("-Dintellij.platform.root.module=${productProperties.applicationInfoModule}")
+      jvmArgs.add("-Dintellij.platform.product.mode=${productProperties.productMode.id}")
     }
 
     if (productProperties.platformPrefix != null) {
@@ -297,34 +301,35 @@ class BuildContextImpl(
   }
 
   override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get().get(os) ?: emptyList()
+
+  override suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean) {
+    jarCacheManager.computeIfAbsent(sources = sources, targetFile = targetFile, nativeFiles = null, span = Span.current()) {
+      buildJar(targetFile = targetFile, sources = sources, compress = compress, notify = false)
+    }
+  }
 }
 
 private fun createBuildOutputRootEvaluator(projectHome: Path,
                                            productProperties: ProductProperties,
                                            buildOptions: BuildOptions): (JpsProject) -> Path {
   return { project ->
-    val appInfo = ApplicationInfoPropertiesImpl(project = project,
-                                                productProperties = productProperties,
-                                                buildOptions = buildOptions)
+    val appInfo = ApplicationInfoPropertiesImpl(project = project, productProperties = productProperties, buildOptions = buildOptions)
     projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
   }
 }
 
 private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, String>> {
   return module.sourceRoots.asSequence()
-    .filter { root: JpsModuleSourceRoot ->
-      JavaModuleSourceRootTypes.PRODUCTION.contains(root.rootType)
-    }
+    .filter { JavaModuleSourceRootTypes.PRODUCTION.contains(it.rootType) }
     .map { moduleSourceRoot: JpsModuleSourceRoot ->
-      var prefix: String
       val properties = moduleSourceRoot.properties
-      prefix = if (properties is JavaSourceRootProperties) {
-        properties.packagePrefix.replace(".", "/")
+      var prefix = if (properties is JavaSourceRootProperties) {
+        properties.packagePrefix.replace('.', '/')
       }
       else {
         (properties as JavaResourceRootProperties).relativeOutputPath
       }
-      if (!prefix.endsWith("/")) {
+      if (!prefix.endsWith('/')) {
         prefix += "/"
       }
       Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), prefix.trimStart('/'))
@@ -332,5 +337,5 @@ private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, S
 }
 
 internal fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String {
-  return Files.readString(communityHome.communityRoot.resolve("build.txt")).trim { it <= ' ' }
+  return Files.readString(communityHome.communityRoot.resolve("build.txt")).trim()
 }

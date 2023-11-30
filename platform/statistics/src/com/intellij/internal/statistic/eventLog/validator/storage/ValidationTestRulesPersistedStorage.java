@@ -109,7 +109,7 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
       }
       else {
         groups.add(new GroupValidationTestRule(group.id, true,
-                                               SerializationHelper.Companion.serialize(group.rules)));
+                                               SerializationHelper.INSTANCE.serialize(group.rules)));
       }
     }
     return groups;

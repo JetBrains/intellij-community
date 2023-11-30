@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -8,15 +8,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
 
-public class MockFileManager implements FileManager {
+public final class MockFileManager implements FileManager {
   private final PsiManagerEx myManager;
   // in mock tests it's LightVirtualFile, they're only alive when they're referenced,
   // and there can not be several instances representing the same file
@@ -30,7 +30,8 @@ public class MockFileManager implements FileManager {
 
   public MockFileManager(PsiManagerEx manager) {
     myManager = manager;
-    myViewProviders = ConcurrentFactoryMap.create(key->new SingleRootFileViewProvider(myManager, key), ContainerUtil::createConcurrentWeakKeyWeakValueMap);
+    myViewProviders = ConcurrentFactoryMap.create(key->new SingleRootFileViewProvider(myManager, key),
+                                                  () -> CollectionFactory.createConcurrentWeakKeyWeakValueMap());
   }
 
   @Override

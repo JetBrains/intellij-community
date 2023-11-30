@@ -1,1 +1,1 @@
-KtProperty: B.foo
+KtProperty: B

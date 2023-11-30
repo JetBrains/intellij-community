@@ -2,6 +2,7 @@
 package com.intellij.platform.runtime.repository.impl;
 
 import com.intellij.platform.runtime.repository.*;
+import com.intellij.platform.runtime.repository.serialization.RawIncludedRuntimeModule;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -12,11 +13,25 @@ import java.util.stream.Collectors;
  * essential plugins.
  */
 public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
-  private final List<IncludedRuntimeModule> myRootModules;
+  private final @NotNull List<RawIncludedRuntimeModule> myRawRootModules;
+  private final ProductMode myProductMode;
+  private final RuntimeModuleRepository myRepository;
   private volatile List<IncludedRuntimeModule> myIncludedModules;
 
-  public MainRuntimeModuleGroup(@NotNull List<IncludedRuntimeModule> rootModules) {
-    myRootModules = rootModules;
+  public MainRuntimeModuleGroup(@NotNull List<RawIncludedRuntimeModule> rawRootModules, @NotNull ProductMode currentMode, 
+                                @NotNull RuntimeModuleRepository repository) {
+    myRawRootModules = rawRootModules;
+    myProductMode = currentMode;
+    myRepository = repository;
+  }
+
+
+  @Override
+  public @NotNull Set<@NotNull RuntimeModuleId> getOptionalModuleIds() {
+    return myRawRootModules.stream()
+      .filter(it -> it.getImportance().equals(ModuleImportance.OPTIONAL))
+      .map(RawIncludedRuntimeModule::getModuleId)
+      .collect(Collectors.toSet());
   }
 
   @Override
@@ -28,10 +43,20 @@ public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
   }
 
   private List<IncludedRuntimeModule> computeIncludedModules() {
-    List<IncludedRuntimeModule> result = new ArrayList<>(myRootModules);
-    Set<RuntimeModuleDescriptor> rootModules = myRootModules.stream().map(IncludedRuntimeModule::getModuleDescriptor).collect(Collectors.toSet());
+    List<IncludedRuntimeModule> rootIncludedModules = new ArrayList<>();
+    Set<RuntimeModuleDescriptor> rootModules = new HashSet<>();
+    ProductModeMatcher matcher = new ProductModeMatcher(myProductMode);
+    for (RawIncludedRuntimeModule rawRootModule : myRawRootModules) {
+      IncludedRuntimeModule included = rawRootModule.resolve(myRepository);
+      if (included != null && matcher.matches(included.getModuleDescriptor())) {
+        rootIncludedModules.add(included);
+        rootModules.add(included.getModuleDescriptor());
+      }
+    }
+
+    List<IncludedRuntimeModule> result = new ArrayList<>(rootIncludedModules);
     Set<RuntimeModuleDescriptor> visited = new HashSet<>();
-    for (IncludedRuntimeModule rootModule : myRootModules) {
+    for (IncludedRuntimeModule rootModule : rootIncludedModules) {
       collectDependencies(rootModule.getModuleDescriptor(), rootModules, visited, result);
     }
     return result;
@@ -52,6 +77,6 @@ public final class MainRuntimeModuleGroup implements RuntimeModuleGroup {
 
   @Override
   public String toString() {
-    return "MainRuntimeModuleGroup{rootModules=" + myRootModules + "}";
+    return "MainRuntimeModuleGroup{rootModules=" + myRawRootModules + "}";
   }
 }

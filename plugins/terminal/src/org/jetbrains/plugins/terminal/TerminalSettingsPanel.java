@@ -47,7 +47,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-public class TerminalSettingsPanel {
+public final class TerminalSettingsPanel {
   private JPanel myWholePanel;
   private TextFieldWithHistoryWithBrowseButton myShellPathField;
   private JBCheckBox mySoundBellCheckBox;

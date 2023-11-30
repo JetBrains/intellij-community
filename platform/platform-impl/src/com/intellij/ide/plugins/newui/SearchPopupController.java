@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -64,8 +64,7 @@ public abstract class SearchPopupController {
     return myTextField.getTextEditor().getCaretPosition();
   }
 
-  @NotNull
-  private static Pair<String, String> parseAttributeInQuery(@NotNull String query, int end, @NotNull Ref<? super Integer> startPosition) {
+  private static @NotNull Pair<String, String> parseAttributeInQuery(@NotNull String query, int end, @NotNull Ref<? super Integer> startPosition) {
     int index = end - 1;
     String value = null;
 
@@ -206,8 +205,7 @@ public abstract class SearchPopupController {
     return false;
   }
 
-  @NotNull
-  protected abstract List<String> getAttributes();
+  protected abstract @NotNull List<String> getAttributes();
 
   protected abstract @Nullable Collection<String> getValues(@NotNull String attribute); // TODO to be replaced with SortedSet
 

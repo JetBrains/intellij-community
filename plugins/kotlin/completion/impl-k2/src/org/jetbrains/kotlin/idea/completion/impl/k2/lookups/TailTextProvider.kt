@@ -17,13 +17,13 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 
 internal object TailTextProvider {
-    fun KtAnalysisSession.getTailText(signature: KtCallableSignature<*>): String = buildString {
+    context(KtAnalysisSession)
+fun getTailText(signature: KtCallableSignature<*>): String = buildString {
         if (signature is KtFunctionLikeSignature<*>) {
             if (insertLambdaBraces(signature)) {
-                append(" {...}")
-            } else {
-                append(renderFunctionParameters(signature))
+                append(" {...} ")
             }
+            append(renderFunctionParameters(signature))
         }
 
         // use unsubstituted type when rendering receiver type of extension
@@ -35,7 +35,8 @@ internal object TailTextProvider {
         signature.symbol.getContainerPresentation()?.let { append(it) }
     }
 
-    fun KtAnalysisSession.getTailText(
+    context(KtAnalysisSession)
+fun getTailText(
         symbol: KtClassLikeSymbol,
         usePackageFqName: Boolean = false,
         addTypeParameters: Boolean = true
@@ -74,12 +75,14 @@ internal object TailTextProvider {
     private fun FqName.asStringForTailText(): String =
         if (isRoot) "<root>" else asString()
 
-    fun KtAnalysisSession.insertLambdaBraces(symbol: KtFunctionLikeSignature<*>): Boolean {
+    context(KtAnalysisSession)
+fun insertLambdaBraces(symbol: KtFunctionLikeSignature<*>): Boolean {
         val singleParam = symbol.valueParameters.singleOrNull()
         return singleParam != null && !singleParam.symbol.hasDefaultValue && singleParam.returnType is KtFunctionalType
     }
 
-    fun KtAnalysisSession.insertLambdaBraces(symbol: KtFunctionalType): Boolean {
+    context(KtAnalysisSession)
+fun insertLambdaBraces(symbol: KtFunctionalType): Boolean {
         val singleParam = symbol.parameterTypes.singleOrNull()
         return singleParam != null && singleParam is KtFunctionalType
     }

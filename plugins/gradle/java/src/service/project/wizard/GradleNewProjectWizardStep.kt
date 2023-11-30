@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.util.minimumWidth
 import com.intellij.util.lang.JavaVersion
@@ -54,12 +55,12 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleV
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.LOCAL
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.DistributionTypeItem.WRAPPER
-import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.Companion.logGradleDistributionChanged
-import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.Companion.logGradleDistributionFinished
-import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.Companion.logGradleDslChanged
-import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.Companion.logGradleDslFinished
-import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.Companion.logGradleVersionChanged
-import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.Companion.logGradleVersionFinished
+import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.logGradleDistributionChanged
+import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.logGradleDistributionFinished
+import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.logGradleDslChanged
+import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.logGradleDslFinished
+import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.logGradleVersionChanged
+import org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector.logGradleVersionFinished
 import org.jetbrains.plugins.gradle.service.settings.PlaceholderGroup.Companion.placeholderGroup
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
@@ -87,10 +88,10 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
   private val gradleHomeProperty = propertyGraph.lazyProperty { suggestGradleHome() }
   private val updateDefaultProjectSettingsProperty = propertyGraph.lazyProperty { true }
 
-  private var distributionType by distributionTypeProperty
+  protected var distributionType by distributionTypeProperty
   protected var gradleVersion by gradleVersionProperty
   private var autoSelectGradleVersion by autoSelectGradleVersionProperty
-  private var gradleHome by gradleHomeProperty
+  protected var gradleHome by gradleHomeProperty
   private var updateDefaultProjectSettings by updateDefaultProjectSettingsProperty
 
   init {
@@ -124,7 +125,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   protected fun setupGradleDslUI(builder: Panel) {
     builder.row(GradleBundle.message("gradle.dsl.new.project.wizard")) {
-      segmentedButton(listOf(GradleDsl.KOTLIN, GradleDsl.GROOVY)) { it.text }
+      segmentedButton(listOf(GradleDsl.KOTLIN, GradleDsl.GROOVY)) { text = it.text }
         .bind(gradleDslProperty)
         .whenItemSelectedFromUi { logGradleDslChanged(gradleDsl) }
     }.bottomGap(BottomGap.SMALL)
@@ -138,7 +139,7 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
       row {
         label(GradleBundle.message("gradle.project.settings.distribution.npw"))
           .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
-        comboBox(distributionTypes, listCellRenderer { text = it.text })
+        comboBox(distributionTypes, textListCellRenderer { it?.text })
           .columns(COLUMNS_SHORT)
           .bindItem(distributionTypeProperty)
           .whenItemSelectedFromUi { logGradleDistributionChanged(distributionType.value) }
@@ -264,14 +265,11 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     )
   }
 
-  private fun ValidationInfoBuilder.validateIdeaGradleCompatibility(
-    withDialog: Boolean,
-    gradleVersion: GradleVersion
-  ): ValidationInfo? {
-    val oldestSupportedGradleVersion = GradleJvmSupportMatrix.getOldestSupportedGradleVersionByIdea()
-    if (gradleVersion >= oldestSupportedGradleVersion) {
+  private fun ValidationInfoBuilder.validateIdeaGradleCompatibility(withDialog: Boolean, gradleVersion: GradleVersion): ValidationInfo? {
+    if (GradleJvmSupportMatrix.isGradleSupportedByIdea(gradleVersion)) {
       return null
     }
+    val oldestSupportedGradleVersion = GradleJvmSupportMatrix.getOldestSupportedGradleVersionByIdea()
     return errorWithDialog(
       withDialog = withDialog,
       message = GradleBundle.message(
@@ -463,10 +461,9 @@ abstract class GradleNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   protected fun linkGradleProject(
     project: Project,
+    builder: AbstractGradleModuleBuilder = GradleJavaModuleBuilder(),
     configureBuildScript: GradleBuildScriptBuilder<*>.() -> Unit
   ): Module? {
-    val builder = GradleJavaModuleBuilder()
-
     builder.moduleJdk = sdk
     builder.name = parentStep.name
     builder.contentEntryPath = parentStep.path + "/" + parentStep.name

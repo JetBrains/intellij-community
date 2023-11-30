@@ -3,12 +3,14 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.IntentionsUI;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.intention.AdvertisementAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +30,7 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
            }}""");
     myFixture.findAllGutters();
     List<IntentionAction> intentions = myFixture.getAvailableIntentions();
-    assertEmpty(intentions);
+    assertEmpty(ContainerUtil.filter(intentions, action -> !(action instanceof AdvertisementAction)));
   }
 
   public void testOptions() {
@@ -37,7 +39,7 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
                                                      "}");
     assertSize(1, myFixture.findGuttersAtCaret());
 
-    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(getEditor(), getFile(), false);
+    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(getEditor(), getFile());
     assertThat(intentions.guttersToShow.size()).isGreaterThan(1);
   }
 
@@ -60,7 +62,7 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
                                                      "}");
     assertSize(1, myFixture.findGuttersAtCaret());
 
-    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(getEditor(), getFile(), false);
+    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(getEditor(), getFile());
     List<AnAction> descriptors = intentions.guttersToShow;
     Set<String> names = descriptors.stream().map(o -> o.getTemplatePresentation().getText()).collect(Collectors.toSet());
     assertEquals(descriptors.size(), names.size());

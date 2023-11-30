@@ -3,16 +3,12 @@ package org.jetbrains.kotlin.idea.fir.extensions
 
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtension
-import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionFile
-import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionProvider
-import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionReferencePsiTargetsProvider
+import org.jetbrains.kotlin.analysis.api.resolve.extensions.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -21,6 +17,9 @@ import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 class KtResolveExtensionProviderForTests : KtResolveExtensionProvider() {
     override fun provideExtensionsFor(module: KtModule): List<KtResolveExtension> {
@@ -56,10 +55,6 @@ private class ExtensionForTests(private val xmlFile: XmlFile) : KtResolveExtensi
 
     override fun getKtFiles(): List<KtResolveExtensionFile> {
         return files
-    }
-
-    override fun getModificationTracker(): ModificationTracker {
-        return ModificationTracker { xmlFile.modificationStamp }
     }
 }
 
@@ -99,28 +94,36 @@ private class ExtensionFileForTest(private val rootTag: XmlTag, private val pack
         }
     }
 
-    override fun createPsiTargetsProvider(): KtResolveExtensionReferencePsiTargetsProvider {
-        return object : KtResolveExtensionReferencePsiTargetsProvider() {
-            override fun KtAnalysisSession.getReferenceTargetsForSymbol(symbol: KtSymbol): Collection<PsiElement> {
-                val fqNameParts =  when (symbol) {
-                    is KtFunctionSymbol -> {
-                        val callableId = symbol.callableIdIfNonLocal ?: return listOf(rootTag)
-                        callableId.className?.pathSegments().orEmpty() + callableId.callableName
+    override fun createNavigationTargetsProvider(): KtResolveExtensionNavigationTargetsProvider {
+        return object : KtResolveExtensionNavigationTargetsProvider() {
+            override fun KtAnalysisSession.getNavigationTargets(element: KtElement): Collection<PsiElement> =
+                element.parentsWithSelf
+                    .filterIsInstance<KtDeclaration>()
+                    .firstNotNullOfOrNull { declaration ->
+                        val fqNameParts = when (val symbol = declaration.getSymbol()) {
+                            is KtFunctionSymbol -> {
+                                val callableId = symbol.callableIdIfNonLocal
+                                    ?: return@firstNotNullOfOrNull null
+                                callableId.className?.pathSegments().orEmpty() + callableId.callableName
+                            }
+
+                            is KtClassLikeSymbol -> {
+                                symbol.classIdIfNonLocal?.relativeClassName?.pathSegments()
+                                    ?: return@firstNotNullOfOrNull null
+                            }
+
+                            else -> {
+                                return@firstNotNullOfOrNull null
+                            }
+                        }
+                        var tag = rootTag
+                        for (part in fqNameParts) {
+                            tag = tag.subTags.firstOrNull { it.getAttributeValue("name") == part.asString() }
+                                ?: return@firstNotNullOfOrNull null
+                        }
+                        return@firstNotNullOfOrNull listOf(tag)
                     }
-                    is KtClassLikeSymbol -> {
-                        symbol.classIdIfNonLocal?.relativeClassName?.pathSegments() ?: return listOf(rootTag)
-                    }
-                    else -> {
-                        return listOf(rootTag)
-                    }
-                }
-                var tag = rootTag
-                for (part in fqNameParts) {
-                    tag = tag.subTags.firstOrNull { it.getAttributeValue("name") == part.asString()  }
-                        ?: return listOf(rootTag)
-                }
-                return listOf(tag)
-            }
+                    ?: listOf(rootTag)
         }
     }
 

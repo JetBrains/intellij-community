@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner;
 
-import com.intellij.ProjectTopics;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesUtilBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ public final class StringDescriptorManager {
 
   public StringDescriptorManager(@NotNull Module module) {
     myModule = module;
-    module.getProject().getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    module.getProject().getMessageBus().connect().subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         synchronized(myPropertiesFileCache) {
@@ -78,18 +79,22 @@ public final class StringDescriptorManager {
       propertiesFile = myPropertiesFileCache.get(cacheKey);
     }
     if (propertiesFile == null || !propertiesFile.getContainingFile().isValid()) {
-      propertiesFile = PropertiesUtilBase.getPropertiesFile(propFileName, myModule, locale);
-      synchronized (myPropertiesFileCache) {
-        if (propertiesFile != null) {
-          myPropertiesFileCache.put(cacheKey, propertiesFile);
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-723514")) {
+        propertiesFile = PropertiesUtilBase.getPropertiesFile(propFileName, myModule, locale);
+        synchronized (myPropertiesFileCache) {
+          if (propertiesFile != null) {
+            myPropertiesFileCache.put(cacheKey, propertiesFile);
+          }
         }
       }
     }
 
     if (propertiesFile != null) {
-      final IProperty propertyByKey = propertiesFile.findPropertyByKey(descriptor.getKey());
-      if (propertyByKey != null) {
-        return propertyByKey;
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-254373")) {
+        final IProperty propertyByKey = propertiesFile.findPropertyByKey(descriptor.getKey());
+        if (propertyByKey != null) {
+          return propertyByKey;
+        }
       }
     }
     return null;

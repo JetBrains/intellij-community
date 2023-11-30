@@ -41,7 +41,7 @@ interface BooleanEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: BooleanEntity, modification: BooleanEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: BooleanEntity, modification: BooleanEntity.Builder.() -> Unit): BooleanEntity = modifyEntity(
   BooleanEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -72,7 +72,7 @@ interface IntEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: IntEntity, modification: IntEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: IntEntity, modification: IntEntity.Builder.() -> Unit): IntEntity = modifyEntity(
   IntEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -103,7 +103,7 @@ interface StringEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: StringEntity, modification: StringEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: StringEntity, modification: StringEntity.Builder.() -> Unit): StringEntity = modifyEntity(
   StringEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -134,7 +134,7 @@ interface ListEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ListEntity, modification: ListEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: ListEntity, modification: ListEntity.Builder.() -> Unit): ListEntity = modifyEntity(
   ListEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -165,7 +165,8 @@ interface OptionalIntEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OptionalIntEntity, modification: OptionalIntEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: OptionalIntEntity,
+                                      modification: OptionalIntEntity.Builder.() -> Unit): OptionalIntEntity = modifyEntity(
   OptionalIntEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -196,7 +197,8 @@ interface OptionalStringEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OptionalStringEntity, modification: OptionalStringEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: OptionalStringEntity,
+                                      modification: OptionalStringEntity.Builder.() -> Unit): OptionalStringEntity = modifyEntity(
   OptionalStringEntity.Builder::class.java, entity, modification)
 //endregion
 

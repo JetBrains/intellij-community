@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -18,7 +18,11 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.openapi.ui.validation.WHEN_TEXT_CHANGED
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsEnvCustomizer
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
@@ -31,6 +35,7 @@ import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.layout.not
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
@@ -52,6 +57,8 @@ import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 import javax.swing.border.Border
 
 private fun gitSharedSettings(project: Project) = GitSharedSettings.getInstance(project)
@@ -127,6 +134,12 @@ internal class GitVcsPanel(private val project: Project) :
         protectedBranchesField.readOnlyText = ParametersListUtil.COLON_LINE_JOINER.`fun`(sharedSettings.additionalProhibitedPatterns)
       }
       cell(protectedBranchesField)
+        .validationRequestor(WHEN_TEXT_CHANGED)
+        .validationRequestor(DialogValidationRequestor { _, validate ->
+          // when the panel shown, initiate one time validation request to right away highlight the field if needed
+          validate()
+        })
+        .validationInfo { validateProtectedBranchesPatterns(it.text) ?: validateProtectedBranchesPatterns(it.readOnlyText) }
         .align(AlignX.FILL)
         .bind<List<String>>(
           { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
@@ -141,6 +154,20 @@ internal class GitVcsPanel(private val project: Project) :
         checkBox(synchronizeBranchProtectionRules(project))
       }
     }
+  }
+
+  private fun ValidationInfoBuilder.validateProtectedBranchesPatterns(text: String): ValidationInfo? {
+    for (pattern in ParametersListUtil.COLON_LINE_PARSER.`fun`(text)) {
+      try {
+        Pattern.compile(pattern)
+      }
+      catch (e: PatternSyntaxException) {
+        val cause = StringUtil.substringBefore(e.message.orEmpty(), "\n").orEmpty()
+        return error(message("settings.protected.branched.validation", pattern, cause))
+      }
+    }
+
+    return null
   }
 
   override fun getId() = "vcs.${GitVcs.NAME}"

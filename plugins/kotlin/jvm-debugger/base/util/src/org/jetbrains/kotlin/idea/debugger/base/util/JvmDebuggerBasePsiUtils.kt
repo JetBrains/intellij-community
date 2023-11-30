@@ -16,11 +16,11 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 /**
  * Returns the `TextRange` of the line with a given zero-based index.
  */
-fun PsiFile.getRangeOfLine(line: Int): TextRange? {
+fun PsiFile.getRangeOfLine(line: Int, skipWhitespace: Boolean = true): TextRange? {
     if (line < 0) {
         return null
     }
-    val startOffset = getLineStartOffset(line) ?: return null
+    val startOffset = getLineStartOffset(line, skipWhitespace) ?: return null
     val endOffset = getLineEndOffset(line) ?: return null
     if (TextRange.isProperRange(startOffset, endOffset)) {
         return TextRange(startOffset, endOffset)

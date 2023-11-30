@@ -61,7 +61,6 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(ReloadFilesCommand.PREFIX, ReloadFilesCommand::new),
       Map.entry(AddFileCommand.PREFIX, AddFileCommand::new),
       Map.entry(DeleteFileCommand.PREFIX, DeleteFileCommand::new),
-      Map.entry(TestTipsAndFeaturesIntegrationCommand.PREFIX, TestTipsAndFeaturesIntegrationCommand::new),
       Map.entry(ExpandMainMenuCommand.PREFIX, ExpandMainMenuCommand::new),
       Map.entry(ExpandEditorMenuCommand.PREFIX, ExpandEditorMenuCommand::new),
       Map.entry(OpenRandomFileCommand.PREFIX, OpenRandomFileCommand::new),
@@ -77,6 +76,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(CollectAllFilesCommand.PREFIX, CollectAllFilesCommand::new),
       Map.entry(ExecuteEditorActionCommand.PREFIX, ExecuteEditorActionCommand::new),
       Map.entry(AssertCompletionCommand.PREFIX, AssertCompletionCommand::new),
+      Map.entry(ChooseCompletionCommand.PREFIX, ChooseCompletionCommand::new),
       Map.entry(AssertFindUsagesCommand.PREFIX, AssertFindUsagesCommand::new),
       Map.entry(SetBreakpointCommand.PREFIX, SetBreakpointCommand::new),
       Map.entry(DebugRunConfigurationCommand.PREFIX, DebugRunConfigurationCommand::new),
@@ -88,7 +88,16 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(AcceptDecompileNotice.PREFIX, AcceptDecompileNotice::new),
       Map.entry(DisableCodeVisionCommand.PREFIX, DisableCodeVisionCommand::new),
       Map.entry(InstallCustomJBR.PREFIX, InstallCustomJBR::new),
-      Map.entry(ShowRecentFilesCommand.PREFIX, ShowRecentFilesCommand::new)
+      Map.entry(ShowRecentFilesCommand.PREFIX, ShowRecentFilesCommand::new),
+      Map.entry(ShowEvaluateExpressionCommand.PREFIX, ShowEvaluateExpressionCommand::new),
+      Map.entry(EvaluateExpressionCompletionCommand.PREFIX, EvaluateExpressionCompletionCommand::new),
+      Map.entry(CollectFilesNotMarkedAsIndex.PREFIX, CollectFilesNotMarkedAsIndex::new),
+      Map.entry(RemoveBreakpointCommand.PREFIX, RemoveBreakpointCommand::new),
+      Map.entry(DropErrorCommand.PREFIX, DropErrorCommand::new),
+      Map.entry(SaveDocumentsAndSettingsCommand.PREFIX, SaveDocumentsAndSettingsCommand::new),
+      Map.entry(FreezeUICommand.PREFIX, FreezeUICommand::new),
+      Map.entry(MoveCaretCommand.PREFIX, MoveCaretCommand::new),
+      Map.entry(TakeThreadDumpCommand.PREFIX, TakeThreadDumpCommand::new)
     );
   }
 }

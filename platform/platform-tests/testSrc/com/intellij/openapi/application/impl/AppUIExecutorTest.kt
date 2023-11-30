@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -92,7 +93,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
   fun `test coroutine onUiThread`() {
     val executor = AppUIExecutor.onUiThread(ModalityState.any())
     GlobalScope.async(executor.coroutineDispatchingContext()) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
     }.joinNonBlocking()
   }
 
@@ -109,7 +110,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       queue.add("start")
 
       launch(executor.coroutineDispatchingContext()) {
-        ApplicationManager.getApplication().assertIsDispatchThread()
+        ThreadingAssertions.assertEventDispatchThread()
 
         queue.add("coroutine start")
         Disposer.dispose(disposable)
@@ -119,7 +120,7 @@ class AppUIExecutorTest : LightPlatformTestCase() {
           queue.add("coroutine after yield")
         }
         catch (e: Exception) {
-          ApplicationManager.getApplication().assertIsDispatchThread()
+          ThreadingAssertions.assertEventDispatchThread()
           queue.add("coroutine yield caught ${e.javaClass.simpleName}")
           throw e
         }

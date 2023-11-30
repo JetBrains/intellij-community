@@ -437,7 +437,11 @@ public class PythonTask {
       })
       .withStop(() -> process.destroyProcess(), () -> !process.isProcessTerminated()
       )
-      .withAfterCompletion(myAfterCompletion)
+      .withAfterCompletion(() -> {
+        if (process.getExitCode() != null && process.getExitCode() == 0) {
+          myAfterCompletion.run();
+        }
+      })
       .withHelpId(myHelpId)
       .run();
   }

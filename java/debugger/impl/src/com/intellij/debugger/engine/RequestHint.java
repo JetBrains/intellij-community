@@ -266,8 +266,8 @@ public class RequestHint {
     return STOP;
   }
 
-  public void doStep(@NotNull DebugProcessImpl debugProcess, SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, int size, int depth) {
-    debugProcess.doStep(suspendContext, stepThread, size, depth, this);
+  protected void doStep(@NotNull DebugProcessImpl debugProcess, SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, int size, int depth, Object commandToken) {
+    debugProcess.doStep(suspendContext, stepThread, size, depth, this, commandToken);
   }
 
   @Nullable

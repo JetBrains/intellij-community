@@ -7,7 +7,6 @@ import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -117,29 +116,14 @@ public class NavBarModel {
       return;
     }
 
-    DataContext wrappedDataContext = wrapDataContext(dataContext);
-    ReadAction.nonBlocking(() -> createModel(wrappedDataContext))
+    DataContext asyncDataContext = Utils.createAsyncDataContext(dataContext);
+    ReadAction.nonBlocking(() -> createModel(asyncDataContext))
       .expireWith(myProject)
       .finishOnUiThread(ModalityState.current(), model -> {
         setModelWithUpdate(model);
         if (callback != null) callback.run();
       })
       .submit(ourExecutor);
-  }
-
-  @NotNull
-  private static DataContext wrapDataContext(@NotNull DataContext context) {
-    DataContext wrapped = Utils.wrapDataContext(context);
-    if (Utils.isAsyncDataContext(wrapped)) return wrapped;
-
-    return SimpleDataContext.builder().addAll(
-      context,
-      CommonDataKeys.PSI_FILE,
-      CommonDataKeys.PROJECT,
-      CommonDataKeys.VIRTUAL_FILE,
-      PlatformCoreDataKeys.MODULE,
-      CommonDataKeys.EDITOR,
-      PlatformCoreDataKeys.SELECTED_ITEMS).build();
   }
 
   private void setModelWithUpdate(@Nullable List<Object> model) {

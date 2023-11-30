@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -15,7 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.NameUtil
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -134,7 +134,7 @@ class VariableOrParameterNameWithTypeCompletion(
         ProgressManager.checkCanceled()
         if (suggestionsByTypesAdded.contains(type)) return // don't add suggestions for the same with longer user prefix
 
-        val nameSuggestions = Fe10KotlinNameSuggester.getCamelNames(className, { true }, userPrefix.isEmpty())
+        val nameSuggestions = KotlinNameSuggester.getCamelNames(className, { true }, userPrefix.isEmpty())
         for (name in nameSuggestions) {
             val parameterName = userPrefix + name
             if (prefixMatcher.isStartMatch(parameterName)) {

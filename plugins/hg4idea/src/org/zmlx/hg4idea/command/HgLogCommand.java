@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.visible.CommitCountStageKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
@@ -120,7 +121,7 @@ public class HgLogCommand {
     }
     arguments.add("--template");
     arguments.add(template);
-    if (limit != -1) {
+    if (!CommitCountStageKt.isAll(limit)) {
       arguments.add("--limit");
       arguments.add(String.valueOf(limit));
     }

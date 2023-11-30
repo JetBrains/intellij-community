@@ -18,7 +18,7 @@ import java.nio.charset.Charset
 import javax.swing.SwingUtilities
 
 /**
- * Logic of key events handling is copied from [org.jetbrains.plugins.terminal.exp.TerminalPanel]
+ * Logic of key events handling is copied from [com.jediterm.terminal.ui.TerminalPanel]
  * Logic of mouse event handling is copied from [com.jediterm.terminal.model.JediTerminal]
  */
 class TerminalEventsHandler(private val session: TerminalSession,

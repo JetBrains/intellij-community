@@ -13,6 +13,7 @@ import java.util.function.IntFunction
 internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage {
   val storageId: StorageId
   var isFresh: Boolean
+  val isEmpty: Boolean
 
   fun getMessage(commitId: Int): String?
 
@@ -46,8 +47,6 @@ internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage
   @Throws(IOException::class)
   fun processMessages(processor: (Int, String) -> Boolean)
 
-  fun getRename(parent: Int, child: Int): IntArray?
-
   fun createWriter(): VcsLogWriter
 
   fun getCommitsForSubstring(string: String,
@@ -64,4 +63,5 @@ interface VcsLogWriter {
   fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails)
   fun flush()
   fun close(performCommit: Boolean)
+  fun interrupt()
 }

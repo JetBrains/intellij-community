@@ -2,22 +2,18 @@ package com.intellij.grazie.jlanguage.hunspell
 
 import ai.grazie.spell.lists.hunspell.HunspellWordList
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.util.io.inputStream
 import org.languagetool.rules.spelling.hunspell.HunspellDictionary
 import java.nio.file.Path
+import kotlin.io.path.inputStream
 
 class LuceneHunspellDictionary(dictionary: Path, affix: Path) : HunspellDictionary {
-  private val dict: HunspellWordList
-
-  init {
-    this.dict = affix.inputStream().use { affix ->
-      dictionary.inputStream().use { dictionary ->
-        HunspellWordList(
-          affix,
-          dictionary,
-          checkCanceled = { ProgressManager.checkCanceled() }
-        )
-      }
+  private val dict: HunspellWordList = affix.inputStream().use { affix ->
+    dictionary.inputStream().use { dictionary ->
+      HunspellWordList(
+        affix,
+        dictionary,
+        checkCanceled = { ProgressManager.checkCanceled() }
+      )
     }
   }
 

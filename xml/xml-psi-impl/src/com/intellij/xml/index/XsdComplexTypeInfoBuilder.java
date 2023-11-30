@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class XsdComplexTypeInfoBuilder implements NanoXmlBuilder {
-  private final static String SIGN = "";
+  private static final String SIGN = "";
   public static final String HTTP_WWW_W3_ORG_2001_XMLSCHEMA = "http://www.w3.org/2001/XMLSchema";
   // base type -> inherited types
   private final MultiMap<SchemaTypeInfo, SchemaTypeInfo> myMap;

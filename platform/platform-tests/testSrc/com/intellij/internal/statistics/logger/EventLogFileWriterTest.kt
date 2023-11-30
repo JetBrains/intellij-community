@@ -18,7 +18,8 @@ import kotlin.io.path.exists
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-const val MAX_AGE = (14 * 24 * 60 * 60 * 1000).toLong()
+/** Should be in sync with [EventLogFileWriter.maxFileAge] */
+const val MAX_AGE = (7 * 24 * 60 * 60 * 1000).toLong()
 
 class EventLogFileWriterTest {
 
@@ -81,6 +82,18 @@ class EventLogFileWriterTest {
 
     doTestCleanupOldFiles(listOf(f1, f2, f3), listOf(false, false, false), ts - 3000, true)
   }
+
+  @Test
+  fun `test all almost expired files`() {
+    val ts = System.currentTimeMillis()
+
+    val f1 = TestFile(ts - MAX_AGE + 1000, "test.log")
+    val f2 = TestFile(ts - MAX_AGE + 2000, "test2.log")
+    val f3 = TestFile(ts - MAX_AGE + 3000, "test3.log")
+
+    doTestCleanupOldFiles(listOf(f1, f2, f3), listOf(false, false, false), ts - MAX_AGE + 1000, true)
+  }
+
 
   @Test
   fun `test all new files but one`() {
@@ -223,7 +236,6 @@ class EventLogFileWriterTest {
 class TestEventLogFileWriter(dir: Path, files: List<File>)
   : EventLogFileWriter(dir,
                        DEFAULT_MAX_FILE_SIZE_BYTES,
-                       MAX_AGE,
                        { directory -> EventLogFile.create(directory, EventLogBuildType.EAP, "221").file },
                        Supplier { files }) {
   var quickCleanCheck: Boolean = false

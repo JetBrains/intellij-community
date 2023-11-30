@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.extensions.impl
@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NotNull
 import java.util.AbstractMap.SimpleImmutableEntry
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentMap
@@ -17,12 +18,13 @@ import java.util.function.Supplier
 
 // Separate class to keep ExtensionPointImpl class implementation clear and readable,
 // such simple util code better to keep separately.
-// getThreadSafeAdapterList can be opened to used here directly to avoid using of iterator, but it doesn't make sense
-// - if there is already cached extension list, it will be used instead of custom iterator.
-// It is not only about performance and common sense, but also supporting ability to mock extension list in tests (custom list is set).
+// getThreadSafeAdapterList can be opened to use here directly to avoid using of iterator, but it doesn't make sense
+// - if there is already a cached extension list, it will be used instead of custom iterator.
+// It is not only about performance and common sense,
+// but also supporting the ability to mock an extension list in tests (a custom list is set).
 @ApiStatus.Internal
 object ExtensionProcessingHelper {
-  fun <T : Any> forEachExtensionSafe(iterable: Iterable<T?>, extensionConsumer: Consumer<T>) {
+  fun <T : Any> forEachExtensionSafe(iterable: Iterable<T?>, extensionConsumer: Consumer<@NotNull T>) {
     for (t in iterable) {
       if (t == null) {
         break
@@ -44,7 +46,7 @@ object ExtensionProcessingHelper {
   }
 
   fun <T> findFirstSafe(predicate: Predicate<in T>, iterable: Iterable<T?>): T? {
-    return computeSafeIfAny({ o: T -> if (predicate.test(o)) o else null }, iterable)
+    return computeSafeIfAny({ if (predicate.test(it)) it else null }, iterable)
   }
 
   fun <T : Any, R> computeSafeIfAny(processor: Function<T, out R>, iterable: Iterable<T?>): R? {
@@ -126,7 +128,8 @@ object ExtensionProcessingHelper {
                                        key: K,
                                        cacheId: Class<*>,
                                        valueProducer: Function<K, V>): V {
-    // Or to have double look-up (map for valueProducer, map for key), or using of composite key. Java GC is quite good, so, composite key.
+    // Or to have a double look-up (map for valueProducer, map for a key), or using of a composite key.
+    // Java GC is quite good, so, composite key.
     val cache = point.getCacheMap<SimpleImmutableEntry<K, Class<*>>, V>()
     return cache.computeIfAbsent(SimpleImmutableEntry(key, cacheId)) { (key1): SimpleImmutableEntry<K, Class<*>> ->
       valueProducer.apply(key1)
@@ -160,8 +163,8 @@ object ExtensionProcessingHelper {
 
   private fun <K : Any, T : Any> buildCacheForGroupingKeyMapper(keyMapper: Function<T, K?>,
                                                                 point: ExtensionPoint<T>): Map<K, MutableList<T>> {
-    // use HashMap instead of THashMap - a lot of keys not expected,
-    // nowadays HashMap is a more optimized (e.g. computeIfAbsent implemented in an efficient manner)
+    // use HashMap instead of THashMap - a lot of keys not expected;
+    // nowadays HashMap is more optimized (e.g., computeIfAbsent implemented in an efficient manner)
     val cache = HashMap<K, MutableList<T>>()
     for (extension in point.extensionList) {
       val key = keyMapper.apply(extension) ?: continue

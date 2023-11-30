@@ -70,7 +70,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   protected void initMapAndCache() throws IOException {
     ValueContainerMap<Key, Value> map = createValueContainerMap();
-    myCache = MapIndexStorageCacheProvider.getActualProvider().createCache(
+    myCache = MapIndexStorageCacheProvider.Companion.getActualProvider().createCache(
       key -> map.getModifiableValueContainer(key),
       (key, container) -> onDropFromCache(key, container),
       myKeyDescriptor,

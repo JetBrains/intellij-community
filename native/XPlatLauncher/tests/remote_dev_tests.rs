@@ -44,7 +44,7 @@ mod tests {
         let remote_dev_command = &["run", &project_dir];
         let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command)).stdout;
 
-        assert!(output.contains("cwmHostNoLobby"), "output:\n{}", output);
+        assert!(output.contains("remoteDevHost"), "output:\n{}", output);
         assert!(output.contains(project_dir), "output:\n{}", output);
         assert!(!output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"), "output:\n{}", output);
     }

@@ -1,4 +1,5 @@
 from collections.abc import Iterable, Mapping
+from types import TracebackType
 from typing import Any, TextIO, overload
 from typing_extensions import Literal, TypeAlias
 
@@ -47,7 +48,7 @@ class Runner:
         command: str,
         *,
         asynchronous: Literal[True],
-        disown: Literal[False] = ...,
+        disown: Literal[False] = False,
         dry: bool = ...,
         echo: bool = ...,
         echo_format: str = ...,
@@ -72,8 +73,8 @@ class Runner:
         self,
         command: str,
         *,
-        asynchronous: Literal[False] = ...,
-        disown: Literal[False] = ...,
+        asynchronous: Literal[False] = False,
+        disown: Literal[False] = False,
         dry: bool = ...,
         echo: bool = ...,
         echo_format: str = ...,
@@ -148,7 +149,6 @@ class Runner:
     def send_interrupt(self, interrupt) -> None: ...
     def returncode(self) -> None: ...
     def stop(self) -> None: ...
-    def stop_timer(self) -> None: ...
     def kill(self) -> None: ...
     @property
     def timed_out(self): ...
@@ -156,7 +156,7 @@ class Runner:
 class Local(Runner):
     status: Any
     def __init__(self, context) -> None: ...
-    def should_use_pty(self, pty: bool = ..., fallback: bool = ...): ...
+    def should_use_pty(self, pty: bool = False, fallback: bool = True): ...
     process: Any
 
 class Result:
@@ -171,32 +171,33 @@ class Result:
     hide: tuple[Literal["stdout", "stderr"], ...]
     def __init__(
         self,
-        stdout: str = ...,
-        stderr: str = ...,
-        encoding: str | None = ...,
-        command: str = ...,
-        shell: str = ...,
-        env=...,
-        exited: int = ...,
-        pty: bool = ...,
-        hide: tuple[Literal["stdout", "stderr"], ...] = ...,
+        stdout: str = "",
+        stderr: str = "",
+        encoding: str | None = None,
+        command: str = "",
+        shell: str = "",
+        env=None,
+        exited: int = 0,
+        pty: bool = False,
+        hide: tuple[Literal["stdout", "stderr"], ...] = (),
     ) -> None: ...
     @property
     def return_code(self) -> int: ...
-    def __nonzero__(self) -> bool: ...
     def __bool__(self) -> bool: ...
     @property
     def ok(self) -> bool: ...
     @property
     def failed(self) -> bool: ...
-    def tail(self, stream: Literal["stderr", "stdout"], count: int = ...) -> str: ...
+    def tail(self, stream: Literal["stderr", "stdout"], count: int = 10) -> str: ...
 
 class Promise(Result):
     runner: Any
     def __init__(self, runner) -> None: ...
     def join(self): ...
     def __enter__(self): ...
-    def __exit__(self, exc_type, exc_value, traceback) -> None: ...
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None
+    ) -> None: ...
 
-def normalize_hide(val, out_stream=..., err_stream=...): ...
+def normalize_hide(val, out_stream=None, err_stream=None): ...
 def default_encoding() -> str: ...

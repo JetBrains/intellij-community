@@ -8,6 +8,7 @@
 // ACTION: Make 'b' 'abstract'
 // ACTION: Move to companion object
 // ERROR: Property must be initialized or be abstract
+// IGNORE_K2
 
 actual class SimpleWConstructor actual constructor(i: Int) {
     actual val <caret>b: String

@@ -2,7 +2,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -138,22 +137,5 @@ public final class ContainerUtilRt {
   public static <T> List<T> emptyList() {
     //noinspection unchecked
     return (List<T>)EmptyList.INSTANCE;
-  }
-
-  /**
-   * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#map2List(Collection, Function)}
-   * @return read-only list consisting of the elements from collection converted by mapper
-   */
-  @Deprecated
-  @NotNull
-  @Contract(pure=true)
-  @ApiStatus.ScheduledForRemoval
-  public static <T, V> List<V> map2List(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
-    if (collection.isEmpty()) return emptyList();
-    List<V> list = new ArrayList<>(collection.size());
-    for (final T t : collection) {
-      list.add(mapper.fun(t));
-    }
-    return list;
   }
 }

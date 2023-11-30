@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template;
 
@@ -336,7 +336,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   @Override
-  public void run(@NotNull final Editor editor, final boolean inline) {
+  public void run(final @NotNull Editor editor, final boolean inline) {
     final Template template;
     if (inline) {
       template = buildInlineTemplate();

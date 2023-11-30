@@ -72,9 +72,14 @@ class JKQualifiedExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitQualifiedExpression(this)
 }
 
+/**
+ * @param shouldBePreserved - parentheses came from original Java code and should be preserved
+ * (don't run "Remove unnecessary parentheses" inspection on them)
+ */
 class JKParenthesizedExpression(
     expression: JKExpression,
-    override val expressionType: JKType? = null
+    override val expressionType: JKType? = null,
+    val shouldBePreserved: Boolean = false
 ) : JKExpression() {
     var expression: JKExpression by child(expression)
     override fun calculateType(typeFactory: JKTypeFactory) = expressionType ?: expression.calculateType(typeFactory)
@@ -123,9 +128,14 @@ class JKStubExpression(override val expressionType: JKType? = null) : JKExpressi
     override fun accept(visitor: JKVisitor) = visitor.visitStubExpression(this)
 }
 
+/**
+ * @param shouldBePreserved - this is an original `this` expression from Java code
+ * that should be preserved in Kotlin (don't run "Redundant explicit 'this'" inspection on it automatically).
+ */
 class JKThisExpression(
     qualifierLabel: JKLabel,
     override val expressionType: JKType? = null,
+    val shouldBePreserved: Boolean = false
 ) : JKExpression() {
     var qualifierLabel: JKLabel by child(qualifierLabel)
     override fun accept(visitor: JKVisitor) = visitor.visitThisExpression(this)
@@ -360,9 +370,13 @@ class JKJavaNewEmptyArray(
     override fun accept(visitor: JKVisitor) = visitor.visitJavaNewEmptyArray(this)
 }
 
+/**
+ * @param hasTrailingComma - Java array initializer has a trailing comma
+ */
 class JKJavaNewArray(
     initializer: List<JKExpression>,
     type: JKTypeElement,
+    val hasTrailingComma: Boolean,
     override val expressionType: JKType? = null
 ) : JKExpression() {
     val type by child(type)
@@ -415,5 +429,5 @@ class JKErrorExpression(
 ) : JKExpression(), JKErrorElement {
     override fun calculateType(typeFactory: JKTypeFactory): JKType = expressionType ?: typeFactory.types.nothing
 
-    override fun accept(visitor: JKVisitor) = visitor.visitExpression(this)
+    override fun accept(visitor: JKVisitor) = visitor.visitErrorExpression(this)
 }

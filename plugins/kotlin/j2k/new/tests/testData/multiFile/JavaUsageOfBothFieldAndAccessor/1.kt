@@ -2,5 +2,5 @@ package test
 
 class J {
     @JvmField
-    var foo = 42
+    var foo: Int = 42
 }

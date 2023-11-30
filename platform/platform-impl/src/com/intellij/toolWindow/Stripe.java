@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow;
 
 import com.intellij.accessibility.AccessibilityUtils;
@@ -265,7 +265,7 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
     return accessibleContext;
   }
 
-  private class AccessibleStripe extends AccessibleJPanel {
+  private final class AccessibleStripe extends AccessibleJPanel {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibilityUtils.GROUPED_ELEMENTS;

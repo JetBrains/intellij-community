@@ -7,9 +7,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.AttributesOpe
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.ContentsOperation.Companion.contentRecordId
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation.Companion.fileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag.*
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.fmap
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.AttributeDataRule.AttributeOverwriteData
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
 
 object VfsModificationContract {
   /**
@@ -41,9 +40,10 @@ object VfsModificationContract {
   }
 
   val nameId = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_SET_NAME_ID, REC_FILL_RECORD, REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_ALLOC, REC_SET_NAME_ID, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
+      is RecordsOperation.AllocateRecord -> setValue(0)
       is RecordsOperation.SetNameId -> setValue(nameId)
       is RecordsOperation.FillRecord -> setValue(nameId)
       is RecordsOperation.CleanRecord -> setValue(0)
@@ -52,9 +52,10 @@ object VfsModificationContract {
   }
 
   val parentId = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_SET_PARENT, REC_FILL_RECORD, REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_ALLOC, REC_SET_PARENT, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
+      is RecordsOperation.AllocateRecord -> setValue(0)
       is RecordsOperation.SetParent -> setValue(parentId)
       is RecordsOperation.FillRecord -> setValue(parentId)
       is RecordsOperation.CleanRecord -> setValue(0)
@@ -63,9 +64,10 @@ object VfsModificationContract {
   }
 
   val length = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_SET_LENGTH, REC_FILL_RECORD, REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_ALLOC, REC_SET_LENGTH, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
+      is RecordsOperation.AllocateRecord -> setValue(0L)
       is RecordsOperation.SetLength -> setValue(length)
       is RecordsOperation.FillRecord -> setValue(length)
       is RecordsOperation.CleanRecord -> setValue(0L)
@@ -74,9 +76,10 @@ object VfsModificationContract {
   }
 
   val timestamp = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_SET_TIMESTAMP, REC_FILL_RECORD, REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_ALLOC, REC_SET_TIMESTAMP, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
+      is RecordsOperation.AllocateRecord -> setValue(0L)
       is RecordsOperation.SetTimestamp -> setValue(timestamp)
       is RecordsOperation.FillRecord -> setValue(timestamp)
       is RecordsOperation.CleanRecord -> setValue(0L)
@@ -85,9 +88,10 @@ object VfsModificationContract {
   }
 
   val flags = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_SET_FLAGS, REC_FILL_RECORD, REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_ALLOC, REC_SET_FLAGS, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
+      is RecordsOperation.AllocateRecord -> setValue(0)
       is RecordsOperation.SetFlags -> setValue(flags)
       is RecordsOperation.FillRecord -> setValue(flags)
       is RecordsOperation.CleanRecord -> setValue(0)
@@ -96,9 +100,10 @@ object VfsModificationContract {
   }
 
   val contentRecordId = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_SET_CONTENT_RECORD_ID, REC_FILL_RECORD, REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_ALLOC, REC_SET_CONTENT_RECORD_ID, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
+      is RecordsOperation.AllocateRecord -> setValue(0)
       is RecordsOperation.SetContentRecordId -> setValue(recordId)
       // it is not written explicitly in the code, because fillRecord is only used in two places where contentRecordId has no effect anyway,
       // but semantically it should be treated like contentRecordId=0
@@ -109,9 +114,10 @@ object VfsModificationContract {
   }
 
   val attributeRecordId = PropertyOverwriteRule(
-    VfsOperationTagsMask(REC_SET_ATTR_REC_ID, REC_FILL_RECORD, REC_CLEAN_RECORD)
+    VfsOperationTagsMask(REC_ALLOC, REC_SET_ATTR_REC_ID, REC_FILL_RECORD, REC_CLEAN_RECORD)
   ) { setValue ->
     when (this) {
+      is RecordsOperation.AllocateRecord -> setValue(0)
       is RecordsOperation.SetAttributeRecordId -> setValue(recordId)
       is RecordsOperation.FillRecord -> if (overwriteAttrRef) setValue(0)
       is RecordsOperation.CleanRecord -> setValue(0)
@@ -121,7 +127,7 @@ object VfsModificationContract {
 
   class ContentModificationRule(
     override val relevantOperations: VfsOperationTagsMask,
-    val contentModifier: VfsOperation<*>.(modifyContent: (ContentOperation) -> Unit) -> Unit
+    private val contentModifier: VfsOperation<*>.(modifyContent: (ContentOperation) -> Unit) -> Unit
   ) : ModificationRule<ContentOperation> {
     init {
       assert(relevantOperations.toList().all { it.isContentOperation })
@@ -139,12 +145,12 @@ object VfsModificationContract {
   /** reference counting is not supported, because it is not used anymore */
   sealed interface ContentOperation {
     fun interface Set : ContentOperation {
-      fun readContent(payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray>
+      fun readContent(payloadReader: PayloadReader): State.DefinedState<ByteArray>
     }
 
     fun interface Modify : ContentOperation {
       fun modifyContent(previousContent: ByteArray,
-                        payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray>
+                        payloadReader: PayloadReader): State.DefinedState<ByteArray>
     }
   }
 
@@ -164,12 +170,12 @@ object VfsModificationContract {
       is ContentsOperation.AcquireNewRecord -> modifyContent(
         ContentOperation.Set { ByteArray(0).let(State::Ready) }
       )
-      is ContentsOperation.WriteBytes -> modifyContent(setContent(dataPayloadRef))
-      is ContentsOperation.WriteStream -> modifyContent(setContent(dataPayloadRef))
-      is ContentsOperation.WriteStream2 -> modifyContent(setContent(dataPayloadRef))
+      is ContentsOperation.WriteBytes -> modifyContent(setContent(dataRef))
+      is ContentsOperation.WriteStream -> modifyContent(setContent(dataRef))
+      is ContentsOperation.WriteStream2 -> modifyContent(setContent(dataRef))
       is ContentsOperation.ReplaceBytes -> {
         modifyContent(ContentOperation.Modify { before, payloadReader ->
-          payloadReader(dataPayloadRef).fmap { data ->
+          payloadReader(dataRef).fmap { data ->
             if (offset < 0 || offset + data.size > before.size) { // from AbstractStorage.replaceBytes
               throw VfsRecoveryException(
                 "replaceBytes: replace is out of bounds: " +
@@ -183,7 +189,7 @@ object VfsModificationContract {
       }
       is ContentsOperation.AppendStream -> {
         modifyContent(ContentOperation.Modify { before, payloadReader ->
-          payloadReader(dataPayloadRef).fmap { before + it }
+          payloadReader(dataRef).fmap { before + it }
         })
       }
       else -> throw AssertionError("operation $this does not modify content")
@@ -192,10 +198,10 @@ object VfsModificationContract {
 
   class AttributeDataRule(
     override val relevantOperations: VfsOperationTagsMask,
-    val attributeDataModifier: VfsOperation<*>.(overwriteAttributeData: (AttributeOverwriteData) -> Unit) -> Unit
+    private val attributeDataModifier: VfsOperation<*>.(overwriteAttributeData: (AttributeOverwriteData) -> Unit) -> Unit
   ) : ModificationRule<AttributeOverwriteData> {
     init {
-      assert(relevantOperations.toList().all { it.isAttributeOperation })
+      assert(relevantOperations.toList().all { it.isAttributeOperation || it.isRecordOperation })
     }
 
     class AttributeOverwriteData(val enumeratedAttributeFilter: EnumeratedFileAttribute?, val data: PayloadRef?) {
@@ -213,11 +219,12 @@ object VfsModificationContract {
   }
 
   val attributeData = AttributeDataRule(
-    VfsOperationTagsMask(ATTR_DELETE_ATTRS, ATTR_WRITE_ATTR)
+    VfsOperationTagsMask(ATTR_DELETE_ATTRS, ATTR_WRITE_ATTR, REC_ALLOC)
   ) { overwriteAttributeData ->
     when (this) {
+      is RecordsOperation.AllocateRecord -> overwriteAttributeData(AttributeOverwriteData(null, null))
       is AttributesOperation.DeleteAttributes -> overwriteAttributeData(AttributeOverwriteData(null, null))
-      is AttributesOperation.WriteAttribute -> overwriteAttributeData(AttributeOverwriteData(enumeratedAttribute, attrDataPayloadRef))
+      is AttributesOperation.WriteAttribute -> overwriteAttributeData(AttributeOverwriteData(enumeratedAttribute, dataRef))
       else -> throw AssertionError("operation $this does not modify attribute's data")
     }
   }

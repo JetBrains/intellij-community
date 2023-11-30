@@ -6,11 +6,10 @@ import com.intellij.ide.plugins.newui.TwoLineProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.SdkEditorAdditionalOptionsProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
@@ -43,7 +42,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 
@@ -136,7 +139,16 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myTabbedPane.addChangeListener(e -> myHistory.pushQueryPlace());
 
     myHomeComponent = createHomeComponent();
-    myHomeComponent.getTextField().setEditable(false);
+    final JTextField textField = myHomeComponent.getTextField();
+    textField.setEditable(false);
+    textField.addHierarchyListener(new HierarchyListener() {
+      @Override
+      public void hierarchyChanged(HierarchyEvent e) {
+        if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) == 0 || !textField.isShowing()) { return; }
+        checkHomePathValidity();
+      }
+    });
+
     myHomeFieldLabel = new JLabel(getHomeFieldLabelValue());
     myHomeFieldLabel.setLabelFor(myHomeComponent.getTextField());
     myMainPanel.add(myHomeFieldLabel, new GridBagConstraints(
@@ -273,24 +285,29 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private void setHomePathValue(@NlsSafe String absolutePath) {
     myHomeComponent.setText(absolutePath);
-    JTextField textField = myHomeComponent.getTextField();
-    if (absolutePath != null && !absolutePath.isEmpty() && mySdk.getSdkType().isLocalSdk(mySdk)) {
-      new Task.Backgroundable(myProject, ProjectBundle.message("sdk.configure.checking.home.path.validity"), false) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          final File homeDir = new File(absolutePath);
-          boolean homeMustBeDirectory = ((SdkType)mySdk.getSdkType()).getHomeChooserDescriptor().isChooseFolders();
-          final boolean valid = homeDir.exists() && homeDir.isDirectory() == homeMustBeDirectory;
-          SwingUtilities.invokeLater(() -> {
-            textField.setForeground(valid ? UIUtil.getFieldForegroundColor()
-                                          : PathEditor.INVALID_COLOR);
-          });
-        }
-      }.queue();
+    myHomeComponent.getTextField().setForeground(UIUtil.getFieldForegroundColor());
+
+    if (myHomeComponent.isShowing()) {
+      checkHomePathValidity();
     }
-    else {
-      textField.setForeground(UIUtil.getFieldForegroundColor());
+  }
+
+  private void checkHomePathValidity() {
+    final JTextField textField = myHomeComponent.getTextField();
+    if (textField.getText().isEmpty() && !mySdk.getSdkType().isLocalSdk(mySdk)) {
+      return;
     }
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      var homeDir = Path.of(textField.getText());
+      var homeMustBeDirectory = ((SdkType)mySdk.getSdkType()).getHomeChooserDescriptor().isChooseFolders();
+      var isValid = homeMustBeDirectory ? Files.isDirectory(homeDir) : Files.isRegularFile(homeDir);
+
+      ApplicationManager.getApplication().invokeLater(
+        () -> textField.setForeground(isValid ? UIUtil.getFieldForegroundColor() : PathEditor.INVALID_COLOR),
+        ModalityState.stateForComponent(myHomeComponent)
+      );
+    });
   }
 
   private void doSelectHomePath() {

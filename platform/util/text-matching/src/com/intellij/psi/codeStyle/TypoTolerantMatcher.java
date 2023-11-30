@@ -297,12 +297,14 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
 
       if (!myTypoAware) {
         int patternIndex = 0;
-        for (int i = 0; i < length; ++i) {
-          char c = myName.charAt(i);
-          if (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1]) {
-            patternIndex += 2;
-            if (patternIndex >= myMeaningfulCharacters.length) {
-              break;
+        if (myMeaningfulCharacters.length > 0) {
+          for (int i = 0; i < length; ++i) {
+            char c = myName.charAt(i);
+            if (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1]) {
+              patternIndex += 2;
+              if (patternIndex >= myMeaningfulCharacters.length) {
+                break;
+              }
             }
           }
         }
@@ -341,7 +343,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
           patternIndex - 2, errorState)))) {
           int spaceIndex = myName.indexOf(' ', nameIndex);
           if (spaceIndex >= 0) {
-            return FList.<TextRange>emptyList().prepend(new Range(spaceIndex, spaceIndex + 1, 0));
+            return FList.singleton(new Range(spaceIndex, spaceIndex + 1, 0));
           }
           return null;
         }
@@ -544,7 +546,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       if (patternIndex + fragmentLength >= patternLength(errorState)) {
         int errors = errorState.countErrors(patternIndex, patternIndex + fragmentLength);
         if (errors == fragmentLength) return null;
-        return FList.<TextRange>emptyList().prepend(new Range(nameIndex, nameIndex + fragmentLength, errors));
+        return FList.singleton(new Range(nameIndex, nameIndex + fragmentLength, errors));
       }
 
       // try to match the remainder of pattern with the remainder of name

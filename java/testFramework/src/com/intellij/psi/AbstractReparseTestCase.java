@@ -75,7 +75,7 @@ public abstract class AbstractReparseTestCase extends LightJavaCodeInsightFixtur
 
   protected void doReparse(final String s, final int length) {
     CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      BlockSupport blockSupport = getProject().getService(BlockSupport.class);
+      BlockSupport blockSupport = BlockSupport.getInstance(getProject());
       blockSupport.reparseRange(myDummyFile, myInsertOffset - length, myInsertOffset, s);
     }), "asd", null);
   }

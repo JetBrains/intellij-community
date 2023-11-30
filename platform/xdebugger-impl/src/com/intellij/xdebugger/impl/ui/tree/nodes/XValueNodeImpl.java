@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
@@ -11,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
@@ -54,11 +54,12 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private boolean myChanged;
   private XValuePresentation myValuePresentation;
 
-  //todo[nik] annotate 'name' with @NotNull
+  //todo annotate 'name' with @NotNull
   public XValueNodeImpl(XDebuggerTree tree, @Nullable XDebuggerTreeNode parent, String name, @NotNull XValue value) {
     super(tree, parent, true, value);
     myName = name;
 
+    // todo: should be rewritten, this code passes partially initialized 'this' into a call
     value.computePresentation(this, XValuePlace.TREE);
 
     // add "Collecting" message only if computation is not yet done
@@ -212,7 +213,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   public void markChanged() {
     if (myChanged) return;
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myChanged = true;
     if (myName != null && myValuePresentation != null) {
       updateText();
@@ -294,7 +295,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   public void setValueModificationStarted() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myRawValue = null;
     myText.clear();
     appendName();

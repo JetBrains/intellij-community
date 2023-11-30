@@ -1,22 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Ignore
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 internal fun EntityStorage.singleSampleEntity() = entities(SampleEntity::class.java).single()
 
 class SimplePropertiesInStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
-  @Before
+  @BeforeEach
   fun setUp() {
     virtualFileManager = VirtualFileUrlManagerImpl()
   }
@@ -44,7 +46,7 @@ class SimplePropertiesInStorageTest {
   }
 
   @Test
-  @Ignore("Api change")
+  @Disabled("Api change")
   fun `modify entity`() {
     val builder = createEmptyBuilder()
     val original = builder addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
@@ -131,7 +133,7 @@ class SimplePropertiesInStorageTest {
   */
 
   @Test
-  @Ignore("Api change")
+  @Disabled("Api change")
   fun `change source`() {
     val builder = createEmptyBuilder()
     val source1 = SampleEntitySource("1")
@@ -146,14 +148,16 @@ class SimplePropertiesInStorageTest {
     assertTrue(builder.entitiesBySource { it == source1 }.values.all { it.isEmpty() })
   }
 
-  @Test(expected = IllegalStateException::class)
+  @Test
   fun `test trying to modify non-existing entity`() {
     val builder = createEmptyBuilder()
     val sampleEntity = builder addEntity SampleEntity(false, "Prop", ArrayList(), HashMap(),
                                                       VirtualFileUrlManagerImpl().fromUrl("file:///tmp"), SampleEntitySource("test"))
     val anotherBuilder = createEmptyBuilder()
-    anotherBuilder.modifyEntity(sampleEntity) {
-      this.stringProperty = "Another prop"
+    assertThrows<IllegalStateException> {
+      anotherBuilder.modifyEntity(sampleEntity) {
+        this.stringProperty = "Another prop"
+      }
     }
   }
 }
@@ -165,10 +169,10 @@ class ExtensionParentListTest {
       ref = MainEntityParentList("123", MySource)
     }
 
-    kotlin.test.assertEquals("xyz", entity.data)
+    assertEquals("xyz", entity.data)
     val ref = entity.ref
     val children = ref!!.children
-    kotlin.test.assertEquals("xyz", children.single().data)
+    assertEquals("xyz", children.single().data)
   }
 
   @Test
@@ -179,10 +183,10 @@ class ExtensionParentListTest {
       )
     }
 
-    kotlin.test.assertEquals("123", entity.x)
+    assertEquals("123", entity.x)
     val ref = entity.children.single()
     val children = ref.ref
-    kotlin.test.assertEquals("123", children!!.x)
+    assertEquals("123", children!!.x)
   }
 
   @Test
@@ -196,12 +200,12 @@ class ExtensionParentListTest {
       this.ref = entity
     }
 
-    kotlin.test.assertEquals("123", entity.x)
+    assertEquals("123", entity.x)
     val ref = entity.children.first()
     val children = ref.ref
-    kotlin.test.assertEquals("123", children!!.x)
+    assertEquals("123", children!!.x)
 
-    kotlin.test.assertEquals(2, newChild.ref!!.children.size)
+    assertEquals(2, newChild.ref!!.children.size)
   }
 
   @Test
@@ -212,15 +216,15 @@ class ExtensionParentListTest {
     val builder = createEmptyBuilder()
     builder.addEntity(entity)
 
-    kotlin.test.assertEquals("xyz", entity.data)
+    assertEquals("xyz", entity.data)
     val ref = entity.ref
     val children = ref!!.children
-    kotlin.test.assertEquals("xyz", children.single().data)
+    assertEquals("xyz", children.single().data)
 
-    kotlin.test.assertEquals("xyz", builder.entities(AttachedEntityParentList::class.java).single().data)
-    kotlin.test.assertEquals("123", builder.entities(MainEntityParentList::class.java).single().x)
-    kotlin.test.assertEquals("xyz", builder.entities(MainEntityParentList::class.java).single().children.single().data)
-    kotlin.test.assertEquals("123", builder.entities(AttachedEntityParentList::class.java).single().ref!!.x)
+    assertEquals("xyz", builder.entities(AttachedEntityParentList::class.java).single().data)
+    assertEquals("123", builder.entities(MainEntityParentList::class.java).single().x)
+    assertEquals("xyz", builder.entities(MainEntityParentList::class.java).single().children.single().data)
+    assertEquals("123", builder.entities(AttachedEntityParentList::class.java).single().ref!!.x)
   }
 
   @Test
@@ -233,15 +237,15 @@ class ExtensionParentListTest {
     val builder = createEmptyBuilder()
     builder.addEntity(entity)
 
-    kotlin.test.assertEquals("123", entity.x)
+    assertEquals("123", entity.x)
     val ref = entity.children.single()
     val children = ref.ref
-    kotlin.test.assertEquals("123", children!!.x)
+    assertEquals("123", children!!.x)
 
-    kotlin.test.assertEquals("xyz", builder.entities(AttachedEntityParentList::class.java).single().data)
-    kotlin.test.assertEquals("123", builder.entities(MainEntityParentList::class.java).single().x)
-    kotlin.test.assertEquals("xyz", builder.entities(MainEntityParentList::class.java).single().children.single().data)
-    kotlin.test.assertEquals("123", builder.entities(AttachedEntityParentList::class.java).single().ref!!.x)
+    assertEquals("xyz", builder.entities(AttachedEntityParentList::class.java).single().data)
+    assertEquals("123", builder.entities(MainEntityParentList::class.java).single().x)
+    assertEquals("xyz", builder.entities(MainEntityParentList::class.java).single().children.single().data)
+    assertEquals("123", builder.entities(AttachedEntityParentList::class.java).single().ref!!.x)
   }
 
   @Test
@@ -256,15 +260,15 @@ class ExtensionParentListTest {
     val builder = createEmptyBuilder()
     builder.addEntity(child)
 
-    kotlin.test.assertEquals("123", entity.x)
+    assertEquals("123", entity.x)
     val ref = entity.children.first()
     val children2 = ref.ref
-    kotlin.test.assertEquals("123", children2!!.x)
+    assertEquals("123", children2!!.x)
 
-    kotlin.test.assertEquals("xyz", builder.entities(AttachedEntityParentList::class.java).single { it.data == "xyz" }.data)
-    kotlin.test.assertEquals("123", builder.entities(MainEntityParentList::class.java).single().x)
-    kotlin.test.assertEquals("xyz", builder.entities(MainEntityParentList::class.java).single().children.single { it.data == "xyz" }.data)
-    kotlin.test.assertEquals("123", builder.entities(AttachedEntityParentList::class.java).single { it.data == "xyz" }.ref!!.x)
+    assertEquals("xyz", builder.entities(AttachedEntityParentList::class.java).single { it.data == "xyz" }.data)
+    assertEquals("123", builder.entities(MainEntityParentList::class.java).single().x)
+    assertEquals("xyz", builder.entities(MainEntityParentList::class.java).single().children.single { it.data == "xyz" }.data)
+    assertEquals("123", builder.entities(AttachedEntityParentList::class.java).single { it.data == "xyz" }.ref!!.x)
   }
 
   @Test
@@ -280,21 +284,21 @@ class ExtensionParentListTest {
       this.ref = entity
     }
 
-    kotlin.test.assertEquals(2, entity.children.size)
+    assertEquals(2, entity.children.size)
 
-    kotlin.test.assertEquals("xyz", entity.children.single { it.data == "xyz" }.data)
-    kotlin.test.assertEquals("abc", entity.children.single { it.data == "abc" }.data)
+    assertEquals("xyz", entity.children.single { it.data == "xyz" }.data)
+    assertEquals("abc", entity.children.single { it.data == "abc" }.data)
 
-    kotlin.test.assertEquals("123", children.ref!!.x)
+    assertEquals("123", children.ref!!.x)
 
-    kotlin.test.assertEquals("123", entity.x)
+    assertEquals("123", entity.x)
     val ref = entity.children.first()
     val children2 = ref.ref
-    kotlin.test.assertEquals("123", children2!!.x)
+    assertEquals("123", children2!!.x)
 
-    kotlin.test.assertEquals("xyz", builder.entities(AttachedEntityParentList::class.java).single { it.data == "xyz" }.data)
-    kotlin.test.assertEquals("123", builder.entities(MainEntityParentList::class.java).single().x)
-    kotlin.test.assertEquals("xyz", builder.entities(MainEntityParentList::class.java).single().children.single { it.data == "xyz" }.data)
-    kotlin.test.assertEquals("123", builder.entities(AttachedEntityParentList::class.java).single { it.data == "xyz" }.ref!!.x)
+    assertEquals("xyz", builder.entities(AttachedEntityParentList::class.java).single { it.data == "xyz" }.data)
+    assertEquals("123", builder.entities(MainEntityParentList::class.java).single().x)
+    assertEquals("xyz", builder.entities(MainEntityParentList::class.java).single().children.single { it.data == "xyz" }.data)
+    assertEquals("123", builder.entities(AttachedEntityParentList::class.java).single { it.data == "xyz" }.ref!!.x)
   }
 }

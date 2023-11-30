@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -70,7 +70,7 @@ public final class DeleteHandler {
 
   private DeleteHandler() { }
 
-  public static class DefaultDeleteProvider implements DeleteProvider {
+  public static final class DefaultDeleteProvider implements DeleteProvider {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
@@ -132,26 +132,26 @@ public final class DeleteHandler {
 
     final boolean dumb = DumbService.getInstance(project).isDumb();
     if (safeDeleteApplicable && !dumb) {
-      final Ref<Boolean> exit = Ref.create(false);
-      final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
-        @Override
-        public void run(final SafeDeleteDialog dialog) {
-          if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
-
-          SafeDeleteProcessor processor = SafeDeleteProcessor.createInstance(project, () -> {
-            exit.set(true);
-            dialog.close(DialogWrapper.OK_EXIT_CODE);
-          }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
-
-          processor.run();
-        }
-      }) {
-        @Override
-        protected boolean isDelete() {
-          return true;
-        }
-      };
       if (needConfirmation) {
+        final Ref<Boolean> exit = Ref.create(false);
+        final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
+          @Override
+          public void run(final SafeDeleteDialog dialog) {
+            if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
+
+            SafeDeleteProcessor processor = SafeDeleteProcessor.createInstance(project, () -> {
+              exit.set(true);
+              dialog.close(DialogWrapper.OK_EXIT_CODE);
+            }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
+
+            processor.run();
+          }
+        }) {
+          @Override
+          protected boolean isDelete() {
+            return true;
+          }
+        };
         dialog.setTitle(RefactoringBundle.message("delete.title"));
         if (!dialog.showAndGet() || exit.get()) {
           return;
@@ -378,7 +378,7 @@ public final class DeleteHandler {
     Disposer.register(disposable, () -> ourOverrideNeedsConfirmation = null);
   }
 
-  private static class LocalFilesDeleteTask extends Task.Modal {
+  private static final class LocalFilesDeleteTask extends Task.Modal {
     private final PsiElement[] myFileElements;
 
     List<PsiElement> processed = new ArrayList<>();

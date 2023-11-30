@@ -6,6 +6,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
@@ -36,6 +37,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -889,8 +891,10 @@ public final class FormEditingUtil {
 
   @Nullable
   public static PsiClass findClassToBind(@NotNull final Module module, @NotNull final String classToBindName) {
-    return JavaPsiFacade.getInstance(module.getProject())
-      .findClass(classToBindName.replace('$', '.'), module.getModuleWithDependenciesScope());
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-266779")) {
+      return JavaPsiFacade.getInstance(module.getProject())
+        .findClass(classToBindName.replace('$', '.'), module.getModuleWithDependenciesScope());
+    }
   }
 
   public interface ComponentVisitor<Type extends IComponent> {

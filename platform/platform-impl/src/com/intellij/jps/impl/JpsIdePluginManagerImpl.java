@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jps.impl;
 
 import com.intellij.openapi.application.Application;
@@ -60,7 +60,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
 
     ExtensionsArea rootArea = application.getExtensionArea();
-    //todo[nik] get rid of this check: currently this class is used in intellij.platform.jps.build tests instead of JpsPluginManagerImpl because intellij.platform.ide.impl module is added to classpath via testFramework
+    //todo get rid of this check: currently this class is used in intellij.platform.jps.build tests instead of JpsPluginManagerImpl because intellij.platform.ide.impl module is added to classpath via testFramework
     if (rootArea.hasExtensionPoint(JpsPluginBean.EP_NAME)) {
       final Ref<Boolean> initial = new Ref<>(Boolean.TRUE);
       JpsPluginBean.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<>() {
@@ -236,8 +236,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     }
   }
 
-  @Nullable
-  private static <P extends JpsElement> Element serializeProperties(SourceFolder root, @NotNull JpsModuleSourceRootPropertiesSerializer<P> serializer) {
+  private static @Nullable <P extends JpsElement> Element serializeProperties(SourceFolder root, @NotNull JpsModuleSourceRootPropertiesSerializer<P> serializer) {
     P properties = root.getJpsElement().getProperties(serializer.getType());
     if (properties != null) {
       Element sourceElement = new Element(JpsModuleRootModelSerializer.SOURCE_FOLDER_TAG);
@@ -262,14 +261,12 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     return myModificationStamp.get();
   }
 
-  @NotNull
   @Override
-  public <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {
+  public @NotNull <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {
     return loadExtensions(extensionClass, null);
   }
 
-  @NotNull
-  private <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass, @Nullable Predicate<? super PluginDescriptor> filter) {
+  private @NotNull <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass, @Nullable Predicate<? super PluginDescriptor> filter) {
     Set<ClassLoader> loaders = new LinkedHashSet<>();
     for (PluginDescriptor plugin : myExternalBuildPlugins) {
       if (filter == null || filter.test(plugin)) {
@@ -282,8 +279,7 @@ public final class JpsIdePluginManagerImpl extends JpsPluginManager {
     return loadExtensionsFrom(loaders, extensionClass);
   }
 
-  @NotNull
-  private static <T> Collection<T> loadExtensionsFrom(@NotNull Collection<? extends ClassLoader> loaders, @NotNull Class<T> extensionClass) {
+  private static @NotNull <T> Collection<T> loadExtensionsFrom(@NotNull Collection<? extends ClassLoader> loaders, @NotNull Class<T> extensionClass) {
     if (loaders.isEmpty()) {
       return Collections.emptyList();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -58,17 +58,14 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   public void dispose() {
   }
 
-  @Nullable
-  protected FilePropertyPusher<T> getFilePropertyPusher() {
+  protected @Nullable FilePropertyPusher<T> getFilePropertyPusher() {
     return null;
   }
 
-  @Nullable
-  protected Project getProject() { return myProject; }
+  protected @Nullable Project getProject() { return myProject; }
 
-  @NotNull
   @Override
-  public Map<VirtualFile, T> getMappings() {
+  public @NotNull Map<VirtualFile, T> getMappings() {
     synchronized (myMappings) {
       ensureStateLoaded();
       cleanup();
@@ -93,25 +90,21 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   @Override
-  @Nullable
-  public T getMapping(@Nullable VirtualFile file) {
+  public @Nullable T getMapping(@Nullable VirtualFile file) {
     T t = getConfiguredMapping(file);
     return t == null ? getDefaultMapping(file) : t;
   }
 
-  @Nullable
-  public T getConfiguredMapping(@Nullable VirtualFile file) {
+  public @Nullable T getConfiguredMapping(@Nullable VirtualFile file) {
     FilePropertyPusher<T> pusher = getFilePropertyPusher();
     return getMappingInner(file, pusher == null ? null : pusher.getFilePropertyKey(), false);
   }
 
-  @Nullable
-  public T getDirectlyConfiguredMapping(@Nullable VirtualFile file) {
+  public @Nullable T getDirectlyConfiguredMapping(@Nullable VirtualFile file) {
     return getMappingInner(file, null, true);
   }
 
-  @Nullable
-  private T getMappingInner(@Nullable VirtualFile file, @Nullable FilePropertyKey<T> pusherKey, boolean forHierarchy) {
+  private @Nullable T getMappingInner(@Nullable VirtualFile file, @Nullable FilePropertyKey<T> pusherKey, boolean forHierarchy) {
     if (file instanceof VirtualFileWindow window) {
       file = window.getDelegate();
     }
@@ -137,8 +130,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  @Nullable
-  protected T getNotInHierarchy(@Nullable VirtualFile file, @NotNull Map<VirtualFile, T> mappings) {
+  protected @Nullable T getNotInHierarchy(@Nullable VirtualFile file, @NotNull Map<VirtualFile, T> mappings) {
     if (getProject() == null || file == null ||
         file.getFileSystem() instanceof NonPhysicalFileSystem ||
         !getProject().isDefault() && ProjectFileIndex.getInstance(getProject()).isInContent(file)) {
@@ -156,8 +148,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   @Override
-  @Nullable
-  public T getDefaultMapping(@Nullable VirtualFile file) {
+  public @Nullable T getDefaultMapping(@Nullable VirtualFile file) {
     return null;
   }
 
@@ -165,8 +156,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     return false;
   }
 
-  @Nullable
-  public T getImmediateMapping(@Nullable VirtualFile file) {
+  public @Nullable T getImmediateMapping(@Nullable VirtualFile file) {
     synchronized (myMappings) {
       ensureStateLoaded();
       return doGetImmediateMapping(file);
@@ -241,11 +231,9 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  @NotNull
-  public abstract List<T> getAvailableValues();
+  public abstract @NotNull List<T> getAvailableValues();
 
-  @Nullable
-  protected abstract String serialize(@NotNull T t);
+  protected abstract @Nullable String serialize(@NotNull T t);
 
   @Override
   public Element getState() {
@@ -277,15 +265,13 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  @Nullable
-  protected T handleUnknownMapping(@Nullable VirtualFile file, String value) {
+  protected @Nullable T handleUnknownMapping(@Nullable VirtualFile file, String value) {
     return null;
   }
 
-  @NotNull
-  @Deprecated
   // better to not override
-  protected String getValueAttribute() {
+  @Deprecated
+  protected @NotNull String getValueAttribute() {
     return "value";
   }
 

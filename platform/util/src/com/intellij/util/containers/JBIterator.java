@@ -246,7 +246,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   }
 
-  private static class CountDown<A> implements Condition<A> {
+  private static final class CountDown<A> implements Condition<A> {
     int cur;
 
     CountDown(int count) {
@@ -261,7 +261,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   }
 
-  private static class MapOp<E, T> extends Op<Function<? super E, ? extends T>> {
+  private static final class MapOp<E, T> extends Op<Function<? super E, ? extends T>> {
     MapOp(Function<? super E, ? extends T> function) {
       super(function);
     }
@@ -272,7 +272,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   }
 
-  private class FilterOp<E> extends Op<Condition<? super E>> {
+  private final class FilterOp<E> extends Op<Condition<? super E>> {
     FilterOp(Condition<? super E> condition) {
       super(condition);
     }
@@ -283,7 +283,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   }
 
-  private class FilterMapOp<E, T> extends Op<Function<? super E, ? extends T>> {
+  private final class FilterMapOp<E, T> extends Op<Function<? super E, ? extends T>> {
     FilterMapOp(Function<? super E, ? extends T> function) {
       super(function);
     }
@@ -295,7 +295,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   }
 
-  private class WhileOp<E> extends Op<Condition<? super E>> {
+  private final class WhileOp<E> extends Op<Condition<? super E>> {
 
     WhileOp(Condition<? super E> condition) {
       super(condition);
@@ -306,7 +306,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   }
 
-  private class SkipOp<E> extends Op<Condition<? super E>> {
+  private final class SkipOp<E> extends Op<Condition<? super E>> {
     boolean active = true;
 
     SkipOp(Condition<? super E> condition) {
@@ -321,7 +321,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   }
 
-  private static class NextOp extends Op<Void> {
+  private static final class NextOp extends Op<Void> {
     NextOp() {
       super(null);
     }
@@ -332,7 +332,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     }
   }
 
-  private class CursorOp extends Op<Void> {
+  private final class CursorOp extends Op<Void> {
     boolean advanced;
 
     CursorOp() {

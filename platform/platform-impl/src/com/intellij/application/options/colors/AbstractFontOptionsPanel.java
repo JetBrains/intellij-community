@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.Patches;
@@ -52,15 +52,15 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   private final JLabel enableLigaturesHintLabel = new JLabel(AllIcons.General.ContextHelp);
   private final AbstractFontCombo<?> mySecondaryCombo;
 
-  @NotNull private final JBCheckBox myOnlyMonospacedCheckBox =
+  private final @NotNull JBCheckBox myOnlyMonospacedCheckBox =
     new JBCheckBox(ApplicationBundle.message("checkbox.show.only.monospaced.fonts"));
 
   private boolean myIsInSchemeChange;
   private final JLabel mySizeLabel = new JLabel(ApplicationBundle.message("editbox.font.size"));
   private final JTextField myEditorFontSizeField = new JBTextField(4);
 
-  protected final static int ADDITIONAL_VERTICAL_GAP = 12;
-  protected final static int BASE_INSET = 5;
+  protected static final int ADDITIONAL_VERTICAL_GAP = 12;
+  protected static final int BASE_INSET = 5;
   private JLabel mySecondaryFontLabel;
   private final JLabel myLineSpacingLabel = new JLabel(ApplicationBundle.message("editbox.line.spacing"));
   private final JTextField myLineSpacingField = new JBTextField(4);
@@ -302,8 +302,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     return fontPanel;
   }
 
-  @NotNull
-  private static JEditorPane createReaderModeComment() {
+  private static @NotNull JEditorPane createReaderModeComment() {
     return UtilsKt.createComment(ApplicationBundle.message("comment.use.ligatures.with.reader.mode"), -1,
                                      e -> goToReaderMode()
     );
@@ -444,8 +443,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
 
   protected abstract boolean isDelegating();
 
-  @NotNull
-  protected abstract FontPreferences getFontPreferences();
+  protected abstract @NotNull FontPreferences getFontPreferences();
 
   protected abstract void setFontSize(int fontSize);
 
@@ -458,8 +456,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
   protected abstract void setCurrentLineSpacing(float lineSpacing);
 
   @Override
-  @Nullable
-  public Runnable showOption(final String option) {
+  public @Nullable Runnable showOption(final String option) {
     return null;
   }
 

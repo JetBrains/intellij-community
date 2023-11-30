@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.application.options.schemes.AbstractSchemeActions;
@@ -55,27 +55,23 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
     });
   }
 
-  @NotNull
-  public KeymapSchemeManager getManager() {
+  public @NotNull KeymapSchemeManager getManager() {
     if (manager == null) manager = new KeymapSchemeManager(this);
     return manager;
   }
 
-  @NotNull
   @Override
-  public SchemesModel<KeymapScheme> getModel() {
+  public @NotNull SchemesModel<KeymapScheme> getModel() {
     return getManager();
   }
 
-  @Nullable
   @Override
-  protected String getComboBoxLabel() {
+  protected @Nullable String getComboBoxLabel() {
     return null;
   }
 
-  @NotNull
   @Override
-  protected AbstractSchemeActions<KeymapScheme> createSchemeActions() {
+  protected @NotNull AbstractSchemeActions<KeymapScheme> createSchemeActions() {
     return getManager();
   }
 

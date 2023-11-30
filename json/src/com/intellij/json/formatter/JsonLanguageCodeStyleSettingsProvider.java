@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.formatter;
 
 import com.intellij.application.options.IndentOptionsEditor;
@@ -25,7 +25,7 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.ge
  * @author Mikhail Golubev
  */
 public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-  private static class Holder {
+  private static final class Holder {
     private static final String[] ALIGN_OPTIONS = Arrays.stream(JsonCodeStyleSettings.PropertyAlignment.values())
       .map(alignment -> alignment.getDescription())
       .toArray(value -> new String[value]);
@@ -93,15 +93,13 @@ public class JsonLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
   }
 
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return JsonLanguage.INSTANCE;
   }
 
-  @Nullable
   @Override
-  public IndentOptionsEditor getIndentOptionsEditor() {
+  public @Nullable IndentOptionsEditor getIndentOptionsEditor() {
     return new SmartIndentOptionsEditor();
   }
 

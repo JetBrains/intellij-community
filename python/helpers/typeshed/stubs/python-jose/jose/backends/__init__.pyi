@@ -15,7 +15,7 @@ from .rsa_backend import RSAKey as BackendRSAKey
 # then falling back on other imports
 # these are all the potential options
 AESKey: type[CryptographyAESKey] | None
-HMACKey: type[CryptographyHMACKey] | type[NativeHMACKey]
-RSAKey: type[CryptographyRSAKey] | type[BackendRSAKey] | None
-ECKey: type[CryptographyECKey] | type[ECDSAECKey]
+HMACKey: type[CryptographyHMACKey | NativeHMACKey]
+RSAKey: type[CryptographyRSAKey | BackendRSAKey] | None
+ECKey: type[CryptographyECKey | ECDSAECKey]
 get_random_bytes: Callable[[int], bytes]

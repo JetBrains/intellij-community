@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.intentions.openInProject;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -23,15 +23,13 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.ProjectStatus.Open;
 
 public final class LightEditOpenInProjectIntention implements IntentionAction, LightEditCompatible, DumbAware {
-  @IntentionName
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getText() {
     return ApplicationBundle.message("light.edit.open.in.project.intention");
   }
 
-  @IntentionFamilyName
   @Override
-  public @NotNull String getFamilyName() {
+  public @IntentionFamilyName @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -69,8 +67,7 @@ public final class LightEditOpenInProjectIntention implements IntentionAction, L
     }
   }
 
-  @Nullable
-  private static Project findOpenProject(@NotNull VirtualFile file) {
+  private static @Nullable Project findOpenProject(@NotNull VirtualFile file) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
         return project;

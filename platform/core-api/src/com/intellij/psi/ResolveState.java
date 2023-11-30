@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Key;
@@ -12,18 +12,15 @@ import java.util.Map;
 public class ResolveState {
   private static final ResolveState ourInitialState = new ResolveState();
 
-  @NotNull
-  public static ResolveState initial() {
+  public static @NotNull ResolveState initial() {
     return ourInitialState;
   }
 
-  @NotNull
-  public <T> ResolveState put(@NotNull Key<T> key, T value) {
+  public @NotNull <T> ResolveState put(@NotNull Key<T> key, T value) {
     return new OneElementResolveState(key, value);
   }
 
-  @NotNull
-  public ResolveState putAll(@NotNull ResolveState state) {
+  public @NotNull ResolveState putAll(@NotNull ResolveState state) {
     return state;
   }
 
@@ -35,8 +32,7 @@ public class ResolveState {
   }
 
   private static final class OneElementResolveState extends ResolveState {
-    @NotNull
-    private final Key myKey;
+    private final @NotNull Key myKey;
     private final Object myValue;
 
     private OneElementResolveState(@NotNull Key key, Object value) {
@@ -44,9 +40,8 @@ public class ResolveState {
       myValue = value;
     }
 
-    @NotNull
     @Override
-    public <T> ResolveState put(@NotNull Key<T> key, T value) {
+    public @NotNull <T> ResolveState put(@NotNull Key<T> key, T value) {
       if (myKey.equals(key)) {
         return new OneElementResolveState(key, value);
       }
@@ -54,9 +49,8 @@ public class ResolveState {
       return new TwoElementResolveState(myKey, myValue, key, value);
     }
 
-    @NotNull
     @Override
-    public ResolveState putAll(@NotNull ResolveState state) {
+    public @NotNull ResolveState putAll(@NotNull ResolveState state) {
       return state.get(myKey) == null ? state.put(myKey, myValue) : state;
     }
 
@@ -71,9 +65,9 @@ public class ResolveState {
   }
 
   private static class TwoElementResolveState extends ResolveState {
-    @NotNull private final Key myKey1;
+    private final @NotNull Key myKey1;
     private final Object myValue1;
-    @NotNull private final Key myKey2;
+    private final @NotNull Key myKey2;
     private final Object myValue2;
 
     TwoElementResolveState(@NotNull Key key1, Object value1, @NotNull Key key2, Object value2) {
@@ -83,9 +77,8 @@ public class ResolveState {
       myValue2 = value2;
     }
 
-    @NotNull
     @Override
-    public <T> ResolveState put(@NotNull Key<T> key, T value) {
+    public @NotNull <T> ResolveState put(@NotNull Key<T> key, T value) {
       if (myKey1.equals(key)) {
         return new TwoElementResolveState(key, value, myKey2, myValue2);
       }
@@ -96,9 +89,8 @@ public class ResolveState {
       return new ManyElementResolveState(this, key, value);
     }
 
-    @NotNull
     @Override
-    public ResolveState putAll(@NotNull ResolveState state) {
+    public @NotNull ResolveState putAll(@NotNull ResolveState state) {
       if (state == ourInitialState) {
         return this;
       }
@@ -170,15 +162,13 @@ public class ResolveState {
       }
     }
 
-    @NotNull
     @Override
-    public <T> ResolveState put(@NotNull Key<T> key, T value) {
+    public @NotNull <T> ResolveState put(@NotNull Key<T> key, T value) {
       return new ManyElementResolveState(this, key, value);
     }
 
-    @NotNull
     @Override
-    public ResolveState putAll(@NotNull ResolveState state) {
+    public @NotNull ResolveState putAll(@NotNull ResolveState state) {
       if (state == ourInitialState) return this;
       return new ManyElementResolveState(this, state);
     }

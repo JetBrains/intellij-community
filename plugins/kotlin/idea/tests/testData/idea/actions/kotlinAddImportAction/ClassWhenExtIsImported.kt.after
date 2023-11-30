@@ -1,3 +1,4 @@
+// IGNORE_K2
 // EXPECT_VARIANT_IN_ORDER "class apples.Apple"
 package root
 

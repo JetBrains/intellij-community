@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import unittest
 from datetime import datetime, timedelta
 from decimal import Decimal
 from fractions import Fraction
+from typing_extensions import assert_type
+from unittest.mock import MagicMock, Mock, patch
 
 case = unittest.TestCase()
 
@@ -58,14 +62,14 @@ class Eggs:
 
 
 class Ham:
-    def __lt__(self, other: "Ham") -> bool:
+    def __lt__(self, other: Ham) -> bool:
         if not isinstance(other, Ham):
             return NotImplemented
         return True
 
 
 class Bacon:
-    def __gt__(self, other: "Bacon") -> bool:
+    def __gt__(self, other: Bacon) -> bool:
         if not isinstance(other, Bacon):
             return NotImplemented
         return True
@@ -84,3 +88,36 @@ case.assertGreater(datetime(1999, 1, 2), 1)  # type: ignore
 case.assertGreater(Spam(), Eggs())  # type: ignore
 case.assertGreater(Ham(), Bacon())  # type: ignore
 case.assertGreater(Bacon(), Ham())  # type: ignore
+
+###
+# Tests for mock.patch
+###
+
+
+@patch("sys.exit")
+def f_default_new(i: int, mock: MagicMock) -> str:
+    return "asdf"
+
+
+@patch("sys.exit", new=42)
+def f_explicit_new(i: int) -> str:
+    return "asdf"
+
+
+assert_type(f_default_new(1), str)
+f_default_new("a")  # Not an error due to ParamSpec limitations
+assert_type(f_explicit_new(1), str)
+f_explicit_new("a")  # type: ignore[arg-type]
+
+
+@patch("sys.exit", new=Mock())
+class TestXYZ(unittest.TestCase):
+    attr: int = 5
+
+    @staticmethod
+    def method() -> int:
+        return 123
+
+
+assert_type(TestXYZ.attr, int)
+assert_type(TestXYZ.method(), int)

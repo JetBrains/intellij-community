@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -13,7 +14,7 @@ import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 
 class AddJvmStaticAnnotationFix(declaration: KtCallableDeclaration) : AddAnnotationFix(
     declaration,
-    JVM_STATIC_ANNOTATION_FQ_NAME,
+    ClassId.topLevel(JVM_STATIC_ANNOTATION_FQ_NAME),
     Kind.Declaration(declaration.nameAsSafeName.asString())
 ) {
     override fun getFamilyName(): String = text

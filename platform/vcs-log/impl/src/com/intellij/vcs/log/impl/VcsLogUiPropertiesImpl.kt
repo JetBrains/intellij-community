@@ -30,7 +30,7 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
       MainVcsLogUiProperties.SHOW_LONG_EDGES -> state.isShowLongEdges
       CommonUiProperties.SHOW_ROOT_NAMES -> state.isShowRootNames
       MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES -> state.isShowOnlyAffectedChanges
-      MainVcsLogUiProperties.BEK_SORT_TYPE -> PermanentGraph.SortType.values()[state.bekSortType]
+      MainVcsLogUiProperties.BEK_SORT_TYPE -> PermanentGraph.SortType.entries[state.bekSortType]
       MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE -> logUiState.textFilterSettings.isMatchCase
       MainVcsLogUiProperties.TEXT_FILTER_REGEX -> logUiState.textFilterSettings.isRegex
       else -> throw UnsupportedOperationException("Property $property does not exist")

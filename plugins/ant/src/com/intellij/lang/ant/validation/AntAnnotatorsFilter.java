@@ -22,16 +22,15 @@ import com.intellij.lang.xml.XMLExternalAnnotator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public class AntAnnotatorsFilter implements ExternalAnnotatorsFilter {
   @Override
-  public boolean isProhibited(@NotNull ExternalAnnotator annotator, @NotNull PsiFile file) {
+  public boolean isProhibited(ExternalAnnotator annotator, PsiFile file) {
     return annotator instanceof XMLExternalAnnotator &&
-           file instanceof XmlFile xmlFile &&
-           ReadAction.compute(() -> AntDomFileDescription.isAntFile(xmlFile));
+           file instanceof XmlFile &&
+           ReadAction.compute(() -> AntDomFileDescription.isAntFile((XmlFile)file));
   }
 }

@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.optionalToIf;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.streamToLoop.ChainVariable;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -41,7 +41,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
         String methodName = terminalCall.getMethodExpression().getReferenceName();
         if (methodName == null || !SUPPORTED_TERMINALS.contains(methodName)) return;
         List<Operation> operations = extractOperations(terminalCall, true);
-        if (operations == null || operations.size() < 1 || !(operations.get(0) instanceof SourceOperation)) return;
+        if (operations == null || operations.isEmpty() || !(operations.get(0) instanceof SourceOperation)) return;
         OptionalToIfContext context = OptionalToIfContext.create(terminalCall);
         if (context == null) return;
         holder.registerProblem(terminalCall, JavaBundle.message("inspection.message.replace.optional.with.if.statements"), new ReplaceOptionalWithIfFix());
@@ -118,7 +118,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @NotNull
-  public static List<OperationRecord> createRecords(@NotNull List<Operation> operations) {
+  static List<OperationRecord> createRecords(@NotNull List<Operation> operations) {
     ChainVariable inVar = ChainVariable.STUB;
     ChainVariable outVar;
     List<OperationRecord> records = new ArrayList<>(operations.size());
@@ -163,7 +163,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
     }
   }
 
-  private static class ReplaceOptionalWithIfFix implements LocalQuickFix {
+  private static class ReplaceOptionalWithIfFix extends PsiUpdateModCommandQuickFix {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -173,14 +173,14 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      PsiMethodCallExpression chainExpression = tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+      PsiMethodCallExpression chainExpression = tryCast(element, PsiMethodCallExpression.class);
       if (chainExpression == null) return;
       PsiStatement chainStatement = PsiTreeUtil.getParentOfType(chainExpression, PsiStatement.class);
       if (chainStatement == null) return;
       List<Operation> operations = extractOperations(chainExpression, true);
-      if (operations == null || operations.size() == 0) return;
+      if (operations == null || operations.isEmpty()) return;
       OptionalToIfContext context = OptionalToIfContext.create(chainExpression);
       if (context == null) return;
       String code = generateCode(context, operations);

@@ -34,9 +34,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class ChangeSet {
+public final class ChangeSet {
   private final long myId;
-  @Nullable private @NlsContexts.Label String myName;
+  private @Nullable @NlsContexts.Label String myName;
   private final long myTimestamp;
   private final List<Change> myChanges;
 
@@ -78,9 +78,7 @@ public class ChangeSet {
     myName = name;
   }
 
-  @NlsContexts.Label
-  @Nullable
-  public String getName() {
+  public @NlsContexts.Label @Nullable String getName() {
     return myName;
   }
 
@@ -92,9 +90,7 @@ public class ChangeSet {
     isLocked = true;
   }
 
-  @NlsContexts.Label
-  @Nullable
-  public String getLabel() {
+  public @NlsContexts.Label @Nullable String getLabel() {
     //noinspection RedundantTypeArguments
     return this.<@NlsContexts.Label @Nullable String>accessChanges(() -> {
       for (Change each : myChanges) {
@@ -198,7 +194,7 @@ public class ChangeSet {
   }
 
   @Override
-  public final boolean equals(Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
@@ -210,7 +206,7 @@ public class ChangeSet {
   }
 
   @Override
-  public final int hashCode() {
+  public int hashCode() {
     return (int)(myId ^ (myId >>> 32));
   }
 
@@ -243,7 +239,7 @@ public class ChangeSet {
     }
   }
 
-  private void accessChanges(@NotNull final Runnable func) {
+  private void accessChanges(final @NotNull Runnable func) {
     accessChanges(() -> {
       func.run();
       return null;

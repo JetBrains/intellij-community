@@ -44,8 +44,7 @@ public abstract class ReadTask {
    * Is invoked inside a read action and under a progress indicator that's canceled when a write action is about to occur.
    * @return an action that should be performed later on Swing thread if no write actions have happened before that
    */
-  @Nullable
-  public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+  public @Nullable Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
     computeInReadAction(indicator);
     return null;
   }
@@ -62,7 +61,7 @@ public abstract class ReadTask {
    * For example, use {@link com.intellij.openapi.project.DumbService#runReadActionInSmartMode(Runnable)}.
    * @param indicator the progress indicator of the background thread
    */
-  public Continuation runBackgroundProcess(@NotNull final ProgressIndicator indicator) throws ProcessCanceledException {
+  public Continuation runBackgroundProcess(final @NotNull ProgressIndicator indicator) throws ProcessCanceledException {
     return ReadAction.compute(() -> performInReadAction(indicator));
   }
 
@@ -94,16 +93,14 @@ public abstract class ReadTask {
     /**
      * @return modality state when {@link #getAction()} is to be executed
      */
-    @NotNull
-    public ModalityState getModalityState() {
+    public @NotNull ModalityState getModalityState() {
       return myModalityState;
     }
 
     /**
      * @return runnable to be executed in Swing thread in default modality state
      */
-    @NotNull
-    public Runnable getAction() {
+    public @NotNull Runnable getAction() {
       return myAction;
     }
   }

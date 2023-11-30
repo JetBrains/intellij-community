@@ -8,12 +8,13 @@ import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrappe
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
@@ -26,11 +27,12 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import java.awt.BorderLayout
 import java.util.concurrent.Callable
+import java.util.function.Consumer
 import javax.swing.JPanel
 
 @NlsSafe
@@ -44,7 +46,8 @@ class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedIn
         .derive(StartupUiUtil.labelFont)
       foreground = JBUI.CurrentTheme.Advertiser.foreground()
     }
-  private var actionLink: ActionLink = ActionLink()
+  private var actionLink = ActionLink()
+  private val shortcutLabel = JBLabel()
 
   @JvmField
   val component: JPanel =
@@ -57,10 +60,17 @@ class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedIn
 
   init {
     component.add(text, BorderLayout.WEST)
-    component.add(actionLink, BorderLayout.EAST)
+
+    val actionPanel = JPanel(BorderLayout(2, 0))
+    shortcutLabel.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+    actionPanel.add(actionLink, BorderLayout.WEST)
+    actionPanel.add(shortcutLabel, BorderLayout.EAST)
+    actionPanel.background = JBUI.CurrentTheme.Advertiser.background()
+
+    component.add(actionPanel, BorderLayout.EAST)
   }
 
-  fun updateElement(element: Any) {
+  fun updateElement(element: Any, disposable: Disposable) {
     //preserve vertical space
     text.text = DEFAULT_TEXT
     actionLink.text = DEFAULT_TEXT
@@ -70,13 +80,19 @@ class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedIn
       val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.ACTION_SEARCH, context(project))
       action.updateIt(actionEvent)
       actionLink.update(actionEvent, action)
+      shortcutLabel.updateIt(action)
     }
 
-    val leftText = advertisement.leftText.invoke(element)
-    if (leftText != null) {
-      text.text = StringUtil.shortenTextWithEllipsis(leftText, 80, 0)
-      text.toolTipText = leftText
-    }
+    ReadAction.nonBlocking(Callable<String> { advertisement.leftText.invoke(element) })
+      .finishOnUiThread(ModalityState.nonModal(),
+                        Consumer { leftText ->
+                          if (leftText != null) {
+                            text.text = StringUtil.shortenTextWithEllipsis(leftText, 80, 0)
+                            text.toolTipText = leftText
+                          }
+                        })
+      .expireWith(disposable)
+      .submit(AppExecutorUtil.getAppExecutorService())
   }
 
   companion object {
@@ -93,11 +109,15 @@ class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedIn
       actionListeners.forEach { removeActionListener(it) }
       addActionListener { _ -> ActionUtil.performActionDumbAwareWithCallbacks(action, event) }
     }
+
+    private fun JBLabel.updateIt(action: AnAction) {
+      text = KeymapUtil.getFirstKeyboardShortcutText(action)
+    }
   }
 }
 
 class ExtendedInfoImpl(val contributors: List<SearchEverywhereContributor<*>>) : ExtendedInfo() {
-  private val list = contributors.filterIsInstance(SearchEverywhereExtendedInfoProvider::class.java).mapNotNull { it.createExtendedInfo() }
+  private val list = contributors.filterIsInstance<SearchEverywhereExtendedInfoProvider>().mapNotNull { it.createExtendedInfo() }
 
   init {
     leftText = fun(element: Any) = list.firstNotNullOfOrNull { it.leftText.invoke(element) }
@@ -140,15 +160,9 @@ fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
     val actualProject = projectFun.invoke(item)
     if (actualFile == null) return null
 
-    return ReadAction.nonBlocking(Callable {
-      runBlockingCancellable {
-        readAction {
-          ProjectFileIndex.getInstance(actualProject ?: return@readAction null).getSourceRootForFile(actualFile)
-        }?.let {
-          VfsUtilCore.getRelativePath(actualFile, it)
-        } ?: FileUtil.getLocationRelativeToUserHome(actualFile.path)
-      }
-    }).submit(NonUrgentExecutor.getInstance()).get()
+    return ProjectFileIndex.getInstance(actualProject ?: return null).getSourceRootForFile(actualFile)
+             ?.let { VfsUtilCore.getRelativePath(actualFile, it) }
+           ?: FileUtil.getLocationRelativeToUserHome(actualFile.path)
   }
 
   val split: (Any) -> AnAction? = fun(item: Any): ExtendedInfoOpenInRightSplitAction? {

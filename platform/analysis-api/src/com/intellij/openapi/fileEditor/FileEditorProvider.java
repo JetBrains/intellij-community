@@ -29,10 +29,14 @@ public interface FileEditorProvider {
    */
   boolean accept(@NotNull Project project, @NotNull VirtualFile file);
 
+  default boolean acceptRequiresReadAction() {
+     return true;
+   }
+
   /**
    * Creates editor for the specified file.
    * <p>
-   * This method is called only if the provider has accepted this file (i.e. method {@link #accept(Project, VirtualFile)} returned
+   * This method is called only if the provider has accepted this file (i.e., method {@link #accept(Project, VirtualFile)} returned
    * {@code true}).
    * The provider should return only valid editor.
    *

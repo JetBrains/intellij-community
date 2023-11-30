@@ -13,6 +13,8 @@ import com.intellij.psi.PsiField;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.ui.ChooserInterceptor;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -582,7 +584,10 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testPureNoArgMethodAsVariable() { doTest(); }
   public void testRedundantAssignment() {
     doTest();
-    assertIntentionAvailable("Extract side effect");
+    UiInterceptors.register(new ChooserInterceptor(List.of("Extract side effect", "Delete assignment completely"), "Extract side effect"));
+    IntentionAction action = myFixture.findSingleIntention("Remove redundant assignment");
+    myFixture.launchAction(action);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
   public void testXorNullity() { doTest(); }
   public void testPrimitiveNull() { doTest(); }

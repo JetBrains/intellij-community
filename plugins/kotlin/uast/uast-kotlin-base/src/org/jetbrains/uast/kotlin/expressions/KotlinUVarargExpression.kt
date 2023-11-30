@@ -14,15 +14,19 @@ class KotlinUVarargExpression(
     private val valueArgs: List<ValueArgument>,
     uastParent: UElement?,
 ) : KotlinAbstractUExpression(uastParent), UCallExpression, DelegatedMultiResolve {
+
+    private val valueArgumentsPart = UastLazyPart<List<UExpression>>()
+
     override val kind: UastCallKind = UastCallKind.NESTED_ARRAY_INITIALIZER
 
-    override val valueArguments: List<UExpression> by lz {
-        valueArgs.map {
-            it.getArgumentExpression()?.let { argumentExpression ->
-                getLanguagePlugin().convertOpt(argumentExpression, this)
-            } ?: UastEmptyExpression(this)
+    override val valueArguments: List<UExpression>
+        get() = valueArgumentsPart.getOrBuild {
+            valueArgs.map {
+                it.getArgumentExpression()?.let { argumentExpression ->
+                    getLanguagePlugin().convertOpt(argumentExpression, this)
+                } ?: UastEmptyExpression(this)
+            }
         }
-    }
 
     override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 

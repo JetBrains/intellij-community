@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EventObject;
 
-public class LookupEvent extends EventObject {
+public final class LookupEvent extends EventObject {
 
   private final Lookup myLookup;
   private final LookupElement myItem;

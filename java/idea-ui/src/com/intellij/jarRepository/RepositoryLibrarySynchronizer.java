@@ -19,8 +19,8 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
@@ -133,7 +133,7 @@ public final class RepositoryLibrarySynchronizer implements StartupActivity.Dumb
     }
 
     var disposable = RemoteRepositoriesConfiguration.getInstance(project);
-    LibrarySynchronizationQueue synchronizationQueue = project.getService(LibrarySynchronizationQueue.class);
+    LibrarySynchronizationQueue synchronizationQueue = LibrarySynchronizationQueue.getInstance(project);
     ChangedRepositoryLibrarySynchronizer synchronizer = new ChangedRepositoryLibrarySynchronizer(project, synchronizationQueue);
     GlobalChangedRepositoryLibrarySynchronizer globalLibSynchronizer = new GlobalChangedRepositoryLibrarySynchronizer(synchronizationQueue, disposable);
     for (LibraryTable libraryTable : GlobalChangedRepositoryLibrarySynchronizer.getGlobalAndCustomLibraryTables()) {

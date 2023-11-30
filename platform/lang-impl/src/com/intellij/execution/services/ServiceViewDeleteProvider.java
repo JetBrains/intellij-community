@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.CommonBundle;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-class ServiceViewDeleteProvider implements DeleteProvider {
+final class ServiceViewDeleteProvider implements DeleteProvider {
   private final ServiceView myServiceView;
 
   ServiceViewDeleteProvider(@NotNull ServiceView serviceView) {
@@ -36,7 +36,8 @@ class ServiceViewDeleteProvider implements DeleteProvider {
     Project project = dataContext.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
-    List<Pair<ServiceViewItem, Runnable>> items = ContainerUtil.mapNotNull(myServiceView.getSelectedItems(), item -> {
+    List<ServiceViewItem> selectedItems = ServiceViewActionProvider.getSelectedItems(dataContext);
+    List<Pair<ServiceViewItem, Runnable>> items = ContainerUtil.mapNotNull(selectedItems, item -> {
       Runnable remover = item.getViewDescriptor().getRemover();
       return remover == null ? null : Pair.create(item, remover);
     });
@@ -58,7 +59,8 @@ class ServiceViewDeleteProvider implements DeleteProvider {
 
   @Override
   public boolean canDeleteElement(@NotNull DataContext dataContext) {
-    if (!ContainerUtil.exists(myServiceView.getSelectedItems(), item -> item.getViewDescriptor().getRemover() != null)) {
+    List<ServiceViewItem> selectedItems = ServiceViewActionProvider.getSelectedItems(dataContext);
+    if (!ContainerUtil.exists(selectedItems, item -> item.getViewDescriptor().getRemover() != null)) {
       return false;
     }
     JComponent detailsComponent = myServiceView.getUi().getDetailsComponent();

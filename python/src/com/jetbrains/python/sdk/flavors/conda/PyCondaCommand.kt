@@ -3,9 +3,11 @@ package com.jetbrains.python.sdk.flavors.conda
 
 import com.intellij.execution.target.*
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
-import com.intellij.execution.target.readableFs.PathInfo
-import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
+import com.jetbrains.python.pathValidation.ValidationRequest
+import com.jetbrains.python.pathValidation.validateExecutableFile
 
 /**
  * Encapsulates conda binary command to simplify target request creation
@@ -16,19 +18,16 @@ class PyCondaCommand(
   internal val project: Project? = null,
   internal val indicator: TargetProgressIndicator = TargetProgressIndicator.EMPTY
 ) {
+
+  @RequiresBackgroundThread
   private fun createRequest(): Result<TargetEnvironmentRequest> {
-    (targetConfig as? TargetConfigurationReadableFs)?.let {
-      val pathInfo = it.getPathInfo(fullCondaPathOnTarget)
-      if (pathInfo == null) {
-        return Result.failure(Exception("$fullCondaPathOnTarget does not exist"))
-      }
-      if (pathInfo != PathInfo.Unknown && (pathInfo as? PathInfo.RegularFile)?.executable != true) {
-        return Result.failure(Exception("$fullCondaPathOnTarget is not executable file"))
-      }
+    validateExecutableFile(ValidationRequest(fullCondaPathOnTarget, platformAndRoot = targetConfig.getPlatformAndRoot()))?.let {
+      return Result.failure(Exception(it.message))
     }
     return Result.success(targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest())
   }
 
+  @RequiresBackgroundThread
   fun createRequestEnvAndCommandLine(): Result<Triple<TargetEnvironmentRequest, TargetEnvironment, TargetedCommandLineBuilder>> {
     val request = createRequest().getOrElse { return Result.failure(it) }
 

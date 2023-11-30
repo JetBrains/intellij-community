@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij.cce">
-    <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaCompletionEvaluationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaRenameVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.visitor.JavaCompletionVisitor"/>
     <setupSdkStep implementation="com.intellij.cce.evaluation.SetupJDKStep"/>
   </extensions>
 </idea-plugin>

@@ -12,9 +12,7 @@ import org.jetbrains.idea.svn.SvnVcs
 import java.util.*
 
 private class SvnStatisticsCollector : ProjectUsagesCollector() {
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+  override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     if (!project.isTrusted()) return emptySet()
@@ -30,9 +28,7 @@ private class SvnStatisticsCollector : ProjectUsagesCollector() {
       .toSet()
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("svn.configuration", 2)
-    private val WORKING_COPY = GROUP.registerEvent("working.copy",
-                                                   EventFields.StringValidatedByRegexp("format", "version"))
-  }
+  private val GROUP = EventLogGroup("svn.configuration", 2)
+  private val WORKING_COPY = GROUP.registerEvent("working.copy",
+                                                 EventFields.StringValidatedByRegexp("format", "version"))
 }

@@ -38,7 +38,6 @@ project.androidApp.androidTest
     multiplatformAndroidLibrary.main (TEST)
     multiplatformJvmLibrary.commonMain (TEST)
     multiplatformJvmLibrary.jvmMain (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
@@ -78,7 +77,6 @@ project.androidApp.main
     multiplatformAndroidLibrary.main (COMPILE)
     multiplatformJvmLibrary.commonMain (COMPILE)
     multiplatformJvmLibrary.jvmMain (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
@@ -119,7 +117,6 @@ project.androidApp.unitTest
     multiplatformAndroidLibrary.main (TEST)
     multiplatformJvmLibrary.commonMain (TEST)
     multiplatformJvmLibrary.jvmMain (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
@@ -134,9 +131,8 @@ project.jvmLibrary.main
     multiplatformAndroidJvmIosLibrary.jvmMain (COMPILE)
     multiplatformJvmLibrary.commonMain (COMPILE)
     multiplatformJvmLibrary.jvmMain (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0 (RUNTIME)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0 (RUNTIME)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
@@ -148,9 +144,8 @@ project.jvmLibrary.test
     multiplatformAndroidJvmIosLibrary.jvmMain (COMPILE)
     multiplatformJvmLibrary.commonMain (COMPILE)
     multiplatformJvmLibrary.jvmMain (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0 (RUNTIME)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0 (RUNTIME)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
@@ -282,8 +277,6 @@ project.multiplatformAndroidJvmIosLibrary
 
 project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain
     multiplatformAndroidJvmIosLibrary.commonMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
@@ -291,23 +284,19 @@ project.multiplatformAndroidJvmIosLibrary.androidTest
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (friend, TEST)
     multiplatformAndroidJvmIosLibrary.commonMain (friend, TEST)
     multiplatformAndroidJvmIosLibrary.main (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
 project.multiplatformAndroidJvmIosLibrary.commonMain
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 project.multiplatformAndroidJvmIosLibrary.commonTest
     multiplatformAndroidJvmIosLibrary.commonMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
 
 project.multiplatformAndroidJvmIosLibrary.jvmMain
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (refines, COMPILE)
     multiplatformAndroidJvmIosLibrary.commonMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
@@ -316,8 +305,6 @@ project.multiplatformAndroidJvmIosLibrary.jvmTest
     multiplatformAndroidJvmIosLibrary.commonMain (friend, TEST)
     multiplatformAndroidJvmIosLibrary.commonTest (refines, TEST)
     multiplatformAndroidJvmIosLibrary.jvmMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
@@ -336,8 +323,6 @@ project.multiplatformAndroidJvmIosLibrary.linuxX64Test
 project.multiplatformAndroidJvmIosLibrary.main
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (refines, COMPILE)
     multiplatformAndroidJvmIosLibrary.commonMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
@@ -346,8 +331,6 @@ project.multiplatformAndroidJvmIosLibrary.unitTest
     multiplatformAndroidJvmIosLibrary.commonMain (friend, TEST)
     multiplatformAndroidJvmIosLibrary.commonTest (refines, TEST)
     multiplatformAndroidJvmIosLibrary.main (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
@@ -357,8 +340,6 @@ project.multiplatformAndroidJvmIosLibrary2.androidAndJvmMain
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary2.commonMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
@@ -370,19 +351,17 @@ project.multiplatformAndroidJvmIosLibrary2.androidTest
     multiplatformAndroidJvmIosLibrary2.commonMain (friend, TEST)
     multiplatformAndroidJvmIosLibrary2.main (friend, TEST)
     multiplatformAndroidLibrary.main (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
 project.multiplatformAndroidJvmIosLibrary2.commonMain
     multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 project.multiplatformAndroidJvmIosLibrary2.commonTest
     multiplatformAndroidJvmIosLibrary.commonMain (TEST)
     multiplatformAndroidJvmIosLibrary2.commonMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
 
 project.multiplatformAndroidJvmIosLibrary2.jvmMain
     jvmLibrary.main (COMPILE)
@@ -393,8 +372,6 @@ project.multiplatformAndroidJvmIosLibrary2.jvmMain
     multiplatformAndroidJvmIosLibrary2.commonMain (refines, COMPILE)
     multiplatformJvmLibrary.commonMain (COMPILE)
     multiplatformJvmLibrary.jvmMain (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
@@ -409,8 +386,6 @@ project.multiplatformAndroidJvmIosLibrary2.jvmTest
     multiplatformAndroidJvmIosLibrary2.jvmMain (friend, TEST)
     multiplatformJvmLibrary.commonMain (TEST)
     multiplatformJvmLibrary.jvmMain (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
@@ -437,8 +412,6 @@ project.multiplatformAndroidJvmIosLibrary2.main
     multiplatformAndroidJvmIosLibrary2.androidAndJvmMain (refines, COMPILE)
     multiplatformAndroidJvmIosLibrary2.commonMain (refines, COMPILE)
     multiplatformAndroidLibrary.main (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
@@ -451,8 +424,6 @@ project.multiplatformAndroidJvmIosLibrary2.unitTest
     multiplatformAndroidJvmIosLibrary2.commonTest (refines, TEST)
     multiplatformAndroidJvmIosLibrary2.main (friend, TEST)
     multiplatformAndroidLibrary.main (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
@@ -464,8 +435,8 @@ project.multiplatformAndroidLibrary.androidTest
     multiplatformAndroidJvmIosLibrary.commonMain (TEST)
     multiplatformAndroidJvmIosLibrary.main (TEST)
     multiplatformAndroidLibrary.main (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0 (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
@@ -474,8 +445,8 @@ project.multiplatformAndroidLibrary.main
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.main (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0 (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
@@ -485,8 +456,8 @@ project.multiplatformAndroidLibrary.unitTest
     multiplatformAndroidJvmIosLibrary.commonMain (TEST)
     multiplatformAndroidJvmIosLibrary.main (TEST)
     multiplatformAndroidLibrary.main (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0 (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
@@ -494,25 +465,23 @@ project.multiplatformJvmLibrary
 
 project.multiplatformJvmLibrary.commonMain
     com.squareup.okio:okio-jvm:3.2.0 (COMPILE)
-    com.squareup.okio:okio:commonMain:3.2.0 (COMPILE)
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.jvmMain (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0 (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
 project.multiplatformJvmLibrary.commonTest
     com.squareup.okio:okio-jvm:3.2.0 (TEST)
-    com.squareup.okio:okio:commonMain:3.2.0 (TEST)
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (TEST)
     multiplatformAndroidJvmIosLibrary.commonMain (TEST)
     multiplatformAndroidJvmIosLibrary.jvmMain (TEST)
     multiplatformJvmLibrary.commonMain (friend, TEST)
     multiplatformJvmLibrary.jvmMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0 (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
@@ -522,8 +491,8 @@ project.multiplatformJvmLibrary.jvmMain
     multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.jvmMain (COMPILE)
     multiplatformJvmLibrary.commonMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0 (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
     org.jetbrains:annotations:13.0 (COMPILE)
 
@@ -535,8 +504,8 @@ project.multiplatformJvmLibrary.jvmTest
     multiplatformJvmLibrary.commonMain (friend, TEST)
     multiplatformJvmLibrary.commonTest (refines, TEST)
     multiplatformJvmLibrary.jvmMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0 (TEST)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 

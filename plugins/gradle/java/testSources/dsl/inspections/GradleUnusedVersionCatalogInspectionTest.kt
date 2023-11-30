@@ -56,6 +56,17 @@ class GradleUnusedVersionCatalogInspectionTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
+  fun testUsageOfLibraryInBundle(gradleVersion: GradleVersion) {
+    runTest(gradleVersion, "", """
+        [libraries]
+        groovy-core = "aa:bb:2.0.0"   
+        [bundles]
+        <warning>aa</warning> = [ "groovy-core" ]
+    """.trimIndent())
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
   fun testUsageOfBundle(gradleVersion: GradleVersion) {
     runTest(gradleVersion, "libs.bundles.ui", """
         [bundles]

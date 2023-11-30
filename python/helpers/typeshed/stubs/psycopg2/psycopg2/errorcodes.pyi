@@ -1,4 +1,4 @@
-def lookup(code, _cache=...): ...
+def lookup(code: str, _cache: dict[str, str] = {}) -> str: ...
 
 CLASS_SUCCESSFUL_COMPLETION: str
 CLASS_WARNING: str
@@ -302,3 +302,5 @@ ASSERT_FAILURE: str
 INTERNAL_ERROR: str
 DATA_CORRUPTED: str
 INDEX_CORRUPTED: str
+IDLE_SESSION_TIMEOUT: str
+SQL_JSON_ITEM_CANNOT_BE_CAST_TO_TARGET_TYPE: str

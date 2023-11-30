@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -28,9 +28,8 @@ public class MoreOperationNode extends ZenCodingNode {
     return myRightOperand;
   }
 
-  @NotNull
   @Override
-  public List<ZenCodingNode> getChildren() {
+  public @NotNull List<ZenCodingNode> getChildren() {
     return ContainerUtil.newLinkedList(myLeftOperand, myRightOperand);
   }
 
@@ -40,12 +39,11 @@ public class MoreOperationNode extends ZenCodingNode {
     return myLeftOperand.getApproximateOutputLength(callback) + (myRightOperand.getApproximateOutputLength(callback) * mul);
   }
 
-  @NotNull
   @Override
-  public List<GenerationNode> expand(int numberInIteration,
-                                     int totalIterations, String surroundedText,
-                                     CustomTemplateCallback callback,
-                                     boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
+  public @NotNull List<GenerationNode> expand(int numberInIteration,
+                                              int totalIterations, String surroundedText,
+                                              CustomTemplateCallback callback,
+                                              boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
     if (myLeftOperand instanceof MulOperationNode || (myLeftOperand instanceof UnaryMulOperationNode && surroundedText != null)) {
       List<GenerationNode> result = new ArrayList<>();
       if (myLeftOperand instanceof MulOperationNode mul) {

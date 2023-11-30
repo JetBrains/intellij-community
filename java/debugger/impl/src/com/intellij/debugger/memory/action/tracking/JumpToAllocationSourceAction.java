@@ -45,7 +45,7 @@ public class JumpToAllocationSourceAction extends DebuggerTreeAction {
   }
 
   @Nullable
-  private List<StackFrameItem> getStack(AnActionEvent e) {
+  private static List<StackFrameItem> getStack(AnActionEvent e) {
     final Project project = e.getProject();
     final XValueNodeImpl selectedNode = getSelectedNode(e.getDataContext());
     final ObjectReference ref = selectedNode != null ? getObjectReference(selectedNode) : null;

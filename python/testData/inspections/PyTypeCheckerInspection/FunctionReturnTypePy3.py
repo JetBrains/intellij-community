@@ -7,7 +7,7 @@ def b(x: int) -> List[str]:
     return <warning descr="Expected type 'list[str]', got 'list[int]' instead">[1,2]</warning>
 
 def c() -> int:
-    return <warning descr="Expected type 'int', got 'LiteralString' instead">'abc'</warning>
+    return <warning descr="Expected type 'int', got 'str' instead">'abc'</warning>
 
 def d(x: int) -> List[str]:
     return [str(x)]
@@ -26,7 +26,7 @@ def f() -> Optional[str]:
 
 def g(x) -> int:
     if x:
-        return <warning descr="Expected type 'int', got 'LiteralString' instead">'abc'</warning>
+        return <warning descr="Expected type 'int', got 'str' instead">'abc'</warning>
     else:
         return <warning descr="Expected type 'int', got 'dict' instead">{}</warning>
 

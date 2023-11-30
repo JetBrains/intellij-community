@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.*;
 import com.intellij.ui.icons.HiDPIImage;
@@ -40,7 +41,6 @@ import javax.swing.border.LineBorder;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.FontUIResource;
-import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
@@ -78,10 +78,6 @@ public final class UIUtil {
   public static final @NlsSafe String BR = "<br/>";
   public static final @NlsSafe String HR = "<hr/>";
   public static final @NlsSafe String LINE_SEPARATOR = "\n";
-
-  public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
-  public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
-
   private static final Key<WeakReference<Component>> FOSTER_PARENT = Key.create("Component.fosterParent");
   private static final Key<Boolean> HAS_FOCUS = Key.create("Component.hasFocus");
 
@@ -95,10 +91,6 @@ public final class UIUtil {
   // cannot be static because logging maybe not configured yet
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(UIUtil.class);
-  }
-
-  public static void decorateWindowHeader(JRootPane pane) {
-    ComponentUtil.decorateWindowHeader(pane);
   }
 
   public static int getTransparentTitleBarHeight(JRootPane rootPane) {
@@ -156,7 +148,7 @@ public final class UIUtil {
     }
 
     if (isUnderAquaBasedLookAndFeel()) {
-      c.putClientProperty("JComponent.sizeVariant", StringUtil.toLowerCase(componentStyle.name()));
+      c.putClientProperty("JComponent.sizeVariant", Strings.toLowerCase(componentStyle.name()));
     }
     FontSize fontSize;
     if (componentStyle == ComponentStyle.MINI) {
@@ -185,102 +177,6 @@ public final class UIUtil {
 
   public static @NotNull RGBImageFilter getTextGrayFilter() {
     return GrayFilter.namedFilter("text.grayFilter", new GrayFilter(20, 0, 100));
-  }
-
-  public static class GrayFilter extends RGBImageFilter {
-    private float brightness;
-    private float contrast;
-    private int alpha;
-
-    private int origContrast;
-    private int origBrightness;
-
-    /**
-     * @param brightness in range [-100..100] where 0 has no effect
-     * @param contrast in range [-100..100] where 0 has no effect
-     * @param alpha in range [0..100] where 0 is transparent, 100 has no effect
-     */
-    public GrayFilter(int brightness, int contrast, int alpha) {
-      setBrightness(brightness);
-      setContrast(contrast);
-      setAlpha(alpha);
-    }
-
-    public GrayFilter() {
-      this(0, 0, 100);
-    }
-
-    private void setBrightness(int brightness) {
-      origBrightness = Math.max(-100, Math.min(100, brightness));
-      this.brightness = (float)(Math.pow(origBrightness, 3) / (100f * 100f)); // cubic in [0..100]
-    }
-
-    public int getBrightness() {
-      return origBrightness;
-    }
-
-    private void setContrast(int contrast) {
-      origContrast = Math.max(-100, Math.min(100, contrast));
-      this.contrast = origContrast / 100f;
-    }
-
-    public int getContrast() {
-      return origContrast;
-    }
-
-    private void setAlpha(int alpha) {
-      this.alpha = Math.max(0, Math.min(100, alpha));
-    }
-
-    public int getAlpha() {
-      return alpha;
-    }
-
-    @Override
-    @SuppressWarnings("AssignmentReplaceableWithOperatorAssignment")
-    public int filterRGB(int x, int y, int rgb) {
-      // Use NTSC conversion formula.
-      int gray = (int)(0.30 * (rgb >> 16 & 0xff) +
-                       0.59 * (rgb >> 8 & 0xff) +
-                       0.11 * (rgb & 0xff));
-
-      if (brightness >= 0) {
-        gray = (int)((gray + brightness * 255) / (1 + brightness));
-      }
-      else {
-        gray = (int)(gray / (1 - brightness));
-      }
-
-      if (contrast >= 0) {
-        if (gray >= 127) {
-          gray = (int)(gray + (255 - gray) * contrast);
-        }
-        else {
-          gray = (int)(gray - gray * contrast);
-        }
-      }
-      else {
-        gray = (int)(127 + (gray - 127) * (contrast + 1));
-      }
-
-      int a = ((rgb >> 24) & 0xff) * alpha / 100;
-
-      return (a << 24) | (gray << 16) | (gray << 8) | gray;
-    }
-
-    public @NotNull GrayFilterUIResource asUIResource() {
-      return new GrayFilterUIResource(this);
-    }
-
-    public static class GrayFilterUIResource extends GrayFilter implements UIResource {
-      public GrayFilterUIResource(@NotNull GrayFilter filter) {
-        super(filter.origBrightness, filter.origContrast, filter.alpha);
-      }
-    }
-
-    public static @NotNull GrayFilter namedFilter(@NotNull String resourceName, @NotNull GrayFilter defaultFilter) {
-      return Objects.requireNonNullElse((GrayFilter)UIManager.get(resourceName), defaultFilter);
-    }
   }
 
   public static @NotNull Couple<Color> getCellColors(@NotNull JTable table, boolean isSel, int row, int column) {
@@ -419,7 +315,7 @@ public final class UIUtil {
    * @return the property value from the specified component or {@code null}
    * @deprecated use {@link ClientProperty#get(Component, Object)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static Object getClientProperty(Object component, @NotNull @NonNls Object key) {
     return component instanceof Component ? ClientProperty.get((Component)component, key) : null;
   }
@@ -626,10 +522,9 @@ public final class UIUtil {
 
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
+      currentAtom.append(ch);
 
       boolean lineBreak = ch == '\n';
-      if (!lineBreak) currentAtom.append(ch);
-
       if (lineBreak || ch == separator) {
         currentLine.append(currentAtom);
         currentAtom.setLength(0);
@@ -927,8 +822,13 @@ public final class UIUtil {
     return UIManager.getFont("OptionPane.messageFont");
   }
 
+  /**
+   * @deprecated Use {@link FontUtil#getMenuFont()}
+   */
+  @Deprecated
+  @SuppressWarnings("unused")
   public static Font getMenuFont() {
-    return UIManager.getFont("Menu.font");
+    return FontUtil.getMenuFont();
   }
 
   /**
@@ -1057,16 +957,28 @@ public final class UIUtil {
     return SystemInfoRt.isMac && (StartupUiUtil.isUnderDarcula() || isUnderIntelliJLaF());
   }
 
+  /**
+   * Do not use it. Use theme properties instead of it.
+   */
+  @Deprecated(forRemoval = true)
   public static boolean isUnderDefaultMacTheme() {
-    return StartupUiUtil.isUnderDefaultMacTheme();
+    return false;
   }
 
+  /**
+   * Do not use it. Use theme properties instead of it.
+   */
+  @Deprecated(forRemoval = true)
   public static boolean isUnderWin10LookAndFeel() {
-    return StartupUiUtil.isUnderWin10LookAndFeel();
+    return false;
   }
 
+  /**
+   * @deprecated Do not use it. Use {@link JBColor}.
+   */
+  @Deprecated(forRemoval = true)
   public static boolean isUnderDarcula() {
-    return StartupUiUtil.isUnderDarcula();
+    return StartupUiUtil.INSTANCE.isDarkTheme();
   }
 
   public static boolean isUnderIntelliJLaF() {
@@ -1156,8 +1068,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Insets getListViewportPadding(boolean listWithAdvertiser) {
-    return listWithAdvertiser ? new JBInsets(4, 0, 8 , 0)
-                              : JBInsets.create(4, 0);
+    return listWithAdvertiser ? new JBInsets(4, 0, 8 , 0) : JBInsets.create(4, 0);
   }
 
   public static boolean isToUseDottedCellBorder() {
@@ -1166,6 +1077,10 @@ public final class UIUtil {
 
   public static boolean isControlKeyDown(@NotNull MouseEvent mouseEvent) {
     return SystemInfoRt.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
+  }
+
+  public static @NotNull String getControlKeyName() {
+    return SystemInfoRt.isMac ? "Command" : "Ctrl";
   }
 
   public static String @NotNull [] getStandardFontSizes() {
@@ -1734,7 +1649,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getBgFillColor(@NotNull Component c) {
-    final Component parent = findNearestOpaque(c);
+    Component parent = findNearestOpaque(c);
     return parent == null ? c.getBackground() : parent.getBackground();
   }
 
@@ -1905,7 +1820,9 @@ public final class UIUtil {
   @Deprecated
   public static @NotNull HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
     HTMLEditorKitBuilder builder = new HTMLEditorKitBuilder();
-    if(!noGapsBetweenParagraphs) builder.withGapsBetweenParagraphs();
+    if (!noGapsBetweenParagraphs) {
+      builder.withGapsBetweenParagraphs();
+    }
     return builder.build();
   }
 
@@ -1929,6 +1846,15 @@ public final class UIUtil {
     }
   }
 
+  public static @NotNull Font getFontWithFallbackIfNeeded(@NotNull Font font, @NotNull char[] text) {
+    if (!SystemInfoRt.isMac /* 'getFontWithFallback' does nothing on macOS */ && font.canDisplayUpTo(text, 0, text.length) != -1) {
+      return getFontWithFallback(font);
+    }
+    else {
+      return font;
+    }
+  }
+
   public static @NotNull FontUIResource getFontWithFallback(@NotNull Font font) {
     // On macOS font fallback is implemented in JDK by default
     // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
@@ -1939,28 +1865,24 @@ public final class UIUtil {
         }
       }
       catch (Throwable e) {
-        // this might happen e.g. if we're running under newer runtime, forbidding access to sun.font package
+        // this might happen e.g., if we're running under newer runtime, forbidding access to sun.font package
         getLogger().warn(e);
         // this might not give the same result, but we have no choice here
-        return StartupUiUtil.getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
+        return StartupUiUtilKt.getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
       }
     }
     return font instanceof FontUIResource ? (FontUIResource)font : new FontUIResource(font);
   }
 
   public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, int size) {
-    return StartupUiUtil.getFontWithFallback(familyName, style, size);
-  }
-
-  public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, float size) {
-    return StartupUiUtil.getFontWithFallback(familyName, style, size);
+    return StartupUiUtilKt.getFontWithFallback(familyName, style, size);
   }
 
   //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
   public static <T> T htmlInjectionGuard(T toRender) {
-    if (toRender instanceof String && StringUtil.toLowerCase((String)toRender).startsWith("<html>")) {
+    if (toRender instanceof String && Strings.toLowerCase((String)toRender).startsWith("<html>")) {
       //noinspection unchecked
-      return (T) ("<html>" + StringUtil.escapeXmlEntities((String)toRender));
+      return (T) ("<html>" + Strings.escapeXmlEntities((String)toRender));
     }
     return toRender;
   }
@@ -2222,11 +2144,11 @@ public final class UIUtil {
     return null;
   }
 
-  public static @NotNull <T extends JComponent> List<T> findComponentsOfType(JComponent parent, @NotNull Class<? extends T> cls) {
+  public static @NotNull <T extends JComponent> List<T> findComponentsOfType(@Nullable JComponent parent, @NotNull Class<? extends T> cls) {
     return ComponentUtil.findComponentsOfType(parent, cls);
   }
 
-  public static class TextPainter {
+  public static final class TextPainter {
     private final List<String> myLines = new ArrayList<>();
     private boolean myDrawShadow;
     private Color myShadowColor;
@@ -2318,7 +2240,7 @@ public final class UIUtil {
           }
 
           g.drawString(text, x, yOffset[0]);
-          if (!StringUtil.isEmpty(shortcut)) {
+          if (!Strings.isEmpty(shortcut)) {
             Color oldColor1 = g.getColor();
             g.setColor(JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246))));
             g.drawString(shortcut, x + fm.stringWidth(text + (StartupUiUtil.isUnderDarcula() ? " " : "")), yOffset[0]);
@@ -2570,7 +2492,7 @@ public final class UIUtil {
     if (component instanceof JLabel) candidate = ((JLabel)component).getText();
     if (component instanceof JTextComponent) candidate = ((JTextComponent)component).getText();
     if (component instanceof AbstractButton) candidate = ((AbstractButton)component).getText();
-    if (StringUtil.isNotEmpty(candidate)) {
+    if (Strings.isNotEmpty(candidate)) {
       candidate = candidate.replaceAll("<a href=\"#inspection/[^)]+\\)", "");
       if (!builder.isEmpty()) {
         builder.append(' ');
@@ -2658,14 +2580,6 @@ public final class UIUtil {
     textField.setColumns(4);
   }
 
-  /**
-   * Returns the first window ancestor of the component.
-   * Note that this method returns the component itself if it is a window.
-   *
-   * @param component the component used to find corresponding window
-   * @return the first window ancestor of the component; or {@code null}
-   *         if the component is not a window and is not contained inside a window
-   */
   public static @Nullable Window getWindow(@Nullable Component component) {
     return ComponentUtil.getWindow(component);
   }

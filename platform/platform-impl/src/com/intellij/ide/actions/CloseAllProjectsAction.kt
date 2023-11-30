@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.IdeUICustomization
@@ -10,7 +11,7 @@ import com.intellij.ui.IdeUICustomization
 /**
  * @author Konstantin Bulenkov
  */
-class CloseAllProjectsAction : CloseProjectsActionBase() {
+class CloseAllProjectsAction : CloseProjectsActionBase(), ActionRemoteBehaviorSpecification.Frontend {
   init {
     val uiCustomization = IdeUICustomization.getInstance()
     templatePresentation.setText(uiCustomization.projectMessagePointer("action.close.all.projects.text"))

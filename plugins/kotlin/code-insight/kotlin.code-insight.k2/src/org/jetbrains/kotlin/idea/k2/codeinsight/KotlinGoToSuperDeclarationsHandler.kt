@@ -14,7 +14,6 @@ import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.SuperDeclaration
 import org.jetbrains.kotlin.idea.codeInsight.SuperDeclarationProvider
@@ -27,16 +26,7 @@ class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
             editor: Editor
         ): KtDeclaration? {
             val element = file.findElementAt(editor.caretModel.offset)?: return null
-            return element
-                .parents(false)
-                .filter { declaration ->
-                    when (declaration) {
-                        is KtNamedFunction, is KtClassOrObject, is KtProperty -> true
-                        is KtParameter -> declaration.hasValOrVar()
-                        else -> false
-                    }
-                }
-                .firstOrNull() as? KtDeclaration
+            return SuperDeclarationProvider.findDeclaration(element)
         }
 
         fun findSuperDeclarations(targetDeclaration: KtDeclaration): HandlerResult? {

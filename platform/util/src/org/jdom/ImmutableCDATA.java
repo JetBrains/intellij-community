@@ -5,9 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ImmutableCDATA extends CDATA {
   ImmutableCDATA(@NotNull String str) {
-    //todo[nik] fake change to ensure that this file is recompiled, otherwise the call will invoke the incorrect method and exception will fail
-    //noinspection unused
-    CDATA cdata = super.setText(str);
+    super.setText(str);
   }
 
   @Override

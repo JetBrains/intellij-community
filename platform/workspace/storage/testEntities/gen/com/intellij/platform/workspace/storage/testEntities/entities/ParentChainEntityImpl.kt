@@ -14,24 +14,24 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToAbstractOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneChildOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ParentChainEntityImpl(val dataSource: ParentChainEntityData) : ParentChainEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ParentChainEntityImpl(private val dataSource: ParentChainEntityData) : ParentChainEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val ROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentChainEntity::class.java, CompositeAbstractEntity::class.java,
                                                                         ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       ROOT_CONNECTION_ID,
     )
 
@@ -46,6 +46,7 @@ open class ParentChainEntityImpl(val dataSource: ParentChainEntityData) : Parent
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ParentChainEntityData?) : ModifiableWorkspaceEntityBase<ParentChainEntity, ParentChainEntityData>(
     result), ParentChainEntity.Builder {
@@ -75,7 +76,7 @@ open class ParentChainEntityImpl(val dataSource: ParentChainEntityData) : Parent
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -162,6 +163,11 @@ class ParentChainEntityData : WorkspaceEntityData<ParentChainEntity>() {
     }
   }
 
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.ParentChainEntity") as EntityMetadata
+  }
+
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ParentChainEntity::class.java
   }
@@ -209,9 +215,5 @@ class ParentChainEntityData : WorkspaceEntityData<ParentChainEntity>() {
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

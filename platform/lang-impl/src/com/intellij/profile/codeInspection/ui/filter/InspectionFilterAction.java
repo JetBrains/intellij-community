@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.filter;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -34,7 +34,7 @@ import java.util.Set;
 /**
  * @author Dmitry Batkovich
  */
-public class InspectionFilterAction extends DefaultActionGroup implements Toggleable, DumbAware {
+public final class InspectionFilterAction extends DefaultActionGroup implements Toggleable, DumbAware {
   private final static int MIN_LANGUAGE_COUNT_TO_WRAP = 11;
 
   private final SeverityRegistrar mySeverityRegistrar;
@@ -115,7 +115,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     add(new ShowOnlyCleanupInspectionsAction());
   }
 
-  private class ResetFilterAction extends DumbAwareAction {
+  private final class ResetFilterAction extends DumbAwareAction {
     ResetFilterAction() {
       super(ActionsBundle.messagePointer("action.ResetFilterAction.text"));
     }
@@ -137,7 +137,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private class ShowOnlyCleanupInspectionsAction extends CheckboxAction implements DumbAware{
+  private final class ShowOnlyCleanupInspectionsAction extends CheckboxAction implements DumbAware{
     ShowOnlyCleanupInspectionsAction() {
       super(AnalysisBundle.message("inspections.settings.show.only.cleanup.text"));
     }
@@ -158,7 +158,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private class ShowAvailableOnlyOnAnalyzeInspectionsAction extends CheckboxAction implements DumbAware {
+  private final class ShowAvailableOnlyOnAnalyzeInspectionsAction extends CheckboxAction implements DumbAware {
 
     ShowAvailableOnlyOnAnalyzeInspectionsAction() {
       super(AnalysisBundle.message("inspections.settings.show.only.batch.text"));
@@ -212,7 +212,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private class ShowEnabledOrDisabledInspectionsAction extends CheckboxAction implements DumbAware{
+  private final class ShowEnabledOrDisabledInspectionsAction extends CheckboxAction implements DumbAware{
 
     private final Boolean myShowEnabledActions;
 
@@ -240,7 +240,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private class LanguageFilterAction extends CheckboxAction implements DumbAware {
+  private final class LanguageFilterAction extends CheckboxAction implements DumbAware {
     private final Language myLanguage;
 
     LanguageFilterAction(final @Nullable Language language) {
@@ -285,7 +285,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
   }
 
-  private class ShowOnlyModifiedInspectionsAction extends CheckboxAction implements DumbAware {
+  private final class ShowOnlyModifiedInspectionsAction extends CheckboxAction implements DumbAware {
     ShowOnlyModifiedInspectionsAction() {
       super(AnalysisBundle.message("inspections.settings.show.modified.text"));
     }

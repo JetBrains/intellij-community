@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.fileTypes.FileType;
 
-public class FileTypeConfigurableInteractions extends CounterUsagesCollector {
+public final class FileTypeConfigurableInteractions extends CounterUsagesCollector {
   private static final EventLogGroup group = new EventLogGroup("file.type.configurable.interactions", 1);
   public static final EventId1<FileType> patternAdded = group.registerEvent("pattern.added", EventFields.FileType);
   public static final EventId1<FileType> patternEdited = group.registerEvent("pattern.edited", EventFields.FileType);

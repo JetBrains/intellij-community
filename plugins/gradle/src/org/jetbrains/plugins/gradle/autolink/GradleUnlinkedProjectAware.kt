@@ -6,10 +6,10 @@ import com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectLinkLis
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import org.jetbrains.plugins.gradle.util.GradleConstants.KNOWN_GRADLE_FILES
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 
@@ -28,7 +28,7 @@ class GradleUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
 
   override fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable) {
     val gradleSettings = GradleSettings.getInstance(project)
-    gradleSettings.subscribe(object : GradleSettingsListenerAdapter() {
+    gradleSettings.subscribe(object : GradleSettingsListener {
       override fun onProjectsLinked(settings: Collection<GradleProjectSettings>) =
         settings.forEach { listener.onProjectLinked(it.externalProjectPath) }
 

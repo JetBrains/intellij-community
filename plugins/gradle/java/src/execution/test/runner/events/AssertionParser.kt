@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.nullize
 
 object AssertionParser {
@@ -54,7 +55,8 @@ object AssertionParser {
   }
 
   private fun parse(assertionMessage: String, regex: Regex): Result? {
-    val matchesResult = regex.matchEntire(assertionMessage) ?: return null
+    val canonicalAssertionMessage = StringUtil.convertLineSeparators(assertionMessage)
+    val matchesResult = regex.matchEntire(canonicalAssertionMessage) ?: return null
     val expected = matchesResult.groups["expected"] ?: return null
     val actual = matchesResult.groups["actual"] ?: return null
     val message = matchesResult.groups["message"]

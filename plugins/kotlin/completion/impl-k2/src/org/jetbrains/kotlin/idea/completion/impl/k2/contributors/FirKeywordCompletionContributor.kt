@@ -7,7 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.KeywordCompletion
 import org.jetbrains.kotlin.idea.completion.context.*
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHan
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtContainerNode
@@ -28,9 +29,10 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
+import org.jetbrains.kotlin.util.match
 
 internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionContext, priority: Int) :
-    FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
+    FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
     private val keywordCompletion = KeywordCompletion(object : KeywordCompletion.LanguageVersionSettingProvider {
         override fun getLanguageVersionSetting(element: PsiElement) = element.languageVersionSettings
         override fun getLanguageVersionSetting(module: Module) = module.languageVersionSettings
@@ -38,23 +40,32 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
 
     private val resolveDependentCompletionKeywordHandlers = ResolveDependentCompletionKeywordHandlerProvider(basicContext)
 
-    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext, weighingContext: WeighingContext) {
+    context(KtAnalysisSession)
+    override fun complete(
+        positionContext: KotlinRawPositionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
         val expression = when (positionContext) {
-            is FirNameReferencePositionContext -> positionContext.reference.expression.let {
+            is KotlinSimpleNameReferencePositionContext -> positionContext.reference.expression.let {
                 it.parentsWithSelf.match(KtLabelReferenceExpression::class, KtContainerNode::class, last = KtExpressionWithLabel::class)
                     ?: it
             }
-            is FirTypeConstraintNameInWhereClausePositionContext, is FirIncorrectPositionContext, is FirClassifierNamePositionContext ->
+
+            is KotlinTypeConstraintNameInWhereClausePositionContext, is KotlinIncorrectPositionContext, is KotlinClassifierNamePositionContext ->
                 error("keyword completion should not be called for ${positionContext::class.simpleName}")
-            is FirValueParameterPositionContext,
-            is FirMemberDeclarationExpectedPositionContext,
-            is FirUnknownPositionContext -> null
+
+            is KotlinValueParameterPositionContext,
+            is KotlinMemberDeclarationExpectedPositionContext,
+            is KDocNameReferencePositionContext,
+            is KotlinUnknownPositionContext -> null
         }
         completeWithResolve(expression ?: positionContext.position, expression, weighingContext)
     }
 
 
-    private fun KtAnalysisSession.completeWithResolve(position: PsiElement, expression: KtExpression?, weighingContext: WeighingContext) {
+    context(KtAnalysisSession)
+    private fun completeWithResolve(position: PsiElement, expression: KtExpression?, weighingContext: WeighingContext) {
         complete(position) { lookupElement, keyword ->
             val lookups = DefaultCompletionKeywordHandlerProvider.getHandlerForKeyword(keyword)
                 ?.createLookups(parameters, expression, lookupElement, project)

@@ -52,6 +52,8 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.readText
 
 internal val LOG = logger<BuiltInWebServer>()
 

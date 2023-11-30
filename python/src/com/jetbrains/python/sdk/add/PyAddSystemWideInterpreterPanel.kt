@@ -28,12 +28,11 @@ import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.projectSyncRows
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.target.ProjectSync
-import com.jetbrains.python.sdk.add.target.PyAddSdkPanelBase.Companion.createSdkForTarget
-import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkView
+import com.jetbrains.python.sdk.add.target.TargetPanelExtension
 import com.jetbrains.python.sdk.add.target.createDetectedSdk
+import com.jetbrains.python.sdk.configuration.createSdkForTarget
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.BorderLayout
 import java.util.function.Supplier
@@ -43,7 +42,7 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
                                            private val existingSdks: List<Sdk>,
                                            private val context: UserDataHolderBase,
                                            private val targetSupplier: Supplier<TargetEnvironmentConfiguration>? = null,
-                                           config: PythonLanguageRuntimeConfiguration? = null) : PyAddSdkPanel(), PyAddTargetBasedSdkView {
+                                           config: PythonLanguageRuntimeConfiguration? = null) : PyAddSdkPanel() {
   private val project: Project?
     get() = _project ?: module?.project
 
@@ -56,9 +55,9 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
   private lateinit var contentPanel: DialogPanel
 
   /**
-   * Encapsulates the work with the files synchronization options.
+   * Encapsulates the work with the optional target-specific fields, e.g., synchronization options and sudo permission.
    */
-  private var projectSync: ProjectSync? = null
+  private var targetPanelExtension: TargetPanelExtension? = null
 
   init {
     layout = BorderLayout()
@@ -102,21 +101,20 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
           .comment(PyBundle.message("python.sdk.admin.permissions.needed.consider.creating.venv.content"),
                    maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
       }
-      projectSync = projectSyncRows(project, targetEnvironmentConfiguration)
+      targetPanelExtension = extendWithTargetSpecificFields(project, targetEnvironmentConfiguration)
     }
     add(contentPanel, BorderLayout.NORTH)
   }
 
   override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox, this))
 
-  override fun getOrCreateSdk(): Sdk? = getOrCreateSdk(targetEnvironmentConfiguration = null)
-
-  override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? {
+  override fun getOrCreateSdk(): Sdk? {
     contentPanel.apply()
 
-    applyOptionalProjectSyncConfiguration(targetEnvironmentConfiguration)
+    targetPanelExtension?.applyToTargetConfiguration()
 
-    if (targetEnvironmentConfiguration == null) {
+    val currentTargetEnvironmentConfiguration = targetEnvironmentConfiguration
+    if (currentTargetEnvironmentConfiguration == null) {
       // this is the local machine case
       return when (val sdk = installSdkIfNeeded(sdkComboBox.selectedSdk, module, existingSdks, context)) {
         is PyDetectedSdk -> sdk.setup(existingSdks)
@@ -125,12 +123,8 @@ open class PyAddSystemWideInterpreterPanel(private val _project: Project?,
     }
     else {
       val interpreterPath = sdkComboBox.selectedSdk?.homePath!!
-      return createSdkForTarget(project, targetEnvironmentConfiguration, interpreterPath, existingSdks)
+      return createSdkForTarget(project, currentTargetEnvironmentConfiguration, interpreterPath, existingSdks, targetPanelExtension)
     }
-  }
-
-  private fun applyOptionalProjectSyncConfiguration(targetConfiguration: TargetEnvironmentConfiguration?) {
-    if (targetConfiguration != null) projectSync?.apply(targetConfiguration)
   }
 
   override fun addChangeListener(listener: Runnable) {

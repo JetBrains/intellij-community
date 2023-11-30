@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Konstantin Bulenkov
  * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class NavBarUpdateQueue extends MergingUpdateQueue {
   private final AtomicBoolean myModelUpdating = new AtomicBoolean(Boolean.FALSE);
   private final Alarm myUserActivityAlarm = new Alarm(this);

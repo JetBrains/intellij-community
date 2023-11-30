@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
@@ -10,23 +11,30 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-class MixedListFactory extends SEResultsListFactory {
+final class MixedListFactory extends SEResultsListFactory {
 
   private final List<String> prioritizedContributors = new ArrayList<>();
 
-  MixedListFactory() {
+  MixedListFactory(boolean forceDisableRecentFilesPrioritization) {
     prioritizedContributors.add(CalculatorSEContributor.class.getName());
     prioritizedContributors.add("AutocompletionContributor");
     prioritizedContributors.add("CommandsContributor");
     prioritizedContributors.add(TopHitSEContributor.class.getSimpleName());
-    if (Registry.is("search.everywhere.recent.at.top")) {
-      prioritizedContributors.add(RecentFilesSEContributor.class.getSimpleName());
+    if (!forceDisableRecentFilesPrioritization) {
+      if (Registry.is("search.everywhere.recent.at.top")) {
+        prioritizedContributors.add(RecentFilesSEContributor.class.getSimpleName());
+      }
     }
   }
 
+  MixedListFactory(){
+    this(false);
+  }
+
   @Override
-  public SearchListModel createModel() {
+  public SearchListModel createModel(Computable<String> tabIDProvider) {
     MixedSearchListModel mixedModel = new MixedSearchListModel();
+    mixedModel.setTabIDProvider(tabIDProvider);
 
     Map<String, Integer> priorities = getContributorsPriorities();
     Comparator<SearchEverywhereFoundElementInfo> prioritizedContributorsComparator = (element1, element2) -> {

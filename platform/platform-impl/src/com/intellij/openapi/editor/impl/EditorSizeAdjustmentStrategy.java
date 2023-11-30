@@ -113,7 +113,7 @@ final class EditorSizeAdjustmentStrategy {
     myAlarm.addRequest(new UpdateSizeTask(editor), 1000);
   }
 
-  private class UpdateSizeTask implements Runnable {
+  private final class UpdateSizeTask implements Runnable {
     private final EditorImpl myEditor;
 
     UpdateSizeTask(@NotNull EditorImpl editor) {

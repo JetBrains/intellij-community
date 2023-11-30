@@ -14,11 +14,8 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.*;
 import java.nio.file.Path;
 
-//TODO RC: this class is suspicious because it uses some multi-threading constructs (synchronized, volatile), but
-//         the class overall is not thread safe in any reasonable sense. I.e. authors seem to consider the class
-//         for multithreaded use, but it is really not safe for it. We should either made it really thread-safe,
-//         or remove all synchronized/volatile, and rely on caller for synchronization.
-public class AppendableStorageBackedByResizableMappedFile<Data> implements AppendableObjectStorage<Data> {
+/** valueId == offset of value in a file */
+public final class AppendableStorageBackedByResizableMappedFile<Data> implements AppendableObjectStorage<Data> {
   @VisibleForTesting
   @ApiStatus.Internal
   public static final int APPEND_BUFFER_SIZE = 4096;
@@ -26,6 +23,11 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
   private static final ThreadLocal<MyDataIS> TLOCAL_READ_STREAMS = ThreadLocal.withInitial(() -> new MyDataIS());
 
   private final ResizeableMappedFile storage;
+
+  //TODO RC: the class is suspicious because it uses some multi-threading constructs (synchronized, volatile), but
+  //         the class overall is not thread safe in any reasonable sense. I.e. authors seem to consider the class
+  //         for multithreaded use, but it is really not safe for it. We should either made it really thread-safe,
+  //         or remove all synchronized/volatile, and rely on caller for synchronization.
 
   private volatile int fileLength;
   private volatile @Nullable AppendMemoryBuffer appendBuffer;
@@ -60,7 +62,8 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
 
 
   @Override
-  public Data read(int offset, boolean checkAccess) throws IOException {
+  public Data read(int valueId, boolean checkAccess) throws IOException {
+    int offset = valueId;
     AppendMemoryBuffer buffer = appendBuffer;
     if (buffer != null
         && (long)offset >= buffer.startingOffsetInFile) {
@@ -101,6 +104,9 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
     //         strict consistency -- items added after last flush but before .processAll() could be not listed
     //
     //if (isDirty()) {
+    //  //RC: why not .force() right here? Probably because of the locks: processAll is a read method, so
+    //  //    it is likely readLock is acquired, but force() requires writeLock, and one can't upgrade read
+    //  //    lock to the write one. So the responsibility was put on a caller.
     //  throw new IllegalStateException("Must be .force()-ed first");
     //}
     if (fileLength == 0) {
@@ -108,19 +114,19 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
     }
     IOCancellationCallbackHolder.checkCancelled();
     return storage.readInputStream(is -> {
-      // calculation may restart few times, so it's expected that processor processes duplicated
+      // calculation may restart few times, so it's expected that processor processes duplicates
       LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), fileLength) {
         @Override
         public int available() {
           return remainingLimit();
         }
       };
-      DataInputStream keyStream = new DataInputStream(lis);
+      DataInputStream valuesStream = new DataInputStream(lis);
       try {
         while (true) {
           int offset = lis.getBytesRead();
-          Data key = dataDescriptor.read(keyStream);
-          if (!processor.process(offset, key)) return false;
+          Data value = dataDescriptor.read(valuesStream);
+          if (!processor.process(offset, value)) return false;
         }
       }
       catch (EOFException e) {
@@ -168,8 +174,9 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
   }
 
   @Override
-  public boolean checkBytesAreTheSame(int addr, Data value) throws IOException {
-    try (CheckerOutputStream comparer = buildOldComparerStream(addr)) {
+  public boolean checkBytesAreTheSame(int valueId, Data value) throws IOException {
+    int offset = valueId;
+    try (CheckerOutputStream comparer = buildOldComparerStream(offset)) {
       DataOutput out = new DataOutputStream(comparer);
       dataDescriptor.save(out, value);
       return comparer.same;
@@ -197,7 +204,8 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
   @Override
   public void close() throws IOException {
     ExceptionUtil.runAllAndRethrowAllExceptions(
-      new IOException("Can't .close() appendable storage [" + storage.getPagedFileStorage().getFile() + "]"),
+      IOException.class,
+      () -> new IOException("Can't .close() appendable storage [" + storage.getPagedFileStorage().getFile() + "]"),
       this::force,
       storage::close
     );
@@ -284,7 +292,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
     }
   }
 
-  private static class MyBufferedIS extends BufferedInputStream {
+  private static final class MyBufferedIS extends BufferedInputStream {
     MyBufferedIS() {
       super(TOMBSTONE, 512);
     }
@@ -307,7 +315,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> implements Appen
    * The buffer caches in memory a region of a file [startingOffsetInFile..startingOffsetInFile+bufferPosition],
    * with both ends inclusive.
    */
-  private static class AppendMemoryBuffer {
+  private static final class AppendMemoryBuffer {
     private final byte[] buffer;
     /**
      * Similar to ByteBuffer.position: a cursor pointing to the last written byte of a buffer.

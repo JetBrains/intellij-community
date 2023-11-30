@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.presentation.impl
 
 import com.intellij.openapi.project.Project
@@ -13,8 +13,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import java.awt.Color
 
-class FilePresentationServiceImpl(private val project: Project) : FilePresentationService {
-
+internal class FilePresentationServiceImpl(private val project: Project) : FilePresentationService {
   @RequiresReadLock
   @RequiresBackgroundThread
   override fun getFileBackgroundColor(file: VirtualFile): Color? {

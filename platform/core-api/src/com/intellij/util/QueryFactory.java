@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -20,13 +20,11 @@ public class QueryFactory<Result, Parameters> {
   /**
    * @return query to perform the search. @param parameters of the search
    */
-  @NotNull
-  public final Query<Result> createQuery(@NotNull Parameters parameters) {
+  public final @NotNull Query<Result> createQuery(@NotNull Parameters parameters) {
     return new ExecutorsQuery<>(parameters, getExecutors());
   }
 
-  @NotNull
-  protected List<QueryExecutor<Result, Parameters>> getExecutors() {
+  protected @NotNull List<QueryExecutor<Result, Parameters>> getExecutors() {
     return myExecutors;
   }
 
@@ -38,8 +36,7 @@ public class QueryFactory<Result, Parameters> {
    * @param parameters of the search
    * @return query to perform the search. Obtained results are automatically filtered wrt. equals() relation.
    */
-  @NotNull
-  public final Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters) {
+  public final @NotNull Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters) {
     return new UniqueResultsQuery<Result, Result>(createQuery(parameters));
   }
 

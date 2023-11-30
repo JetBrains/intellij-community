@@ -86,7 +86,6 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
     return mySharedProjectData;
   }
 
-  //todo[nik] pull up to open API?
   public UserDataHolder getSharedModuleData() {
     return mySharedModuleData;
   }

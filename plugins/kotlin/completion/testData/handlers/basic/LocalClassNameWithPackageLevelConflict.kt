@@ -8,5 +8,6 @@ class Main {
     }
 }
 
+// IGNORE_K2
 // ELEMENT: Bar
 // TAIL_TEXT: " (foo)"

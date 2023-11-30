@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
@@ -138,14 +138,14 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     }
   }
 
-  private static class SoftMarginsOption extends Option {
+  private static final class SoftMarginsOption extends Option {
 
     private final Language myLanguage;
 
-    protected SoftMarginsOption(@NotNull Language language,
-                                @NotNull String optionName,
-                                @NotNull String title,
-                                @Nullable String groupName) {
+    private SoftMarginsOption(@NotNull Language language,
+                              @NotNull String optionName,
+                              @NotNull String title,
+                              @Nullable String groupName) {
       super(optionName, title, groupName, null, null);
       myLanguage = language;
     }
@@ -167,11 +167,11 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     }
   }
 
-  private class CommaSeparatedIdentifiersOption extends FieldOption {
+  private final class CommaSeparatedIdentifiersOption extends FieldOption {
 
-    protected CommaSeparatedIdentifiersOption(@NotNull String optionName,
-                                              @NotNull String title,
-                                              @Nullable String groupName) {
+    private CommaSeparatedIdentifiersOption(@NotNull String optionName,
+                                            @NotNull String title,
+                                            @Nullable String groupName) {
       super(null, optionName, title, groupName, null, null);
     }
 

@@ -1,3 +1,4 @@
+// IGNORE_K2
 class A {
     fun test() = 1
 }

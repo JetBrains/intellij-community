@@ -18,7 +18,7 @@ object TransferSettingsCollector : CounterUsagesCollector() {
 
   private val logger = logger<TransferSettingsCollector>()
 
-  private val GROUP = EventLogGroup("wizard.transfer.settings", 1)
+  private val GROUP = EventLogGroup("wizard.transfer.settings", 5)
   override fun getGroup(): EventLogGroup = GROUP
 
   private val ideField = EventFields.Enum<TransferableIdeId>("ide")
@@ -26,13 +26,16 @@ object TransferSettingsCollector : CounterUsagesCollector() {
   private val featureField = EventFields.Enum<TransferableIdeFeatureId>("feature")
   private val performanceMetricTypeTypeField = EventFields.Enum<PerformanceMetricType>("type")
   private val perfEventValueField = EventFields.Long("value")
+  private val selectedSectionsField = EventFields.StringList("selectedSections", TransferableSections.types)
+  private val unselectedSectionsField = EventFields.StringList("unselectedSections", TransferableSections.types)
+  private val timesSwitchedBetweenInstancesField = EventFields.Int("timesSwitchedBetweenInstances")
 
   // Common events
   private val transferSettingsShown = GROUP.registerEvent("transfer.settings.shown")
   private val transferSettingsSkipped = GROUP.registerEvent("transfer.settings.skipped")
-  private val importStarted = GROUP.registerEvent("import.started")
-  private val importSucceeded = GROUP.registerEvent("import.succeeded", ideField)
-  private val importFailed = GROUP.registerEvent("import.failed", ideField)
+  private val importStarted = GROUP.registerEvent("import.started", selectedSectionsField, unselectedSectionsField, timesSwitchedBetweenInstancesField)
+  private val importSucceeded = GROUP.registerEvent("import.succeeded", ideField, ideVersionField)
+  private val importFailed = GROUP.registerEvent("import.failed", ideField, ideVersionField)
 
   // Discovery events
   private val instancesOfIdeFound = GROUP.registerEvent(
@@ -82,33 +85,64 @@ object TransferSettingsCollector : CounterUsagesCollector() {
     transferSettingsSkipped.log()
   }
 
-  fun logImportStarted() {
-    importStarted.log()
+  fun logImportStarted(settings: Settings, timesSwitchedBetweenInstances: Int) {
+    val selectedSections = mutableListOf<String>()
+    val unselectedSections = mutableListOf<String>()
+
+    if (settings.laf != null) {
+      if (settings.preferences.laf) selectedSections.add(TransferableSections.laf) else unselectedSections.add(TransferableSections.laf)
+    }
+    if (settings.keymap != null) {
+      if (settings.preferences.keymap) selectedSections.add(TransferableSections.keymap) else unselectedSections.add(TransferableSections.keymap)
+    }
+    if (settings.plugins.isNotEmpty()) {
+      if (settings.preferences.plugins) selectedSections.add(TransferableSections.plugins) else unselectedSections.add(TransferableSections.plugins)
+    }
+    if (settings.recentProjects.isNotEmpty()) {
+      if (settings.preferences.recentProjects) selectedSections.add(TransferableSections.recentProjects) else unselectedSections.add(TransferableSections.recentProjects)
+    }
+    if (settings.syntaxScheme != null) {
+      if (settings.preferences.syntaxScheme) selectedSections.add(TransferableSections.syntaxScheme) else unselectedSections.add(TransferableSections.syntaxScheme)
+    }
+
+    importStarted.log(selectedSections, unselectedSections, timesSwitchedBetweenInstances)
   }
 
   fun logImportSucceeded(ideVersion: IdeVersion, settings: Settings) {
     logger.runAndLogException {
       val ide = ideVersion.transferableId
-      importSucceeded.log(ide)
-      settings.laf?.transferableId?.let { lafImported.log(it) }
-      settings.keymap?.let { keymap ->
-        val patchedKeymap = keymap as? PatchedKeymap
-        shortcutsTransferred.log(
-          keymap.transferableId,
-          patchedKeymap?.overrides?.size ?: 0,
-          patchedKeymap?.removal?.size ?: 0
-        )
+      importSucceeded.log(ide, ideVersion.transferableVersion)
+
+      if (settings.preferences.laf) {
+        settings.laf?.transferableId?.let { lafImported.log(it) }
       }
-      recentProjectsTransferred.log(ide, settings.recentProjects.size)
-      for (plugin in settings.plugins) {
-        featureImported.log(plugin.transferableId, ide)
+
+      if (settings.preferences.keymap) {
+        settings.keymap?.let { keymap ->
+          val patchedKeymap = keymap as? PatchedKeymap
+          shortcutsTransferred.log(
+            keymap.transferableId,
+            patchedKeymap?.overrides?.size ?: 0,
+            patchedKeymap?.removal?.size ?: 0
+          )
+        }
+      }
+
+      if (settings.preferences.recentProjects) {
+        recentProjectsTransferred.log(ide, settings.recentProjects.size)
+      }
+
+      if (settings.preferences.plugins) {
+        for (plugin in settings.plugins) {
+          featureImported.log(plugin.transferableId, ide)
+        }
       }
     }
   }
 
   fun logImportFailed(ideVersion: IdeVersion) {
     logger.runAndLogException {
-      importFailed.log(ideVersion.transferableId)
+      importFailed.log(ideVersion.transferableId, ideVersion.transferableVersion)
     }
   }
 

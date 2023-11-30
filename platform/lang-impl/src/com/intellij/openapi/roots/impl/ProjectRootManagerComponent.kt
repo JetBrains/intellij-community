@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.configurationStore.BatchUpdateListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
@@ -47,11 +46,9 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
+import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -64,9 +61,10 @@ private val WATCH_ROOTS_LOG = Logger.getInstance("#com.intellij.openapi.vfs.Watc
 private val WATCHED_ROOTS_PROVIDER_EP_NAME = ExtensionPointName<WatchedRootsProvider>("com.intellij.roots.watchedRootsProvider")
 
 /**
- * ProjectRootManager extended with ability to watch events.
+ * ProjectRootManager extended with the ability to watch events.
  */
-open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImpl(project), Disposable {
+open class ProjectRootManagerComponent(project: Project,
+                                       coroutineScope: CoroutineScope) : ProjectRootManagerImpl(project, coroutineScope), Disposable {
   // accessed in EDT only
   private var collectWatchRootsJob = AtomicReference<Job>()
   private var pointerChangesDetected = false
@@ -80,7 +78,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   private val rootWatchLock = ReentrantLock()
 
   private val rootsChangedListener: VirtualFilePointerListener = object : VirtualFilePointerListener {
-    private fun getPointersChanges(pointers: Array<VirtualFilePointer>): RootsChangeRescanningInfo {
+    private fun getPointerChanges(pointers: Array<VirtualFilePointer>): RootsChangeRescanningInfo {
       var result: RootsChangeRescanningInfo? = null
       for (pointer in pointers) {
         if (pointer.isValid) {
@@ -94,27 +92,27 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     }
 
     override fun beforeValidityChanged(pointers: Array<VirtualFilePointer>) {
-      if (myProject.isDisposed) {
+      if (project.isDisposed) {
         return
       }
       if (!isInsideWriteAction && !pointerChangesDetected) {
         pointerChangesDetected = true
         //this is the first pointer changing validity
-        myRootsChanged.levelUp()
+        rootsChanged.levelUp()
       }
-      myRootsChanged.beforeRootsChanged()
+      rootsChanged.beforeRootsChanged()
       if (LOG_CACHES_UPDATE || LOG.isTraceEnabled) {
         LOG.trace(Throwable(if (pointers.isNotEmpty()) pointers[0].presentableUrl else ""))
       }
     }
 
     override fun validityChanged(pointers: Array<VirtualFilePointer>) {
-      val changeInfo = getPointersChanges(pointers)
-      if (myProject.isDisposed) {
+      val changeInfo = getPointerChanges(pointers)
+      if (project.isDisposed) {
         return
       }
       if (isInsideWriteAction) {
-        myRootsChanged.rootsChanged(changeInfo)
+        rootsChanged.rootsChanged(changeInfo)
       }
       else {
         clearScopesCaches()
@@ -126,47 +124,47 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   }
 
   init {
-    if (!myProject.isDefault) {
+    if (!project.isDefault) {
       registerListeners()
     }
   }
 
   private fun registerListeners() {
-    val connection = myProject.messageBus.connect(this)
+    val connection = project.messageBus.connect(this)
     connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       @Deprecated("Deprecated in Java")
       @Suppress("removal")
       override fun projectOpened(project: Project) {
-        if (project === myProject) {
+        if (project === this@ProjectRootManagerComponent.project) {
           addRootsToWatch()
-          ApplicationManager.getApplication().addApplicationListener(AppListener(), myProject)
+          ApplicationManager.getApplication().addApplicationListener(AppListener(), this@ProjectRootManagerComponent.project)
         }
       }
 
       override fun projectClosed(project: Project) {
-        if (project === myProject) {
+        if (project === this@ProjectRootManagerComponent.project) {
           this@ProjectRootManagerComponent.projectClosed()
         }
       }
     })
     connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
       override fun beforeFileTypesChanged(event: FileTypeEvent) {
-        myFileTypesChanged.beforeRootsChanged()
+        fileTypesChanged.beforeRootsChanged()
       }
 
       override fun fileTypesChanged(event: FileTypeEvent) {
-        myFileTypesChanged.rootsChanged()
+        fileTypesChanged.rootsChanged()
       }
     })
     connection.subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
       override fun onBatchUpdateStarted() {
-        myRootsChanged.levelUp()
-        myFileTypesChanged.levelUp()
+        rootsChanged.levelUp()
+        fileTypesChanged.levelUp()
       }
 
       override fun onBatchUpdateFinished() {
-        myRootsChanged.levelDown()
-        myFileTypesChanged.levelDown()
+        rootsChanged.levelDown()
+        fileTypesChanged.levelDown()
       }
     })
 
@@ -186,7 +184,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   }
 
   private fun addRootsToWatch() {
-    if (myProject.isDefault) {
+    if (project.isDefault) {
       return
     }
 
@@ -204,7 +202,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     }
     else {
       @Suppress("DEPRECATION")
-      myProject.coroutineScope.launch {
+      project.coroutineScope.launch {
         val job = launch(start = CoroutineStart.LAZY) {
           val watchRoots = readAction { collectWatchRoots(newDisposable) }
           postCollect(newDisposable, oldDisposable, watchRoots)
@@ -221,7 +219,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     if (rootPointersDisposable == oldDisposable && lastInProgressRootPointersDisposable == newDisposable) {
       rootPointersDisposable = newDisposable
       // dispose after the re-creating container to keep VFPs from disposing and re-creating back;
-      // instead, just increment/decrement their usage count
+      // instead, update their usage count
       Disposer.dispose(oldDisposable)
       rootsToWatch = LocalFileSystem.getInstance().replaceWatchedRoots(rootsToWatch, watchRoots.first, watchRoots.second)
     }
@@ -233,9 +231,9 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   override fun fireBeforeRootsChangeEvent(fileTypes: Boolean) {
     isFiringEvent = true
     try {
-      (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
-      (WorkspaceFileIndex.getInstance(myProject) as WorkspaceFileIndexEx).indexData.resetCustomContributors()
-      myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(ModuleRootEventImpl(myProject, fileTypes))
+      (DirectoryIndex.getInstance(project) as? DirectoryIndexImpl)?.reset()
+      (WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx).indexData.resetCustomContributors()
+      project.messageBus.syncPublisher(ModuleRootListener.TOPIC).beforeRootsChange(ModuleRootEventImpl(project, fileTypes))
     }
     finally {
       isFiringEvent = false
@@ -245,17 +243,17 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   override fun fireRootsChangedEvent(fileTypes: Boolean, indexingInfos: List<RootsChangeRescanningInfo>) {
     isFiringEvent = true
     try {
-      (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
-      (WorkspaceFileIndex.getInstance(myProject) as WorkspaceFileIndexEx).indexData.resetCustomContributors()
+      (DirectoryIndex.getInstance(project) as? DirectoryIndexImpl)?.reset()
+      (WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx).indexData.resetCustomContributors()
 
       val isFromWorkspaceOnly = EntityIndexingService.getInstance().isFromWorkspaceOnly(indexingInfos)
-      myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS)
-        .rootsChanged(ModuleRootEventImpl(myProject, fileTypes, indexingInfos, isFromWorkspaceOnly))
+      project.messageBus.syncPublisher(ModuleRootListener.TOPIC)
+        .rootsChanged(ModuleRootEventImpl(project, fileTypes, indexingInfos, isFromWorkspaceOnly))
     }
     finally {
       isFiringEvent = false
     }
-    EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos)
+    EntityIndexingService.getInstance().indexChanges(project, indexingInfos)
     addRootsToWatch()
   }
 
@@ -263,9 +261,9 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     ApplicationManager.getApplication().assertReadAccessAllowed()
     val recursivePaths = CollectionFactory.createFilePathSet()
     val flatPaths = CollectionFactory.createFilePathSet()
-    WATCH_ROOTS_LOG.trace { "watch roots for ${myProject}}" }
+    WATCH_ROOTS_LOG.trace { "watch roots for ${project}}" }
 
-    val store = myProject.stateStore
+    val store = project.stateStore
     val projectFilePath = store.projectFilePath
     if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName?.toString()) {
       flatPaths += projectFilePath.systemIndependentPath
@@ -274,7 +272,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     }
 
     for (extension in AdditionalLibraryRootsProvider.EP_NAME.extensionList) {
-      val toWatch = extension.getRootsToWatch(myProject)
+      val toWatch = extension.getRootsToWatch(project)
       if (!toWatch.isEmpty()) {
         WATCH_ROOTS_LOG.trace { "  ${extension::class.java}}: ${toWatch}" }
         for (file in toWatch) {
@@ -284,7 +282,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     }
 
     for (extension in WATCHED_ROOTS_PROVIDER_EP_NAME.extensionList) {
-      val toWatch = extension.getRootsToWatch(myProject)
+      val toWatch = extension.getRootsToWatch(project)
       if (!toWatch.isEmpty()) {
         WATCH_ROOTS_LOG.trace { "  ${extension::class.java}}: ${toWatch}" }
         for (path in toWatch) {
@@ -295,7 +293,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
 
     val excludedUrls = HashSet<String>()
     // changes in files provided by this method should be watched manually because no-one's bothered to set up correct pointers for them
-    for (excludePolicy in DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
+    for (excludePolicy in DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
       excludedUrls.addAll(excludePolicy.excludeUrlsForProject)
     }
     // avoid creating empty unnecessary container
@@ -333,7 +331,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       }
     }
 
-    for (module in ModuleManager.getInstance(myProject).modules) {
+    for (module in ModuleManager.getInstance(project).modules) {
       if (logRoots) LOG.trace { "  module ${module}" }
       val rootManager = ModuleRootManager.getInstance(module)
       collectUrls(rootManager.contentRootUrls, "content")
@@ -353,8 +351,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     settings.retainCondition = Condition<WorkspaceFileIndexContributor<out WorkspaceEntity>> {
       it.storageKind == EntityStorageKind.MAIN && it !is PlatformInternalWorkspaceFileIndexContributor && it !is SkipAddingToWatchedRoots
     }
-    val builder = WorkspaceIndexingRootsBuilder.registerEntitiesFromContributors(project,
-                                                                                 WorkspaceModel.getInstance(project).currentSnapshot,
+    val builder = WorkspaceIndexingRootsBuilder.registerEntitiesFromContributors(WorkspaceModel.getInstance(project).currentSnapshot,
                                                                                  settings)
 
     fun register(rootFiles: Collection<VirtualFile>, name: String) {
@@ -362,37 +359,44 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       rootFiles.forEach { recursivePaths.add(it.path) }
     }
 
-    builder.forEachModuleContentEntitiesRoots { roots -> register(roots, "module content roots") }
-    builder.forEachContentEntitiesRoots { roots -> register(roots, "content roots") }
-    builder.forEachExternalEntitiesRoots({ roots -> register(roots, "external roots") }) { sourceRoots ->
-      register(sourceRoots, "external source roots")
+    builder.forEachModuleContentEntitiesRoots { roots ->
+      register(roots.roots, "module content roots")
+      register(roots.nonRecursiveRoots, "module non-recursive content roots")
+    }
+    builder.forEachContentEntitiesRoots { roots ->
+      register(roots.roots, "content roots")
+      register(roots.nonRecursiveRoots, "non-recursive content roots")
+    }
+    builder.forEachExternalEntitiesRoots { roots ->
+      register(roots.roots, "external roots")
+      register(roots.sourceRoots, "external source roots")
+      register(roots.nonRecursiveRoots, "non-recursive external roots")
+      register(roots.nonRecursiveSourceRoots, "non-recursive external source roots")
     }
   }
 
   override fun clearScopesCaches() {
     super.clearScopesCaches()
 
-    myProject.getServiceIfCreated(LibraryScopeCache::class.java)?.clear()
+    LibraryScopeCache.getInstance(project)?.clear()
   }
 
   override fun clearScopesCachesForModules() {
     super.clearScopesCachesForModules()
 
-    for (module in ModuleManager.getInstance(myProject).modules) {
+    for (module in ModuleManager.getInstance(project).modules) {
       (module as ModuleEx).clearScopesCache()
     }
   }
 
-  override fun markRootsForRefresh() {
+  override fun markRootsForRefresh(): List<VirtualFile> {
     val paths = CollectionFactory.createFilePathSet()
     collectModuleWatchRoots(paths, paths, false)
-    val fs = LocalFileSystem.getInstance()
-    for (path in paths) {
-      val root = fs.findFileByPath(path)
-      if (root is NewVirtualFile) {
-        root.markDirtyRecursively()
-      }
-    }
+    val roots = paths.mapNotNull(LocalFileSystem.getInstance()::findFileByPath)
+    roots.asSequence()
+      .filterIsInstance(NewVirtualFile::class.java)
+      .forEach(NewVirtualFile::markDirtyRecursively)
+    return roots
   }
 
   override fun dispose() {}
@@ -410,10 +414,11 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     override fun writeActionFinished(action: Any) {
       if (--insideWriteAction == 0 && pointerChangesDetected) {
         pointerChangesDetected = false
-        myRootsChanged.levelDown()
+        rootsChanged.levelDown()
       }
     }
   }
 
-  override fun getRootsValidityChangedListener(): VirtualFilePointerListener = rootsChangedListener
+  override val rootsValidityChangedListener: VirtualFilePointerListener
+    get() = rootsChangedListener
 }

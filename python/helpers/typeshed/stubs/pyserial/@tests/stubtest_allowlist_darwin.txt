@@ -1,0 +1,16 @@
+# Error: failed to import
+# =======================
+serial.serialwin32  # Windows only
+serial.win32  # Windows only
+serial.tools.list_ports_windows  # Windows only
+
+# Error: is inconsistent
+# ======================
+# Methods defined with positional-only argument in the stub because they inherit from
+# io.RawIOBase but at runtime they are normal arguments that don't have consistent
+# names.
+serial.serialposix.Serial.write
+
+# intended to be private aliases
+serial.tools.list_ports_posix.plat
+serial.serialposix.plat

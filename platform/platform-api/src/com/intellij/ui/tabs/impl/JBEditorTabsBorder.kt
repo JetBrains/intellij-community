@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ui.tabs.impl
@@ -28,6 +28,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
         val from = bounds(oldSelection) ?: return
         val to = bounds(newSelection) ?: return
+        if (from.width == 0 || to.width == 0) return //tab was added or removed. See IDEA-331744
         val dur = 100
         val del = 50
         val s1 = from.x

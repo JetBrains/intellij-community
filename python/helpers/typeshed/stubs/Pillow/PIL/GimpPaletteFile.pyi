@@ -1,7 +1,7 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class GimpPaletteFile:
     rawmode: str
-    palette: Any
+    palette: Incomplete
     def __init__(self, fp) -> None: ...
     def getpalette(self): ...

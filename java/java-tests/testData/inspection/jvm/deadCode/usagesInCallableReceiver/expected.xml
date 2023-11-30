@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>TC.kt</file>
+    <line>6</line>
+    <description>Parameter &lt;code&gt;s&lt;/code&gt; is not used</description>
+  </problem>
+</problems>

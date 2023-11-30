@@ -14,25 +14,25 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class NamedChildEntityImpl(val dataSource: NamedChildEntityData) : NamedChildEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class NamedChildEntityImpl(private val dataSource: NamedChildEntityData) : NamedChildEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(NamedEntity::class.java, NamedChildEntity::class.java,
                                                                                 ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
     )
 
@@ -50,6 +50,7 @@ open class NamedChildEntityImpl(val dataSource: NamedChildEntityData) : NamedChi
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: NamedChildEntityData?) : ModifiableWorkspaceEntityBase<NamedChildEntity, NamedChildEntityData>(
     result), NamedChildEntity.Builder {
@@ -79,7 +80,7 @@ open class NamedChildEntityImpl(val dataSource: NamedChildEntityData) : NamedChi
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -175,7 +176,7 @@ open class NamedChildEntityImpl(val dataSource: NamedChildEntityData) : NamedChi
 class NamedChildEntityData : WorkspaceEntityData<NamedChildEntity>() {
   lateinit var childProperty: String
 
-  fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
+  internal fun isChildPropertyInitialized(): Boolean = ::childProperty.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<NamedChildEntity> {
     val modifiable = NamedChildEntityImpl.Builder(null)
@@ -192,6 +193,11 @@ class NamedChildEntityData : WorkspaceEntityData<NamedChildEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.NamedChildEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -247,9 +253,5 @@ class NamedChildEntityData : WorkspaceEntityData<NamedChildEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + childProperty.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

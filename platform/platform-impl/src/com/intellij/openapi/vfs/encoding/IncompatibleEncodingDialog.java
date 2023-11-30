@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.CommonBundle;
@@ -18,14 +18,14 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.nio.charset.Charset;
 
-public class IncompatibleEncodingDialog extends DialogWrapper {
-  @NotNull private final VirtualFile virtualFile;
-  @NotNull private final Charset charset;
-  @NotNull private final EncodingUtil.Magic8 safeToReload;
-  @NotNull private final EncodingUtil.Magic8 safeToConvert;
+public final class IncompatibleEncodingDialog extends DialogWrapper {
+  private final @NotNull VirtualFile virtualFile;
+  private final @NotNull Charset charset;
+  private final @NotNull EncodingUtil.Magic8 safeToReload;
+  private final @NotNull EncodingUtil.Magic8 safeToConvert;
 
   IncompatibleEncodingDialog(@NotNull VirtualFile virtualFile,
-                             @NotNull final Charset charset,
+                             final @NotNull Charset charset,
                              @NotNull EncodingUtil.Magic8 safeToReload,
                              @NotNull EncodingUtil.Magic8 safeToConvert) {
     super(false);
@@ -37,9 +37,8 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
     init();
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     JLabel label = new JLabel(XmlStringUtil.wrapInHtml(
       IdeBundle.message("dialog.message.incompatible.encoding", charset.displayName(), virtualFile.getName())));
     label.setIcon(Messages.getQuestionIcon());

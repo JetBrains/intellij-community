@@ -1,62 +1,88 @@
-from typing import Any
+from _typeshed import Incomplete
+from collections.abc import Iterator
+from typing import ClassVar
+from typing_extensions import Final, Literal, TypeAlias
 
+from openpyxl.descriptors.base import Alias, Bool, NoneSet, Typed, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable
+from openpyxl.styles.colors import Color, ColorDescriptor
 
-BORDER_NONE: Any
-BORDER_DASHDOT: str
-BORDER_DASHDOTDOT: str
-BORDER_DASHED: str
-BORDER_DOTTED: str
-BORDER_DOUBLE: str
-BORDER_HAIR: str
-BORDER_MEDIUM: str
-BORDER_MEDIUMDASHDOT: str
-BORDER_MEDIUMDASHDOTDOT: str
-BORDER_MEDIUMDASHED: str
-BORDER_SLANTDASHDOT: str
-BORDER_THICK: str
-BORDER_THIN: str
+_SideStyle: TypeAlias = Literal[
+    "dashDot",
+    "dashDotDot",
+    "dashed",
+    "dotted",
+    "double",
+    "hair",
+    "medium",
+    "mediumDashDot",
+    "mediumDashDotDot",
+    "mediumDashed",
+    "slantDashDot",
+    "thick",
+    "thin",
+]
 
-class Side(Serialisable):  # type: ignore[misc]
-    __fields__: Any
-    color: Any
-    style: Any
-    border_style: Any
-    def __init__(self, style: Any | None = ..., color: Any | None = ..., border_style: Any | None = ...) -> None: ...
+BORDER_NONE: Final = None
+BORDER_DASHDOT: Final = "dashDot"
+BORDER_DASHDOTDOT: Final = "dashDotDot"
+BORDER_DASHED: Final = "dashed"
+BORDER_DOTTED: Final = "dotted"
+BORDER_DOUBLE: Final = "double"
+BORDER_HAIR: Final = "hair"
+BORDER_MEDIUM: Final = "medium"
+BORDER_MEDIUMDASHDOT: Final = "mediumDashDot"
+BORDER_MEDIUMDASHDOTDOT: Final = "mediumDashDotDot"
+BORDER_MEDIUMDASHED: Final = "mediumDashed"
+BORDER_SLANTDASHDOT: Final = "slantDashDot"
+BORDER_THICK: Final = "thick"
+BORDER_THIN: Final = "thin"
 
-class Border(Serialisable):
-    tagname: str
-    __fields__: Any
-    __elements__: Any
-    start: Any
-    end: Any
-    left: Any
-    right: Any
-    top: Any
-    bottom: Any
-    diagonal: Any
-    vertical: Any
-    horizontal: Any
-    outline: Any
-    diagonalUp: Any
-    diagonalDown: Any
-    diagonal_direction: Any
+class Side(Serialisable):
+    __fields__: ClassVar[tuple[str, ...]]
+    color: ColorDescriptor[Literal[True]]
+    style: NoneSet[_SideStyle]
+    border_style: Alias
     def __init__(
         self,
-        left: Any | None = ...,
-        right: Any | None = ...,
-        top: Any | None = ...,
-        bottom: Any | None = ...,
-        diagonal: Any | None = ...,
-        diagonal_direction: Any | None = ...,
-        vertical: Any | None = ...,
-        horizontal: Any | None = ...,
-        diagonalUp: bool = ...,
-        diagonalDown: bool = ...,
-        outline: bool = ...,
-        start: Any | None = ...,
-        end: Any | None = ...,
+        style: _SideStyle | Literal["none"] | None = None,
+        color: str | Color | None = None,
+        border_style: Incomplete | None = None,
     ) -> None: ...
-    def __iter__(self): ...
 
-DEFAULT_BORDER: Any
+class Border(Serialisable):
+    tagname: ClassVar[str]
+    __fields__: ClassVar[tuple[str, ...]]
+    __elements__: ClassVar[tuple[str, ...]]
+    start: Typed[Side, Literal[True]]
+    end: Typed[Side, Literal[True]]
+    left: Typed[Side, Literal[True]]
+    right: Typed[Side, Literal[True]]
+    top: Typed[Side, Literal[True]]
+    bottom: Typed[Side, Literal[True]]
+    diagonal: Typed[Side, Literal[True]]
+    vertical: Typed[Side, Literal[True]]
+    horizontal: Typed[Side, Literal[True]]
+    outline: Bool[Literal[False]]
+    diagonalUp: Bool[Literal[False]]
+    diagonalDown: Bool[Literal[False]]
+    diagonal_direction: Incomplete
+    def __init__(
+        self,
+        left: Side | None = None,
+        right: Side | None = None,
+        top: Side | None = None,
+        bottom: Side | None = None,
+        diagonal: Side | None = None,
+        diagonal_direction: Incomplete | None = None,
+        vertical: Side | None = None,
+        horizontal: Side | None = None,
+        diagonalUp: _ConvertibleToBool = False,
+        diagonalDown: _ConvertibleToBool = False,
+        outline: _ConvertibleToBool = True,
+        start: Side | None = None,
+        end: Side | None = None,
+    ) -> None: ...
+    def __iter__(self) -> Iterator[tuple[str, str]]: ...
+
+DEFAULT_BORDER: Final[Border]

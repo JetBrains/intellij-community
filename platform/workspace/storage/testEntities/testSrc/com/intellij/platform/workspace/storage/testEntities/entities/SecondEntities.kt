@@ -47,7 +47,7 @@ interface SampleEntity2 : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SampleEntity2, modification: SampleEntity2.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: SampleEntity2, modification: SampleEntity2.Builder.() -> Unit): SampleEntity2 = modifyEntity(
   SampleEntity2.Builder::class.java, entity, modification)
 //endregion
 
@@ -90,6 +90,6 @@ interface VFUEntity2 : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: VFUEntity2, modification: VFUEntity2.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: VFUEntity2, modification: VFUEntity2.Builder.() -> Unit): VFUEntity2 = modifyEntity(
   VFUEntity2.Builder::class.java, entity, modification)
 //endregion

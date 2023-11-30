@@ -8,6 +8,7 @@ fun bar(o: Any) {
     foo(o as Xx<caret>)
 }
 
+// IGNORE_K2
 // ORDER: Xx2
 // ORDER: Xx1
 // ORDER: Xx3

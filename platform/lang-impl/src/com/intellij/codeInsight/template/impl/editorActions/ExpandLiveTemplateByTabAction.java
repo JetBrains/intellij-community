@@ -16,9 +16,10 @@
 package com.intellij.codeInsight.template.impl.editorActions;
 
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 
-public class ExpandLiveTemplateByTabAction extends EditorAction {
+public class ExpandLiveTemplateByTabAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public ExpandLiveTemplateByTabAction() {
     super(ExpandLiveTemplateCustomAction.createExpandTemplateHandler(TemplateSettings.TAB_CHAR));
     setInjectedContext(true);

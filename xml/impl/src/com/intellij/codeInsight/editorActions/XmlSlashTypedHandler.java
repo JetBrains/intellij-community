@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -24,13 +24,12 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlSlashTypedHandler extends TypedHandlerDelegate {
-  @NotNull
   @Override
-  public Result beforeCharTyped(final char c,
-                                @NotNull final Project project,
-                                @NotNull final Editor editor,
-                                @NotNull final PsiFile editedFile,
-                                @NotNull final FileType fileType) {
+  public @NotNull Result beforeCharTyped(final char c,
+                                         final @NotNull Project project,
+                                         final @NotNull Editor editor,
+                                         final @NotNull PsiFile editedFile,
+                                         final @NotNull FileType fileType) {
     if (c == '/' && XmlGtTypedHandler.fileContainsXmlLanguage(editedFile)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -90,9 +89,8 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  @NotNull
   @Override
-  public Result charTyped(final char c, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile editedFile) {
+  public @NotNull Result charTyped(final char c, final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile editedFile) {
     if (!WebEditorOptions.getInstance().isAutoCloseTag()) return Result.CONTINUE;
     if (c == '/' && XmlGtTypedHandler.fileContainsXmlLanguage(editedFile)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();

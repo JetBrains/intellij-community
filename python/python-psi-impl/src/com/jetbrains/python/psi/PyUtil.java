@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -989,7 +988,8 @@ public final class PyUtil {
    */
   public static boolean isPackage(@NotNull PsiDirectory directory, boolean checkSetupToolsPackages, @Nullable PsiElement anchor) {
     if (isExplicitPackage(directory)) return true;
-    final LanguageLevel level = anchor != null ? LanguageLevel.forElement(anchor) : LanguageLevel.forElement(directory);
+    @NotNull PsiElement element = anchor != null ? anchor : directory;
+    final LanguageLevel level = LanguageLevel.forElement(element);
     if (!level.isPython2()) {
       return true;
     }
@@ -1174,12 +1174,7 @@ public final class PyUtil {
   public static Collection<VirtualFile> getSourceRoots(@NotNull PsiElement foothold) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(foothold);
     if (module != null) {
-      Collection<VirtualFile> roots = getSourceRoots(module);
-      ModelBranch branch = ModelBranch.getPsiBranch(foothold);
-      if (branch != null) {
-        return ContainerUtil.map(roots, branch::findFileCopy);
-      }
-      return roots;
+      return getSourceRoots(module);
     }
     return Collections.emptyList();
   }

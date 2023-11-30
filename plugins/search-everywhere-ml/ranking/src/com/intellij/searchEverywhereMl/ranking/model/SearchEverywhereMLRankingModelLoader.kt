@@ -5,6 +5,7 @@ import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.catboost.CatBoostResourcesModelMetadataReader
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 import com.intellij.searchEverywhereMl.ranking.SearchEverywhereMlRankingService
 import com.intellij.searchEverywhereMl.ranking.model.local.LocalRankingModelProviderUtil
 
@@ -21,8 +22,8 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
 
     fun getForTab(tabId: String): SearchEverywhereMLRankingModelLoader {
       return EP_NAME.findFirstSafe {
-        it.supportedTab == tabId
-      } ?: throw IllegalArgumentException("Unsupported tab $tabId")
+        it.supportedTab.tabId == tabId
+      } ?: throw IllegalArgumentException("Unsupported tab identifier $tabId")
     }
   }
 
@@ -50,7 +51,7 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
    */
   protected abstract fun getBundledModel(): DecisionFunction
 
-  protected abstract val supportedTab: String
+  protected abstract val supportedTab: SearchEverywhereTabWithMlRanking
 
   protected fun shouldProvideExperimentalModel(): Boolean {
     return SearchEverywhereMlRankingService.getService()?.shouldUseExperimentalModel(supportedTab) ?: false

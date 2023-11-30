@@ -124,6 +124,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveImplicitLambdaParameter(myFixture)
     }
 
+    fun testResolveImplicitLambdaParameter_binary() {
+        checkResolveImplicitLambdaParameter_binary(myFixture)
+    }
+
     fun testResolveSyntheticMethod() {
         checkResolveSyntheticMethod(myFixture)
     }
@@ -218,5 +222,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testParentOfParameterOfCatchClause() {
         checkParentOfParameterOfCatchClause(myFixture)
+    }
+
+    fun testCompanionConstantAsVarargAnnotationValue() {
+        // TODO(KT-61497): remove the flag
+        checkCompanionConstantAsVarargAnnotationValue(myFixture, isK2 = true)
     }
 }

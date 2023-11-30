@@ -81,8 +81,7 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
   }
 
   @Override
-  @NotNull
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     content.componentPlace.setLayout(new BorderLayout());
     content.componentPlace.add(myEditor.getComponent(), BorderLayout.CENTER);
     DataManager.registerDataProvider(content.panel, dataId -> {
@@ -100,13 +99,13 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
   }
 
   @Override
-  public void resetEditorFrom(@NotNull final RunnerAndConfigurationSettings settings) {
+  public void resetEditorFrom(final @NotNull RunnerAndConfigurationSettings settings) {
     myEditor.resetEditorFrom(settings);
     doReset(settings);
   }
 
   @Override
-  public void applyEditorTo(@NotNull final RunnerAndConfigurationSettings settings) throws ConfigurationException {
+  public void applyEditorTo(final @NotNull RunnerAndConfigurationSettings settings) throws ConfigurationException {
     myEditor.applyEditorTo(settings);
     doApply((RunnerAndConfigurationSettingsImpl)settings, false);
 
@@ -116,9 +115,8 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     }
   }
 
-  @NotNull
   @Override
-  public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
+  public @NotNull RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettings result = myEditor.getSnapshot();
     doApply((RunnerAndConfigurationSettingsImpl)result, true);
     return result;
@@ -166,11 +164,14 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     myBeforeRunStepsPanel.addTask(task);
   }
 
+  public void replaceBeforeLaunchSteps(@NotNull List<BeforeRunTask<?>> tasks) {
+    myBeforeRunStepsPanel.replaceTasks(tasks);
+  }
+
   /**
    * You MUST NOT modify tasks in the returned list.
    */
-  @NotNull
-  public List<BeforeRunTask<?>> getStepsBeforeLaunch() {
+  public @NotNull List<BeforeRunTask<?>> getStepsBeforeLaunch() {
     return myBeforeRunStepsPanel.getTasks();
   }
 

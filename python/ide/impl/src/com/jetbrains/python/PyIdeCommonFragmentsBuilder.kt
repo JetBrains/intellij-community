@@ -2,11 +2,13 @@
 package com.jetbrains.python
 
 import com.intellij.application.options.ModulesComboBox
+import com.jetbrains.python.run.EnvFileComponent.Companion.createEnvFilesFragment
 import com.intellij.execution.ui.CommandLinePanel
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.SettingsEditorFragmentType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.PyCommonFragmentsBuilder
 import com.jetbrains.python.run.configuration.AbstractPythonConfigurationFragmentedEditor.Companion.MIN_FRAGMENT_WIDTH
@@ -14,6 +16,7 @@ import com.jetbrains.python.run.configuration.PyPathMappingsEditorFragment
 import com.jetbrains.python.run.configuration.PySdkComboBox
 import com.jetbrains.python.sdk.PySdkListCellRenderer
 import java.awt.event.ItemEvent
+import kotlin.io.path.Path
 
 class PyIdeCommonFragmentsBuilder : PyCommonFragmentsBuilder() {
 
@@ -70,6 +73,7 @@ class PyIdeCommonFragmentsBuilder : PyCommonFragmentsBuilder() {
 
     fragments.add(createWorkingDirectoryFragment(config.project))
     fragments.add(createEnvParameters())
+    fragments.add(createEnvFilesFragment { VirtualFileManager.getInstance().findFileByNioPath(Path(config.getWorkingDirectorySafe())) })
     fragments.add(PyPathMappingsEditorFragment(sdkComboBox))
   }
 }

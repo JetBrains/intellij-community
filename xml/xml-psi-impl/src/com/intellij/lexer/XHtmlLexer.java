@@ -26,8 +26,16 @@ public class XHtmlLexer extends HtmlLexer {
     super(baseLexer, false);
   }
 
+  public XHtmlLexer(Lexer baseLexer, boolean highlightMode) {
+    super(baseLexer, false, highlightMode);
+  }
+
   public XHtmlLexer() {
     this(new XmlLexer(true));
+  }
+
+  public XHtmlLexer(boolean highlightMode) {
+    this(new XmlLexer(true), highlightMode);
   }
 
   @Override

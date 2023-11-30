@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -228,7 +228,6 @@ public final class DirectBufferWrapper {
     return myFile.getPageSize();
   }
 
-  
 
   private ByteBuffer allocateAndLoadFileContent() throws IOException {
     final int bufferSize = myFile.getPageSize();
@@ -269,7 +268,9 @@ public final class DirectBufferWrapper {
   void force() throws IOException {
     myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
 
-    assert !myFile.isReadOnly();
+    if (myFile.isReadOnly()) {
+      throw new IllegalStateException("Can't flush .readOnly page: " + this);
+    }
     if (isDirty()) {
       ByteBuffer buffer = myBuffer.duplicate();
       buffer.rewind();
@@ -278,7 +279,7 @@ public final class DirectBufferWrapper {
       myFile.executeIdempotentOp(ch -> {
         ch.write(buffer, myPosition);
         return null;
-      }, myFile.isReadOnly());
+      }, /*readOnly: */ false);
 
       myDirty = false;
     }

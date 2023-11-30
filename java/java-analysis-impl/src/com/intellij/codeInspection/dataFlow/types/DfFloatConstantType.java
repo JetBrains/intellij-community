@@ -7,9 +7,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class DfFloatConstantType extends DfConstantType<Float> implements DfFloatType {
+public final class DfFloatConstantType extends DfConstantType<Float> implements DfFloatType {
+  private final boolean shouldWiden;
+  
   DfFloatConstantType(float value) {
+    this(value, false);
+  }
+
+  private DfFloatConstantType(float value, boolean widen) {
     super(value);
+    shouldWiden = widen;
+  }
+  
+  public DfFloatConstantType makeWide() {
+    return shouldWiden ? this : new DfFloatConstantType(getValue(), true);
+  }
+
+  @Override
+  public DfType widen() {
+    return shouldWiden ? DfTypes.FLOAT : super.widen();
   }
 
   @NotNull
@@ -62,5 +78,16 @@ public class DfFloatConstantType extends DfConstantType<Float> implements DfFloa
       return DfFloatRangeType.create(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, false, false);
     }
     return DfFloatRangeType.create(value, value, true, true);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    return o instanceof DfFloatConstantType that && super.equals(o) && shouldWiden == that.shouldWiden;
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * super.hashCode() + (shouldWiden ? 1 : 0);
   }
 }

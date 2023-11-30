@@ -10,7 +10,10 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -213,7 +216,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
           if (!isAccessible && containingClass.getQualifiedName() == null) {
             continue;
           }
-          fixes.add(new ReplaceFix(field, originalExpression).asQuickFix());
+          fixes.add(LocalQuickFix.from(new ReplaceFix(field, originalExpression)));
         }
       }
     }

@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 from MySQLdb import connections as connections, constants as constants, converters as converters, cursors as cursors
 from MySQLdb._mysql import (
@@ -33,17 +33,17 @@ threadsafety: int
 apilevel: str
 paramstyle: str
 
-class DBAPISet(frozenset[Any]):
+class DBAPISet(frozenset[Incomplete]):
     def __eq__(self, other): ...
 
-STRING: Any
-BINARY: Any
-NUMBER: Any
-DATE: Any
-TIME: Any
-TIMESTAMP: Any
-DATETIME: Any
-ROWID: Any
+STRING: Incomplete
+BINARY: Incomplete
+NUMBER: Incomplete
+DATE: Incomplete
+TIME: Incomplete
+TIMESTAMP: Incomplete
+DATETIME: Incomplete
+ROWID: Incomplete
 
 def Binary(x): ...
 def Connect(*args, **kwargs): ...

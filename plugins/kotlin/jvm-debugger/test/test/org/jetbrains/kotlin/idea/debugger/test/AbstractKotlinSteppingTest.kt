@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.debugger.test.util.SteppingInstructionKind
 
 abstract class AbstractKotlinSteppingTest : KotlinDescriptorTestCaseWithStepping() {
     private enum class Category(val instruction: SteppingInstructionKind?) {
+        StepIntoIgnoreFilters(SteppingInstructionKind.StepIntoIgnoreFilters),
         StepInto(SteppingInstructionKind.StepInto),
         StepOut(SteppingInstructionKind.StepOut),
         StepOver(SteppingInstructionKind.StepOver),

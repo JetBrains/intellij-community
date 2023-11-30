@@ -1,152 +1,229 @@
-from typing import Any
+from _typeshed import Incomplete, Unused
+from typing import ClassVar, overload
+from typing_extensions import Literal, TypeAlias
 
-from openpyxl.descriptors import Float
+from openpyxl.descriptors import Float, Strict
+from openpyxl.descriptors.base import Bool, Integer, NoneSet, Set, String, Typed, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.serialisable import Serialisable
+from openpyxl.styles.colors import Color, ColorDescriptor
+from openpyxl.styles.differential import DifferentialStyle
 
-class ValueDescriptor(Float):
-    expected_type: Any
-    def __set__(self, instance, value) -> None: ...
+_IconSetIconSet: TypeAlias = Literal[
+    "3Arrows",
+    "3ArrowsGray",
+    "3Flags",
+    "3TrafficLights1",
+    "3TrafficLights2",
+    "3Signs",
+    "3Symbols",
+    "3Symbols2",
+    "4Arrows",
+    "4ArrowsGray",
+    "4RedToBlack",
+    "4Rating",
+    "4TrafficLights",
+    "5Arrows",
+    "5ArrowsGray",
+    "5Rating",
+    "5Quarters",
+]
+_RuleOperator: TypeAlias = Literal[
+    "lessThan",
+    "lessThanOrEqual",
+    "equal",
+    "notEqual",
+    "greaterThanOrEqual",
+    "greaterThan",
+    "between",
+    "notBetween",
+    "containsText",
+    "notContains",
+    "beginsWith",
+    "endsWith",
+]
+_RuleTimePeriod: TypeAlias = Literal[
+    "today", "yesterday", "tomorrow", "last7Days", "thisMonth", "lastMonth", "nextMonth", "thisWeek", "lastWeek", "nextWeek"
+]
+_FormatObjectType: TypeAlias = Literal["num", "percent", "max", "min", "formula", "percentile"]
+_RuleType: TypeAlias = Literal[
+    "expression",
+    "cellIs",
+    "colorScale",
+    "dataBar",
+    "iconSet",
+    "top10",
+    "uniqueValues",
+    "duplicateValues",
+    "containsText",
+    "notContainsText",
+    "beginsWith",
+    "endsWith",
+    "containsBlanks",
+    "notContainsBlanks",
+    "containsErrors",
+    "notContainsErrors",
+    "timePeriod",
+    "aboveAverage",
+]
+
+class ValueDescriptor(Float[Incomplete]):
+    expected_type: type[Incomplete]
+    def __set__(self, instance: Serialisable | Strict, value) -> None: ...  # type: ignore[override]
 
 class FormatObject(Serialisable):
-    tagname: str
-    type: Any
-    val: Any
-    gte: Any
-    extLst: Any
-    __elements__: Any
-    def __init__(self, type, val: Any | None = ..., gte: Any | None = ..., extLst: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    type: Set[_FormatObjectType]
+    val: Incomplete
+    gte: Bool[Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(
+        self, type: _FormatObjectType, val: Incomplete | None = None, gte: _ConvertibleToBool | None = None, extLst: Unused = None
+    ) -> None: ...
 
-class RuleType(Serialisable):  # type: ignore[misc]
-    cfvo: Any
+class RuleType(Serialisable):
+    cfvo: Incomplete
 
 class IconSet(RuleType):
-    tagname: str
-    iconSet: Any
-    showValue: Any
-    percent: Any
-    reverse: Any
-    __elements__: Any
-    cfvo: Any
+    tagname: ClassVar[str]
+    iconSet: NoneSet[_IconSetIconSet]
+    showValue: Bool[Literal[True]]
+    percent: Bool[Literal[True]]
+    reverse: Bool[Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    cfvo: Incomplete
     def __init__(
         self,
-        iconSet: Any | None = ...,
-        showValue: Any | None = ...,
-        percent: Any | None = ...,
-        reverse: Any | None = ...,
-        cfvo: Any | None = ...,
+        iconSet: _IconSetIconSet | Literal["none"] | None = None,
+        showValue: _ConvertibleToBool | None = None,
+        percent: _ConvertibleToBool | None = None,
+        reverse: _ConvertibleToBool | None = None,
+        cfvo: Incomplete | None = None,
     ) -> None: ...
 
 class DataBar(RuleType):
-    tagname: str
-    minLength: Any
-    maxLength: Any
-    showValue: Any
-    color: Any
-    __elements__: Any
-    cfvo: Any
+    tagname: ClassVar[str]
+    minLength: Integer[Literal[True]]
+    maxLength: Integer[Literal[True]]
+    showValue: Bool[Literal[True]]
+    color: ColorDescriptor[Literal[False]]
+    __elements__: ClassVar[tuple[str, ...]]
+    cfvo: Incomplete
+    @overload
     def __init__(
         self,
-        minLength: Any | None = ...,
-        maxLength: Any | None = ...,
-        showValue: Any | None = ...,
-        cfvo: Any | None = ...,
-        color: Any | None = ...,
+        minLength: _ConvertibleToInt | None = None,
+        maxLength: _ConvertibleToInt | None = None,
+        showValue: _ConvertibleToBool | None = None,
+        cfvo: Incomplete | None = None,
+        *,
+        color: str | Color,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        minLength: _ConvertibleToInt | None,
+        maxLength: _ConvertibleToInt | None,
+        showValue: _ConvertibleToBool | None,
+        cfvo: Incomplete | None,
+        color: str | Color,
     ) -> None: ...
 
 class ColorScale(RuleType):
-    tagname: str
-    color: Any
-    __elements__: Any
-    cfvo: Any
-    def __init__(self, cfvo: Any | None = ..., color: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    color: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    cfvo: Incomplete
+    def __init__(self, cfvo: Incomplete | None = None, color: Incomplete | None = None) -> None: ...
 
 class Rule(Serialisable):
-    tagname: str
-    type: Any
-    dxfId: Any
-    priority: Any
-    stopIfTrue: Any
-    aboveAverage: Any
-    percent: Any
-    bottom: Any
-    operator: Any
-    text: Any
-    timePeriod: Any
-    rank: Any
-    stdDev: Any
-    equalAverage: Any
-    formula: Any
-    colorScale: Any
-    dataBar: Any
-    iconSet: Any
-    extLst: Any
-    dxf: Any
-    __elements__: Any
-    __attrs__: Any
+    tagname: ClassVar[str]
+    type: Set[_RuleType]
+    dxfId: Integer[Literal[True]]
+    priority: Integer[Literal[False]]
+    stopIfTrue: Bool[Literal[True]]
+    aboveAverage: Bool[Literal[True]]
+    percent: Bool[Literal[True]]
+    bottom: Bool[Literal[True]]
+    operator: NoneSet[_RuleOperator]
+    text: String[Literal[True]]
+    timePeriod: NoneSet[_RuleTimePeriod]
+    rank: Integer[Literal[True]]
+    stdDev: Integer[Literal[True]]
+    equalAverage: Bool[Literal[True]]
+    formula: Incomplete
+    colorScale: Typed[ColorScale, Literal[True]]
+    dataBar: Typed[DataBar, Literal[True]]
+    iconSet: Typed[IconSet, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    dxf: Typed[DifferentialStyle, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    __attrs__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        type,
-        dxfId: Any | None = ...,
-        priority: int = ...,
-        stopIfTrue: Any | None = ...,
-        aboveAverage: Any | None = ...,
-        percent: Any | None = ...,
-        bottom: Any | None = ...,
-        operator: Any | None = ...,
-        text: Any | None = ...,
-        timePeriod: Any | None = ...,
-        rank: Any | None = ...,
-        stdDev: Any | None = ...,
-        equalAverage: Any | None = ...,
-        formula=...,
-        colorScale: Any | None = ...,
-        dataBar: Any | None = ...,
-        iconSet: Any | None = ...,
-        extLst: Any | None = ...,
-        dxf: Any | None = ...,
+        type: _RuleType,
+        dxfId: _ConvertibleToInt | None = None,
+        priority: _ConvertibleToInt = 0,
+        stopIfTrue: _ConvertibleToBool | None = None,
+        aboveAverage: _ConvertibleToBool | None = None,
+        percent: _ConvertibleToBool | None = None,
+        bottom: _ConvertibleToBool | None = None,
+        operator: _RuleOperator | Literal["none"] | None = None,
+        text: str | None = None,
+        timePeriod: _RuleTimePeriod | Literal["none"] | None = None,
+        rank: _ConvertibleToInt | None = None,
+        stdDev: _ConvertibleToInt | None = None,
+        equalAverage: _ConvertibleToBool | None = None,
+        formula=(),
+        colorScale: ColorScale | None = None,
+        dataBar: DataBar | None = None,
+        iconSet: IconSet | None = None,
+        extLst: Unused = None,
+        dxf: DifferentialStyle | None = None,
     ) -> None: ...
 
 def ColorScaleRule(
-    start_type: Any | None = ...,
-    start_value: Any | None = ...,
-    start_color: Any | None = ...,
-    mid_type: Any | None = ...,
-    mid_value: Any | None = ...,
-    mid_color: Any | None = ...,
-    end_type: Any | None = ...,
-    end_value: Any | None = ...,
-    end_color: Any | None = ...,
+    start_type: Incomplete | None = None,
+    start_value: Incomplete | None = None,
+    start_color: Incomplete | None = None,
+    mid_type: Incomplete | None = None,
+    mid_value: Incomplete | None = None,
+    mid_color: Incomplete | None = None,
+    end_type: Incomplete | None = None,
+    end_value: Incomplete | None = None,
+    end_color: Incomplete | None = None,
 ): ...
 def FormulaRule(
-    formula: Any | None = ...,
-    stopIfTrue: Any | None = ...,
-    font: Any | None = ...,
-    border: Any | None = ...,
-    fill: Any | None = ...,
+    formula: Incomplete | None = None,
+    stopIfTrue: Incomplete | None = None,
+    font: Incomplete | None = None,
+    border: Incomplete | None = None,
+    fill: Incomplete | None = None,
 ): ...
 def CellIsRule(
-    operator: Any | None = ...,
-    formula: Any | None = ...,
-    stopIfTrue: Any | None = ...,
-    font: Any | None = ...,
-    border: Any | None = ...,
-    fill: Any | None = ...,
+    operator: Incomplete | None = None,
+    formula: Incomplete | None = None,
+    stopIfTrue: Incomplete | None = None,
+    font: Incomplete | None = None,
+    border: Incomplete | None = None,
+    fill: Incomplete | None = None,
 ): ...
 def IconSetRule(
-    icon_style: Any | None = ...,
-    type: Any | None = ...,
-    values: Any | None = ...,
-    showValue: Any | None = ...,
-    percent: Any | None = ...,
-    reverse: Any | None = ...,
+    icon_style: Incomplete | None = None,
+    type: Incomplete | None = None,
+    values: Incomplete | None = None,
+    showValue: Incomplete | None = None,
+    percent: Incomplete | None = None,
+    reverse: Incomplete | None = None,
 ): ...
 def DataBarRule(
-    start_type: Any | None = ...,
-    start_value: Any | None = ...,
-    end_type: Any | None = ...,
-    end_value: Any | None = ...,
-    color: Any | None = ...,
-    showValue: Any | None = ...,
-    minLength: Any | None = ...,
-    maxLength: Any | None = ...,
+    start_type: Incomplete | None = None,
+    start_value: Incomplete | None = None,
+    end_type: Incomplete | None = None,
+    end_value: Incomplete | None = None,
+    color: Incomplete | None = None,
+    showValue: Incomplete | None = None,
+    minLength: Incomplete | None = None,
+    maxLength: Incomplete | None = None,
 ): ...

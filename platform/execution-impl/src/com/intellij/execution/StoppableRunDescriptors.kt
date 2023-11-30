@@ -15,8 +15,8 @@ import com.intellij.openapi.project.Project
  * an associated run configuration.
  */
 fun getStoppableDescriptors(project: Project): List<Pair<RunContentDescriptor, RunnerAndConfigurationSettings?>> {
+  val manager = ExecutionManagerImpl.getInstanceIfCreated(project) ?: return emptyList()
   val allDescriptors = ExecutionManagerImpl.getAllDescriptors(project).asReversed()
-  val manager = ExecutionManagerImpl.getInstance(project)
   val map = mutableMapOf<ExecutionEnvironment, MutableList<RunContentDescriptor>>()
   val list = mutableListOf<RunContentDescriptor>()
   for (descriptor in allDescriptors) {

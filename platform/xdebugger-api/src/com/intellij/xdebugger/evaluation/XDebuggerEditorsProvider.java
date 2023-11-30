@@ -3,6 +3,7 @@ package com.intellij.xdebugger.evaluation;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
@@ -37,6 +38,8 @@ public abstract class XDebuggerEditorsProvider {
                                  @NotNull EvaluationMode mode) {
     return createDocument(project, expression.getExpression(), sourcePosition, mode);
   }
+  
+  public void afterEditorCreated(@Nullable Editor editor) {}
 
   @NotNull
   public Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {

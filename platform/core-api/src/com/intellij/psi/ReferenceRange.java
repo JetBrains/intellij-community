@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
@@ -12,16 +12,14 @@ public final class ReferenceRange {
   private ReferenceRange() {
   }
 
-  @NotNull
-  public static List<TextRange> getRanges(@NotNull PsiReference ref) {
+  public static @NotNull List<TextRange> getRanges(@NotNull PsiReference ref) {
     if (ref instanceof MultiRangeReference) {
       return ((MultiRangeReference)ref).getRanges();
     }
     return Collections.singletonList(ref.getRangeInElement());
   }
 
-  @NotNull
-  public static List<TextRange> getAbsoluteRanges(@NotNull PsiReference ref) {
+  public static @NotNull List<TextRange> getAbsoluteRanges(@NotNull PsiReference ref) {
     final PsiElement elt = ref.getElement();
     final List<TextRange> relativeRanges = getRanges(ref);
     final List<TextRange> answer = new ArrayList<>(relativeRanges.size());

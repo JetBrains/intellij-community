@@ -181,7 +181,6 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
 
   public void onFrameworkSelectionChanged(FrameworkSupportNode node) {
     final FrameworkSupportInModuleProvider provider = node.getUserObject();
-    //todo[nik]
     boolean checked = node.isChecked();
     if (provider instanceof OldFrameworkSupportProviderWrapper) {
       final FrameworkSupportProvider oldProvider = ((OldFrameworkSupportProviderWrapper) provider).getProvider();

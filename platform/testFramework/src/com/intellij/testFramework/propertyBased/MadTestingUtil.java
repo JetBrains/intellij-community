@@ -12,6 +12,7 @@ import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
 import com.intellij.lang.Language;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -406,8 +407,9 @@ public final class MadTestingUtil {
   @NotNull
   static String getIntentionDescription(String intentionName, IntentionAction action) {
     IntentionAction actual = IntentionActionDelegate.unwrap(action);
+    ModCommandAction command = action.asModCommandAction();
     String family = actual.getFamilyName();
-    Class<?> aClass = actual.getClass();
+    Class<?> aClass = command != null ? command.getClass() : actual.getClass();
     LocalQuickFix fix = QuickFixWrapper.unwrap(actual);
     if (fix != null) {
       family = fix.getFamilyName();

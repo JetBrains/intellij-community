@@ -26,8 +26,6 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -525,7 +523,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                   "project-a.main", "project-a.test", "project-a.util",
                   "project-b", "project-b.main", "project-b.test");
 
-    assertModuleModuleDeps("project-b.main", "project-a.util", "project-a.main");
+    assertModuleModuleDeps("project-b.main",  "project-a.main", "project-a.util");
   }
 
   @Test

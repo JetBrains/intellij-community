@@ -1,3 +1,0 @@
-# Misnamed first argument in implementation
-html5lib._inputstream.EncodingBytes.__new__
-html5lib._tokenizer.attributeMap.get

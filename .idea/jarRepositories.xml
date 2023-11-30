@@ -4,12 +4,12 @@
     <remote-repository>
       <option name="id" value="central-proxy" />
       <option name="name" value="Maven Central repository" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/maven-central" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="intellij-dependencies" />
       <option name="name" value="IntelliJ Dependencies" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/intellij-dependencies" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="3e981f81-9991-429f-bed8-5e9b000571d9" />
@@ -17,39 +17,19 @@
       <option name="url" value="https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="7f849d18-5038-490f-a93d-226871e8f98c" />
-      <option name="name" value="7f849d18-5038-490f-a93d-226871e8f98c" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/www.myget.org/F/rd-snapshots/maven" />
-    </remote-repository>
-    <remote-repository>
       <option name="id" value="36870030-7a21-4052-b93a-010aa4c33366" />
       <option name="name" value="36870030-7a21-4052-b93a-010aa4c33366" />
       <option name="url" value="https://cache-redirector.jetbrains.com/download.jetbrains.com/teamcity-repository" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="caeb020e-2153-45d1-b752-f56d66968d08" />
-      <option name="name" value="caeb020e-2153-45d1-b752-f56d66968d08" />
+      <option name="id" value="kotlin-ide-plugin-deps" />
+      <option name="name" value="kotlin-ide-plugin-deps" />
       <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="KotlinIdeMavenArtifacts" />
-      <option name="name" value="KotlinIdeMavenArtifacts" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="GraziePlatform" />
       <option name="name" value="GraziePlatform" />
       <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="download-pgp-verifier" />
-      <option name="name" value="download-pgp-verifier" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/download-pgp-verifier" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="ea2d1ec7-ac51-47bd-8cff-265a321ccb16" />
-      <option name="name" value="ea2d1ec7-ac51-47bd-8cff-265a321ccb16" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="kpm" />

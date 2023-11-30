@@ -40,8 +40,7 @@ public class IDEARemoteTestNG extends TestNG {
 
       List<XmlSuite> suites = Lists.newArrayList();
       calculateAllSuites(m_suites, suites);
-      if(suites.size() > 0) {
-
+      if(!suites.isEmpty()) {
         for (XmlSuite suite : suites) {
           final List<XmlTest> tests = suite.getTests();
           for (XmlTest test : tests) {

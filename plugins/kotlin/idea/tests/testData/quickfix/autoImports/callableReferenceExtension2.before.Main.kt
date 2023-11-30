@@ -2,4 +2,4 @@
 // ERROR: Unresolved reference: extensionFun
 val v = "a"::extensionFun<caret>
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */

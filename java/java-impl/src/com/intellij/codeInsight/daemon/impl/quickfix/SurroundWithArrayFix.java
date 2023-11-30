@@ -1,13 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class SurroundWithArrayFix extends PsiElementBaseIntentionAction implements IntentionActionWithFixAllOption, HighPriorityAction {
+public class SurroundWithArrayFix implements ModCommandAction {
   private final PsiCall myMethodCall;
   @Nullable private final PsiExpression myExpression;
   private boolean boxing;
@@ -34,26 +34,22 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction implemen
 
   @Override
   @NotNull
-  public String getText() {
+  public String getFamilyName() {
     return QuickFixBundle.message("surround.with.array.initialization");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
-    return getText();
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    return getExpression(context.findLeaf()) == null ? null :
+           Presentation.of(getFamilyName()).withFixAllOption(this).withPriority(PriorityAction.Priority.HIGH);
   }
-
-  @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-    return getExpression(element) != null;
- }
 
   @Nullable
   protected PsiExpression getExpression(PsiElement element) {
     if (myMethodCall == null || !myMethodCall.isValid()) {
       return myExpression == null || !myExpression.isValid() ? null : myExpression;
     }
+    if (element == null) return null;
     final PsiMethod method = myMethodCall.resolveMethod();
     if (method != null) {
       return checkMethod(element, method);
@@ -107,12 +103,14 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction implemen
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    Project project = context.project();
+    PsiElement element = context.findLeaf();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiExpression expression = getExpression(element);
     assert expression != null;
     final PsiExpression toReplace = elementFactory.createExpressionFromText(getArrayCreation(expression, boxing), element);
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(expression.replace(toReplace));
+    return ModCommand.psiUpdate(expression, e -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(e.replace(toReplace)));
   }
 
   @NonNls
@@ -124,11 +122,5 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction implemen
                             ? ((PsiPrimitiveType)arrayComponentType).getBoxedTypeName()
                             : arrayComponentType.getCanonicalText();
     return "new " + typeText + "[]{" + expression.getText() + "}";
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new SurroundWithArrayFix(PsiTreeUtil.findSameElementInCopy(myMethodCall, target),
-                                    PsiTreeUtil.findSameElementInCopy(myExpression, target));
   }
 }

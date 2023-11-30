@@ -2,10 +2,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -17,10 +20,10 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +91,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChosenCallback((selectedValue) -> addLibrary(project, editor, selectedValue))
+        .setItemChosenCallback(selectedValue -> addLibrary(project, editor, selectedValue))
         .createPopup();
       if (editor != null) {
         popup.showInBestPositionFor(editor);
@@ -100,12 +103,25 @@ class AddLibraryDependencyFix extends OrderEntryFix {
   }
 
   private void addLibrary(@NotNull Project project, @Nullable Editor editor, Library library) {
-    JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, library, myScope, myExported);
-
-    String qName = myLibraries.get(library);
-    if (!Strings.isEmpty(qName) && editor != null) {
-      importClass(myCurrentModule, editor, restoreReference(), qName);
-    }
+    ModalityState modality = ModalityState.defaultModalityState();
+    JavaProjectModelModificationService.getInstance(project)
+      .addDependency(myCurrentModule, library, myScope, myExported)
+      .onSuccess(__ -> {
+        if (editor == null) return;
+        ReadAction.nonBlocking(() -> {
+            PsiReference reference = restoreReference();
+            String qName = myLibraries.get(library);
+            if (qName.isEmpty() || reference == null) return null;
+            return AddImportAction.create(editor, myCurrentModule, reference, qName);
+          })
+          .expireWhen(() -> editor.isDisposed() || myCurrentModule.isDisposed())
+          .finishOnUiThread(modality, action -> {
+            if (action != null) {
+              action.execute();
+            }
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
+      });
   }
 
   @Override

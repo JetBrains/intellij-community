@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
+public final class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
   private final @NotNull Project myProject;
   private final @NotNull Editor myEditor;
 

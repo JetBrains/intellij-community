@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
@@ -50,7 +36,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   }
 
   @Override
-  public XmlTag findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
+  public XmlTag findElementForParameterInfo(final @NotNull CreateParameterInfoContext context) {
     final XmlTag tag = findXmlTag(context.getFile(), context.getOffset());
     final XmlElementDescriptor descriptor = tag != null ? tag.getDescriptor() : null;
 
@@ -63,12 +49,12 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   }
 
   @Override
-  public void showParameterInfo(final @NotNull XmlTag element, @NotNull final CreateParameterInfoContext context) {
+  public void showParameterInfo(final @NotNull XmlTag element, final @NotNull CreateParameterInfoContext context) {
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
   @Override
-  public XmlTag findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
+  public XmlTag findElementForUpdatingParameterInfo(final @NotNull UpdateParameterInfoContext context) {
     final XmlTag tag = findXmlTag(context.getFile(), context.getOffset());
     if (tag != null) {
       final PsiElement currentXmlTag = context.getParameterOwner();
@@ -79,12 +65,11 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   }
 
   @Override
-  public void updateParameterInfo(@NotNull final XmlTag parameterOwner, @NotNull final UpdateParameterInfoContext context) {
+  public void updateParameterInfo(final @NotNull XmlTag parameterOwner, final @NotNull UpdateParameterInfoContext context) {
     context.setParameterOwner(parameterOwner);
   }
 
-  @Nullable
-  private static XmlTag findXmlTag(PsiFile file, int offset){
+  private static @Nullable XmlTag findXmlTag(PsiFile file, int offset){
     if (!(file instanceof XmlFile)) return null;
 
     PsiElement element = file.findElementAt(offset);
@@ -117,7 +102,7 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   }
 
   @Override
-  public void updateUI(XmlElementDescriptor o, @NotNull final ParameterInfoUIContext context) {
+  public void updateUI(XmlElementDescriptor o, final @NotNull ParameterInfoUIContext context) {
     XmlTag parameterOwner  = (XmlTag)context.getParameterOwner();
     updateElementDescriptor(o, context, s -> parameterOwner != null && parameterOwner.getAttributeValue(s) != null);
   }

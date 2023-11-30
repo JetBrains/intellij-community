@@ -198,7 +198,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
 
   public static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, long maxBytes) {
     if (vFile instanceof LightVirtualFile && !vFile.getFileType().isBinary()) {
-      // This is optimization in order to avoid conversion of [large] file contents to bytes
+      // this is an optimization in order to avoid conversion of [large] file contents to bytes
       int lengthInChars = ((LightVirtualFile)vFile).getContent().length();
       if (lengthInChars < maxBytes / 2) {
         return false;

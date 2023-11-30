@@ -21,6 +21,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
@@ -175,6 +176,7 @@ public final class StubIndexImpl extends StubIndexEx {
                                                         int version,
                                                         @NotNull Path indexRootDir,
                                                         @NotNull Exception e) throws IOException {
+    IndexStatisticGroup.reportIndexRebuild(indexKey, e, true);
     LOG.info(e);
     FileUtil.deleteWithRenaming(indexRootDir.toFile());
     IndexVersion.rewriteVersion(indexKey, version); // todo snapshots indices
@@ -215,7 +217,7 @@ public final class StubIndexImpl extends StubIndexEx {
 
   @Override
   public void forceRebuild(@NotNull Throwable e) {
-    FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, e);
+    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID, e);
   }
 
   @Override
@@ -308,7 +310,7 @@ public final class StubIndexImpl extends StubIndexEx {
     return LOG;
   }
 
-  private static class StubIndexStorageLayout<K> implements VfsAwareIndexStorageLayout<K, Void> {
+  private static final class StubIndexStorageLayout<K> implements VfsAwareIndexStorageLayout<K, Void> {
     private final FileBasedIndexExtension<K, Void> myWrappedExtension;
     private final StubIndexKey<K, ?> myIndexKey;
 

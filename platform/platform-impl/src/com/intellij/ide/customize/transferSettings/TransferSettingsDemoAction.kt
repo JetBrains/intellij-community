@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("HardCodedStringLiteral")
 
 package com.intellij.ide.customize.transferSettings
@@ -7,6 +7,7 @@ import com.intellij.ide.customize.transferSettings.controllers.TransferSettingsL
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.customize.transferSettings.models.TransferSettingsModel
+import com.intellij.ide.customize.transferSettings.providers.TransferSettingsPerformContext
 import com.intellij.ide.customize.transferSettings.providers.testProvider.TestTransferSettingsProvider
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeTransferSettingsProvider
 import com.intellij.ide.customize.transferSettings.providers.vsmac.VSMacTransferSettingsProvider
@@ -47,7 +48,7 @@ private class TransferSettingsDemoDialog(private val project: Project) : DialogW
       val btn = JButton("Import").apply {
         addActionListener {
           val selectedIde = pnl.selectedIde as? IdeVersion ?: error("Selected ide is null or not IdeVersion")
-          config.controller.performImport(project, selectedIde, true, progressBase)
+          config.controller.performImport(project, selectedIde, progressBase)
         }
       }
 
@@ -62,7 +63,7 @@ private class TransferSettingsDemoDialog(private val project: Project) : DialogW
           btn.isEnabled = true
         }
 
-        override fun importPerformed(ideVersion: IdeVersion, settings: Settings) {
+        override fun importPerformed(ideVersion: IdeVersion, settings: Settings, context: TransferSettingsPerformContext) {
           successOrFailureLabel.isVisible = true
           successOrFailureLabel.text = "Success"
           progressBar.isVisible = false

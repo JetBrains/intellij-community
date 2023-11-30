@@ -4,6 +4,7 @@ package com.intellij.devkit.workspaceModel.codegen.writer
 import com.intellij.devkit.workspaceModel.CodegenJarLoader
 import com.intellij.devkit.workspaceModel.DevKitWorkspaceModelBundle
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
+import com.intellij.devkit.workspaceModel.metaModel.impl.WorkspaceMetaModelProviderImpl
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.command.CommandProcessor
@@ -11,6 +12,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,24 +26,24 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
-import com.intellij.workspaceModel.codegen.engine.CodeGenerator
-import com.intellij.workspaceModel.codegen.engine.GeneratedCode
-import com.intellij.workspaceModel.codegen.engine.GenerationProblem
-import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
+import com.intellij.workspaceModel.codegen.engine.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
 import org.jetbrains.kotlin.resolve.ImportPath
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 
 private val LOG = logger<CodeWriter>()
 
 object CodeWriter {
   @RequiresEdt
-  suspend fun generate(project: Project,
-               module: Module,
-               sourceFolder: VirtualFile,
-               targetFolderGenerator: () -> VirtualFile?) {
+  suspend fun generate(
+    project: Project, module: Module, sourceFolder: VirtualFile,
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
+    targetFolderGenerator: () -> VirtualFile?
+  ) {
     val ktClasses = HashMap<String, KtClass>()
     VfsUtilCore.processFilesRecursively(sourceFolder) {
       if (it.extension == "kt") {
@@ -57,108 +59,178 @@ object CodeWriter {
     val serviceLoader = ServiceLoader.load(CodeGenerator::class.java, classLoader).findFirst()
     if (serviceLoader.isEmpty) error("Can't load generator")
 
-    val objModules = loadObjModules(ktClasses, module)
-    val codeGenerator = serviceLoader.get()
-    val results = objModules.map { codeGenerator.generate(it) }
-    val generatedCode = results.flatMap { it.generatedCode }
-    val problems = results.flatMap { it.problems }
-    WorkspaceCodegenProblemsProvider.getInstance(project).reportProblems(problems)
-    
-    if (generatedCode.isNotEmpty() && problems.none { it.level == GenerationProblem.Level.ERROR }) {
-      val genFolder = targetFolderGenerator.invoke()
-      if (genFolder == null) {
-        LOG.info("Generated source folder doesn't exist. Skip processing source folder with path: ${sourceFolder}")
-        return
-      }
+    CommandProcessor.getInstance().executeCommand(project, Runnable {
+      val title = DevKitWorkspaceModelBundle.message("progress.title.generating.code")
+      ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
+        indicator.text = DevKitWorkspaceModelBundle.message("progress.text.collecting.classes.metadata")
+        val objModules = loadObjModules(ktClasses, module, processAbstractTypes, explicitApiEnabled)
+        val codeGenerator = serviceLoader.get()
+        val results = objModules.map { codeGenerator.generate(it) }
+        val generatedCode = results.flatMap { it.generatedCode }
+        val problems = results.flatMap { it.problems }
+        WorkspaceCodegenProblemsProvider.getInstance(project).reportProblems(problems)
 
-      CommandProcessor.getInstance().executeCommand(project, Runnable {
-        val title = DevKitWorkspaceModelBundle.message("progress.title.generating.code")
-        ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
-          indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
-          val psiFactory = KtPsiFactory(project)
-          ktClasses.values.flatMapTo(HashSet()) { listOfNotNull(it.containingFile.node, it.body?.node) }.forEach {
-            removeChildrenInGeneratedRegions(it)
-          }
-          val topLevelDeclarations = MultiMap.create<KtFile, Pair<KtClass, List<KtDeclaration>>>()
-          val importsByFile = FactoryMap.create<KtFile, Imports> { Imports(it.packageFqName.asString()) }
-          val generatedFiles = ArrayList<KtFile>()
-          indicator.text = DevKitWorkspaceModelBundle.message("progress.text.writing.code")
-          indicator.isIndeterminate = false
-          generatedCode.forEachIndexed { i, code ->
-            indicator.fraction = 0.2 * i / generatedCode.size
-            if (code.target.name in SKIPPED_TYPES) return@forEachIndexed
-
-            val target = code.target
-            val apiInterfaceName = "${target.module.name}.${target.name}"
-            val apiClass = ktClasses[apiInterfaceName] ?: error("Cannot find API class by $apiInterfaceName")
-            val apiFile = apiClass.containingKtFile
-            val apiImports = importsByFile.getValue(apiFile)
-            addInnerDeclarations(apiClass, code, apiImports)
-            val topLevelCode = code.topLevelCode
-            if (topLevelCode != null) {
-              val declarations = psiFactory.createFile(apiImports.findAndRemoveFqns(code.topLevelCode!!)).declarations
-              topLevelDeclarations.putValue(apiFile, apiClass to declarations)
-            }
-            val implementationClassText = code.implementationClass
-            if (implementationClassText != null) {
-              val sourceFile = apiClass.containingFile.virtualFile
-              val packageFolder = createPackageFolderIfMissing(sourceFolder, sourceFile, genFolder)
-              val targetDirectory = PsiManager.getInstance(project).findDirectory(packageFolder)!!
-              val implImports = Imports(apiFile.packageFqName.asString())
-              val implFile = psiFactory.createFile("${code.target.name}Impl.kt", implImports.findAndRemoveFqns(implementationClassText))
-              copyHeaderComment(apiFile, implFile)
-              apiClass.containingKtFile.importDirectives.mapNotNull { it.importPath }.forEach { import ->
-                implImports.add(import.pathStr)
-              }
-              targetDirectory.findFile(implFile.name)?.delete()
-              //todo remove other old generated files
-              val addedFile = targetDirectory.add(implFile) as KtFile
-              generatedFiles.add(addedFile)
-              importsByFile[addedFile] = implImports
-            }
-          }
-
-          indicator.text = DevKitWorkspaceModelBundle.message("progress.text.formatting.generated.code")
-          importsByFile.forEach { (file, imports) ->
-            addImports(file, imports.set)
-          }
-          generatedFiles.forEachIndexed { i, file ->
-            indicator.fraction = 0.2 + 0.7 * i / generatedFiles.size
-            CodeStyleManager.getInstance(project).reformat(file)
-          }
-          topLevelDeclarations.entrySet().forEach { (file, placeAndDeclarations) ->
-            val addedElements = ArrayList<KtDeclaration>()
-            for ((place, declarations) in placeAndDeclarations) {
-              var nextPlace: PsiElement = place
-              val newElements = ArrayList<KtDeclaration>()
-              for (declaration in declarations) {
-                val added = file.addAfter(declaration, nextPlace) as KtDeclaration
-                newElements.add(added)
-                nextPlace = added
-              }
-              addGeneratedRegionStartComment(file, newElements.first())
-              addGeneratedRegionEndComment(file, newElements.last())
-              addedElements.addAll(newElements)
-            }
-          }
-
-          val filesWithGeneratedRegions = ktClasses.values.groupBy { it.containingFile }.toList()
-          filesWithGeneratedRegions.forEachIndexed { i, (file, classes) ->
-            indicator.fraction = 0.9 + 0.1 * i / filesWithGeneratedRegions.size
-            reformatCodeInGeneratedRegions(file, classes.mapNotNull { it.body?.node } + listOf(file.node))
-          }
-
+        if (generatedCode.isEmpty() || problems.any { it.level == GenerationProblem.Level.ERROR }) {
+          LOG.info("Not found types for generation")
+          return@runWriteActionWithCancellableProgressInDispatchThread
         }
-      }, DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name), null)
-    } else {
-      LOG.info("Not found types for generation")
+
+        val genFolder = targetFolderGenerator.invoke()
+        if (genFolder == null) {
+          LOG.info("Generated source folder doesn't exist. Skip processing source folder with path: ${sourceFolder}")
+          return@runWriteActionWithCancellableProgressInDispatchThread
+        }
+
+        indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
+        val psiFactory = KtPsiFactory(project)
+
+        removeGeneratedCode(ktClasses, genFolder)
+
+        val topLevelDeclarations = MultiMap.create<KtFile, Pair<KtClass, List<KtDeclaration>>>()
+        val importsByFile = FactoryMap.create<KtFile, Imports> { Imports(it.packageFqName.asString()) }
+        val generatedFiles = ArrayList<KtFile>()
+        indicator.text = DevKitWorkspaceModelBundle.message("progress.text.writing.code")
+        indicator.isIndeterminate = false
+        generatedCode.forEachIndexed { i, code ->
+          indicator.fraction = 0.15 + 0.1 * i / generatedCode.size
+          when (code) {
+            is ObjModuleFileGeneratedCode ->
+              addGeneratedObjModuleFile(code, generatedFiles, project, sourceFolder, genFolder, importsByFile, psiFactory)
+            is ObjClassGeneratedCode ->
+              addGeneratedObjClassFile(code, generatedFiles, project, sourceFolder, genFolder, ktClasses,
+                                       importsByFile, topLevelDeclarations, psiFactory)
+          }
+        }
+
+        indicator.text = DevKitWorkspaceModelBundle.message("progress.text.formatting.generated.code")
+        importsByFile.forEach { (file, imports) ->
+          addImports(file, imports.set)
+        }
+        generatedFiles.withoutBigFiles().forEachIndexed { i, file ->
+          indicator.fraction = 0.25 + 0.7 * i / generatedFiles.size
+          CodeStyleManager.getInstance(project).reformat(file)
+        }
+        topLevelDeclarations.entrySet().forEach { (file, placeAndDeclarations) ->
+          val addedElements = ArrayList<KtDeclaration>()
+          for ((place, declarations) in placeAndDeclarations) {
+            var nextPlace: PsiElement = place
+            val newElements = ArrayList<KtDeclaration>()
+            for (declaration in declarations) {
+              val added = file.addAfter(declaration, nextPlace) as KtDeclaration
+              newElements.add(added)
+              nextPlace = added
+            }
+            addGeneratedRegionStartComment(file, newElements.first())
+            addGeneratedRegionEndComment(file, newElements.last())
+            addedElements.addAll(newElements)
+          }
+        }
+
+        val filesWithGeneratedRegions = ktClasses.values.groupBy { it.containingFile }.toList()
+        filesWithGeneratedRegions.forEachIndexed { i, (file, classes) ->
+          indicator.fraction = 0.95 + 0.05 * i / filesWithGeneratedRegions.size
+          reformatCodeInGeneratedRegions(file, classes.mapNotNull { it.body?.node } + listOf(file.node))
+        }
+      }
+    }, DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name), null)
+  }
+
+  private fun loadObjModules(
+    ktClasses: HashMap<String, KtClass>, module: Module,
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean
+  ): List<CompiledObjModule> {
+    val packages = ktClasses.values.mapTo(LinkedHashSet()) { it.containingKtFile.packageFqName.asString() }
+
+    val metaModelProvider: WorkspaceMetaModelProvider = WorkspaceMetaModelProviderImpl(
+      explicitApiEnabled = explicitApiEnabled,
+      processAbstractTypes = processAbstractTypes,
+      module.project
+    )
+    return packages.map { metaModelProvider.getObjModule(it, module) }
+  }
+
+  private fun removeGeneratedCode(ktClasses: Map<String, KtClass>, genFolder: VirtualFile) {
+    ktClasses.values.flatMapTo(HashSet()) { listOfNotNull(it.containingFile.node, it.body?.node) }.forEach {
+      removeChildrenInGeneratedRegions(it)
+    }
+
+    //remove generated files, e.g. MetadataStorageImpl.kt
+    removeFiles(genFolder) {
+      it.isGeneratedFile
+    }
+
+    //remove empty packages
+    removeFiles(genFolder) { vfs ->
+      vfs.isDirectory && vfs != genFolder && VfsUtil.collectChildrenRecursively(vfs).all { it.isDirectory }
     }
   }
 
-  private fun loadObjModules(ktClasses: HashMap<String, KtClass>, module: Module): List<CompiledObjModule> {
-    val packages = ktClasses.values.mapTo(LinkedHashSet()) { it.containingKtFile.packageFqName.asString() }
-    val metaModelProvider = WorkspaceMetaModelProvider.getInstance(module.project)
-    return packages.map { metaModelProvider.getObjModule(it, module) }
+  private fun removeFiles(baseFolder: VirtualFile, filter: (VirtualFile) -> Boolean) {
+    val filesToRemove = arrayListOf<VirtualFile>()
+
+    VfsUtilCore.processFilesRecursively(baseFolder) {
+      if (filter.invoke(it)) {
+        filesToRemove.add(it)
+      }
+      return@processFilesRecursively true
+    }
+
+    filesToRemove.forEach { it.delete(CodeWriter) }
+  }
+
+  private fun addGeneratedObjModuleFile(code: ObjModuleFileGeneratedCode, generatedFiles: MutableList<KtFile>,
+                                        project: Project, sourceFolder: VirtualFile, genFolder: VirtualFile,
+                                        importsByFile: MutableMap<KtFile, Imports>, psiFactory: KtPsiFactory) {
+    val packageFqnName = code.objModuleName
+    val packageFolder = createPackageFolderIfMissing(sourceFolder, packageNameToPath(packageFqnName), genFolder)
+    val targetDirectory = PsiManager.getInstance(project).findDirectory(packageFolder)!!
+
+    val implImports = Imports(packageFqnName)
+    val implFile = psiFactory.createFile("${code.fileName}.kt", implImports.findAndRemoveFqns(code.generatedCode))
+
+    targetDirectory.findFile(implFile.name)?.delete()
+
+    val addedFile = targetDirectory.add(implFile) as KtFile
+    generatedFiles.add(addedFile)
+    importsByFile[addedFile] = implImports
+  }
+
+  private fun addGeneratedObjClassFile(code: ObjClassGeneratedCode, generatedFiles: MutableList<KtFile>,
+                              project: Project, sourceFolder: VirtualFile, genFolder: VirtualFile,
+                              ktClasses: Map<String, KtClass>, importsByFile: MutableMap<KtFile, Imports>,
+                              topLevelDeclarations: MultiMap<KtFile, Pair<KtClass, List<KtDeclaration>>>, psiFactory: KtPsiFactory) {
+
+    if (code.target.name in SKIPPED_TYPES) return
+
+    val target = code.target
+    val apiInterfaceName = "${target.module.name}.${target.name}"
+    val apiClass = ktClasses[apiInterfaceName] ?: error("Cannot find API class by $apiInterfaceName")
+    val apiFile = apiClass.containingKtFile
+    val apiImports = importsByFile.getValue(apiFile)
+    addInnerDeclarations(apiClass, code, apiImports)
+    val topLevelCode = code.topLevelCode
+    if (topLevelCode != null) {
+      val declarations = psiFactory.createFile(apiImports.findAndRemoveFqns(code.topLevelCode!!)).declarations
+      topLevelDeclarations.putValue(apiFile, apiClass to declarations)
+    }
+    val implementationClassText = code.implementationClass
+    if (implementationClassText != null) {
+      val sourceFile = apiClass.containingFile.virtualFile
+      val relativePath = VfsUtil.getRelativePath(sourceFile.parent, sourceFolder, '/')
+      val packageFolder = VfsUtil.createDirectoryIfMissing(genFolder, "$relativePath")
+      val targetDirectory = PsiManager.getInstance(project).findDirectory(packageFolder)!!
+      val implImports = Imports(apiFile.packageFqName.asString())
+      val implFile = psiFactory.createFile("${code.target.name}Impl.kt", implImports.findAndRemoveFqns(implementationClassText))
+      copyHeaderComment(apiFile, implFile)
+      apiClass.containingKtFile.importDirectives.mapNotNull { it.importPath }.forEach { import ->
+        implImports.add(import.pathStr)
+      }
+      targetDirectory.findFile(implFile.name)?.delete()
+      //todo remove other old generated files
+      val addedFile = targetDirectory.add(implFile) as KtFile
+      generatedFiles.add(addedFile)
+      importsByFile[addedFile] = implImports
+    }
   }
 
   private fun copyHeaderComment(apiFile: KtFile, implFile: KtFile) {
@@ -192,7 +264,7 @@ object CodeWriter {
     }
   }
 
-  private fun addInnerDeclarations(ktClass: KtClass, code: GeneratedCode, imports: Imports) {
+  private fun addInnerDeclarations(ktClass: KtClass, code: ObjClassGeneratedCode, imports: Imports) {
     val psiFactory = KtPsiFactory(ktClass.project)
     val builderInterface = ktClass.addDeclaration(psiFactory.createClass(imports.findAndRemoveFqns(code.builderInterface)))
     val companionObject = ktClass.addDeclaration(psiFactory.createObject(imports.findAndRemoveFqns(code.companionObject)))
@@ -227,7 +299,7 @@ object CodeWriter {
 
   private fun joinAdjacentRegions(regions: List<TextRange>): List<TextRange> {
     val result = ArrayList<TextRange>()
-    regions.sortedBy { it.startOffset }.forEach { next -> 
+    regions.sortedBy { it.startOffset }.forEach { next ->
       val last = result.lastOrNull()
       if (last != null && last.endOffset >= next.startOffset) {
         result[result.lastIndex] = last.union(next)
@@ -244,7 +316,7 @@ object CodeWriter {
     var regionStart: ASTNode? = null
     node.children().forEach { child ->
       if (child.isGeneratedRegionStart) {
-        regionStart = if (child.treePrev?.elementType == KtTokens.WHITE_SPACE) child.treePrev else child  
+        regionStart = if (child.treePrev?.elementType == KtTokens.WHITE_SPACE) child.treePrev else child
       }
       else if (regionStart != null && child.isGeneratedRegionEnd) {
         generatedRegions.add(regionStart!! to child)
@@ -253,7 +325,14 @@ object CodeWriter {
     return generatedRegions
   }
 
+  private fun createPackageFolderIfMissing(sourceRoot: VirtualFile, packagePath: String, genFolder: VirtualFile): VirtualFile {
+    val relativePath = getRelativePathWithoutCommonPrefix(sourceRoot.path, packagePath)
+    return VfsUtil.createDirectoryIfMissing(genFolder, relativePath)
+  }
+
+
   private const val GENERATED_REGION_START = "//region generated code"
+
   private const val GENERATED_REGION_END = "//endregion"
 
   private val ASTNode.isGeneratedRegionStart: Boolean
@@ -265,8 +344,38 @@ object CodeWriter {
       elementType == KtTokens.EOL_COMMENT && text == GENERATED_REGION_END
 
 
-  private fun createPackageFolderIfMissing(sourceRoot: VirtualFile, sourceFile: VirtualFile, genFolder: VirtualFile): VirtualFile {
-    val relativePath = VfsUtil.getRelativePath(sourceFile.parent, sourceRoot, '/')
-    return VfsUtil.createDirectoryIfMissing(genFolder, "$relativePath")
+  private const val GENERATED_METADATA_STORAGE_FILE = "MetadataStorageImpl.kt"
+
+  private val GENERATED_FILES = setOf(GENERATED_METADATA_STORAGE_FILE)
+
+  private val VirtualFile.isGeneratedFile: Boolean
+    get() = extension == "kt" && GENERATED_FILES.contains(name)
+
+
+  private fun getRelativePathWithoutCommonPrefix(base: String, relative: String): String {
+    val basePath = Paths.get(FileUtil.normalize(base))
+    val relativePath = Paths.get(FileUtil.normalize(relative))
+
+    for (i in 0 until basePath.nameCount) {
+      val basePathSuffix = basePath.subpathOrNull(i, basePath.nameCount)
+      if (basePathSuffix != null && relativePath.startsWith(basePathSuffix)) {
+        return relativePath.subpathOrNull(basePathSuffix.nameCount, relativePath.nameCount)?.toString() ?: ""
+      }
+    }
+
+    return relative
+  }
+
+  private fun Path.subpathOrNull(beginIndex: Int, endIndex: Int): Path? {
+    return if (beginIndex < endIndex) subpath(beginIndex, endIndex).addSeparator() else null
+  }
+
+  private fun Path.addSeparator(): Path = Paths.get("/${toString()}")
+
+  private fun packageNameToPath(packageName: String): String = "/${packageName.replace('.', '/')}"
+
+  //Function was added because CodeStyleManager throws an exception for big MetadataStorageImpl files
+  private fun Iterable<KtFile>.withoutBigFiles(): Iterable<KtFile> {
+    return filterNot { it.name == GENERATED_METADATA_STORAGE_FILE }
   }
 }

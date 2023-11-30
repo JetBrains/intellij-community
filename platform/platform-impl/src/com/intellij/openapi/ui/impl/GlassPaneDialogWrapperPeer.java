@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -233,14 +233,13 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     throw new UnsupportedOperationException("Not implemented in " + getClass().getCanonicalName());
   }
 
-  @NotNull
   @Override
-  public Point getLocation() {
+  public @NotNull Point getLocation() {
     return myDialog.getLocation();
   }
 
   @Override
-  public void setLocation(@NotNull final Point p) {
+  public void setLocation(final @NotNull Point p) {
     setLocation(p.x, p.y);
   }
 
@@ -577,7 +576,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     }
 
     @Override
-    public Object getData(@NotNull @NonNls final String dataId) {
+    public Object getData(final @NotNull @NonNls String dataId) {
       DialogWrapper wrapper = myDialogWrapper.get();
       if (wrapper instanceof DataProvider) {
         return ((DataProvider)wrapper).getData(dataId);
@@ -666,7 +665,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     }
   }
 
-  public static class GlasspanePeerUnavailableException extends Exception {
+  public static final class GlasspanePeerUnavailableException extends Exception {
   }
 
   public static final class TransparentLayeredPane extends JBLayeredPane {

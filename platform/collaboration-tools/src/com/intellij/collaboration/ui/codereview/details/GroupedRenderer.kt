@@ -56,11 +56,11 @@ class GroupedRenderer<T>(
   }
 
   companion object {
-    fun createDefaultSeparator(text: @NlsContexts.Separator String? = null): GroupHeaderSeparator {
+    fun createDefaultSeparator(text: @NlsContexts.Separator String? = null, paintLine: Boolean = false): GroupHeaderSeparator {
       val labelInsets = if (ExperimentalUI.isNewUI()) Popup.separatorLabelInsets() else ActionsList.cellPadding()
       return GroupHeaderSeparator(labelInsets).apply {
-        text?.let { t->
-          setHideLine(true)
+        text?.let { t ->
+          setHideLine(!paintLine)
           caption = t
         }
       }

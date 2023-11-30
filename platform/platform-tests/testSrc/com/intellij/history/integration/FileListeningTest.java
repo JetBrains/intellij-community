@@ -62,7 +62,7 @@ public class FileListeningTest extends IntegrationTestCase {
     assertEquals(before, getRevisionsFor(myRoot).size());
   }
 
-  public void testIgnoringFilesRecursively() {
+  public void testIgnoringFilesRecursively() throws IOException {
     String excluded = "dir/excluded";
     addExcludedDir(myRoot.getPath() + "/" + excluded);
     String contentUnderExcluded = excluded + "/content";
@@ -242,7 +242,7 @@ public class FileListeningTest extends IntegrationTestCase {
     assertEquals(before, getRevisionsFor(myRoot).size());
   }
 
-  public void testDeletionDoesNotVersionIgnoredFilesRecursively() {
+  public void testDeletionDoesNotVersionIgnoredFilesRecursively() throws IOException {
     String dir1 = createDirectoryExternally("dir");
     createFileExternally("dir/f.txt");
     createFileExternally("dir/f.class");
@@ -271,7 +271,7 @@ public class FileListeningTest extends IntegrationTestCase {
     assertEquals("subdir2", children.get(1).getChildren().get(0).getName());
   }
 
-  public void testCreationAndDeletionOfUnversionedFile() {
+  public void testCreationAndDeletionOfUnversionedFile() throws IOException {
     addExcludedDir(myRoot.getPath() + "/dir");
 
     Module m = createModule("foo");
@@ -294,7 +294,7 @@ public class FileListeningTest extends IntegrationTestCase {
     assertNull(revs.get(3).findEntry().findEntry("dir/subDir/file.txt"));
   }
 
-  public void testCreationAndDeletionOfFileUnderUnversionedDir() {
+  public void testCreationAndDeletionOfFileUnderUnversionedDir() throws IOException {
     addExcludedDir(myRoot.getPath() + "/dir");
 
     Module m = createModule("foo");

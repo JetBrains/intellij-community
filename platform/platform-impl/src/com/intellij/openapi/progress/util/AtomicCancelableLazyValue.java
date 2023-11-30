@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.progress.util;
 
@@ -16,8 +16,7 @@ public abstract class AtomicCancelableLazyValue<T> {
   private volatile T myValue;
   private final ReentrantLock myLock = new ReentrantLock();
 
-  @NotNull
-  public final T getValue() {
+  public final @NotNull T getValue() {
     T curValue = myValue;
     if (curValue != null) {
       return curValue;
@@ -36,19 +35,16 @@ public abstract class AtomicCancelableLazyValue<T> {
     });
   }
 
-  @NotNull
-  protected abstract T compute();
+  protected abstract @NotNull T compute();
 
   public boolean isComputed() {
     return myValue != null;
   }
 
-  @NotNull
-  public static <T> AtomicCancelableLazyValue<T> createValue(@NotNull NotNullFactory<? extends T> value) {
+  public static @NotNull <T> AtomicCancelableLazyValue<T> createValue(@NotNull NotNullFactory<? extends T> value) {
     return new AtomicCancelableLazyValue<>() {
-      @NotNull
       @Override
-      protected T compute() {
+      protected @NotNull T compute() {
         return value.create();
       }
     };

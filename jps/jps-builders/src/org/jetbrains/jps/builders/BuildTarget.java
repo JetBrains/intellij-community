@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +27,7 @@ import java.util.List;
  * @see BuildTargetType
  */
 public abstract class BuildTarget<R extends BuildRootDescriptor> {
-  @NotNull
-  private final BuildTargetType<? extends BuildTarget<R>> myTargetType;
+  private final @NotNull BuildTargetType<? extends BuildTarget<R>> myTargetType;
 
   protected BuildTarget(@NotNull BuildTargetType<? extends BuildTarget<R>> targetType) {
     myTargetType = targetType;
@@ -54,8 +39,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    */
   public abstract @NotNull String getId();
 
-  @NotNull
-  public final BuildTargetType<? extends BuildTarget<R>> getTargetType() {
+  public final @NotNull BuildTargetType<? extends BuildTarget<R>> getTargetType() {
     return myTargetType;
   }
 
@@ -86,8 +70,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @see AdditionalRootsProviderService
    * @see org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider
    */
-  @NotNull
-  public abstract List<R> computeRootDescriptors(@NotNull JpsModel model,
+  public abstract @NotNull List<R> computeRootDescriptors(@NotNull JpsModel model,
                                                  @NotNull ModuleExcludeIndex index,
                                                  @NotNull IgnoredFileIndex ignoredFileIndex,
                                                  @NotNull BuildDataPaths dataPaths);
@@ -99,11 +82,9 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @param rootIndex the index of build roots.
    * @return the build root or null if no root with this ID exists.
    */
-  @Nullable
-  public abstract R findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex);
+  public abstract @Nullable R findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex);
 
-  @NotNull
-  public abstract String getPresentableName();
+  public abstract @NotNull String getPresentableName();
 
   /**
    * Returns the list of output directories in which this target is going to produce its output. (The specific
@@ -113,8 +94,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @param context the compilation context.
    * @return the collection of output roots.
    */
-  @NotNull
-  public abstract Collection<File> getOutputRoots(@NotNull CompileContext context);
+  public abstract @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context);
 
   @Override
   public String toString() {

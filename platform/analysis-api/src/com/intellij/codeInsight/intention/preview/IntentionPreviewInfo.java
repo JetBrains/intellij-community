@@ -59,7 +59,8 @@ public interface IntentionPreviewInfo {
   };
 
   /**
-   * Changes in the file copy should be displayed as intention preview
+   * Changes in the file copy should be displayed as intention preview. Differences in leading/trailing 
+   * whitespaces will be shown only if there are no other differences. Otherwise, whitespaces will be trimmed before shown the diff.
    */
   IntentionPreviewInfo DIFF = new IntentionPreviewInfo() {
     @Override
@@ -69,7 +70,7 @@ public interface IntentionPreviewInfo {
   };
 
   /**
-   * Changes in the file copy should be displayed as intention preview, without trimming any whitespaces
+   * Changes in the file copy should be displayed as intention preview, without trimming any whitespaces.
    */
   IntentionPreviewInfo DIFF_NO_TRIM = new IntentionPreviewInfo() {
     @Override
@@ -81,7 +82,7 @@ public interface IntentionPreviewInfo {
   /**
    * Diff preview for multiple files. UI may show only some of them if there are too many.
    */
-  class MultiFileDiff implements IntentionPreviewInfo {
+  final class MultiFileDiff implements IntentionPreviewInfo {
     private final @NotNull List<@NotNull CustomDiff> myDiffs;
 
     public MultiFileDiff(@NotNull List<@NotNull CustomDiff> diffs) {
@@ -104,7 +105,7 @@ public interface IntentionPreviewInfo {
    * However, sometimes you may provide carefully crafted original and new text, in order to get some diff highlighting
    * (added/removed parts).
    */
-  class CustomDiff implements IntentionPreviewInfo {
+  final class CustomDiff implements IntentionPreviewInfo {
     private final @NotNull FileType myFileType;
     private final @NotNull String myOrigText;
     private final @NotNull String myModifiedText;
@@ -173,6 +174,20 @@ public interface IntentionPreviewInfo {
   }
 
   /**
+   * Kind of information displayed in HTML preview
+   */
+  enum InfoKind {
+    /**
+     * Informational preview (default)
+     */
+    INFORMATION,
+    /**
+     * Error
+     */
+    ERROR
+  }
+
+  /**
    * HTML description. Here are some advices:
    * <ul>
    *   <li>If you want to display icon, use {@link HtmlChunk#icon(String, Icon)}. Though be careful, as converting it to text
@@ -189,8 +204,9 @@ public interface IntentionPreviewInfo {
    *   preview for common cases. Ask if you think that you need a new common method.</li>
    * </ul>
    */
-  class Html implements IntentionPreviewInfo {
+  final class Html implements IntentionPreviewInfo {
     private final @NotNull HtmlChunk myContent;
+    private final @NotNull InfoKind myInfoKind;
 
     /**
      * Construct description from HtmlChunk
@@ -198,7 +214,18 @@ public interface IntentionPreviewInfo {
      * @param content description content
      */
     public Html(@NotNull HtmlChunk content) {
+      this(content, InfoKind.INFORMATION);
+    }
+
+    /**
+     * Construct description from HtmlChunk
+     *
+     * @param content  description content
+     * @param infoKind kind of description box (may affect visual representation)
+     */
+    public Html(@NotNull HtmlChunk content, @NotNull InfoKind infoKind) {
       myContent = content;
+      myInfoKind = infoKind;
     }
 
     /**
@@ -215,6 +242,10 @@ public interface IntentionPreviewInfo {
      */
     public @NotNull HtmlChunk content() {
       return myContent;
+    }
+
+    public @NotNull InfoKind infoKind() {
+      return myInfoKind;
     }
   }
 
@@ -389,7 +420,7 @@ public interface IntentionPreviewInfo {
    * @param toSelect    predicate, which returns true if the option should be selected in preview
    * @return a presentation describing that the action will add the specified option to the options list
    */
-  static IntentionPreviewInfo addListOption(@NotNull List<@NlsSafe String> updatedList,
+  static IntentionPreviewInfo.Html addListOption(@NotNull List<@NlsSafe String> updatedList,
                                             @NotNull @Nls String title,
                                             @NotNull Predicate<String> toSelect) {
     int maxToList = Math.min(7, updatedList.size() + 2);

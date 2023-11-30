@@ -33,25 +33,25 @@ import javax.swing.JComponent
 internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, hostOffset: Int): DocumentationHoverInfo? {
   ApplicationManager.getApplication().assertIsNonDispatchThread()
   return runBlockingCancellable {
-    val request = readAction {
+    val requests = readAction {
       val targets = injectedThenHost(
         project, hostEditor, hostOffset,
         IdeDocumentationTargetProvider.getInstance(project)::documentationTargets
       )
-      targets?.singleOrNull()?.documentationRequest()
+      targets?.map { it.documentationRequest() }
     }
-    if (request == null) {
+    if (requests.isNullOrEmpty()) {
       return@runBlockingCancellable null
     }
     if (!LightEdit.owns(project)) {
       val preview = withContext(Dispatchers.EDT) {
-        DocumentationToolWindowManager.instance(project).updateVisibleAutoUpdatingTab(request)
+        DocumentationToolWindowManager.instance(project).updateVisibleAutoUpdatingTab(requests.first())
       }
       if (preview) {
         return@runBlockingCancellable null
       }
     }
-    val browser = DocumentationBrowser.createBrowser(project, request)
+    val browser = DocumentationBrowser.createBrowser(project, requests)
     val hasContent: Boolean? = withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
       // to avoid flickering: wait a bit before showing the hover popup,
       // otherwise, the popup will be shown with "Fetching..." message,
@@ -111,6 +111,7 @@ private class DocumentationTargetHoverInfo(
         resizePopup(popup)
         bridge.updateLocation()
       }
+      DocumentationUsageCollector.QUICK_DOC_SHOWN.log()
     }
     EditorUtil.disposeWithEditor(editor, popupUI)
     return popupUI.component

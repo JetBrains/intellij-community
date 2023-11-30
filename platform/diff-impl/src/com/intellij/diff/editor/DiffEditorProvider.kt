@@ -1,10 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.editor
 
-import com.intellij.diff.tools.combined.CombinedDiffComponentFactoryProvider
-import com.intellij.diff.tools.combined.CombinedDiffEditor
-import com.intellij.diff.tools.combined.CombinedDiffModelRepository
-import com.intellij.diff.tools.combined.CombinedDiffVirtualFile
+import com.intellij.diff.tools.combined.*
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
@@ -17,7 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.NonNls
 
-class DiffEditorProvider : DefaultPlatformFileEditorProvider, StructureViewFileEditorProvider, DumbAware {
+internal class DiffEditorProvider : DefaultPlatformFileEditorProvider, StructureViewFileEditorProvider, DumbAware {
   companion object {
     @NonNls
     const val DIFF_EDITOR_PROVIDER_ID = "DiffEditor"
@@ -27,10 +24,17 @@ class DiffEditorProvider : DefaultPlatformFileEditorProvider, StructureViewFileE
     return file is CombinedDiffVirtualFile || file is DiffVirtualFile
   }
 
+  override fun acceptRequiresReadAction() = false
+
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     if (file is CombinedDiffVirtualFile) {
       val sourceId = file.sourceId
-      val combinedDiffModel = project.service<CombinedDiffModelRepository>().findModel(sourceId)
+      val modelRepository = project.service<CombinedDiffModelRepository>()
+      var combinedDiffModel = modelRepository.findModel(sourceId)
+      if (combinedDiffModel == null && file is CombinedDiffModelBuilder) {
+        combinedDiffModel = file.createModel(sourceId)
+        modelRepository.registerModel(sourceId, combinedDiffModel)
+      }
       requireNotNull(combinedDiffModel) { "Combined diff model doesn't registered for $sourceId" }
       return CombinedDiffEditor(file, project.service<CombinedDiffComponentFactoryProvider>().create(combinedDiffModel))
     }
@@ -44,6 +48,8 @@ class DiffEditorProvider : DefaultPlatformFileEditorProvider, StructureViewFileE
   }
 
   override fun getEditorTypeId(): String = DIFF_EDITOR_PROVIDER_ID
+
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.NONE
+
   override fun getStructureViewBuilder(project: Project, file: VirtualFile): StructureViewBuilder? = null
 }

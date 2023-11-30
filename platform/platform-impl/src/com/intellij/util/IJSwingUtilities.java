@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -58,8 +58,7 @@ public final class IJSwingUtilities {
     return SwingUtilities.isDescendingFrom(focusedComponent, component);
   }
 
-  @NotNull
-  public static Component getFocusedComponentInWindowOrSelf(@NotNull Component component) {
+  public static @NotNull Component getFocusedComponentInWindowOrSelf(@NotNull Component component) {
     Window window = ComponentUtil.getWindow(component);
     Component focusedComponent = window == null ? null : WindowManagerEx.getInstanceEx().getFocusedComponent(window);
     return focusedComponent != null ? focusedComponent : component;
@@ -87,7 +86,7 @@ public final class IJSwingUtilities {
     if (c instanceof RootPaneContainer) {
       JRootPane rootPane = ((RootPaneContainer)c).getRootPane();
       if (rootPane != null) {
-        UIUtil.decorateWindowHeader(rootPane);
+        ComponentUtil.decorateWindowHeader(rootPane);
       }
     }
 

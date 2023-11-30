@@ -10,7 +10,7 @@ import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NotNull;
 
 
-public class SameDirectoryWeigher extends ProximityWeigher {
+public final class SameDirectoryWeigher extends ProximityWeigher {
   private static final NullableLazyKey<PsiDirectory, ProximityLocation>
     PLACE_DIRECTORY = NullableLazyKey.create("placeDirectory", location -> getParentDirectory(location.getPosition()));
 

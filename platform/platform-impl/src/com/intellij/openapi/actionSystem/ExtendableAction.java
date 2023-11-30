@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExtendableAction extends AnAction {
-  @NotNull private final ExtensionPointName<AnActionExtensionProvider> myExtensionPoint;
+  private final @NotNull ExtensionPointName<AnActionExtensionProvider> myExtensionPoint;
 
   public ExtendableAction(@NotNull ExtensionPointName<AnActionExtensionProvider> extensionPoint) {
     myExtensionPoint = extensionPoint;
@@ -56,8 +56,7 @@ public class ExtendableAction extends AnAction {
     }
   }
 
-  @Nullable
-  private AnActionExtensionProvider getProvider(@NotNull AnActionEvent e) {
+  private @Nullable AnActionExtensionProvider getProvider(@NotNull AnActionEvent e) {
     return myExtensionPoint.findFirstSafe(provider -> provider.isActive(e));
   }
 

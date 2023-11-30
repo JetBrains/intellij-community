@@ -22,4 +22,8 @@ class GHPRDiffRequestModelImpl : GHPRDiffRequestModel {
   override fun addFilePathSelectionListener(listener: () -> Unit) {
     SimpleEventListener.addListener(selectedPathDispatcher, listener)
   }
+
+  override fun addFilePathSelectionListener(disposable: Disposable, listener: () -> Unit) {
+    SimpleEventListener.addDisposableListener(selectedPathDispatcher, disposable, listener)
+  }
 }

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * @see CreateDirectoryPathFix
  * @see CreateFilePathFix
  */
-public class TargetDirectory {
+public final class TargetDirectory {
   private final SmartPsiElementPointer<PsiDirectory> myDirectory;
   private final String @NotNull [] myPathToCreate;
 

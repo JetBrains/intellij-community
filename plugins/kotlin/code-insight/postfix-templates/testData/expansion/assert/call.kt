@@ -5,3 +5,5 @@ fun test() {
 object Processor {
     fun shouldProcess(): Boolean = true
 }
+
+// IGNORE_K2

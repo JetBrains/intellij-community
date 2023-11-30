@@ -9,7 +9,7 @@ import junit.framework.TestCase
 import org.jetbrains.concurrency.isPending
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ConcurrentLinkedDeque
 
 class DependencySearchServiceTest : LightPlatformTestCase() {
 
@@ -26,9 +26,9 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val testProviderLocal1 = object : TestSearchProvider() {
       override fun isLocal() = true
 
-      override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> {
+      override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
         return CompletableFuture.supplyAsync {
-          listOf(MavenRepositoryArtifactInfo(groupId!!, artifactId!!, listOf("0", "1")))
+          listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("0", "1")))
         }
       }
     }
@@ -36,9 +36,9 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val testProviderLocal2 = object : TestSearchProvider() {
       override fun isLocal() = true
 
-      override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> {
+      override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
         return CompletableFuture.supplyAsync {
-          listOf(MavenRepositoryArtifactInfo(groupId!!, artifactId!!, listOf("2")))
+          listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("2")))
         }
       }
     }
@@ -46,9 +46,9 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val testProviderRemote3 = object : TestSearchProvider() {
       override fun isLocal() = false
 
-      override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> {
+      override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
         return CompletableFuture.supplyAsync {
-          listOf(MavenRepositoryArtifactInfo(groupId!!, artifactId!!, listOf("3")))
+          listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("3")))
         }
       }
     }
@@ -56,9 +56,9 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
     val testProviderRemote4 = object : TestSearchProvider() {
       override fun isLocal() = false
 
-      override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> {
+      override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
         return CompletableFuture.supplyAsync {
-          listOf(MavenRepositoryArtifactInfo(groupId!!, artifactId!!, listOf("4")))
+          listOf(MavenRepositoryArtifactInfo(groupId, artifactId, listOf("4")))
         }
       }
     }
@@ -67,14 +67,19 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
       listOf(
         testProviderLocal1, testProviderLocal2, testProviderRemote3, testProviderRemote4)
     }), testRootDisposable, false)
-    val searchParameters = SearchParameters(true, false)
+    val searchParameters = SearchParameters(false, false)
 
-    val result = CopyOnWriteArrayList<RepositoryArtifactData>()
+    val result = ConcurrentLinkedDeque<RepositoryArtifactData>()
     val promise = dependencySearchService.suggestPrefix("group", "artifact", searchParameters) {
       result.add(it)
     }
-    val artifactResults = result.filterIsInstance(MavenRepositoryArtifactInfo::class.java)
+    object : WaitFor(2_000) {
+      override fun condition(): Boolean {
+        return result.last() === PoisonedRepositoryArtifactData.INSTANCE
+      }
+    }
     TestCase.assertTrue(result.last() === PoisonedRepositoryArtifactData.INSTANCE)
+    val artifactResults = result.filterIsInstance(MavenRepositoryArtifactInfo::class.java)
     UsefulTestCase.assertSameElements(artifactResults.flatMap { it.items.asList() }.map { it.version },
                                       "0", "1", "2", "3", "4")
   }
@@ -123,7 +128,7 @@ class DependencySearchServiceTest : LightPlatformTestCase() {
       TODO("Not yet implemented")
     }
 
-    override fun suggestPrefix(groupId: String?, artifactId: String?): CompletableFuture<List<RepositoryArtifactData>> {
+    override fun suggestPrefix(groupId: String, artifactId: String): CompletableFuture<List<RepositoryArtifactData>> {
       TODO("Not yet implemented")
     }
 

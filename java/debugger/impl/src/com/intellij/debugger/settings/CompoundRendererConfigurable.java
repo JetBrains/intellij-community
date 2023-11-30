@@ -528,7 +528,7 @@ class CompoundRendererConfigurable extends JPanel {
                 }
               };
               fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-              return PsiDocumentManager.getInstance(project).getDocument(fragment);
+              return fragment.getViewProvider().getDocument();
             }, "");
     }
   }

@@ -26,6 +26,10 @@ public class MavenServerLoggerWrapper extends MavenRemoteObject implements Maven
     myPullingQueue.add(new ServerLogEvent(ServerLogEvent.Type.PRINT, o));
   }
 
+  public void debug(String o) {
+    myPullingQueue.add(new ServerLogEvent(ServerLogEvent.Type.DEBUG, o));
+  }
+
   @NotNull
   @Override
   public List<ServerLogEvent> pull() {

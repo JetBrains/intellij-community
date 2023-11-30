@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
@@ -60,7 +61,15 @@ public class PropertiesCompletionContributor extends CompletionContributor {
   private static void doAdd(CompletionParameters parameters, final CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
     PsiElement parent = position.getParent();
+    PsiElement gParent = parent != null ? parent.getParent() : null;
     PsiReference[] references = parent == null ? position.getReferences() : ArrayUtil.mergeArrays(position.getReferences(), parent.getReferences());
+    if (gParent instanceof PsiLanguageInjectionHost && references.length == 0) {
+      //kotlin
+      PsiReference[] gParentReferences = gParent.getReferences();
+      if (gParentReferences.length > 0) {
+        references = ArrayUtil.mergeArrays(references, gParentReferences);
+      }
+    }
     PropertyReference propertyReference = ContainerUtil.findInstance(references, PropertyReference.class);
     if (propertyReference != null && !hasMoreImportantReference(references, propertyReference)) {
       final int startOffset = parameters.getOffset();

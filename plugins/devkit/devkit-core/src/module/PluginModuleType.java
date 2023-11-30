@@ -28,7 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
+public final class PluginModuleType extends ModuleType<PluginModuleBuilder> {
 
   @NonNls public static final String ID = "PLUGIN_MODULE";
 

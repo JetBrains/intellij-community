@@ -1,2 +1,0 @@
-polib.TextWrapper
-polib._BaseFile.save

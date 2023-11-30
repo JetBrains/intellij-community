@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX;
 
 import com.intellij.codeInsight.daemon.ProjectSdkSetupValidator;
@@ -25,16 +25,15 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import javax.swing.event.HyperlinkEvent;
 
-public class JavaFxProjectSdkSetupValidator implements ProjectSdkSetupValidator {
+public final class JavaFxProjectSdkSetupValidator implements ProjectSdkSetupValidator {
 
   @Override
   public boolean isApplicableFor(@NotNull Project project, @NotNull VirtualFile file) {
     return JavaFxFileTypeFactory.isFxml(file);
   }
 
-  @Nullable
   @Override
-  public String getErrorMessage(@NotNull Project project, @NotNull VirtualFile file) {
+  public @Nullable String getErrorMessage(@NotNull Project project, @NotNull VirtualFile file) {
     final String javaErrorMessage = JavaProjectSdkSetupValidator.INSTANCE.getErrorMessage(project, file);
     if (javaErrorMessage != null) {
       return javaErrorMessage;
@@ -50,9 +49,8 @@ public class JavaFxProjectSdkSetupValidator implements ProjectSdkSetupValidator 
     return null;
   }
 
-  @NotNull
   @Override
-  public ActionHandler getFixHandler(@NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull ActionHandler getFixHandler(@NotNull Project project, @NotNull VirtualFile file) {
     return new ActionHandler() {
       @Override
       public void handlePanelActionClick(@NotNull EditorNotificationPanel panel, @NotNull HyperlinkEvent event) {

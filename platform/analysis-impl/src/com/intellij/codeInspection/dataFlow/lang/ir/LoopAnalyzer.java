@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.util.ArrayUtil;
@@ -14,7 +14,7 @@ import java.util.*;
 
 final class LoopAnalyzer {
   private static final class MyGraph implements Graph<Instruction> {
-    @NotNull private final ControlFlow myFlow;
+    private final @NotNull ControlFlow myFlow;
     private final Instruction[] myInstructions;
     private final Int2ObjectMap<int[]> myIns = new Int2ObjectOpenHashMap<>();
 
@@ -37,28 +37,24 @@ final class LoopAnalyzer {
       }
     }
 
-    @NotNull
     @Override
-    public Collection<Instruction> getNodes() {
+    public @NotNull Collection<Instruction> getNodes() {
       return Arrays.asList(myFlow.getInstructions());
     }
 
-    @NotNull
     @Override
-    public Iterator<Instruction> getIn(Instruction n) {
+    public @NotNull Iterator<Instruction> getIn(Instruction n) {
       int[] ins = myIns.get(n.getIndex());
       return indicesToInstructions(ins);
     }
 
-    @NotNull
     @Override
-    public Iterator<Instruction> getOut(Instruction instruction) {
+    public @NotNull Iterator<Instruction> getOut(Instruction instruction) {
       int[] next = instruction.getSuccessorIndexes();
       return indicesToInstructions(next);
     }
 
-    @NotNull
-    private Iterator<Instruction> indicesToInstructions(int[] next) {
+    private @NotNull Iterator<Instruction> indicesToInstructions(int[] next) {
       if (next == null) return Collections.emptyIterator();
       List<Instruction> out = new ArrayList<>(next.length);
       for (int i : next) {

@@ -16,18 +16,15 @@
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewComponent;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 
 public class PropertiesFileStructureViewComponent extends PropertiesGroupingStructureViewComponent {
 
-  public PropertiesFileStructureViewComponent(Project project, PropertiesFileImpl propertiesFile, FileEditor editor) {
-    super(project, editor, new PropertiesFileStructureViewModel(propertiesFile, EditorUtil.getEditorEx(editor)));
+  public PropertiesFileStructureViewComponent(Project project, PropertiesFileImpl propertiesFile, FileEditor editor, String separator) {
+    super(project, editor, new PropertiesFileStructureViewModel(propertiesFile, EditorUtil.getEditorEx(editor), separator));
   }
 
 }

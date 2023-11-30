@@ -29,7 +29,7 @@ public final class ValueContainerExternalizer<T> implements DataExternalizer<Upd
 
   @Override
   public @NotNull UpdatableValueContainer<T> read(final @NotNull DataInput in) throws IOException {
-    final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<>();
+    final ValueContainerImpl<T> valueContainer = ValueContainerImpl.createNewValueContainer();
     valueContainer.readFrom((DataInputStream)in, myValueExternalizer, myInputRemapping);
     return valueContainer;
   }

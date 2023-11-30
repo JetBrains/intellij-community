@@ -58,14 +58,14 @@ internal fun findMostSpecificExistingFileOrNewDefault(
     val hostName = HostManager.host.name
 
     val prioritisedClassifyingParts = sequenceOf(
+        listOfNotNull(testClassifier, kotlinClassifier, gradleClassifier, agpClassifier),
+        listOfNotNull(testClassifier, kotlinClassifier, gradleClassifier),
+        listOfNotNull(testClassifier, kotlinClassifier, agpClassifier),
+        listOfNotNull(testClassifier, gradleClassifier, agpClassifier),
+        listOfNotNull(testClassifier, kotlinClassifier),
+        listOfNotNull(testClassifier, gradleClassifier),
+        listOfNotNull(testClassifier, agpClassifier),
         listOfNotNull(testClassifier),
-        listOfNotNull(kotlinClassifier, gradleClassifier, agpClassifier),
-        listOfNotNull(kotlinClassifier, gradleClassifier),
-        listOfNotNull(kotlinClassifier, agpClassifier),
-        listOfNotNull(gradleClassifier, agpClassifier),
-        listOfNotNull(kotlinClassifier),
-        listOfNotNull(gradleClassifier),
-        listOfNotNull(agpClassifier),
     ).flatMap { parts ->
         sequenceOf(parts, parts + listOfNotNull(hostType), parts + hostName)
     }

@@ -86,10 +86,10 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
   private fun processAssertJ(call: UCallExpression) {
     if (!ASSERTJ_ASSERT_THAT_MATCHER.uCallMatches(call)) return
     val chain = call.getOutermostQualified().getQualifiedChain()
-    val checkCall = chain.findLast {
+    val isEqualsCall = chain.findLast {
       it is UCallExpression && ASSERTJ_IS_EQUALS_MATCHER.uCallMatches(it)
     }.asSafely<UCallExpression>()
-    val checkType = checkCall?.valueArguments?.firstOrNull()?.getExpressionType() ?: return
+    val checkType = isEqualsCall?.valueArguments?.firstOrNull()?.getExpressionType() ?: return
     var sourceType = call.valueArguments.firstOrNull()?.getExpressionType() ?: return
     for (elem in chain) {
       if (elem !is UCallExpression) continue
@@ -97,29 +97,39 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
         ASSERTJ_EXTRACTING_REF_MATCHER.uCallMatches(elem) -> return // not supported
         ASSERTJ_EXTRACTING_FUN_MATCHER.uCallMatches(elem) -> return // not supported
         ASSERTJ_EXTRACTING_ITER_FUN_MATCHER.uCallMatches(elem) -> return // not supported
-        ASSERTJ_SINGLE_ELEMENT_MATCHER.uCallMatches(elem) -> {
-          if (!InheritanceUtil.isInheritor(sourceType, "java.lang.Iterable")) return
+        elem.resolve()?.containingClass?.qualifiedName == "org.assertj.core.api.AbstractThrowableAssert" -> return // not supported
+        ASSERTJ_SINGLE_ELEMENT_MATCHER.uCallMatches(elem) || ASSERTJ_FIRST_ELEMENT_MATCHER.uCallMatches(elem) -> {
+          if (!InheritanceUtil.isInheritor(sourceType, CommonClassNames.JAVA_LANG_ITERABLE)) return
           sourceType.asSafely<PsiClassType>()?.parameters?.firstOrNull() ?: return
         }
         else -> sourceType
       }
     }
-    checkMismatch(checkCall, sourceType, checkType)
+    checkMismatch(isEqualsCall, sourceType, checkType)
   }
 
-  fun buildErrorString(methodName: String, left: PsiType, right: PsiType): @Nls String {
+  private fun buildErrorString(methodName: String, left: PsiType, right: PsiType): @Nls String {
     val comparedTypeText = left.presentableText
     val comparisonTypeText = right.presentableText
     if (isAssertNotEqualsMethod(methodName)) {
-      return JvmAnalysisBundle.message("jvm.inspections.assertnotequals.between.inconvertible.types.problem.descriptor", comparedTypeText,
-                                       comparisonTypeText)
+      return JvmAnalysisBundle.message(
+        "jvm.inspections.assertnotequals.between.inconvertible.types.problem.descriptor",
+        comparedTypeText,
+        comparisonTypeText
+      )
     }
     return if (isAssertNotSameMethod(methodName)) {
-      JvmAnalysisBundle.message("jvm.inspections.assertnotsame.between.inconvertible.types.problem.descriptor", comparedTypeText, comparisonTypeText)
+      JvmAnalysisBundle.message(
+        "jvm.inspections.assertnotsame.between.inconvertible.types.problem.descriptor",
+        comparedTypeText,
+        comparisonTypeText
+      )
     }
-    else JvmAnalysisBundle.message("jvm.inspections.assertequals.between.inconvertible.types.problem.descriptor",
-                                   StringUtil.escapeXmlEntities(comparedTypeText),
-                                   StringUtil.escapeXmlEntities(comparisonTypeText))
+    else JvmAnalysisBundle.message(
+      "jvm.inspections.assertequals.between.inconvertible.types.problem.descriptor",
+      StringUtil.escapeXmlEntities(comparedTypeText),
+      StringUtil.escapeXmlEntities(comparisonTypeText)
+    )
   }
 
   private fun isAssertNotEqualsMethod(methodName: String): Boolean = "assertNotEquals" == methodName || "isNotEqualTo" == methodName
@@ -141,6 +151,10 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
 
     private val ASSERTJ_SINGLE_ELEMENT_MATCHER: CallMatcher = CallMatcher.instanceCall(
       "org.assertj.core.api.AbstractIterableAssert", "singleElement"
+    )
+
+    private val ASSERTJ_FIRST_ELEMENT_MATCHER: CallMatcher = CallMatcher.instanceCall(
+      "org.assertj.core.api.AbstractIterableAssert", "first"
     )
 
     private val ASSERTJ_EXTRACTING_ITER_FUN_MATCHER: CallMatcher = CallMatcher.instanceCall(

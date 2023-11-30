@@ -7,11 +7,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.replaceService
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettingsUtil
 import org.junit.jupiter.api.fail
 import java.nio.file.Path
+import kotlin.io.path.createFile
 
 object ExtensionTestingUtil {
   fun mockPathManager(tempDirectory: Path, parentDisposable: Disposable) {
@@ -27,7 +28,7 @@ object ExtensionTestingUtil {
     val directory = ExtensionsExternalFilesPathManager.getInstance().obtainExternalFilesDirectoryPath(extension)
     for (file in extension.externalFiles) {
       val filePath = directory.resolve(file)
-      filePath.createFile()
+      filePath.createParentDirectories().createFile()
     }
     for (file in directory.toFile().walkTopDown()) {
       println(file)

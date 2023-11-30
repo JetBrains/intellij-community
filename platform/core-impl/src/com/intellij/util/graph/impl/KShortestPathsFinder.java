@@ -167,7 +167,7 @@ public final class KShortestPathsFinder<Node> {
 
       final Heap<Node> heap = myHeaps.get(myStart);
       if (heap != null) {
-        queue.add(new Sidetracks<>(0, FList.<HeapNode<Node>>emptyList().prepend(heap.getRoot())));
+        queue.add(new Sidetracks<>(0, FList.singleton(heap.getRoot())));
         for (int i = 2; i <= k; i++) {
           if (queue.isEmpty()) break;
           myProgressIndicator.checkCanceled();

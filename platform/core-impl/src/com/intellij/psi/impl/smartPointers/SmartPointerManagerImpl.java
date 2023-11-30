@@ -17,7 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManager implement
   private final Project myProject;
   private final PsiDocumentManagerBase myPsiDocManager;
   private final Key<WeakReference<SmartPointerTracker>> LIGHT_TRACKER_KEY;
-  private final ConcurrentMap<VirtualFile, SmartPointerTracker> myPhysicalTrackers = ContainerUtil.createConcurrentWeakValueMap();
+  private final ConcurrentMap<VirtualFile, SmartPointerTracker> myPhysicalTrackers = CollectionFactory.createConcurrentWeakValueMap();
 
   public SmartPointerManagerImpl(@NotNull Project project) {
     myProject = project;

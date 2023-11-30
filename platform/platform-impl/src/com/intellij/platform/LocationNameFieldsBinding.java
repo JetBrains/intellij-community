@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -28,7 +28,7 @@ import java.io.File;
  *
  * @author catherine
  */
-public class LocationNameFieldsBinding {
+public final class LocationNameFieldsBinding {
   private boolean myModifyingLocation = false;
   private boolean myModifyingProjectName = false;
   private boolean myExternalModify = false;
@@ -98,11 +98,11 @@ public class LocationNameFieldsBinding {
     return !currentName.equals(mySuggestedProjectName);
   }
 
-  private class NameFieldDocument extends PlainDocument {
+  private final class NameFieldDocument extends PlainDocument {
     NameFieldDocument(final JTextField projectNameTextField, final TextFieldWithBrowseButton locationField) {
       addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(@NotNull final DocumentEvent e) {
+        protected void textChanged(final @NotNull DocumentEvent e) {
           if (!myModifyingLocation && !myExternalModify) {
             myModifyingProjectName = true;
             File f = new File(myBaseDir);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -122,12 +122,10 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
   }
 
   @Override
-  @Nullable
-  public abstract T retrieveDomElement();
+  public abstract @Nullable T retrieveDomElement();
 
   @Override
-  @NotNull
-  public abstract XmlFile getContainingFile();
+  public abstract @NotNull XmlFile getContainingFile();
 
   private static final class NamedAnchor<T extends DomElement> extends DomAnchorImpl<T> {
     private final DomAnchor myParent;
@@ -186,8 +184,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     }
 
     @Override
-    @NotNull
-    public XmlFile getContainingFile() {
+    public @NotNull XmlFile getContainingFile() {
       return myParent.getContainingFile();
     }
   }
@@ -237,8 +234,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     }
 
     @Override
-    @NotNull
-    public XmlFile getContainingFile() {
+    public @NotNull XmlFile getContainingFile() {
       return myParent.getContainingFile();
     }
   }
@@ -278,8 +274,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     }
 
     @Override
-    @NotNull
-    public XmlFile getContainingFile() {
+    public @NotNull XmlFile getContainingFile() {
       return myFile;
     }
   }
@@ -308,9 +303,8 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       return null;
     }
 
-    @NotNull
     @Override
-    public XmlFile getContainingFile() {
+    public @NotNull XmlFile getContainingFile() {
       return (XmlFile)myAnchor.getFile();
     }
 
@@ -349,15 +343,13 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       return (T)myHandler.getProxy();
     }
 
-    @NotNull
     @Override
-    public XmlFile getContainingFile() {
+    public @NotNull XmlFile getContainingFile() {
       return myHandler.getFile();
     }
 
-    @Nullable
     @Override
-    public PsiElement getPsiElement() {
+    public @Nullable PsiElement getPsiElement() {
       return myHandler.getXmlElement();
     }
 

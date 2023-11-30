@@ -95,4 +95,66 @@ public class GuardBlockTest extends BasePlatformTestCase {
     myFixture.getEditor().getCaretModel().moveToOffset(offset - 1);
     assertNotNull(myFixture.completeBasic());
   }
+
+  public void testDocumentGuardedTextUtilDuplicateLine() {
+    String text = "a\n#%%\nc";
+    //              ^^^^^^^   <- guarded
+    // com.intellij.openapi.editor.actions.DocumentGuardedTextUtil.insertString handles this case and inserts "\na" after first "a"
+    myFixture.configureByText("x.txt", text);
+    RangeMarker guard = createGuard(1, 6);
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DUPLICATE_LINES);
+    myFixture.checkResult("a\na\n#%%\nc");
+    assertTrue(guard.isValid());
+    assertEquals(3, guard.getStartOffset());
+    assertEquals(8, guard.getEndOffset());
+  }
+
+  public void testDocumentGuardedTextUtilDeleteLine() {
+    String text = "a\n<caret>b\n#%%\nc";
+    //                        ^^^^^^^   <- guarded
+    // com.intellij.openapi.editor.actions.DocumentGuardedTextUtil.deleteString handles this case and removes \n before caret
+    myFixture.configureByText("x.txt", text);
+    RangeMarker guard = createGuard(3, 8);
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE_LINE);
+    myFixture.checkResult("a\n#%%\nc");
+    assertTrue(guard.isValid());
+    assertEquals(1, guard.getStartOffset());
+    assertEquals(6, guard.getEndOffset());
+  }
+
+  public void testDocumentGuardedTextUtilDuplicateLineWithGreedy() {
+    String text = "a\n#%%\nc";
+    //              ^^^^^^^   <- guarded
+    myFixture.configureByText("x.txt", text);
+    createGuard(1, 6).setGreedyToLeft(true);
+
+    try {
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DUPLICATE_LINES);
+    }
+    catch (RuntimeException e) {
+      assertEquals("Unable to perform an action since it changes read-only fragments of the current document", e.getMessage());
+      myFixture.checkResult(text);
+      return;
+    }
+    fail("must be read only at " + 1);
+  }
+
+  public void testDocumentGuardedTextUtilDeleteLineWithGreedy() {
+    String text = "a\n<caret>b\n#%%\nc";
+    //                        ^^^^^^^   <- guarded
+    myFixture.configureByText("x.txt", text);
+    createGuard(3, 8).setGreedyToLeft(true);
+
+    try {
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE_LINE);
+    }
+    catch (RuntimeException e) {
+      assertEquals("Unable to perform an action since it changes read-only fragments of the current document", e.getMessage());
+      myFixture.checkResult(text);
+      return;
+    }
+    fail("must be read only at " + 3);
+  }
 }

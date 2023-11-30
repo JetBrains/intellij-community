@@ -30,7 +30,7 @@ internal class MavenProjectOpenProcessor : ProjectOpenProcessor() {
 
   override fun canImportProjectAfterwards(): Boolean = true
 
-  override fun importProjectAfterwards(project: Project, file: VirtualFile) {
-    importProvider.linkToExistingProject(file, project)
+  override suspend fun importProjectAfterwardsAsync(project: Project, file: VirtualFile) {
+    importProvider.linkToExistingProjectAsync(file, project)
   }
 }

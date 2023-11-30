@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.AbstractBundle;
@@ -32,10 +32,7 @@ final class ConfigurableGroupEP implements PluginAware {
    * @see com.intellij.openapi.options.ConfigurableEP#parentId
    * @see com.intellij.openapi.options.ConfigurableEP#groupId
    */
-  @NonNls
-  @RequiredElement
-  @Attribute("id")
-  public String id;
+  @RequiredElement @Attribute("id") public @NonNls String id;
 
   /**
    * This attribute is used to create a hierarchy of settings.
@@ -44,9 +41,7 @@ final class ConfigurableGroupEP implements PluginAware {
    * @see com.intellij.openapi.options.ConfigurableEP#parentId
    * @see com.intellij.openapi.options.ConfigurableEP#groupId
    */
-  @NonNls
-  @Attribute("parentId")
-  public String parentId;
+  @Attribute("parentId") public @NonNls String parentId;
 
   /**
    * This attribute specifies the weight of the configurable group within a parent group.
@@ -61,9 +56,7 @@ final class ConfigurableGroupEP implements PluginAware {
    *
    * @see com.intellij.openapi.options.Configurable#getHelpTopic
    */
-  @NonNls
-  @Attribute("helpTopic")
-  public String helpTopic;
+  @Attribute("helpTopic") public @NonNls String helpTopic;
 
   /**
    * This attribute specifies the resource bundle that contains display name and description.
@@ -78,19 +71,13 @@ final class ConfigurableGroupEP implements PluginAware {
    *
    * @see com.intellij.openapi.options.Configurable#getDisplayName
    */
-  @RequiredElement
-  @Attribute("displayNameKey")
-  @NlsContexts.ConfigurableName
-  public String displayNameKey;
+  @RequiredElement @Attribute("displayNameKey") public @NlsContexts.ConfigurableName String displayNameKey;
 
   /**
    * This attribute specifies the key to retrieve a description from the given {@link #bundle}.
    * Note that it should be HTML-based text to layout a long text in a proper way.
    */
-  @RequiredElement
-  @Attribute("descriptionKey")
-  @NlsContexts.DetailedDescription
-  public String descriptionKey;
+  @RequiredElement @Attribute("descriptionKey") public @NlsContexts.DetailedDescription String descriptionKey;
 
   private PluginDescriptor myPluginDescriptor;
 

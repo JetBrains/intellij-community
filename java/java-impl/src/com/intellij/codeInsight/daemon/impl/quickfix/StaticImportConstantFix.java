@@ -40,6 +40,11 @@ class StaticImportConstantFix extends StaticImportMemberFix<PsiField, PsiJavaCod
   }
 
   @Override
+  protected @NotNull String getMemberKindPresentableText() {
+    return QuickFixBundle.message("static.import.constant.kind.text");
+  }
+
+  @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return generatePreview(file, (__, field) -> AddSingleMemberStaticImportAction.bindAllClassRefs(file, field, field.getName(), field.getContainingClass()));
   }

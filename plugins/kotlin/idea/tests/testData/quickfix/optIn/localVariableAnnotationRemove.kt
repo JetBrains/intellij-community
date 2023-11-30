@@ -1,6 +1,4 @@
 // "Remove annotation" "true"
-// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
-// WITH_STDLIB
 
 @RequiresOptIn
 @Target(AnnotationTarget.LOCAL_VARIABLE)

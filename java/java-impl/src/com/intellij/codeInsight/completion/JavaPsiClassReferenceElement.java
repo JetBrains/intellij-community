@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.lang.java.JavaLanguage;
@@ -33,7 +33,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     myQualifiedName = psiClass.getQualifiedName();
     myClass = psiClass;
     setInsertHandler(AllClassesGetter.TRY_SHORTENING);
-    setTailType(TailType.NONE);
+    setTailType(TailTypes.noneType());
     myPackageDisplayName = PsiFormatUtil.getPackageDisplayName(psiClass);
   }
 

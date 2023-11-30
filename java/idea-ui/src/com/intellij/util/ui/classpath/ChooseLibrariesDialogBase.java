@@ -255,7 +255,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
 
     @Override
     protected void update(@NotNull PresentationData presentation) {
-      //todo[nik] this is workaround for bug in getTemplatePresentation().setIcons()
+      //todo this is workaround for bug in getTemplatePresentation().setIcons()
       presentation.setIcon(getTemplatePresentation().getIcon(false));
     }
   }

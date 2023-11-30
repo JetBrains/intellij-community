@@ -9,7 +9,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.platform.util.ArgsParser
 import com.intellij.util.SystemProperties
@@ -20,6 +21,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.asDeferred
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 import kotlin.system.exitProcess
 
@@ -33,8 +35,8 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
     }
     //IDEA-241709
     System.setProperty("ide.browser.jcef.enabled", false.toString())
-    //disable vcs log
-    System.setProperty("vcs.log.index.git", false.toString())
+    //disable vcs log indexes
+    System.setProperty("vcs.log.index.enable", false.toString())
     //disable slow edt access assertions
     System.setProperty("ide.slow.operations.assertion", false.toString())
 
@@ -73,33 +75,31 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
       exitProcess(2)
     }
 
-    val pathToConfig = commandArgs.pathToConfigurationFile
-    if (pathToConfig != null) {
-      EnvironmentUtil.setPathToConfigurationFile(pathToConfig.toAbsolutePath())
-    }
+    setEnvironmentConfiguration(commandArgs)
+
+    configureVcsIndexing(commandArgs)
 
     val buildMode = getBuildMode(commandArgs)
     val builders = System.getenv()["IJ_WARMUP_BUILD_BUILDERS"]?.split(";")?.toHashSet()
 
     val application = ApplicationManager.getApplication()
     WarmupStatus.statusChanged(application, WarmupStatus.InProgress)
+    val timeStart = System.currentTimeMillis()
 
     initLogger(args)
 
-    var totalIndexedFiles = 0
+    val totalIndexedFiles = AtomicInteger(0)
     val handler = object : ProjectIndexingActivityHistoryListener {
       override fun onFinishedDumbIndexing(history: ProjectDumbIndexingHistory) {
-        totalIndexedFiles += history.totalStatsPerFileType.values.sumOf { it.totalNumberOfFiles }
+        totalIndexedFiles.addAndGet(history.totalStatsPerFileType.values.sumOf { it.totalNumberOfFiles })
       }
     }
-    application.messageBus.connect().subscribe(ProjectIndexingActivityHistoryListener.TOPIC, handler)
+    application.messageBus.simpleConnect().subscribe(ProjectIndexingActivityHistoryListener.TOPIC, handler)
 
     val project = withLoggingProgresses {
-      blockingContext {
-        waitIndexInitialization()
-      }
+      waitIndexInitialization()
       val project = try {
-        importOrOpenProject(commandArgs, it)
+        importOrOpenProject(commandArgs)
       }
       catch(t: Throwable) {
         WarmupLogger.logError("Failed to load project", t)
@@ -119,21 +119,27 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
     waitForRefreshQueue()
 
     withLoggingProgresses {
-      withContext(Dispatchers.EDT) {
-        blockingContext {
-          ProjectManager.getInstance().closeAndDispose(project)
-        }
-      }
+      ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = true)
     }
 
-    WarmupStatus.statusChanged(application, WarmupStatus.Finished(totalIndexedFiles))
-    WarmupLogger.logInfo("IDE Warm-up finished. $totalIndexedFiles files were indexed. Exiting the application...")
+    WarmupStatus.statusChanged(application, WarmupStatus.Finished(totalIndexedFiles.get()))
+    val timeEnd = System.currentTimeMillis()
+
+    WarmupLogger.logInfo("""IDE Warm-up finished.
+ - Elapsed time: ${Formats.formatDuration(timeEnd - timeStart)}
+ - Number of indexed files: $totalIndexedFiles. 
+Exiting the application...""")
+
     withContext(Dispatchers.EDT) {
       blockingContext {
         application.exit(false, true, false)
       }
     }
   }
+}
+
+private fun configureVcsIndexing(commandArgs: WarmupProjectArgs) {
+  System.setProperty("vcs.log.index.enable", commandArgs.indexGitLog.toString())
 }
 
 private class InvalidWarmupArgumentsException(errorMessage: String) : Exception(errorMessage)
@@ -156,7 +162,7 @@ private fun getBuildMode(args: WarmupProjectArgs) : BuildMode? {
 }
 
 private suspend fun waitForCachesSupports(project: Project) {
-  val projectIndexesWarmupSupports = ProjectIndexesWarmupSupport.EP_NAME.getExtensions(project)
+  val projectIndexesWarmupSupports = ProjectIndexesWarmupSupport.EP_NAME.getExtensionList(project)
   WarmupLogger.logInfo("Waiting for all ProjectIndexesWarmupSupport[${projectIndexesWarmupSupports.size}]...")
   val futures = projectIndexesWarmupSupports.mapNotNull { support ->
     try {
@@ -178,10 +184,17 @@ private suspend fun waitForCachesSupports(project: Project) {
   WarmupLogger.logInfo("All ProjectIndexesWarmupSupport.waitForCaches completed")
 }
 
+private fun setEnvironmentConfiguration(commandArgs : WarmupProjectArgs) {
+  val pathToConfig = commandArgs.pathToConfigurationFile
+  if (pathToConfig != null) {
+    EnvironmentUtil.setPathToConfigurationFile(pathToConfig.toAbsolutePath())
+  }
+}
+
 private suspend fun waitForBuilders(project: Project, rebuild: BuildMode, builders: Set<String>?) {
   fun isBuilderEnabled(id: String): Boolean = if (builders.isNullOrEmpty()) true else builders.contains(id)
 
-  val projectBuildWarmupSupports = ProjectBuildWarmupSupport.EP_NAME.getExtensions(project).filter { builder ->
+  val projectBuildWarmupSupports = ProjectBuildWarmupSupport.EP_NAME.getExtensionList(project).filter { builder ->
     isBuilderEnabled(builder.getBuilderId())
   }
   WarmupLogger.logInfo("Starting additional project builders[${projectBuildWarmupSupports.size}] (rebuild=$rebuild)...")

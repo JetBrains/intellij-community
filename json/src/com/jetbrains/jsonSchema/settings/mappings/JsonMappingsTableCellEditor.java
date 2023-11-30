@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.openapi.Disposable;
@@ -27,7 +27,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
-class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
+final class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
   final TextFieldWithBrowseButton myComponent;
   final JPanel myWrapper;
 
@@ -113,7 +113,7 @@ class JsonMappingsTableCellEditor extends AbstractTableCellEditor {
     return myComponent.getChildComponent().getText();
   }
 
-  private static class MyFileTextFieldImpl extends FileTextFieldImpl {
+  private static final class MyFileTextFieldImpl extends FileTextFieldImpl {
     private final JTextField myTextField;
     private final Project myProject;
 

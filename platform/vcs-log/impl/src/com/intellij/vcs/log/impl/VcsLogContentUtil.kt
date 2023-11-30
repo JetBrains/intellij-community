@@ -2,10 +2,9 @@
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
@@ -18,9 +17,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
-import com.intellij.vcs.log.ui.MainVcsLogUi
-import com.intellij.vcs.log.ui.VcsLogPanel
-import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.ui.*
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.JComponent
@@ -31,7 +28,7 @@ import javax.swing.JComponent
 object VcsLogContentUtil {
 
   private fun getLogUi(c: JComponent): VcsLogUiEx? {
-    val uis = VcsLogPanel.getLogUis(c)
+    val uis = VcsLogUiHolder.getLogUis(c)
     require(uis.size <= 1) { "Component $c has more than one log ui: $uis" }
     return uis.singleOrNull()
   }
@@ -102,7 +99,8 @@ object VcsLogContentUtil {
 
   @RequiresEdt
   fun showLogIsNotAvailableMessage(project: Project) {
-    VcsBalloonProblemNotifier.showOverChangesView(project, VcsLogBundle.message("vcs.log.is.not.available"), MessageType.WARNING)
+    VcsNotifier.getInstance(project).notifyWarning(VcsLogNotificationIdsHolder.LOG_NOT_AVAILABLE, "",
+                                                   VcsLogBundle.message("vcs.log.is.not.available"))
   }
 
   internal fun findMainLog(cm: ContentManager): Content? {

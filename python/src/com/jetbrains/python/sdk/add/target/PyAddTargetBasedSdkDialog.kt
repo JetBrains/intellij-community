@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.util.function.Consumer
@@ -27,7 +28,9 @@ class PyAddTargetBasedSdkDialog private constructor(private val project: Project
 
     centerPanel = PyAddTargetBasedSdkPanel(project, module, existingSdks, targetEnvironmentConfiguration?.let { { it } },
                                            config = PythonLanguageRuntimeConfiguration(),
-                                           introspectable = null)
+                                           introspectable = null).apply {
+                                             Disposer.register(disposable, this)
+    }
   }
 
   override fun createCenterPanel(): JComponent = centerPanel.createCenterPanel()

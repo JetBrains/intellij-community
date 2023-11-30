@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,21 +35,18 @@ public class EnumPropertyAccessor extends ExternalStringAccessor<Enum<?>> implem
     return StringUtil.toLowerCase(enumConstant.toString().replace(" ", "_"));
   }
 
-  @NotNull
   @Override
-  public List<String> getChoices() {
+  public @NotNull List<String> getChoices() {
     return new ArrayList<>(myEnumMap.keySet());
   }
 
-  @Nullable
   @Override
-  protected Enum<?> fromExternal(@NotNull String str) {
+  protected @Nullable Enum<?> fromExternal(@NotNull String str) {
     return myEnumMap.get(str);
   }
 
-  @NotNull
   @Override
-  protected String toExternal(@NotNull Enum<?> value) {
+  protected @NotNull String toExternal(@NotNull Enum<?> value) {
     List<String> names = myEnumMap.getKeysByValue(value);
     assert names != null && names.size() > 0 : "Unexpected value " + value;
     return names.get(0);

@@ -23,11 +23,14 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.ui.popup.util.BaseTreePopupStep;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ActiveComponent;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -42,15 +45,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class NewRunConfigurationPopup {
   static final ConfigurationType HIDDEN_ITEMS_STUB = new ConfigurationType() {
-    @NotNull
     @Override
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
       return "";
     }
 
-    @Nls
     @Override
-    public String getConfigurationTypeDescription() {
+    public @Nls String getConfigurationTypeDescription() {
       return "";
     }
 
@@ -59,9 +60,8 @@ public final class NewRunConfigurationPopup {
       return EmptyIcon.ICON_16;
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return "";
     }
 
@@ -71,13 +71,12 @@ public final class NewRunConfigurationPopup {
     }
   };
 
-  @NotNull
-  public static JBPopup createAddPopup(@NotNull Project project,
-                                       @NotNull final List<? extends ConfigurationType> typesToShow,
-                                       @NotNull @Nls final String defaultText,
-                                       @NotNull final Consumer<? super ConfigurationFactory> creator,
-                                       @Nullable final ConfigurationType selectedConfigurationType,
-                                       @Nullable final Runnable finalStep, boolean showTitle) {
+  public static @NotNull JBPopup createAddPopup(@NotNull Project project,
+                                                final @NotNull List<? extends ConfigurationType> typesToShow,
+                                                final @NotNull @Nls String defaultText,
+                                                final @NotNull Consumer<? super ConfigurationFactory> creator,
+                                                final @Nullable ConfigurationType selectedConfigurationType,
+                                                final @Nullable Runnable finalStep, boolean showTitle) {
     if (Registry.is("run.configuration.use.tree.popup.to.add.new", false)) {
       return createAddTreePopup(project, creator, selectedConfigurationType, showTitle);
     }
@@ -86,8 +85,7 @@ public final class NewRunConfigurationPopup {
       showTitle ? ExecutionBundle.message("add.new.run.configuration.action2.name") : null, typesToShow) {
 
       @Override
-      @NotNull
-      public String getTextFor(final ConfigurationType type) {
+      public @NotNull String getTextFor(final ConfigurationType type) {
         return type != HIDDEN_ITEMS_STUB ? type.getDisplayName() : defaultText;
       }
 
@@ -131,8 +129,7 @@ public final class NewRunConfigurationPopup {
           ExecutionBundle.message("add.new.run.configuration.action.name", type.getDisplayName()), factories) {
 
           @Override
-          @NotNull
-          public String getTextFor(final ConfigurationFactory value) {
+          public @NotNull String getTextFor(final ConfigurationFactory value) {
             return value.getName();
           }
 
@@ -172,8 +169,8 @@ public final class NewRunConfigurationPopup {
   }
 
   private static JBPopup createAddTreePopup(@NotNull Project project,
-                                            @NotNull final Consumer<? super ConfigurationFactory> creator,
-                                            @Nullable final ConfigurationType selectedConfigurationType,
+                                            final @NotNull Consumer<? super ConfigurationFactory> creator,
+                                            final @Nullable ConfigurationType selectedConfigurationType,
                                             boolean showTitle) {
     NewRunConfigurationTreePopupFactory treePopupFactory = ApplicationManager.getApplication().getService(NewRunConfigurationTreePopupFactory.class);
     treePopupFactory.initStructure(project);
@@ -181,9 +178,8 @@ public final class NewRunConfigurationPopup {
     AbstractTreeStructure structure = new AbstractTreeStructure() {
       private final Map<NodeDescriptor<?>, NodeDescriptor<?>[]> myCache = new HashMap<>();
 
-      @NotNull
       @Override
-      public Object getRootElement() {
+      public @NotNull Object getRootElement() {
         return treePopupFactory.getRootElement();
       }
 
@@ -196,15 +192,13 @@ public final class NewRunConfigurationPopup {
         return myCache.get(nodeDescriptor);
       }
 
-      @Nullable
       @Override
-      public Object getParentElement(@NotNull Object element) {
+      public @Nullable Object getParentElement(@NotNull Object element) {
         return ((NodeDescriptor<?>)element).getParentDescriptor();
       }
 
-      @NotNull
       @Override
-      public NodeDescriptor<?> createDescriptor(@NotNull Object element, @Nullable NodeDescriptor parentDescriptor) {
+      public @NotNull NodeDescriptor<?> createDescriptor(@NotNull Object element, @Nullable NodeDescriptor parentDescriptor) {
         return treePopupFactory.createDescriptor(project, element, parentDescriptor, NodeDescriptor.DEFAULT_WEIGHT);
       }
 
@@ -279,17 +273,23 @@ public final class NewRunConfigurationPopup {
       .createActionToolbar(ActionPlaces.POPUP, new DefaultActionGroup(collapseAllAction), true);
     toolbar.setTargetComponent(treePopup.getComponent());
     toolbar.setMiniMode(true);
+    var toolbarInsets = JBUI.CurrentTheme.Popup.headerInsets();
+    if (toolbarInsets instanceof JBInsets scaledInsets) {
+      toolbarInsets = scaledInsets.getUnscaled(); // JBUI.Borders.empty() will scale, need this to avoid double scaling
+    }
+    JBEmptyBorder toolbarBorder = ExperimentalUI.isNewUI()
+      ? JBUI.Borders.empty(toolbarInsets.top, 1, toolbarInsets.bottom, 1)
+      : JBUI.Borders.empty(2, 1, 0, 1);
     treePopup.getTitle().setButtonComponent(new ActiveComponent() {
       @Override
       public void setActive(boolean active) {
       }
 
-      @NotNull
       @Override
-      public JComponent getComponent() {
+      public @NotNull JComponent getComponent() {
         return toolbar.getComponent();
       }
-    }, JBUI.Borders.empty(2, 1, 0, 1));
+    }, toolbarBorder);
     return treePopup;
   }
 }

@@ -68,11 +68,7 @@ class PyRerunFailedTestsAction(componentContainer: ComponentContainer) : Abstrac
                                                            env: ExecutionEnvironment?,
                                                            private val state: PythonTestCommandLineStateBase<*>)
     : PythonTestCommandLineStateBase<AbstractPythonTestRunConfiguration<*>>(configuration, env) {
-    private val project: Project
-
-    init {
-      project = configuration.project
-    }
+    private val project = configuration.project
 
     override fun getRunner(): HelperPackage = state.runner
 

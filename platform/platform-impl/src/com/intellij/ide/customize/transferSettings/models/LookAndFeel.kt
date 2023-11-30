@@ -1,18 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings.models
 
 import com.intellij.ide.customize.transferSettings.TransferableLafId
-import com.intellij.ide.ui.LafManager
-import javax.swing.UIManager
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
+import com.intellij.ide.ui.laf.UiThemeProviderListManager
 
 interface ILookAndFeel {
   val transferableId: TransferableLafId
-  fun getPreview(): UIManager.LookAndFeelInfo
+  fun getPreview(): UIThemeLookAndFeelInfo
 }
 
-class BundledLookAndFeel(override val transferableId: TransferableLafId, val lafInfo: UIManager.LookAndFeelInfo): ILookAndFeel {
+class BundledLookAndFeel(override val transferableId: TransferableLafId, val lafInfo: UIThemeLookAndFeelInfo): ILookAndFeel {
   companion object {
-    fun fromManager(transferableId: TransferableLafId, lafName: String): BundledLookAndFeel = LafManager.getInstance().installedLookAndFeels.first { it.name == lafName }
+    fun fromManager(transferableId: TransferableLafId, lafName: String): BundledLookAndFeel = UiThemeProviderListManager.getInstance().findThemeByName(lafName)
       ?.let { BundledLookAndFeel(transferableId, it) } ?: error("LookAndFeel $lafName not found")
   }
 
@@ -28,7 +28,7 @@ class PluginLookAndFeel(
   override fun getPreview() = fallback.lafInfo
 }
 
-class SystemDarkThemeDetectorLookAndFeel(val darkLaf: ILookAndFeel, val lightLaf: ILookAndFeel) : ILookAndFeel {
+class SystemDarkThemeDetectorLookAndFeel(private val darkLaf: ILookAndFeel, val lightLaf: ILookAndFeel) : ILookAndFeel {
   override fun getPreview() = darkLaf.getPreview() // TODO return
   override val transferableId = darkLaf.transferableId
 }

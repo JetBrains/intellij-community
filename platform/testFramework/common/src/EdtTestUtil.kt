@@ -11,7 +11,16 @@ import org.jetbrains.annotations.TestOnly
 @TestOnly
 inline fun <V> runInEdtAndGet(crossinline compute: () -> V): V {
   @Suppress("DEPRECATION", "RemoveExplicitTypeArguments")
-  return EdtTestUtil.runInEdtAndGet(ThrowableComputable<V, Throwable> { compute() })
+  return EdtTestUtil.runInEdtAndGet(ThrowableComputable<V, Throwable> { compute() }, true)
+}
+
+/**
+ * Consider using Kotlin coroutines and [Dispatchers.EDT][com.intellij.openapi.application.EDT].
+ */
+@TestOnly
+inline fun <V> runInEdtAndGet(writeIntent: Boolean, crossinline compute: () -> V): V {
+  @Suppress("DEPRECATION", "RemoveExplicitTypeArguments")
+  return EdtTestUtil.runInEdtAndGet(ThrowableComputable<V, Throwable> { compute() }, writeIntent)
 }
 
 /**
@@ -20,5 +29,14 @@ inline fun <V> runInEdtAndGet(crossinline compute: () -> V): V {
 @TestOnly
 inline fun runInEdtAndWait(crossinline runnable: () -> Unit) {
   @Suppress("DEPRECATION", "RemoveExplicitTypeArguments")
-  EdtTestUtil.runInEdtAndWait(ThrowableRunnable<Throwable> { runnable() })
+  EdtTestUtil.runInEdtAndWait(ThrowableRunnable<Throwable> { runnable() }, true)
+}
+
+/**
+ * Consider using Kotlin coroutines and [Dispatchers.EDT][com.intellij.openapi.application.EDT].
+ */
+@TestOnly
+inline fun runInEdtAndWait(writeIntent: Boolean, crossinline runnable: () -> Unit) {
+  @Suppress("DEPRECATION", "RemoveExplicitTypeArguments")
+  EdtTestUtil.runInEdtAndWait(ThrowableRunnable<Throwable> { runnable() }, writeIntent)
 }

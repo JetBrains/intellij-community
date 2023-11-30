@@ -747,7 +747,7 @@ public final class Palette implements PersistentStateComponent<Element>, Disposa
    * Updates UI of editors and renderers of all introspected properties
    */
   private final class MyLafManagerListener implements LafManagerListener {
-    private void updateUI(Property<?, ?> property) {
+    private static void updateUI(Property<?, ?> property) {
       PropertyRenderer<?> renderer = property.getRenderer();
       renderer.updateUI();
       PropertyEditor<?> editor = property.getEditor();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.config;
 
 import com.intellij.openapi.util.Comparing;
@@ -9,8 +9,7 @@ import java.util.Comparator;
 public abstract class AbstractProperty<T> {
   public static final Comparator<AbstractProperty> NAME_COMPARATOR = Comparator.comparing(AbstractProperty::getName);
 
-  @NonNls
-  public abstract String getName();
+  public abstract @NonNls String getName();
 
   public abstract T getDefault(AbstractPropertyContainer container);
 
@@ -36,7 +35,7 @@ public abstract class AbstractProperty<T> {
     return getName();
   }
 
-  public static abstract class AbstractPropertyContainer<PropertyImpl extends AbstractProperty> {
+  public abstract static class AbstractPropertyContainer<PropertyImpl extends AbstractProperty> {
     public static final AbstractPropertyContainer EMPTY = new AbstractPropertyContainer() {
       @Override
       public Object getValueOf(AbstractProperty property) {

@@ -20,6 +20,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import com.jetbrains.python.sdk.poetry.isPoetry
+import com.jetbrains.python.statistics.InterpreterCreationMode.*
 import com.jetbrains.python.statistics.InterpreterTarget.*
 import com.jetbrains.python.statistics.InterpreterType.*
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -95,9 +96,16 @@ val EXECUTION_TYPE = EventFields.String("executionType", listOf(
 enum class InterpreterType(val value: String) {
   PIPENV("pipenv"),
   CONDAVENV("condavenv"),
+  BASE_CONDA("base_conda"),
   VIRTUALENV("virtualenv"),
   REGULAR("regular"),
   POETRY("poetry")
+}
+
+enum class InterpreterCreationMode(val value: String) {
+  SIMPLE("simple"),
+  CUSTOM("custom"),
+  NA("not_applicable"),
 }
 
 val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf(PIPENV.value,
@@ -106,9 +114,13 @@ val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf(PIPENV.value
                                                                           REGULAR.value,
                                                                           POETRY.value))
 
+val INTERPRETER_CREATION_MODE = EventFields.String("interpreter_creation_mode", listOf(SIMPLE.value,
+                                                                                     CUSTOM.value,
+                                                                                     NA.value))
+
 
 private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(this)?.name ?: "Python"
-val Sdk.version: LanguageLevel get() = PythonSdkType.getLanguageLevelForSdk(this)
+val Sdk?.version: LanguageLevel get() = PythonSdkType.getLanguageLevelForSdk(this)
 val Sdk.executionType: InterpreterTarget
   get() =
     when (val additionalData = sdkAdditionalData) {
@@ -127,6 +139,10 @@ val Sdk.interpreterType: InterpreterType
     else -> REGULAR
   }
 
+/**
+ * Mapping from new targets to an old ones is need to keep compatibility with the current fus schema.
+ * We are going to clean up these code together with housekeeping tasks about getting rid of old remotes.
+ */
 private val PyTargetAwareAdditionalData.executionType: InterpreterTarget
   get() =
     targetEnvironmentConfiguration?.typeId?.let { typeId ->

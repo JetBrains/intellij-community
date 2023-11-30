@@ -3,6 +3,7 @@ package com.intellij.searchEverywhereMl.ranking
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -11,10 +12,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.searchEverywhereMl.SE_TABS
+import com.intellij.searchEverywhereMl.SearchEverywhereSessionPropertyProvider
 import com.intellij.searchEverywhereMl.log.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.ranking.features.*
 import com.intellij.searchEverywhereMl.ranking.id.SearchEverywhereMlItemIdProvider
-import com.intellij.util.concurrency.NonUrgentExecutor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -125,13 +126,13 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                              elements: List<SearchEverywhereFoundElementInfoWithMl>,
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              additionalEvents: List<EventPair<*>>) {
-    NonUrgentExecutor.getInstance().execute {
-      val eventData = mutableListOf<EventPair<*>>()
-      eventData.addAll(additionalEvents)
+    eventId.log(project) {
+      val tabId = cache.tabId
+      addAll(additionalEvents)
 
-      eventData.addAll(
+      addAll(
         getCommonTypeLevelEvents(seSessionId = seSessionId,
-                                 tabId = cache.tabId,
+                                 tabId = tabId,
                                  elementsSize = elements.size,
                                  searchStateFeatures = cache.searchStateFeatures,
                                  timeToFirstResult = timeToFirstResult,
@@ -145,9 +146,8 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                  experimentGroup = cache.experimentGroup)
       )
 
-      eventData.addAll(getElementsEvents(project, shouldLogFeatures, elements, mixedListInfo, elementIdProvider))
-
-      eventId.log(eventData)
+      addAll(SearchEverywhereSessionPropertyProvider.getAllProperties(tabId))
+      addAll(getElementsEvents(project, shouldLogFeatures, elements, mixedListInfo, elementIdProvider))
     }
   }
 
@@ -199,6 +199,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
                                        orderByMl: Boolean,
                                        experimentGroup: Int): List<EventPair<*>> {
     return buildList {
+      val isInternal = ApplicationManager.getApplication().isInternal
       add(SE_TAB_ID_KEY.with(tabId))
       add(SESSION_ID_LOG_DATA_KEY.with(seSessionId))
       add(SEARCH_INDEX_DATA_KEY.with(searchIndex))
@@ -215,6 +216,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
       add(IS_MIXED_LIST.with(isMixedList))
       add(ORDER_BY_ML_GROUP.with(orderByMl))
       add(EXPERIMENT_GROUP.with(experimentGroup))
+      add(IS_INTERNAL.with(isInternal))
     }
   }
 
@@ -272,9 +274,10 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 68, MLSE_RECORDER_ID)
+    private val GROUP = EventLogGroup("mlse.log", 82, MLSE_RECORDER_ID)
     private const val REPORTED_ITEMS_LIMIT = 50
 
+    private val IS_INTERNAL = EventFields.Boolean("isInternal")
     private val ORDER_BY_ML_GROUP = EventFields.Boolean("orderByMl")
     private val EXPERIMENT_GROUP = EventFields.Int("experimentGroup")
     private val FORCE_EXPERIMENT_GROUP = EventFields.Boolean("isForceExperiment")
@@ -286,7 +289,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     private val SE_TAB_ID_KEY = EventFields.String("seTabId", SE_TABS)
     private val CLOSE_POPUP_KEY = EventFields.Boolean("closePopup")
     private val SEARCH_START_TIME_KEY = EventFields.Long("startTime")
-    private val REBUILD_REASON_KEY = EventFields.Enum<SearchRestartReason>("rebuildReason")
+    internal val REBUILD_REASON_KEY = EventFields.Enum<SearchRestartReason>("rebuildReason")
     private val SESSION_ID_LOG_DATA_KEY = EventFields.Int("sessionId")
     private val SEARCH_INDEX_DATA_KEY = EventFields.Int("searchIndex")
     private val LOG_FEATURES_DATA_KEY = EventFields.Boolean("logFeatures")
@@ -307,7 +310,8 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
     @VisibleForTesting
     val ID_KEY = EventFields.Int("id")
-    internal val ACTION_ID_KEY = EventFields.StringValidatedByCustomRule("actionId", "action")
+    @Suppress("DEPRECATION")
+    internal val ACTION_ID_KEY = ActionsEventLogGroup.ActioID("actionId")
 
     @VisibleForTesting
     val FEATURES_DATA_KEY = createFeaturesEventObject()
@@ -326,7 +330,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     // events
     @VisibleForTesting
     val SESSION_FINISHED = registerEvent("sessionFinished", CLOSE_POPUP_KEY, FORCE_EXPERIMENT_GROUP)
-    private val SEARCH_RESTARTED = registerEvent("searchRestarted")
+    internal val SEARCH_RESTARTED = registerEvent("searchRestarted")
 
     private fun collectNameFeaturesToFields(): Map<String, EventField<*>> {
       val nameFeatureToField = hashMapOf<String, EventField<*>>(
@@ -361,6 +365,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
         SE_TAB_ID_KEY,
         EXPERIMENT_GROUP,
         ORDER_BY_ML_GROUP,
+        IS_INTERNAL,
         SEARCH_START_TIME_KEY,
         TIME_TO_FIRST_RESULT_DATA_KEY,
         TYPED_SYMBOL_KEYS,
@@ -374,6 +379,7 @@ class SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
         SEARCH_STATE_FEATURES_DATA_KEY,
         COLLECTED_RESULTS_DATA_KEY
       )
+      fields.addAll(SearchEverywhereSessionPropertyProvider.getAllDeclarations())
       fields.addAll(SearchEverywhereContextFeaturesProvider.getContextFields())
       fields.addAll(additional)
       return GROUP.registerVarargEvent(eventId, *fields.toTypedArray())

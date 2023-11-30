@@ -7,6 +7,8 @@ import java.nio.file.Path
 
 interface ModuleAttachListener {
   companion object {
+
+    @Topic.ProjectLevel
     val TOPIC: Topic<ModuleAttachListener> = Topic(ModuleAttachListener::class.java, Topic.BroadcastDirection.NONE, true)
   }
 

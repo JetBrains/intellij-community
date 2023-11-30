@@ -7,13 +7,11 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -25,19 +23,16 @@ import java.util.Collections;
 import java.util.List;
 
 public class JavaCoverageSuite extends BaseCoverageSuite {
-  private String[] myFilters;
-  private String mySuiteToMerge;
-
   @NonNls
   private static final String FILTER = "FILTER";
   @NonNls
   private static final String EXCLUDED_FILTER = "EXCLUDED_FILTER";
   @NonNls
-  private static final String MERGE_SUITE = "MERGE_SUITE";
-  @NonNls
   private static final String COVERAGE_RUNNER = "RUNNER";
-  private String[] myExcludePatterns;
   private final CoverageEngine myCoverageEngine;
+  private String @Nullable [] myIncludeFilters;
+  private String @Nullable [] myExcludePatterns;
+  private boolean mySkipUnloadedClassesAnalysis;
 
   //read external only
   public JavaCoverageSuite(@NotNull final CoverageEngine coverageEngine) {
@@ -47,30 +42,58 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
 
   public JavaCoverageSuite(final String name,
                            final CoverageFileProvider coverageDataFileProvider,
-                           final String[] filters,
-                           final String[] excludePatterns,
+                           final String @Nullable [] includeFilters,
+                           final String @Nullable [] excludePatterns,
                            final long lastCoverageTimeStamp,
                            final boolean coverageByTestEnabled,
-                           final boolean tracingEnabled,
+                           final boolean branchCoverage,
                            final boolean trackTestFolders,
                            final CoverageRunner coverageRunner,
                            @NotNull final CoverageEngine coverageEngine,
                            final Project project) {
     super(name, coverageDataFileProvider, lastCoverageTimeStamp, coverageByTestEnabled,
-          tracingEnabled, trackTestFolders,
+          branchCoverage, trackTestFolders,
           coverageRunner != null ? coverageRunner : CoverageRunner.getInstance(IDEACoverageRunner.class), project);
 
-    myFilters = filters;
-    myExcludePatterns = excludePatterns;
     myCoverageEngine = coverageEngine;
+    myIncludeFilters = includeFilters;
+    myExcludePatterns = excludePatterns;
+
+    if (coverageRunner instanceof JaCoCoCoverageRunner) {
+      setSkipUnloadedClassesAnalysis(true);
+    }
   }
 
   public final String @NotNull [] getFilteredPackageNames() {
-    return getPackageNames(myFilters);
+    return getPackageNames(myIncludeFilters);
   }
 
   public final String @NotNull [] getExcludedPackageNames() {
     return getPackageNames(myExcludePatterns);
+  }
+
+  final String @Nullable [] getIncludeFilters() {
+    return myIncludeFilters;
+  }
+
+  final void setIncludeFilters(String @Nullable [] filters) {
+    myIncludeFilters = filters;
+  }
+
+  final String @Nullable [] getExcludePatterns() {
+    return myExcludePatterns;
+  }
+
+  final void setExcludePatterns(String @Nullable [] patterns) {
+    myExcludePatterns = patterns;
+  }
+
+  public boolean isSkipUnloadedClassesAnalysis() {
+    return mySkipUnloadedClassesAnalysis;
+  }
+
+  public void setSkipUnloadedClassesAnalysis(boolean skipUnloadedClassesAnalysis) {
+    mySkipUnloadedClassesAnalysis = skipUnloadedClassesAnalysis;
   }
 
   private static String[] getPackageNames(String[] filters) {
@@ -86,7 +109,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   }
 
   public final String @NotNull [] getFilteredClassNames() {
-    return getClassNames(myFilters);
+    return getClassNames(myIncludeFilters);
   }
 
   public final String @NotNull [] getExcludedClassNames() {
@@ -107,11 +130,8 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     super.readExternal(element);
 
     // filters
-    myFilters = readFilters(element, FILTER);
+    myIncludeFilters = readFilters(element, FILTER);
     myExcludePatterns = readFilters(element, EXCLUDED_FILTER);
-
-    // suite to merge
-    mySuiteToMerge = element.getAttributeValue(MERGE_SUITE);
 
     if (getRunner() == null) {
       setRunner(CoverageRunner.getInstance(IDEACoverageRunner.class)); //default
@@ -130,13 +150,12 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   @Override
   public final void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
-    if (mySuiteToMerge != null) {
-      element.setAttribute(MERGE_SUITE, mySuiteToMerge);
-    }
-    writeFilters(element, myFilters, FILTER);
+    writeFilters(element, myIncludeFilters, FILTER);
     writeFilters(element, myExcludePatterns, EXCLUDED_FILTER);
     final CoverageRunner coverageRunner = getRunner();
-    element.setAttribute(COVERAGE_RUNNER, coverageRunner != null ? coverageRunner.getId() : "emma");
+    if (coverageRunner != null) {
+      element.setAttribute(COVERAGE_RUNNER, coverageRunner.getId());
+    }
   }
 
   private static void writeFilters(Element element, final String[] filters, final String tagName) {
@@ -150,53 +169,17 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   }
 
   @Override
-  @Nullable
-  public ProjectData getCoverageData(final CoverageDataManager coverageDataManager) {
-    final ProjectData data = getCoverageData();
-    if (data != null) return data;
-    ProjectData map = loadProjectInfo();
-    if (mySuiteToMerge != null) {
-      JavaCoverageSuite toMerge = null;
-      final CoverageSuite[] suites = coverageDataManager.getSuites();
-      for (CoverageSuite suite : suites) {
-        if (Comparing.strEqual(suite.getPresentableName(), mySuiteToMerge)) {
-          if (!Comparing.strEqual(((JavaCoverageSuite)suite).getSuiteToMerge(), getPresentableName())) {
-            toMerge = (JavaCoverageSuite)suite;
-          }
-          break;
-        }
-      }
-      if (toMerge != null) {
-        final ProjectData projectInfo = toMerge.getCoverageData(coverageDataManager);
-        if (map != null) {
-          map.merge(projectInfo);
-        } else {
-          map = projectInfo;
-        }
-      }
-    }
-    setCoverageData(map);
-    return map;
-  }
-
-  @Override
   @NotNull
   public final CoverageEngine getCoverageEngine() {
     return myCoverageEngine;
-  }
-
-  @Nullable
-  public final String getSuiteToMerge() {
-    return mySuiteToMerge;
   }
 
   public final boolean isClassFiltered(final String classFQName) {
     return isClassFiltered(classFQName, getFilteredClassNames());
   }
 
-  public final boolean isClassFiltered(final String classFQName,
-                                 final String[] classPatterns) {
-    for (final String className : classPatterns) {
+  public static boolean isClassFiltered(String classFQName, String[] classPatterns) {
+    for (String className : classPatterns) {
       if (className.equals(classFQName) || classFQName.startsWith(className) && classFQName.charAt(className.length()) == '$') {
         return true;
       }

@@ -20,23 +20,20 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiAnnotationParameterList;
 import com.intellij.psi.impl.java.stubs.impl.PsiAnnotationParameterListStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.AnnotationParamListElement;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationParamListImpl;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.*;
 import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
  */
-public class JavaAnnotationParameterListType extends JavaStubElementType<PsiAnnotationParameterListStub, PsiAnnotationParameterList> {
+public class JavaAnnotationParameterListType extends JavaStubElementType<PsiAnnotationParameterListStub, PsiAnnotationParameterList>
+  implements EmptyStubSerializer<PsiAnnotationParameterListStub> {
 
   protected JavaAnnotationParameterListType() {
-    super("ANNOTATION_PARAMETER_LIST", true);
+    super("ANNOTATION_PARAMETER_LIST", true, BasicJavaElementType.BASIC_ANNOTATION_PARAMETER_LIST);
   }
 
   @Override
@@ -62,12 +59,7 @@ public class JavaAnnotationParameterListType extends JavaStubElementType<PsiAnno
   }
 
   @Override
-  public void serialize(@NotNull PsiAnnotationParameterListStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-  }
-
-  @NotNull
-  @Override
-  public PsiAnnotationParameterListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PsiAnnotationParameterListStub instantiate(StubElement<?> parentStub) {
     return new PsiAnnotationParameterListStubImpl(parentStub);
   }
 

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.navigationToolbar
 
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.idea.KotlinIconProvider
 import org.jetbrains.kotlin.idea.projectView.KtDeclarationTreeNode.Companion.tryGetRepresentableText
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -11,11 +10,7 @@ import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinNavBarModelExtension : AbstractNavBarModelExtensionCompatBase() {
     override fun getPresentableText(item: Any?): String? =
-        when (item) {
-            is KtDeclaration -> tryGetRepresentableText(item, renderArguments = false)
-            is PsiNamedElement -> item.name
-            else -> null
-        }
+        (item as? KtDeclaration)?.let { tryGetRepresentableText(it, renderArguments = false) }
 
     override fun adjustElementImpl(psiElement: PsiElement?): PsiElement? {
         if (psiElement is KtDeclaration) {

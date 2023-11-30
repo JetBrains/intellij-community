@@ -24,8 +24,12 @@ import org.jetbrains.kotlin.psi.psiUtil.PsiUtilsKt;
 
 import javax.swing.*;
 
+import static org.jetbrains.kotlin.idea.base.searching.usages.dialogs.Utils.isAbstract;
+import static org.jetbrains.kotlin.idea.base.searching.usages.dialogs.Utils.isOpen;
+
 public class KotlinFindFunctionUsagesDialog extends FindMethodUsagesDialog {
     private StateRestoringCheckBox expectedUsages;
+    private StateRestoringCheckBox overrideUsages;
 
     public KotlinFindFunctionUsagesDialog(
             PsiMethod method,
@@ -37,6 +41,11 @@ public class KotlinFindFunctionUsagesDialog extends FindMethodUsagesDialog {
             FindUsagesHandler handler
     ) {
         super(method, project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, handler);
+    }
+
+    @Override
+    public boolean isIncludeOverloadedMethodsAvailable() {
+        return true;
     }
 
     @NotNull
@@ -55,15 +64,13 @@ public class KotlinFindFunctionUsagesDialog extends FindMethodUsagesDialog {
         JPanel findWhatPanel = super.createFindWhatPanel();
 
         if (findWhatPanel != null) {
-            Utils.renameCheckbox(
+            Utils.removeCheckbox(
                     findWhatPanel,
-                    JavaBundle.message("find.what.implementing.methods.checkbox"),
-                    KotlinBundle.message("find.declaration.implementing.methods.checkbox")
+                    JavaBundle.message("find.what.implementing.methods.checkbox")
             );
-            Utils.renameCheckbox(
+            Utils.removeCheckbox(
                     findWhatPanel,
-                    JavaBundle.message("find.what.overriding.methods.checkbox"),
-                    KotlinBundle.message("find.declaration.overriding.methods.checkbox")
+                    JavaBundle.message("find.what.overriding.methods.checkbox")
             );
         }
 
@@ -73,6 +80,18 @@ public class KotlinFindFunctionUsagesDialog extends FindMethodUsagesDialog {
     @Override
     protected void addUsagesOptions(JPanel optionsPanel) {
         super.addUsagesOptions(optionsPanel);
+
+        KtNamedDeclaration method = (KtNamedDeclaration) myUsagesHandler.getPsiElement();
+        if (isOpen(method)) {
+            overrideUsages = addCheckboxToPanel(
+              isAbstract(method)
+              ? KotlinBundle.message("find.declaration.implementing.methods.checkbox")
+              : KotlinBundle.message("find.declaration.overriding.methods.checkbox"),
+              getFindUsagesOptions().getSearchOverrides(),
+              optionsPanel,
+              true
+            );
+        }
 
         if (!Utils.renameCheckbox(
                 optionsPanel,
@@ -108,9 +127,20 @@ public class KotlinFindFunctionUsagesDialog extends FindMethodUsagesDialog {
     public void calcFindUsagesOptions(JavaMethodFindUsagesOptions options) {
         super.calcFindUsagesOptions(options);
 
+        options.isOverridingMethods = isSelected(overrideUsages);
+
         KotlinFunctionFindUsagesOptions kotlinOptions = (KotlinFunctionFindUsagesOptions) options;
         if (expectedUsages != null) {
             kotlinOptions.setSearchExpected(expectedUsages.isSelected());
         }
     }
+
+    @Override
+    protected void update() {
+        super.update();
+        if (!isOKActionEnabled() && (isSelected(overrideUsages))) {
+            setOKActionEnabled(true);
+        }
+    }
+
 }

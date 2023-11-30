@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,7 @@ import com.intellij.openapi.ui.popup.util.RoundedCellRenderer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -69,7 +71,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     try {
       GotoData gotoData = getSourceAndTargetElements(editor, file);
       Consumer<JBPopup> showPopupProcedure = popup -> {
-        popup.showInBestPositionFor(editor);
+        if (!editor.isDisposed()) {
+          popup.showInBestPositionFor(editor);
+        }
       };
       if (gotoData != null) {
         show(project, editor, file, gotoData, showPopupProcedure);
@@ -79,8 +83,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
     }
     catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification(
-        CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"));
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+        CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"),
+        DumbModeBlockedFunctionality.GotoTarget);
     }
   }
 
@@ -112,6 +117,13 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       return;
     }
 
+    showNotEmpty(project, gotoData, showPopup);
+  }
+
+  void showNotEmpty(@NotNull Project project, @NotNull GotoData gotoData, @NotNull Consumer<? super JBPopup> showPopup) {
+    PsiElement[] targets = gotoData.targets;
+    List<AdditionalAction> additionalActions = gotoData.additionalActions;
+
     boolean finished = gotoData.listUpdaterTask == null || gotoData.listUpdaterTask.isFinished();
     if (targets.length == 1 && additionalActions.isEmpty() && finished) {
       navigateToElement(targets[0]);
@@ -142,7 +154,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     if (useEditorFont()) {
       builder.setFont(EditorUtil.getEditorFont());
     }
-    builder.setRenderer(new RoundedCellRenderer<>(new GotoTargetRenderer(o -> ((ItemWithPresentation)o).getPresentation()))).
+    var renderer = Registry.is("ide.goto.target.new.renderer")
+                   ? new GotoTargetRendererNew(o -> ((ItemWithPresentation)o).getPresentation())
+                   : new RoundedCellRenderer<>(new GotoTargetRenderer(o -> ((ItemWithPresentation)o).getPresentation()));
+    builder.setRenderer(renderer).
       setItemsChosenCallback(selectedElements -> {
         for (ItemWithPresentation element : selectedElements) {
           if (element.getItem() instanceof AdditionalAction) {
@@ -182,11 +197,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     if (gotoData.listUpdaterTask != null) {
       Alarm alarm = new Alarm(popup);
-      alarm.addRequest(() -> {
-        if (!editor.isDisposed()) {
-          showPopup.accept(popup);
-        }
-      }, 300);
+      alarm.addRequest(() -> showPopup.accept(popup), 300);
       gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
@@ -216,8 +227,9 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
     }
     catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification(
-        CodeInsightBundle.message("notification.navigation.is.not.available.while.indexing"));
+      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+        CodeInsightBundle.message("notification.navigation.is.not.available.while.indexing"),
+        DumbModeBlockedFunctionality.GotoTarget);
     }
   }
 
@@ -321,7 +333,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     void execute();
   }
 
-  public static class GotoData {
+  public static final class GotoData {
     @NotNull public final PsiElement source;
     public PsiElement[] targets;
     public final List<AdditionalAction> additionalActions;
@@ -329,7 +341,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     private boolean hasDifferentNames;
     public BackgroundUpdaterTaskBase<ItemWithPresentation> listUpdaterTask;
-    protected final Set<String> myNames;
+    private final Set<String> myNames;
     private List<ItemWithPresentation> myItems;
 
     public GotoData(@NotNull PsiElement source, PsiElement @NotNull [] targets, @NotNull List<AdditionalAction> additionalActions) {
@@ -402,7 +414,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer {
+  private static final class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer {
     @Override
     public String getElementText(final PsiElement element) {
       if (element instanceof PsiNamedElement) {

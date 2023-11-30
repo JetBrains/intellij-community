@@ -7,7 +7,10 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.execution.*
+import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.ExecutorRegistry
+import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.TestStateStorage
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -110,7 +113,8 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
   }
 
   private open class RunActionFix(
-    executorId: String, @FileModifier.SafeFieldForPreview protected val configuration: RunnerAndConfigurationSettings
+    executorId: String,
+    @FileModifier.SafeFieldForPreview protected val configuration: RunnerAndConfigurationSettings
   ) : LocalQuickFix, Iconable {
     @FileModifier.SafeFieldForPreview
     private val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: throw IllegalStateException(
@@ -118,7 +122,7 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
     )
 
     override fun getFamilyName(): @Nls(capitalization = Nls.Capitalization.Sentence) String =
-      UIUtil.removeMnemonic(executor.getStartActionText(ProgramRunnerUtil.shortenName(configuration.name, 0)))
+      UIUtil.removeMnemonic(executor.getStartActionText(configuration.name))
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       ExecutionUtil.runConfiguration(configuration, executor)
@@ -127,12 +131,14 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
     override fun getIcon(flags: Int): Icon = executor.icon
 
     override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
-      return IntentionPreviewInfo.Html(ExecutionBundle.message("test.failed.line.run.preview", configuration.name))
+      return IntentionPreviewInfo.Html(ExecutionBundle.message("test.failed.line.run.preview"))
     }
   }
 
   private class DebugActionFix(
-    private val topStacktraceLine: String, executorId: String, settings: RunnerAndConfigurationSettings
+    private val topStacktraceLine: String,
+    executorId: String,
+    settings: RunnerAndConfigurationSettings
   ) : RunActionFix(executorId, settings) {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val line = StackTraceLine(project, topStacktraceLine)
@@ -145,7 +151,7 @@ class TestFailedLineManagerImpl(project: Project) : TestFailedLineManager, FileE
     }
 
     override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
-      return IntentionPreviewInfo.Html(ExecutionBundle.message("test.failed.line.debug.preview", configuration.name))
+      return IntentionPreviewInfo.Html(ExecutionBundle.message("test.failed.line.debug.preview"))
     }
   }
 }

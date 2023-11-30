@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.openapi.project.Project;
@@ -37,8 +37,8 @@ public final class InternalTestDiscoveryListener extends TestDiscoveryBasicListe
       try {
         myDiscoveryIndexClass = Class.forName("com.intellij.execution.testDiscovery.TestDiscoveryIndex");
         myDiscoveryIndex = myDiscoveryIndexClass
-          .getConstructor(Project.class, String.class)
-          .newInstance(project, myTracesFile);
+          .getConstructor(Path.class)
+          .newInstance(Path.of(myTracesFile));
       }
       catch (Throwable e) {
         e.printStackTrace();
@@ -53,8 +53,8 @@ public final class InternalTestDiscoveryListener extends TestDiscoveryBasicListe
     try {
       Object index = getIndex();
       Method method = Class.forName("com.intellij.execution.testDiscovery.TestDiscoveryExtension")
-                           .getMethod("processTracesFile", String.class, String.class, String.class, myDiscoveryIndexClass);
-      method.invoke(null, myTracesFile, myModuleName, "j", index);
+                           .getMethod("processTracesFile", String.class, String.class, byte.class, myDiscoveryIndexClass);
+      method.invoke(null, myTracesFile, myModuleName, (byte)'j', index);
       System.out.println("Compacting done.");
     }
     catch (Throwable e) {

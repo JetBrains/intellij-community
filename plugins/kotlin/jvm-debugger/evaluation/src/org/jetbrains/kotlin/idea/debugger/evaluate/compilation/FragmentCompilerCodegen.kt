@@ -4,6 +4,7 @@
  */
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
+import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -16,7 +17,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 
 
 interface FragmentCompilerCodegen {
-    fun initCodegen(classDescriptor: ClassDescriptor, methodDescriptor: FunctionDescriptor, parameterInfo: CodeFragmentParameterInfo)
+    fun initCodegen(classDescriptor: ClassDescriptor, methodDescriptor: FunctionDescriptor, parameterInfo: K1CodeFragmentParameterInfo)
     fun cleanupCodegen()
 
     fun configureCompiler(compilerConfiguration: CompilerConfiguration)
@@ -26,25 +27,30 @@ interface FragmentCompilerCodegen {
         compilerConfiguration: CompilerConfiguration,
         classDescriptor: ClassDescriptor,
         methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo
+        parameterInfo: K1CodeFragmentParameterInfo
     )
 
     fun computeFragmentParameters(
         executionContext: ExecutionContext,
         codeFragment: KtCodeFragment,
         bindingContext: BindingContext
-    ): CodeFragmentParameterInfo
+    ): K1CodeFragmentParameterInfo
 
     fun extractResult(
-        methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo,
-        generationState: GenerationState
+      methodDescriptor: FunctionDescriptor,
+      parameterInfo: K1CodeFragmentParameterInfo,
+      generationState: GenerationState
     ): CodeFragmentCompiler.CompilationResult
 }
 
-fun List<OutputFile>.filterCodeFragmentClassFiles(): List<OutputFile> {
-    return filter { classFile ->
-        val path = classFile.relativePath
-        path == "$GENERATED_CLASS_NAME.class" || (path.startsWith("$GENERATED_CLASS_NAME\$") && path.endsWith(".class"))
-    }
+private fun isCodeFragmentClassPath(path: String): Boolean {
+    return path == "$GENERATED_CLASS_NAME.class"
+            || (path.startsWith("$GENERATED_CLASS_NAME\$") && path.endsWith(".class"))
 }
+
+fun List<OutputFile>.filterCodeFragmentClassFiles(): List<OutputFile> {
+    return filter { isCodeFragmentClassPath(it.relativePath) }
+}
+
+val KtCompiledFile.isCodeFragmentClassFile: Boolean
+    get() = isCodeFragmentClassPath(path)

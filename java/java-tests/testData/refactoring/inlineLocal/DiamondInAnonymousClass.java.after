@@ -6,7 +6,7 @@ class MyTest {
   {
 
       new I<String>() {
-      public void m(String s) {}
-    }.m("");
+        public void m(String s) {}
+      }.m("");
   }
 }

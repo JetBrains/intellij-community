@@ -35,7 +35,6 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
         override val pluginPath = "buildSystem.gradle"
 
         val gradleProperties by listProperty(
-
             "kotlin.code.style" to "official"
         )
 
@@ -89,6 +88,10 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
 
         private val isGradle = checker { buildSystemType.isGradle }
 
+        private val isGradleWrapper = checker {
+            buildSystemType.isGradle && gradleHome.settingValue == ""
+        }
+
         val gradleVersion by valueSetting(
             "<GRADLE_VERSION>",
             GenerationPhase.PROJECT_GENERATION,
@@ -97,9 +100,16 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
             defaultValue = value(Versions.GRADLE)
         }
 
+        val gradleHome by stringSetting(
+            "<GRADLE_HOME>",
+            GenerationPhase.PROJECT_GENERATION,
+        ) {
+            defaultValue = value("")
+        }
+
         val initGradleWrapperTask by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             runBefore(TemplatesPlugin.renderFileTemplates)
-            isAvailable = isGradle
+            isAvailable = isGradleWrapper
             withAction {
                 TemplatesPlugin.addFileTemplate.execute(
                     FileTemplate(
@@ -161,7 +171,6 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
             }
         }
 
-
         val createSettingsFileTask by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             runAfter(KotlinPlugin.createModules)
             runAfter(KotlinPlugin.createPluginRepositories)
@@ -220,6 +229,7 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
     override val settings: List<PluginSetting<*, *>> = super.settings +
             listOf(
                 gradleVersion,
+                gradleHome
             )
 
     override val pipelineTasks: List<PipelineTask> = super.pipelineTasks +
@@ -245,10 +255,12 @@ val Reader.settingsGradleBuildFileData
                 { GradlePrinter(GradlePrinter.GradleDsl.KOTLIN) },
                 "settings.gradle.kts"
             )
+
         BuildSystemType.GradleGroovyDsl ->
             BuildFileData(
                 { GradlePrinter(GradlePrinter.GradleDsl.GROOVY) },
                 "settings.gradle"
             )
+
         else -> null
     }

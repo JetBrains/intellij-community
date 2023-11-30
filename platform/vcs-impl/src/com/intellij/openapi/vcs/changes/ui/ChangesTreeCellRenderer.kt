@@ -7,6 +7,7 @@ import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import java.awt.*
+import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.JTree
@@ -79,6 +80,8 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
         }
 
         override fun getDelegateParent(): Container? = parent
+
+        override fun getAccessibleParent(): Accessible? = parent as? Accessible
 
         override fun getAccessibleName(): String? {
           checkBox.accessibleContext.accessibleName = textRenderer.accessibleContext.accessibleName

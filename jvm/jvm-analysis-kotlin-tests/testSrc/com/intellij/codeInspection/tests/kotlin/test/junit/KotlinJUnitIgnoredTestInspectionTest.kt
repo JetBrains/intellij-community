@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.junit.JUnitIgnoredTestInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.junit.JUnitIgnoredTestInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinJUnitIgnoredTestInspectionTest : JUnitIgnoredTestInspectionTestBase() {
   fun `test JUnit 4 @Ignore`() {

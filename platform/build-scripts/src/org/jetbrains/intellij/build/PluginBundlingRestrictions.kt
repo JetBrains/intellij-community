@@ -3,15 +3,16 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import java.util.Objects
 
 /**
- * Allows to exclude a plugin from some distributions.
+ * Allows excluding a plugin from some distributions.
  *
  * @see org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec#getBundlingRestrictions()
  */
 class PluginBundlingRestrictions private constructor(
   /**
-   * Change this value if the plugin works in some OS only and therefore don't need to be bundled with distributions for other OS.
+   * Change this value if the plugin works on some OS only and therefore don't need to be bundled with distributions for other OS.
    */
   @JvmField
   val supportedOs: PersistentList<OsFamily>,
@@ -24,41 +25,31 @@ class PluginBundlingRestrictions private constructor(
   val supportedArch: List<JvmArchitecture>,
 
   /**
-   * Set to `true` if the plugin should be included in distribution for EAP builds only.
+   * Set to required [PluginDistribution] value depending on the distribution zone
+   *  - Use [PluginDistribution.NOT_FOR_PUBLIC_BUILDS] if the plugin should be included in distribution for nightly builds only (non EAP, non Release).
+   *  - Use [PluginDistribution.NOT_FOR_RELEASE] if the plugin should be included in distribution for EAP and Nightly builds only (non Release).
+   *  - Use [PluginDistribution.ALL] if the plugin should be included all distribution for EAP, Nightly and Release.
    */
   @JvmField
-  val includeInEapOnly: Boolean,
-
-  /**
-   * Set to `true` if the plugin should be included in distribution for nightly builds only (non EAP, non Release).
-   */
-  @JvmField
-  val includeInNightlyOnly: Boolean,
+  var includeInDistribution: PluginDistribution = PluginDistribution.ALL
 ) {
   companion object {
     @JvmField
-    val NONE = PluginBundlingRestrictions(OsFamily.ALL, JvmArchitecture.ALL, false, false)
+    val NONE = PluginBundlingRestrictions(OsFamily.ALL, JvmArchitecture.ALL, PluginDistribution.ALL)
 
     /**
-     * Use if the plugin should be included anywhere, just used to calculate searchable options index, provided module list.
-     * Must be used with conjunction of other PluginLayout's which do have actual restrictions.
-     */
-    @JvmField
-    val EPHEMERAL = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), false, false)
-
-    /**
-     * Use for the plugin version which is uploaded to marketplace, since marketplace does not support per-OS/ARCH plugins.
+     * Use for the plugin version which is uploaded to the Marketplace, since the latter does not support per-OS/ARCH plugins.
      * Bundled plugins must also have other PluginLayouts with different restrictions.
      *
-     * If plugin is identical for both bundled and marketplace-uploaded versions, use [NONE] instead.
+     * If bundled and marketplace-uploaded versions of the plugin are identical, use [NONE] instead.
      */
     @JvmField
-    val MARKETPLACE = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), false, false)
+    val MARKETPLACE = PluginBundlingRestrictions(persistentListOf(), persistentListOf(), PluginDistribution.ALL)
   }
 
   class Builder {
     /**
-     * Change this value if the plugin works in some OS only and therefore don't need to be bundled with distributions for other OS.
+     * Change this value if the plugin works on some OS only and therefore don't need to be bundled with distributions for other OS.
      */
     var supportedOs: PersistentList<OsFamily> = OsFamily.ALL
 
@@ -68,36 +59,42 @@ class PluginBundlingRestrictions private constructor(
      */
     var supportedArch: List<JvmArchitecture> = JvmArchitecture.ALL
 
-    /**
-     * Set to `true` if the plugin should be included in distribution for EAP builds only.
-     */
-    var includeInEapOnly: Boolean = false
+    @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_RELEASE"))
+    var includeInEapOnly: Boolean
+      get() = includeInDistribution == PluginDistribution.NOT_FOR_RELEASE
+      set(_) {
+        includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
+      }
+
+    @Deprecated("Use an explicit distribution", ReplaceWith("includeInDistribution == PluginDistribution.NOT_FOR_PUBLIC_BUILDS"))
+    var includeInNightlyOnly: Boolean
+      get() = includeInDistribution == PluginDistribution.NOT_FOR_PUBLIC_BUILDS
+      set(_) {
+        includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
+      }
 
     /**
-     * Set to `true` if the plugin should be included in distribution for nightly builds only (non EAP, non Release).
+     * Set to required [PluginDistribution] value depending on the distribution zone
+     *  - Use [PluginDistribution.NOT_FOR_PUBLIC_BUILDS] if the plugin should be included in distribution for nightly builds only (non EAP, non Release).
+     *  - Use [PluginDistribution.NOT_FOR_RELEASE] if the plugin should be included in distribution for EAP and Nightly builds only (non Release).
+     *  - Use [PluginDistribution.ALL] if the plugin should be included all distribution for EAP, Nightly and Release.
      */
-    var includeInNightlyOnly: Boolean = false
-
-    var ephemeral: Boolean = false
+    var includeInDistribution: PluginDistribution = PluginDistribution.ALL
 
     var marketplace: Boolean = false
 
     internal fun build(): PluginBundlingRestrictions {
-      if (ephemeral) {
-        check(supportedOs == OsFamily.ALL)
-        check(supportedArch == JvmArchitecture.ALL)
-        check(!includeInEapOnly)
-        check(!includeInNightlyOnly)
-        return EPHEMERAL
-      }
       if (marketplace) {
         check(supportedOs == OsFamily.ALL)
         check(supportedArch == JvmArchitecture.ALL)
+        check(includeInDistribution == PluginDistribution.ALL)
+        @Suppress("DEPRECATION")
         check(!includeInEapOnly)
+        @Suppress("DEPRECATION")
         check(!includeInNightlyOnly)
         return MARKETPLACE
       }
-      return when (val restrictions = PluginBundlingRestrictions(supportedOs, supportedArch, includeInEapOnly, includeInNightlyOnly)) {
+      return when (val restrictions = PluginBundlingRestrictions(supportedOs, supportedArch, includeInDistribution)) {
         NONE -> NONE
         else -> restrictions
       }
@@ -110,40 +107,26 @@ class PluginBundlingRestrictions private constructor(
     }
   }
 
-  override fun toString(): String {
-    if (this === EPHEMERAL) return "ephemeral"
-    if (this === MARKETPLACE) return "marketplace"
-    if (this == NONE) return "unrestricted"
-    return "os: ${if (supportedOs == OsFamily.ALL) "unrestricted" else supportedOs.joinToString(",")}, " +
-           "arch: ${if (supportedArch == JvmArchitecture.ALL) "unrestricted" else supportedArch.joinToString(",")}, " +
-           "eapOnly: $includeInEapOnly, nightlyOnly: $includeInNightlyOnly"
-  }
+  override fun toString(): String =
+    if (this === MARKETPLACE) "marketplace"
+    else if (this == NONE) "unrestricted"
+    else "os: ${if (supportedOs == OsFamily.ALL) "unrestricted" else supportedOs.joinToString(",")}, " +
+         "arch: ${if (supportedArch == JvmArchitecture.ALL) "unrestricted" else supportedArch.joinToString(",")}, " +
+         "includeInDistribution=$includeInDistribution)"
 
-  override fun hashCode(): Int {
-    if (this === EPHEMERAL) return -1
-    if (this === MARKETPLACE) return -2
-
-    var result = supportedOs.hashCode()
-    result = 31 * result + supportedArch.hashCode()
-    result = 31 * result + includeInEapOnly.hashCode()
-    result = 31 * result + includeInNightlyOnly.hashCode()
-    return result
-  }
+  override fun hashCode(): Int =
+    if (this === MARKETPLACE) -1
+    else Objects.hash(supportedOs, supportedArch, includeInDistribution)
 
   @Suppress("RedundantIf")
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as PluginBundlingRestrictions
-
-    if (this === EPHEMERAL) return false
     if (this === MARKETPLACE) return false
-
+    if (javaClass != other?.javaClass) return false
+    other as PluginBundlingRestrictions
     if (supportedOs != other.supportedOs) return false
     if (supportedArch != other.supportedArch) return false
-    if (includeInEapOnly != other.includeInEapOnly) return false
-    if (includeInNightlyOnly != other.includeInNightlyOnly) return false
+    if (includeInDistribution != other.includeInDistribution) return false
     return true
   }
 }

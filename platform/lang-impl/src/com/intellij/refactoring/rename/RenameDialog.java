@@ -6,10 +6,12 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
@@ -33,6 +35,7 @@ import com.intellij.ui.SeparatorFactory;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -43,6 +46,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 
 public class RenameDialog extends RefactoringDialog implements RenameRefactoringDialog {
@@ -268,20 +272,30 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
       myCbSearchTextOccurrences.setVisible(false);
     }
 
-    for(AutomaticRenamerFactory factory: AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
-      if (factory.isApplicable(myPsiElement) && factory.getOptionName() != null) {
-        gbConstraints.gridwidth = myAutoRenamerFactories.size() % 2 == 0 ? 1 : GridBagConstraints.REMAINDER;
-        gbConstraints.gridx = myAutoRenamerFactories.size() % 2;
-        gbConstraints.insets = gbConstraints.gridx == 0 ? JBUI.insetsBottom(4) : JBUI.insets(0, UIUtil.DEFAULT_HGAP, 4, 0);
-        gbConstraints.weightx = 1;
-        gbConstraints.fill = GridBagConstraints.BOTH;
-
-        JCheckBox checkBox = new NonFocusableCheckBox();
-        checkBox.setText(factory.getOptionName());
-        checkBox.setSelected(factory.isEnabled());
-        panel.add(checkBox, gbConstraints);
-        myAutoRenamerFactories.put(factory, checkBox);
+    List<AutomaticRenamerFactory> applicableAutoRenameFactories = ActionUtil.underModalProgress(
+      myProject,
+      RefactoringBundle.message("rename.finding.auto.rename.options.modal.title"),
+      () -> {
+        ProgressManager.checkCanceled();
+        return ContainerUtil.filter(
+          AutomaticRenamerFactory.EP_NAME.getExtensionList(),
+          renamerFactory -> renamerFactory.isApplicable(myPsiElement) && renamerFactory.getOptionName() != null
+        );
       }
+    );
+
+    for(AutomaticRenamerFactory factory : applicableAutoRenameFactories) {
+      gbConstraints.gridwidth = myAutoRenamerFactories.size() % 2 == 0 ? 1 : GridBagConstraints.REMAINDER;
+      gbConstraints.gridx = myAutoRenamerFactories.size() % 2;
+      gbConstraints.insets = gbConstraints.gridx == 0 ? JBUI.insetsBottom(4) : JBUI.insets(0, UIUtil.DEFAULT_HGAP, 4, 0);
+      gbConstraints.weightx = 1;
+      gbConstraints.fill = GridBagConstraints.BOTH;
+
+      JCheckBox checkBox = new NonFocusableCheckBox();
+      checkBox.setText(factory.getOptionName());
+      checkBox.setSelected(factory.isEnabled());
+      panel.add(checkBox, gbConstraints);
+      myAutoRenamerFactories.put(factory, checkBox);
     }
   }
 

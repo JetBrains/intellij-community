@@ -30,7 +30,7 @@ import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
 private val TEXT_EDITOR_KEY = Key.create<TextEditor>("textEditor")
-private const val TYPE_ID: @NonNls String = "text-editor"
+internal const val TEXT_EDITOR_PROVIDER_TYPE_ID: @NonNls String = "text-editor"
 private const val LINE_ATTR: @NonNls String = "line"
 private const val COLUMN_ATTR: @NonNls String = "column"
 private const val LEAN_FORWARD_ATTR: @NonNls String = "lean-forward"
@@ -84,6 +84,8 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     return isTextFile(file) && !SingleRootFileViewProvider.isTooLargeForContentLoading(file)
   }
 
+  override fun acceptRequiresReadAction() = false
+
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     return TextEditorImpl(project, file, this, createTextEditor(project, file))
   }
@@ -107,8 +109,8 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     return state
   }
 
-  override fun writeState(@Suppress("LocalVariableName") _state: FileEditorState, project: Project, element: Element) {
-    val state = _state as TextEditorState
+  override fun writeState(state: FileEditorState, project: Project, element: Element) {
+    state as TextEditorState
     if (state.relativeCaretPosition != 0) {
       element.setAttribute(RELATIVE_CARET_POSITION_ATTR, state.relativeCaretPosition.toString())
     }
@@ -131,7 +133,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     }
   }
 
-  override fun getEditorTypeId(): String = TYPE_ID
+  override fun getEditorTypeId(): String = TEXT_EDITOR_PROVIDER_TYPE_ID
 
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.NONE
 
@@ -187,6 +189,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
       }
       editor.caretModel.setCaretsAndSelections(states, false)
     }
+
     val relativeCaretPosition = state.relativeCaretPosition
     if (AsyncEditorLoader.isEditorLoaded(editor) || ApplicationManager.getApplication().isUnitTestMode) {
       if (ApplicationManager.getApplication().isUnitTestMode) {

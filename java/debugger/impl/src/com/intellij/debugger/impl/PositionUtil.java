@@ -38,7 +38,7 @@ public class PositionUtil extends ContextUtil {
     }
     return ReadAction.compute(() -> {
       final PsiFile psiFile = sourcePosition.getFile();
-      final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+      final Document document = psiFile.getViewProvider().getDocument();
       if (document == null) {
         return null;
       }

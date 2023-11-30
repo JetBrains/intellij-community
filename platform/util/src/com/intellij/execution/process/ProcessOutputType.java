@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents a stream (stdout/stderr/system) output type. It can be a base output type or a colored output type.
  * Base stdout/stderr output types are constants: {@link ProcessOutputTypes#STDOUT}, {@link ProcessOutputTypes#STDERR} and
  * {@link ProcessOutputTypes#SYSTEM}.<br/>
- * A colored stdout/stderr output type corresponds to an unique ANSI color attributes info passed as
+ * A colored stdout/stderr output type corresponds to a unique ANSI color attributes info passed as
  * {@code name} constructor parameter, and base stream output type (stdout/stderr) - {@code streamType} parameter.
  * <p/>
  * Use {@link com.intellij.execution.ui.ConsoleViewContentType#getConsoleViewType} to get TextAttributes for an instance
@@ -47,15 +47,18 @@ public class ProcessOutputType extends Key<Object> {
    */
   public static final ProcessOutputType STDERR = new ProcessOutputType("stderr");
 
-  private final ProcessOutputType myStreamType;
+  private final @Nullable String myEscapeSequence;
+  private final @NotNull ProcessOutputType myStreamType;
 
   public ProcessOutputType(@NotNull String name, @NotNull ProcessOutputType streamType) {
     super(name);
+    myEscapeSequence = name;
     myStreamType = streamType.getBaseOutputType();
   }
 
   private ProcessOutputType(@NotNull String name) {
     super(name);
+    myEscapeSequence = null;
     myStreamType = this;
   }
 
@@ -79,8 +82,24 @@ public class ProcessOutputType extends Key<Object> {
     return key instanceof ProcessOutputType && ((ProcessOutputType)key).isStdout();
   }
 
-  public static @NotNull String getKeyNameForLogging(@NotNull Key<?> key) {
-    return key.toString().replace("\u001B", "ESC");
+  public @Nullable String getEscapeSequence() {
+    return myEscapeSequence;
+  }
+
+  @Override
+  public String toString() {
+    if (myEscapeSequence != null) {
+      return "[" + getBaseOutputType() + "] " + toHumanReadableEscapeSequence(myEscapeSequence);
+    }
+    return super.toString();
+  }
+
+  private static @NotNull String toHumanReadableEscapeSequence(@NotNull String escapeSequence) {
+    return escapeSequence.replace("\u001b", "ESC")
+      .replace("\u0007", "BEL")
+      .replace("\n", "\\n")
+      .replace("\r", "\\r")
+      .replace("\b", "\\b");
   }
 
   public static @Nullable ProcessOutputType tryCast(@NotNull Key<?> key) {

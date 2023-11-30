@@ -2,7 +2,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.CommonBundle;
-import com.intellij.ProjectTopics;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.diagnostic.CoreAttachmentFactory;
@@ -60,6 +59,13 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -70,17 +76,11 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
-import com.intellij.platform.workspace.storage.EntityChange;
-import com.intellij.platform.workspace.storage.VersionedStorageChange;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
-import com.intellij.platform.workspace.jps.entities.LibraryEntity;
-import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -116,7 +116,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     MessageBusConnection connection = myBus.connect(this);
 
     connection.subscribe(WorkspaceModelTopics.CHANGED, new ExternalAnnotationsRootListener());
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         if (event.isCausedByWorkspaceModelChangesOnly()) return;
@@ -196,7 +196,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
                                  @NotNull PsiFile fromFile,
                                  PsiNameValuePair @Nullable [] value) throws CanceledConfigurationException {
     Application application = ApplicationManager.getApplication();
-    application.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(!application.isWriteAccessAllowed());
 
     final Project project = myPsiManager.getProject();
@@ -598,7 +598,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
   @Override
   public boolean deannotate(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return processExistingExternalAnnotations(listOwner, annotationFQN, annotationTag -> {
       PsiElement parent = annotationTag.getParent();
       annotationTag.delete();
@@ -613,7 +613,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
   @Override
   public void elementRenamedOrMoved(@NotNull PsiModifierListOwner element, @NotNull String oldExternalName) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     try {
       final List<XmlFile> files = findExternalAnnotationsXmlFiles(element);
       if (files == null) {
@@ -662,7 +662,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   public boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner,
                                         @NotNull String annotationFQN,
                                         PsiNameValuePair @Nullable [] value) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return processExistingExternalAnnotations(listOwner, annotationFQN, annotationTag -> {
       annotationTag.replace(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(
         createAnnotationTag(annotationFQN, value)));
@@ -746,7 +746,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
   @Override
   public @NotNull AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return chooseAnnotationsPlace(element, () -> confirmNewExternalAnnotationRoot(element));
   }
 

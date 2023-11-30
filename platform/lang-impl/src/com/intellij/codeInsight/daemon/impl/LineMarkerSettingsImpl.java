@@ -22,7 +22,7 @@ import java.util.Map;
   storages = @Storage("gutter.xml"),
   category = SettingsCategory.CODE
 )
-public class LineMarkerSettingsImpl extends LineMarkerSettings implements PersistentStateComponent<LineMarkerSettingsImpl> {
+public final class LineMarkerSettingsImpl extends LineMarkerSettings implements PersistentStateComponent<LineMarkerSettingsImpl> {
 
   @Override
   public boolean isEnabled(@NotNull GutterIconDescriptor descriptor) {

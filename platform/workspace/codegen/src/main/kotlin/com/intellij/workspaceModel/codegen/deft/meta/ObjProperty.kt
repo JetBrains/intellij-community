@@ -1,13 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.deft.meta
 
-import com.intellij.workspaceModel.codegen.deft.annotations.Name
 import com.intellij.workspaceModel.codegen.deft.annotations.Parent
+
+interface TypeProperty<V> {
+  val name: String
+
+  val valueType: ValueType<V>
+}
 
 /**
  * Same as [kotlin.reflect.KProperty]
  */
-interface ObjProperty<T : Obj, V> : Obj {
+interface ObjProperty<T : Obj, V> : Obj, TypeProperty<V> {
   val suspend: Boolean
 
   val open: Boolean
@@ -15,11 +20,6 @@ interface ObjProperty<T : Obj, V> : Obj {
   val mutable: Boolean
 
   val receiver: ObjClass<T>
-
-  @Name
-  val name: String
-
-  val valueType: ValueType<V>
 
   val valueKind: ValueKind
 

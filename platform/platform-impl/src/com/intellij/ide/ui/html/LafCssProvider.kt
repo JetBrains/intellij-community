@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("CssInvalidPropertyValue", "CssUnknownProperty", "CssUnusedSymbol")
 
 package com.intellij.ide.ui.html
 
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.ui.ColorUtil
@@ -19,32 +20,30 @@ private const val EDITOR_FOREGROUND_STUB = """___EDITOR_FOREGROUND___"""
 @Suppress("CssInvalidHtmlTagReference")
 private const val EDITOR_BACKGROUND_STUB = """___EDITOR_BACKGROUND___"""
 
-internal object LafCssProvider {
-  /**
-   * Get custom css styles and overrides for default swing CSS
-   */
-  fun getCssForCurrentLaf(): String {
-    return (defaultOverridesCss + customCss)
-      .replace(PX_SIZE_REGEX) {
-        val pxSize = it.groupValues[1].toInt()
-        JBUIScale.scale(pxSize).toString() + "px"
-      }
-      .replace(LAF_COLOR_REGEX) {
-        val colorCode = it.groupValues[1].removeSurrounding("\"")
-        ColorUtil.toHtmlColor(JBColor.namedColor(colorCode))
-      }
-  }
+/**
+ * Get custom css styles and overrides for default swing CSS
+ */
+internal fun getCssForCurrentLaf(): String {
+  return (defaultOverridesCss + customCss)
+    .replace(PX_SIZE_REGEX) {
+      val pxSize = it.groupValues[1].toInt()
+      JBUIScale.scale(pxSize).toString() + "px"
+    }
+    .replace(LAF_COLOR_REGEX) {
+      val colorCode = it.groupValues[1].removeSurrounding("\"")
+      ColorUtil.toHtmlColor(JBColor.namedColor(colorCode))
+    }
+}
 
-  /**
-   * Get custom editor styles
-   */
-  fun getCssForCurrentEditorScheme(): String {
-    val editorColorScheme = EditorColorsManager.getInstance().globalScheme
-    return editorCss
-      .replace(EDITOR_FONT_FAMILY_STUB, editorColorScheme.getFont(EditorFontType.PLAIN).family)
-      .replace(EDITOR_FOREGROUND_STUB, ColorUtil.toHtmlColor(editorColorScheme.defaultForeground))
-      .replace(EDITOR_BACKGROUND_STUB, ColorUtil.toHtmlColor(editorColorScheme.defaultBackground))
-  }
+/**
+ * Get custom editor styles
+ */
+internal suspend fun getCssForCurrentEditorScheme(): String {
+  val editorColorScheme = serviceAsync<EditorColorsManager>().globalScheme
+  return editorCss
+    .replace(EDITOR_FONT_FAMILY_STUB, editorColorScheme.getFont(EditorFontType.PLAIN).family)
+    .replace(EDITOR_FOREGROUND_STUB, ColorUtil.toHtmlColor(editorColorScheme.defaultForeground))
+    .replace(EDITOR_BACKGROUND_STUB, ColorUtil.toHtmlColor(editorColorScheme.defaultBackground))
 }
 
 @Suppress("CssInvalidFunction", "CssInvalidPropertyValue")

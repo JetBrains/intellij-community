@@ -1,5 +1,4 @@
 // "Create function" "false"
-// ACTION: Change lambda expression return type to () -> Boolean
 // ACTION: Create extension function 'Unit.equals'
 // ACTION: Create local variable 'maximumSizeOfGroup'
 // ACTION: Create object 'maximumSizeOfGroup'

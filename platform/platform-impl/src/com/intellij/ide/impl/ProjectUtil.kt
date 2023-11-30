@@ -15,8 +15,11 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -38,6 +41,8 @@ import com.intellij.platform.CommandLineProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.attachToProjectAsync
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.project.stateStore
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
@@ -50,7 +55,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.basicAttributesIfExists
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.Nls
@@ -65,8 +69,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.Callable
-import java.util.concurrent.CompletableFuture
 import kotlin.Result
 
 private val LOG = Logger.getInstance(ProjectUtil::class.java)
@@ -411,14 +413,6 @@ object ProjectUtil {
     return mode
   }
 
-  @ScheduledForRemoval
-  @Deprecated("Use {@link #isSameProject(Path, Project)} ",
-              ReplaceWith("projectFilePath != null && isSameProject(Path.of(projectFilePath), project)",
-                          "com.intellij.ide.impl.ProjectUtil.isSameProject", "java.nio.file.Path"))
-  fun isSameProject(projectFilePath: String?, project: Project): Boolean {
-    return projectFilePath != null && isSameProject(Path.of(projectFilePath), project)
-  }
-
   @JvmStatic
   fun isSameProject(projectFile: Path, project: Project): Boolean {
     val projectStore = project.stateStore
@@ -526,7 +520,7 @@ object ProjectUtil {
         continue
       }
 
-      LOG.debug("$location: open file ", file)
+      LOG.debug { "$location: open file $file" }
       if (projectToClose == null) {
         val processor = CommandLineProjectOpenProcessor.getInstanceIfExists()
         if (processor != null) {
@@ -722,16 +716,9 @@ fun Project.executeOnPooledThread(task: Runnable) {
   coroutineScope.launch { blockingContext { task.run() } }
 }
 
-@ScheduledForRemoval
-@Internal
-@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
-fun <T> Project.computeOnPooledThread(task: Callable<T>): CompletableFuture<T> {
-  @Suppress("DEPRECATION")
-  return coroutineScope.async { blockingContext { task.call() } }.asCompletableFuture()
-}
-
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Internal
+@ScheduledForRemoval
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun Project.executeOnPooledIoThread(task: Runnable) {
   @Suppress("DEPRECATION")

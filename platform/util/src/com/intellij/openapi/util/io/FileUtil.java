@@ -193,6 +193,15 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Contract(pure = true)
+  public static @Nullable Path findAncestor(@NotNull Path path1, @NotNull Path path2) {
+    Path ancestor = path1;
+    while (ancestor != null && !isAncestor(ancestor, path2, false)) {
+      ancestor = ancestor.getParent();
+    }
+    return ancestor;
+  }
+
+  @Contract(pure = true)
   public static @Nullable File getParentFile(@NotNull File file) {
     return FileUtilRt.getParentFile(file);
   }
@@ -214,6 +223,11 @@ public class FileUtil extends FileUtilRt {
     return bytes;
   }
 
+  /**
+   * use {@link com.intellij.openapi.vfs.VfsUtilCore#loadNBytes}
+   * or {@link InputStream#readNBytes(int)}
+   */
+  @Deprecated
   public static byte @NotNull [] loadFirstAndClose(@NotNull InputStream stream, int maxLength) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     try {
@@ -371,7 +385,7 @@ public class FileUtil extends FileUtilRt {
    * Really insist: i.e. retry delete a few times with a timeout -- see {@link FileUtilRt#doDelete(Path)}
    * for details of a single-file delete operation.
    *
-   * @throws an exception if delete is not successful
+   * @throws IOException exception if delete is not successful
    * @see FileUtilRt#doDelete(Path)
    */
   public static void delete(@NotNull Path path) throws IOException {
@@ -1119,7 +1133,7 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
-  private static class Lazy {
+  private static final class Lazy {
     private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(
       (Function<File, Iterable<File>>)file -> file == null ? Collections.emptySet() : JBIterable.of(file.listFiles()));
   }
@@ -1246,6 +1260,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   /** @deprecated ambiguous w.r.t. to normalized UNC paths; consider using {@link OSAgnosticPathUtil} or {@link java.nio.file NIO2} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isUnixAbsolutePath(@NotNull String path) {
     return path.startsWith("/");

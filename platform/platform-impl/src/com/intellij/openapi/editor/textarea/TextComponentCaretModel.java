@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.openapi.Disposable;
@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-class TextComponentCaretModel implements CaretModel {
+final class TextComponentCaretModel implements CaretModel {
   private final TextComponentEditor myEditor;
   private final Caret myCaret;
   private final EventDispatcher<CaretActionListener> myCaretActionListeners = EventDispatcher.create(CaretActionListener.class);
@@ -38,12 +38,12 @@ class TextComponentCaretModel implements CaretModel {
   }
 
   @Override
-  public void addCaretListener(@NotNull final CaretListener listener) {
+  public void addCaretListener(final @NotNull CaretListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void removeCaretListener(@NotNull final CaretListener listener) {
+  public void removeCaretListener(final @NotNull CaretListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
@@ -62,15 +62,13 @@ class TextComponentCaretModel implements CaretModel {
     return 1;
   }
 
-  @NotNull
   @Override
-  public Caret getCurrentCaret() {
+  public @NotNull Caret getCurrentCaret() {
     return myCaret;
   }
 
-  @NotNull
   @Override
-  public Caret getPrimaryCaret() {
+  public @NotNull Caret getPrimaryCaret() {
     return myCaret;
   }
 
@@ -79,21 +77,18 @@ class TextComponentCaretModel implements CaretModel {
     return 1;
   }
 
-  @NotNull
   @Override
-  public List<Caret> getAllCarets() {
+  public @NotNull List<Caret> getAllCarets() {
     return Collections.singletonList(myCaret);
   }
 
-  @Nullable
   @Override
-  public Caret getCaretAt(@NotNull VisualPosition pos) {
+  public @Nullable Caret getCaretAt(@NotNull VisualPosition pos) {
     return myCaret.getVisualPosition().equals(pos) ? myCaret : null;
   }
 
-  @Nullable
   @Override
-  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
+  public @Nullable Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     return null;
   }
 
@@ -129,9 +124,8 @@ class TextComponentCaretModel implements CaretModel {
     setCaretsAndSelections(caretStates);
   }
 
-  @NotNull
   @Override
-  public List<CaretState> getCaretsAndSelections() {
+  public @NotNull List<CaretState> getCaretsAndSelections() {
     return Collections.singletonList(new CaretState(getLogicalPosition(), 
                                                     myEditor.offsetToLogicalPosition(myEditor.getSelectionModel().getSelectionStart()), 
                                                     myEditor.offsetToLogicalPosition(myEditor.getSelectionModel().getSelectionEnd())));

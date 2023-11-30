@@ -214,29 +214,32 @@ abstract class ToolWindowHeader internal constructor(
     )
   }
 
+  private fun manageWestPanelTabComponentAndToolbar(init: Boolean) {
+    if (!init) { // remove to avoid extra events, toolbars update on addNotify!
+      westPanel.remove(contentUi.tabComponent)
+      toolbarWest?.apply { westPanel.remove(component) }
+      return
+    }
+    // Makes sure toolbar stays after the tab component
+    val allowDnd = ClientProperty.isTrue(toolWindow.component as Component?, ToolWindowContentUi.ALLOW_DND_FOR_TABS)
+    westPanel.add(contentUi.tabComponent, if (allowDnd) CC().grow().pushX() else CC().growY())
+    toolbarWest?.apply { westPanel.add(component, CC().pushX()) }
+  }
+
   override fun propertyChange(evt: PropertyChangeEvent?) {
-    if (ClientProperty.isTrue(toolWindow.component as Component?, ToolWindowContentUi.ALLOW_DND_FOR_TABS)) {
-      westPanel.add(contentUi.tabComponent, CC().grow().pushX())
-    }
-    else {
-      westPanel.add(contentUi.tabComponent, CC().growY())
-    }
-    val toolbar = toolbarWest
-    if (toolbar != null) {
-      // It always should stay after tab component
-      westPanel.add(toolbar.component, CC().pushX())
-    }
+    manageWestPanelTabComponentAndToolbar(true)
   }
 
   override fun addNotify() {
     super.addNotify()
     toolWindow.component.addPropertyChangeListener(ToolWindowContentUi.ALLOW_DND_FOR_TABS.toString(), this)
-    propertyChange(null)
+    manageWestPanelTabComponentAndToolbar(true)
   }
 
   override fun removeNotify() {
     toolWindow.component.removePropertyChangeListener(ToolWindowContentUi.ALLOW_DND_FOR_TABS.toString(), this)
     super.removeNotify()
+    manageWestPanelTabComponentAndToolbar(false)
   }
 
   fun getToolbar(): ActionToolbar = toolbar
@@ -258,8 +261,8 @@ abstract class ToolWindowHeader internal constructor(
 
   fun setTabActions(actions: List<AnAction>) {
     if (toolbarWest == null) {
-      toolbarWest = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_TITLE, DefaultActionGroup(actionGroupWest),
-                                                                    true)
+      toolbarWest = ActionManager.getInstance().createActionToolbar(
+        ActionPlaces.TOOLWINDOW_TITLE, DefaultActionGroup(actionGroupWest), true)
       with(toolbarWest as ActionToolbarImpl) {
         targetComponent = this
         setForceMinimumSize(true)
@@ -267,7 +270,9 @@ abstract class ToolWindowHeader internal constructor(
         setReservePlaceAutoPopupIcon(false)
         isOpaque = false
         border = JBUI.Borders.empty()
-        westPanel.add(this, CC().pushX())
+        if (westPanel.isShowing) {
+          westPanel.add(this, CC().pushX())
+        }
       }
     }
     actionGroupWest.removeAll()

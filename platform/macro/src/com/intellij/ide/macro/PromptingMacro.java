@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -8,9 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Eugene Zhuravlev
+ * Base class for macros requiring input from a user (e.g., via input dialog, file chooser, etc.).
+ * @see PromptMacro
  */
-public abstract class PromptingMacro extends Macro{
+public abstract class PromptingMacro extends Macro {
 
   @Override
   public final String expand(@NotNull DataContext dataContext) throws ExecutionCancelledException {
@@ -28,9 +29,10 @@ public abstract class PromptingMacro extends Macro{
   }
 
   /**
-   * Called from expand() method
+   * Called from the {@link #expand} methods.
    *
-   * @return user input. If null is returned, ExecutionCancelledException is thrown by expand() method
+   * @return user input.
+   * If {@code null} is returned, {@code ExecutionCancelledException} is thrown by the {@link #expand} method.
    */
   @Nullable
   protected abstract String promptUser(DataContext dataContext);

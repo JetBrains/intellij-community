@@ -14,6 +14,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
   JsonSubTypes.Type(name = "Team", value = GHTeam::class)
 )
 interface GHPullRequestRequestedReviewer {
+  val id: String
   val shortName: String
   val url: String
   val avatarUrl: String

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
-import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerConfigurable
@@ -10,6 +9,9 @@ import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
@@ -26,37 +28,27 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.HyperlinkLabel
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
+import java.time.Instant
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JLabel
+import kotlin.time.Duration.Companion.seconds
 
 class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      return null
+    }
+
     val suggestionData = getSuggestionData(project, ApplicationInfo.getInstance().build.productCode, file.name, file.fileType)
 
     if (suggestionData == null) {
-      ProcessIOExecutorService.INSTANCE.execute {
-        val marketplaceRequests = MarketplaceRequests.getInstance()
-        marketplaceRequests.loadJetBrainsPluginsIds()
-        marketplaceRequests.loadExtensionsForIdes()
-
-        val extensionsStateService = PluginAdvertiserExtensionsStateService.instance
-        var shouldUpdateNotifications = extensionsStateService.updateCache(file.name)
-        val fullExtension = PluginAdvertiserExtensionsStateService.getFullExtension(file.name)
-        if (fullExtension != null) {
-          shouldUpdateNotifications = extensionsStateService.updateCache(fullExtension) || shouldUpdateNotifications
-        }
-        if (shouldUpdateNotifications) {
-          ApplicationManager.getApplication().invokeLater(
-            { EditorNotifications.getInstance(project).updateNotifications(file) },
-            project.disposed
-          )
-        }
-        LOG.debug("Tried to update extensions cache for file '${file.name}'. shouldUpdateNotifications=$shouldUpdateNotifications")
-      }
-
+      project.service<AdvertiserInfoUpdateService>()
+        .scheduleAdvertiserUpdate(file)
       return null
     }
 
@@ -103,8 +95,11 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
     }
 
     override fun apply(fileEditor: FileEditor): EditorNotificationPanel? {
+      val hasSuggestedIde = isCommunityIde() && isDefaultTextMatePlugin(extensionOrFileName) && suggestedIdes.isNotEmpty()
+
       lateinit var label: JLabel
-      val panel = object : EditorNotificationPanel(fileEditor, Status.Info) {
+      val status = if (hasSuggestedIde) EditorNotificationPanel.Status.Promo else EditorNotificationPanel.Status.Info
+      val panel = object : EditorNotificationPanel(fileEditor, status) {
         init {
           label = myLabel
         }
@@ -128,7 +123,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       }
 
       val installedPlugin = installedPlugin
-      if (isCommunityIde() && isDefaultTextMatePlugin(extensionOrFileName) && suggestedIdes.isNotEmpty()) {
+      if (hasSuggestedIde) {
         addSuggestedIdes(panel, label, pluginAdvertiserExtensionsState)
         return panel    // Don't show the "Ignore extension" label
       }
@@ -213,7 +208,8 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
   }
 }
 
-private val SUGGESTION_EP_NAME: ExtensionPointName<PluginSuggestionProvider> = ExtensionPointName.create("com.intellij.pluginSuggestionProvider")
+private val SUGGESTION_EP_NAME: ExtensionPointName<PluginSuggestionProvider> = ExtensionPointName.create(
+  "com.intellij.pluginSuggestionProvider")
 
 @VisibleForTesting
 fun getSuggestionData(
@@ -236,7 +232,13 @@ private fun getSuggestionData(
   fileType: FileType,
 ): PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion? {
   val marketplaceRequests = MarketplaceRequests.getInstance()
-  val jbPluginsIds = marketplaceRequests.loadCachedJBPlugins() ?: return null
+  val jbPluginsIds: Set<PluginId> = if (!ApplicationManager.getApplication().isUnitTestMode) {
+    marketplaceRequests.loadCachedJBPlugins() ?: return null
+  }
+  else {
+    emptySet()
+  }
+
   val ideExtensions = marketplaceRequests.extensionsForIdes ?: return null
 
   val extensionOrFileName = extensionsData.extensionOrFileName
@@ -254,7 +256,9 @@ private fun getSuggestionData(
   return PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion(project, extensionOrFileName, dataSet, jbPluginsIds, suggestedIdes)
 }
 
-private fun getSuggestedIdes(activeProductCode: String, extensionOrFileName: String, ideExtensions: Map<String, List<String>>): List<SuggestedIde> {
+private fun getSuggestedIdes(activeProductCode: String,
+                             extensionOrFileName: String,
+                             ideExtensions: Map<String, List<String>>): List<SuggestedIde> {
   if (isIgnoreIdeSuggestion) {
     return emptyList()
   }
@@ -280,4 +284,38 @@ private fun getSuggestedIdes(activeProductCode: String, extensionOrFileName: Str
 
 private fun updateAllNotifications(project: Project) {
   EditorNotifications.getInstance(project).updateAllNotifications()
+}
+
+@Service(Service.Level.PROJECT)
+internal class AdvertiserInfoUpdateService(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope
+) {
+  private val firstRequestTs: Instant = Instant.now()
+
+  fun scheduleAdvertiserUpdate(file: VirtualFile) {
+    val fileName = file.name
+    coroutineScope.launch {
+      if (Instant.now().isBefore(firstRequestTs.plusSeconds(30))) {
+        delay(30.seconds) // no hurry, let's think that the network is really slow anyway
+      }
+
+      MarketplaceRequests.getInstance().updatePluginIdsAndExtensionData()
+
+      val extensionsStateService = PluginAdvertiserExtensionsStateService.instance
+      var shouldUpdateNotifications = extensionsStateService.updateCache(fileName)
+      val fullExtension = PluginAdvertiserExtensionsStateService.getFullExtension(fileName)
+      if (fullExtension != null) {
+        shouldUpdateNotifications = extensionsStateService.updateCache(fullExtension) || shouldUpdateNotifications
+      }
+
+      if (shouldUpdateNotifications) {
+        withContext(Dispatchers.EDT) {
+          EditorNotifications.getInstance(project).updateNotifications(file)
+        }
+      }
+
+      LOG.debug("Tried to update extensions cache for file '${fileName}'. shouldUpdateNotifications=$shouldUpdateNotifications")
+    }
+  }
 }

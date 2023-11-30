@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -133,7 +133,7 @@ public final class EnumerationChildrenRenderer extends ReferenceRenderer impleme
 
   @Override
   public CompletableFuture<Boolean> isExpandableAsync(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    if (myChildren.size() > 0) {
+    if (!myChildren.isEmpty()) {
       return CompletableFuture.completedFuture(true);
     }
     if (myAppendDefaultChildren) {

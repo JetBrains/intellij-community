@@ -67,7 +67,7 @@ public final class ExternalSystemApiUtil {
       return Integer.compare(order1, order2);
     }
 
-    private int getOrder(@NotNull Object o) {
+    private static int getOrder(@NotNull Object o) {
       Queue<Class<?>> toCheck = new ArrayDeque<>();
       toCheck.add(o.getClass());
       while (!toCheck.isEmpty()) {
@@ -278,7 +278,7 @@ public final class ExternalSystemApiUtil {
   /**
    * @deprecated Use findParentRecursively instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable <T> DataNode<T> findParent(
     @NotNull DataNode<?> node,
     @NotNull Key<T> key,
@@ -711,18 +711,6 @@ public final class ExternalSystemApiUtil {
     if (moduleDataNode == null) return Collections.emptyList();
     var taskNodes = findAll(moduleDataNode, ProjectKeys.TASK);
     return ContainerUtil.map(taskNodes, it -> it.getData());
-  }
-
-  /**
-   * @deprecated use ExternalSystemApiUtil.findProjectNode instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @Nullable DataNode<ProjectData> findProjectData(
-    @NotNull Project project,
-    @NotNull ProjectSystemId systemId,
-    @NotNull String projectPath
-  ) {
-    return findProjectNode(project, systemId, projectPath);
   }
 
   public static @Nullable DataNode<ProjectData> findProjectNode(

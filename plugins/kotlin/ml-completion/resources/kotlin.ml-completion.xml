@@ -6,6 +6,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <completion.ml.model implementation="org.jetbrains.kotlin.idea.mlCompletion.KotlinMLRankingProvider"/>
     <completion.ml.contextFeatures language="kotlin" implementationClass="org.jetbrains.kotlin.idea.mlCompletion.KotlinContextFeatureProvider"/>
+    <completion.ml.elementFeatures language="kotlin" implementationClass="org.jetbrains.kotlin.idea.mlCompletion.KotlinElementFeatureProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

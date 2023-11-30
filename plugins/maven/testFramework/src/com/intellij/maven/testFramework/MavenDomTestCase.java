@@ -13,6 +13,7 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,6 +49,7 @@ import org.jetbrains.idea.maven.dom.inspections.MavenModelInspection;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.IOException;
 import java.util.*;
@@ -103,9 +105,13 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
   }
 
   protected void configTest(VirtualFile f) {
-    if (Comparing.equal(myConfigTimestamps.get(f), f.getTimeStamp())) return;
+    if (Comparing.equal(myConfigTimestamps.get(f), f.getTimeStamp())) {
+      MavenLog.LOG.warn("MavenDomTestCase configTest skipped");
+      return;
+    }
     myFixture.configureFromExistingVirtualFile(f);
     myConfigTimestamps.put(f, f.getTimeStamp());
+    MavenLog.LOG.warn("MavenDomTestCase configTest performed");
   }
 
   protected void type(VirtualFile f, char c) {
@@ -115,7 +121,9 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
 
   protected PsiReference getReferenceAtCaret(VirtualFile f) {
     configTest(f);
-    return findPsiFile(f).findReferenceAt(getEditorOffset(f));
+    int editorOffset = getEditorOffset(f);
+    MavenLog.LOG.warn("MavenDomTestCase getReferenceAtCaret offset " + editorOffset);
+    return findPsiFile(f).findReferenceAt(editorOffset);
   }
 
   protected PsiReference getReferenceAt(VirtualFile f, int offset) {
@@ -243,7 +251,7 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     assertNotNull("expected reference is null", expected);
 
     PsiReference ref = getReferenceAtCaret(file);
-    assertNotNull(ref);
+    assertNotNull("reference at caret is null", ref);
     PsiElement resolved = ref.resolve();
     if (resolved instanceof MavenPsiElementWrapper) {
       resolved = ((MavenPsiElementWrapper)resolved).getWrappee();
@@ -353,13 +361,37 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
   }
 
   protected void checkHighlighting(VirtualFile f) {
+    MavenLog.LOG.warn("checkHighlighting started");
+
     VirtualFileManager.getInstance().syncRefresh();
+    MavenLog.LOG.warn("checkHighlighting: VFS refreshed");
+
+    var psiFile = findPsiFile(f);
+    if (null == psiFile) {
+      MavenLog.LOG.warn("checkHighlighting: psi file is null");
+    }
+    else {
+      var document = myFixture.getDocument(psiFile);
+      if (null == document) {
+        MavenLog.LOG.warn("checkHighlighting: document is null");
+      }
+      else {
+        FileDocumentManager.getInstance().reloadFromDisk(document);
+        MavenLog.LOG.warn("checkHighlighting: document reloaded from disk");
+      }
+    }
+
     configTest(myProjectPom);
+    MavenLog.LOG.warn("checkHighlighting: test configured");
+
     try {
       myFixture.testHighlighting(true, false, true, f);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);
+    }
+    finally {
+      MavenLog.LOG.warn("checkHighlighting finished");
     }
   }
 

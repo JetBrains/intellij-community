@@ -2,13 +2,23 @@
 package com.intellij.ui.dsl.listCellRenderer
 
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Experimental
 @LcrDslMarker
-interface LcrInitParams {
+sealed class LcrInitParams {
+
+  enum class Align {
+    LEFT,
+    CENTER,
+    RIGHT
+  }
 
   /**
-   * True if the cell fills available extra horizontal space. If several cells use [grow] then extra space is distributed equally
+   * If specified then the cell occupies all available free space (so next cells will be near right edge) and the content of the cell
+   * is placed according to the [align] value
    */
-  var grow: Boolean
+  var align: Align? = null
+
+  var accessibleName: @Nls String? = null
 }

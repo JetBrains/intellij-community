@@ -1,9 +1,11 @@
+from collections.abc import Generator
 from typing import Any
 
 WHEEL_NAME: Any
 NAMESPACE_PACKAGE_INIT: str
 
 def unpack(src_dir, dst_dir) -> None: ...
+def disable_info_traces() -> Generator[None, None, None]: ...
 
 class Wheel:
     filename: Any

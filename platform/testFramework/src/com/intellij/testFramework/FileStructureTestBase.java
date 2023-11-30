@@ -45,7 +45,7 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
   }
 
   protected void checkTree() {
-    EdtTestUtilKt.runInEdtAndWait(() -> {
+    EdtTestUtilKt.runInEdtAndWait(true, () -> {
       checkTree(null, true);
       return null;
     });

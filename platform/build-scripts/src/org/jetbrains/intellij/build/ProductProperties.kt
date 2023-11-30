@@ -1,6 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.runtime.repository.ProductMode
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginProblem
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentListOf
@@ -69,7 +75,7 @@ abstract class ProductProperties {
   /**
    * Paths to directories containing images specified by 'logo/@url' and 'icon/@ico' attributes in ApplicationInfo.xml file.
    * <br>
-   * todo(nik) get rid of this and make sure that these resources are located in [applicationInfoModule] instead
+   * todo get rid of this and make sure that these resources are located in [applicationInfoModule] instead
    */
   var brandingResourcePaths: List<Path> = emptyList()
 
@@ -158,6 +164,22 @@ abstract class ProductProperties {
   val productLayout: ProductModulesLayout = ProductModulesLayout()
 
   /**
+   * Base part of URL (ending with `/`) where additional product resources are located.
+   * For example, for IntelliJ IDEA it's `https://download.jetbrains.com/idea/`.
+   * Note that it can be used only for published builds; there will be no resources for snapshot or nightly builds.
+   * It's used by the build scripts for the following:
+   * * to inject URL of *.manifest file produced by [RepairUtilityBuilder][org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder] and 
+   *   in `repair` executable;
+   * * to specify URL of distributions in [SBOM][SoftwareBillOfMaterials] files. 
+   */
+  var baseDownloadUrl: String? = null
+
+  /**
+   * See [SoftwareBillOfMaterials]
+   */
+  val sbomOptions = SoftwareBillOfMaterials.Options()
+
+  /**
    * If `true`, a cross-platform ZIP archive containing binaries for all OSes will be built.
    * The archive will be generated in [BuildPaths.artifactDir] directory and have ".portable" suffix by default
    * (override [getCrossPlatformZipFileName] to change the file name).
@@ -182,10 +204,19 @@ abstract class ProductProperties {
   var embeddedJetBrainsClientMainModule: String? = null 
 
   /**
+   * Specifies the mode of this product which will be used to determine which plugin modules should be loaded at runtime by 
+   * [the modular loader][com.intellij.platform.bootstrap.ModuleBasedProductLoadingStrategy].
+   * This property makes sense only if [supportModularLoading] is set to `true`.
+   */
+  @ApiStatus.Experimental
+  var productMode: ProductMode = ProductMode.LOCAL_IDE
+
+  /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
    */
-  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String =
-    getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
+  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
+  }
 
   /**
    * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker],
@@ -219,6 +250,22 @@ abstract class ProductProperties {
    * Base file name (without an extension) for product archives and installers (*.exe, *.tar.gz, *.dmg).
    */
   abstract fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String
+
+  /**
+   * `<productName>-<releaseVersion>` for release builds, e.g. ideaIC-2023.2
+   * `<productName>-<buildNumber>` for other builds, e.g. ideaIC-232.9999
+   *
+   * See [getBaseArtifactName].
+   */
+  open fun getBaseArtifactName(context: BuildContext): String {
+    val buildNumber = if (context.applicationInfo.isRelease) {
+      context.applicationInfo.fullVersion
+    }
+    else {
+      context.buildNumber
+    }
+    return getBaseArtifactName(context.applicationInfo, buildNumber)
+  }
 
   /**
    * @return an instance of the class containing properties specific for Windows distribution,
@@ -256,13 +303,13 @@ abstract class ProductProperties {
 
   /**
    * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
-   * todo(nik) get rid of this
+   * todo get rid of this
    */
   var additionalModulesToCompile: PersistentList<String> = persistentListOf()
 
   /**
    * Specified modules which tests need to be compiled when product is built.
-   * todo(nik) get rid of this
+   * todo get rid of this
    */
   var modulesToCompileTests: PersistentList<String> = persistentListOf()
 
@@ -335,4 +382,15 @@ abstract class ProductProperties {
    * authoring tools and builds.
    */
   var buildDocAuthoringAssets: Boolean = false
+
+  /**
+   * Allows customizing [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.
+   * @return list of plugin validation errors.
+   */
+  open fun validatePlugin(result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
+    return when (result) {
+      is PluginCreationSuccess -> result.unacceptableWarnings
+      is PluginCreationFail -> result.errorsAndWarnings
+    }
+  }
 }

@@ -37,7 +37,7 @@ class ExitContext {
     myReturnVariable =
       new VariableNameGenerator(block, VariableKind.LOCAL_VARIABLE).byName("result", "res").byType(returnType).generate(true);
     if (marker.myDefaultValue != null && PsiTreeUtil.isAncestor(block, marker.myDefaultValue, true)) {
-      myReturnVariableDefaultValue = (PsiExpression)marker.myDefaultValue.copy();
+      myReturnVariableDefaultValue = myFactory.createExpressionFromText(marker.myDefaultValue.getText(), block);
     } else {
       myReturnVariableDefaultValue = marker.myDefaultValue;
     }

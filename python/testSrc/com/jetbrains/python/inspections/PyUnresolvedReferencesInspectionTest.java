@@ -915,6 +915,19 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON310, this::doTest);
   }
 
+  // PY-63361
+  public void testParametrizationOfClassWithTypeParameterListIsNotReported() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      doTestByText("""
+                   class MyGeneric[T]:
+                       pass
+                   
+                   class Sub(MyGeneric[int]):
+                       pass
+                   """);
+    });
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

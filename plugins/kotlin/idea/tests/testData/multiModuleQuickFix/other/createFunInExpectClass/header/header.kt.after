@@ -1,4 +1,5 @@
 // "Create member function 'Foo.foo'" "true"
+// IGNORE_K2
 
 expect class Foo {
     fun foo(s: String, i: Int)

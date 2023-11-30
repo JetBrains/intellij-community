@@ -210,7 +210,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   private boolean underProject(final File file) {
     return ReadAction.compute(() -> {
       final VirtualFile vf = SvnUtil.getVirtualFile(file.getAbsolutePath());
-      return (vf == null) || myProject.getService(FileIndexFacade.class).isInContent(vf);
+      return (vf == null) || FileIndexFacade.getInstance(myProject).isInContent(vf);
     });
   }
 

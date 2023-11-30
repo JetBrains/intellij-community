@@ -8,12 +8,11 @@ import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
-import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
@@ -30,9 +29,8 @@ internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelVi
   val reviewerFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
   val labelFilterState: MutableStateFlow<GitLabMergeRequestsFiltersValue.LabelFilterValue?>
 
-  suspend fun getMergeRequestMembers(): List<GitLabUserDTO>
-
-  suspend fun getLabels(): List<GitLabLabelDTO>
+  val mergeRequestMembers: Flow<Result<List<GitLabUserDTO>>>
+  val labels: Flow<Result<List<GitLabLabelDTO>>>
 }
 
 @OptIn(FlowPreview::class)
@@ -82,6 +80,9 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
     copy(label = it)
   }
 
+  override val mergeRequestMembers: Flow<Result<List<GitLabUserDTO>>> = projectData.members
+  override val labels: Flow<Result<List<GitLabLabelDTO>>> = projectData.labels
+
   init {
     scope.launchNow {
       // with debounce to avoid collecting intermediate state
@@ -92,10 +93,6 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
       }
     }
   }
-
-  override suspend fun getLabels(): List<GitLabLabelDTO> = projectData.getLabels()
-
-  override suspend fun getMergeRequestMembers(): List<GitLabUserDTO> = projectData.getMembers()
 
   companion object {
     fun defaultQuickFilter(user: GitLabUserDTO): GitLabMergeRequestsQuickFilter = GitLabMergeRequestsQuickFilter.AssignedToMe(user)

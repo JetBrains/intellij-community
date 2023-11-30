@@ -1,15 +1,17 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,7 +29,19 @@ public final class GetterProcessor extends AbstractClassProcessor {
   }
 
   private static GetterFieldProcessor getGetterFieldProcessor() {
-    return ApplicationManager.getApplication().getService(GetterFieldProcessor.class);
+    return LombokProcessorManager.getInstance().getGetterFieldProcessor();
+  }
+
+  @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    final AccessorsInfo.AccessorsValues classAccessorsValues = AccessorsInfo.getAccessorsValues(psiClass);
+    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
+      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField, classAccessorsValues);
+      if (nameHint.equals(LombokUtils.getGetterName(psiField, accessorsInfo))) return true;
+    }
+    return false;
   }
 
   @Override
@@ -72,20 +86,20 @@ public final class GetterProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
-      target.addAll(createFieldGetters(psiClass, methodVisibility));
+      target.addAll(createFieldGetters(psiClass, methodVisibility, nameHint));
     }
   }
 
   @NotNull
-  public Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @NotNull String methodModifier) {
+  public Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @NotNull String methodModifier, @Nullable String nameHint) {
     Collection<PsiMethod> result = new ArrayList<>();
     final Collection<PsiField> getterFields = filterGetterFields(psiClass);
     GetterFieldProcessor fieldProcessor = getGetterFieldProcessor();
     for (PsiField getterField : getterFields) {
-      result.add(fieldProcessor.createGetterMethod(getterField, psiClass, methodModifier));
+      ContainerUtil.addIfNotNull(result, fieldProcessor.createGetterMethod(getterField, psiClass, methodModifier, nameHint));
     }
     return result;
   }

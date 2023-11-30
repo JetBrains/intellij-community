@@ -2,12 +2,8 @@
 package com.intellij.workspaceModel.codegen.engine
 
 import com.intellij.workspaceModel.codegen.deft.meta.*
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 
-val SKIPPED_TYPES: Set<String> = setOfNotNull(WorkspaceEntity::class.simpleName,
-                                              WorkspaceEntity.Builder::class.simpleName,
-                                              WorkspaceEntityWithSymbolicId::class.simpleName)
+val SKIPPED_TYPES: Set<String> = setOfNotNull("Builder", "WorkspaceEntity", "WorkspaceEntityWithSymbolicId")
 interface CodeGenerator {
   fun generate(module: CompiledObjModule): GenerationResult
 }
@@ -42,10 +38,18 @@ sealed interface ProblemLocation {
   }
 }
 
-class GeneratedCode(
+sealed interface GeneratedCode
+
+class ObjClassGeneratedCode(
   val target: ObjClass<*>,
   val builderInterface: String,
   val companionObject: String,
   val topLevelCode: String?,
   val implementationClass: String?
-)
+): GeneratedCode
+
+class ObjModuleFileGeneratedCode(
+  val fileName: String,
+  val objModuleName: String,
+  val generatedCode: String
+): GeneratedCode

@@ -14,7 +14,7 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ChangeTemplateDataLanguageAction extends AnAction {
+public final class ChangeTemplateDataLanguageAction extends AnAction {
   @Override
   public void update(final @NotNull AnActionEvent e) {
     e.getPresentation().setVisible(false);

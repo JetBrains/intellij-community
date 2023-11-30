@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl;
 
@@ -60,8 +60,7 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
     }
   }
 
-  @NotNull
-  public static TodoScanningState createTodoScanningState(IndexPattern[] patterns) {
+  public static @NotNull TodoScanningState createTodoScanningState(IndexPattern[] patterns) {
     Matcher[] matchers = new Matcher[patterns.length];
     TodoScanningState todoScanningState = new TodoScanningState(patterns, matchers);
 

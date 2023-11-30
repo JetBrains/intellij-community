@@ -17,8 +17,7 @@ class Proto implements RW.Savable, Streamable, ProtoEntity {
   public final int access;
   public final int signature;
   public final int name;
-  @NotNull
-  public final Set<TypeRepr.ClassType> annotations;
+  public final @NotNull Set<TypeRepr.ClassType> annotations;
 
   protected Proto(final int access, final int signature, final int name, Set<TypeRepr.ClassType> annotations) {
     this.access = access;

@@ -94,10 +94,10 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      super.setupProject(project)
       if (parent.generateOnboardingTips) {
-        prepareTipsInEditor(project)
+        prepareOnboardingTips(project)
       }
+      super.setupProject(project)
     }
   }
 }

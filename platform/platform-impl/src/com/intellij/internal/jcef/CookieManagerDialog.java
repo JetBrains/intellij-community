@@ -18,14 +18,14 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-class CookieManagerDialog extends JDialog {
+final class CookieManagerDialog extends JDialog {
   private static final String myTitle = "Cookie Manager";
   private static final String myDeleteCookiesButtonText = "Delete All Cookies";
   @SuppressWarnings("unused") private final JBCefBrowser myJBCefBrowser;
   private final JBCefCookieManager myJBCefCookieManager;
   private final CookieTableModel myTableModel = new CookieTableModel();
 
-  protected CookieManagerDialog(Frame owner, JBCefBrowser jbCefBrowser) {
+  CookieManagerDialog(Frame owner, JBCefBrowser jbCefBrowser) {
     super(owner, myTitle, false);
     setLayout(new BorderLayout());
     setSize(JBDimension.size(new Dimension(800, 600)));
@@ -59,7 +59,7 @@ class CookieManagerDialog extends JDialog {
     myTableModel.show(cefCookies);
   }
 
-  private static class CookieTableModel extends AbstractTableModel {
+  private static final class CookieTableModel extends AbstractTableModel {
     private final String[] columnNames =
       new String[]{"Name", "Value", "Domain", "Path", "Secure", "HTTP only", "Created", "Last Access", "Expires"};
     private final ArrayList<Object[]> rowData = new ArrayList<>();

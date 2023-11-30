@@ -83,9 +83,15 @@ class TextCompletionPopup<T>(
     override fun isSelectable(value: Item<T>): Boolean = value is Item.Just
 
     override fun getValues(): List<Item<T>> {
-      return contributor.getItems()
-        .map { Item.Just(it) }
-        .ifEmpty { listOf(Item.None) }
+      val items = contributor.getItems()
+      if (items.isEmpty()) {
+        return listOf(Item.None)
+      }
+      if (items.size > MAX_COMPLETION_LIST_SIZE) {
+        return items.take(MAX_COMPLETION_LIST_SIZE)
+                 .map { Item.Just(it) } + Item.More
+      }
+      return items.map { Item.Just(it) }
     }
 
     override fun onChosen(selectedValue: Item<T>, finalChoice: Boolean): com.intellij.openapi.ui.popup.PopupStep<*>? {
@@ -111,9 +117,14 @@ class TextCompletionPopup<T>(
 
       myBorder = null
 
+      isEnabled = value is Item.Just
+
       when (value) {
         is Item.None -> {
           append(LangBundle.message("completion.no.suggestions"))
+        }
+        is Item.More -> {
+          append(LangBundle.message("completion.more.suggestions", MAX_COMPLETION_LIST_SIZE))
         }
         is Item.Just -> {
           val cell = TextCompletionRenderer.Cell(this, value.item, list, index, selected, hasFocus)
@@ -125,6 +136,7 @@ class TextCompletionPopup<T>(
 
   private sealed interface Item<out T> {
     object None : Item<Nothing>
+    object More : Item<Nothing>
     class Just<T>(val item: T) : Item<T>
   }
 
@@ -133,5 +145,14 @@ class TextCompletionPopup<T>(
     fun getItems(): List<T>
 
     fun fireItemChosen(item: T)
+  }
+
+  companion object {
+
+    /**
+     * This property used to truncate number of completion variants, which we show to user.
+     * List popup has UI performance issues for huge number of elements.
+     */
+    private const val MAX_COMPLETION_LIST_SIZE = 1000
   }
 }

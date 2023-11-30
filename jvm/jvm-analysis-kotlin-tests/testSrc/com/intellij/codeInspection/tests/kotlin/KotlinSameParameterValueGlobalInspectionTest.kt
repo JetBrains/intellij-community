@@ -1,6 +1,6 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.codeInspection.tests.SameParameterValueInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.SameParameterValueInspectionTestBase
 
 class KotlinSameParameterValueGlobalInspectionTest : SameParameterValueInspectionTestBase(false) {
   fun testEntryPoint() {

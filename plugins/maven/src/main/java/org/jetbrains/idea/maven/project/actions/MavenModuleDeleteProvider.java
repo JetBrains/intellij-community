@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.module.Module;
@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Ignores maven project if the corresponding module is deleted
  */
-public class MavenModuleDeleteProvider extends ModuleDeleteProvider {
+public final class MavenModuleDeleteProvider extends ModuleDeleteProvider {
   @Override
   protected void doDetachModules(@NotNull Project project,
                                  Module @Nullable [] modules,

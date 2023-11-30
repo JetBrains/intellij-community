@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.actions;
 
@@ -25,7 +25,7 @@ import java.util.List;
 import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ANY_KEY;
 import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ESCAPE;
 
-public class CopyAction extends TextComponentEditorAction implements HintManagerImpl.ActionToIgnore {
+public final class CopyAction extends TextComponentEditorAction implements HintManagerImpl.ActionToIgnore {
 
   private static final String SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY = "editor.skip.copy.and.cut.for.empty.selection";
   public static final String SKIP_SELECTING_LINE_AFTER_COPY_EMPTY_SELECTION_KEY = "editor.skip.selecting.line.after.copy.empty.selection";
@@ -34,9 +34,9 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
     super(new Handler(), false);
   }
 
-  public static class Handler extends EditorActionHandler {
+  public static final class Handler extends EditorActionHandler {
     @Override
-    public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void doExecute(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       copyToClipboard(editor, dataContext, EditorCopyPasteHelper.getInstance()::getSelectionTransferable);
     }
   }
@@ -50,10 +50,7 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
     }
 
     public @NotNull DataContext extendDataContext(@NotNull DataContext dataContext) {
-      return dataId -> {
-        if (KEY.is(dataId)) return this;
-        return dataContext.getData(dataId);
-      };
+      return CustomizedDataContext.create(dataContext, dataId -> KEY.is(dataId) ? this : null);
     }
   }
 

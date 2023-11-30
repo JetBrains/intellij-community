@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduce;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -152,9 +152,21 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
       }
     };
     chooser.showChooser(occurrencesMap, choice -> {
-            AbstractInplaceIntroducer<?, ?> introducer = getIntroducer(target, scope, usages, choice, file, editor, project);
-            introducer.startInplaceIntroduceTemplate();
-        });
+      startInplaceIntroduce(target, scope, usages, file, editor, project, choice);
+    });
+  }
+
+  public void startInplaceIntroduce(
+    @NotNull Target target,
+    @NotNull Scope scope,
+    @NotNull List<UsageInfo> usages,
+    @NotNull PsiFile file,
+    @NotNull Editor editor,
+    @NotNull Project project,
+    OccurrencesChooser.ReplaceChoice choice
+  ) {
+    AbstractInplaceIntroducer<?, ?> introducer = getIntroducer(target, scope, usages, choice, file, editor, project);
+    introducer.startInplaceIntroduceTemplate();
   }
 
   @NotNull

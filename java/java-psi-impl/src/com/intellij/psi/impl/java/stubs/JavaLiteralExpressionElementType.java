@@ -21,6 +21,7 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.java.stubs.impl.PsiLiteralStub;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.stubs.IndexSink;
@@ -33,7 +34,7 @@ import java.io.IOException;
 
 public class JavaLiteralExpressionElementType extends JavaStubElementType<PsiLiteralStub, PsiLiteralExpression> {
   public JavaLiteralExpressionElementType() {
-    super("LITERAL_EXPRESSION");
+    super("LITERAL_EXPRESSION", BasicJavaElementType.BASIC_LITERAL_EXPRESSION);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.editor.Editor;
@@ -18,8 +18,7 @@ import java.util.Collection;
  * Please refer to {@link TargetElementUtil} for additional information.
  */
 public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluator {
-  @Nullable
-  public PsiElement getNamedElement(@NotNull PsiElement element) {
+  public @Nullable PsiElement getNamedElement(@NotNull PsiElement element) {
     return null;
   }
 
@@ -27,27 +26,23 @@ public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluato
     return true;
   }
 
-  @Nullable
-  public PsiElement adjustElement(Editor editor, int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
+  public @Nullable PsiElement adjustElement(Editor editor, int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
     return element;
   }
 
-  @Nullable
-  public PsiElement adjustTargetElement(Editor editor, int offset, int flags, @NotNull PsiElement targetElement) {
+  public @Nullable PsiElement adjustTargetElement(Editor editor, int offset, int flags, @NotNull PsiElement targetElement) {
     return targetElement;
   }
 
-  @Nullable
-  public PsiElement adjustReferenceOrReferencedElement(@NotNull PsiFile file,
-                                                       @NotNull Editor editor,
-                                                       int offset,
-                                                       int flags,
-                                                       @Nullable PsiElement refElement) {
+  public @Nullable PsiElement adjustReferenceOrReferencedElement(@NotNull PsiFile file,
+                                                                 @NotNull Editor editor,
+                                                                 int offset,
+                                                                 int flags,
+                                                                 @Nullable PsiElement refElement) {
     return refElement;
   }
 
-  @Nullable
-  public PsiElement adjustReference(@NotNull PsiReference ref) {
+  public @Nullable PsiElement adjustReference(@NotNull PsiReference ref) {
     return null;
   }
 
@@ -56,8 +51,7 @@ public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluato
    * comparing to the default ref.resolve() and ref.multiResolve() methods.
    * The method is calling in places where the target element from the reference is required: e.g. GTD, GTTD, highlighting identifier pass and others  
    */
-  @Nullable
-  public Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
+  public @Nullable Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
     return null;
   }
 
@@ -65,18 +59,16 @@ public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluato
    * Method customizing GTD navigation element. It is the last place where the navElement can be changed.
    * @apiNote this method is called for all elements, including the ones from GTD direct provides
    */
-  @Nullable
-  public PsiElement getGotoDeclarationTarget(@NotNull final PsiElement element, @Nullable final PsiElement navElement) {
+  public @Nullable PsiElement getGotoDeclarationTarget(final @NotNull PsiElement element, final @Nullable PsiElement navElement) {
     return null;
   }
 
-  @NotNull
-  public ThreeState isAcceptableReferencedElement(@NotNull PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
+  public @NotNull ThreeState isAcceptableReferencedElement(@NotNull PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
     return ThreeState.UNSURE;
   }
 
   @Override
-  public boolean includeSelfInGotoImplementation(@NotNull final PsiElement element) {
+  public boolean includeSelfInGotoImplementation(final @NotNull PsiElement element) {
     return true;
   }
 
@@ -88,8 +80,7 @@ public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluato
    * @return a scope where element's implementations (Goto/Show Implementations) should be searched.
    * If null is returned, default (module-with-dependents) scope will be used.
    */
-  @Nullable
-  public SearchScope getSearchScope(Editor editor, @NotNull PsiElement element) {
+  public @Nullable SearchScope getSearchScope(Editor editor, @NotNull PsiElement element) {
     return null;
   }
 }

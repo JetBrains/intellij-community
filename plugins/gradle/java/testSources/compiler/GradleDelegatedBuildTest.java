@@ -14,8 +14,10 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,6 +76,63 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
 
     assertCopied("impl/build/resources/main/dir/file-impl.properties");
     assertNotCopied("impl/build/resources/test/dir/file-impl-test.properties");
+  }
+
+  @Test
+  @TargetVersions("8.0+")
+  public void testDelegationBuildsBuildSrc() throws IOException {
+    var buildPath = isGradleNewerThan("4.0") ? "build/classes/java" : "build/classes";
+    var junitTestAnnotation = isGradleNewerOrSameAs("4.7") ? "org.junit.jupiter.api.Test" : "org.junit.Test";
+
+    createProjectSubFile("settings.gradle", settingsScript(
+      it -> it.setProjectName("project")
+    ));
+    createProjectSubFile("build.gradle", script(
+      it -> it.withJavaPlugin()
+        .withJUnit()
+    ));
+    createProjectSubFile("buildSrc/build.gradle", script(
+      it -> it.withJavaPlugin()
+        .withJUnit()
+    ));
+    importProject();
+    assertModules("project", "project.main", "project.test",
+                  "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test");
+
+    createProjectSubFile("buildSrc/src/main/java/org/example/Main.java", """
+        package org.example;
+        
+        public class Main {
+        
+          public static void main(String[] args) {
+            sayHello();
+          }
+        
+          public static void sayHello() {
+            System.out.println("Hello!");
+          }
+        }
+      """);
+    createProjectSubFile("buildSrc/src/test/java/org/example/TestCase.java", """
+        package org.example;
+        
+        import %s;
+        
+        public class TestCase {
+        
+          @Test
+          public void test() {
+            System.out.println("Test!");
+            Main.sayHello();
+          }
+        }
+      """.formatted(junitTestAnnotation));
+
+    assertDoesntExist(new File(getProjectPath(), "buildSrc/" + buildPath + "/main/org/example/Main.class"));
+    assertDoesntExist(new File(getProjectPath(), "buildSrc/" + buildPath + "/test/org/example/TestCase.class"));
+    compileModules("project.buildSrc.test");
+    assertExists(new File(getProjectPath(), "buildSrc/" + buildPath + "/main/org/example/Main.class"));
+    assertExists(new File(getProjectPath(), "buildSrc/" + buildPath + "/test/org/example/TestCase.class"));
   }
 
   @Test

@@ -10,22 +10,19 @@ import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class DefaultProjectTimed extends TimedReference<Project> {
-  @NotNull
-  private final DefaultProject myParentDisposable;
+  private final @NotNull DefaultProject myParentDisposable;
 
   DefaultProjectTimed(@NotNull DefaultProject disposable) {
     super(disposable);
     myParentDisposable = disposable;
   }
 
-  @NotNull
-  abstract Project compute();
+  abstract @NotNull Project compute();
 
   abstract void init(@NotNull Project project);
 
-  @NotNull
   @Override
-  public synchronized Project get() {
+  public synchronized @NotNull Project get() {
     Project value = super.get();
     if (value == null) {
       value = compute();

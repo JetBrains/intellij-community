@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class XDebuggerInlayUtil {
   public static final String INLINE_HINTS_DELIMETER = ":";
   @NotNull private final Project myProject;
@@ -63,7 +64,7 @@ public final class XDebuggerInlayUtil {
             }
           }
           DebuggerUIUtil.repaintCurrentEditor(project); // to update inline debugger data
-        }, project.getDisposed());
+        }, ModalityState.nonModal(), project.getDisposed());
       }
     });
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
@@ -80,7 +81,7 @@ public final class XDebuggerInlayUtil {
     if (valueNode.getValuePresentation() != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
         createInlayInt(session, new InlineDebugRenderer(valueNode, position, session));
-      }, session.getProject().getDisposed());
+      }, ModalityState.nonModal(), session.getProject().getDisposed());
       return true;
     }
     return false;
@@ -89,7 +90,7 @@ public final class XDebuggerInlayUtil {
   private static void createInlayInt(@NotNull XDebugSession session, InlineDebugRenderer renderer) {
     EDT.assertIsEdt();
     XSourcePosition position = renderer.getPosition();
-    FileEditor editor = FileEditorManager.getInstance(session.getProject()).getSelectedEditor(position.getFile());
+    FileEditor editor = XDebuggerUtil.getInstance().getSelectedEditor(session.getProject(), position.getFile());
     if (editor instanceof TextEditor) {
       Editor e = ((TextEditor)editor).getEditor();
       int line = position.getLine();
@@ -130,7 +131,7 @@ public final class XDebuggerInlayUtil {
   }
 
   public void clearInlays() {
-    ApplicationManager.getApplication().invokeLater(() -> clearInlaysInt(myProject), myProject.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> clearInlaysInt(myProject), ModalityState.nonModal(), myProject.getDisposed());
   }
 
   private static List<Inlay> clearInlaysInEditor(@NotNull Editor editor) {

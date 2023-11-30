@@ -74,6 +74,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   private final JBScrollPane myScrollPane;
   private final ActionButton myHistoryPopupButton;
   private boolean myMultilineEnabled = true;
+  private boolean myShowNewLineButton = true;
 
   /**
    * @deprecated infoMode is not used. Use the other constructor.
@@ -220,7 +221,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     }
 
     boolean showClearIcon = !StringUtil.isEmpty(myTextArea.getText());
-    boolean showNewLine = myMultilineEnabled;
+    boolean showNewLine = myMultilineEnabled && myShowNewLineButton;
     boolean wrongVisibility =
       ((myClearButton.getParent() == null) == showClearIcon) || ((myNewLineButton.getParent() == null) == showNewLine);
 
@@ -229,10 +230,9 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       myIconsPanel.removeAll();
       myIconsPanel.setLayout(new BorderLayout());
       myIconsPanel.add(myClearButton, BorderLayout.CENTER);
-      myIconsPanel.add(myNewLineButton, BorderLayout.EAST);
+      if (showNewLine) myIconsPanel.add(myNewLineButton, BorderLayout.EAST);
       resetPreferredSize(myIconsPanel);
       if (!showClearIcon) myIconsPanel.remove(myClearButton);
-      if (!showNewLine) myIconsPanel.remove(myNewLineButton);
       myIconsPanel.revalidate();
       myIconsPanel.repaint();
     }
@@ -306,6 +306,11 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     updateIconsLayout();
   }
 
+  public void setShowNewLineButton(boolean show) {
+    myShowNewLineButton = show;
+    updateIconsLayout();
+  }
+
   @NotNull
   public JTextArea getTextArea() {
     return myTextArea;
@@ -332,7 +337,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   @Deprecated
   public void setInfoText(@SuppressWarnings("unused") String info) {}
 
-  private class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
+  private final class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
     ShowHistoryAction() {
       super(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
             FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
@@ -351,11 +356,13 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       Dimension size = historyList.getPreferredSize();
       size.width = Math.min(size.width, getWidth() + 200);
       historyList.setPreferredSize(size);
+      historyList.getAccessibleContext()
+        .setAccessibleName(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"));
       Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null);
     }
   }
 
-  private class ClearAction extends DumbAwareAction implements LightEditCompatible {
+  private final class ClearAction extends DumbAwareAction implements LightEditCompatible {
     ClearAction() {
       super(ExperimentalUI.isNewUI() ? ExpUiIcons.General.CloseSmall : AllIcons.Actions.Close);
       getTemplatePresentation().setHoveredIcon(
@@ -369,7 +376,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     }
   }
 
-  private class NewLineAction extends DumbAwareAction implements LightEditCompatible {
+  private final class NewLineAction extends DumbAwareAction implements LightEditCompatible {
     NewLineAction() {
       super(FindBundle.message("find.new.line"), null, AllIcons.Actions.SearchNewLine);
       setShortcutSet(new CustomShortcutSet(NEW_LINE_KEYSTROKE));
@@ -410,7 +417,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     }
   }
 
-  private static class PseudoSeparatorBorder implements Border {
+  private static final class PseudoSeparatorBorder implements Border {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       g.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());

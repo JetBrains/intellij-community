@@ -6,47 +6,65 @@ import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.LightweightHint
 import java.awt.Point
 import java.awt.event.MouseEvent
+import java.lang.ref.WeakReference
 
 class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
   private var areaUnderCursor: InlayMouseArea? = null
-  private var inlayUnderCursor: Inlay<*>? = null
+  private var inlayUnderCursor: WeakReference<Inlay<*>>? = null
   private var ctrlDown = false
+  private var hint: LightweightHint? = null
 
   override fun mouseMoved(e: EditorMouseEvent) {
     val inlay = getInlay(e)
     val renderer = if (inlay == null) null else getRenderer(inlay)
     val mouseArea = if (renderer == null || inlay == null) null else getMouseAreaUnderCursor(inlay, renderer, e.mouseEvent)
     val ctrlDown = isControlDown(e.mouseEvent)
+
+    if (inlay != inlayUnderCursor?.get()) {
+      hint?.hide()
+      if (renderer != null) {
+        hint = renderer.handleHover(e)
+      }
+      else {
+        hint = null
+      }
+    }
+
     if (mouseArea != areaUnderCursor || ctrlDown != this.ctrlDown) {
-      val isHovered = ctrlDown && mouseArea != null
+      val isHoveredWithCtrl = ctrlDown && mouseArea != null
 
       val oldEntries = areaUnderCursor?.entries
-      if (oldEntries != null && !isHovered) {
+      if (oldEntries != null && !isHoveredWithCtrl) {
         for (entry in oldEntries) {
-          entry.isHovered = false
+          entry.isHoveredWithCtrl = false
         }
       }
 
       val newEntries = mouseArea?.entries
-      if (newEntries != null && isHovered) {
+      if (newEntries != null && isHoveredWithCtrl) {
         for (entry in newEntries) {
-          entry.isHovered = true
+          entry.isHoveredWithCtrl = true
         }
       }
-      inlayUnderCursor?.update()
+
+      inlayUnderCursor?.get()?.update()
       inlay?.update()
 
       areaUnderCursor = mouseArea
-      inlayUnderCursor = inlay
       this.ctrlDown = ctrlDown
+    }
+
+    if (inlay != inlayUnderCursor?.get()) {
+      inlayUnderCursor = inlay?.let { WeakReference(it) }
     }
   }
 
   private fun isControlDown(e: MouseEvent): Boolean = (SystemInfo.isMac && e.isMetaDown) || e.isControlDown
 
-  private fun getRenderer(inlay: Inlay<*>) : DeclarativeInlayRenderer? {
+  private fun getRenderer(inlay: Inlay<*>): DeclarativeInlayRenderer? {
     val renderer = inlay.renderer
     if (renderer !is DeclarativeInlayRenderer) return null
     return renderer
@@ -58,7 +76,7 @@ class DeclarativeInlayHintsMouseMotionListener : EditorMouseMotionListener {
     return e.inlay
   }
 
-  private fun getMouseAreaUnderCursor(inlay: Inlay<*>, renderer: DeclarativeInlayRenderer, event: MouseEvent) : InlayMouseArea? {
+  private fun getMouseAreaUnderCursor(inlay: Inlay<*>, renderer: DeclarativeInlayRenderer, event: MouseEvent): InlayMouseArea? {
     val bounds = inlay.bounds ?: return null
     val inlayPoint = Point(bounds.x, bounds.y)
     val translated = Point(event.x - inlayPoint.x, event.y - inlayPoint.y)

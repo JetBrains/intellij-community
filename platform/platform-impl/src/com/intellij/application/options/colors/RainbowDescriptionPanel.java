@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -24,10 +24,10 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 
 
-public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
+public final class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
-  protected JPanel myPanel;
+  JPanel myPanel;
 
   private JBLabel myLStop1;
   private JBLabel myLStop2;
@@ -36,11 +36,11 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
   private JBLabel myLStop5;
   private final JBLabel[] myLStops = new JBLabel[]{myLStop1, myLStop2, myLStop3, myLStop4, myLStop5};
 
-  protected ColorPanel myStop1;
-  protected ColorPanel myStop2;
-  protected ColorPanel myStop3;
-  protected ColorPanel myStop4;
-  protected ColorPanel myStop5;
+  ColorPanel myStop1;
+  ColorPanel myStop2;
+  ColorPanel myStop3;
+  ColorPanel myStop4;
+  ColorPanel myStop5;
   private final ColorPanel[] myStops = new ColorPanel[]{myStop1, myStop2, myStop3, myStop4, myStop5};
 
   private JBCheckBox myRainbow;
@@ -80,15 +80,13 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     myInheritanceLabel.setBorder(JBUI.Borders.empty(4, 0, 4, 4));
   }
 
-  @NotNull
   @Contract(pure = true)
-  private static String checkRightArrow(@NotNull String str) {
+  private static @NotNull String checkRightArrow(@NotNull String str) {
     return str.replaceAll("->", FontUtil.rightArrow(StartupUiUtil.getLabelFont()));
   }
 
-  @NotNull
   @Override
-  public JComponent getPanel() {
+  public @NotNull JComponent getPanel() {
     return this;
   }
 

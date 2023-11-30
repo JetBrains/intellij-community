@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -35,8 +35,7 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
   protected abstract String getQuickFixKeyId();
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlBundle.message(getQuickFixKeyId());
   }
 
@@ -52,11 +51,10 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
     doInvoke(file, offset, uri, editor);
   }
 
-  protected abstract void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor)
+  protected abstract void doInvoke(final @NotNull PsiFile file, final int offset, final @NotNull String uri, final Editor editor)
     throws IncorrectOperationException;
 
-  @Nullable
-  public static @NlsSafe String findUri(PsiFile file, int offset) {
+  public static @Nullable @NlsSafe String findUri(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     if (element == null ||
         element instanceof PsiWhiteSpace ) {

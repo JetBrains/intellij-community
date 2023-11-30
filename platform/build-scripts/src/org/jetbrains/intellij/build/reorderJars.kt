@@ -7,8 +7,6 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.INDEX_FILENAME
@@ -52,43 +50,54 @@ fun reorderJar(relativePath: String, file: Path) {
     }
 }
 
-fun generateClasspath(homeDir: Path, libDir: Path, antTargetFile: Path?): PersistentList<String> {
+fun generateClasspath(homeDir: Path, libDir: Path, antTargetFile: Path?): List<String> {
   spanBuilder("generate classpath")
     .setAttribute("dir", homeDir.toString())
     .use { span ->
-      val osName = System.getProperty("os.name")
-      val classifier = when {
-        osName.startsWith("windows", ignoreCase = true) -> "windows"
-        osName.startsWith("mac", ignoreCase = true) -> "mac"
-        else -> "linux"
-      }
-
-      val sourceToNames = readClassLoadingLog(
-        classLoadingLog = PackageIndexBuilder::class.java.classLoader.getResourceAsStream("$classifier/class-report.txt")!!,
-        rootDir = homeDir,
-      )
-      val files = computeAppClassPath(sourceToNames, libDir)
+      val files = computeAppClassPath(homeDir = homeDir, libDir = libDir)
       if (antTargetFile != null) {
         files.add(antTargetFile)
       }
       val result = files.map { libDir.relativize(it).toString() }
       span.setAttribute(AttributeKey.stringArrayKey("result"), result)
-      return result.toPersistentList()
+      return result
     }
 }
 
-private fun computeAppClassPath(sourceToNames: Map<Path, List<String>>, libDir: Path): LinkedHashSet<Path> {
+private fun computeAppClassPath(homeDir: Path, libDir: Path): LinkedHashSet<Path> {
   val existing = HashSet<Path>()
   addJarsFromDir(libDir) { paths ->
     paths.filterTo(existing) { !excludedLibJars.contains(it.fileName.toString()) }
   }
 
-  val result = LinkedHashSet<Path>()
+  return computeAppClassPath(libDir, existing, homeDir)
+}
+
+fun computeAppClassPath(libDir: Path, existing: Set<Path>, homeDir: Path): LinkedHashSet<Path> {
+  val result = LinkedHashSet<Path>(existing.size + 4)
   // add first - should be listed first
-  sequenceOf(PLATFORM_LOADER_JAR, UTIL_JAR).map(libDir::resolve).filterTo(result, existing::contains)
-  sourceToNames.keys.filterTo(result) { it.parent == libDir && existing.contains(it) }
+  sequenceOf(PLATFORM_LOADER_JAR, UTIL_8_JAR, UTIL_JAR).map(libDir::resolve).filterTo(result, existing::contains)
+  computeCoreSources().asSequence().map { homeDir.resolve(it) }.filterTo(result) { existing.contains(it) }
   // sorted to ensure stable performance results
   result.addAll(if (isWindows) existing.sortedBy(Path::toString) else existing.sorted())
+  return result
+}
+
+private fun computeCoreSources(): Set<String> {
+  val osName = System.getProperty("os.name")
+  val classifier = when {
+    osName.startsWith("windows", ignoreCase = true) -> "windows"
+    osName.startsWith("mac", ignoreCase = true) -> "mac"
+    else -> "linux"
+  }
+
+  val result = LinkedHashSet<String>()
+  PackageIndexBuilder::class.java.classLoader.getResourceAsStream("$classifier/class-report.txt")!!.bufferedReader().forEachLine {
+    val path = it.split(':', limit = 2).get(1)
+    if (path.startsWith("lib/")) {
+      result.add(path)
+    }
+  }
   return result
 }
 
@@ -103,8 +112,8 @@ fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path): Map<Path, 
   val sourceToNames = LinkedHashMap<Path, MutableList<String>>()
   classLoadingLog.bufferedReader().forEachLine {
     val data = it.split(':', limit = 2)
-    val sourcePath = data[1]
-    sourceToNames.computeIfAbsent(rootDir.resolve(sourcePath)) { mutableListOf() }.add(data[0])
+    val sourcePath = data.get(1)
+    sourceToNames.computeIfAbsent(rootDir.resolve(sourcePath)) { mutableListOf() }.add(data.get(0))
   }
   return sourceToNames
 }

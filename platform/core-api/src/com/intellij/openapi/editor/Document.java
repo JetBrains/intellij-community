@@ -36,15 +36,13 @@ public interface Document extends UserDataHolder {
    *
    * @return document content.
    */
-  @NotNull
   @Contract(pure = true)
-  default @NlsSafe String getText() {
+  default @NotNull @NlsSafe String getText() {
     return getImmutableCharSequence().toString();
   }
 
-  @NotNull
   @Contract(pure = true)
-  default @NlsSafe String getText(@NotNull TextRange range) {
+  default @NotNull @NlsSafe String getText(@NotNull TextRange range) {
     return range.substring(getText());
   }
 
@@ -58,8 +56,7 @@ public interface Document extends UserDataHolder {
    * @see #getTextLength()
    */
   @Contract(pure = true)
-  @NotNull
-  default @NlsSafe CharSequence getCharsSequence() {
+  default @NotNull @NlsSafe CharSequence getCharsSequence() {
     return getImmutableCharSequence();
   }
 
@@ -224,8 +221,7 @@ public interface Document extends UserDataHolder {
    * @param endOffset   the end offset for the range of text covered by the marker.
    * @return the marker instance.
    */
-  @NotNull
-  default RangeMarker createRangeMarker(int startOffset, int endOffset) {
+  default @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset) {
     return createRangeMarker(startOffset, endOffset, false);
   }
 
@@ -262,7 +258,9 @@ public interface Document extends UserDataHolder {
 
   /**
    * Marks the document as read-only or read/write. This method only modifies the flag stored
-   * in the document instance - no checkouts or file changes are performed.
+   * in the document instance - no checkouts or file changes are performed. When temporarily changing read-only status, like for example
+   * when modifying a read-only document, please make sure to reset the read-only status in a <code>finally</code> to make sure the status
+   * is preserved even if the modification failed.
    *
    * @param isReadOnly the new value of the read-only flag.
    * @see #isWritable()
@@ -300,8 +298,7 @@ public interface Document extends UserDataHolder {
    * @param offset the offset for which the marker is requested.
    * @return the marker instance, or {@code null} if the specified offset is not covered by a read-only marker.
    */
-  @Nullable
-  default RangeMarker getOffsetGuard(int offset) {
+  default @Nullable RangeMarker getOffsetGuard(int offset) {
     return getRangeGuard(offset, offset);
   }
 
@@ -312,8 +309,7 @@ public interface Document extends UserDataHolder {
    * @param end   the end offset of the range for which the marker is requested.
    * @return the marker instance, or {@code null} if the specified range is not covered by a read-only marker.
    */
-  @Nullable
-  default RangeMarker getRangeGuard(int start, int end) {
+  default @Nullable RangeMarker getRangeGuard(int start, int end) {
     return null;
   }
 
@@ -345,10 +341,9 @@ public interface Document extends UserDataHolder {
   default void setCyclicBufferSize(int bufferSize) {
   }
 
-  void setText(@NotNull final CharSequence text);
+  void setText(final @NotNull CharSequence text);
 
-  @NotNull
-  default RangeMarker createRangeMarker(@NotNull TextRange textRange) {
+  default @NotNull RangeMarker createRangeMarker(@NotNull TextRange textRange) {
     return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
   }
 

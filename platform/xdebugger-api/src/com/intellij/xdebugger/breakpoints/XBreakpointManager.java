@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger.breakpoints;
 
@@ -41,6 +41,15 @@ public interface XBreakpointManager {
   @NotNull
   <B extends XBreakpoint<?>> Collection<? extends B> getBreakpoints(@NotNull Class<? extends XBreakpointType<B, ?>> typeClass);
 
+  @NotNull
+  <B extends XLineBreakpoint<P>, P extends XBreakpointProperties> Collection<B> findBreakpointsAtLine(@NotNull XLineBreakpointType<P> type,
+                                                                                                      @NotNull VirtualFile file,
+                                                                                                      int line);
+
+  /**
+   * @deprecated Use {@link #findBreakpointsAtLine}.
+   */
+  @Deprecated(forRemoval = true)
   @Nullable
   <P extends XBreakpointProperties> XLineBreakpoint<P> findBreakpointAtLine(@NotNull XLineBreakpointType<P> type,
                                                                             @NotNull VirtualFile file,
@@ -60,21 +69,6 @@ public interface XBreakpointManager {
   <B extends XBreakpoint<P>, P extends XBreakpointProperties> void addBreakpointListener(@NotNull XBreakpointType<B, P> type,
                                                                                          @NotNull XBreakpointListener<B> listener,
                                                                                          Disposable parentDisposable);
-
-  // no externals usages, agreed to keep it anyway for now
-  // cannot be default because project message bus must be used
-
-  /**
-   * @deprecated Use {@link XBreakpointListener#TOPIC}
-   */
-  @Deprecated(forRemoval = true)
-  void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener);
-
-  /**
-   * @deprecated Use {@link XBreakpointListener#TOPIC}
-   */
-  @Deprecated(forRemoval = true)
-  void removeBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener);
 
   void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage);
 }

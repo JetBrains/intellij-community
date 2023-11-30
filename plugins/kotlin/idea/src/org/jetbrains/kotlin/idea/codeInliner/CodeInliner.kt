@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.searching.usages.ReferencesSearchScopeHelper
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -238,7 +238,7 @@ class CodeInliner<TCallElement : KtElement>(
         for (declaration in declarations) {
             val oldName = declaration.name
             if (oldName != null && oldName.nameHasConflictsInScope(lexicalScope, languageVersionSettings)) {
-                val newName = Fe10KotlinNameSuggester.suggestNameByName(oldName, validator)
+                val newName = KotlinNameSuggester.suggestNameByName(oldName, validator)
                 for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent))) {
                     if (reference.element.startOffset < endOfScope) {
                         reference.handleElementRename(newName)
@@ -599,7 +599,7 @@ class CodeInliner<TCallElement : KtElement>(
     private fun removeRedundantLambdasAndAnonymousFunctions(pointer: SmartPsiElementPointer<KtElement>) {
         val element = pointer.element ?: return
         for (function in element.collectDescendantsOfType<KtFunction>().asReversed()) {
-            val call = RedundantLambdaOrAnonymousFunctionInspection.findCallIfApplicableTo(function)
+            val call = RedundantLambdaOrAnonymousFunctionInspection.Util.findCallIfApplicableTo(function)
             if (call != null) {
                 KotlinInlineAnonymousFunctionProcessor.performRefactoring(call, editor = null)
             }
@@ -614,7 +614,7 @@ class CodeInliner<TCallElement : KtElement>(
 
     private fun removeRedundantUnitExpressions(pointer: SmartPsiElementPointer<KtElement>) {
         pointer.element?.forEachDescendantOfType<KtReferenceExpression> {
-            if (RedundantUnitExpressionInspection.isRedundantUnit(it)) {
+            if (RedundantUnitExpressionInspection.Util.isRedundantUnit(it)) {
                 it.delete()
             }
         }
@@ -759,7 +759,7 @@ class CodeInliner<TCallElement : KtElement>(
         })
 
         callExpressions.forEach {
-            if (it.canMoveLambdaOutsideParentheses()) {
+            if (it.canMoveLambdaOutsideParentheses(skipComplexCalls = false)) {
                 it.moveFunctionLiteralOutsideParentheses()
             }
         }

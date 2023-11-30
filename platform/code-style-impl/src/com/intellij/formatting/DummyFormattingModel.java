@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.lang.ASTNode;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class DummyFormattingModel implements FormattingModel {
+final class DummyFormattingModel implements FormattingModel {
   private final Block myRootBlock;
   private final FormattingDocumentModel myDocumentModel;
 
@@ -23,9 +23,8 @@ class DummyFormattingModel implements FormattingModel {
         return EMPTY;
       }
 
-      @Nullable
       @Override
-      public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+      public @Nullable Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
         return null;
       }
 
@@ -47,9 +46,8 @@ class DummyFormattingModel implements FormattingModel {
         return document.getLineStartOffset(line);
       }
 
-      @NotNull
       @Override
-      public CharSequence getText(TextRange textRange) {
+      public @NotNull CharSequence getText(TextRange textRange) {
         return document.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset());
       }
 
@@ -58,9 +56,8 @@ class DummyFormattingModel implements FormattingModel {
         return document.getTextLength();
       }
 
-      @NotNull
       @Override
-      public Document getDocument() {
+      public @NotNull Document getDocument() {
         return document;
       }
 
@@ -69,12 +66,11 @@ class DummyFormattingModel implements FormattingModel {
         return false;
       }
 
-      @NotNull
       @Override
-      public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
-                                                      int startOffset,
-                                                      int endOffset,
-                                                      ASTNode nodeAfter, boolean changedViaPsi) {
+      public @NotNull CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText,
+                                                               int startOffset,
+                                                               int endOffset,
+                                                               ASTNode nodeAfter, boolean changedViaPsi) {
         return whiteSpaceText;
       }
     };

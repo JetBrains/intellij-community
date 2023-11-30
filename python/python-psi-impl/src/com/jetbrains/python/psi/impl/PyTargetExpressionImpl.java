@@ -397,12 +397,17 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
                                             @NotNull PsiElement anchor,
                                             @NotNull TypeEvalContext context,
                                             boolean async) {
+    final Ref<PyType> nextMethodCallType = getNextMethodCallType(type, source, anchor, context, async);
+    if (nextMethodCallType != null && !nextMethodCallType.isNull()) {
+      if (nextMethodCallType.get() instanceof PyCollectionType collectionType) {
+        if (async && "typing.Awaitable".equals(collectionType.getClassQName())) {
+          return collectionType.getIteratedItemType();
+        }
+      }
+      return nextMethodCallType.get();
+    }
     if (type instanceof PyCollectionType) {
       return ((PyCollectionType)type).getIteratedItemType();
-    }
-    final Ref<PyType> nextMethodCallType = getNextMethodCallType(type, source, anchor, context, async);
-    if (nextMethodCallType != null) {
-      return nextMethodCallType.get();
     }
     return null;
   }

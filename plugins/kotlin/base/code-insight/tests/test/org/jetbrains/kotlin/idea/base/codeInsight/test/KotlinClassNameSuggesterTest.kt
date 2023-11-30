@@ -29,7 +29,7 @@ class KotlinClassNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCase() 
     }
 
     private fun test(classId: ClassId, vararg names: String) {
-        val nameSuggester = KotlinNameSuggester(KotlinNameSuggester.Case.CAMEL)
+        val nameSuggester = KotlinNameSuggester()
         val actualNames = nameSuggester.suggestClassNames(classId).toList().sorted()
         TestCase.assertEquals(names.sorted(), actualNames)
     }

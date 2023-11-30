@@ -2,9 +2,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -31,7 +33,10 @@ public abstract class MethodArgumentFix extends PsiUpdateModCommandAction<PsiExp
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList list) {
     if (!myToType.isValid() || !PsiTypesUtil.allTypeParametersResolved(list, myToType)) return null;
     PsiExpression[] args = list.getExpressions();
-    if (args.length <= myIndex || args[myIndex] == null || !args[myIndex].isValid()) return null;
+    if (args.length <= myIndex) return null;
+    PsiExpression arg = args[myIndex];
+    if (arg == null || !arg.isValid()) return null;
+    if (myArgumentFixerActionFactory.getModifiedArgument(arg, myToType) == null) return null;
     return Presentation.of(getText(list));
   }
 

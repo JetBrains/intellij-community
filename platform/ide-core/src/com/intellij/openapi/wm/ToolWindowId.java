@@ -9,6 +9,9 @@ public interface ToolWindowId {
   String FAVORITES_VIEW = "Favorites";
   String BOOKMARKS = "Bookmarks";
   String ANT_BUILD = "Ant";
+  /**
+   * Please don't use it as a default debug executor, unless {@link com.intellij.execution.executors.DefaultDebugExecutor} is inaccessible.
+   */
   String DEBUG = "Debug";
   String RUN = "Run";
 

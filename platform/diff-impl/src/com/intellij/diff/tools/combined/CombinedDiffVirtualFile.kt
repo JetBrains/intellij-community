@@ -2,7 +2,13 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.editor.DiffVirtualFileBase
+import org.jetbrains.annotations.ApiStatus
 
 open class CombinedDiffVirtualFile(val sourceId: String, name: String, private val path: String? = null) : DiffVirtualFileBase(name) {
   override fun getPath(): String = path ?: name
+}
+
+@ApiStatus.Internal
+interface CombinedDiffModelBuilder {
+  fun createModel(id: String): CombinedDiffModelImpl
 }

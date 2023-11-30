@@ -243,7 +243,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
   private static boolean templateDependsOnFieldsNullability() {
     final EqualsHashCodeTemplatesManager templatesManager = EqualsHashCodeTemplatesManager.getInstance();
-    final String notNullCheckPresent = "\\.notNull[^\\w]";
+    final String notNullCheckPresent = "\\.notNull\\W";
     final Pattern pattern = Pattern.compile(notNullCheckPresent);
     return pattern.matcher(templatesManager.getDefaultEqualsTemplate().getTemplate()).find() ||
            pattern.matcher(templatesManager.getDefaultHashcodeTemplate().getTemplate()).find();
@@ -409,7 +409,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       return myPanel;
     }
 
-    private void setupCombobox(EqualsHashCodeTemplatesManager templatesManager,
+    private static void setupCombobox(EqualsHashCodeTemplatesManager templatesManager,
                                       ComboBox<String> comboBox,
                                       PsiClass psiClass,
                                       Set<String> invalid) {
@@ -436,7 +436,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       comboBox.setSelectedItem(templatesManager.getDefaultTemplateBaseName());
     }
 
-    private class MyEditTemplatesListener implements ActionListener {
+    private static class MyEditTemplatesListener implements ActionListener {
       private final PsiClass myPsiClass;
       private final JComponent myParent;
       private final ComboBox<String> myComboBox;
@@ -453,7 +453,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         final EqualsHashCodeTemplatesPanel ui = new EqualsHashCodeTemplatesPanel(myPsiClass.getProject(), EqualsHashCodeTemplatesManager.getInstance());
         ui.selectNodeInTree(templatesManager.getDefaultTemplateBaseName());
         ShowSettingsUtil.getInstance().editConfigurable(myParent, ui);
-        setupCombobox(templatesManager, myComboBox, myPsiClass, new HashSet<String>());
+        setupCombobox(templatesManager, myComboBox, myPsiClass, new HashSet<>());
       }
     }
   }

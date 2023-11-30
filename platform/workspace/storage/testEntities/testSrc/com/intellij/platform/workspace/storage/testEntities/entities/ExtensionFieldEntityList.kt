@@ -39,7 +39,8 @@ interface MainEntityList : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: MainEntityList, modification: MainEntityList.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: MainEntityList,
+                                      modification: MainEntityList.Builder.() -> Unit): MainEntityList = modifyEntity(
   MainEntityList.Builder::class.java, entity, modification)
 
 var MainEntityList.Builder.child: @Child List<AttachedEntityList>
@@ -75,7 +76,8 @@ interface AttachedEntityList : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: AttachedEntityList, modification: AttachedEntityList.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: AttachedEntityList,
+                                      modification: AttachedEntityList.Builder.() -> Unit): AttachedEntityList = modifyEntity(
   AttachedEntityList.Builder::class.java, entity, modification)
 //endregion
 

@@ -27,7 +27,10 @@ package org.jetbrains.lang.manifest.highlighting;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
@@ -83,7 +86,7 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
 
           List<LocalQuickFix> fixes = new ArrayList<>();
           for (Suggestion match : matches) {
-            fixes.add(new HeaderRenameQuickFix(header, match.getWord()).asQuickFix());
+            fixes.add(LocalQuickFix.from(new HeaderRenameQuickFix(header, match.getWord())));
             if (fixes.size() == MAX_SUGGESTIONS) break;
           }
           if (bestMatch == null || bestMatch.getMetrics() > TYPO_DISTANCE) {

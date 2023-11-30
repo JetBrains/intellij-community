@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
+public final class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
   @NotNull
   private final InspectionToolWrapper<?,?> myToolWrapper;
   private final FileModifier myQuickfix;
@@ -59,6 +60,16 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    String message = findAndFix(project, file);
+
+    if (message != null) {
+      HintManager.getInstance().showErrorHint(editor, message);
+    }
+  }
+
+  @NlsContexts.HintText
+  @Nullable
+  public String findAndFix(@NotNull Project project, PsiFile file) {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "do not run under write action";
     PsiFile targetFile = myFile == null ? file : myFile;
     List<ProblemDescriptor> descriptions;
@@ -72,14 +83,14 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
       throw new RuntimeException(e);
     }
 
-    if (descriptions.isEmpty() || !FileModificationService.getInstance().preparePsiElementForWrite(targetFile)) return;
+    String message = null;
+    if (!descriptions.isEmpty() && FileModificationService.getInstance().preparePsiElementForWrite(targetFile)) {
+      AbstractPerformFixesTask fixesTask = CleanupInspectionUtil.getInstance()
+        .applyFixes(project, LangBundle.message("apply.fixes"), descriptions, myQuickfix.getClass(), myQuickfix.startInWriteAction());
 
-    final AbstractPerformFixesTask fixesTask = CleanupInspectionUtil.getInstance().applyFixes(project, LangBundle.message("apply.fixes"), descriptions, myQuickfix.getClass(), myQuickfix.startInWriteAction());
-
-    if (!fixesTask.isApplicableFixFound()) {
-      HintManager.getInstance().showErrorHint(editor,
-                                              LangBundle.message("hint.text.unfortunately.currently.available.for.batch.mode", myText));
+      message = fixesTask.getResultMessage(myText);
     }
+    return message;
   }
 
   @Override

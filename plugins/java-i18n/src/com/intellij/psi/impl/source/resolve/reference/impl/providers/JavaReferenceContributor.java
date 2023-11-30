@@ -24,10 +24,7 @@ import com.intellij.psi.impl.source.resolve.reference.CommentsReferenceContribut
 import com.intellij.psi.javadoc.PsiDocToken;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
-import static com.intellij.patterns.XmlPatterns.xmlTag;
-
-public class JavaReferenceContributor extends PsiReferenceContributor{
+public final class JavaReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
     final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider() {

@@ -1,14 +1,13 @@
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Platform;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.process.impl.ProcessListUtil;
 import com.intellij.execution.wsl.WSLCommandLineOptions;
 import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.system.OS;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +47,7 @@ public class WslAttachHost implements XAttachHost {
     ProcessOutput output = myWsl.executeOnWsl(command, options, 5_000, null);
     int exitCode = output.getExitCode();
     if (exitCode != 0) {
-      String exitCodeString = ProcessTerminatedListener.stringifyExitCode(Platform.UNIX, exitCode);
+      String exitCodeString = ProcessTerminatedListener.stringifyExitCode(OS.Linux, exitCode);
       throw new ExecutionException(XDebuggerBundle.message("dialog.message.error.executing.ps", exitCodeString));
     }
     return output.getStdout();

@@ -188,7 +188,7 @@ final class WslDistributionDescriptor {
 
     final ProcessOutput output;
     try {
-      distribution.patchCommandLine(commandLine, null, options);
+      distribution.doPatchCommandLine(commandLine, null, options);
       var processHandler = new CapturingProcessHandler(commandLine);
       output = pi == null ? processHandler.runProcess(PROBE_TIMEOUT) : processHandler.runProcessWithProgressIndicator(pi, PROBE_TIMEOUT);
     }
@@ -239,7 +239,7 @@ final class WslDistributionDescriptor {
         return super.getValue();
       }
 
-      private long getCurrentExternalChangesCount() {
+      private static long getCurrentExternalChangesCount() {
         return SaveAndSyncHandler.getInstance().getExternalChangesTracker().getModificationCount();
       }
     };

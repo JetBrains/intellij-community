@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.templateLanguages;
 
 import com.intellij.formatting.*;
@@ -97,8 +83,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   }
 
   @Override
-  @Nullable
-  public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
+  public @Nullable Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
     if (child1 instanceof DataLanguageBlockWrapper && child2 instanceof DataLanguageBlockWrapper) {
       return ((DataLanguageBlockWrapper)child1).getRightHandSpacing((DataLanguageBlockWrapper)child2);
     }
@@ -112,8 +97,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
    * @param thisBlockIndex the index of the current block in the parent block sub-blocks
    * @return the spacing between the current block and its right neighbor
    */
-  @Nullable
-  public Spacing getRightNeighborSpacing(@NotNull Block rightNeighbor, @NotNull DataLanguageBlockWrapper parent, int thisBlockIndex) {
+  public @Nullable Spacing getRightNeighborSpacing(@NotNull Block rightNeighbor, @NotNull DataLanguageBlockWrapper parent, int thisBlockIndex) {
     return null;
   }
 
@@ -124,8 +108,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
    * @param thisBlockIndex the index of the current block in the parent block sub-blocks
    * @return the spacing between the current block and its left neighbor
    */
-  @Nullable
-  public Spacing getLeftNeighborSpacing(@Nullable Block leftNeighbor, @NotNull DataLanguageBlockWrapper parent, int thisBlockIndex) {
+  public @Nullable Spacing getLeftNeighborSpacing(@Nullable Block leftNeighbor, @NotNull DataLanguageBlockWrapper parent, int thisBlockIndex) {
     return null;
   }
 
@@ -171,8 +154,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     return myForeignChildren;
   }
 
-  @Nullable
-  public Wrap substituteTemplateChildWrap(@NotNull DataLanguageBlockWrapper child, @Nullable Wrap childWrap) {
+  public @Nullable Wrap substituteTemplateChildWrap(@NotNull DataLanguageBlockWrapper child, @Nullable Wrap childWrap) {
     return childWrap;
   }
 }

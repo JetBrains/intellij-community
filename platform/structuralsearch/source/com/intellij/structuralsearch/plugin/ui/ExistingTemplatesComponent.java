@@ -21,7 +21,6 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
@@ -43,6 +42,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
+import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public final class ExistingTemplatesComponent {
   private static final Pattern SPLIT = Pattern.compile("(?<!/)/(?!/)"); // slash not preceded or followed by another slash
@@ -52,9 +52,6 @@ public final class ExistingTemplatesComponent {
   private final DefaultTreeModel patternTreeModel;
   private final JComponent panel;
   private Supplier<? extends Configuration> myConfigurationProducer;
-  private Supplier<? extends EditorTextField> mySearchEditorProducer;
-  private Runnable myExportRunnable;
-  private Runnable myImportRunnable;
   private final DefaultMutableTreeNode myDraftTemplateNode;
   private final DefaultMutableTreeNode myRecentNode;
   private final DefaultMutableTreeNode myUserTemplatesNode;
@@ -62,7 +59,7 @@ public final class ExistingTemplatesComponent {
   private boolean myTemplateChanged = false;
   private boolean myDraftTemplateAutoselect = false;
 
-  ExistingTemplatesComponent(Project project, JComponent keyboardShortcutRoot) {
+  ExistingTemplatesComponent(Project project, JComponent keyboardShortcutRoot, AnAction importAction, AnAction exportAction) {
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     myDraftTemplateNode = new DefaultMutableTreeNode(SSRBundle.message("draft.template.node")); // 'New Template' node
     myRecentNode = new DefaultMutableTreeNode(SSRBundle.message("recent.category")); // 'Recent' node
@@ -139,35 +136,6 @@ public final class ExistingTemplatesComponent {
       }
     };
 
-    final DumbAwareAction exportAction = new DumbAwareAction(SSRBundle.messagePointer("export.template.action"), AllIcons.ToolbarDecorator.Export) {
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        if (mySearchEditorProducer != null) {
-          e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchEditorProducer.get().getText()));
-        }
-      }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (myExportRunnable != null) {
-          myExportRunnable.run();
-        }
-      }
-    };
-    final DumbAwareAction importAction = new DumbAwareAction(SSRBundle.messagePointer("import.template.action"), AllIcons.ToolbarDecorator.Import) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (myImportRunnable != null) {
-          myImportRunnable.run();
-        }
-      }
-    };
-
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
     actionGroup.addAll(saveGroup, removeAction, Separator.getInstance(),
@@ -181,7 +149,7 @@ public final class ExistingTemplatesComponent {
     toolbar.setTargetComponent(patternTree);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     toolbar.setForceMinimumSize(true);
-    toolbar.setBorder(JBUI.Borders.empty(3));
+    toolbar.setBorder(JBUI.Borders.empty(DEFAULT_VGAP, 0));
 
     panel = new JPanel(new GridBagLayout());
     final var constraints = new GridBag().setDefaultWeightX(1.0);
@@ -447,18 +415,6 @@ public final class ExistingTemplatesComponent {
 
   public void setConfigurationProducer(Supplier<? extends Configuration> configurationProducer) {
     myConfigurationProducer = configurationProducer;
-  }
-
-  public void setSearchEditorProducer(Supplier<? extends EditorTextField> editorProducer) {
-    mySearchEditorProducer = editorProducer;
-  }
-
-  public void setExportRunnable(Runnable exportRunnable) {
-    myExportRunnable = exportRunnable;
-  }
-
-  public void setImportRunnable(Runnable importRunnable) {
-    myImportRunnable = importRunnable;
   }
 
   public void updateColors() {

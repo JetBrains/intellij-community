@@ -73,8 +73,8 @@ class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun `test nullability of parameter with dfa`() = doTest("""
         fun nullableParamWithDfa(p: Int?) {
-            if (d != null) {
-                println(/*NOT_NULL*/d)
+            if (p != null) {
+                println(/*NOT_NULL*/p)
             }
         }
     """.trimIndent())
@@ -92,7 +92,7 @@ class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
     fun `test nullability with platform type and if`() = doTest("""
         fun platformWithIf(): String = run {
             val a = java.lang.StringBuilder().append("a").toString()
-            /*NOT_NULL*/ if (a != null) {
+            if (a != null) {
                 return@run /*NOT_NULL*/ a
             } else {
                 "a"

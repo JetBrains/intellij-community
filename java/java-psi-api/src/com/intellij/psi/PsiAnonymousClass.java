@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,27 @@ import org.jetbrains.annotations.Nullable;
  * @see PsiNewExpression#getAnonymousClass() 
  */
 public interface PsiAnonymousClass extends PsiClass {
+  /**
+   * @return null, as anonymous class has no name
+   */
+  @Override
+  @Contract("-> null")
+  @Nullable String getQualifiedName();
+
+  /**
+   * @return null, as anonymous class has no name
+   */
+  @Override
+  @Contract("-> null")
+  @Nullable PsiIdentifier getNameIdentifier();
+
+  /**
+   * @return null, as anonymous class has no name
+   */
+  @Override
+  @Contract("-> null")
+  @Nullable String getName();
+
   /**
    * Returns the reference element specifying the base class for the anonymous class.
    *

@@ -16,6 +16,7 @@
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.EditorDiffViewer;
 import com.intellij.diff.actions.ProxyUndoRedoAction;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
@@ -53,7 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditorHolder> {
+public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditorHolder> implements EditorDiffViewer {
   @NotNull private final List<? extends EditorEx> myEditableEditors;
   @Nullable private List<? extends EditorEx> myEditors;
 
@@ -205,6 +206,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   }
 
   @NotNull
+  @Override
   public List<? extends EditorEx> getEditors() {
     if (myEditors == null) {
       myEditors = ContainerUtil.map(getEditorHolders(), holder -> holder.getEditor());
@@ -218,6 +220,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   }
 
   @NotNull
+  @Override
   public EditorEx getCurrentEditor() {
     return getEditor(getCurrentSide());
   }

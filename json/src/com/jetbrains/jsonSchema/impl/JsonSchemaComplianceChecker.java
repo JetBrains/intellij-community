@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -21,15 +21,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class JsonSchemaComplianceChecker {
+public final class JsonSchemaComplianceChecker {
   private static final Key<Set<PsiElement>> ANNOTATED_PROPERTIES = Key.create("JsonSchema.Properties.Annotated");
 
-  @NotNull private final JsonSchemaObject myRootSchema;
-  @NotNull private final ProblemsHolder myHolder;
-  @NotNull private final JsonLikePsiWalker myWalker;
+  private final @NotNull JsonSchemaObject myRootSchema;
+  private final @NotNull ProblemsHolder myHolder;
+  private final @NotNull JsonLikePsiWalker myWalker;
   private final LocalInspectionToolSession mySession;
-  @NotNull private final JsonComplianceCheckerOptions myOptions;
-  @Nullable private final @Nls String myMessagePrefix;
+  private final @NotNull JsonComplianceCheckerOptions myOptions;
+  private final @Nullable @Nls String myMessagePrefix;
 
   public JsonSchemaComplianceChecker(@NotNull JsonSchemaObject rootSchema,
                                      @NotNull ProblemsHolder holder,
@@ -53,7 +53,7 @@ public class JsonSchemaComplianceChecker {
     myMessagePrefix = messagePrefix;
   }
 
-  public void annotate(@NotNull final PsiElement element) {
+  public void annotate(final @NotNull PsiElement element) {
     Project project = element.getProject();
     final JsonPropertyAdapter firstProp = myWalker.getParentPropertyAdapter(element);
     if (firstProp != null) {
@@ -90,7 +90,7 @@ public class JsonSchemaComplianceChecker {
     List<TextRange> ranges = new ArrayList<>();
     List<List<Map.Entry<PsiElement, JsonValidationError>>> entries = new ArrayList<>();
     for (Map.Entry<PsiElement, JsonValidationError> entry : checker.getErrors().entrySet()) {
-      TextRange range = entry.getKey().getTextRange();
+      TextRange range = myWalker.adjustErrorHighlightingRange(entry.getKey());
       boolean processed = false;
       for (int i = 0; i < ranges.size(); i++) {
         TextRange currRange = ranges.get(i);

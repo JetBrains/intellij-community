@@ -7,10 +7,13 @@ import com.intellij.util.lang.JavaVersion
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
+import org.jetbrains.jps.api.CanceledStatus
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.minutes
 
 internal object CompiledClasses {
   fun checkOptions(context: CompilationContext) {
@@ -100,6 +103,9 @@ internal object CompiledClasses {
           withScope = { name, operation -> context.messages.block(name, operation) },
           classOutput = context.classesOutputDirectory,
           metadataFile = Path.of(context.options.pathToCompiledClassesArchivesMetadata!!),
+          /**
+           * [FetchAndUnpackItem.output].hash file shouldn't leak to installer distribution
+           */
           saveHash = !forInstallers,
         )
       }
@@ -140,12 +146,25 @@ internal object CompiledClasses {
     val isIncrementalCompilationDataAvailable = context.options.incrementalCompilation &&
                                                 context.compilationData.isIncrementalCompilationDataAvailable()
     try {
-      runner.compile(context, moduleNames, includingTestsInModules)
-      if (isIncrementalCompilationDataAvailable) {
-        context.messages.buildStatus("Compiled using local cache")
-      } else {
-        context.messages.buildStatus("Clean build")
+      val status = when {
+        isIncrementalCompilationDataAvailable -> "Compiled using local cache"
+        else -> "Clean build"
       }
+      context.messages.block(status) {
+        if (isIncrementalCompilationDataAvailable) runBlocking {
+          // workaround for KT-55695
+          withTimeout(context.options.incrementalCompilationTimeout.minutes) {
+            launch {
+              runner.compile(
+                context, moduleNames, includingTestsInModules,
+                CanceledStatus { !isActive }
+              )
+            }
+          }
+        }
+        else runner.compile(context, moduleNames, includingTestsInModules)
+      }
+      context.messages.buildStatus(status)
     }
     catch (e: Exception) {
       if (!context.options.incrementalCompilation) {
@@ -156,30 +175,38 @@ internal object CompiledClasses {
                                  "'${BuildOptions.INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY}' is false.")
         throw e
       }
-      context.messages.warning("Incremental compilation failed. Re-trying with clean build.")
+      if (e is TimeoutCancellationException) {
+        context.messages.reportBuildProblem("Incremental compilation timed out. Re-trying with clean build.")
+      }
+      else {
+        context.messages.warning("Incremental compilation failed. Re-trying with clean build.")
+      }
       context.options.incrementalCompilation = false
       context.compilationData.reset()
-      runner.compile(context, moduleNames, includingTestsInModules)
+      context.messages.block("Clean build retry") {
+        runner.compile(context, moduleNames, includingTestsInModules)
+      }
       context.messages.info("Compilation successful after clean build retry")
-      println("##teamcity[buildStatus status='SUCCESS' text='Clean build retry']")
+      context.messages.changeBuildStatusToSuccess("Clean build retry")
       context.messages.reportStatisticValue("Incremental compilation failures", "1")
     }
   }
 
   private fun JpsCompilationRunner.compile(context: CompilationContext,
                                            moduleNames: Collection<String>?,
-                                           includingTestsInModules: List<String>?) {
+                                           includingTestsInModules: List<String>?,
+                                           canceledStatus: CanceledStatus = CanceledStatus.NULL) {
     when {
-      moduleNames != null -> buildModules(moduleNames.map(context::findRequiredModule))
-      includingTestsInModules != null -> buildProduction()
+      moduleNames != null -> buildModules(moduleNames.map(context::findRequiredModule), canceledStatus)
+      includingTestsInModules != null -> buildProduction(canceledStatus)
       else -> {
-        buildAll()
+        buildAll(canceledStatus)
         context.options.useCompiledClassesFromProjectOutput = true
       }
     }
     context.options.incrementalCompilation = true
     includingTestsInModules?.forEach {
-      buildModuleTests(context.findRequiredModule(it))
+      buildModuleTests(context.findRequiredModule(it), canceledStatus)
     }
   }
 }

@@ -1,5 +1,5 @@
 internal class C {
-    var a = 10
+    var a: Int = 10
 
     init {
         a = 14

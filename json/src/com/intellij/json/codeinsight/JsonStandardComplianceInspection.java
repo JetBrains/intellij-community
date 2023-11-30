@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.codeinsight;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -47,15 +47,13 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
   public boolean myWarnAboutTrailingCommas = true;
   public boolean myWarnAboutMultipleTopLevelValues = true;
 
-  @NotNull
   @Override
-  public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!JsonDialectUtil.isStandardJson(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new StandardJsonValidatingElementVisitor(holder);
   }
@@ -102,10 +100,9 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     return result.toString();
   }
 
-  private static class AddDoubleQuotesFix implements LocalQuickFix {
-    @NotNull
+  private static final class AddDoubleQuotesFix implements LocalQuickFix {
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JsonBundle.message("quickfix.add.double.quotes.desc");
     }
 
@@ -130,7 +127,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
   protected class StandardJsonValidatingElementVisitor extends JsonElementVisitor {
     private final ProblemsHolder myHolder;
-    private final static String MISSING_VALUE = "missingValue";
+    private static final String MISSING_VALUE = "missingValue";
 
     public StandardJsonValidatingElementVisitor(ProblemsHolder holder) {myHolder = holder;}
 

@@ -17,9 +17,9 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -155,8 +155,9 @@ class CheckInitialized implements ElementFilter {
 
   @Override
   public boolean isAcceptable(Object element, @Nullable PsiElement context) {
-    if (element instanceof CandidateInfo) {
-      element = ((CandidateInfo)element).getElement();
+    PsiMethod method = MethodParameterInfoHandler.tryGetMethodFromCandidate(element);
+    if (method != null) {
+      element = method;
     }
     if (element instanceof PsiField) {
       return !myNonInitializedFields.contains(element);

@@ -131,4 +131,32 @@
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Object literal can be converted to lambda</problem_class>
         <description>Convert to lambda</description>
     </problem>
+
+    <problem>
+        <file>MultipleLambdaArgumentsAreNotMovedOutsideParentheses.kt</file>
+        <line>8</line>
+        <module>light_idea_test_case</module>
+        <package>MultipleLambdaArgumentsAreNotMovedOutsideParentheses</package>
+        <entry_point TYPE="method" FQNAME="MultipleLambdaArgumentsAreNotMovedOutsideParentheses.MultipleLambdaArgumentsAreNotMovedOutsideParenthesesKt void bar()" />
+        <problem_class id="ObjectLiteralToLambda" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Object literal can be converted to lambda</problem_class>
+        <description>Convert to lambda</description>
+        <highlighted_element>object : Runnable</highlighted_element>
+        <language>kotlin</language>
+        <offset>12</offset>
+        <length>17</length>
+    </problem>
+
+    <problem>
+        <file>NamedLambdaArgumentIsNotMovedOutsideParentheses.kt</file>
+        <line>7</line>
+        <module>light_idea_test_case</module>
+        <package>NamedLambdaArgumentIsNotMovedOutsideParentheses</package>
+        <entry_point TYPE="method" FQNAME="NamedLambdaArgumentIsNotMovedOutsideParentheses.NamedLambdaArgumentIsNotMovedOutsideParenthesesKt void bar()" />
+        <problem_class id="ObjectLiteralToLambda" severity="WEAK WARNING" attribute_key="INFO_ATTRIBUTES">Object literal can be converted to lambda</problem_class>
+        <description>Convert to lambda</description>
+        <highlighted_element>object : Runnable</highlighted_element>
+        <language>kotlin</language>
+        <offset>19</offset>
+        <length>17</length>
+    </problem>
 </problems>

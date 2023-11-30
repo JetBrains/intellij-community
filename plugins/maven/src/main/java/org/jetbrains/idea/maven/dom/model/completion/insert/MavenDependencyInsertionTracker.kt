@@ -17,8 +17,8 @@ internal fun logMavenDependencyInsertion(context: InsertionContext, item: Lookup
 
   MavenDependencyInsertionCollector.logPackageAutoCompleted(
     groupId, artifactId, version,
-    MavenDependencyInsertionCollector.Companion.BuildSystem.MAVEN,
-    MavenDependencyInsertionCollector.Companion.DependencyDeclarationNotation.MAVEN,
+    MavenDependencyInsertionCollector.BuildSystem.MAVEN,
+    MavenDependencyInsertionCollector.DependencyDeclarationNotation.MAVEN,
     completionPrefix.length,
     selectedLookupIndex
   )

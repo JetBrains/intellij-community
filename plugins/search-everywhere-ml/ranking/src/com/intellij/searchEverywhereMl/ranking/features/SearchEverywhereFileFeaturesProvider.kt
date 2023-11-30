@@ -6,6 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.FileBookmark
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -25,7 +26,7 @@ import java.nio.file.Path
 class SearchEverywhereFileFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java, RecentFilesSEContributor::class.java) {
   companion object {
-    val FILETYPE_DATA_KEY = EventFields.StringValidatedByCustomRule("fileType", "file_type")
+    val FILETYPE_DATA_KEY = EventFields.StringValidatedByCustomRule("fileType", FileTypeUsagesCollector.ValidationRule::class.java)
     val IS_BOOKMARK_DATA_KEY = EventFields.Boolean("isBookmark")
 
     internal val IS_DIRECTORY_DATA_KEY = EventFields.Boolean("isDirectory")
@@ -146,7 +147,7 @@ class SearchEverywhereFileFeaturesProvider
     }
   }
 
-  internal fun getRelativePathNameMatchingFeatures(item: PsiFileSystemItem, searchQuery: String): Collection<EventPair<*>> {
+  private fun getRelativePathNameMatchingFeatures(item: PsiFileSystemItem, searchQuery: String): Collection<EventPair<*>> {
     val filePath = item.virtualFile.toNioPathOrNull() ?: return emptyList()
     val basePath = item.project.guessProjectDir()?.toNioPathOrNull() ?: return emptyList()
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.execution.process.ProcessOutputTypes
@@ -7,12 +7,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogFileHistoryHandler
 import com.intellij.vcs.log.VcsLogFileHistoryHandler.Rename
 import com.intellij.vcs.log.impl.VcsFileStatusInfo
+import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitRevisionNumber
 import git4idea.commands.Git
@@ -40,6 +42,13 @@ class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistoryHand
     Git.getInstance().runCommandWithoutCollectingOutput(handler)
     splitter.reportErrors()
     return result
+  }
+
+  @Throws(VcsException::class)
+  override fun collectHistory(root: VirtualFile, filePath: FilePath, hash: Hash?, consumer: (VcsFileRevision) -> Unit) {
+    val args = GitHistoryProvider.getHistoryLimitArgs(project)
+    val revisionNumber = if (hash != null) VcsLogUtil.convertToRevisionNumber(hash) else GitRevisionNumber.HEAD
+    GitFileHistory(project, root, filePath, revisionNumber, true).load(consumer, *args)
   }
 
   @Throws(VcsException::class)

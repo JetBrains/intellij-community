@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimpli
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.psi.*
 
-class SimplifyNegatedBinaryExpressionInspection : AbstractApplicabilityBasedInspection<KtPrefixExpression>(KtPrefixExpression::class.java) {
+internal class SimplifyNegatedBinaryExpressionInspection : AbstractApplicabilityBasedInspection<KtPrefixExpression>(KtPrefixExpression::class.java) {
 
     override fun inspectionHighlightType(element: KtPrefixExpression): ProblemHighlightType =
         if (element.canBeSimplifiedWithoutChangingSemantics()) super.inspectionHighlightType(element) else INFORMATION

@@ -65,8 +65,12 @@ data class IntentionPreviewDiffResult(val diffs: List<DiffInfo>, @TestOnly val n
                policy: ComparisonPolicy,
                normalDiff: Boolean = true,
                fileName: String? = null): IntentionPreviewDiffResult {
-      val lineFragments = ComparisonManager.getInstance().compareLines(
+      var lineFragments = ComparisonManager.getInstance().compareLines(
         origText, updatedText, policy, DumbProgressIndicator.INSTANCE)
+      if (lineFragments.isEmpty() && policy == ComparisonPolicy.TRIM_WHITESPACES) {
+        lineFragments = ComparisonManager.getInstance().compareLines(
+          origText, updatedText, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE)
+      }
       val diff = squash(lineFragments)
       val diffs = diff.mapNotNull { fragment ->
         val start = getOffset(updatedText, fragment.startLine2)

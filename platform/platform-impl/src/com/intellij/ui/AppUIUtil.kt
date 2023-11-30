@@ -3,16 +3,19 @@
 
 package com.intellij.ui
 
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.Consent
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.ConsentSettingsUi
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.ui.UISettings
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -24,14 +27,17 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.AppIcon.MacAppIcon
-import com.intellij.ui.icons.findSvgData
+import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.ui.icons.createImageDescriptorList
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.svg.loadWithSizes
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.PlatformUtils
+import com.intellij.util.ResourceUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
@@ -45,9 +51,10 @@ import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.border.Border
+import kotlin.math.roundToInt
 
 private const val VENDOR_PREFIX = "jetbrains-"
-private var ourIcons: MutableList<Image?>? = null
+private var appIcons: MutableList<Image?>? = null
 
 @Volatile
 private var isMacDocIconSet = false
@@ -56,27 +63,25 @@ private val LOG: Logger
   get() = logger<AppUIUtil>()
 
 fun updateAppWindowIcon(window: Window) {
-  if (AppUIUtil.isWindowIconAlreadyExternallySet) {
+  if (isMacDocIconSet || isWindowIconAlreadyExternallySet()) {
     return
   }
 
-  var images = ourIcons
+  var images = appIcons
   if (images == null) {
     images = ArrayList(3)
     val appInfo = ApplicationInfoImpl.getShadowInstance()
-    val svgIconUrl = appInfo.applicationSvgIconUrl
-    val smallSvgIconUrl = appInfo.smallApplicationSvgIconUrl
     val scaleContext = ScaleContext.create(window)
     if (SystemInfoRt.isUnix) {
-      loadAppIconImage(svgPath = svgIconUrl, scaleContext = scaleContext, size = 128)?.let {
+      loadAppIconImage(svgPath = appInfo.applicationSvgIconUrl, scaleContext = scaleContext, size = 128)?.let {
         images.add(it)
       }
     }
-    loadAppIconImage(svgPath = smallSvgIconUrl, scaleContext = scaleContext, size = 32)?.let {
+    loadAppIconImage(svgPath = appInfo.applicationSvgIconUrl, scaleContext = scaleContext, size = 32)?.let {
       images.add(it)
     }
     if (SystemInfoRt.isWindows) {
-      loadAppIconImage(svgPath = smallSvgIconUrl, scaleContext = scaleContext, size = 16)?.let {
+      loadAppIconImage(svgPath = appInfo.smallApplicationSvgIconUrl, scaleContext = scaleContext, size = 16)?.let {
         images.add(it)
       }
     }
@@ -87,7 +92,7 @@ fun updateAppWindowIcon(window: Window) {
       }
     }
 
-    ourIcons = images
+    appIcons = images
   }
 
   if (!images.isEmpty()) {
@@ -104,24 +109,53 @@ fun updateAppWindowIcon(window: Window) {
 /** Returns a HiDPI-aware image. */
 private fun loadAppIconImage(svgPath: String, scaleContext: ScaleContext, size: Int): Image? {
   val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-  val svgData = findSvgData(path = svgPath, classLoader = AppUIUtil::class.java.classLoader, pixScale = pixScale)
+  val sysScale = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
+  val userScale = scaleContext.getScale(ScaleType.USR_SCALE).toFloat()
+  val userSize = (size * userScale).roundToInt()
+  val svgData = findAppIconSvgData(path = svgPath, pixScale = pixScale)
   if (svgData == null) {
     LOG.warn("Cannot load SVG application icon from $svgPath")
     return null
   }
-  return loadWithSizes(sizes = listOf(size), data = svgData, scale = pixScale).first()
+  return loadWithSizes(sizes = listOf(userSize), data = svgData, scale = sysScale).first()
 }
 
-fun loadSmallApplicationIcon(scaleContext: ScaleContext,
-                             size: Int = 16,
-                             isReleaseIcon: Boolean = !ApplicationInfoImpl.getShadowInstance().isEAP): Icon {
+private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
+  val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+  // app icon doesn't support `dark` concept, and moreover, it cannot depend on a current LaF
+  val descriptors = createImageDescriptorList(path = path, isDark = false, pixScale = pixScale)
+  val rawPathWithoutExt = path.substring(if (path.startsWith('/')) 1 else 0, path.lastIndexOf('.'))
+  for (descriptor in descriptors) {
+    val transformedPath = descriptor.pathTransform(rawPathWithoutExt, "svg")
+    val resourceLoadStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+    val data = ResourceUtil.getResourceAsBytes(transformedPath, AppUIUtil::class.java.classLoader, true) ?: continue
+    if (resourceLoadStart != -1L) {
+      IconLoadMeasurer.loadFromResources.end(resourceLoadStart)
+    }
+    if (loadingStart != -1L) {
+      IconLoadMeasurer.addLoading(isSvg = descriptor.isSvg, start = loadingStart)
+    }
+    return data
+  }
+  return null
+}
+
+// todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
+fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon {
+  return loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
+}
+
+internal fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon {
   val appInfo = ApplicationInfoImpl.getShadowInstance()
-  val smallIconUrl = if (isReleaseIcon && appInfo.isEAP && appInfo is ApplicationInfoImpl) {
+  val upscale = size * scaleContext.getScale(DerivedScaleType.PIX_SCALE) >= 20
+  val svgUrl = if (appInfo is ApplicationInfoImpl) {
     // This is the way to load the release icon in EAP. Needed for some actions.
-    appInfo.getSmallApplicationSvgIconUrl(false)
-  } else appInfo.smallApplicationSvgIconUrl
-  val image = loadAppIconImage(smallIconUrl, scaleContext, size) ?: error("Can't load '${smallIconUrl}'")
-  return JBImageIcon(image)
+    if (upscale) appInfo.getApplicationSvgIconUrl(!requestReleaseIcon) else appInfo.getSmallApplicationSvgIconUrl(!requestReleaseIcon)
+  }
+  else {
+    if (upscale) appInfo.applicationSvgIconUrl else appInfo.smallApplicationSvgIconUrl
+  }
+  return JBImageIcon(loadAppIconImage(svgPath = svgUrl, scaleContext = scaleContext, size = size) ?: error("Can't load '${svgUrl}'"))
 }
 
 fun findAppIcon(): String? {
@@ -134,35 +168,25 @@ fun findAppIcon(): String? {
       }
     }
   }
-  val url = ApplicationInfoEx::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
+  val url = ApplicationInfo::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
   return if (url != null && URLUtil.FILE_PROTOCOL == url.protocol) URLUtil.urlToFile(url).absolutePath else null
 }
 
-object AppUIUtil {
-  @Suppress("MemberVisibilityCanBePrivate")
-  val isWindowIconAlreadyExternallySet: Boolean
-    get() {
-      if (SystemInfoRt.isMac) {
-        return isMacDocIconSet || !PlatformUtils.isJetBrainsClient() && !PluginManagerCore.isRunningFromSources()
-      }
-      else {
-        return SystemInfoRt.isWindows && java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
-      }
-    }
-
-  // todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
-  @JvmOverloads
-  @JvmStatic
-  fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon {
-    return loadSmallApplicationIcon(scaleContext = scaleContext,
-                                    size = size,
-                                    isReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
+// used in Rider
+fun isWindowIconAlreadyExternallySet(): Boolean {
+  return when {
+    SystemInfoRt.isWindows -> java.lang.Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm
+    SystemInfoRt.isMac -> isMacDocIconSet || !PlatformUtils.isJetBrainsClient()
+    else -> false
   }
+}
 
+object AppUIUtil {
   @JvmStatic
   fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? {
-    val url = ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl
-    return loadAppIconImage(url, ctx, size)?.let { JBImageIcon(it) }
+    return loadAppIconImage(svgPath = ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl,
+                            scaleContext = ctx,
+                            size = size)?.let { JBImageIcon(it) }
   }
 
   @JvmStatic
@@ -201,7 +225,6 @@ object AppUIUtil {
     }
   }
 
-  @JvmStatic
   fun getFrameClass(): String {
     val name = ApplicationNamesInfo.getInstance().fullProductNameWithEdition.lowercase()
       .replace(' ', '-')
@@ -377,11 +400,13 @@ object AppUIUtil {
   @JvmStatic
   fun isInFullScreen(window: Window?): Boolean = window is IdeFrame && (window as IdeFrame).isInFullScreen
 
-  fun adjustFractionalMetrics(defaultValue: Any): Any {
-    if (!SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) {
+  private fun adjustFractionalMetrics(defaultValue: Any): Any {
+    if (!SystemInfoRt.isMac || GraphicsEnvironment.isHeadless() || AppMode.isRemoteDevHost()) {
       return defaultValue
     }
     val gc = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration
     return if (sysScale(gc) == 1.0f) RenderingHints.VALUE_FRACTIONALMETRICS_OFF else defaultValue
   }
+
+  fun getAdjustedFractionalMetricsValue(): Any = adjustFractionalMetrics(UISettings.getPreferredFractionalMetricsValue())
 }

@@ -4,16 +4,16 @@ package com.intellij.ide.util.scopeChooser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.PredefinedSearchScopeProvider;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.ui.ComboboxWithBrowseButton;
-import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.ui.TitledSeparator;
+import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -47,7 +47,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private @Nullable SearchScope preselectedScope;
 
   public ScopeChooserCombo() {
-    super(new MyComboBox());
+    super(new ComboBox<>());
   }
 
   public ScopeChooserCombo(final Project project, boolean suggestSearchInLibs, boolean prevSearchWholeFiles, @Nls String preselect) {
@@ -55,7 +55,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     init(project, suggestSearchInLibs, prevSearchWholeFiles, preselect, null);
   }
 
-  public void init(final Project project, final @Nls String preselect){
+  public void init(final Project project, final @Nls String preselect) {
     init(project, false, true, preselect, null);
   }
 
@@ -92,7 +92,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
     ComboBox<ScopeDescriptor> combo = getComboBox();
     combo.setMinimumAndPreferredWidth(JBUIScale.scale(300));
-    combo.setRenderer(createDefaultRenderer());
+    combo.setRenderer(createRenderer());
     combo.setSwingPopup(false);
 
     if (selection != null) {
@@ -113,6 +113,42 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
 
     return rebuildModelAndSelectScopeOnSuccess(selection);
+  }
+
+  @NotNull
+  private ListCellRenderer<ScopeDescriptor> createRenderer() {
+    return new GroupedComboBoxRenderer<>(this) {
+      @NotNull
+      @Override
+      public @NlsContexts.ListItem String getText(ScopeDescriptor item) {
+        String text = item.getDisplayName();
+        return text == null ? super.getText(item) : text;
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon(ScopeDescriptor item) {
+        return item.getIcon();
+      }
+
+      @Nullable
+      @Override
+      public ListSeparator separatorFor(ScopeDescriptor value) {
+        String firstElementDisplayName = value.getDisplayName();
+        if (firstElementDisplayName != null) return scopeModel.getSeparatorName(value.getDisplayName());
+        return null;
+      }
+
+      @Override
+      public void customize(@NotNull SimpleColoredComponent item,
+                            ScopeDescriptor value,
+                            int index,
+                            boolean isSelected,
+                            boolean cellHasFocus) {
+        if (value == null) return;
+        super.customize(item, value, index, isSelected, cellHasFocus);
+      }
+    };
   }
 
   @NotNull
@@ -156,7 +192,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     String selection = getSelectedScopeName();
     if (myBrowseListener != null) myBrowseListener.onBeforeBrowseStarted();
     EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, selection);
-    if (dlg.isOK()){
+    if (dlg.isOK()) {
       NamedScope namedScope = dlg.getSelectedScope();
       rebuildModelAndSelectScopeOnSuccess(namedScope == null ? null : namedScope.getScopeId());
     }
@@ -178,7 +214,9 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   protected void updateModel(@NotNull DefaultComboBoxModel<ScopeDescriptor> model,
                              @NotNull List<? extends ScopeDescriptor> descriptors) {
     for (ScopeDescriptor descriptor : descriptors) {
-      model.addElement(descriptor);
+      if (!(descriptor instanceof ScopeModel.ScopeSeparator)) {
+        model.addElement(descriptor);
+      }
     }
   }
 
@@ -234,7 +272,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return scopeName != null ? ScopeIdMapper.getInstance().getScopeSerializationId(scopeName) : null;
   }
 
-  private static class MyRenderer extends SimpleListCellRenderer<ScopeDescriptor> {
+  private static final class MyRenderer extends SimpleListCellRenderer<ScopeDescriptor> {
     final TitledSeparator separator = new TitledSeparator();
 
     @Override
@@ -263,23 +301,5 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     void onBeforeBrowseStarted();
 
     void onAfterBrowseFinished();
-  }
-
-  private static class MyComboBox extends ComboBox {
-
-    @Override
-    public void setSelectedItem(Object item) {
-      if (!(item instanceof ScopeModel.ScopeSeparator)) {
-        super.setSelectedItem(item);
-      }
-    }
-
-    @Override
-    public void setSelectedIndex(final int anIndex) {
-      Object item = getItemAt(anIndex);
-      if (!(item instanceof ScopeModel.ScopeSeparator)) {
-        super.setSelectedIndex(anIndex);
-      }
-    }
   }
 }

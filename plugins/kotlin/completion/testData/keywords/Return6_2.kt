@@ -11,6 +11,7 @@ inline fun takeHandler2(handler: () -> Unit){}
 
 inline fun takeMyHandler3(handler: () -> Unit){}
 
+// IGNORE_K2
 // INVOCATION_COUNT: 1
 // EXIST: { lookupString: "return@takeMyHandler1", itemText: "return", tailText: "@takeMyHandler1", attributes: "bold" }
 // ABSENT: "return@takeHandler2"

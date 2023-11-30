@@ -4,10 +4,10 @@ package com.intellij.testFramework.assertions
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.io.delete
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.isFile
-import com.intellij.util.io.isHidden
 import org.junit.rules.ExternalResource
 import java.nio.file.Path
+import kotlin.io.path.isHidden
+import kotlin.io.path.isRegularFile
 
 class CleanupSnapshots(private val dir: Path) : ExternalResource() {
   private val usedPaths = HashSet<Path>()
@@ -29,7 +29,7 @@ class CleanupSnapshots(private val dir: Path) : ExternalResource() {
   override fun after() {
     dir.directoryStreamIfExists {
       for (file in it) {
-        if (!usedPaths.contains(file) && !file.isHidden() && file.isFile()) {
+        if (!usedPaths.contains(file) && !file.isHidden() && file.isRegularFile()) {
           file.delete(false)
           println("Remove outdated snapshot ${dir.relativize(file)}")
         }

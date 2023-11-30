@@ -25,6 +25,9 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility"
             serviceImplementation="org.jetbrains.kotlin.idea.core.overrideImplement.Fe10OverrideImplementFacility"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.compiler.K1KotlinCompilerIdeAllowedErrorFilter"/>
 
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
@@ -97,7 +100,7 @@
                           implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinExpressionTypeProviderDescriptorsImpl"/>
 
     <testCreator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.testIntegration.KotlinTestCreator"/>
-    <testDiffProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.testIntegration.KotlinTestDiffProvider"/>
+    <testDiffProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.KotlinTestDiffProvider"/>
     <testFinder implementation="org.jetbrains.kotlin.idea.testIntegration.KotlinTestFinder"/>
 
     <lang.jvm.actions.jvmElementActionsFactory
@@ -131,7 +134,15 @@
     <structureViewBuilder
             order="first"
             key="CLASS"
-            factoryClass="org.jetbrains.kotlin.idea.structureView.KtClsStructureViewBuilderProvider"/>
+            factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
+    <structureViewBuilder
+            order="first"
+            key="kotlin_builtins"
+            factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
+    <structureViewBuilder
+            order="first"
+            key="KNM"
+            factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
   </extensions>
 
   <!-- Line markers -->
@@ -149,8 +160,6 @@
     <codeInsight.parameterNameHints language="kotlin"
                                     implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinInlayParameterHintsProvider"/>
 
-    <codeInsight.inlayProvider language="kotlin"
-                               implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinCodeAuthorInlayHintsProvider"/>
     <codeInsight.inlayProvider language="kotlin"
                                implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionProvider"/>
     <codeInsight.inlayProvider language="kotlin"
@@ -170,8 +179,7 @@
 
   <!-- Go to declaration -->
   <extensions defaultExtensionNs="com.intellij">
-    
-    <gotoDeclarationHandler implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinImportAliasGotoDeclarationHandler"/>
+
     <gotoRelatedProvider implementation="org.jetbrains.kotlin.idea.goto.KotlinExpectOrActualGotoRelatedProvider"/>
 
     <codeInsight.gotoSuper language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeInsight.GotoSuperActionHandler"/>
@@ -229,8 +237,10 @@
 
     <usageTypeProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinUsageTypeProviderImpl"/>
 
-    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightExitPointsHandlerFactory"/>
+    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.K1HighlightExitPointsHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightImplicitItHandlerFactory"/>
+    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightReceiverUsagesHandlerFactory"/>
+    <registryKey defaultValue="false" description="Enables highlighting for receiver usages" key="kotlin.receiver.usage.highlighting"/>
 
     <overridingMethodsSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinOverridingMethodsWithGenericsSearcher"/>
 

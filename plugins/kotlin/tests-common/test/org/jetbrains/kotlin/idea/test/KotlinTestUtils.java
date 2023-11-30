@@ -81,7 +81,7 @@ public final class KotlinTestUtils {
     private static final boolean AUTOMATICALLY_UNMUTE_PASSED_TESTS = false;
     private static final boolean AUTOMATICALLY_MUTE_FAILED_TESTS = false;
 
-    private static final Pattern DIRECTIVE_PATTERN = Pattern.compile("^//\\s*[!]?([A-Z_]+)(:[ \\t]*(.*))?$", Pattern.MULTILINE);
+    private static final Pattern DIRECTIVE_PATTERN = Pattern.compile("^//\\s*[!]?([A-Z0-9_]+)(:[ \\t]*(.*))?$", Pattern.MULTILINE);
 
     private KotlinTestUtils() {
     }
@@ -518,7 +518,7 @@ public final class KotlinTestUtils {
     }
 
     public static void runTest(@NotNull DoTest test, @NotNull TestCase testCase, @TestDataFile String testDataFile) throws Exception {
-        runTestImpl(testWithCustomIgnoreDirective(test, TargetBackend.ANY, IGNORE_BACKEND_DIRECTIVE_PREFIX), testCase, testDataFile);
+        runTestImpl(testWithCustomIgnoreDirective(test, TargetBackend.ANY, IGNORE_BACKEND_DIRECTIVE_PREFIX, testCase), testCase, testDataFile);
     }
 
     // In this test runner version the `testDataFile` parameter is annotated by `TestDataFile`.
@@ -537,7 +537,7 @@ public final class KotlinTestUtils {
     // * sometimes, for too common/general names, it shows many variants to navigate
     // * it adds an additional step for navigation -- you must choose an exact file to navigate
     public static void runTest0(DoTest test, TestCase testCase, TargetBackend targetBackend, String testDataFilePath) throws Exception {
-        runTestImpl(testWithCustomIgnoreDirective(test, targetBackend, IGNORE_BACKEND_DIRECTIVE_PREFIX), testCase, testDataFilePath);
+        runTestImpl(testWithCustomIgnoreDirective(test, targetBackend, IGNORE_BACKEND_DIRECTIVE_PREFIX, testCase), testCase, testDataFilePath);
     }
 
     private static void runTestImpl(@NotNull DoTest test, @Nullable TestCase testCase, String testDataFilePath) throws Exception {
@@ -561,7 +561,7 @@ public final class KotlinTestUtils {
         test.invoke(absoluteTestDataFilePath);
     }
 
-    private static DoTest testWithCustomIgnoreDirective(DoTest test, TargetBackend targetBackend, String ignoreDirective) {
+    private static DoTest testWithCustomIgnoreDirective(DoTest test, TargetBackend targetBackend, String ignoreDirective, TestCase testCase) {
         return filePath -> {
             File testDataFile = new File(filePath);
 
@@ -618,20 +618,35 @@ public final class KotlinTestUtils {
             }
 
             if (isIgnored) {
-                if (AUTOMATICALLY_UNMUTE_PASSED_TESTS) {
-                    String text = doLoadFile(testDataFile);
-                    String directive = ignoreDirective + targetBackend.name();
-                    String newText = Pattern.compile("^" + directive + "\n", Pattern.MULTILINE).matcher(text).replaceAll("");
-                    if (!newText.equals(text)) {
-                        System.err.println("\"" + directive + "\" was removed from \"" + testDataFile + "\"");
-                        FileUtil.writeToFile(testDataFile, newText);
-                    }
+                if (testCase instanceof IgnorableTestCase ignorableTestCase) {
+                    ignorableTestCase.setIgnoreIsPassedCallback(() -> {
+                        processIgnoreIsPassed(targetBackend, ignoreDirective, testDataFile);
+                        return null;
+                    });
+                    return;
                 }
-
-                throw new AssertionError(
-                        String.format("Looks like this test can be unmuted. Remove \"%s%s\" directive.", ignoreDirective, targetBackend));
+                processIgnoreIsPassed(targetBackend, ignoreDirective, testDataFile);
             }
         };
+    }
+
+    private static void processIgnoreIsPassed(TargetBackend targetBackend, String ignoreDirective, File testDataFile) {
+        if (AUTOMATICALLY_UNMUTE_PASSED_TESTS) {
+            try {
+                String text = doLoadFile(testDataFile);
+                String directive = ignoreDirective + targetBackend.name();
+                String newText = Pattern.compile("^" + directive + "\n", Pattern.MULTILINE).matcher(text).replaceAll("");
+                if (!newText.equals(text)) {
+                    System.err.println("\"" + directive + "\" was removed from \"" + testDataFile + "\"");
+                    FileUtil.writeToFile(testDataFile, newText);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        throw new AssertionError(
+                String.format("Looks like this test can be unmuted. Remove \"%s%s\" directive.", ignoreDirective, targetBackend));
     }
 
     public static String getTestsRoot(@NotNull Class<?> testCaseClass) {

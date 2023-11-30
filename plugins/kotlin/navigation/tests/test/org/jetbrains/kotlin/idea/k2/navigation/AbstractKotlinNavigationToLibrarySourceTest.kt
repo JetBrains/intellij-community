@@ -45,7 +45,7 @@ abstract class AbstractKotlinNavigationToLibrarySourceTest : AbstractReferenceRe
     }
 
     private fun KtNamedDeclaration.signatureText(): String {
-        val firstElement = children.first { it !is PsiComment && it !is PsiWhiteSpace }
+        val firstElement = children.firstOrNull { it !is PsiComment && it !is PsiWhiteSpace } ?: return nameAsSafeName.asString()
         val endOffset = when (this) {
             is KtNamedFunction -> typeReference ?: valueParameterList?.rightParenthesis
             is KtProperty -> typeReference ?: equalsToken?.getPrevSiblingIgnoringWhitespace()

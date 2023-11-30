@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.HelpID;
@@ -146,17 +146,17 @@ public class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<Jav
       @Override
       protected boolean validateData() {
         final String className = getClassName();
-        if (className.length() == 0) {
+        if (className.isEmpty()) {
           return false;
         }
         final String fieldName = getFieldName();
-        if (fieldName.length() == 0) {
+        if (fieldName.isEmpty()) {
           return false;
         }
         PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
         if (psiClass != null) {
           final PsiFile psiFile = psiClass.getContainingFile();
-          Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+          Document document = psiFile.getViewProvider().getDocument();
           if (document != null) {
             PsiField field = psiClass.findFieldByName(fieldName, false);
             if (field != null) {

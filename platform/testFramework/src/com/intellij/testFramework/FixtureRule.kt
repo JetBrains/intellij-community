@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
+import com.intellij.testFramework.common.assertNonDefaultProjectsAreNotLeaked
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.Dispatchers
@@ -286,15 +287,16 @@ private fun <T : Annotation> Description.getOwnOrClassAnnotation(annotationClass
 
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
 @Inherited
-annotation class RunsInEdt
+annotation class RunsInEdt(val writeIntent: Boolean = true)
 
 class EdtRule : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
-    return if (description.getOwnOrClassAnnotation(RunsInEdt::class.java) == null) {
+    val annotation = description.getOwnOrClassAnnotation(RunsInEdt::class.java)
+    return if (annotation == null) {
       base
     }
     else {
-      statement { runInEdtAndWait { base.evaluate() } }
+      statement { runInEdtAndWait(annotation.writeIntent) { base.evaluate() } }
     }
   }
 }

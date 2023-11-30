@@ -7,6 +7,6 @@ fun Foo?.test() {
     val f = ::f<caret>
 }
 // TODO: Enable when FIR reports UNSAFE_CALL for function reference on nullable (currently UNRESOLVED_REFERENCE)
-/* IGNORE_FIR */
+/* IGNORE_K2 */
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

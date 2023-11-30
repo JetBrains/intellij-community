@@ -3,8 +3,8 @@ public final class NonTrivialIdentifiersKt {
         invoke()
         var p: A = <init>()
         invoke({
-            invoke({
-                invoke()
+            return invoke({
+                return invoke()
             })
         })
     }

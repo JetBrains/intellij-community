@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -27,8 +27,7 @@ public abstract class EmmetParser {
     return myIndex;
   }
 
-  @Nullable
-  public ZenCodingNode parse() {
+  public @Nullable ZenCodingNode parse() {
     ZenCodingNode add = parseAddOrMore();
     if (add == null) {
       return null;
@@ -57,8 +56,7 @@ public abstract class EmmetParser {
     }
   }
 
-  @Nullable
-  protected ZenCodingNode parseAddOrMore() {
+  protected @Nullable ZenCodingNode parseAddOrMore() {
     ZenCodingNode mul = parseMul(parseExpression());
 
     ZenCodingToken operationToken = getToken();
@@ -88,8 +86,7 @@ public abstract class EmmetParser {
     return null;
   }
 
-  @Nullable
-  protected ZenCodingNode parseClimbUpOperation(@Nullable ZenCodingNode leftPart) {
+  protected @Nullable ZenCodingNode parseClimbUpOperation(@Nullable ZenCodingNode leftPart) {
     advance();
     ZenCodingNode rightPart = parseAddOrMore();
     if (rightPart == null) {
@@ -98,8 +95,7 @@ public abstract class EmmetParser {
     return new ClimbUpOperationNode(notNullNode(leftPart), rightPart);
   }
 
-  @Nullable
-  protected ZenCodingNode parseMoreOperation(@Nullable ZenCodingNode leftPart) {
+  protected @Nullable ZenCodingNode parseMoreOperation(@Nullable ZenCodingNode leftPart) {
     advance();
     ZenCodingNode rightPart = parseAddOrMore();
     if (rightPart == null) {
@@ -116,8 +112,7 @@ public abstract class EmmetParser {
     return myIndex++;
   }
 
-  @Nullable
-  private ZenCodingNode parseMul(@Nullable ZenCodingNode expression) {
+  private @Nullable ZenCodingNode parseMul(@Nullable ZenCodingNode expression) {
     ZenCodingToken operationToken = getToken();
     if (expression != null && operationToken instanceof OperationToken && ((OperationToken)operationToken).getSign() == '*') {
       advance();
@@ -131,8 +126,7 @@ public abstract class EmmetParser {
     return expression;
   }
 
-  @Nullable
-  private ZenCodingNode parseExpression() {
+  private @Nullable ZenCodingNode parseExpression() {
     ZenCodingToken token = getToken();
     if (token == ZenCodingTokens.OPENING_R_BRACKET) {
       advance();
@@ -165,8 +159,7 @@ public abstract class EmmetParser {
     return templateNode;
   }
 
-  @Nullable
-  protected ZenCodingNode parseTemplate() {
+  protected @Nullable ZenCodingNode parseTemplate() {
     ZenCodingToken token = getToken();
     if (!(token instanceof IdentifierToken)) {
       return null;
@@ -197,8 +190,7 @@ public abstract class EmmetParser {
     return true;
   }
 
-  @Nullable
-  protected ZenCodingToken getToken() {
+  protected @Nullable ZenCodingToken getToken() {
     if (myIndex < myTokens.size()) {
       return myTokens.get(myIndex);
     }
@@ -206,8 +198,7 @@ public abstract class EmmetParser {
   }
   
   
-  @Nullable
-  protected ZenCodingToken nextToken(int i) {
+  protected @Nullable ZenCodingToken nextToken(int i) {
     if (myIndex + i < myTokens.size()) {
       return myTokens.get(myIndex + i);
     }

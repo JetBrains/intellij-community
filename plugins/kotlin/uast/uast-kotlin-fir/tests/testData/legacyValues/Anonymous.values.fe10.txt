@@ -19,20 +19,21 @@ UFile (package = ) [import java.io.Closeable...]
                 UDeclarationsExpression [var runnable2: java.lang.Runnable = Runnable({ ...})] = Undetermined
                     ULocalVariable (name = runnable2) [var runnable2: java.lang.Runnable = Runnable({ ...})]
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [Runnable({ ...})] = external Runnable({
-    println()
+    return println()
 })(Undetermined)
                             UIdentifier (Identifier (Runnable)) [UIdentifier (Identifier (Runnable))]
                             USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] = external Runnable({
-    println()
+    return println()
 })(Undetermined)
                             ULambdaExpression [{ ...}] = Undetermined
-                                UBlockExpression [{...}] = external println()()
-                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] = external println()()
-                                        UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println()()
+                                UBlockExpression [{...}] = Nothing
+                                    UReturnExpression [return println()] = Nothing
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [println()] = external println()()
+                                            UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] = external println()()
                 UQualifiedReferenceExpression [runnable2.run()] = external run()()
                     USimpleNameReferenceExpression (identifier = runnable2) [runnable2] = (var runnable2 = external Runnable({
-    println()
+    return println()
 })(Undetermined))
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [run()] = external run()()
                         UIdentifier (Identifier (run)) [UIdentifier (Identifier (run))]

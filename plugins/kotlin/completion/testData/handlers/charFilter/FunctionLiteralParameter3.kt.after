@@ -4,6 +4,7 @@ fun bar() {
     }
 }
 
+// IGNORE_K2
 // INVOCATION_COUNT: 0
 // ELEMENT: *
 // CHAR: ' '

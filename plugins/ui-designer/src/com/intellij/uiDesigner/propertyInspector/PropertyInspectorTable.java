@@ -1350,7 +1350,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
      * Recursively updates renderer and editor UIs of all synthetic
      * properties.
      */
-    private void updateUI(final Property property){
+    private static void updateUI(final Property property){
       final PropertyRenderer renderer = property.getRenderer();
       renderer.updateUI();
       final PropertyEditor editor = property.getEditor();

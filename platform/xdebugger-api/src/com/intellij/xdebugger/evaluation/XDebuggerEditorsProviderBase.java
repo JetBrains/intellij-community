@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.evaluation;
 
 import com.intellij.lang.Language;
@@ -22,20 +22,6 @@ import java.util.Collections;
 public abstract class XDebuggerEditorsProviderBase extends XDebuggerEditorsProvider {
   @NotNull
   @Override
-  public final Document createDocument(@NotNull Project project, @NotNull String text, @Nullable XSourcePosition sourcePosition, @NotNull EvaluationMode mode) {
-    PsiElement context = null;
-    if (sourcePosition != null) {
-      context = getContextElement(sourcePosition.getFile(), sourcePosition.getOffset(), project);
-    }
-
-    PsiFile codeFragment = createExpressionCodeFragment(project, text, context, true);
-    Document document = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
-    assert document != null;
-    return document;
-  }
-
-  @NotNull
-  @Override
   public Document createDocument(@NotNull Project project,
                                  @NotNull XExpression expression,
                                  @Nullable XSourcePosition sourcePosition,
@@ -56,7 +42,7 @@ public abstract class XDebuggerEditorsProviderBase extends XDebuggerEditorsProvi
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-304707, EA-597817, EA-832153, ...")) {
       codeFragment = createExpressionCodeFragment(project, expression, context, true);
     }
-    Document document = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+    Document document = codeFragment.getViewProvider().getDocument();
     assert document != null;
     return document;
   }

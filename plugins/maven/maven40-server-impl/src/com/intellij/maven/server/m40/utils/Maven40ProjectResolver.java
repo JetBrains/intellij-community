@@ -2,7 +2,6 @@
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.maven.server.m40.Maven40ServerEmbedderImpl;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
 import org.apache.maven.RepositoryUtils;
@@ -44,23 +43,29 @@ public class Maven40ProjectResolver {
   @NotNull private final MavenServerConsoleIndicatorImpl myCurrentIndicator;
   @Nullable private final MavenWorkspaceMap myWorkspaceMap;
   @NotNull private final File myLocalRepositoryFile;
+  @NotNull private final Properties userProperties;
+  private final boolean myResolveInParallel;
 
   public Maven40ProjectResolver(@NotNull Maven40ServerEmbedderImpl embedder,
                                 boolean updateSnapshots,
                                 @NotNull Maven40ImporterSpy importerSpy,
                                 @NotNull MavenServerConsoleIndicatorImpl currentIndicator,
                                 @Nullable MavenWorkspaceMap workspaceMap,
-                                @NotNull File localRepositoryFile) {
+                                @NotNull File localRepositoryFile,
+                                @NotNull Properties userProperties,
+                                boolean resolveInParallel) {
     myEmbedder = embedder;
     myUpdateSnapshots = updateSnapshots;
     myImporterSpy = importerSpy;
     myCurrentIndicator = currentIndicator;
     myWorkspaceMap = workspaceMap;
     myLocalRepositoryFile = localRepositoryFile;
+    this.userProperties = userProperties;
+    myResolveInParallel = resolveInParallel;
   }
 
   @NotNull
-  public Collection<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
+  public ArrayList<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
                                                                 @NotNull Collection<File> files,
                                                                 @NotNull List<String> activeProfiles,
                                                                 @NotNull List<String> inactiveProfiles) {
@@ -71,8 +76,9 @@ public class Maven40ProjectResolver {
         activeProfiles,
         inactiveProfiles
       );
-
-      return ContainerUtilRt.map2List(results, result -> createExecutionResult(result));
+      ArrayList<MavenServerExecutionResult> list = new ArrayList<>();
+      results.stream().map(result -> createExecutionResult(result)).forEachOrdered(list::add);
+      return list;
     }
     catch (Exception e) {
       throw myEmbedder.wrapToSerializableRuntimeException(e);
@@ -85,7 +91,7 @@ public class Maven40ProjectResolver {
                                                               @NotNull List<String> activeProfiles,
                                                               @NotNull List<String> inactiveProfiles) {
     File file = !files.isEmpty() ? files.iterator().next() : null;
-    MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles);
+    MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles, userProperties);
 
     request.setUpdateSnapshots(myUpdateSnapshots);
 
@@ -134,7 +140,7 @@ public class Maven40ProjectResolver {
         }
 
         task.updateTotalRequests(buildingResultsToResolveDependencies.size());
-        boolean runInParallel = canResolveDependenciesInParallel();
+        boolean runInParallel = myResolveInParallel;
         Collection<Maven40ExecutionResult> execResults =
           ParallelRunner.execute(
             runInParallel,
@@ -154,10 +160,6 @@ public class Maven40ProjectResolver {
     });
 
     return executionResults;
-  }
-
-  private boolean canResolveDependenciesInParallel() {
-    return true;
   }
 
   @NotNull
@@ -461,10 +463,10 @@ public class Maven40ProjectResolver {
     return buildingResults;
   }
 
-  private void buildSinglePom(ProjectBuilder builder,
-                              List<ProjectBuildingResult> buildingResults,
-                              ProjectBuildingRequest projectBuildingRequest,
-                              File pomFile) {
+  private static void buildSinglePom(ProjectBuilder builder,
+                                     List<ProjectBuildingResult> buildingResults,
+                                     ProjectBuildingRequest projectBuildingRequest,
+                                     File pomFile) {
     try {
       ProjectBuildingResult build = builder.build(pomFile, projectBuildingRequest);
       buildingResults.add(build);

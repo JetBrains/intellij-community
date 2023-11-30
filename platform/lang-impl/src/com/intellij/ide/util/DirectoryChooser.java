@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
@@ -329,7 +329,7 @@ public class DirectoryChooser extends DialogWrapper {
     protected abstract int getFragmentIndex(String[] path, int index);
   }
 
-  public static class ItemWrapper {
+  public static final class ItemWrapper {
     private final @Nullable PsiDirectory myDirectory;
     private final @Nullable Module myModule;
     private final @Nullable String myPostfix;
@@ -582,7 +582,7 @@ public class DirectoryChooser extends DialogWrapper {
   }
 
 
-  public static class PathFragment {
+  public static final class PathFragment {
     private final String myText;
     private final boolean myCommon;
 
@@ -601,7 +601,7 @@ public class DirectoryChooser extends DialogWrapper {
   }
 
 
-  private class FilterExistentAction extends CheckboxAction {
+  private final class FilterExistentAction extends CheckboxAction {
     FilterExistentAction() {
       super(RefactoringBundle.messagePointer("directory.chooser.hide.non.existing.checkBox.text"),
             () -> UIUtil.removeMnemonic(RefactoringBundle.message("directory.chooser.hide.non.existing.checkBox.text")),

@@ -10,6 +10,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.ConvertToScopeIntention.ScopeFunction.*
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -35,7 +36,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         RUN(functionName = "run", isParameterScope = false),
         WITH(functionName = "with", isParameterScope = false);
 
-        val receiver = if (isParameterScope) "it" else "this"
+        val receiver = if (isParameterScope) StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier else "this"
     }
 
     private data class RefactoringTargetAndItsValueExpression(

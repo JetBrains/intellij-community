@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -43,7 +43,7 @@ class LibraryRootsChangedTest {
   @Before
   fun setUp() {
     moduleRootListener = RootsChangedTest.MyModuleRootListener(projectModel.project)
-    projectModel.project.messageBus.connect(disposableRule.disposable).subscribe(ProjectTopics.PROJECT_ROOTS, moduleRootListener)
+    projectModel.project.messageBus.connect(disposableRule.disposable).subscribe(ModuleRootListener.TOPIC, moduleRootListener)
     module = projectModel.createModule("main")
   }
 

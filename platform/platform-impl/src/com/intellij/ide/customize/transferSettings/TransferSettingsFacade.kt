@@ -1,16 +1,17 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize.transferSettings
 
 import com.intellij.ide.customize.transferSettings.controllers.TransferSettingsListener
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.ide.customize.transferSettings.models.TransferSettingsModel
+import com.intellij.ide.customize.transferSettings.providers.TransferSettingsPerformContext
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeTransferSettingsProvider
 import com.intellij.ide.customize.transferSettings.ui.TransferSettingsProgressIndicatorBase
 import com.intellij.ide.customize.transferSettings.ui.TransferSettingsView
 import com.intellij.openapi.project.Project
-import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import javax.swing.JButton
-import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JProgressBar
 
@@ -24,18 +25,18 @@ class TransferSettingsFacade(private val project: Project?) {
   val status by lazy { JLabel("No yet status") }
   val progressBar by lazy { JProgressBar(0, 100) }
   val successOrFailureLabel by lazy { JLabel().apply { isVisible = false } }
-  val progressBase by lazy { TransferSettingsProgressIndicatorBase(progressBar, status, successOrFailureLabel) }
+  private val progressBase by lazy { TransferSettingsProgressIndicatorBase(progressBar, status, successOrFailureLabel) }
 
   val view by lazy { initView() }
 
   private fun initView(): TransferSettingsView {
-    application.assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     val view = TransferSettingsView(config, model)
 
     button.addActionListener {
       val selectedIde = view.selectedIde as? IdeVersion ?: error("Selected ide is null or not IdeVersion")
-      config.controller.performImport(project, selectedIde, true, progressBase)
+      config.controller.performImport(project, selectedIde, progressBase)
     }
 
     config.controller.addListener(object : TransferSettingsListener {
@@ -50,7 +51,7 @@ class TransferSettingsFacade(private val project: Project?) {
         button.isEnabled = true
       }
 
-      override fun importPerformed(ideVersion: IdeVersion, settings: Settings) {
+      override fun importPerformed(ideVersion: IdeVersion, settings: Settings, context: TransferSettingsPerformContext) {
         successOrFailureLabel.isVisible = true
         successOrFailureLabel.text = "Success"
         progressBar.isVisible = false

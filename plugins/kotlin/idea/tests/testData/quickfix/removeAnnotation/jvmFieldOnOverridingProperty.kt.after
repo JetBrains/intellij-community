@@ -1,5 +1,5 @@
 // "Remove @JvmField annotation" "true"
-// IGNORE_FIR
+// IGNORE_K2
 // WITH_STDLIB
 interface I {
     val x: Int

@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfoById
@@ -52,8 +51,8 @@ object KotlinIdePlugin {
             "org.jetbrains.kotlin.native.appcode"
         )
 
-        val pluginDescriptor = PluginManagerCore.getPlugins().firstOrNull { it.pluginId.idString in allPluginIds }
-            ?: error("Kotlin IDE plugin not found above the active plugins: " + PluginManagerCore.getPlugins().contentToString())
+        val pluginDescriptor = PluginManagerCore.plugins.firstOrNull { it.pluginId.idString in allPluginIds }
+            ?: error("Kotlin IDE plugin not found above the active plugins: " + PluginManagerCore.plugins.contentToString())
 
         val patchedVersion = System.getProperty("kotlin.plugin.version", null)
 

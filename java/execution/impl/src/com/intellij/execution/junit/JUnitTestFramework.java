@@ -24,6 +24,8 @@ public abstract class JUnitTestFramework extends JavaTestFramework {
   @Override
   public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
     if (element instanceof PsiMethod) {
+      if (!isFrameworkAvailable(element)) return false;
+
       PsiClass containingClass = ((PsiMethod)element).getContainingClass();
       return containingClass != null && isTestClass(containingClass, false) &&
              JUnitUtil.getTestMethod(element, checkAbstract) != null;

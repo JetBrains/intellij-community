@@ -34,6 +34,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.Nls;
@@ -629,7 +630,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   protected void refreshAfterCopyTo(DirDiffElementImpl element, DiffElement newElement) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myDisposed) return;
     if (newElement == null && element.getTarget() != null) {
       final int row = myElements.indexOf(element);
@@ -677,7 +678,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   protected void refreshAfterCopyFrom(@NotNull DirDiffElementImpl element, DiffElement newElement) {
     if (myDisposed) return;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     refreshElementAfterCopyFrom(element, newElement);
   }
 

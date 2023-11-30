@@ -169,8 +169,8 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
     if (text != null) {
       for(FileEditor fileEditor: fileEditors) {
-        if (fileEditor instanceof TextEditor) { // JSP is not safe to edit via Psi
-          final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
+        if (fileEditor instanceof TextEditor textEditor) { // JSP is not safe to edit via Psi
+          final Document document = textEditor.getEditor().getDocument();
           document.setText(text);
 
           if (ApplicationManager.getApplication().isUnitTestMode()) {

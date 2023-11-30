@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.codeWithMe.ClientId
@@ -114,6 +114,7 @@ interface VcsEditorTabFilesListener {
 
   companion object {
     @JvmField
+    @Topic.AppLevel
     val TOPIC: Topic<VcsEditorTabFilesListener> =
       Topic(VcsEditorTabFilesListener::class.java, Topic.BroadcastDirection.NONE, true)
   }

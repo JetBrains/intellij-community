@@ -35,11 +35,27 @@ public interface CustomHighlighterRenderer {
   void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g);
 
   /**
-   * By default (if this method returns {@code false}), custom highlighter is painted over the background (defined by common highlighters)
-   * and before the text. If the method returns {@code true}, it will be painted over the text.
+   * @deprecated please use {@link #getOrder()} instead
    */
-  @ApiStatus.Experimental
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   default boolean isForeground() {
     return false;
+  }
+
+  /**
+   * Allows specifying the order of painting for this highlighter.
+   * Default is {@link CustomHighlighterOrder#AFTER_BACKGROUND} - paint highlighter over the background and before the text.
+   *
+   * @see CustomHighlighterOrder
+   */
+  @ApiStatus.Experimental
+  default @NotNull CustomHighlighterOrder getOrder() {
+    if (isForeground()) {
+      return CustomHighlighterOrder.AFTER_TEXT;
+    }
+    else {
+      return CustomHighlighterOrder.AFTER_BACKGROUND;
+    }
   }
 }

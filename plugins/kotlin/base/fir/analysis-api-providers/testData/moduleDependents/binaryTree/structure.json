@@ -1,0 +1,56 @@
+{
+  "libraries": [
+    { "name": "L1" }
+  ],
+  "modules" : [
+    { "name": "A", "dependsOn": ["B", "C"] },
+    { "name": "B", "dependsOn": ["D", "E"] },
+    { "name": "C", "dependsOn": ["F", "G"] },
+    { "name": "D", "dependsOn": [] },
+    { "name": "E", "dependsOn": [] },
+    { "name": "F", "dependsOn": ["L1"] },
+    { "name": "G", "dependsOn": [] }
+  ],
+  "targets": [
+    {
+      "library": "L1",
+      "directDependents": ["F"],
+      "transitiveDependents": ["F", "C", "A"]
+    },
+    {
+      "module": "A",
+      "directDependents": [],
+      "transitiveDependents": []
+    },
+    {
+      "module": "B",
+      "directDependents": ["A"],
+      "transitiveDependents": ["A"]
+    },
+    {
+      "module": "C",
+      "directDependents": ["A"],
+      "transitiveDependents": ["A"]
+    },
+    {
+      "module": "D",
+      "directDependents": ["B"],
+      "transitiveDependents": ["B", "A"]
+    },
+    {
+      "module": "E",
+      "directDependents": ["B"],
+      "transitiveDependents": ["B", "A"]
+    },
+    {
+      "module": "F",
+      "directDependents": ["C"],
+      "transitiveDependents": ["C", "A"]
+    },
+    {
+      "module": "G",
+      "directDependents": ["C"],
+      "transitiveDependents": ["C", "A"]
+    }
+  ]
+}

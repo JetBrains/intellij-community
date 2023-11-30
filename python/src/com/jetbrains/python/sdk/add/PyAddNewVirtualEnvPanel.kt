@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.add
 
-import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -16,9 +15,10 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.basePath
-import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
+import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import icons.PythonIcons
@@ -28,10 +28,10 @@ import javax.swing.Icon
 import javax.swing.event.DocumentEvent
 
 open class PyAddNewVirtualEnvPanel(private val project: Project?,
-                              private val module: Module?,
-                              private val existingSdks: List<Sdk>,
-                              newProjectPath: String?,
-                              private val context: UserDataHolder) : PyAddNewEnvPanel() {
+                                   private val module: Module?,
+                                   private val existingSdks: List<Sdk>,
+                                   newProjectPath: String?,
+                                   private val context: UserDataHolder) : PyAddNewEnvPanel() {
   override val envName: String = "Virtualenv"
 
   override var newProjectPath: String? = newProjectPath
@@ -71,13 +71,12 @@ open class PyAddNewVirtualEnvPanel(private val project: Project?,
   }
 
   override fun validateAll(): List<ValidationInfo> =
-    listOfNotNull(validateEnvironmentDirectoryLocation(pathField, PathInfo.localPathInfoProvider),
+    listOfNotNull(validateEnvironmentDirectoryLocation(pathField, PlatformAndRoot.local),
                   validateSdkComboBox(baseSdkField, this))
 
   override fun getOrCreateSdk(): Sdk? {
-    return PyProjectVirtualEnvConfiguration.createVirtualEnvSynchronously(baseSdkField.selectedSdk, existingSdks, pathField.text,
-                                                                          newProjectPath, project, module, context,
-                                                                          inheritSitePackagesField.isSelected, makeSharedField.isSelected)
+    return createVirtualEnvSynchronously(baseSdkField.selectedSdk, existingSdks, pathField.text, newProjectPath, project, module, context,
+                                         inheritSitePackagesField.isSelected, makeSharedField.isSelected)
   }
 
   override fun getStatisticInfo(): InterpreterStatisticsInfo? {

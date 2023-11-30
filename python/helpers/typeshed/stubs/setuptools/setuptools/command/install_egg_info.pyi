@@ -1,6 +1,6 @@
 from typing import Any
 
-from setuptools import Command, namespaces
+from .. import Command, namespaces
 
 class install_egg_info(namespaces.Installer, Command):
     description: str

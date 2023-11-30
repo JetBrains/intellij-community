@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.surroundWith;
 
 import com.intellij.json.JsonBundle;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Mikhail Golubev
  */
-public class JsonWithObjectLiteralSurrounder extends JsonSurrounderBase {
+public final class JsonWithObjectLiteralSurrounder extends JsonSurrounderBase {
   @Override
   public String getTemplateDescription() {
     return JsonBundle.message("surround.with.object.literal.desc");
@@ -45,11 +46,10 @@ public class JsonWithObjectLiteralSurrounder extends JsonSurrounderBase {
     return !JsonPsiUtil.isPropertyKey(elements[0]) && (elements[0] instanceof JsonProperty || elements.length == 1);
   }
 
-  @Nullable
   @Override
-  public TextRange surroundElements(@NotNull Project project,
-                                    @NotNull Editor editor,
-                                    PsiElement @NotNull [] elements) throws IncorrectOperationException {
+  public @Nullable TextRange surroundElements(@NotNull Project project,
+                                              @NotNull Editor editor,
+                                              PsiElement @NotNull [] elements) throws IncorrectOperationException {
 
     if (!isApplicable(elements)) {
       return null;
@@ -77,9 +77,8 @@ public class JsonWithObjectLiteralSurrounder extends JsonSurrounderBase {
     return new TextRange(rangeWithQuotes.getStartOffset() + 1, rangeWithQuotes.getEndOffset() - 1);
   }
 
-  @NotNull
   @Override
-  protected String createReplacementText(@NotNull String textInRange) {
+  protected @NotNull String createReplacementText(@NotNull String textInRange) {
     return "{\n\"property\": " + textInRange + "\n}";
   }
 }

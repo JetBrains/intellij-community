@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.SwingProperties;
@@ -11,6 +12,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadGridLayoutManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -135,11 +137,13 @@ public abstract class IntrospectedProperty<V> extends Property<RadComponent, V> 
     final GlobalSearchScope scope = component.getModule().getModuleWithDependenciesAndLibrariesScope(true);
     PsiClass componentClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(component.getComponentClassName(), scope);
     if (componentClass == null) return true;
-    final PsiMethod[] psiMethods = componentClass.findMethodsByName(myReadMethod.getName(), true);
-    for(PsiMethod method: psiMethods) {
-      if (!method.hasModifierProperty(PsiModifier.STATIC) &&
-          method.getParameterList().isEmpty()) {
-        return true;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-641435")) {
+      final PsiMethod[] psiMethods = componentClass.findMethodsByName(myReadMethod.getName(), true);
+      for (PsiMethod method : psiMethods) {
+        if (!method.hasModifierProperty(PsiModifier.STATIC) &&
+            method.getParameterList().isEmpty()) {
+          return true;
+        }
       }
     }
     return false;

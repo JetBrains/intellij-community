@@ -139,7 +139,7 @@ class PyAddPipEnvPanel(private val project: Project?,
   }
 
   override fun validateAll(): List<ValidationInfo> =
-    listOfNotNull(validatePipEnvExecutable(), validatePipEnvIsNotAdded())
+    listOfNotNull(validatePipEnvIsNotAdded())
 
   override fun addChangeListener(listener: Runnable) {
     pipEnvPathField.textField.document.addDocumentListener(object : DocumentAdapter() {
@@ -164,10 +164,6 @@ class PyAddPipEnvPanel(private val project: Project?,
    */
   private val selectedModule: Module?
     get() = module ?: moduleField.selectedItem as? Module
-
-  private fun validatePipEnvExecutable(): ValidationInfo? {
-    return validatePipEnvExecutable(pipEnvPathField.text.nullize() ?: detectPipEnvExecutable()?.absolutePath)
-  }
 
   /**
    * Checks if the pipenv for the project hasn't been already added.

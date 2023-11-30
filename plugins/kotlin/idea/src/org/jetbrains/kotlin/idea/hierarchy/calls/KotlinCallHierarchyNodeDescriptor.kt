@@ -32,7 +32,7 @@ class KotlinCallHierarchyNodeDescriptor(
     Navigatable {
     private var usageCount = 1
     private val references: MutableSet<PsiReference> = HashSet()
-    private val javaDelegate: CallHierarchyNodeDescriptor
+    private val javaDelegate = CallHierarchyNodeDescriptor(myProject, null, element, isBase, navigateToReference)
 
     fun incrementUsageCount() {
         usageCount++
@@ -205,9 +205,5 @@ class KotlinCallHierarchyNodeDescriptor(
         private fun renderClassOrObject(descriptor: ClassDescriptor): String {
             return descriptor.name.asString()
         }
-    }
-
-    init {
-        javaDelegate = CallHierarchyNodeDescriptor(myProject, null, element, isBase, navigateToReference)
     }
 }

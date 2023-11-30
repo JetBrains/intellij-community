@@ -31,18 +31,13 @@ final class StrippedLongSet {
    */
   private transient boolean containsNull;
   /**
-   * The current table size. Note that an additional element is allocated for
-   * storing the null key.
+   * The current table size. Note that an additional element is allocated for storing the null key.
    */
   private transient int n;
   /**
-   * Threshold after which we rehash. It must be the table size times {@link #f}.
+   * Threshold after which we rehash. It must be the table size times {@link #loadFactor}.
    */
   private transient int maxFill;
-  /**
-   * We never resize below this threshold, which is the construction-time {#n}.
-   */
-  private final transient int minN;
   /**
    * Number of entries in the set (including the null key, if present).
    */
@@ -50,30 +45,29 @@ final class StrippedLongSet {
   /**
    * The acceptable load factor.
    */
-  private final float f;
+  private final float loadFactor;
 
   /**
    * Creates a new hash set.
    *
    * <p>
    * The actual table size will be the least power of two greater than
-   * {@code expected}/{@code f}.
+   * {@code expected}/{@code loadFactor}.
    *
    * @param expected the expected number of elements in the hash set.
-   * @param f        the load factor.
+   * @param loadFactor        the load factor.
    */
-
-  StrippedLongSet(final int expected, final float f) {
-    if (f <= 0 || f > 1) {
+  StrippedLongSet(final int expected, final float loadFactor) {
+    if (loadFactor <= 0 || loadFactor > 1) {
       throw new IllegalArgumentException("Load factor must be greater than 0 and smaller than or equal to 1");
     }
     if (expected < 0) {
       throw new IllegalArgumentException("The expected number of elements must be non-negative");
     }
-    this.f = f;
-    minN = n = Hash.arraySize(expected, f);
+    this.loadFactor = loadFactor;
+    n = Hash.arraySize(expected, loadFactor);
     mask = n - 1;
-    maxFill = Hash.maxFill(n, f);
+    maxFill = Hash.maxFill(n, loadFactor);
     keys = new long[n + 1];
   }
 
@@ -114,83 +108,9 @@ final class StrippedLongSet {
       key[pos] = k;
     }
     if (size++ >= maxFill) {
-      rehash(Hash.arraySize(size + 1, f));
+      rehash(Hash.arraySize(size + 1, loadFactor));
     }
     return true;
-  }
-
-  /**
-   * Shifts left entries with the specified hash code, starting at the specified
-   * position, and empties the resulting free entry.
-   *
-   * @param pos a starting position.
-   */
-  private void shiftKeys(int pos) {
-    // Shift entries with the same hash.
-    int last, slot;
-    long curr;
-    final long[] key = this.keys;
-    for (; ; ) {
-      pos = (last = pos) + 1 & mask;
-      for (; ; ) {
-        if ((curr = key[pos]) == 0) {
-          key[last] = 0;
-          return;
-        }
-        slot = (int)curr & mask;
-        if (last <= pos ? last >= slot || slot > pos : last >= slot && slot > pos) {
-          break;
-        }
-        pos = pos + 1 & mask;
-      }
-      key[last] = curr;
-    }
-  }
-
-  private boolean removeEntry(final int pos) {
-    size--;
-    shiftKeys(pos);
-    if (n > minN && size < maxFill / 4 && n > Hash.DEFAULT_INITIAL_SIZE) {
-      rehash(n / 2);
-    }
-    return true;
-  }
-
-  private boolean removeNullEntry() {
-    containsNull = false;
-    keys[n] = 0;
-    size--;
-    if (n > minN && size < maxFill / 4 && n > Hash.DEFAULT_INITIAL_SIZE) {
-      rehash(n / 2);
-    }
-    return true;
-  }
-
-  public boolean remove(final long k) {
-    if (k == 0) {
-      if (containsNull) {
-        return removeNullEntry();
-      }
-      return false;
-    }
-    long curr;
-    final long[] key = this.keys;
-    int pos;
-    // The starting point.
-    if ((curr = key[pos = (int)k & mask]) == 0) {
-      return false;
-    }
-    if (k == curr) {
-      return removeEntry(pos);
-    }
-    while (true) {
-      if ((curr = key[pos = pos + 1 & mask]) == 0) {
-        return false;
-      }
-      if (k == curr) {
-        return removeEntry(pos);
-      }
-    }
   }
 
   public boolean contains(final long k) {
@@ -287,7 +207,7 @@ final class StrippedLongSet {
     }
     n = newN;
     this.mask = mask;
-    maxFill = Hash.maxFill(n, f);
+    maxFill = Hash.maxFill(n, loadFactor);
     this.keys = newKey;
   }
 

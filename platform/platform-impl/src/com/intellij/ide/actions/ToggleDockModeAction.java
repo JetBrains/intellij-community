@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated See {@link ToolWindowViewModeAction} \
  **/
 @Deprecated
-public class ToggleDockModeAction extends ToggleAction implements DumbAware {
+public class ToggleDockModeAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent event){

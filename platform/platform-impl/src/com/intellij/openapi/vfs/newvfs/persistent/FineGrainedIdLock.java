@@ -17,35 +17,35 @@ import java.util.concurrent.locks.ReentrantLock;
  *     does exist: many threads trying to lock/unlock different IDs will contend on a single shared lock.
  */
 final class FineGrainedIdLock {
-  private final IntSet myLockedIds = new IntOpenHashSet(Runtime.getRuntime().availableProcessors());
-  private final Lock myLock = new ReentrantLock();
-  private final Condition myUnlockCondition = myLock.newCondition();
+  private final IntSet lockedIds = new IntOpenHashSet(Runtime.getRuntime().availableProcessors());
+  private final Lock lock = new ReentrantLock();
+  private final Condition unlockCondition = lock.newCondition();
 
   public void lock(int id) {
-    myLock.lock();
+    lock.lock();
     try {
-      while (myLockedIds.contains(id)) {
-        myUnlockCondition.awaitUninterruptibly();
+      while (lockedIds.contains(id)) {
+        unlockCondition.awaitUninterruptibly();
       }
-      myLockedIds.add(id);
+      lockedIds.add(id);
     }
     finally {
-      myLock.unlock();
+      lock.unlock();
     }
   }
 
   public void unlock(int id) {
-    myLock.lock();
+    lock.lock();
     try {
-      myLockedIds.remove(id);
+      lockedIds.remove(id);
       //RC: this wakes up all threads waiting -- i.e. myLockedIds.size(), which could be a lot.
       //    And each thread will need to re-acquire myLock, to check lockedIds.contains() -- and
       //    all threads but one return to waiting after the check. Could be quite ineffective
       //    if there are a lot of IDs locked.
-      myUnlockCondition.signalAll();
+      unlockCondition.signalAll();
     }
     finally {
-      myLock.unlock();
+      lock.unlock();
     }
   }
 }

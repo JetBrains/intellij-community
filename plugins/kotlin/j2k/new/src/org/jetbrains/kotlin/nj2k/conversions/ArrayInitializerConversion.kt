@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.toArgumentList
@@ -22,12 +21,15 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveApp
                     ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[PrimitiveType.valueOf(primitiveArrayType.jvmPrimitiveType.name)]!!.asString()
                 else
                     ArrayFqNames.ARRAY_OF_FUNCTION.asString()
+            val arguments = element.initializer.also { element.initializer = emptyList() }.toArgumentList()
+            arguments.hasTrailingComma = element.hasTrailingComma
             val typeArguments =
                 if (primitiveArrayType == null) JKTypeArgumentList(element::type.detached())
                 else JKTypeArgumentList()
+
             newElement = JKCallExpressionImpl(
                 symbolProvider.provideMethodSymbol("kotlin.$arrayConstructorName"),
-                element.initializer.also { element.initializer = emptyList() }.toArgumentList(),
+                arguments,
                 typeArguments
             )
         } else if (element is JKJavaNewEmptyArray) {
@@ -36,7 +38,7 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveApp
             )
         }
 
-        return recurse(newElement)
+        return recurse(newElement.withFormattingFrom(element))
     }
 
     private fun buildArrayInitializer(dimensions: List<JKExpression>, type: JKType): JKExpression {

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UImportStatement
+import org.jetbrains.uast.UNINITIALIZED_UAST_PART
 import org.jetbrains.uast.USimpleNameReferenceExpression
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
@@ -19,17 +20,23 @@ class KotlinUImportStatement(
     givenParent: UElement?
 ) : KotlinAbstractUElement(givenParent), UImportStatement, DelegatedMultiResolve {
 
+    private var importRefPart: Any? = UNINITIALIZED_UAST_PART
+
     override val javaPsi: PsiElement? = null
 
     override val sourcePsi: KtImportDirective = psi
 
     override val isOnDemand: Boolean = sourcePsi.isAllUnder
 
-    private val importRef: ImportReference? by lz {
-        sourcePsi.importedReference?.let {
-            ImportReference(it, sourcePsi.name ?: sourcePsi.text, this, sourcePsi)
+    private val importRef: ImportReference?
+        get() {
+            if (importRefPart == UNINITIALIZED_UAST_PART) {
+                importRefPart = sourcePsi.importedReference?.let {
+                    ImportReference(it, sourcePsi.name ?: sourcePsi.text, this, sourcePsi)
+                }
+            }
+            return importRefPart as ImportReference?
         }
-    }
 
     override val importReference: UElement? = importRef
 

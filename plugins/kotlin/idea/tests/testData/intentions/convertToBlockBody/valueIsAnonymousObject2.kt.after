@@ -1,5 +1,5 @@
 interface I
 
 fun f(): I {
-    return object : I { }
+    return object : I {}
 }

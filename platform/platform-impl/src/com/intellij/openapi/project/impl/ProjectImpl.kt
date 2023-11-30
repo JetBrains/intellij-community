@@ -17,10 +17,13 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.client.ClientAwareComponentManager
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectNameListener
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
@@ -31,33 +34,34 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.project.ProjectStoreOwner
-import com.intellij.serviceContainer.AlreadyDisposedException
-import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.*
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.TimedReference
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx
-import com.intellij.util.namedChildScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.nio.file.ClosedFileSystemException
 import java.nio.file.Path
+import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicReference
+
+internal val projectMethodType: MethodType = MethodType.methodType(Void.TYPE, Project::class.java)
+internal val projectAndScopeMethodType: MethodType = MethodType.methodType(Void.TYPE, Project::class.java, CoroutineScope::class.java)
+
+private val LOG = logger<ProjectImpl>()
 
 @Internal
 open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName: String?)
-  : ClientAwareComponentManager(parent = parent,
-                                coroutineScope = parent.getCoroutineScope().namedChildScope("ProjectImpl")), ProjectEx, ProjectStoreOwner {
+  : ClientAwareComponentManager(parent), ProjectEx, ProjectStoreOwner {
   companion object {
-    private val LOG = logger<ProjectImpl>()
-
     @Internal
     val RUN_START_UP_ACTIVITIES: Key<Boolean> = Key.create("RUN_START_UP_ACTIVITIES")
 
@@ -82,19 +86,21 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
     // for light projects, preload only services that are essential
     // ("await" means "project component loading activity is completed only when all such services are completed")
-    internal fun CoroutineScope.preloadServices(project: ProjectImpl) {
-      project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                              activityPrefix = "project ",
-                              syncScope = this,
-                              onlyIfAwait = project.isLight,
-                              asyncScope = project.asyncPreloadServiceScope)
+    internal fun CoroutineScope.schedulePreloadServices(project: ProjectImpl) {
+      launch(CoroutineName("project service preloading (sync)")) {
+        project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                                activityPrefix = "project ",
+                                syncScope = this,
+                                onlyIfAwait = project.isLight,
+                                asyncScope = project.asyncPreloadServiceScope)
+      }
     }
   }
 
   // used by Rider
   @Internal
   @JvmField
-  val asyncPreloadServiceScope: CoroutineScope = coroutineScope.childScope()
+  val asyncPreloadServiceScope: CoroutineScope = coroutineScope.childScope(supervisor = false)
 
   private val earlyDisposable = AtomicReference(Disposer.newDisposable())
 
@@ -107,7 +113,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   private var cachedName: String?
 
   private val componentStoreValue = SynchronizedClearableLazy {
-    ApplicationManager.getApplication().getService(ProjectStoreFactory::class.java).createStore(this)
+    ApplicationManager.getApplication().service<ProjectStoreFactory>().createStore(this)
   }
 
   init {
@@ -123,6 +129,26 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     // light project may be changed later during test, so we need to remember its initial state
     @Suppress("TestOnlyProblems")
     isLight = ApplicationManager.getApplication().isUnitTestMode && filePath.toString().contains(LIGHT_PROJECT_NAME)
+  }
+
+  final override fun <T : Any> findConstructorAndInstantiateClass(lookup: MethodHandles.Lookup, aClass: Class<T>): T {
+    @Suppress("UNCHECKED_CAST")
+    // see ConfigurableEP - prefer constructor that accepts our instance
+    return (lookup.findConstructorOrNull(aClass, projectMethodType)?.invoke(this)
+            ?: lookup.findConstructorOrNull(aClass, projectAndScopeMethodType)?.invoke(this, instanceCoroutineScope(aClass))
+            ?: lookup.findConstructorOrNull(aClass, coroutineScopeMethodType)?.invoke(instanceCoroutineScope(aClass))
+            ?: lookup.findConstructorOrNull(aClass, emptyConstructorMethodType)?.invoke()
+            ?: throw RuntimeException("Cannot find suitable constructor, " +
+                                      "expected (Project), (Project, CoroutineScope), (CoroutineScope), or ()")) as T
+  }
+
+  final override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
+    return listOf(
+      projectMethodType,
+      projectAndScopeMethodType,
+      coroutineScopeMethodType,
+      emptyConstructorMethodType,
+    )
   }
 
   override fun isInitialized(): Boolean {
@@ -158,7 +184,9 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     }
 
     cachedName = value
+
     if (!ApplicationManager.getApplication().isUnitTestMode) {
+      messageBus.syncPublisher(ProjectNameListener.TOPIC).nameChanged(value)
       StartupManager.getInstance(this).runAfterOpened {
         ApplicationManager.getApplication().invokeLater(Runnable {
           val frame = WindowManager.getInstance().getFrame(this) ?: return@Runnable
@@ -169,14 +197,8 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     }
   }
 
-  final override var componentStore: IProjectStore
+  final override val componentStore: IProjectStore
     get() = componentStoreValue.value
-    set(value) {
-      if (componentStoreValue.isInitialized()) {
-        throw java.lang.IllegalStateException("store is already initialized")
-      }
-      componentStoreValue.value = value
-    }
 
   final override fun getProjectFilePath(): String = componentStore.projectFilePath.systemIndependentPath
 
@@ -204,7 +226,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     }
     else {
       path = store.projectFilePath
-      @Suppress("UsePropertyAccessSyntax")
       prefix = getName()
     }
     return "$prefix${Integer.toHexString(path.systemIndependentPath.hashCode())}"
@@ -356,7 +377,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     // ensure that expensive save operation is not performed before startupActivityPassed
     // first save may be quite cost operation, because cache is not warmed up yet
     if (!isInitialized) {
-      LOG.debug("Skip save for $name: not initialized")
+      LOG.debug { "Skip save for $name: not initialized" }
       return
     }
 
@@ -368,7 +389,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   }
 
   @TestOnly
-  override fun getCreationTrace(): String? {
+  final override fun getCreationTrace(): String? {
     val trace = getUserData(CREATION_TRACE)
     val testName = getUserData(CREATION_TEST_NAME) ?: return trace
     return "created in test: $testName, used in tests: ${getUserData(USED_TEST_NAMES)}\n $trace"
@@ -376,11 +397,11 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
   private fun storeCreationTrace() {
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      putUserData(CREATION_TRACE, ExceptionUtil.currentStackTrace())
+      putUserData(CREATION_TRACE, "${LocalDateTime.now()}@${ExceptionUtil.currentStackTrace()}")
     }
   }
 
-  override fun stopServicePreloading() {
+  final override fun stopServicePreloading() {
     super.stopServicePreloading()
 
     asyncPreloadServiceScope.cancel()

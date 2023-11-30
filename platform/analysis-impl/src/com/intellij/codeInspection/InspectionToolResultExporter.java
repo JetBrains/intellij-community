@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -46,10 +46,9 @@ public interface InspectionToolResultExporter extends ProblemDescriptionsProcess
   @Nullable
   HighlightSeverity getSeverity(@NotNull RefElement element);
 
-  @NotNull
-  static HighlightSeverity getSeverity(@Nullable RefEntity entity,
-                                        @Nullable PsiElement psiElement,
-                                        @NotNull InspectionToolResultExporter presentation) {
+  static @NotNull HighlightSeverity getSeverity(@Nullable RefEntity entity,
+                                                @Nullable PsiElement psiElement,
+                                                @NotNull InspectionToolResultExporter presentation) {
     HighlightSeverity severity = null;
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(presentation.getProject()).getCurrentProfile();
     if (entity instanceof RefElement refElement) {

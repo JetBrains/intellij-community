@@ -1,18 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.module.ModuleComponent
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -29,7 +30,8 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
+import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridgeImpl
@@ -49,29 +51,29 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
   internal class ModuleManagerInitProjectActivity : InitProjectActivity {
     override suspend fun run(project: Project) {
       val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
-      var activity = StartUpMeasurer.startActivity("firing modules_added event")
       val modules = moduleManager.modules().toList()
-      blockingContext {
-        fireModulesAdded(project, modules)
-      }
-
-      activity = activity.endAndStart("deprecated module component moduleAdded calling")
-      @Suppress("removal", "DEPRECATION")
-      val deprecatedComponents = mutableListOf<com.intellij.openapi.module.ModuleComponent>()
-      for (module in modules) {
-        if (!module.isLoaded) {
-          module.moduleAdded(deprecatedComponents)
+      span("firing modules_added event") {
+        blockingContext {
+          fireModulesAdded(project, modules)
         }
       }
-      if (!deprecatedComponents.isEmpty()) {
-        writeAction {
-          for (deprecatedComponent in deprecatedComponents) {
-            @Suppress("DEPRECATION", "removal")
-            deprecatedComponent.moduleAdded()
+      span("deprecated module component moduleAdded calling") {
+        @Suppress("removal", "DEPRECATION")
+        val deprecatedComponents = mutableListOf<ModuleComponent>()
+        for (module in modules) {
+          if (!module.isLoaded) {
+            module.moduleAdded(deprecatedComponents)
+          }
+        }
+        if (!deprecatedComponents.isEmpty()) {
+          writeAction {
+            for (deprecatedComponent in deprecatedComponents) {
+              @Suppress("DEPRECATION", "removal")
+              deprecatedComponent.moduleAdded()
+            }
           }
         }
       }
-      activity.end()
     }
   }
 

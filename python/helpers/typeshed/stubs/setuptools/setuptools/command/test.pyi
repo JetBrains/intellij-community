@@ -1,24 +1,25 @@
-from _typeshed import Self
+from _typeshed import Incomplete, Unused
 from collections.abc import Callable
 from types import ModuleType
 from typing import Any, Generic, TypeVar, overload
+from typing_extensions import Self
 from unittest import TestLoader, TestSuite
 
-from setuptools import Command
+from .. import Command
 
 _T = TypeVar("_T")
 
 class ScanningLoader(TestLoader):
     def __init__(self) -> None: ...
-    def loadTestsFromModule(self, module: ModuleType, pattern: Any | None = ...) -> list[TestSuite]: ...  # type: ignore[override]
+    def loadTestsFromModule(self, module: ModuleType, pattern: Incomplete | None = None) -> list[TestSuite]: ...  # type: ignore[override]
 
 class NonDataProperty(Generic[_T]):
     fget: Callable[..., _T]
     def __init__(self, fget: Callable[..., _T]) -> None: ...
     @overload
-    def __get__(self: Self, obj: None, objtype: object = ...) -> Self: ...
+    def __get__(self, obj: None, objtype: Unused = None) -> Self: ...
     @overload
-    def __get__(self, obj: Any, objtype: object = ...) -> _T: ...
+    def __get__(self, obj: Any, objtype: Unused = None) -> _T: ...
 
 class test(Command):
     description: str
@@ -32,7 +33,7 @@ class test(Command):
     @NonDataProperty
     def test_args(self) -> list[str]: ...
     def with_project_on_sys_path(self, func) -> None: ...
-    def project_on_sys_path(self, include_dists=...): ...
+    def project_on_sys_path(self, include_dists=[]): ...
     @staticmethod
     def paths_on_pythonpath(paths) -> None: ...
     @staticmethod

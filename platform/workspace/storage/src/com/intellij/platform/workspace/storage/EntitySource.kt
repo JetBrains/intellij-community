@@ -4,9 +4,17 @@ package com.intellij.platform.workspace.storage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 /**
- * Declares a place from which an entity came.
- * Usually contains enough information to identify a project location.
- * An entity source must be serializable along with entities, so there are some limits to implementation.
+ * Describes a place where an entity came from. 
+ * It may be a configuration file on disk (in that case [virtualFileUrl] property should be implemented to point to that file), or some 
+ * strings which identify the source, or a marker object if entities are generated automatically by some algorithm which doesn't use 
+ * external data.
+ *
+ * Each entity must specify its source via [WorkspaceEntity.entitySource] property. 
+ * For example, entities loaded from configuration files under .idea directory use 
+ * [JpsProjectFileEntitySource][com.intellij.platform.workspace.jps.JpsProjectFileEntitySource].
+ * Information about entity sources is used by [MutableEntityStorage.replaceBySource] function.
+ * 
+ * An entity source must be serializable along with entities, so there are some restrictions on its implementation.
  * It must be a data class which contains read-only properties of the following types:
  * * primitive types;
  * * String;
@@ -15,8 +23,8 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
  * * another data class with properties of the allowed types;
  * * sealed abstract class where all implementations satisfy these requirements.
  */
-interface EntitySource {
-  val virtualFileUrl: VirtualFileUrl?
+public interface EntitySource {
+  public val virtualFileUrl: VirtualFileUrl?
     get() = null
 }
 
@@ -30,4 +38,4 @@ interface EntitySource {
  * file is applied to the model via [MutableEntityStorage.replaceBySource], it won't overwrite actual configuration
  * of `ModuleEntity`.
  */
-interface DummyParentEntitySource : EntitySource
+public interface DummyParentEntitySource : EntitySource

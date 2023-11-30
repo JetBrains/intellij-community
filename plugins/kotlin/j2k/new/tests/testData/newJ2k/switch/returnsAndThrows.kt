@@ -1,13 +1,13 @@
 fun foo(a: Int): Int {
-    return when (a) {
+    when (a) {
         1 -> {
             println("1")
-            1
+            return 1
         }
 
         2 -> {
             println("2")
-            2
+            return 2
         }
 
         3 -> {
@@ -17,7 +17,7 @@ fun foo(a: Int): Int {
 
         else -> {
             println("default")
-            0
+            return 0
         }
     }
 }

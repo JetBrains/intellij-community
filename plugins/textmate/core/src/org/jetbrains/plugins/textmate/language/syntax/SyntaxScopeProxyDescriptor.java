@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * <p/>
  * User: zolotov
  */
-public class SyntaxScopeProxyDescriptor extends SyntaxProxyDescriptor {
+public final class SyntaxScopeProxyDescriptor extends SyntaxProxyDescriptor {
   @NotNull private final CharSequence myScope;
   @NotNull private final TextMateSyntaxTable mySyntaxTable;
   private final int myRuleId;

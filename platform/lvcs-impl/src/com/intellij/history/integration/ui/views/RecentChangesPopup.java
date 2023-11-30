@@ -34,7 +34,7 @@ public final class RecentChangesPopup {
       .showCenteredInCurrentWindow(project);
   }
 
-  private static class RecentChangesListCellRenderer implements ListCellRenderer<RecentChange> {
+  private static final class RecentChangesListCellRenderer implements ListCellRenderer<RecentChange> {
     private final JPanel myPanel = new JPanel(new FlowLayout(FlowLayout.LEADING,UIUtil.DEFAULT_HGAP,2));
     private final JLabel myActionLabel = new JLabel("", JLabel.LEFT);
     private final JLabel myDateLabel = new JLabel("", JLabel.LEFT);
@@ -71,7 +71,7 @@ public final class RecentChangesPopup {
       setColors(bg, fg, myPanel, myActionLabel, myDateLabel, mySpacePanel);
     }
 
-    private void setColors(Color bg, Color fg, JComponent... cc) {
+    private static void setColors(Color bg, Color fg, JComponent... cc) {
       for (JComponent c : cc) {
         c.setBackground(bg);
         c.setForeground(fg);

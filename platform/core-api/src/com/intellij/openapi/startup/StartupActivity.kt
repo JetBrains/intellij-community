@@ -40,13 +40,13 @@ interface StartupActivity {
   /**
    * See **obsolescence notice** on [StartupActivity].
    */
-  @Deprecated("Use ProjectPostStartupActivity")
+  @Deprecated("Use ProjectActivity")
   interface Background : StartupActivity, com.intellij.openapi.project.DumbAware
 }
 
 /**
  * Runs an activity after project open.
- * Coroutine scope: from project opening to project closing (or plugin unloading).
+ * [execute] gets called inside a coroutine scope spanning from project opening to project closing (or plugin unloading).
  * Flow and any other long-running activities are allowed and natural.
  *
  * @see StartupManager
@@ -56,9 +56,6 @@ interface StartupActivity {
 interface ProjectActivity {
   suspend fun execute(project: Project)
 }
-
-@Deprecated("Use ProjectActivity", level = DeprecationLevel.ERROR)
-interface ProjectPostStartupActivity : ProjectActivity
 
 /**
  * `initProjectActivity` activity must be defined only by a core and requires approval by core team.

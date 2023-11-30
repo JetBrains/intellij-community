@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.util.PairConsumer;
@@ -11,8 +11,7 @@ public abstract class TreeModelAdapter implements TreeModelListener {
 
   public enum EventType {StructureChanged, NodesChanged, NodesInserted, NodesRemoved}
 
-  @NotNull
-  public static TreeModelListener create(@NotNull final PairConsumer<? super TreeModelEvent, ? super EventType> consumer) {
+  public static @NotNull TreeModelListener create(final @NotNull PairConsumer<? super TreeModelEvent, ? super EventType> consumer) {
     return new TreeModelAdapter() {
       @Override
       protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {

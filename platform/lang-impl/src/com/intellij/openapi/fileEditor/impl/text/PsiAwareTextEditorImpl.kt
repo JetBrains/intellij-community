@@ -2,23 +2,13 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
-import com.intellij.codeInsight.codeVision.CodeVisionEntry
-import com.intellij.codeInsight.codeVision.CodeVisionInitializer
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
-import com.intellij.codeInsight.documentation.render.DocRenderManager
-import com.intellij.codeInsight.documentation.render.DocRenderPassFactory
 import com.intellij.codeInsight.folding.CodeFoldingManager
-import com.intellij.codeInsight.hints.HintsBuffer
-import com.intellij.codeInsight.hints.InlayHintsPassFactory.Companion.applyPlaceholders
-import com.intellij.codeInsight.hints.InlayHintsPassFactory.Companion.collectPlaceholders
-import com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory.Companion.applyPlaceholders
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.actionSystem.CompositeDataProvider
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -26,14 +16,10 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Segment
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.util.concurrent.CancellationException
 
 private val LOG = logger<PsiAwareTextEditorImpl>()
@@ -46,81 +32,29 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
                                                                                          provider = provider,
                                                                                          editor = createTextEditor(project, file))
 
-  constructor(project: Project,
-              file: VirtualFile,
-              provider: TextEditorProvider,
-              editor: EditorImpl) : super(project = project, file = file, provider = provider, editor = editor)
+  protected constructor(project: Project,
+                        file: VirtualFile,
+                        provider: TextEditorProvider,
+                        editor: EditorImpl) : super(project = project, file = file, provider = provider, editor = editor)
 
   internal constructor(project: Project,
                        file: VirtualFile,
                        asyncLoader: AsyncEditorLoader,
                        editor: EditorImpl) : super(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
 
-  override suspend fun loadEditorInBackground(): Runnable {
-    val editor = editor
-    val document = editor.document
-
-    class State {
-      var foldingState: CodeFoldingState? = null
-      var focusZones: List<Segment>? = null
-      var items: DocRenderPassFactory.Items? = null
-      var buffer: HintsBuffer? = null
-      var placeholders: List<Pair<TextRange, CodeVisionEntry>>? = null
-      var psiFile: PsiFile? = null
-    }
-    val state = State()
-
-    val psiManager = PsiManager.getInstance(project)
-    readAction {
-      if (!project.isDefault && PsiDocumentManager.getInstance(project).isCommitted(document)) {
-        state.foldingState = catchingExceptions {
-          blockingContextToIndicator {
-            CodeFoldingManager.getInstance(project).buildInitialFoldings(document)
-          }
-        }
-      }
-
-      val psiFile = psiManager.findFile(file)
-      state.psiFile = psiFile
-      state.focusZones = catchingExceptions { FocusModePassFactory.calcFocusZones(psiFile) }
-      if (psiFile != null) {
-        if (DocRenderManager.isDocRenderingEnabled(getEditor())) {
-          state.items = catchingExceptions { DocRenderPassFactory.calculateItemsToRender(editor, psiFile) }
-        }
-        state.buffer = catchingExceptions { collectPlaceholders(file = psiFile, editor = editor) }
-      }
-    }
-
-    state.placeholders = catchingExceptionsAsync {
-      CodeVisionInitializer.getInstance(project).getCodeVisionHost().collectPlaceholders(editor, state.psiFile)
-    }
-
-    return Runnable {
-      state.foldingState?.setToEditor(editor)
-      state.focusZones?.let { focusZones ->
-        FocusModePassFactory.setToEditor(focusZones, editor)
-        if (editor is EditorImpl) {
-          editor.applyFocusMode()
-        }
-      }
-      state.items?.let { items ->
-        DocRenderPassFactory.applyItemsToRender(editor, project, items, true)
-      }
-      val psiFile = state.psiFile
-      state.buffer?.let { buffer ->
-        applyPlaceholders(file = psiFile!!, editor = editor, hints = buffer)
-      }
-      state.placeholders?.takeIf { it.isNotEmpty() }?.let { placeholders ->
-        applyPlaceholders(editor, placeholders)
-      }
-      if (psiFile != null && psiFile.isValid) {
-        DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
-      }
-    }
-  }
-
   override fun createEditorComponent(project: Project, file: VirtualFile, editor: EditorImpl): TextEditorComponent {
-    return PsiAwareTextEditorComponent(project = project, file = file, textEditor = this, editor = editor)
+    val component = PsiAwareTextEditorComponent(project = project, file = file, textEditor = this, editor = editor)
+
+    component.addComponentListener(object: ComponentAdapter() {
+      override fun componentShown(e: ComponentEvent?) {
+        editor.component.isVisible = true
+      }
+      override fun componentHidden(e: ComponentEvent?) {
+        editor.component.isVisible = false
+      }
+    })
+
+    return component
   }
 
   override fun getBackgroundHighlighter(): BackgroundEditorHighlighter? {
@@ -163,20 +97,8 @@ private class PsiAwareTextEditorComponent(private val project: Project,
   }
 }
 
-private inline fun <T : Any> catchingExceptionsAsync(computable: () -> T?): T? {
-  try {
-    return computable()
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Throwable) {
-    LOG.warn("Exception during editor loading", if (e is ControlFlowException) RuntimeException(e) else e)
-    return null
-  }
-}
-
-private inline fun <T : Any> catchingExceptions(computable: () -> T?): T? {
+// not `inline` to ensure that this function is not used for a `suspend` task
+internal fun <T : Any> catchingExceptions(computable: () -> T?): T? {
   try {
     return computable()
   }
@@ -186,7 +108,7 @@ private inline fun <T : Any> catchingExceptions(computable: () -> T?): T? {
   catch (e: ProcessCanceledException) {
     // will throw if actually canceled
     ProgressManager.checkCanceled()
-    // otherwise, this PCE is manual -> threat it like any other exception
+    // otherwise, this PCE is manual -> treat it like any other exception
     LOG.warn("Exception during editor loading", RuntimeException(e))
   }
   catch (e: Throwable) {

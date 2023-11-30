@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -81,6 +82,9 @@ public abstract class JBValue {
    * @see JBUI#value(float)
    */
   public static class Float extends JBValue {
+    @ApiStatus.Internal
+    public static final JBValue EMPTY = new Float(0f);
+
     private final float value;
 
     /**
@@ -103,10 +107,10 @@ public abstract class JBValue {
     }
   }
 
-  private static class CachedFloat extends Float {
+  private static final class CachedFloat extends Float {
     private float cachedScaledValue;
 
-    protected CachedFloat(float value) {
+    private CachedFloat(float value) {
       super(value);
       scaleAndCache();
     }
@@ -133,10 +137,10 @@ public abstract class JBValue {
 
   /**
    * A group of values, utilizing caching strategy per value. The group listens to the global user scale factor change and updates
-   * all of the values. The {@link JBValue#get()} method of a value returns a cached scaled value, saving recalculation.
+   * all the values. The {@link JBValue#get()} method of a value returns a cached scaled value, saving recalculation.
    * This can be a better choice when values are used multiple times in a code block.
    */
-  public static class JBValueGroup {
+  public static final class JBValueGroup {
     private final List<CachedFloat> group = new LinkedList<>();
     private final PropertyChangeListener listener = new PropertyChangeListener() {
       @Override

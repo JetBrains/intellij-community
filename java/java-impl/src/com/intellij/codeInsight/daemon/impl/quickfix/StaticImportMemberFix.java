@@ -87,6 +87,9 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
   @NotNull
   protected abstract @NlsSafe String getMemberPresentableText(@NotNull T t);
 
+  @NotNull
+  protected abstract @NlsSafe String getMemberKindPresentableText();
+
   @Override
   @NotNull
   public String getText() {
@@ -172,7 +175,8 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
         && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
       TextRange textRange = callExpression.getTextRange();
       QuestionAction action = createQuestionAction(candidates, containingFile.getProject(), editor);
-      String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberPresentableText(firstCandidate));
+      String hintText =
+        ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberKindPresentableText(), getMemberPresentableText(firstCandidate));
       HintManager.getInstance().showQuestionHint(editor, hintText,
                                                  textRange.getStartOffset(),
                                                  textRange.getEndOffset(), action);

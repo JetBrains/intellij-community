@@ -8,16 +8,14 @@ import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.tools.fragmented.LineNumberConvertor;
 import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.diff.util.Range;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.EditorMouseEvent;
-import com.intellij.openapi.editor.event.EditorMouseListener;
-import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -27,7 +25,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotatedLineModificationDetails;
 import com.intellij.openapi.vcs.annotate.AnnotatedLineModificationDetails.InnerChange;
@@ -44,7 +41,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouseMotionListener, Disposable {
+final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouseMotionListener, DocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance(InlineDiffFromAnnotation.class);
 
   @NotNull private final EditorEx myEditor;
@@ -88,6 +85,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
       new InlineDiffFromAnnotation((EditorEx)editor, fileAnnotation, textPresentation, provider, disposable);
     editor.addEditorMouseMotionListener(inlineDiffFromAnnotation, disposable);
     editor.addEditorMouseListener(inlineDiffFromAnnotation, disposable);
+    editor.getDocument().addDocumentListener(inlineDiffFromAnnotation, disposable);
   }
 
   @Override
@@ -114,6 +112,11 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
 
   @Override
   public void mouseExited(@NotNull EditorMouseEvent event) {
+    removeDiff();
+  }
+
+  @Override
+  public void documentChanged(@NotNull DocumentEvent event) {
     removeDiff();
   }
 
@@ -174,6 +177,8 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
 
   private void addHighlighters(int editorLine, @NotNull AnnotatedLineModificationDetails details) {
     Document document = myEditor.getDocument();
+    if (editorLine >= DiffUtil.getLineCount(document)) return;
+
     int lineStartOffset = document.getLineStartOffset(editorLine);
     int lineEndOffset = document.getLineEndOffset(editorLine);
     String currentContent = document.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString();

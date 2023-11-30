@@ -65,7 +65,7 @@ public interface PsiClass
   /**
    * Checks if the class is a record.
    *
-   * @return true if the class is an record, false otherwise.
+   * @return true if the class is a record, false otherwise.
    */
   default boolean isRecord() {
     return false;
@@ -74,7 +74,7 @@ public interface PsiClass
   /**
    * Returns the list of classes that this class or interface extends.
    *
-   * @return the extends list, or null for anonymous classes.
+   * @return the extends list, or null for anonymous classes and unnamed classes.
    */
   @Nullable
   PsiReferenceList getExtendsList();
@@ -82,7 +82,7 @@ public interface PsiClass
   /**
    * Returns the list of interfaces that this class implements.
    *
-   * @return the implements list, or null for anonymous classes
+   * @return the implements list, or null for anonymous classes and unnamed classes
    */
   @Nullable
   PsiReferenceList getImplementsList();
@@ -90,7 +90,7 @@ public interface PsiClass
   /**
    * Returns the array of class types for the classes that this class or interface extends.
    *
-   * @return the array of extended class types, or an empty list for anonymous classes.
+   * @return the array of extended class types, or an empty list for anonymous classes and unnamed classes.
    */
   PsiClassType @NotNull [] getExtendsListTypes();
 
@@ -98,7 +98,7 @@ public interface PsiClass
    * Returns the array of class types for the interfaces that this class implements.
    *
    * @return the array of extended class types, or an empty list for anonymous classes,
-   * enums and annotation types
+   * enums, annotation types and unnamed classes
    */
   PsiClassType @NotNull [] getImplementsListTypes();
 
@@ -297,7 +297,7 @@ public interface PsiClass
   /**
    * Returns the token representing the opening curly brace of the class.
    *
-   * @return the token instance, or null if the token is missing in the source code file.
+   * @return the token instance, or null if the token is absent in the source code file.
    */
   @Nullable
   PsiElement getLBrace();
@@ -305,7 +305,7 @@ public interface PsiClass
   /**
    * Returns the token representing the closing curly brace of the class.
    *
-   * @return the token instance, or null if the token is missing in the source code file.
+   * @return the token instance, or null if the token is absent in the source code file.
    */
   @Nullable
   PsiElement getRBrace();
@@ -313,7 +313,7 @@ public interface PsiClass
   /**
    * Returns the name identifier of the class.
    *
-   * @return the name identifier, or null if the class is anonymous or synthetic jsp class
+   * @return the name identifier, or null if the class is anonymous, synthetic jsp class or unnamed class
    */
   @Override
   @Nullable

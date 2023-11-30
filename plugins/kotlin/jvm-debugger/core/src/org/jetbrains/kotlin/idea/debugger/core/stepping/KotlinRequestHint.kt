@@ -33,7 +33,7 @@ open class KotlinRequestHint(
     override fun isTheSameFrame(context: SuspendContextImpl) =
         super.isTheSameFrame(context) && (myInlineFilter === null || !myInlineFilter.isNestedInline(context))
 
-    override fun doStep(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl?, stepThread: ThreadReferenceProxyImpl?, size: Int, depth: Int) {
+    override fun doStep(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl?, stepThread: ThreadReferenceProxyImpl?, size: Int, depth: Int, commandToken: Any?) {
         if (depth == StepRequest.STEP_OUT) {
             val frameProxy = suspendContext?.frameProxy
             val location = frameProxy?.safeLocation()
@@ -42,12 +42,12 @@ open class KotlinRequestHint(
                 if (action !== KotlinStepAction.StepOut) {
                     val command = action.createCommand(debugProcess, suspendContext, false)
                     val hint = command.getHint(suspendContext, stepThread, this)!!
-                    command.step(suspendContext, stepThread, hint)
+                    command.step(suspendContext, stepThread, hint, commandToken)
                     return
                 }
             }
         }
-        super.doStep(debugProcess, suspendContext, stepThread, size, depth)
+        super.doStep(debugProcess, suspendContext, stepThread, size, depth, commandToken)
     }
 }
 

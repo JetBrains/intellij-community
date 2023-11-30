@@ -146,10 +146,12 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   }
 }
 
-@State(name = "PropertyService", reportStatistic = false, storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
+@State(name = "PropertyService", reportStatistic = false, storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE,
+                                                                              usePathMacroManager = false)])
 @Internal
 class AppPropertyService : BasePropertyService()
 
-@State(name = "PropertiesComponent", reportStatistic = false, storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "PropertiesComponent", reportStatistic = false, storages = [Storage(StoragePathMacros.WORKSPACE_FILE,
+                                                                                  usePathMacroManager = false)])
 @Internal
 internal class ProjectPropertyService : BasePropertyService()

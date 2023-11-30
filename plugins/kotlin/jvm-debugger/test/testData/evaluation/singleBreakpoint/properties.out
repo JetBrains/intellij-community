@@ -1,0 +1,22 @@
+LineBreakpoint created at properties.kt:50
+Run Java
+Connected to the target VM
+properties.kt:50
+Compile bytecode for A().p1
+Compile bytecode for A().p2
+Compile bytecode for A().p3
+Compile bytecode for A().p4
+Compile bytecode for A().p5
+Compile bytecode for A().p6
+Compile bytecode for A().let { it.p7 = 7; it.p7 }
+Compile bytecode for A().let { it.p8 = 8; it.p8 }
+Compile bytecode for A().let { it.p9 = 9; it.p9 }
+Compile bytecode for A.op1
+Compile bytecode for A.op2
+Compile bytecode for A.op3
+Compile bytecode for A.op4 = 104; A.op4
+Compile bytecode for A.op5 = 105; A.op5
+Compile bytecode for A.op6 = 106; A.op6
+Disconnected from the target VM
+
+Process finished with exit code 0

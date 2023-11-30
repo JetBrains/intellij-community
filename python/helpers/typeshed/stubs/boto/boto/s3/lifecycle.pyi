@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 class Rule:
@@ -8,11 +9,11 @@ class Rule:
     transition: Any
     def __init__(
         self,
-        id: Any | None = ...,
-        prefix: Any | None = ...,
-        status: Any | None = ...,
-        expiration: Any | None = ...,
-        transition: Any | None = ...,
+        id: Incomplete | None = None,
+        prefix: Incomplete | None = None,
+        status: Incomplete | None = None,
+        expiration: Incomplete | None = None,
+        transition: Incomplete | None = None,
     ) -> None: ...
     def startElement(self, name, attrs, connection): ...
     def endElement(self, name, value, connection): ...
@@ -21,7 +22,7 @@ class Rule:
 class Expiration:
     days: Any
     date: Any
-    def __init__(self, days: Any | None = ..., date: Any | None = ...) -> None: ...
+    def __init__(self, days: Incomplete | None = None, date: Incomplete | None = None) -> None: ...
     def startElement(self, name, attrs, connection): ...
     def endElement(self, name, value, connection): ...
     def to_xml(self): ...
@@ -30,7 +31,9 @@ class Transition:
     days: Any
     date: Any
     storage_class: Any
-    def __init__(self, days: Any | None = ..., date: Any | None = ..., storage_class: Any | None = ...) -> None: ...
+    def __init__(
+        self, days: Incomplete | None = None, date: Incomplete | None = None, storage_class: Incomplete | None = None
+    ) -> None: ...
     def to_xml(self): ...
 
 class Transitions(list[Transition]):
@@ -43,7 +46,9 @@ class Transitions(list[Transition]):
     def startElement(self, name, attrs, connection): ...
     def endElement(self, name, value, connection): ...
     def to_xml(self): ...
-    def add_transition(self, days: Any | None = ..., date: Any | None = ..., storage_class: Any | None = ...): ...
+    def add_transition(
+        self, days: Incomplete | None = None, date: Incomplete | None = None, storage_class: Incomplete | None = None
+    ): ...
     @property
     def days(self): ...
     @property
@@ -57,9 +62,9 @@ class Lifecycle(list[Rule]):
     def to_xml(self): ...
     def add_rule(
         self,
-        id: Any | None = ...,
-        prefix: str = ...,
-        status: str = ...,
-        expiration: Any | None = ...,
-        transition: Any | None = ...,
+        id: Incomplete | None = None,
+        prefix: str = "",
+        status: str = "Enabled",
+        expiration: Incomplete | None = None,
+        transition: Incomplete | None = None,
     ): ...

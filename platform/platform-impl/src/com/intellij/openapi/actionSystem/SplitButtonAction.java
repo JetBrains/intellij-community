@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.icons.AllIcons;
@@ -34,7 +34,7 @@ import java.util.Objects;
 
 public class SplitButtonAction extends ActionGroup implements CustomComponentAction {
   private final ActionGroup myActionGroup;
-  private final static Key<AnAction> FIRST_ACTION = Key.create("firstAction");
+  private static final Key<AnAction> FIRST_ACTION = Key.create("firstAction");
 
   public SplitButtonAction(@NotNull ActionGroup actionGroup) {
     myActionGroup = actionGroup;
@@ -75,8 +75,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
     }
   }
 
-  @Nullable
-  private AnAction getFirstEnabledAction(@NotNull AnActionEvent e) {
+  private @Nullable AnAction getFirstEnabledAction(@NotNull AnActionEvent e) {
     UpdateSession session = e.getUpdateSession();
     var children = session.children(myActionGroup);
     var firstEnabled = ContainerUtil.find(children, a -> session.presentation(a).isEnabled());
@@ -94,8 +93,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
   }
 
   @Override
-  @NotNull
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return new SplitButton(this, presentation, place, myActionGroup);
   }
 

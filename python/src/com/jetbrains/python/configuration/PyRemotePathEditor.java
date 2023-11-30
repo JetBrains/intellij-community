@@ -118,7 +118,7 @@ class PyRemotePathEditor extends PythonPathEditor {
       return remoteInterpreterManager.chooseRemoteFiles(myProject, (PyRemoteSdkAdditionalDataBase)sdkAdditionalData, false);
     }
     else if (sdkAdditionalData instanceof PyTargetAwareAdditionalData) {
-      var dialog = new ManualPathEntryDialog(myProject, Platform.UNIX,
+      var dialog = new ManualPathEntryDialog(myProject,
                                              ((PyTargetAwareAdditionalData)sdkAdditionalData).getTargetEnvironmentConfiguration());
       if (dialog.showAndGet()) {
         return new String[]{dialog.getPath()};

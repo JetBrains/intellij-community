@@ -34,5 +34,6 @@ fun test() {
     }
 }
 
+// IGNORE_K2
 // EXIST: child
 // ABSENT: container

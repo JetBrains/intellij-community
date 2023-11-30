@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 interface I {
     fun foo1()
     fun foo2()
@@ -14,7 +16,9 @@ abstract class A : Base1() {
 
 abstract class B(val a: A) : Base2() {
     override fun foo2() {
-        a.<caret>
+        fun test() {
+            a.<caret>
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.openapi.impl;
 
-import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerOnPsiElement;
@@ -22,13 +22,12 @@ import com.intellij.refactoring.invertBoolean.InvertBooleanHandler;
 import com.intellij.refactoring.makeStatic.MakeStaticHandler;
 import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
 import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
-import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryHandler;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperHandler;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 
 public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActionHandlerFactory {
   @Override
-  public RefactoringActionHandlerOnPsiElement<PsiAnonymousClass> createAnonymousToInnerHandler() {
+  public RefactoringActionHandlerOnPsiElement<PsiClass> createAnonymousToInnerHandler() {
     return new AnonymousToInnerHandler();
   }
 
@@ -60,11 +59,6 @@ public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActi
   @Override
   public RefactoringActionHandler createConvertToInstanceMethodHandler() {
     return new ConvertToInstanceMethodHandler();
-  }
-
-  @Override
-  public RefactoringActionHandler createReplaceConstructorWithFactoryHandler() {
-    return new ReplaceConstructorWithFactoryHandler();
   }
 
   @Override

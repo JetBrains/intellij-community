@@ -13,7 +13,7 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class ProjectViewDirectoryExpandDurationMeasurer {
+final class ProjectViewDirectoryExpandDurationMeasurer {
 
   private final TreeModel model;
   private final @NotNull TreePath path;

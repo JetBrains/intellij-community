@@ -35,16 +35,11 @@ import java.util.List;
 import java.util.*;
 
 public class EnvironmentVariablesDialog extends DialogWrapper {
-  @NotNull
-  private final EnvironmentVariablesTextFieldWithBrowseButton myParent;
-  @NotNull
-  private final EnvVariablesTable myUserTable;
-  @NotNull
-  private final EnvVariablesTable mySystemTable;
-  @Nullable
-  private final JCheckBox myIncludeSystemVarsCb;
-  @NotNull
-  private final JPanel myWholePanel;
+  private final @NotNull EnvironmentVariablesTextFieldWithBrowseButton myParent;
+  private final @NotNull EnvVariablesTable myUserTable;
+  private final @NotNull EnvVariablesTable mySystemTable;
+  private final @Nullable JCheckBox myIncludeSystemVarsCb;
+  private final @NotNull JPanel myWholePanel;
 
   private final boolean myAlwaysIncludeSystemVars;
 
@@ -95,8 +90,7 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     init();
   }
 
-  @NotNull
-  protected MyEnvVariablesTable createEnvVariablesTable(@NotNull List<EnvironmentVariable> variables, boolean userList) {
+  protected @NotNull MyEnvVariablesTable createEnvVariablesTable(@NotNull List<EnvironmentVariable> variables, boolean userList) {
     return new MyEnvVariablesTable(variables, userList);
   }
 
@@ -110,9 +104,8 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     return new Dimension(500, 500);
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return "EnvironmentVariablesDialog";
   }
 
@@ -160,15 +153,13 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
   @Override
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     return myWholePanel;
   }
 
-  @Nullable
   @Override
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     for (EnvironmentVariable variable : myUserTable.getEnvironmentVariables()) {
       String name = variable.getName(), value = variable.getValue();
       if (StringUtil.isEmpty(name) && StringUtil.isEmpty(value)) continue;
@@ -216,15 +207,13 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
       setPasteActionEnabled(myUserList);
     }
 
-    @Nullable
     @Override
-    protected AnActionButtonRunnable createAddAction() {
+    protected @Nullable AnActionButtonRunnable createAddAction() {
       return myUserList ? super.createAddAction() : null;
     }
 
-    @Nullable
     @Override
-    protected AnActionButtonRunnable createRemoveAction() {
+    protected @Nullable AnActionButtonRunnable createRemoveAction() {
       return myUserList ? super.createRemoveAction() : null;
     }
 

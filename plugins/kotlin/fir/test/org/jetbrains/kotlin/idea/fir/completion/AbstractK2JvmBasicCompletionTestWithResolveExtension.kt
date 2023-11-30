@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionPr
 import org.jetbrains.kotlin.idea.fir.extensions.KtResolveExtensionProviderForTests
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 
-abstract class AbstractK2JvmBasicCompletionTestWithResolveExtension : AbstractHighLevelJvmBasicCompletionTest() {
+abstract class AbstractK2JvmBasicCompletionTestWithResolveExtension : AbstractK2JvmBasicCompletionTest() {
     override fun setUp() {
         super.setUp()
         myFixture.addFileToProject("data.xml",

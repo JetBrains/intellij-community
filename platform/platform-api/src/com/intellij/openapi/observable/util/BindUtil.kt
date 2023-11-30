@@ -3,7 +3,6 @@
 
 package com.intellij.openapi.observable.util
 
-import java.util.concurrent.atomic.AtomicBoolean
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -17,6 +16,7 @@ import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
 import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode

@@ -34,7 +34,7 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
     final String annotationShortName = ReadAction.compute(() -> annClass.getName());
     assert annotationShortName != null;
 
-    final Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(annotationShortName, psiManager.getProject(),
+    final Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().getAnnotations(annotationShortName, psiManager.getProject(),
                                                                                         useScope);
 
     for (final PsiAnnotation annotation : annotations) {

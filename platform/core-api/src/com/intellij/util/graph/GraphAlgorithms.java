@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.graph;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,32 +29,25 @@ public abstract class GraphAlgorithms {
     int levelBound
   );
 
-  @Nullable
-  public abstract <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish);
+  public abstract @Nullable <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish);
 
-  @NotNull
-  public abstract <Node> List<List<Node>> findKShortestPaths(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, int k,
-                                                             @NotNull ProgressIndicator progressIndicator);
+  public abstract @NotNull <Node> List<List<Node>> findKShortestPaths(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, int k,
+                                                                      @NotNull ProgressIndicator progressIndicator);
 
-  @NotNull
-  public abstract <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node);
+  public abstract @NotNull <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node);
 
   public abstract <Node> void iterateOverAllSimpleCycles(
     @NotNull Graph<Node> graph,
     @NotNull Consumer<? super List<Node>> cycleConsumer
   );
 
-  @NotNull
-  public abstract <Node> List<List<Node>> removePathsWithCycles(@NotNull List<? extends List<Node>> paths);
+  public abstract @NotNull <Node> List<List<Node>> removePathsWithCycles(@NotNull List<? extends List<Node>> paths);
 
-  @NotNull
-  public abstract <Node> Graph<Node> invertEdgeDirections(@NotNull Graph<Node> graph);
+  public abstract @NotNull <Node> Graph<Node> invertEdgeDirections(@NotNull Graph<Node> graph);
 
-  @NotNull
-  public abstract <Node> Collection<Chunk<Node>> computeStronglyConnectedComponents(@NotNull Graph<Node> graph);
+  public abstract @NotNull <Node> Collection<Chunk<Node>> computeStronglyConnectedComponents(@NotNull Graph<Node> graph);
 
-  @NotNull
-  public abstract <Node> Graph<Chunk<Node>> computeSCCGraph(@NotNull Graph<Node> graph);
+  public abstract @NotNull <Node> Graph<Chunk<Node>> computeSCCGraph(@NotNull Graph<Node> graph);
 
   /**
    * Adds start node and all its outs to given set recursively.

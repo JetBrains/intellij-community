@@ -1,0 +1,5 @@
+test.java.file
+  PARENTH_EXPRESSION
+    LPARENTH
+    ERROR_ELEMENT
+      <empty list>

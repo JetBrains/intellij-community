@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -33,8 +33,7 @@ public final class SchemeExporterEP<S extends Scheme> extends SchemeConvertorEPB
    * @return A collection of exporters capable of exporting schemes of the given class. An empty collection is returned if there are
    *         no matching exporters.
    */
-  @NotNull
-  public static <S extends Scheme> Collection<SchemeExporterEP<S>> getExtensions(Class<S> schemeClass) {
+  public static @NotNull <S extends Scheme> Collection<SchemeExporterEP<S>> getExtensions(Class<S> schemeClass) {
     List<SchemeExporterEP<S>> exporters = new ArrayList<>();
     for (SchemeExporterEP<?> exporterEP : EP_NAME.getExtensions()) {
       if (schemeClass.getName().equals(exporterEP.schemeClass)) {
@@ -51,8 +50,7 @@ public final class SchemeExporterEP<S extends Scheme> extends SchemeConvertorEPB
    * @param schemeClass The scheme class the exporter has to support.
    * @return The found exporter or null if there are no exporters for the given name and scheme class.
    */
-  @Nullable
-  public static <S extends Scheme> SchemeExporter<S> getExporter(@NotNull String name, Class<S> schemeClass) {
+  public static @Nullable <S extends Scheme> SchemeExporter<S> getExporter(@NotNull String name, Class<S> schemeClass) {
     for (SchemeExporterEP<S> exporterEP : getExtensions(schemeClass)) {
       if (name.equals(exporterEP.getLocalizedName())) {
         return exporterEP.getInstance();

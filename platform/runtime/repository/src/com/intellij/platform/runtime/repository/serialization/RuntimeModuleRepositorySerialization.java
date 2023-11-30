@@ -2,6 +2,7 @@
 package com.intellij.platform.runtime.repository.serialization;
 
 import com.intellij.platform.runtime.repository.MalformedRepositoryException;
+import com.intellij.platform.runtime.repository.ProductMode;
 import com.intellij.platform.runtime.repository.ProductModules;
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer;
@@ -40,9 +41,10 @@ public final class RuntimeModuleRepositorySerialization {
     }
   }
 
-  public static @NotNull ProductModules loadProductModules(@NotNull Path xmlFile, @NotNull RuntimeModuleRepository repository) {
+  public static @NotNull ProductModules loadProductModules(@NotNull Path xmlFile, @NotNull ProductMode currentMode,
+                                                           @NotNull RuntimeModuleRepository repository) {
     try {
-      return loadProductModules(Files.newInputStream(xmlFile), xmlFile.toString(), repository);
+      return loadProductModules(Files.newInputStream(xmlFile), xmlFile.toString(), currentMode, repository);
     }
     catch (IOException e) {
       throw new MalformedRepositoryException("Failed to load module group from " + xmlFile, e);
@@ -50,10 +52,11 @@ public final class RuntimeModuleRepositorySerialization {
   }
 
   @NotNull
-  public static ProductModules loadProductModules(@NotNull InputStream inputStream, @NotNull String filePath, 
+  public static ProductModules loadProductModules(@NotNull InputStream inputStream, @NotNull String filePath,
+                                                  @NotNull ProductMode currentMode,
                                                   @NotNull RuntimeModuleRepository repository) {
     try {
-      return ProductModulesXmlLoader.parseModuleXml(inputStream, filePath, repository);
+      return ProductModulesXmlLoader.parseModuleXml(inputStream, filePath, currentMode, repository);
     }
     catch (XMLStreamException e) {
       throw new MalformedRepositoryException("Failed to load module group from " + filePath, e);

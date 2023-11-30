@@ -523,8 +523,8 @@ public final class VcsFileUtil {
       if (path1 == null || path2 == null) return false;
 
       if (path1.isDirectory() != path2.isDirectory()) return false;
-      String canonical1 = FileUtil.toCanonicalPath(path1.getPath());
-      String canonical2 = FileUtil.toCanonicalPath(path2.getPath());
+      String canonical1 = path1.getPath();
+      String canonical2 = path2.getPath();
       return canonical1.equals(canonical2);
     }
 
@@ -532,7 +532,7 @@ public final class VcsFileUtil {
     public int hashCode(FilePath path) {
       if (path == null) return 0;
 
-      int result = path.getPath().isEmpty() ? 0 : FileUtil.toCanonicalPath(path.getPath()).hashCode();
+      int result = path.getPath().hashCode();
       result = 31 * result + (path.isDirectory() ? 1 : 0);
       return result;
     }

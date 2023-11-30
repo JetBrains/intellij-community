@@ -28,6 +28,7 @@ class DistributedTestModel private constructor(
         override fun registerSerializersCore(serializers: ISerializers)  {
             serializers.register(RdAgentInfo)
             serializers.register(RdAgentType.marshaller)
+            serializers.register(RdProductType.marshaller)
             serializers.register(RdTestSessionStackTraceElement)
             serializers.register(RdTestSessionExceptionCause)
             serializers.register(RdTestSessionException)
@@ -53,7 +54,7 @@ class DistributedTestModel private constructor(
         
         private val __RdTestSessionNullableSerializer = RdTestSession.nullable()
         
-        const val serializationHash = 3947516050474036909L
+        const val serializationHash = -1448630240120114754L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestModel
@@ -103,7 +104,8 @@ val IProtocol.distributedTestModel get() = getOrCreateExtension(DistributedTestM
 data class RdAgentInfo (
     val id: String,
     val launchNumber: Int,
-    val agentType: RdAgentType
+    val agentType: RdAgentType,
+    val productType: RdProductType
 ) : IPrintable {
     //companion
     
@@ -115,13 +117,15 @@ data class RdAgentInfo (
             val id = buffer.readString()
             val launchNumber = buffer.readInt()
             val agentType = buffer.readEnum<RdAgentType>()
-            return RdAgentInfo(id, launchNumber, agentType)
+            val productType = buffer.readEnum<RdProductType>()
+            return RdAgentInfo(id, launchNumber, agentType, productType)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdAgentInfo)  {
             buffer.writeString(value.id)
             buffer.writeInt(value.launchNumber)
             buffer.writeEnum(value.agentType)
+            buffer.writeEnum(value.productType)
         }
         
         
@@ -140,6 +144,7 @@ data class RdAgentInfo (
         if (id != other.id) return false
         if (launchNumber != other.launchNumber) return false
         if (agentType != other.agentType) return false
+        if (productType != other.productType) return false
         
         return true
     }
@@ -149,6 +154,7 @@ data class RdAgentInfo (
         __r = __r*31 + id.hashCode()
         __r = __r*31 + launchNumber.hashCode()
         __r = __r*31 + agentType.hashCode()
+        __r = __r*31 + productType.hashCode()
         return __r
     }
     //pretty print
@@ -158,6 +164,7 @@ data class RdAgentInfo (
             print("id = "); id.print(printer); println()
             print("launchNumber = "); launchNumber.print(printer); println()
             print("agentType = "); agentType.print(printer); println()
+            print("productType = "); productType.print(printer); println()
         }
         printer.print(")")
     }
@@ -185,17 +192,34 @@ enum class RdAgentType {
 /**
  * #### Generated from [DistributedTestModel.kt]
  */
+enum class RdProductType {
+    REMOTE_DEVELOPMENT, 
+    CODE_WITH_ME;
+    
+    companion object {
+        val marshaller = FrameworkMarshallers.enum<RdProductType>()
+        
+    }
+}
+
+
+/**
+ * #### Generated from [DistributedTestModel.kt]
+ */
 class RdTestSession private constructor(
     val agentInfo: RdAgentInfo,
     val testClassName: String?,
     val testMethodName: String?,
     val traceCategories: List<String>,
+    val debugCategories: List<String>,
     private val _ready: RdProperty<Boolean?>,
     private val _sendException: RdSignal<RdTestSessionException>,
     private val _shutdown: RdSignal<Unit>,
+    private val _showNotification: RdSignal<String>,
     private val _closeProject: RdCall<Unit, Boolean>,
     private val _closeProjectIfOpened: RdCall<Unit, Boolean>,
     private val _runNextAction: RdCall<Unit, String?>,
+    private val _requestFocus: RdCall<String, Boolean>,
     private val _makeScreenshot: RdCall<String, Boolean>,
     private val _isResponding: RdCall<Unit, Boolean>
 ) : RdBindableBase() {
@@ -211,15 +235,18 @@ class RdTestSession private constructor(
             val testClassName = buffer.readNullable { buffer.readString() }
             val testMethodName = buffer.readNullable { buffer.readString() }
             val traceCategories = buffer.readList { buffer.readString() }
+            val debugCategories = buffer.readList { buffer.readString() }
             val _ready = RdProperty.read(ctx, buffer, __BoolNullableSerializer)
             val _sendException = RdSignal.read(ctx, buffer, RdTestSessionException)
             val _shutdown = RdSignal.read(ctx, buffer, FrameworkMarshallers.Void)
+            val _showNotification = RdSignal.read(ctx, buffer, FrameworkMarshallers.String)
             val _closeProject = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _closeProjectIfOpened = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
             val _runNextAction = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, __StringNullableSerializer)
+            val _requestFocus = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
             val _makeScreenshot = RdCall.read(ctx, buffer, FrameworkMarshallers.String, FrameworkMarshallers.Bool)
             val _isResponding = RdCall.read(ctx, buffer, FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
-            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, _ready, _sendException, _shutdown, _closeProject, _closeProjectIfOpened, _runNextAction, _makeScreenshot, _isResponding).withId(_id)
+            return RdTestSession(agentInfo, testClassName, testMethodName, traceCategories, debugCategories, _ready, _sendException, _shutdown, _showNotification, _closeProject, _closeProjectIfOpened, _runNextAction, _requestFocus, _makeScreenshot, _isResponding).withId(_id)
         }
         
         override fun write(ctx: SerializationCtx, buffer: AbstractBuffer, value: RdTestSession)  {
@@ -228,12 +255,15 @@ class RdTestSession private constructor(
             buffer.writeNullable(value.testClassName) { buffer.writeString(it) }
             buffer.writeNullable(value.testMethodName) { buffer.writeString(it) }
             buffer.writeList(value.traceCategories) { v -> buffer.writeString(v) }
+            buffer.writeList(value.debugCategories) { v -> buffer.writeString(v) }
             RdProperty.write(ctx, buffer, value._ready)
             RdSignal.write(ctx, buffer, value._sendException)
             RdSignal.write(ctx, buffer, value._shutdown)
+            RdSignal.write(ctx, buffer, value._showNotification)
             RdCall.write(ctx, buffer, value._closeProject)
             RdCall.write(ctx, buffer, value._closeProjectIfOpened)
             RdCall.write(ctx, buffer, value._runNextAction)
+            RdCall.write(ctx, buffer, value._requestFocus)
             RdCall.write(ctx, buffer, value._makeScreenshot)
             RdCall.write(ctx, buffer, value._isResponding)
         }
@@ -245,10 +275,12 @@ class RdTestSession private constructor(
     //fields
     val ready: IProperty<Boolean?> get() = _ready
     val sendException: IAsyncSignal<RdTestSessionException> get() = _sendException
-    val shutdown: ISignal<Unit> get() = _shutdown
+    val shutdown: IAsyncSignal<Unit> get() = _shutdown
+    val showNotification: ISignal<String> get() = _showNotification
     val closeProject: RdCall<Unit, Boolean> get() = _closeProject
     val closeProjectIfOpened: RdCall<Unit, Boolean> get() = _closeProjectIfOpened
     val runNextAction: RdCall<Unit, String?> get() = _runNextAction
+    val requestFocus: RdCall<String, Boolean> get() = _requestFocus
     val makeScreenshot: RdCall<String, Boolean> get() = _makeScreenshot
     val isResponding: RdCall<Unit, Boolean> get() = _isResponding
     //methods
@@ -259,15 +291,24 @@ class RdTestSession private constructor(
     
     init {
         _sendException.async = true
+        _shutdown.async = true
+        _closeProject.async = true
+        _closeProjectIfOpened.async = true
+        _runNextAction.async = true
+        _requestFocus.async = true
+        _makeScreenshot.async = true
+        _isResponding.async = true
     }
     
     init {
         bindableChildren.add("ready" to _ready)
         bindableChildren.add("sendException" to _sendException)
         bindableChildren.add("shutdown" to _shutdown)
+        bindableChildren.add("showNotification" to _showNotification)
         bindableChildren.add("closeProject" to _closeProject)
         bindableChildren.add("closeProjectIfOpened" to _closeProjectIfOpened)
         bindableChildren.add("runNextAction" to _runNextAction)
+        bindableChildren.add("requestFocus" to _requestFocus)
         bindableChildren.add("makeScreenshot" to _makeScreenshot)
         bindableChildren.add("isResponding" to _isResponding)
     }
@@ -277,18 +318,22 @@ class RdTestSession private constructor(
         agentInfo: RdAgentInfo,
         testClassName: String?,
         testMethodName: String?,
-        traceCategories: List<String>
+        traceCategories: List<String>,
+        debugCategories: List<String>
     ) : this(
         agentInfo,
         testClassName,
         testMethodName,
         traceCategories,
+        debugCategories,
         RdProperty<Boolean?>(null, __BoolNullableSerializer),
         RdSignal<RdTestSessionException>(RdTestSessionException),
         RdSignal<Unit>(FrameworkMarshallers.Void),
+        RdSignal<String>(FrameworkMarshallers.String),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool),
         RdCall<Unit, String?>(FrameworkMarshallers.Void, __StringNullableSerializer),
+        RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),
         RdCall<String, Boolean>(FrameworkMarshallers.String, FrameworkMarshallers.Bool),
         RdCall<Unit, Boolean>(FrameworkMarshallers.Void, FrameworkMarshallers.Bool)
     )
@@ -303,12 +348,15 @@ class RdTestSession private constructor(
             print("testClassName = "); testClassName.print(printer); println()
             print("testMethodName = "); testMethodName.print(printer); println()
             print("traceCategories = "); traceCategories.print(printer); println()
+            print("debugCategories = "); debugCategories.print(printer); println()
             print("ready = "); _ready.print(printer); println()
             print("sendException = "); _sendException.print(printer); println()
             print("shutdown = "); _shutdown.print(printer); println()
+            print("showNotification = "); _showNotification.print(printer); println()
             print("closeProject = "); _closeProject.print(printer); println()
             print("closeProjectIfOpened = "); _closeProjectIfOpened.print(printer); println()
             print("runNextAction = "); _runNextAction.print(printer); println()
+            print("requestFocus = "); _requestFocus.print(printer); println()
             print("makeScreenshot = "); _makeScreenshot.print(printer); println()
             print("isResponding = "); _isResponding.print(printer); println()
         }
@@ -321,12 +369,15 @@ class RdTestSession private constructor(
             testClassName,
             testMethodName,
             traceCategories,
+            debugCategories,
             _ready.deepClonePolymorphic(),
             _sendException.deepClonePolymorphic(),
             _shutdown.deepClonePolymorphic(),
+            _showNotification.deepClonePolymorphic(),
             _closeProject.deepClonePolymorphic(),
             _closeProjectIfOpened.deepClonePolymorphic(),
             _runNextAction.deepClonePolymorphic(),
+            _requestFocus.deepClonePolymorphic(),
             _makeScreenshot.deepClonePolymorphic(),
             _isResponding.deepClonePolymorphic()
         )

@@ -15,7 +15,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
 
   @Override
   public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!checkFile(file)) return false;
+    if (editor == null || file == null || !checkFile(file)) return false;
 
     useElementToTheLeft = false;
     int offset = editor.getCaretModel().getOffset();
@@ -46,14 +46,14 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
    * @param element the element under caret.
    * @return true if the intention is available, false otherwise.
    */
-  public abstract boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element);
+  public abstract boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element);
 
   @Override
   public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (editor == null || file == null) return;
+
     PsiElement element = getElement(editor, file);
-    if (element == null) {
-      return;
-    }
+    if (element == null) return;
 
     invoke(project, editor, element);
   }
@@ -66,7 +66,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
    * @param element the element under cursor.
    * @throws IncorrectOperationException On errors.
    */
-  public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
+  public abstract void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
 
   /**
    * Retrieves the element this intention was invoked on.
@@ -75,8 +75,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
    * @param file  the file in which the intention was invoked.
    * @return the element under the caret.
    */
-  @Nullable
-  protected PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
+  protected @Nullable PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
     int position = editor.getCaretModel().getOffset();
     return file.findElementAt(useElementToTheLeft ? position - 1 : position);
   }

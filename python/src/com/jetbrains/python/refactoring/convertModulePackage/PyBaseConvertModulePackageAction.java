@@ -28,7 +28,7 @@ public abstract class PyBaseConvertModulePackageAction extends PyBaseRefactoring
    * @param id      ID of refactoring as {@link CommonRefactoringUtil#showErrorMessage} requires
    * @param project active project
    */
-  protected final void showFileExistsErrorMessage(@NotNull VirtualFile file, @NotNull String id, @NotNull Project project) {
+  protected static void showFileExistsErrorMessage(@NotNull VirtualFile file, @NotNull String id, @NotNull Project project) {
     final String message;
     if (file.isDirectory()) {
       message = PyBundle.message("refactoring.error.directory.exists", file.getName());

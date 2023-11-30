@@ -5,20 +5,20 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analyzer.*
-import org.jetbrains.kotlin.descriptors.ModuleCapability
+import org.jetbrains.kotlin.analyzer.SdkInfoBase
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.PoweredLibraryScopeBase
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.platform.*
+import org.jetbrains.kotlin.platform.CommonPlatforms
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
@@ -49,12 +49,6 @@ data class SdkInfo(override val project: Project, val sdk: Sdk) : IdeaModuleInfo
 
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = JvmPlatformAnalyzerServices
-
-    override val capabilities: Map<ModuleCapability<*>, Any?>
-        get() = when (this.sdk.sdkType) {
-            is JavaSdk -> super<IdeaModuleInfo>.capabilities + mapOf(JDK_CAPABILITY to true)
-            else -> super<IdeaModuleInfo>.capabilities
-        }
 }
 
 fun Project.allSdks(modules: Array<out Module>? = null): Set<Sdk> = runReadAction {
@@ -81,7 +75,7 @@ fun moduleSdks(module: Module): List<Sdk> =
 private class SdkScope(
     project: Project,
     val sdk: Sdk
-) : PoweredLibraryScopeBase(project, sdk.rootProvider.getFiles(OrderRootType.CLASSES), arrayOf()) {
+) : PoweredLibraryScopeBase(project, sdk.rootProvider.getFiles(OrderRootType.CLASSES), VirtualFile.EMPTY_ARRAY) {
     override fun equals(other: Any?) = other is SdkScope && sdk == other.sdk
     override fun calcHashCode(): Int = sdk.hashCode()
     override fun toString() = "SdkScope($sdk)"

@@ -113,6 +113,16 @@ public class FirKeywordCompletionHandlerTestGenerated extends AbstractFirKeyword
         runTest("../completion/testData/handlers/keywords/ConstructorPrimary.kt");
     }
 
+    @TestMetadata("Context.kt")
+    public void testContext() throws Exception {
+        runTest("../completion/testData/handlers/keywords/Context.kt");
+    }
+
+    @TestMetadata("ContextWithoutDeclaration.kt")
+    public void testContextWithoutDeclaration() throws Exception {
+        runTest("../completion/testData/handlers/keywords/ContextWithoutDeclaration.kt");
+    }
+
     @TestMetadata("Do.kt")
     public void testDo() throws Exception {
         runTest("../completion/testData/handlers/keywords/Do.kt");

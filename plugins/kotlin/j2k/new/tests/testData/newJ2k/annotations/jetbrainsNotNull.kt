@@ -3,7 +3,7 @@
 package test
 
 class Test(str: String) {
-    var myStr = "String2"
+    var myStr: String = "String2"
 
     init {
         myStr = str
@@ -20,9 +20,10 @@ class Test(str: String) {
 
     fun test() {
         sout("String")
-        val test = "String2"
+        val test: String = "String2"
         sout(test)
         sout(dummy(test))
+
         Test(test)
     }
 }

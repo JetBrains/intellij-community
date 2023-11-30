@@ -88,7 +88,7 @@ interface SingleContentSupplier {
 
     @JvmStatic
     fun removeSubContentsOfContent(content: Content, rightNow: Boolean) {
-      val supplier = (content.component as? DataProvider)?.let(KEY::getData)
+      val supplier = getSupplierFrom(content)
       if (supplier != null) {
         val removeSubContents = {
           for (subContent in supplier.getSubContents()) {
@@ -101,5 +101,11 @@ interface SingleContentSupplier {
         else SwingUtilities.invokeLater { removeSubContents() }
       }
     }
+
+    fun getSupplierFrom(content: Content): SingleContentSupplier? =
+      getSupplierFrom(content.component)
+
+    fun getSupplierFrom(component: JComponent): SingleContentSupplier? =
+      (component as? DataProvider)?.let(KEY::getData) ?: component.getClientProperty(KEY.name) as? SingleContentSupplier
   }
 }

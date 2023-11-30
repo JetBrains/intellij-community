@@ -268,6 +268,15 @@ class PyNavigationTest : PyTestCase() {
     doTestGotoDeclarationNavigatesToPyNotPyi()
   }
 
+  // PY-63372
+  fun testGotoDeclarationOrUsagesOnNewStyleTypeAliasDefinitionShowsUsages() {
+    doTestGotoDeclarationOrUsagesOutcome(GTDUOutcome.SU,
+                                         """
+                                           type Al<caret>ias[T] = dict[str, T]
+                                           x: Alias
+                                           """)
+  }
+
   private fun doTestGotoDeclarationNavigatesToPyNotPyi() {
     myFixture.copyDirectoryToProject(getTestName(true), "")
     myFixture.configureByFile("test.py")
@@ -287,7 +296,8 @@ class PyNavigationTest : PyTestCase() {
 
   private fun doTestGotoDeclarationOrUsagesOutcome(expectedOutcome: GTDUOutcome, text: String) {
     myFixture.configureByText("a.py", text)
-    val actualOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcomeInNonBlockingReadAction(myFixture.editor, myFixture.file, myFixture.caretOffset)
+    val actualOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcomeInNonBlockingReadAction(myFixture.editor, myFixture.file,
+                                                                                              myFixture.caretOffset)
     assertEquals(expectedOutcome, actualOutcome)
   }
 

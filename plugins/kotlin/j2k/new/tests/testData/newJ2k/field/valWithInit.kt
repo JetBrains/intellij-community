@@ -1,4 +1,5 @@
 internal class Foo(a: Int, b: Int)
+
 internal class C {
-    val f = Foo(1, 2)
+    val f: Foo = Foo(1, 2)
 }

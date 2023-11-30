@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.icons.AllIcons;
@@ -16,12 +16,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 final class XmlIconProvider extends IconProvider implements DumbAware {
-  @NonNls private static final String XSD_FILE_EXTENSION = "xsd";
-  @NonNls private static final String WSDL_FILE_EXTENSION = "wsdl";
+  private static final @NonNls String XSD_FILE_EXTENSION = "xsd";
+  private static final @NonNls String WSDL_FILE_EXTENSION = "wsdl";
 
   @Override
-  @Nullable
-  public Icon getIcon(@NotNull final PsiElement element, final int _flags) {
+  public @Nullable Icon getIcon(final @NotNull PsiElement element, final int _flags) {
     if (element instanceof XmlFile) {
       final VirtualFile vf = ((XmlFile)element).getVirtualFile();
       if (vf != null) {

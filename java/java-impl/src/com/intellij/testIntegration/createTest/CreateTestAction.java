@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.intellij.testIntegration.createTest.CreateTestUtils.computeSuitableTestRootUrls;
 import static com.intellij.testIntegration.createTest.CreateTestUtils.computeTestRoots;
@@ -123,7 +122,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
       TestFramework framework = d.getSelectedTestFrameworkDescriptor();
       final TestGenerator generator = TestGenerators.INSTANCE.forLanguage(framework.getLanguage());
       DumbService.getInstance(project).withAlternativeResolveEnabled(() -> generator.generateTest(project, d));
-    }, CodeInsightBundle.message("intention.create.test"), this);
+    }, CodeInsightBundle.message("intention.create.test.title"), this);
   }
 
   @NotNull
@@ -147,7 +146,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   protected CreateTestDialog createTestDialog(Project project, Module srcModule, PsiClass srcClass, PsiPackage srcPackage) {
-    return new CreateTestDialog(project, getText(), srcClass, srcPackage, srcModule);
+    return new CreateTestDialog(project, CodeInsightBundle.message("intention.create.test.title"), srcClass, srcPackage, srcModule);
   }
 
   @Nullable

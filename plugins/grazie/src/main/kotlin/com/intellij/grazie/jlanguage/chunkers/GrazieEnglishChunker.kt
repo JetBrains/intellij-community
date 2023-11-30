@@ -1,6 +1,6 @@
 package com.intellij.grazie.jlanguage.chunkers
 
-import org.apache.commons.lang3.StringUtils
+import com.intellij.openapi.util.text.StringUtil
 import org.languagetool.AnalyzedTokenReadings
 import org.languagetool.chunking.ChunkTag
 import org.languagetool.chunking.Chunker
@@ -46,8 +46,8 @@ class GrazieEnglishChunker : Chunker {
         // Find the start of chunks inside the tags-string
         // Number of preceding separators = number of preceding tokens
         val i: Int = matcher.start()
-        var j: Int = StringUtils.countMatches(tags.substring(0, i), SEPARATOR)
-        val n: Int = StringUtils.countMatches(matcher.group(), SEPARATOR)
+        var j: Int = StringUtil.getOccurrenceCount(tags.substring(0, i), SEPARATOR)
+        val n: Int = StringUtil.getOccurrenceCount(matcher.group(), SEPARATOR)
 
         val cond = j + n
         for (k in j until cond) {

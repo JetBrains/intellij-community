@@ -11,13 +11,13 @@ import java.lang.annotation.*;
  * that is not the Event Dispatch Thread.
  * Parameters annotated with {@code RequiresBackgroundThread} must be callables and are guaranteed to be called from some thread
  * that is not the Event Dispatch Thread.
- *
- * <p/>Aside from a documentation purpose, the annotation is processed by the {@link org.jetbrains.jps.devkit.threadingModelHelper}.
+ * <p/>
+ * Aside from a documentation purpose, the annotation is processed by the {@link org.jetbrains.jps.devkit.threadingModelHelper}.
  * The plugin instruments annotated elements with {@link Application#assertIsNonDispatchThread()} calls
  * to ensure annotation's contract is not violated at runtime. The instrumentation can be disabled
  * by setting {@link RequiresBackgroundThread#generateAssertion()} to {@code false}.
- *
- * <p/> <b>Important:</b> the instrumentation has limitations. Please read the docs
+ * <p/>
+ * <b>Important:</b> the instrumentation has limitations. Please read the docs
  * of the {@link org.jetbrains.jps.devkit.threadingModelHelper} to learn about them.
  *
  * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>

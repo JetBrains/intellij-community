@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.PathManager;
@@ -6,7 +6,8 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Represents a tool which manages IDE updates instead of a built-in update engine.
@@ -35,19 +36,19 @@ public enum ExternalUpdateManager {
    */
   public static final @Nullable ExternalUpdateManager ACTUAL;
   static {
-    String toolboxPath = System.getProperty("ide.managed.by.toolbox");
-    String home = PathManager.getHomePath().replace('\\', '/');
+    var home = PathManager.getHomePath().replace('\\', '/');
+    var toolboxV2Path = System.getProperty("ide.managed.by.toolbox");
     if (home.contains("/apps/") && home.contains("/ch-")) ACTUAL = TOOLBOX;
-    else if (toolboxPath != null && new File(toolboxPath).exists()) ACTUAL = TOOLBOX;
+    else if (toolboxV2Path != null && Files.exists(Path.of(toolboxV2Path)))ACTUAL = TOOLBOX;
     else if (SystemInfo.isLinux && (home.startsWith("/snap/") || home.startsWith("/var/lib/snapd/snap/"))) ACTUAL = SNAP;
     else if (System.getProperty("ide.no.platform.update") != null) ACTUAL = UNKNOWN;
     else ACTUAL = null;
   }
 
   /**
-   * Returns {@code true} when updates are managed by a tool which install different builds in different directories.
+   * Returns {@code true} when the update manager takes care of creating XDG desktop entries.
    */
-  public static boolean isRoaming() {
+  public static boolean isCreatingDesktopEntries() {
     return ACTUAL == TOOLBOX || ACTUAL == SNAP;
   }
 }

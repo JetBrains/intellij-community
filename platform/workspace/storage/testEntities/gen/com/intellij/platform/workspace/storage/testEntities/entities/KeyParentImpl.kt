@@ -14,24 +14,24 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class KeyParentImpl(val dataSource: KeyParentData) : KeyParent, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class KeyParentImpl(private val dataSource: KeyParentData) : KeyParent, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(KeyParent::class.java, KeyChild::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
     )
 
@@ -52,6 +52,7 @@ open class KeyParentImpl(val dataSource: KeyParentData) : KeyParent, WorkspaceEn
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: KeyParentData?) : ModifiableWorkspaceEntityBase<KeyParent, KeyParentData>(result), KeyParent.Builder {
     constructor() : this(KeyParentData())
@@ -80,7 +81,7 @@ open class KeyParentImpl(val dataSource: KeyParentData) : KeyParent, WorkspaceEn
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -197,8 +198,8 @@ class KeyParentData : WorkspaceEntityData<KeyParent>() {
   lateinit var keyField: String
   lateinit var notKeyField: String
 
-  fun isKeyFieldInitialized(): Boolean = ::keyField.isInitialized
-  fun isNotKeyFieldInitialized(): Boolean = ::notKeyField.isInitialized
+  internal fun isKeyFieldInitialized(): Boolean = ::keyField.isInitialized
+  internal fun isNotKeyFieldInitialized(): Boolean = ::notKeyField.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KeyParent> {
     val modifiable = KeyParentImpl.Builder(null)
@@ -215,6 +216,11 @@ class KeyParentData : WorkspaceEntityData<KeyParent>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.KeyParent") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -288,9 +294,5 @@ class KeyParentData : WorkspaceEntityData<KeyParent>() {
     var result = javaClass.hashCode()
     result = 31 * result + keyField.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

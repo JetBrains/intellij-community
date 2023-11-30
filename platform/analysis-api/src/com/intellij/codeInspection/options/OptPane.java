@@ -55,6 +55,20 @@ public record OptPane(@NotNull List<@NotNull OptRegularComponent> components) {
     return processor.found;
   }
 
+  /**
+   * @return list of all controls (recursively) within this pane
+   */
+  public @NotNull List<@NotNull OptControl> allControls() {
+    List<@NotNull OptControl> controls = new ArrayList<>();
+    traverse(components, component -> {
+      if (component instanceof OptControl control) {
+        controls.add(control);
+      }
+      return true;
+    });
+    return controls;
+  }
+
   private static boolean traverse(@NotNull List<? extends @NotNull OptComponent> components, @NotNull Predicate<@NotNull OptComponent> processor) {
     for (OptComponent component : components) {
       if (!processor.test(component) || !traverse(component.children(), processor)) return false;

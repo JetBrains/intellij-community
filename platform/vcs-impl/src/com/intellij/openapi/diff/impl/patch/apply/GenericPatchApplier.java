@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.PatchHunk;
 import com.intellij.openapi.diff.impl.patch.PatchLine;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
@@ -167,51 +168,84 @@ public class GenericPatchApplier {
   }
 
   public boolean execute() {
-    debug("GenericPatchApplier execute started");
-    if (! myHunks.isEmpty()) {
-      mySuppressNewLineInEnd = myHunks.get(myHunks.size() - 1).isNoNewLineAtEnd();
-    }
-    for (final PatchHunk hunk : myHunks) {
-      myNotExact.addAll(SplitHunk.read(hunk));
-    }
-    for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
-      SplitHunk splitHunk = iterator.next();
-      final SplitHunk copy = createWithAllContextCopy(splitHunk);
-      if (testForExactMatch(copy, splitHunk)) {
-        iterator.remove();
+    try {
+      debug("GenericPatchApplier execute started");
+      if (!myHunks.isEmpty()) {
+        mySuppressNewLineInEnd = myHunks.get(myHunks.size() - 1).isNoNewLineAtEnd();
       }
-    }
-    printTransformations("after exact match");
-    /*for (SplitHunk hunk : myNotExact) {
-      complementInsertAndDelete(hunk);
-    }*/
+      for (final PatchHunk hunk : myHunks) {
+        myNotExact.addAll(SplitHunk.read(hunk));
+      }
+      for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
+        SplitHunk splitHunk = iterator.next();
+        final SplitHunk copy = createWithAllContextCopy(splitHunk);
+        if (testForExactMatch(copy, splitHunk)) {
+          iterator.remove();
+        }
+      }
+      printTransformations("after exact match");
+      /*for (SplitHunk hunk : myNotExact) {
+        complementInsertAndDelete(hunk);
+      }*/
 
-    for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
-      SplitHunk hunk = iterator.next();
-      final SplitHunk copy = createWithAllContextCopy(hunk);
-      if (copy.isInsertion()) continue;
-      if (testForPartialContextMatch(copy, new ExactMatchSolver(copy), ourMaxWalk, hunk)) {
-        iterator.remove();
+      for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
+        SplitHunk hunk = iterator.next();
+        final SplitHunk copy = createWithAllContextCopy(hunk);
+        if (copy.isInsertion()) continue;
+        if (testForPartialContextMatch(copy, new ExactMatchSolver(copy), ourMaxWalk, hunk)) {
+          iterator.remove();
+        }
       }
+      printTransformations("after exact but without context");
+      for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
+        SplitHunk hunk = iterator.next();
+        SplitHunk original = copySplitHunk(hunk, hunk.getContextAfter(), hunk.getContextBefore());
+        complementInsertAndDelete(hunk);
+        if (hunk.isInsertion()) {
+          processAppliedInfoForUnApplied(original);
+          continue;
+        }
+        if (testForPartialContextMatch(hunk, new ExactMatchSolver(hunk), ourMaxWalk, original)) {
+          iterator.remove();
+        }
+        else {
+          processAppliedInfoForUnApplied(original);
+        }
+      }
+      printTransformations("after variable place match");
+      return myNotExact.isEmpty();
     }
-    printTransformations("after exact but without context");
-    for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
-      SplitHunk hunk = iterator.next();
-      SplitHunk original = copySplitHunk(hunk, hunk.getContextAfter(), hunk.getContextBefore());
-      complementInsertAndDelete(hunk);
-      if (hunk.isInsertion()) {
-        processAppliedInfoForUnApplied(original);
-        continue;
-      }
-      if (testForPartialContextMatch(hunk, new ExactMatchSolver(hunk), ourMaxWalk, original)) {
-        iterator.remove();
-      }
-      else {
-        processAppliedInfoForUnApplied(original);
-      }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
-    printTransformations("after variable place match");
+    catch (Throwable e) {
+      LOG.error(e); // GenericPatchApplier is buggy, limit AIOOB impact on user
+    }
+
+    resetToFallbackStateOnError(false);
     return myNotExact.isEmpty();
+  }
+
+  private void resetToFallbackStateOnError(boolean applySomehow) {
+    myHadAlreadyAppliedMet = false;
+    myTransformations.clear();
+
+    myAppliedInfo.clear();
+    myNotExact.clear();
+    for (PatchHunk hunk : myHunks) {
+      List<SplitHunk> splitHunks = SplitHunk.read(hunk);
+      myNotExact.addAll(splitHunks);
+
+      for (SplitHunk splitHunk : splitHunks) {
+        processAppliedInfoForUnApplied(splitHunk);
+      }
+    }
+
+    if (applySomehow) {
+      myNotBound.addAll(myNotExact);
+      myNotBound.sort(HunksComparator.getInstance());
+      myNotExact.clear();
+    }
   }
 
   @NotNull
@@ -320,22 +354,35 @@ public class GenericPatchApplier {
 
   // applies in a way that patch _can_ be solved manually even in the case of total mismatch
   public void trySolveSomehow() {
-    assert !myNotExact.isEmpty();
-    for (final SplitHunk hunk : myNotExact) {
-      hunk.cutSameTail();
-      if (!testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk, null)) {
-        if (complementIfShort(hunk)) {
-          if (!testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk, null)) {
+    try {
+      assert !myNotExact.isEmpty();
+      for (final SplitHunk hunk : myNotExact) {
+        hunk.cutSameTail();
+        if (!testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk, null)) {
+          if (complementIfShort(hunk)) {
+            if (!testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk, null)) {
+              myNotBound.add(hunk);
+            }
+          }
+          else {
             myNotBound.add(hunk);
           }
         }
-        else {
-          myNotBound.add(hunk);
-        }
       }
+
+      myNotBound.sort(HunksComparator.getInstance());
+      myNotExact.clear();
+      return;
     }
-    myNotBound.sort(HunksComparator.getInstance());
-    myNotExact.clear();
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e); // GenericPatchApplier is buggy, limit AIOOB impact on user
+    }
+
+    // fallback root on internal error
+    resetToFallbackStateOnError(true);
   }
 
   private boolean testForPartialContextMatch(final SplitHunk splitHunkWithExtendedContext,

@@ -207,22 +207,23 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     }
 
     /**
-     * Commit action name, without mnemonics and ellipsis. Ex: 'Amend Commit Anyway'.
+     * Commit action name, without ellipsis. Ex: 'Amend Comm&it Anyway'.
      */
     fun getActionTextWithoutEllipsis(vcses: Collection<AbstractVcs>,
                                      executor: CommitExecutor?,
                                      isAmend: Boolean,
-                                     isSkipCommitChecks: Boolean): @Nls String {
+                                     isSkipCommitChecks: Boolean,
+                                     removeMnemonic: Boolean): @Nls String {
       if (executor == null) {
         val actionText = getDefaultCommitActionName(vcses, isAmend, isSkipCommitChecks)
-        return cleanActionText(actionText)
+        return cleanActionText(actionText, removeMnemonic = removeMnemonic)
       }
 
       if (executor is CommitExecutorWithRichDescription) {
         val state = CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
         val actionText = executor.getText(state)
         if (actionText != null) {
-          return cleanActionText(actionText)
+          return cleanActionText(actionText, removeMnemonic = removeMnemonic)
         }
       }
 
@@ -230,10 +231,11 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
       // Ex: executor might not support this flag.
       val actionText = executor.actionText
       if (isSkipCommitChecks) {
-        return VcsBundle.message("commit.checks.failed.notification.commit.anyway.action", cleanActionText(actionText))
+        return VcsBundle.message("commit.checks.failed.notification.commit.anyway.action",
+                                 cleanActionText(actionText, removeMnemonic = removeMnemonic))
       }
       else {
-        return cleanActionText(actionText)
+        return cleanActionText(actionText, removeMnemonic = removeMnemonic)
       }
     }
 
@@ -302,7 +304,8 @@ class DynamicCommitInfoImpl(
   override val commitMessage: String get() = workflowUi.commitMessageUi.text
 
   override val commitActionText: String
-    get() = getActionTextWithoutEllipsis(workflow.vcses, executor, commitContext.isAmendCommitMode, false)
+    get() = getActionTextWithoutEllipsis(workflow.vcses, executor, commitContext.isAmendCommitMode,
+                                         isSkipCommitChecks = false, removeMnemonic = false)
 
   override fun asStaticInfo(): StaticCommitInfo {
     return StaticCommitInfo(commitContext, isVcsCommit, executor, commitActionText, committedChanges, affectedVcses, commitMessage)

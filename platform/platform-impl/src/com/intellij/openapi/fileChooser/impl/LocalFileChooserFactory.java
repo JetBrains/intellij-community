@@ -21,11 +21,10 @@ import javax.swing.*;
 import java.awt.*;
 
 public class LocalFileChooserFactory implements ClientFileChooserFactory {
-  @NotNull
   @Override
-  public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
-                                             @Nullable Project project,
-                                             @Nullable Component parent) {
+  public @NotNull FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
+                                                      @Nullable Project project,
+                                                      @Nullable Component parent) {
     if (ClientFileChooserFactory.useNativeMacChooser(descriptor)) {
       return new MacPathChooserDialog(descriptor, parent, project);
     }
@@ -43,11 +42,10 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
     }
   }
 
-  @NotNull
   @Override
-  public PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
-                                             @Nullable Project project,
-                                             @Nullable Component parent) {
+  public @NotNull PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
+                                                      @Nullable Project project,
+                                                      @Nullable Component parent) {
     PathChooserDialog chooser = ClientFileChooserFactory.createNativePathChooserIfEnabled(descriptor, project, parent);
     if (chooser != null) {
       return chooser;
@@ -63,9 +61,8 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
     }
   }
 
-  @NotNull
   @Override
-  public FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, boolean showHidden, @Nullable Disposable parent) {
+  public @NotNull FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, boolean showHidden, @Nullable Disposable parent) {
     return new FileTextFieldImpl(new JTextField(), new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(descriptor, showHidden),
                                  ClientFileChooserFactory.getMacroMap(), parent);
   }
@@ -81,16 +78,14 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
     }
   }
 
-  @NotNull
   @Override
-  public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
+  public @NotNull FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
     return SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog", true)
            ? new MacFileSaverDialog(descriptor, project) : new FileSaverDialogImpl(descriptor, project);
   }
 
-  @NotNull
   @Override
-  public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
+  public @NotNull FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
     return SystemInfo.isMac && Registry.is("ide.mac.native.save.dialog", true)
            ? new MacFileSaverDialog(descriptor, parent) : new FileSaverDialogImpl(descriptor, parent);
   }

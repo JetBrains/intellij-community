@@ -370,8 +370,7 @@ internal fun checkSaveProjectAfterChange(originalProjectFile: File,
   val builder = MutableEntityStorage.from(projectData.storage)
   val unloadedEntitiesBuilder = MutableEntityStorage.from(projectData.unloadedEntitiesStorage)
   change(builder, projectData.orphanage.toBuilder(), unloadedEntitiesBuilder, projectData.configLocation)
-  val changesList = builder.collectChanges(projectData.storage).values + unloadedEntitiesBuilder.collectChanges(
-    projectData.unloadedEntitiesStorage).values
+  val changesList = builder.collectChanges().values + unloadedEntitiesBuilder.collectChanges().values
   val changedSources = changesList.flatMapTo(HashSet()) { changes ->
     changes.flatMap { change ->
       when (change) {

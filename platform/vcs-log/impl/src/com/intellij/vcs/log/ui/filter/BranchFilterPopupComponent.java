@@ -23,6 +23,7 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromBranchPatterns;
 
-public class BranchFilterPopupComponent
+public final class BranchFilterPopupComponent
   extends MultipleValueFilterPopupComponent<BranchFilters, VcsLogClassicFilterUi.BranchFilterModel> {
   private final VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
 
@@ -155,7 +156,7 @@ public class BranchFilterPopupComponent
       actionGroup.add(new PredefinedValueAction(favorites, VcsLogBundle.messagePointer("vcs.log.branch.filter.favorites"), false));
     }
 
-    private class BranchFilterAction extends PredefinedValueAction {
+    private final class BranchFilterAction extends PredefinedValueAction {
       private final @NotNull LayeredIcon myIcon;
       private final @NotNull LayeredIcon myHoveredIcon;
       private final @NotNull Collection<? extends VcsRef> myReferences;
@@ -164,8 +165,8 @@ public class BranchFilterPopupComponent
       BranchFilterAction(@NotNull Supplier<String> displayName, @NotNull Collection<? extends VcsRef> references) {
         super(new ArrayList<>(ContainerUtil.map2LinkedSet(references, ref -> ref.getName())), displayName, true);
         myReferences = references;
-        myIcon = new LayeredIcon(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16);
-        myHoveredIcon = new LayeredIcon(AllIcons.Nodes.Favorite, AllIcons.Nodes.NotFavoriteOnHover);
+        myIcon = LayeredIcon.layeredIcon(new Icon[]{AllIcons.Nodes.Favorite, EmptyIcon.ICON_16});
+        myHoveredIcon = LayeredIcon.layeredIcon(new Icon[]{AllIcons.Nodes.Favorite, AllIcons.Nodes.NotFavoriteOnHover});
         getTemplatePresentation().setIcon(myIcon);
         getTemplatePresentation().setSelectedIcon(myHoveredIcon);
 

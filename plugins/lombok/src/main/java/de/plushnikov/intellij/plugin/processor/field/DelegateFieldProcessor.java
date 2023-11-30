@@ -6,6 +6,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -17,12 +18,13 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class DelegateFieldProcessor extends AbstractFieldProcessor {
+public final class DelegateFieldProcessor extends AbstractFieldProcessor {
 
   public DelegateFieldProcessor() {
     super(PsiMethod.class, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE);
   }
 
+  @Override
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass,
                                                                    @NotNull PsiAnnotation psiAnnotation,
                                                                    @NotNull PsiField psiField) {
@@ -38,7 +40,7 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiField psiField,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     DelegateHandler.generateElements(psiField, psiField.getType(), psiAnnotation, target);
   }
 

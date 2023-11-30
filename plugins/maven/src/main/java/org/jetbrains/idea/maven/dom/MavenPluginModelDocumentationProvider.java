@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 
@@ -17,7 +16,7 @@ public class MavenPluginModelDocumentationProvider implements DocumentationProvi
     return getDocForMavenPluginParameter(element, true);
   }
 
-  private @Nls String getDocForMavenPluginParameter(PsiElement element, boolean html) {
+  private static @Nls String getDocForMavenPluginParameter(PsiElement element, boolean html) {
     MavenPluginConfigurationDomExtender.ParameterData p = element.getUserData(MavenPluginConfigurationDomExtender.PLUGIN_PARAMETER_KEY);
     if (p == null) return null;
 

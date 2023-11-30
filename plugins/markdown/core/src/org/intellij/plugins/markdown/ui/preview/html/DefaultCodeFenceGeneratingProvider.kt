@@ -135,6 +135,7 @@ internal class DefaultCodeFenceGeneratingProvider(
     val html = """
     <div class="code-fence-highlighter-copy-button" data-fence-content="$encodedContent">
       <img class="code-fence-highlighter-copy-button-icon">
+      <span class="tooltiptext">Copy to clipboard</span>
     </div>
     """.trimIndent()
     visitor.consumeHtml(html)

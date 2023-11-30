@@ -98,7 +98,7 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     target.add(createLoggerField(psiClass, psiAnnotation));
   }
 

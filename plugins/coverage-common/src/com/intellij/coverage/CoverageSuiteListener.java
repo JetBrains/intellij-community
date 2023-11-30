@@ -32,10 +32,16 @@ public interface CoverageSuiteListener {
   /**
    * Called <b>each time</b> before a coverage suite is opened, added to existing, selected, closed
    */
-  void beforeSuiteChosen();
+  default void beforeSuiteChosen() {}
 
   /**
    * Called <b>each time</b> after a coverage suite is opened, added to existing, selected, closed
    */
-  void afterSuiteChosen();
+  default void afterSuiteChosen() {}
+
+
+  /**
+   * Called <b>each time</b> after a coverage suite is completely processed: data is loaded and accumulated
+   */
+  default void coverageDataCalculated(@NotNull CoverageSuitesBundle bundle) {}
 }

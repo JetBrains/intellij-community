@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant.vfs;
 
 import com.intellij.ide.presentation.Presentation;
@@ -9,13 +9,11 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.testAssistant.TestDataUtil;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-
 @Presentation(icon = "AllIcons.Nodes.TestSourceFolder")
-public class TestDataGroupVirtualFile extends VirtualFile {
+public final class TestDataGroupVirtualFile extends VirtualFile {
   private final VirtualFile myBeforeFile;
   private final VirtualFile myAfterFile;
 
@@ -24,31 +22,26 @@ public class TestDataGroupVirtualFile extends VirtualFile {
     myAfterFile = afterFile;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return TestDataUtil.getGroupDisplayName(myBeforeFile.getName(), myAfterFile.getName());
   }
 
-  @NotNull
-  public VirtualFile getBeforeFile() {
+  public @NotNull VirtualFile getBeforeFile() {
     return myBeforeFile;
   }
 
-  @NotNull
-  public VirtualFile getAfterFile() {
+  public @NotNull VirtualFile getAfterFile() {
     return myAfterFile;
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return TestDataGroupFileSystem.getTestDataGroupFileSystem();
   }
 
-  @NotNull
   @Override
-  public String getPath() {
+  public @NotNull String getPath() {
     return TestDataGroupFileSystem.getPath(myBeforeFile, myAfterFile);
   }
 
@@ -76,14 +69,14 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   public VirtualFile[] getChildren() {
     return EMPTY_ARRAY;
   }
-  @NotNull
+
   @Override
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public byte @NotNull [] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() {
     return ArrayUtilRt.EMPTY_BYTE_ARRAY;
   }
 
@@ -107,13 +100,12 @@ public class TestDataGroupVirtualFile extends VirtualFile {
   }
 
   @Override
-  public @NotNull InputStream getInputStream() throws IOException {
+  public @NotNull InputStream getInputStream() {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return myBeforeFile.getFileType();
   }
 

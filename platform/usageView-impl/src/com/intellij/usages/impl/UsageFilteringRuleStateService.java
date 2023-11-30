@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Internal
-@Service
 @State(name = "UsageFilteringRuleState", storages = @Storage("usageView.xml"))
 public final class UsageFilteringRuleStateService implements PersistentStateComponent<String[]> {
 

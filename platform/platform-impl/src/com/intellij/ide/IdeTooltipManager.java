@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
@@ -55,6 +56,7 @@ public class IdeTooltipManager implements Disposable {
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
   private static final String IDE_TOOLTIP_CALLOUT_KEY = "ide.tooltip.callout";
   private static final String IDE_HELPTOOLTIP_ENABLED_KEY = "ide.helptooltip.enabled";
+  private static final Logger LOG = Logger.getInstance(IdeTooltipManager.class);
   private boolean isEnabled;
 
   private HelpTooltipManager helpTooltipManager;
@@ -437,6 +439,11 @@ public class IdeTooltipManager implements Disposable {
     }
 
     Point effectivePoint = tooltip.getPoint();
+    if (effectivePoint == null) {
+      LOG.warn("No point specified for a tooltip for the component " + tooltip.getComponent());
+      effectivePoint = new Point();
+      toCenter = true; // Might as well just center it, since we're not given a point.
+    }
     if (toCenter) {
       Rectangle bounds = tooltip.getComponent().getBounds();
       effectivePoint.x = toCenterX ? bounds.width / 2 : effectivePoint.x;
@@ -462,6 +469,7 @@ public class IdeTooltipManager implements Disposable {
       .setBorderInsets(tooltip.getBorderInsets())
       .setAnimationCycle(animationEnabled ? RegistryManager.getInstance().intValue("ide.tooltip.animationCycle") : 0)
       .setShowCallout(true)
+      .setPointerSize(tooltip.getPointerSize())
       .setCalloutShift(small && tooltip.getCalloutShift() == 0 ? 2 : tooltip.getCalloutShift())
       .setPositionChangeXShift(tooltip.getPositionChangeX())
       .setPositionChangeYShift(tooltip.getPositionChangeY())
@@ -473,6 +481,9 @@ public class IdeTooltipManager implements Disposable {
     tooltip.getTipComponent().setBorder(tooltip.getComponentBorder());
     tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));
 
+    if (tooltip.isPointerShiftedToStart()) {
+      builder.setPointerShiftedToStart(true).setCornerRadius(JBUI.scale(8));
+    }
 
     myBalloon = builder.createBalloon();
 

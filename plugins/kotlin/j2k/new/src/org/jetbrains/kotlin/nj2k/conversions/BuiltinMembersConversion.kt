@@ -37,10 +37,10 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
         val newSelector = conversion.createBuilder().build(selector)
 
         if (this is JKQualifiedExpression && conversion.replaceType == REPLACE_WITH_QUALIFIER) {
-            newSelector.leadingComments += receiver.trailingComments
-            newSelector.leadingComments += receiver.leadingComments
-            newSelector.leadingComments += selector.trailingComments
-            newSelector.leadingComments += selector.leadingComments
+            newSelector.commentsAfter += receiver.commentsBefore
+            newSelector.commentsAfter += receiver.commentsAfter
+            newSelector.commentsAfter += selector.commentsBefore
+            newSelector.commentsAfter += selector.commentsAfter
         }
 
         return when (conversion.replaceType) {
@@ -408,6 +408,9 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
     private val stringConversions: List<Conversion> = listOf(
         Method("java.lang.CharSequence.length") convertTo Field("kotlin.String.length"),
         Method("java.lang.CharSequence.charAt") convertTo Method("kotlin.String.get"),
+        Method("java.lang.String.strip") convertTo Method("kotlin.text.trim") withByArgumentsFilter { it.isEmpty() },
+        Method("java.lang.String.stripLeading") convertTo Method("kotlin.text.trimStart") withByArgumentsFilter { it.isEmpty() },
+        Method("java.lang.String.stripTrailing") convertTo Method("kotlin.text.trimEnd") withByArgumentsFilter { it.isEmpty() },
         Method("java.lang.String.indexOf") convertTo Method("kotlin.text.indexOf"),
         Method("java.lang.String.lastIndexOf") convertTo Method("kotlin.text.lastIndexOf"),
         Method("java.lang.String.getBytes") convertTo Method("kotlin.text.toByteArray")
@@ -474,16 +477,21 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         },
 
         Method("java.lang.String.concat") convertTo
-                CustomExpression { expression ->
-                    if (expression !is JKCallExpression) error("Expression should be JKCallExpression")
-                    val firstArgument = expression.parent.cast<JKQualifiedExpression>()::receiver.detached()
-                    val secondArgument = expression.arguments.arguments.first()::value.detached()
-                    JKBinaryExpression(
-                        firstArgument,
-                        secondArgument,
-                        JKKtOperatorImpl(JKOperatorToken.PLUS, typeFactory.types.possiblyNullString)
-                    )
-                } withReplaceType REPLACE_WITH_QUALIFIER,
+            CustomExpression { expression ->
+                if (expression !is JKCallExpression) error("Expression should be JKCallExpression")
+                val parent = expression.parent.cast<JKQualifiedExpression>()
+                val firstArgument = parent::receiver.detached()
+                val secondArgument = expression.arguments.arguments.first()::value.detached()
+
+                // Drop the line break to avoid awkward formatting of binary expression with operator on next line
+                firstArgument.lineBreaksAfter = 0
+
+                JKBinaryExpression(
+                    firstArgument,
+                    secondArgument,
+                    JKKtOperatorImpl(JKOperatorToken.PLUS, typeFactory.types.string)
+                ).parenthesize().withFormattingFrom(parent)
+            } withReplaceType REPLACE_WITH_QUALIFIER,
 
         // We request the `split` function with the exact signature `split(regex: Regex, limit: Int = 0)`
         // (see `JKSymbolProvider.provideMethodSymbolWithExactSignature`).
@@ -553,7 +561,7 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                     JKExpressionStatement(
                         JKBinaryExpression(
                             //TODO replace with `it` parameter
-                            JKFieldAccessExpression(JKUnresolvedField("it", typeFactory)),
+                            JKFieldAccessExpression(JKUnresolvedField(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier, typeFactory)),
                             JKLiteralExpression("' '", JKLiteralExpression.LiteralType.CHAR),
                             JKKtOperatorImpl(JKOperatorToken.LTEQ, typeFactory.types.boolean)
                         )
@@ -826,7 +834,4 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
 
     private fun List<JKLiteralExpression>.containsNull(): Boolean =
         any { it.isNull() }
-
-    private fun JKExpression?.isDoubleType(): Boolean =
-        this?.calculateType(typeFactory) == JKJavaPrimitiveType.DOUBLE
 }

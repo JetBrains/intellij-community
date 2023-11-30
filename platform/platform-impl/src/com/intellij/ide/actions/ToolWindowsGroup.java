@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -16,7 +17,7 @@ import java.util.List;
 import static java.lang.String.CASE_INSENSITIVE_ORDER;
 import static java.util.Comparator.comparingInt;
 
-public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
+public final class ToolWindowsGroup extends ActionGroup implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getEventProject(e) != null);
@@ -67,13 +68,11 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
     return result;
   }
 
-  @NotNull
-  private static Comparator<ActivateToolWindowAction> getActionComparator() {
+  private static @NotNull Comparator<ActivateToolWindowAction> getActionComparator() {
     return comparingMnemonic().thenComparing(it -> it.getToolWindowId(), CASE_INSENSITIVE_ORDER);
   }
 
-  @NotNull
-  private static Comparator<ActivateToolWindowAction> comparingMnemonic() {
+  private static @NotNull Comparator<ActivateToolWindowAction> comparingMnemonic() {
     return comparingInt(it -> {
       int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(it.getToolWindowId());
       return mnemonic != -1 ? mnemonic : Integer.MAX_VALUE;

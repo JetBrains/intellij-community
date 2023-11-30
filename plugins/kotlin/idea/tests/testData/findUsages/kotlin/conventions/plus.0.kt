@@ -24,4 +24,4 @@ fun test(array: Array<A>) {
 }
 
 
-// IGNORE_FIR_LOG
+// IGNORE_K2_LOG

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.*;
@@ -30,15 +30,13 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
     return myEnd > myStart;
   }
 
-  @NotNull
   @Override
-  public ImaginaryEditor getEditor() {
+  public @NotNull ImaginaryEditor getEditor() {
     return myCaretModel.getEditor();
   }
 
-  @NotNull
   @Override
-  public CaretModel getCaretModel() {
+  public @NotNull CaretModel getCaretModel() {
     return myCaretModel;
   }
 
@@ -103,15 +101,13 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public LogicalPosition getLogicalPosition() {
+  public @NotNull LogicalPosition getLogicalPosition() {
     return getEditor().offsetToLogicalPosition(myStart);
   }
 
-  @NotNull
   @Override
-  public VisualPosition getVisualPosition() {
+  public @NotNull VisualPosition getVisualPosition() {
     return getEditor().offsetToVisualPosition(myStart);
   }
 
@@ -124,21 +120,18 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
   public int getVisualLineEnd() {
     throw notImplemented();
   }
-  @NotNull
   @Override
-  public VisualPosition getSelectionStartPosition() {
+  public @NotNull VisualPosition getSelectionStartPosition() {
     return getEditor().offsetToVisualPosition(myStart);
   }
 
-  @NotNull
   @Override
-  public VisualPosition getSelectionEndPosition() {
+  public @NotNull VisualPosition getSelectionEndPosition() {
     return getEditor().offsetToVisualPosition(myEnd);
   }
 
-  @Nullable
   @Override
-  public String getSelectedText() {
+  public @Nullable String getSelectedText() {
     return getEditor().getDocument().getText(new TextRange(myStart, myEnd));
   }
 
@@ -147,9 +140,8 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
     return getOffset();
   }
 
-  @NotNull
   @Override
-  public VisualPosition getLeadSelectionPosition() {
+  public @NotNull VisualPosition getLeadSelectionPosition() {
     throw notImplemented();
   }
 
@@ -218,9 +210,8 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
     throw notImplemented();
   }
 
-  @Nullable
   @Override
-  public Caret clone(boolean above) {
+  public @Nullable Caret clone(boolean above) {
     throw notImplemented();
   }
 
@@ -234,9 +225,8 @@ public class ImaginaryCaret extends UserDataHolderBase implements Caret {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public CaretVisualAttributes getVisualAttributes() {
+  public @NotNull CaretVisualAttributes getVisualAttributes() {
     throw notImplemented();
   }
 

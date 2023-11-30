@@ -1,5 +1,4 @@
 # These all have class-level defaults that differ from the instance attributes
-pyflakes.messages.CommentAnnotationSyntaxError.message_args
 pyflakes.messages.DuplicateArgument.message_args
 pyflakes.messages.ForwardAnnotationSyntaxError.message_args
 pyflakes.messages.FutureFeatureNotDefined.message_args
@@ -21,5 +20,6 @@ pyflakes.messages.StringDotFormatMissingArgument.message_args
 pyflakes.messages.UndefinedExport.message_args
 pyflakes.messages.UndefinedLocal.message_args
 pyflakes.messages.UndefinedName.message_args
+pyflakes.messages.UnusedAnnotation.message_args
 pyflakes.messages.UnusedImport.message_args
 pyflakes.messages.UnusedVariable.message_args

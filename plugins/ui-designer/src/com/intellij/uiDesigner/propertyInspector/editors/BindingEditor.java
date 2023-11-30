@@ -4,6 +4,7 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -20,6 +21,7 @@ import com.intellij.uiDesigner.radComponents.RadHSpacer;
 import com.intellij.uiDesigner.radComponents.RadVSpacer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -143,9 +145,11 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
 
   @Override
   public JComponent getComponent(final RadComponent component, final @NlsSafe String value, final InplaceContext inplaceContext){
-    final String[] fieldNames = getFieldNames(component, value);
-    myCbx.setModel(new DefaultComboBoxModel(fieldNames));
-    myCbx.setSelectedItem(value);
-    return myCbx;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-653866")) {
+      final String[] fieldNames = getFieldNames(component, value);
+      myCbx.setModel(new DefaultComboBoxModel(fieldNames));
+      myCbx.setSelectedItem(value);
+      return myCbx;
+    }
   }
 }

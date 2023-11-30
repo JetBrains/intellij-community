@@ -23,7 +23,7 @@ import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier
 
 // 1. listen to roots changes
 // 2. - possibly - to deletion/checkouts??? what if WC roots can be
-@Service
+@Service(Service.Level.PROJECT)
 class RootsToWorkingCopies(private val project: Project) : VcsMappingListener, Disposable {
   private val myLock = Any()
   private val myRootMapping = mutableMapOf<VirtualFile, WorkingCopy>()

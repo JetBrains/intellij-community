@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -15,6 +15,10 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
 
   override fun getDelegatesToInfo(expression: GrFunctionalExpression): DelegatesToInfo? {
     if (expression !is GrClosableBlock) return null
+    val resultFromAction = GradleActionDelegatesToProvider().getDelegatesToInfo(expression)
+    if (resultFromAction != null) {
+      return resultFromAction
+    }
     val file = expression.containingFile
     if (file == null || !FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)) return null
 

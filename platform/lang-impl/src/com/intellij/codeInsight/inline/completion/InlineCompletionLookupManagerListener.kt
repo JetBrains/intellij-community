@@ -5,16 +5,19 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.LookupManagerListener
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 class InlineCompletionLookupManagerListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
     newLookup?.addLookupListener(object : LookupListener {
       override fun currentItemChanged(event: LookupEvent) {
         if (event.item == null) return
-        val listener = event.lookup.editor.getUserData(InlineCompletionHandler.KEY) ?: return
-        listener.invoke(event)
+        val listener = InlineCompletion.getHandlerOrNull(event.lookup.editor) ?: return
+        listener.invoke(InlineCompletionEvent.LookupChange(event))
+      }
+
+      override fun lookupCanceled(event: LookupEvent) {
+        val listener = InlineCompletion.getHandlerOrNull(event.lookup.editor) ?: return
+        listener.invoke(InlineCompletionEvent.LookupCancelled(event))
       }
     })
   }

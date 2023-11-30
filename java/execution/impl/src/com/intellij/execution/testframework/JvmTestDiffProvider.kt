@@ -23,6 +23,20 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
     ElementManipulators.getManipulator(element)?.handleContentChange(element, actual)
   }
 
+  /**
+   * Finds the expected value from a [stackTrace]. To do this the following algorithm is used:
+   *
+   * 1. We start traversing the stack trace to find the entry point of our search which is the assert equals call.
+   * 2. We look at the expected arguments of the entry point, if it's a string literal or similar (like a Kotlin trim indented string
+   * literal), we found our expected element, if not we resolve the reference and check for 2 options:
+   *    1. The reference resolved to a field declaration. Here we look at the initializer and check whether it is the expected value.
+   *    2. The reference resolved to a parameter. We go further down the stack trace and repeat step 2 with the next call as the entry point.
+   *    It might happen that we can't find the specific call in sources, for example when the call comes from a library. We now lost the
+   *    parameter that we were tracking, so we try another (less accurate and more expensive) strategy as described in step 3.
+   * 3. We find all calls that we haven't checked in previous steps, collect all arguments that look like string literals and compare its
+   * content with the [expected] value as reported from our test output. If exactly 1 string literal content matches this expected value
+   * we return this element. If we found 0 or more than 1 matching elements we return null.
+   */
   final override fun findExpected(project: Project, stackTrace: String, expected: String): PsiElement? {
     val exceptionCache = ExceptionInfoCache(project, GlobalSearchScope.allScope(project))
     val entryPoint = findExpectedEntryPoint(stackTrace, exceptionCache) ?: return null
@@ -79,7 +93,7 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
     val srcCall = call.sourcePsi ?: return null
     val stringType = PsiType.getJavaLangString(srcCall.manager, srcCall.resolveScope)
     if (assertHint.expected.getExpressionType() != stringType || assertHint.actual.getExpressionType() != stringType) return null
-    val method = call.resolveToUElement()?.asSafely<UMethod>() ?: return null
+    val method = call.resolveToUElementOfType<UMethod>() ?: return null
     if (method.name != "assertEquals") return null
     return method.uastParameters.firstOrNull()
   }
@@ -93,7 +107,7 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
     val candidateCalls = getCallElementsInRange(file, startOffset, endOffset) ?: return null
     return if (candidateCalls.size != 1) {
       candidateCalls.firstOrNull { call ->
-        call.resolveToUElement().asSafely<UMethod>()?.sourcePsi?.isEquivalentTo(resolvedMethod?.sourcePsi) == true
+        call.resolveToUElementOfType<UMethod>()?.sourcePsi?.isEquivalentTo(resolvedMethod?.sourcePsi) == true
       }
     }
     else candidateCalls.first()

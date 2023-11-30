@@ -15,7 +15,6 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAsyncAware
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -29,7 +28,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.pom.java.LanguageLevel.HIGHEST
 import com.intellij.util.ExceptionUtil
@@ -45,6 +43,7 @@ import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.resolved
+import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -55,7 +54,6 @@ private const val MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY = "mave
 private val LOG = Logger.getInstance(MavenCommandLineInspectionProjectConfigurator::class.java)
 private const val DISABLE_EXTERNAL_SYSTEM_AUTO_IMPORT = "external.system.auto.import.disabled"
 private const val MAVEN_COMMAND_LINE_CONFIGURATOR_EXIT_ON_UNRESOLVED_PLUGINS = "maven.command.line.configurator.exit.on.unresolved.plugins"
-private const val MAVEN_LINEAR_IMPORT = "maven.linear.import"
 private val MAVEN_OUTPUT_LOG = Logger.getInstance("MavenOutput")
 
 class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProjectAsyncConfigurator {
@@ -64,8 +62,8 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
   override fun getDescription(): String = MavenProjectBundle.message("maven.commandline.description")
 
   override fun configureEnvironment(context: ConfiguratorContext) = context.run {
-    Registry.get(DISABLE_EXTERNAL_SYSTEM_AUTO_IMPORT).setValue(true)
-    Registry.get(MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY).setValue(false)
+    System.setProperty(MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY, false.toString())
+    Unit
   }
 
   override suspend fun configureProjectAsync(project: Project, context: ConfiguratorContext) {
@@ -74,7 +72,7 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     if (FileUtil.findFirstThatExist(pomXmlFile) == null) return
 
     val service = service<EnvironmentService>()
-    val projectSelectionKey = service.getEnvironmentValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR, "Maven")
+    val projectSelectionKey = service.getEnvironmentValue(ProjectOpenKeyProvider.Keys.PROJECT_OPEN_PROCESSOR, "Maven")
 
     if (projectSelectionKey != "Maven") {
       // something else was selected to open the project
@@ -101,7 +99,9 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
         FileDocumentManager.getInstance().saveAllDocuments()
         MavenUtil.setupProjectSdk(project)
       }
-      (mavenProjectAware as ExternalSystemUnlinkedProjectAsyncAware).linkAndLoadProjectAsync(project, basePath)
+
+      // GradleWarmupConfigurator sets "external.system.auto.import.disabled" to true, but we have to import the project nevertheless
+      MavenOpenProjectProvider().forceLinkToExistingProjectAsync(basePath, project)
     }
     MavenLog.LOG.warn("linked finished for ${project.name}")
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)

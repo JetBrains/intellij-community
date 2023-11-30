@@ -39,6 +39,17 @@ internal class IdeKeyboardFocusManager : DefaultFocusManager() /* see javadoc ab
       super.setDefaultFocusTraversalPolicy(defaultPolicy)
     }
   }
+
+  override fun setGlobalFocusOwner(focusOwner: Component?) {
+    // Check against recursively invisible components.
+    // The calling code does check isShowing(), but it can be overridden by ShowingController.
+    var c = focusOwner
+    while (c != null && c !is Window) {
+      if (!c.isVisible) return
+      c = c.parent
+    }
+    super.setGlobalFocusOwner(focusOwner)
+  }
 }
 
 @Suppress("IdentifierGrammar", "UNCHECKED_CAST")

@@ -21,8 +21,12 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.api.*
 import com.intellij.refactoring.rename.api.ModifiableRenameUsage.*
 import com.intellij.refactoring.rename.impl.FileUpdates.Companion.createFileUpdates
-import com.intellij.refactoring.rename.ui.*
+import com.intellij.refactoring.rename.ui.RenameDialog
+import com.intellij.refactoring.rename.ui.commandName
+import com.intellij.refactoring.rename.ui.progressTitle
+import com.intellij.refactoring.rename.ui.withBackgroundIndicator
 import com.intellij.util.Query
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -41,7 +45,7 @@ internal typealias UsagePointer = Pointer<out RenameUsage>
  * Entry point to perform rename with a dialog initialized with [targetName].
  */
 internal fun showDialogAndRename(project: Project, target: RenameTarget, targetName: String = target.targetName) {
-  ApplicationManager.getApplication().assertIsDispatchThread()
+  ThreadingAssertions.assertEventDispatchThread()
   val initOptions = RenameDialog.Options(
     targetName = targetName,
     renameOptions = renameOptions(project, target)
@@ -300,7 +304,7 @@ private suspend fun previewInDialog(project: Project, fileUpdates: FileUpdates):
 @TestOnly
 fun renameAndWait(project: Project, target: RenameTarget, newName: String) {
   val application = ApplicationManager.getApplication()
-  application.assertIsDispatchThread()
+  ThreadingAssertions.assertEventDispatchThread()
   require(application.isUnitTestMode)
 
   val targetPointer = target.createPointer()

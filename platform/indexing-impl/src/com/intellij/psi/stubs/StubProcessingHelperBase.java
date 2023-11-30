@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +15,7 @@ import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,8 +63,7 @@ public abstract class StubProcessingHelperBase {
     return true;
   }
 
-  @NotNull
-  private static List<StubbedSpine> getAllSpines(PsiFile psiFile) {
+  private static @NotNull List<StubbedSpine> getAllSpines(PsiFile psiFile) {
     if (!(psiFile instanceof PsiFileImpl) && psiFile instanceof PsiFileWithStubSupport) {
       return Collections.singletonList(((PsiFileWithStubSupport)psiFile).getStubbedSpine());
     }
@@ -85,12 +71,12 @@ public abstract class StubProcessingHelperBase {
     return ContainerUtil.map(StubTreeBuilder.getStubbedRoots(psiFile.getViewProvider()), t -> ((PsiFileImpl)t.second).getStubbedSpine());
   }
 
-  private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, PsiElement psiElement) {
+  private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, @Nullable PsiElement psiElement) {
     if (requiredClass.isInstance(psiElement)) return true;
 
     String extraMessage = "psiElement is not instance of requiredClass.\n" +
                           "psiElement=" + psiElement +
-                          ", psiElement.class=" + psiElement.getClass() +
+                          (psiElement != null ? ", psiElement.class=" + psiElement.getClass() : "") +
                           ", requiredClass=" + requiredClass +
                           ".\nref: 50cf572587cf";
 
@@ -160,6 +146,7 @@ public abstract class StubProcessingHelperBase {
                                      @NotNull PsiFileWithStubSupport psiFile,
                                      @NotNull String extraMessage) {
     try {
+      IndexStatisticGroup.reportStubIndexInconsistencyRegistered(psiFile.getProject());
       StubTextInconsistencyException.checkStubTextConsistency(psiFile);
       LOG.error(extraMessage + "\n" + StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null));
     }
@@ -170,8 +157,7 @@ public abstract class StubProcessingHelperBase {
 
   protected abstract void onInternalError(VirtualFile file);
 
-  @NotNull
-  protected static String getFileTypeInfo(@NotNull VirtualFile file, @NotNull Project project) {
+  protected static @NotNull String getFileTypeInfo(@NotNull VirtualFile file, @NotNull Project project) {
     return "file = "+file + (file.isValid() ? "" : " (invalid)") +", " +
            "file type = " + file.getFileType() + ", " +
            "indexed file type = " + FileTypeIndex.getIndexedFileType(file, project);

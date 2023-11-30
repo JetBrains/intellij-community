@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.*;
@@ -47,13 +48,12 @@ import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 @ApiStatus.Experimental
 public abstract class XmlTagDelegate {
   private static final Logger LOG = Logger.getInstance(XmlTagDelegate.class);
-  @NonNls private static final String XML_NS_PREFIX = "xml";
+  private static final @NonNls String XML_NS_PREFIX = "xml";
   private static final Key<CachedValue<ResultWithLog<XmlTag[]>>> SUBTAGS_WITH_INCLUDES_KEY = Key.create("subtags with includes");
   private static final Key<CachedValue<ResultWithLog<XmlTag[]>>> SUBTAGS_WITHOUT_INCLUDES_KEY = Key.create("subtags without includes");
   private static final Comparator<TextRange> RANGE_COMPARATOR = Comparator.comparingInt(TextRange::getStartOffset);
 
-  @NotNull
-  protected final XmlTag myTag;
+  protected final @NotNull XmlTag myTag;
 
   private volatile String myName;
   private volatile String myLocalName;
@@ -65,7 +65,7 @@ public abstract class XmlTagDelegate {
     myTag = tag;
   }
 
-  protected abstract void deleteChildInternalSuper(@NotNull final ASTNode child);
+  protected abstract void deleteChildInternalSuper(final @NotNull ASTNode child);
 
   protected abstract TreeElement addInternalSuper(TreeElement first, ASTNode last, @Nullable ASTNode anchor, @Nullable Boolean before);
 
@@ -96,8 +96,7 @@ public abstract class XmlTagDelegate {
     return myTag.hashCode();
   }
 
-  @Nullable
-  private static XmlNSDescriptor getDtdDescriptor(@NotNull XmlFile containingFile) {
+  private static @Nullable XmlNSDescriptor getDtdDescriptor(@NotNull XmlFile containingFile) {
     final XmlDocument document = containingFile.getDocument();
     if (document == null) {
       return null;
@@ -109,8 +108,7 @@ public abstract class XmlTagDelegate {
     return document.getDefaultNSDescriptor(url, true);
   }
 
-  @Nullable
-  private static String getNSVersion(@Nullable final String ns, @NotNull final XmlTag xmlTag) {
+  private static @Nullable String getNSVersion(final @Nullable String ns, final @NotNull XmlTag xmlTag) {
     String versionValue = xmlTag.getAttributeValue("version");
     if (versionValue != null && xmlTag.getNamespace().equals(ns)) {
       return versionValue;
@@ -257,21 +255,18 @@ public abstract class XmlTagDelegate {
     tag.replaceChild(closingBracket, emptyTagEnd);
   }
 
-  @NotNull
-  private Map<String, NullableLazyValue<XmlNSDescriptor>> getNSDescriptorMap() {
+  private @NotNull Map<String, NullableLazyValue<XmlNSDescriptor>> getNSDescriptorMap() {
     XmlTag tag = myTag;
     return CachedValuesManager.getCachedValue(tag, () ->
       Result.create(computeNsDescriptorMap(tag),
                     PsiModificationTracker.MODIFICATION_COUNT, externalResourceModificationTracker(tag)));
   }
 
-  @NotNull
-  protected String getNamespacePrefix(@NotNull String name) {
+  protected @NotNull String getNamespacePrefix(@NotNull String name) {
     return XmlUtil.findPrefixByQualifiedName(name);
   }
 
-  @NotNull
-  private static Map<String, NullableLazyValue<XmlNSDescriptor>> computeNsDescriptorMap(@NotNull XmlTag tag) {
+  private static @NotNull Map<String, NullableLazyValue<XmlNSDescriptor>> computeNsDescriptorMap(@NotNull XmlTag tag) {
     Map<String, NullableLazyValue<XmlNSDescriptor>> map = null;
     // XSD aware attributes processing
 
@@ -312,13 +307,12 @@ public abstract class XmlTagDelegate {
     return map == null ? Collections.emptyMap() : map;
   }
 
-  @NotNull
-  private static Map<String, NullableLazyValue<XmlNSDescriptor>> initializeSchema(@NotNull final XmlTag tag,
-                                                                                  @Nullable final String namespace,
-                                                                                  @Nullable final String version,
-                                                                                  @NotNull final Set<String> fileLocations,
-                                                                                  @Nullable Map<String, NullableLazyValue<XmlNSDescriptor>> map,
-                                                                                  final boolean nsDecl) {
+  private static @NotNull Map<String, NullableLazyValue<XmlNSDescriptor>> initializeSchema(final @NotNull XmlTag tag,
+                                                                                           final @Nullable String namespace,
+                                                                                           final @Nullable String version,
+                                                                                           final @NotNull Set<String> fileLocations,
+                                                                                           @Nullable Map<String, NullableLazyValue<XmlNSDescriptor>> map,
+                                                                                           final boolean nsDecl) {
     if (map == null) {
       map = new HashMap<>();
     }
@@ -349,11 +343,10 @@ public abstract class XmlTagDelegate {
     return map;
   }
 
-  @Nullable
-  private static XmlNSDescriptor getDescriptor(@NotNull XmlTag tag,
-                                               @Nullable XmlFile currentFile,
-                                               @NotNull String fileLocation,
-                                               @Nullable String namespace) {
+  private static @Nullable XmlNSDescriptor getDescriptor(@NotNull XmlTag tag,
+                                                         @Nullable XmlFile currentFile,
+                                                         @NotNull String fileLocation,
+                                                         @Nullable String namespace) {
     XmlNSDescriptor descriptor = getImplicitNamespaceDescriptor(tag, fileLocation);
     if (descriptor != null) {
       return descriptor;
@@ -392,8 +385,7 @@ public abstract class XmlTagDelegate {
     return null;
   }
 
-  @Nullable
-  private static XmlNSDescriptor getImplicitNamespaceDescriptor(@NotNull XmlTag tag, @NotNull String ns) {
+  private static @Nullable XmlNSDescriptor getImplicitNamespaceDescriptor(@NotNull XmlTag tag, @NotNull String ns) {
     PsiFile file = tag.getContainingFile();
     if (file == null) return null;
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
@@ -406,12 +398,11 @@ public abstract class XmlTagDelegate {
     return null;
   }
 
-  @Nullable
-  private static XmlFile retrieveFile(@Nullable final XmlTag tag,
-                                      @NotNull final String fileLocation,
-                                      @Nullable final String version,
-                                      String namespace,
-                                      boolean nsDecl) {
+  private static @Nullable XmlFile retrieveFile(final @Nullable XmlTag tag,
+                                                final @NotNull String fileLocation,
+                                                final @Nullable String version,
+                                                String namespace,
+                                                boolean nsDecl) {
     final String targetNs = XmlUtil.getTargetSchemaNsFromTag(tag);
     if (fileLocation.equals(targetNs)) {
       return null;
@@ -427,8 +418,9 @@ public abstract class XmlTagDelegate {
     return XmlNamespaceIndex.guessSchema(namespace, nsDecl ? null : tag.getLocalName(), version, fileLocation, file);
   }
 
-  @Nullable
-  private static PsiMetaOwner retrieveOwner(@Nullable final XmlTag tag, @Nullable final XmlFile file, @Nullable final String namespace) {
+  private static @Nullable PsiMetaOwner retrieveOwner(final @Nullable XmlTag tag,
+                                                      final @Nullable XmlFile file,
+                                                      final @Nullable String namespace) {
     if (file == null) {
       return namespace != null && namespace.equals(XmlUtil.getTargetSchemaNsFromTag(tag)) ? tag : null;
     }
@@ -452,15 +444,13 @@ public abstract class XmlTagDelegate {
     });
   }
 
-  @NotNull
-  private static ModificationTracker externalResourceModificationTracker(@NotNull XmlTag tag) {
+  private static @NotNull ModificationTracker externalResourceModificationTracker(@NotNull XmlTag tag) {
     Project project = tag.getProject();
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
     return () -> manager.getModificationCount(project);
   }
 
-  @Nullable
-  protected XmlElementDescriptor computeElementDescriptor() {
+  protected @Nullable XmlElementDescriptor computeElementDescriptor() {
     for (XmlElementDescriptorProvider provider : XmlElementDescriptorProvider.EP_NAME.getExtensionList()) {
       XmlElementDescriptor elementDescriptor = provider.getDescriptor(myTag);
       if (elementDescriptor != null) {
@@ -519,7 +509,7 @@ public abstract class XmlTagDelegate {
   }
 
   @NotNull
-  PsiElement setName(@NotNull final String name) throws IncorrectOperationException {
+  PsiElement setName(final @NotNull String name) throws IncorrectOperationException {
     final XmlTag dummyTag = createTag(name, "aa");
     final ASTNode tag = myTag.getNode();
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(tag);
@@ -567,8 +557,7 @@ public abstract class XmlTagDelegate {
     return map.get(qname);
   }
 
-  @Nullable
-  protected String getAttributeValue(@Nullable String _name, @Nullable String namespace) {
+  protected @Nullable String getAttributeValue(@Nullable String _name, @Nullable String namespace) {
     if (namespace == null) {
       return myTag.getAttributeValue(_name);
     }
@@ -621,12 +610,11 @@ public abstract class XmlTagDelegate {
     return result.toArray(XmlTag.EMPTY);
   }
 
-  protected XmlTag @NotNull [] findSubTags(@NotNull final String name, @Nullable final String namespace) {
+  protected XmlTag @NotNull [] findSubTags(final @NotNull String name, final @Nullable String namespace) {
     return findSubTags(name, namespace, myTag.getSubTags());
   }
 
-  @NotNull
-  public static XmlTag[] findSubTags(@NotNull String name, @Nullable String namespace, XmlTag[] subTags) {
+  public static @NotNull XmlTag[] findSubTags(@NotNull String name, @Nullable String namespace, XmlTag[] subTags) {
     final List<XmlTag> result = new ArrayList<>();
     for (final XmlTag subTag : subTags) {
       if (namespace == null) {
@@ -678,8 +666,7 @@ public abstract class XmlTagDelegate {
     return null;
   }
 
-  @NotNull
-  protected String getNamespaceByPrefix(String prefix) {
+  protected @NotNull String getNamespaceByPrefix(String prefix) {
     BidirectionalMap<String, String> map = getNamespaceMap(myTag);
     if (map != null) {
       final String ns = map.get(prefix);
@@ -716,8 +703,7 @@ public abstract class XmlTagDelegate {
     return XmlUtil.EMPTY_URI;
   }
 
-  @Nullable
-  protected String getPrefixByNamespace(@Nullable String namespace) {
+  protected @Nullable String getPrefixByNamespace(@Nullable String namespace) {
     BidirectionalMap<String, String> map = getNamespaceMap(myTag);
     if (map != null) {
       List<String> keysByValue = map.getKeysByValue(namespace);
@@ -732,15 +718,15 @@ public abstract class XmlTagDelegate {
   }
 
   String @NotNull [] knownNamespaces() {
-    final PsiElement parentElement = myTag.getParent();
+    final XmlTag parentTag = myTag.getParentTag();
     BidirectionalMap<String, String> map = getNamespaceMap(myTag);
     Set<String> known = Collections.emptySet();
     if (map != null) {
       known = new HashSet<>(map.values());
     }
-    if (parentElement instanceof XmlTag) {
-      if (known.isEmpty()) return ((XmlTag)parentElement).knownNamespaces();
-      ContainerUtil.addAll(known, ((XmlTag)parentElement).knownNamespaces());
+    if (parentTag != null) {
+      if (known.isEmpty()) return parentTag.knownNamespaces();
+      ContainerUtil.addAll(known, parentTag.knownNamespaces());
     }
     else {
       XmlExtension xmlExtension = XmlExtension.getExtensionByElement(myTag);
@@ -758,16 +744,13 @@ public abstract class XmlTagDelegate {
     return ArrayUtilRt.toStringArray(known);
   }
 
-  @Nullable
-  private static BidirectionalMap<String, String> getNamespaceMap(@NotNull XmlTag tag) {
+  private static @Nullable BidirectionalMap<String, String> getNamespaceMap(@NotNull XmlTag tag) {
     return CachedValuesManager.getCachedValue(tag, () ->
       Result.create(computeNamespaceMap(tag), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  @Nullable
-  private static BidirectionalMap<String, String> computeNamespaceMap(@NotNull XmlTag tag) {
+  private static @Nullable BidirectionalMap<String, String> computeNamespaceMap(@NotNull XmlTag tag) {
     BidirectionalMap<String, String> map = null;
-    PsiElement parent = tag.getParent();
     boolean hasNamespaceDeclarations = tag.hasNamespaceDeclarations();
     if (hasNamespaceDeclarations) {
       map = new BidirectionalMap<>();
@@ -791,6 +774,9 @@ public abstract class XmlTagDelegate {
       }
     }
 
+    PsiElement parent = (tag instanceof HtmlTag)
+                        ? PsiTreeUtil.getParentOfType(tag, XmlTag.class, XmlDocument.class)
+                        : tag.getParent();
     if (parent instanceof XmlDocument) {
       final XmlExtension extension = XmlExtension.getExtensionByElement(parent);
       if (extension != null) {
@@ -809,8 +795,7 @@ public abstract class XmlTagDelegate {
     return map;
   }
 
-  @NotNull
-  private static Set<String> getNsLocations(@NotNull final XmlTag tag, @Nullable String ns) {
+  private static @NotNull Set<String> getNsLocations(final @NotNull XmlTag tag, @Nullable String ns) {
     if (XmlUtil.XHTML_URI.equals(ns)) {
       return Collections.singleton(XmlUtil.getDefaultXhtmlNamespace(tag.getProject()));
     }
@@ -849,8 +834,7 @@ public abstract class XmlTagDelegate {
     return result;
   }
 
-  @NotNull
-  private Boolean calculateHasNamespaceDeclarations() {
+  private @NotNull Boolean calculateHasNamespaceDeclarations() {
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     processChildren(element -> {
       if (element instanceof XmlAttribute
@@ -923,7 +907,7 @@ public abstract class XmlTagDelegate {
     }
   }
 
-  void deleteChildInternal(@NotNull final ASTNode child) {
+  void deleteChildInternal(final @NotNull ASTNode child) {
     if (child.getElementType() instanceof IXmlAttributeElementType) {
       try {
         deleteChildInternalSuper(child);
@@ -989,8 +973,7 @@ public abstract class XmlTagDelegate {
            genericInsert(child, anchor, before);
   }
 
-  @NotNull
-  private ASTNode expandTag() throws IncorrectOperationException {
+  private @NotNull ASTNode expandTag() throws IncorrectOperationException {
     ASTNode endTagStart = XmlChildRole.CLOSING_TAG_START_FINDER.findChild(myTag.getNode());
     if (endTagStart == null) {
       final XmlTag tagFromText = createTagFromText("<" + myTag.getName() + "></" + myTag.getName() + ">");

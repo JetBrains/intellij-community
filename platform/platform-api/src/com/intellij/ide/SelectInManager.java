@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.components.Service;
@@ -21,8 +21,7 @@ public final class SelectInManager  {
   /**
    * @deprecated Use {@link #getProject()} instead
    */
-  @Deprecated(forRemoval = true)
-  @NonNls public static final String PROJECT = getProject();
+  @Deprecated(forRemoval = true) public static final @NonNls String PROJECT = getProject();
 
   public SelectInManager(@NotNull Project project) {
     myProject = project;
@@ -33,8 +32,7 @@ public final class SelectInManager  {
     myTargets.removeExplicitExtension(target);
   }
 
-  @NotNull
-  public List<SelectInTarget> getTargetList() {
+  public @NotNull List<SelectInTarget> getTargetList() {
     List<SelectInTarget> targets = new ArrayList<>(myTargets.getExtensions());
     if (DumbService.getInstance(myProject).isDumb()) {
       targets.removeIf(target -> !DumbService.isDumbAware(target));

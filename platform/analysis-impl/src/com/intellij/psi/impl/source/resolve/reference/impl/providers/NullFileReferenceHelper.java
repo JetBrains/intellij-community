@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.module.Module;
@@ -34,7 +20,7 @@ public class NullFileReferenceHelper extends FileReferenceHelper {
   public static final NullFileReferenceHelper INSTANCE = new NullFileReferenceHelper();
 
   @Override
-  public PsiFileSystemItem findRoot(final @NotNull Project project, @NotNull final VirtualFile file) {
+  public PsiFileSystemItem findRoot(final @NotNull Project project, final @NotNull VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     VirtualFile contentRootForFile = index.getContentRootForFile(file);
 
@@ -42,14 +28,12 @@ public class NullFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  @NotNull
-  public Collection<PsiFileSystemItem> getRoots(@NotNull final Module module) {
+  public @NotNull Collection<PsiFileSystemItem> getRoots(final @NotNull Module module) {
     return ContainerUtil.mapNotNull(ModuleRootManager.getInstance(module).getContentRoots(), virtualFile -> PsiManager.getInstance(module.getProject()).findDirectory(virtualFile));
   }
 
   @Override
-  @NotNull
-  public Collection<PsiFileSystemItem> getContexts(final @NotNull Project project, @NotNull final VirtualFile file) {
+  public @NotNull Collection<PsiFileSystemItem> getContexts(final @NotNull Project project, final @NotNull VirtualFile file) {
     final PsiFileSystemItem item = getPsiFileSystemItem(project, file);
     if (item != null) {
       final PsiFileSystemItem parent = item.getParent();
@@ -61,7 +45,7 @@ public class NullFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  public boolean isMine(final @NotNull Project project, @NotNull final VirtualFile file) {
+  public boolean isMine(final @NotNull Project project, final @NotNull VirtualFile file) {
     return ProjectRootManager.getInstance(project).getFileIndex().isInContent(file);
   }
 

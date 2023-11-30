@@ -66,7 +66,7 @@ class KotlinModuleOutOfCodeBlockModificationTracker(private val module: Module) 
         fun getModificationCount(module: Module): Long = getUpdaterInstance(module.project).getModificationCount(module)
     }
 
-    @Service
+    @Service(Service.Level.PROJECT)
     class Updater(private val project: Project): Disposable {
         private val kotlinOfOfCodeBlockTracker
             get() =

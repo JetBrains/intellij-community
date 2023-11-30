@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
 import com.intellij.CommonBundle;
@@ -13,7 +13,7 @@ import java.io.File;
 public class GitSimpleEditorHandler implements GitRebaseEditorHandler {
   private static final Logger LOG = Logger.getInstance(GitSimpleEditorHandler.class);
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public GitSimpleEditorHandler(@NotNull Project project) {
     myProject = project;

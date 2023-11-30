@@ -14,13 +14,14 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.impl.CachedIntentions;
+import com.intellij.codeInsight.intention.impl.IntentionContainer;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspectionBase;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -75,7 +76,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -100,6 +100,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ref.GCWatcher;
@@ -499,7 +500,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
 
   }
-  private static abstract class MyFegnaInspection extends LocalInspectionTool {
+  static abstract class MyFegnaInspection extends LocalInspectionTool {
     @Nls
     @NotNull
     @Override
@@ -1199,7 +1200,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Set<LightweightHint> shown = new ReferenceOpenHashSet<>();
     getProject().getMessageBus().connect().subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
       @Override
-      public void hintShown(@NotNull Project project, @NotNull LightweightHint hint, int flags) {
+      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
         shown.add(hint);
         hint.addHintListener(event -> shown.remove(hint));
       }
@@ -1272,14 +1273,18 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   @Override
   protected void configureByExistingFile(@NotNull VirtualFile virtualFile) {
     super.configureByExistingFile(virtualFile);
-    EditorTracker.getInstance(myProject).setActiveEditors(Collections.singletonList(getEditor()));
+    setActiveEditors(getEditor());
   }
 
   @Override
   protected VirtualFile configureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
     VirtualFile file = super.configureByFiles(rawProjectRoot, vFiles);
-    EditorTracker.getInstance(myProject).setActiveEditors(Collections.singletonList(getEditor()));
+    setActiveEditors(getEditor());
     return file;
+  }
+
+  private void setActiveEditors(Editor @NotNull ... editors) {
+    ((EditorTrackerImpl)EditorTracker.getInstance(myProject)).setActiveEditors(Arrays.asList(editors));
   }
 
   // todo - StoreUtil.saveDocumentsAndProjectsAndApp cannot save in EDT. If it is called in EDT,
@@ -1747,7 +1752,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       Disposer.register(getProject(), () -> EditorFactory.getInstance().releaseEditor(editor2));
       TextEditor textEditor1 = new PsiAwareTextEditorProvider().getTextEditor(editor1);
       TextEditor textEditor2 = new PsiAwareTextEditorProvider().getTextEditor(editor2);
-      EditorTracker.getInstance(myProject).setActiveEditors(Arrays.asList(editor1, editor2));
+      setActiveEditors(editor1, editor2);
 
       myDaemonCodeAnalyzer.runPasses(myFile, editor1.getDocument(), textEditor1, new int[0], false, null);
       myDaemonCodeAnalyzer.runPasses(myFile, editor1.getDocument(), textEditor2, new int[0], false, null);
@@ -1757,7 +1762,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
       applied.clear();
       collected.clear();
-      EditorTracker.getInstance(myProject).setActiveEditors(Arrays.asList(editor1, editor2));
+      setActiveEditors(editor1, editor2);
       type("/* xxx */");
       waitForDaemon();
 
@@ -1802,7 +1807,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         configureByText(PlainTextFileType.INSTANCE, "");
         Editor editor = getEditor();
         EditorTracker editorTracker = EditorTracker.getInstance(myProject);
-        editorTracker.setActiveEditors(Collections.singletonList(editor));
+        setActiveEditors(editor);
         while (HeavyProcessLatch.INSTANCE.isRunning()) {
           UIUtil.dispatchAllInvocationEvents();
         }
@@ -1859,7 +1864,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         configureByText(PlainTextFileType.INSTANCE, "");
         Editor editor = getEditor();
         EditorTracker editorTracker = EditorTracker.getInstance(myProject);
-        editorTracker.setActiveEditors(Collections.singletonList(editor));
+        setActiveEditors(editor);
         while (HeavyProcessLatch.INSTANCE.isRunning()) {
           UIUtil.dispatchAllInvocationEvents();
         }
@@ -1919,7 +1924,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         registerFakePass(applied, collected);
 
         EditorTracker editorTracker = EditorTracker.getInstance(myProject);
-        editorTracker.setActiveEditors(Collections.singletonList(editor));
+        setActiveEditors(editor);
         assertTrue(editorTracker.getActiveEditors().contains(editor));
         assertSame(editor, FileEditorManager.getInstance(myProject).getSelectedTextEditor());
 
@@ -2112,9 +2117,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Set<LightweightHint> visibleHints = new ReferenceOpenHashSet<>();
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
       @Override
-      public void hintShown(Project project,
-                            @NotNull LightweightHint hint,
-                            int flags) {
+      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
         visibleHints.add(hint);
         hint.addHintListener(new HintListener() {
           @Override
@@ -2141,7 +2144,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertEmpty(visibleHints);
     }
     else {
-      CachedIntentions after = lastHintAfterDeletion.getCachedIntentions();
+      IntentionContainer after = lastHintAfterDeletion.getCachedIntentions();
       assertFalse(after.toString(), ContainerUtil.exists(after.getErrorFixes(), e -> e.getText().equals("Initialize variable 'var'")));
     }
   }
@@ -2204,7 +2207,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   private void waitForDaemon() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     long start = System.currentTimeMillis();
     long deadline = start + 60_000;
     while (!daemonIsWorkingOrPending()) {
@@ -2527,14 +2530,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     applied.clear();
 
     myDaemonCodeAnalyzer.mustWaitForSmartMode(false, getTestRootDisposable());
-    DumbServiceImpl.getInstance(myProject).setDumb(true);
-    type(' ');
-    doHighlighting();
+    DumbModeTestUtils.runInDumbModeSynchronously(myProject, () -> {
+      type(' ');
+      doHighlighting();
 
-    TextEditorHighlightingPassFactory f = assertOneElement(collected);
-    assertSame(dumbFac, f);
-    TextEditorHighlightingPassFactory f2 = assertOneElement(applied);
-    assertSame(dumbFac, f2);
+      TextEditorHighlightingPassFactory f = assertOneElement(collected);
+      assertSame(dumbFac, f);
+      TextEditorHighlightingPassFactory f2 = assertOneElement(applied);
+      assertSame(dumbFac, f2);
+    });
   }
 
   public void testIntentionActionIsAvailableMustBeQueriedOnlyOncePerHighlightingSession() {
@@ -2665,9 +2669,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       called.incrementAndGet();
       UIUtil.dispatchAllInvocationEvents();
       long highlighted = Arrays.stream(markupModel.getAllHighlighters())
-        .map(highlighter -> highlighter.getErrorStripeTooltip())
-        .filter(tooltip -> tooltip instanceof HighlightInfo
-                             && MyFastAnnotator.SWEARING.equals(((HighlightInfo)tooltip).getDescription()))
+        .map(highlighter -> HighlightInfo.fromRangeHighlighter(highlighter))
+        .filter(Objects::nonNull)
+        .filter(info -> MyFastAnnotator.SWEARING.equals(info.getDescription()))
         .count();
       if (highlighted != 0) {
         toSleepMs.set(0);
@@ -2684,7 +2688,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       long start = System.currentTimeMillis();
       myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, checkHighlighted);
-      List<RangeHighlighter> errors = ContainerUtil.filter(markupModel.getAllHighlighters(), highlighter -> highlighter.getErrorStripeTooltip() instanceof HighlightInfo && ((HighlightInfo)highlighter.getErrorStripeTooltip()).getSeverity() == HighlightSeverity.ERROR);
+      List<RangeHighlighter> errors = ContainerUtil.filter(markupModel.getAllHighlighters(), highlighter -> HighlightInfo.fromRangeHighlighter(highlighter) != null && HighlightInfo.fromRangeHighlighter(highlighter).getSeverity() == HighlightSeverity.ERROR);
       long elapsed = System.currentTimeMillis() - start;
 
       fail("should have been interrupted. toSleepMs: " + toSleepMs + "; highlights: " + errors + "; called: " + called+"; highlighted in "+elapsed+"ms");
@@ -2925,7 +2929,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
   
   public void testUncommittedByAccidentNonPhysicalDocumentMustNotHangDaemon() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
     assertEmpty(highlightErrors());
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());

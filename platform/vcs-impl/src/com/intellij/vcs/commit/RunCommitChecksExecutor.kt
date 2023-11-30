@@ -24,6 +24,8 @@ internal object RunCommitChecksExecutor : CommitExecutor {
     commitContext.isOnlyRunCommitChecks = true
     return CommitSession.VCS_COMMIT
   }
+
+  override fun supportsPartialCommit(): Boolean = true
 }
 
 internal class RunCommitChecksAction : BaseCommitExecutorAction() {

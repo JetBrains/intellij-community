@@ -11,6 +11,16 @@ public class JunitImplicitUsageProviderTest extends LightJavaCodeInsightFixtureT
     super.setUp();
     JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture);
     myFixture.enableInspections(new UnusedDeclarationInspection(true));
+
+    myFixture.addClass("""
+                         package java.nio.file;
+                         public interface Path {}
+                         """);
+    myFixture.addClass("""
+                         package org.assertj.core.api;
+                         import java.nio.file.Path;
+                         public final class Assertions { public static void assertThat(Path actual) {} }
+                         """);
   }
 
   public void testRecognizeTestMethodInParameterizedClass() {
@@ -38,6 +48,36 @@ public class JunitImplicitUsageProviderTest extends LightJavaCodeInsightFixtureT
       @ParameterizedTest(name = "{0}")
       void byName(String name) {}
       }""");
+    myFixture.testHighlighting(true, false, false);
+  }
+
+  public void testJunitTempDirMetaAnnotation() {
+    myFixture.configureByText("Test.java", """
+      import org.junit.jupiter.api.io.TempDir;
+      import java.lang.annotation.ElementType;
+      import java.lang.annotation.Retention;
+      import java.lang.annotation.RetentionPolicy;
+      import java.lang.annotation.Target;
+      import java.nio.file.Path;
+            
+      import static org.assertj.core.api.Assertions.assertThat;
+            
+      class Test {
+          @Target({ ElementType.FIELD, ElementType.PARAMETER })
+          @Retention(RetentionPolicy.RUNTIME)
+          @TempDir
+          @interface CustomTempDir {
+          }
+          
+          @CustomTempDir
+          private Path tempDir;
+            
+          @org.junit.jupiter.api.Test
+          void test() {
+              assertThat(tempDir);
+          }
+      }
+      """);
     myFixture.testHighlighting(true, false, false);
   }
 }

@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-public class InspectionMetaDataDialog extends DialogWrapper {
+public final class InspectionMetaDataDialog extends DialogWrapper {
   private final Pattern mySuppressIdPattern = Pattern.compile(LocalInspectionTool.VALID_ID_PATTERN);
 
   private final Function<String, @Nullable @NlsContexts.DialogMessage String> myNameValidator;

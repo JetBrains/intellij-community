@@ -46,6 +46,11 @@ final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
   }
 
   @Override
+  public boolean acceptRequiresReadAction() {
+    return false;
+  }
+
+  @Override
   @NotNull
   public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     if (IfsUtil.isSVG(file)) {

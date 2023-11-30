@@ -52,3 +52,9 @@ fun KtReferenceExpression.getImportableTargets(bindingContext: BindingContext): 
         ?: getReferenceTargets(bindingContext)
     return targets.map { it.getImportableDescriptor() }.toSet()
 }
+
+fun ClassifierDescriptor.getConstructors(): Collection<ConstructorDescriptor> = when (this) {
+    is ClassDescriptor -> constructors
+    is TypeAliasDescriptor -> constructors
+    else -> emptyList()
+}

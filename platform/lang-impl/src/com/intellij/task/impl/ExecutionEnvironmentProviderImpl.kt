@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task.impl
 
 import com.intellij.execution.ExecutionTarget
@@ -17,7 +17,7 @@ import com.intellij.task.ProjectTaskRunner
 /**
  * @author Vladislav.Soroka
  */
-class ExecutionEnvironmentProviderImpl : ExecutionEnvironmentProvider {
+private class ExecutionEnvironmentProviderImpl : ExecutionEnvironmentProvider {
   override fun createExecutionEnvironment(project: Project,
                                           runProfile: RunProfile,
                                           executor: Executor,
@@ -29,7 +29,7 @@ class ExecutionEnvironmentProviderImpl : ExecutionEnvironmentProvider {
       ExecuteRunConfigurationTaskImpl(runProfile, target, runnerSettings, configurationSettings, settings)
     val environment = ProjectTaskRunner.EP_NAME.computeSafeIfAny {
       try {
-        if (it.canRun(project, runTask)) {
+        if (it.canRun(project, runTask, null)) {
           return@computeSafeIfAny it.createExecutionEnvironment(project, runTask, executor)
         }
       }

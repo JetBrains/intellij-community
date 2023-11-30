@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,7 +45,7 @@ public final class LookupItemUtil {
     if (object instanceof PsiElement) {
       s = PsiUtilCore.getName((PsiElement)object);
     }
-    TailType tailType = TailType.NONE;
+    TailType tailType = TailTypes.noneType();
     if (object instanceof PsiMetaData) {
       s = ((PsiMetaData)object).getName();
     }

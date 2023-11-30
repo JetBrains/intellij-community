@@ -1,0 +1,19 @@
+<idea-plugin package="com.intellij.platform.ml.embeddings">
+  <resource-bundle>messages.EmbeddingsBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup id="Semantic search" displayType="STICKY_BALLOON"
+                       bundle="messages.EmbeddingsBundle"
+                       key="search.everywhere.ml.semantic.notification.group.name"/>
+
+    <registryKey defaultValue="0.0.3"
+                 description="Embeddings model version"
+                 key="search.everywhere.ml.semantic.model.version"/>
+
+    <registryKey
+      defaultValue="https://packages.jetbrains.team/maven/p/ml-search-everywhere/local-models/org/jetbrains/intellij/searcheverywhereMl/semantics/semantic-text-search/%MODEL_VERSION%/semantic-text-search-%MODEL_VERSION%.jar"
+      description="Semantic search artifacts template link"
+      key="search.everywhere.ml.semantic.model.artifacts.link"/>
+  </extensions>
+
+</idea-plugin>

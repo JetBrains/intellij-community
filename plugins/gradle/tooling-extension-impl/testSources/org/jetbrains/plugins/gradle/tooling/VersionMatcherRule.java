@@ -7,9 +7,9 @@ import org.hamcrest.CustomMatcher;
 import org.hamcrest.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportDefaultDataKt;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
-import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
@@ -22,9 +22,7 @@ public class VersionMatcherRule extends TestWatcher {
    * - Idea_Tests_BuildToolsTests<br/>
    * - IntelliJ TeamCity configuration<br/>
    * - {@link VersionMatcherRule#BASE_GRADLE_VERSION}<br/>
-   * - {@link GradleJvmSupportMatrices#SUPPORTED_JAVA_VERSIONS}<br/>
-   * - {@link GradleJvmSupportMatrices#SUPPORTED_GRADLE_VERSIONS}<br/>
-   * - {@link GradleJvmSupportMatrices#COMPATIBILITY}
+   * - {@link GradleJvmSupportDefaultDataKt#getDEFAULT_DATA()}<br/>
    */
   public static final String[] SUPPORTED_GRADLE_VERSIONS = {
     "3.0", /*"3.1", "3.2", "3.3", "3.4",*/ "3.5",
@@ -32,9 +30,9 @@ public class VersionMatcherRule extends TestWatcher {
     "5.0", /*"5.1", "5.2", "5.3.1", "5.4.1", "5.5.1",*/ "5.6.2",
     "6.0", /* "6.0.1",  "6.1", "6.2", "6.3", "6.4", "6.8.3", */ "6.9",
     "7.0.2", /* "7.1", "7.2", "7.4", "7.5.1", */ "7.6",
-    "8.0", "8.2"
+    "8.0", /*"8.2", "8.3", */ "8.4"
   };
-  public static final String BASE_GRADLE_VERSION = "8.2-rc-1";
+  public static final String BASE_GRADLE_VERSION = "8.4";
 
   @Nullable
   private CustomMatcher<String> myMatcher;

@@ -2,8 +2,10 @@
 package com.intellij.platform.workspace.storage.tests.containers
 
 import com.intellij.platform.workspace.storage.impl.containers.MutableNonNegativeIntIntMultiMap
-import org.junit.Assert.*
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class TestNonNegativeIntIntMultiMap {
   @Test
@@ -21,7 +23,7 @@ class TestNonNegativeIntIntMultiMap {
     multimap.putAll(1, intArrayOf(2))
     multimap.putAll(1, intArrayOf(3))
     multimap.putAll(1, intArrayOf(4))
-    assertArrayEquals(intArrayOf(2, 3, 4), multimap[1].toArray())
+    Assertions.assertArrayEquals(intArrayOf(2, 3, 4), multimap[1].toArray())
     multimap.remove(1)
     assertTrue(multimap[1].isEmpty())
   }
@@ -32,11 +34,11 @@ class TestNonNegativeIntIntMultiMap {
     multimap.putAll(1, intArrayOf(2))
     multimap.putAll(1, intArrayOf(3))
     multimap.putAll(1, intArrayOf(4))
-    assertArrayEquals(intArrayOf(2, 3, 4), multimap[1].toArray())
+    Assertions.assertArrayEquals(intArrayOf(2, 3, 4), multimap[1].toArray())
     multimap.remove(1, 3)
-    assertArrayEquals(intArrayOf(2, 4), multimap[1].toArray())
+    Assertions.assertArrayEquals(intArrayOf(2, 4), multimap[1].toArray())
     multimap.remove(1, 2)
-    assertArrayEquals(intArrayOf(4), multimap[1].toArray())
+    Assertions.assertArrayEquals(intArrayOf(4), multimap[1].toArray())
     multimap.remove(1, 4)
     assertTrue(multimap[1].isEmpty())
   }

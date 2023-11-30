@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -11,9 +11,11 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.uast.*;
 
-public class PresentationAnnotationInspection extends DevKitUastInspectionBase {
+@VisibleForTesting
+public final class PresentationAnnotationInspection extends DevKitUastInspectionBase {
 
   public PresentationAnnotationInspection() {
     super(UClass.class);

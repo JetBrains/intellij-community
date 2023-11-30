@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.providers.FileTargetContext.toTargetContexts;
 import static java.util.Collections.*;
@@ -60,7 +58,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
 
   private final boolean myEndingSlashNotAllowed;
   private boolean myEmptyPathAllowed;
-  @Nullable private Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
+  private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
   private FileType @Nullable [] mySuitableFileTypes;
 
   public FileReferenceSet(@NotNull String str,
@@ -166,7 +164,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     this(str, element, startInElement, provider, isCaseSensitive, endingSlashNotAllowed, null);
   }
 
-  public FileReferenceSet(@NotNull final PsiElement element) {
+  public FileReferenceSet(final @NotNull PsiElement element) {
     myElement = element;
     TextRange range = ElementManipulators.getValueTextRange(element);
     myStartInElement = range.getStartOffset();
@@ -178,8 +176,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     reparse();
   }
 
-  @NotNull
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
@@ -199,8 +196,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return myStartInElement;
   }
 
-  @Nullable
-  public FileReference createFileReference(final TextRange range, final int index, final String text) {
+  public @Nullable FileReference createFileReference(final TextRange range, final int index, final String text) {
     return new FileReference(this, range, index, text);
   }
 
@@ -298,24 +294,16 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return false;
   }
 
-  @NotNull
-  public Collection<PsiFileSystemItem> getDefaultContexts() {
+  public @NotNull Collection<PsiFileSystemItem> getDefaultContexts() {
     Collection<PsiFileSystemItem> result = myDefaultContexts;
     if (result == null) {
       result = computeDefaultContexts();
-      ModelBranch branch = ModelBranch.getPsiBranch(getElement());
-      if (branch != null) {
-        result = result.stream()
-          .map(item -> ModelBranch.getPsiBranch(item) == branch ? item : branch.obtainPsiCopy(item))
-          .collect(Collectors.toCollection(LinkedHashSet::new));
-      }
       myDefaultContexts = result;
     }
     return result;
   }
 
-  @NotNull
-  public Collection<PsiFileSystemItem> computeDefaultContexts() {
+  public @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
     final PsiFile file = getContainingFile();
     if (file == null) return emptyList();
 
@@ -331,8 +319,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return getContextByFile(file);
   }
 
-  @Nullable
-  protected PsiFile getContainingFile() {
+  protected @Nullable PsiFile getContainingFile() {
     PsiFile cf = myElement.getContainingFile();
     PsiFile file = InjectedLanguageManager.getInstance(cf.getProject()).getTopLevelFile(cf);
     if (file != null) return file.getOriginalFile();
@@ -340,8 +327,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return null;
   }
 
-  @NotNull
-  private Collection<PsiFileSystemItem> getContextByFile(@NotNull PsiFile file) {
+  private @NotNull Collection<PsiFileSystemItem> getContextByFile(@NotNull PsiFile file) {
     final PsiElement context = file.getContext();
     if (context != null) file = context.getContainingFile();
 
@@ -351,8 +337,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return getContextByFileSystemItem(file.getOriginalFile());
   }
 
-  @NotNull
-  protected Collection<PsiFileSystemItem> getContextByFileSystemItem(@NotNull PsiFileSystemItem file) {
+  protected @NotNull Collection<PsiFileSystemItem> getContextByFileSystemItem(@NotNull PsiFileSystemItem file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null) {
       final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
@@ -385,8 +370,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return emptyList();
   }
 
-  @Nullable
-  private Collection<PsiFileSystemItem> getIncludingFileContexts(@NotNull PsiFile file) {
+  private @Nullable Collection<PsiFileSystemItem> getIncludingFileContexts(@NotNull PsiFile file) {
     if (useIncludingFileAsContext()) {
       FileContextProvider contextProvider = FileContextProvider.getProvider(file);
       if (contextProvider != null) {
@@ -403,8 +387,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return null;
   }
 
-  @NotNull
-  protected Collection<PsiFileSystemItem> getParentDirectoryContext() {
+  protected @NotNull Collection<PsiFileSystemItem> getParentDirectoryContext() {
     PsiFile file = getContainingFile();
     VirtualFile virtualFile = file == null ? null : file.getOriginalFile().getVirtualFile();
     final VirtualFile parent = virtualFile == null ? null : virtualFile.getParent();
@@ -439,8 +422,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     });
   }
 
-  @Nullable
-  private Collection<PsiFileSystemItem> getCustomizationContexts(PsiFile file) {
+  private @Nullable Collection<PsiFileSystemItem> getCustomizationContexts(PsiFile file) {
     if (myOptions != null) {
       Function<PsiFile, Collection<PsiFileSystemItem>> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
       if (value != null) {
@@ -458,8 +440,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return null;
   }
 
-  @Nullable
-  private Collection<FileTargetContext> getTargetCustomizationContexts(@NotNull PsiFile file) {
+  private @Nullable Collection<FileTargetContext> getTargetCustomizationContexts(@NotNull PsiFile file) {
     if (myOptions != null) {
       Function<PsiFile, Collection<PsiFileSystemItem>> value = DEFAULT_PATH_EVALUATOR_OPTION.getValue(myOptions);
       if (value != null) {
@@ -478,8 +459,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return null;
   }
 
-  @NotNull
-  private Collection<FileTargetContext> getTargetContextByFile(@NotNull PsiFile file) {
+  private @NotNull Collection<FileTargetContext> getTargetContextByFile(@NotNull PsiFile file) {
     boolean absolutePathReference = isAbsolutePathReference();
 
     if (!absolutePathReference) {
@@ -545,19 +525,16 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return true;
   }
 
-  @Nullable
-  public PsiFileSystemItem resolve() {
+  public @Nullable PsiFileSystemItem resolve() {
     final FileReference lastReference = getLastReference();
     return lastReference == null ? null : lastReference.resolve();
   }
 
-  @Nullable
-  public FileReference getLastReference() {
+  public @Nullable FileReference getLastReference() {
     return myReferences == null || myReferences.length == 0 ? null : myReferences[myReferences.length - 1];
   }
 
-  @NotNull
-  public static Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(@NotNull final PsiFile file) {
+  public static @NotNull Collection<PsiFileSystemItem> getAbsoluteTopLevelDirLocations(final @NotNull PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return emptyList();
 
@@ -586,9 +563,8 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return new ArrayList<>(result);
   }
 
-  @NotNull
-  private static Collection<FileTargetContext> getTargetAbsoluteTopLevelContexts(@NotNull FileReferenceSetParameters parameters,
-                                                                                 @NotNull PsiFile file) {
+  private static @NotNull Collection<FileTargetContext> getTargetAbsoluteTopLevelContexts(@NotNull FileReferenceSetParameters parameters,
+                                                                                          @NotNull PsiFile file) {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return emptyList();
 
@@ -610,13 +586,11 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return new ArrayList<>(result);
   }
 
-  @NotNull
-  protected Collection<PsiFileSystemItem> toFileSystemItems(VirtualFile... files) {
+  protected @NotNull Collection<PsiFileSystemItem> toFileSystemItems(VirtualFile... files) {
     return toFileSystemItems(Arrays.asList(files));
   }
 
-  @NotNull
-  protected Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<? extends VirtualFile> files) {
+  protected @NotNull Collection<PsiFileSystemItem> toFileSystemItems(@NotNull Collection<? extends VirtualFile> files) {
     final PsiManager manager = getElement().getManager();
     return ContainerUtil.mapNotNull(files, file -> file != null && file.isValid() ? manager.findDirectory(file) : null);
   }
@@ -669,8 +643,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
 
   private static class AbsoluteTopLevelEvaluator implements Function<PsiFile, Collection<PsiFileSystemItem>>, TargetContextEvaluator {
     @Override
-    @NotNull
-    public Collection<FileTargetContext> getTargetContexts(@NotNull FileReferenceSetParameters parameters, @NotNull PsiFile file) {
+    public @NotNull Collection<FileTargetContext> getTargetContexts(@NotNull FileReferenceSetParameters parameters, @NotNull PsiFile file) {
       return getTargetAbsoluteTopLevelContexts(parameters, file);
     }
 

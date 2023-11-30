@@ -157,7 +157,7 @@ public abstract class CreateClassFix {
       }
 
       @Nullable
-      private PsiElement resolveQualifier(@NotNull PsiElement qualifier) {
+      private static PsiElement resolveQualifier(@NotNull PsiElement qualifier) {
         if (qualifier instanceof GrCodeReferenceElement) {
           return ((GrCodeReferenceElement)qualifier).resolve();
         }

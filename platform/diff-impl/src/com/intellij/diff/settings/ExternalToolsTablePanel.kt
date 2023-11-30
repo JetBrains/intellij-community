@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.ui.ComboBoxTableRenderer
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
@@ -132,7 +133,7 @@ internal class ExternalToolsTablePanel(private val models: ExternalToolsModels) 
                                                  row: Int, column: Int): Component {
         if ((value as String) == ExternalToolConfiguration.DEFAULT_TOOL_NAME) {
           return SimpleColoredComponent().apply {
-            append(value, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES) // NON-NLS
+            append(DiffBundle.message("settings.external.diff.table.filetype.default"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
           }
         }
 
@@ -176,7 +177,7 @@ internal class ExternalToolsTablePanel(private val models: ExternalToolsModels) 
 
     private fun createComboBoxRendererAndEditor(): ComboBoxTableRenderer<String> {
       val values = treeModel.collectTools(externalToolGroup).toTypedArray()
-      return ComboBoxTableRenderer(values).withClickCount(1)
+      return ExternalToolNameCellComboBox(values).withClickCount(1)
     }
 
     private fun DefaultTreeModel.collectTools(externalToolGroup: ExternalToolGroup): List<String> {
@@ -193,6 +194,13 @@ internal class ExternalToolsTablePanel(private val models: ExternalToolsModels) 
       }
 
       return tools
+    }
+  }
+
+  private class ExternalToolNameCellComboBox(values: Array<@NlsSafe String>) : ComboBoxTableRenderer<String>(values) {
+    override fun getTextFor(value: @NlsSafe String): String {
+      if (value == ExternalToolConfiguration.BUILTIN_TOOL) return DiffBundle.message("settings.external.diff.table.tool.default")
+      return super.getTextFor(value)
     }
   }
 }

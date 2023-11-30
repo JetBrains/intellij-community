@@ -61,7 +61,7 @@ class MavenRemoteRepositoriesConfigurator : MavenImporter("", ""),
     return mavenProjects.flatMap { mavenProject ->
       mavenProject.remoteRepositories.asSequence().map { repo ->
         RemoteRepositoryDescription(repo.id, repo.name ?: repo.id, mirror(repo.id, repo.url, settingsFile)).also {
-          LOG.debug("Imported remote repository from ${mavenProject.mavenId}: ${it.id}/${it.name} at ${it.url}")
+          LOG.trace("Imported remote repository from ${mavenProject.mavenId}: ${it.id}/${it.name} at ${it.url}")
         }
       }
     }.toHashSet()

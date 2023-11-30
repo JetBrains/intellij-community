@@ -1,13 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.ide;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
@@ -23,10 +21,13 @@ import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.PsiUtil;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastVisibility;
 
 import java.util.Collection;
 
-public class PluginDescriptorUseScopeEnlarger extends UseScopeEnlarger {
+final class PluginDescriptorUseScopeEnlarger extends UseScopeEnlarger {
 
   @Override
   public SearchScope getAdditionalUseScope(@NotNull PsiElement element) {
@@ -42,12 +43,17 @@ public class PluginDescriptorUseScopeEnlarger extends UseScopeEnlarger {
       }
     }
 
-    if (element instanceof PsiClass &&
-        PsiUtil.isIdeaProject(element.getProject()) &&
-        (((PsiClass)element).hasModifierProperty(PsiModifier.PUBLIC) ||
-         ((PsiClass)element).hasModifierProperty(PsiModifier.PACKAGE_LOCAL))) {
-      return getAllPluginDescriptorFilesSearchScope(element);
+    if (PsiUtil.isIdeaProject(element.getProject())) {
+      // we use UAST to properly handle both Java and Kotlin classes
+      var uClass = UastContextKt.toUElement(element, UClass.class);
+
+      if (uClass != null &&
+          (uClass.getVisibility() == UastVisibility.PUBLIC ||
+           uClass.getVisibility() == UastVisibility.PACKAGE_LOCAL)) {
+        return getAllPluginDescriptorFilesSearchScope(element);
+      }
     }
+
     return null;
   }
 

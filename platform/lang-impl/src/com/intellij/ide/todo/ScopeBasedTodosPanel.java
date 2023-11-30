@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.todo;
 
@@ -16,7 +16,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class ScopeBasedTodosPanel extends TodoPanel {
+public final class ScopeBasedTodosPanel extends TodoPanel {
 
   private final Alarm myAlarm;
   private ScopeChooserCombo myScopes;

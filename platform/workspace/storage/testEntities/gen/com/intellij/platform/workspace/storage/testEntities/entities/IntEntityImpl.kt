@@ -11,22 +11,22 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class IntEntityImpl(val dataSource: IntEntityData) : IntEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class IntEntityImpl(private val dataSource: IntEntityData) : IntEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -39,6 +39,7 @@ open class IntEntityImpl(val dataSource: IntEntityData) : IntEntity, WorkspaceEn
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: IntEntityData?) : ModifiableWorkspaceEntityBase<IntEntity, IntEntityData>(result), IntEntity.Builder {
     constructor() : this(IntEntityData())
@@ -67,7 +68,7 @@ open class IntEntityImpl(val dataSource: IntEntityData) : IntEntity, WorkspaceEn
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -129,6 +130,11 @@ class IntEntityData : WorkspaceEntityData<IntEntity>() {
     }
   }
 
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.IntEntity") as EntityMetadata
+  }
+
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return IntEntity::class.java
   }
@@ -180,9 +186,5 @@ class IntEntityData : WorkspaceEntityData<IntEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + data.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

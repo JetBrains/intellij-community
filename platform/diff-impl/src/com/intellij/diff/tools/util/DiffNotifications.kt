@@ -7,7 +7,6 @@ import com.intellij.diff.util.SyncHeightComponent
 import com.intellij.diff.util.TextDiffType
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.ui.EditorNotificationPanel
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.JPanel
@@ -17,12 +16,14 @@ object DiffNotifications {
 
   @JvmStatic
   fun createInsertedContent(): JPanel {
-    return createNotification(DiffBundle.message("notification.status.content.added"), TextDiffType.INSERTED.getColor(null), status = EditorNotificationPanel.Status.Info)
+    return createNotification(DiffBundle.message("notification.status.content.added"), TextDiffType.INSERTED.getColor(null),
+                              status = EditorNotificationPanel.Status.Info)
   }
 
   @JvmStatic
   fun createRemovedContent(): JPanel {
-    return createNotification(DiffBundle.message("notification.status.content.removed"), TextDiffType.DELETED.getColor(null), status = EditorNotificationPanel.Status.Info)
+    return createNotification(DiffBundle.message("notification.status.content.removed"), TextDiffType.DELETED.getColor(null),
+                              status = EditorNotificationPanel.Status.Info)
   }
 
   @JvmStatic
@@ -80,7 +81,6 @@ object DiffNotifications {
   @JvmStatic
   fun hideNotification(panel: EditorNotificationPanel) {
     panel.isVisible = false
-    val syncComponent = UIUtil.getParentOfType(SyncHeightComponent::class.java, panel)
-    syncComponent?.revalidateAll()
+    SyncHeightComponent.invalidateByChild(panel)
   }
 }

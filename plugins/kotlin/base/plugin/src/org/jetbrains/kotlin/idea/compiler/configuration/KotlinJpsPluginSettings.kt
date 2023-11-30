@@ -55,7 +55,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         val jpsMaximumSupportedVersion: KotlinVersion = LanguageVersion.values().last().toKotlinVersion()
 
         fun validateSettings(project: Project) {
-            val jpsPluginSettings = project.service<KotlinJpsPluginSettings>()
+            val jpsPluginSettings = getInstance(project)
 
             if (jpsPluginSettings.settings.version.isEmpty() && bundledVersion.buildNumber == null) {
                 // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds

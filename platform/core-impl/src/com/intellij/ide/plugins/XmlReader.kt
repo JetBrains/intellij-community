@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
@@ -162,12 +162,20 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
 /**
  * Keep in sync with KotlinPluginUtil.KNOWN_KOTLIN_PLUGIN_IDS
  */
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "SSBasedInspection")
-private val KNOWN_KOTLIN_PLUGIN_IDS = HashSet(Arrays.asList(
+private val KNOWN_KOTLIN_PLUGIN_IDS = hashSetOf(
   "org.jetbrains.kotlin",
   "com.intellij.appcode.kmm",
   "org.jetbrains.kotlin.native.appcode"
-))
+)
+
+private val K2_ALLOWED_PLUGIN_IDS = hashSetOf(
+  *KNOWN_KOTLIN_PLUGIN_IDS.toTypedArray(),
+  "fleet.backend.mercury",
+  "fleet.backend.mercury.kotlin",
+  "org.jetbrains.android",
+  "androidx.compose.plugins.idea",
+  "org.jetbrains.compose.desktop.ide",
+)
 
 private fun readRootElementChild(reader: XMLStreamReader2,
                                  descriptor: RawPluginDescriptor,
@@ -348,11 +356,11 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
       ActionDescriptorName.group -> {
         var className = element.attributes.get("class")
         if (className.isNullOrEmpty()) {
-          className = if ("true" == element.attributes.get("compact")) {
+          className = if (element.attributes.get("compact") == "true") {
             "com.intellij.openapi.actionSystem.DefaultCompactActionGroup"
           }
           else {
-            "com.intellij.openapi.actionSystem.DefaultActionGroup"
+            null
           }
         }
 
@@ -553,6 +561,7 @@ private fun readExtensionPoints(reader: XMLStreamReader2,
     var beanClass: String? = null
     var `interface`: String? = null
     var isDynamic = false
+    var hasAttributes = false
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         "area" -> area = getNullifiedAttributeValue(reader, i)
@@ -564,6 +573,7 @@ private fun readExtensionPoints(reader: XMLStreamReader2,
         "interface" -> `interface` = getNullifiedAttributeValue(reader, i)
 
         "dynamic" -> isDynamic = reader.getAttributeAsBoolean(i)
+        "hasAttributes" -> hasAttributes = reader.getAttributeAsBoolean(i)
       }
     }
 
@@ -597,7 +607,8 @@ private fun readExtensionPoints(reader: XMLStreamReader2,
       isNameQualified = qualifiedName != null,
       className = `interface` ?: beanClass!!,
       isBean = `interface` == null,
-      isDynamic = isDynamic
+      hasAttributes = hasAttributes,
+      isDynamic = isDynamic,
     ))
   }
 }
@@ -650,6 +661,7 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
           "controller" -> client = ClientKind.CONTROLLER
           "owner" -> client = ClientKind.OWNER
           "remote" -> client = ClientKind.REMOTE
+          "frontend" -> client = ClientKind.FRONTEND
           "all" -> client = ClientKind.ALL
           else -> LOG.error("Unknown client value: ${reader.getAttributeValue(i)} at ${reader.location}")
         }
@@ -832,9 +844,9 @@ private fun findAttributeValue(reader: XMLStreamReader2, name: String): String? 
   return null
 }
 
-private fun getNullifiedContent(reader: XMLStreamReader2): String? = reader.elementText.takeIf { !it.isEmpty() }
+private fun getNullifiedContent(reader: XMLStreamReader2): String? = reader.elementText.trim().takeIf { !it.isEmpty() }
 
-private fun getNullifiedAttributeValue(reader: XMLStreamReader2, i: Int) = reader.getAttributeValue(i).takeIf { !it.isEmpty() }
+private fun getNullifiedAttributeValue(reader: XMLStreamReader2, i: Int) = reader.getAttributeValue(i).trim().takeIf { !it.isEmpty() }
 
 interface ReadModuleContext {
   val interner: XmlInterner
@@ -923,7 +935,7 @@ private fun checkConditionalIncludeIsSupported(attribute: String, pluginDescript
   val vendor = pluginDescriptor.vendor
   if (vendor != null && (vendor.contains("Google") || vendor.contains("Android"))) return
   if (PluginManagerCore.isUnitTestMode) return
-  if (pluginDescriptor.id !in KNOWN_KOTLIN_PLUGIN_IDS) {
+  if (pluginDescriptor.id !in K2_ALLOWED_PLUGIN_IDS) {
     throw IllegalArgumentException("$attribute of 'include' is not supported")
   }
 }
@@ -931,7 +943,7 @@ private fun checkConditionalIncludeIsSupported(attribute: String, pluginDescript
 private var dateTimeFormatter: DateTimeFormatter? = null
 
 private val LOG: Logger
-  get() = PluginManagerCore.getLogger()
+  get() = PluginManagerCore.logger
 
 private fun parseReleaseDate(dateString: String): LocalDate? {
   if (dateString.isEmpty() || dateString == "__DATE__") {
@@ -1000,7 +1012,7 @@ private fun readOs(value: String): ExtensionDescriptor.Os {
 }
 
 private inline fun XMLStreamReader.consumeChildElements(crossinline consumer: (name: String) -> Unit) {
-  // cursor must be at the start of the parent element
+  // the cursor must be at the start of the parent element
   assert(isStartElement)
 
   var depth = 1

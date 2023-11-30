@@ -3,6 +3,8 @@
 package com.intellij.platform.impl.toolkit
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.ClientSessionsManager
 import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.PlatformGraphicsInfo
 import sun.java2d.SunGraphicsEnvironment
@@ -26,8 +28,11 @@ class IdeGraphicsEnvironment: SunGraphicsEnvironment() {
       if (application == null) {
         return HeadlessDummyGraphicsEnvironment.instance
       }
+      val session = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).firstOrNull()
+                    ?: ClientSessionsManager.getAppSessions(ClientKind.LOCAL).firstOrNull()
+                    ?: return HeadlessDummyGraphicsEnvironment.instance
       val client = try {
-        ClientGraphicsEnvironment.getInstance()
+        ClientGraphicsEnvironment.getInstance(session)
       }
       catch (ex: IllegalStateException) {   // service could be not loaded yet
         HeadlessDummyGraphicsEnvironment.instance

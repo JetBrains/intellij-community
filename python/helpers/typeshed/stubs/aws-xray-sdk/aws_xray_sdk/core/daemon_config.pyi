@@ -1,10 +1,8 @@
-from .exceptions.exceptions import InvalidDaemonAddressException as InvalidDaemonAddressException
-
 DAEMON_ADDRESS_KEY: str
 DEFAULT_ADDRESS: str
 
 class DaemonConfig:
-    def __init__(self, daemon_address=...) -> None: ...
+    def __init__(self, daemon_address="127.0.0.1:2000") -> None: ...
     @property
     def udp_ip(self): ...
     @property

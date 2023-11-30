@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.CancellablePromise
@@ -37,7 +38,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   private var previousStatus: Status? = null
 
   init {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     tree.showsRootHandles = false
     project.messageBus.connect(this)
       .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
@@ -82,15 +83,15 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
    * then this view should ignore such event
    */
   private fun updateCurrentFileIfLocalId() {
-    if (ClientId.current == myClientId) {
+    if (ClientId.current == session.clientId) {
       updateSelectedFile()
     }
   }
   
-  fun updateSelectedFile(): CancellablePromise<Void> {
+  fun updateSelectedFile(): CancellablePromise<*> {
     return ReadAction.nonBlocking {
       if (!myDisposed) {
-        ClientId.withClientId(myClientId) {
+        ClientId.withClientId(session.clientId) {
           ApplicationManager.getApplication().assertIsNonDispatchThread()
           ApplicationManager.getApplication().assertReadAccessAllowed()
           setCurrentFile(findSelectedFile())
@@ -99,8 +100,8 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     }.submit(AppExecutorUtil.getAppExecutorService())
   }
 
-  internal val currentRoot: HighlightingFileRoot?
-    get() = treeModel.root as? HighlightingFileRoot
+  internal val currentRoot: ProblemsViewHighlightingFileRoot?
+    get() = treeModel.root as? ProblemsViewHighlightingFileRoot
 
   private fun getCurrentDocument(): Document? = currentRoot?.document
 
@@ -112,7 +113,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     else {
       val (file, document) = pair
       if (currentRoot?.file == file) return
-      treeModel.root = HighlightingFileRoot(this, file, document)
+      treeModel.root = ProblemsViewHighlightingFileRoot(this, file, document)
       TreeUtil.promiseSelectFirstLeaf(tree)
     }
     powerSaveStateChanged()
@@ -147,7 +148,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
 
   private fun updateStatus() {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    val status = ClientId.withClientId(myClientId) { ReadAction.compute(ThrowableComputable { getCurrentStatus() })}
+    val status = ClientId.withClientId(session.clientId) { ReadAction.compute(ThrowableComputable { getCurrentStatus() })}
     if (previousStatus != status) {
       ApplicationManager.getApplication().invokeLater {
         if (!myDisposed) {

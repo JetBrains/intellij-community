@@ -114,7 +114,7 @@ class GHPRTimelineItemComponentFactory(private val project: Project,
         val builder = HtmlBuilder()
           .append(HtmlChunk.p()
                     .children(
-                      HtmlChunk.link("$COMMIT_HREF_PREFIX${it.abbreviatedOid}", it.abbreviatedOid),
+                      HtmlChunk.link("$COMMIT_HREF_PREFIX${it.oid}", it.abbreviatedOid),
                       HtmlChunk.nbsp(),
                       HtmlChunk.raw(it.messageHeadlineHTML)
                     ))

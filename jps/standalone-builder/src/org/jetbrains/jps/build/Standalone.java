@@ -186,12 +186,20 @@ public class Standalone {
                               @NotNull Map<String, String> buildParameters,
                               @NotNull MessageHandler messageHandler, @NotNull List<TargetTypeBuildScope> scopes,
                               boolean includeDependenciesToScope) throws Exception {
+    runBuild(loader, dataStorageRoot, buildParameters, messageHandler, scopes, includeDependenciesToScope, CanceledStatus.NULL);
+  }
+
+  public static void runBuild(@NotNull JpsModelLoader loader, @NotNull File dataStorageRoot,
+                              @NotNull Map<String, String> buildParameters,
+                              @NotNull MessageHandler messageHandler, @NotNull List<TargetTypeBuildScope> scopes,
+                              boolean includeDependenciesToScope,
+                              @NotNull CanceledStatus canceledStatus) throws Exception {
     final LowMemoryWatcherManager memWatcher = new LowMemoryWatcherManager(SharedThreadPool.getInstance());
     final BuildRunner buildRunner = new BuildRunner(loader);
     buildRunner.setBuilderParams(buildParameters);
     ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
     try {
-      buildRunner.runBuild(descriptor, CanceledStatus.NULL, messageHandler, BuildType.BUILD, scopes, includeDependenciesToScope);
+      buildRunner.runBuild(descriptor, canceledStatus, messageHandler, BuildType.BUILD, scopes, includeDependenciesToScope);
     }
     finally {
       descriptor.release();

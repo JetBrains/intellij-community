@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -18,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.stats.completion.CompletionStatsPolicy
 import com.intellij.stats.completion.sender.isCompletionLogsSendAllowed
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlin.random.Random
 
 class CompletionLoggerInitializer : LookupTracker() {
@@ -27,9 +29,7 @@ class CompletionLoggerInitializer : LookupTracker() {
 
     private fun shouldInitialize(): Boolean {
       val app = ApplicationManager.getApplication()
-      return app.isEAP && StatisticsUploadAssistant.isSendAllowed()
-             || app.isHeadlessEnvironment && java.lang.Boolean.getBoolean(COMPLETION_EVALUATION_HEADLESS)
-             || app.isUnitTestMode
+      return app.isEAP && StatisticsUploadAssistant.isSendAllowed() || app.isHeadlessEvaluation() || app.isUnitTestMode
     }
 
     private val LOGGED_SESSIONS_RATIO_LANGUAGE: Map<String, Double> = mapOf(
@@ -49,18 +49,21 @@ class CompletionLoggerInitializer : LookupTracker() {
     private val LOGGED_SESSIONS_RATIO_FILE_TYPE: Map<String, Double> = mapOf(
       "ipynb" to 1.0,
     )
+
+    private fun Application.isHeadlessEvaluation(): Boolean = isHeadlessEnvironment &&
+                                                              java.lang.Boolean.getBoolean(COMPLETION_EVALUATION_HEADLESS)
   }
 
   private val actionListener: LookupActionsListener by lazy { LookupActionsListener.getInstance() }
 
   override fun lookupClosed() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     actionListener.listener = CompletionPopupListener.DISABLED
   }
 
   override fun lookupCreated(lookup: LookupImpl,
                              storage: MutableLookupStorage) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (!shouldInitialize()) return
 
     val experimentInfo = ExperimentStatus.getInstance().forLanguage(storage.language)
@@ -93,6 +96,7 @@ class CompletionLoggerInitializer : LookupTracker() {
 
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode || experimentInfo.shouldLogSessions(lookup.project)) return true
+    if (application.isHeadlessEvaluation()) return true
 
     if (!isCompletionLogsSendAllowed()) {
       return false

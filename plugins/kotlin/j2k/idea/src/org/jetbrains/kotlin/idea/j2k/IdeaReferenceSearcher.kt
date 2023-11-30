@@ -15,10 +15,9 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
-import java.util.*
 
 object IdeaReferenceSearcher : ReferenceSearcher {
-    override fun findLocalUsages(element: PsiElement, scope: PsiElement) =
+    override fun findLocalUsages(element: PsiElement, scope: PsiElement): Collection<PsiReference> =
         ReferencesSearch.search(element, LocalSearchScope(scope)).findAll()
 
     override fun hasInheritors(`class`: PsiClass) = ClassInheritorsSearch.search(`class`, false).any()

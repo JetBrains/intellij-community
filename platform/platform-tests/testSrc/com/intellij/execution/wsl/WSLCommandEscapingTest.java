@@ -136,7 +136,7 @@ public final class WSLCommandEscapingTest {
       // wsl.exe --exec doesn't support empty parameters: https://github.com/microsoft/WSL/issues/6072
       return !param.isEmpty() && !param.contains("\\");
     });
-    if (execEchoParams.size() > 0) {
+    if (!execEchoParams.isEmpty()) {
       List<String> execCommand = new ArrayList<>(execEchoParams.size() + 1);
       execCommand.add(echoExecutableLinuxPath);
       execCommand.addAll(execEchoParams);

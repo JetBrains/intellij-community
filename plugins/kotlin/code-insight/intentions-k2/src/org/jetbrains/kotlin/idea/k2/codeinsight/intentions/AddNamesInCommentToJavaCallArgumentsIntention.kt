@@ -23,6 +23,7 @@ internal class AddNamesInCommentToJavaCallArgumentsIntention
     class Context(val nameCommentsByArgument: NameCommentsByArgument)
 
     override fun getFamilyName(): String = KotlinBundle.message("add.names.in.comment.to.call.arguments")
+
     override fun getActionName(element: KtCallElement, context: Context): String = familyName
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallElement> = ApplicabilityRanges.CALL_EXCLUDING_LAMBDA_ARGUMENT

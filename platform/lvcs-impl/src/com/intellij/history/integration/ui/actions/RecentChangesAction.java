@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class RecentChangesAction extends LocalHistoryAction {
+public final class RecentChangesAction extends LocalHistoryAction {
   @Override
   protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
     RecentChangesPopup.show(p, gw, Objects.requireNonNull(getVcs()));

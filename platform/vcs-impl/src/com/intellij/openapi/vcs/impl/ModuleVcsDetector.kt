@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.diagnostic.runActivity
@@ -11,14 +11,13 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcsUtil.VcsUtil
 
-class ModuleVcsDetector(private val project: Project) {
+internal class ModuleVcsDetector(private val project: Project) {
   private val vcsManager by lazy(LazyThreadSafetyMode.NONE) { ProjectLevelVcsManagerImpl.getInstanceImpl(project) }
 
   private val queue = MergingUpdateQueue("ModuleVcsDetector", 1000, true, null, project, null, Alarm.ThreadToUse.POOLED_THREAD).also {
@@ -29,7 +28,6 @@ class ModuleVcsDetector(private val project: Project) {
 
   private fun startDetection() {
     MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.startDetection")
-    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyWorkspaceModelChangeListener())
 
     if (vcsManager.needAutodetectMappings() &&
         vcsManager.haveDefaultMapping() == null &&
@@ -131,12 +129,6 @@ class ModuleVcsDetector(private val project: Project) {
     autoDetectForContentRoots(contentRoots)
   }
 
-  private inner class MyWorkspaceModelChangeListener : ContentRootChangeListener(skipFileChanges = true) {
-    override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
-      scheduleScanForNewContentRoots(removed, added)
-    }
-  }
-
   internal class MyStartUpActivity : VcsStartupActivity {
     init {
       if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -144,12 +136,11 @@ class ModuleVcsDetector(private val project: Project) {
       }
     }
 
+    override val order: Int
+      get() = VcsInitObject.MAPPINGS.order + 10
+
     override fun runActivity(project: Project) {
       project.service<ModuleVcsDetector>().startDetection()
-    }
-
-    override fun getOrder(): Int {
-      return VcsInitObject.MAPPINGS.order + 10
     }
   }
 }

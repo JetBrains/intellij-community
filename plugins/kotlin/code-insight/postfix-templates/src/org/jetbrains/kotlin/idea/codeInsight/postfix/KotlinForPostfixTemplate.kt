@@ -104,8 +104,8 @@ internal class KotlinForLoopNumbersPostfixTemplate(
     provider: PostfixTemplateProvider
 ) : AbstractKotlinForLoopNumbersPostfixTemplate(
     @Suppress("SpellCheckingInspection") "fori",
-    "for (i in 0..number)",
-    "for (\$index$ in 0..\$expr$) {\n    \$END$\n}",
+    "for (i in 0 until number)",
+    "for (\$index$ in 0 until \$expr$) {\n    \$END$\n}",
     provider
 )
 
@@ -128,7 +128,8 @@ private val ITERABLE_CLASS_IDS: Set<ClassId> = setOf(
     DefaultTypeClassIds.CHAR_SEQUENCE
 )
 
-internal fun KtAnalysisSession.canBeIterated(type: KtType, checkNullability: Boolean = true): Boolean {
+context(KtAnalysisSession)
+internal fun canBeIterated(type: KtType, checkNullability: Boolean = true): Boolean {
     return when (type) {
         is KtFlexibleType -> canBeIterated(type.lowerBoundIfFlexible())
         is KtIntersectionType -> type.conjuncts.all { canBeIterated(it) }

@@ -72,14 +72,12 @@ public final class GitRefNameValidator implements InputValidator {
     return checkInput(inputString);
   }
 
-  @NotNull
-  public String cleanUpBranchName(@NotNull String branchName) {
+  public @NotNull String cleanUpBranchName(@NotNull String branchName) {
     return cleanUpBranchNameOnTyping(branchName).replaceAll(ENDPATTERNS.pattern(), "");
   }
 
   // On typing replace only space, drop other invalid chars.
-  @NotNull
-  public String cleanUpBranchNameOnTyping(@NotNull String branchName) {
+  public @NotNull String cleanUpBranchNameOnTyping(@NotNull String branchName) {
     return branchName.replaceAll(DROP.pattern(), "").replaceAll(REPLACE.pattern(), AdvancedSettings.getString("git.branch.cleanup.symbol"));
   }
 }

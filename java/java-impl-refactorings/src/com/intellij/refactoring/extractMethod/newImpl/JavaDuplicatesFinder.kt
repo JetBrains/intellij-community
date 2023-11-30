@@ -6,11 +6,18 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
-data class ChangedExpression(val pattern: PsiExpression, val candidate: PsiExpression)
+/**
+ * Represents a pair of expressions which are located in the same place inside the initial code and duplicate
+ * and which can be extracted into the same new parameter.
+ *
+ * @property pattern Parametrized expression inside the initial source code.
+ * @property candidate Parametrized expression inside the duplicate.
+ */
+data class ParametrizedExpression(val pattern: PsiExpression, val candidate: PsiExpression)
 
-data class Duplicate(val pattern: List<PsiElement>, val candidate: List<PsiElement>, val changedExpressions: List<ChangedExpression>)
+data class Duplicate(val pattern: List<PsiElement>, val candidate: List<PsiElement>, val parametrizedExpressions: List<ParametrizedExpression>)
 
-class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChanges: Set<PsiExpression> = emptySet()) {
+class JavaDuplicatesFinder(pattern: List<PsiElement>, private val parametrizedExpressions: Set<PsiExpression> = emptySet()) {
 
   companion object {
     private val ELEMENT_IN_PHYSICAL_FILE = Key<PsiElement>("ELEMENT_IN_PHYSICAL_FILE")
@@ -32,8 +39,8 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
 
   private val pattern: List<PsiElement> = pattern.filterNot(::isNoise)
 
-  fun withPredefinedChanges(predefinedChanges: Set<PsiExpression>): JavaDuplicatesFinder {
-    return JavaDuplicatesFinder(pattern, this.predefinedChanges + predefinedChanges)
+  fun withParametrizedExpressions(parametrizedExpressions: Set<PsiExpression>): JavaDuplicatesFinder {
+    return JavaDuplicatesFinder(pattern, this.parametrizedExpressions + parametrizedExpressions)
   }
 
   fun findDuplicates(scope: PsiElement): List<Duplicate> {
@@ -94,9 +101,9 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
   }
 
   fun tryExtractDuplicate(pattern: List<PsiElement>, candidate: List<PsiElement>): Duplicate? {
-    val changedExpressions = ArrayList<ChangedExpression>()
-    if (!traverseAndCollectChanges(pattern, candidate, changedExpressions)) return null
-    return removeInternalReferences(Duplicate(pattern, candidate, changedExpressions))
+    val parametrizedExpressions = ArrayList<ParametrizedExpression>()
+    if (!traverseAndCollectChanges(pattern, candidate, parametrizedExpressions)) return null
+    return removeInternalReferences(Duplicate(pattern, candidate, parametrizedExpressions))
   }
 
   private fun removeInternalReferences(duplicate: Duplicate): Duplicate? {
@@ -104,7 +111,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
     val candidateDeclarations = duplicate.candidate.flatMap { PsiTreeUtil.findChildrenOfType(it, PsiVariable::class.java) }
     val declarationsMapping = patternDeclarations.zip(candidateDeclarations).toMap()
 
-    val changedExpressions = duplicate.changedExpressions.filterNot { (pattern, candidate) ->
+    val parametrizedExpressions = duplicate.parametrizedExpressions.filterNot { (pattern, candidate) ->
       val patternVariable = (pattern as? PsiReferenceExpression)?.resolve()
       val candidateVariable = (candidate as? PsiReferenceExpression)?.resolve()
       if (patternVariable !in declarationsMapping.keys && candidateVariable !in declarationsMapping.values) return@filterNot false
@@ -112,30 +119,30 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
       return@filterNot true
     }
 
-    if (ExtractMethodHelper.hasReferencesToScope(duplicate.pattern, changedExpressions.map{ change -> change.pattern }) ||
-      ExtractMethodHelper.hasReferencesToScope(duplicate.candidate, changedExpressions.map { change -> change.candidate })){
+    if (ExtractMethodHelper.hasReferencesToScope(duplicate.pattern, parametrizedExpressions.map{ change -> change.pattern }) ||
+        ExtractMethodHelper.hasReferencesToScope(duplicate.candidate, parametrizedExpressions.map { change -> change.candidate })){
       return null
     }
 
-    return duplicate.copy(changedExpressions = changedExpressions)
+    return duplicate.copy(parametrizedExpressions = parametrizedExpressions)
   }
 
   /**
    * Does recursive equivalence check for [pattern] and [candidate] nodes.
-   * Puts parametrized expressions into [changedExpressions] list.
+   * Puts parametrized expressions into [parametrizedExpressions] list.
    * @return false if [pattern] and [candidate] are not parametrized duplicates.
    */
   private fun traverseAndCollectChanges(pattern: List<PsiElement>,
                                         candidate: List<PsiElement>,
-                                        changedExpressions: MutableList<ChangedExpression>): Boolean {
+                                        parametrizedExpressions: MutableList<ParametrizedExpression>): Boolean {
     if (candidate.size != pattern.size) return false
     val notEqualElements = pattern.zip(candidate).filterNot { (pattern, candidate) ->
-      pattern !in predefinedChanges &&
+      pattern !in this.parametrizedExpressions &&
       areNodesEquivalent(pattern, candidate) &&
-      traverseAndCollectChanges(childrenOf(pattern), childrenOf(candidate), changedExpressions)
+      traverseAndCollectChanges(childrenOf(pattern), childrenOf(candidate), parametrizedExpressions)
     }
     if (notEqualElements.any { (pattern, candidate) -> ! canBeReplaced(pattern, candidate) }) return false
-    changedExpressions += notEqualElements.map { (pattern, candidate) -> ChangedExpression(pattern as PsiExpression, candidate as PsiExpression) }
+    parametrizedExpressions += notEqualElements.map { (pattern, candidate) -> ParametrizedExpression(pattern as PsiExpression, candidate as PsiExpression) }
     return true
   }
 
@@ -154,8 +161,8 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
   }
 
   private fun areElementsEquivalent(pattern: PsiElement?, candidate: PsiElement?): Boolean {
-    val manager = pattern?.manager ?: return false
-    return manager.areElementsEquivalent(getElementInPhysicalFile(pattern) ?: pattern, candidate)
+    if (pattern?.isValid != true || candidate?.isValid != true) return false
+    return pattern.manager.areElementsEquivalent(getElementInPhysicalFile(pattern) ?: pattern, candidate)
   }
 
   private fun canBeReplaced(pattern: PsiElement, candidate: PsiElement): Boolean {
@@ -183,7 +190,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>, private val predefinedChan
   }
 
   private fun isOvercomplicated(duplicate: Duplicate): Boolean {
-    val singleChangedExpression = duplicate.changedExpressions.singleOrNull()?.pattern ?: return false
+    val singleChangedExpression = duplicate.parametrizedExpressions.singleOrNull()?.pattern ?: return false
     val singleDeclaration = duplicate.pattern.singleOrNull() as? PsiDeclarationStatement
     val variable = singleDeclaration?.declaredElements?.singleOrNull() as? PsiVariable
     return variable?.initializer == singleChangedExpression

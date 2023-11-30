@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -61,14 +61,12 @@ public final class NationalKeyboardSupport implements PersistentStateComponent<N
   }
 
 
-  @Nullable
-  public static String getLanguageForComponent(@NotNull Component component) {
+  public static @Nullable String getLanguageForComponent(@NotNull Component component) {
     final Locale locale = getLocaleForComponent(component);
     return locale == null ? null : locale.getLanguage();
   }
 
-  @Nullable
-  private static Locale getLocaleForComponent(@NotNull Component component) {
+  private static @Nullable Locale getLocaleForComponent(@NotNull Component component) {
     final InputContext context = component.getInputContext();
     return context == null ? null : context.getLocale();
   }
@@ -88,9 +86,8 @@ public final class NationalKeyboardSupport implements PersistentStateComponent<N
     }
   }
 
-  @Nullable
   @Override
-  public OptionSet getState() {
+  public @Nullable OptionSet getState() {
     return myOptions;
   }
 

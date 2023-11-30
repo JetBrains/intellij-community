@@ -3,7 +3,7 @@ package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
 
-class FileChunkKey<OwnerType> implements Comparable<FileChunkKey<OwnerType>> {
+final class FileChunkKey<OwnerType> implements Comparable<FileChunkKey<OwnerType>> {
   private final OwnerType owner;
   private final long offset;
 

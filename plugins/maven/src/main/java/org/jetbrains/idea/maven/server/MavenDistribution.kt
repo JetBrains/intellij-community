@@ -16,13 +16,6 @@ interface MavenDistribution {
   fun isValid(): Boolean
   fun compatibleWith(mavenDistribution: MavenDistribution): Boolean
 
-  companion object {
-    @JvmStatic
-    fun fromSettings(project: Project): MavenDistribution? {
-      val mavenHome = MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.mavenHome
-      return MavenDistributionConverter().fromString(mavenHome)
-    }
-  }
 }
 
 class LocalMavenDistribution(override val mavenHome: Path, override val name: String) : MavenDistribution {

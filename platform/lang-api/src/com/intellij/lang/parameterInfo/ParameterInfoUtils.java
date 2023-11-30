@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.parameterInfo;
 
@@ -21,14 +21,12 @@ import java.util.Set;
 public final class ParameterInfoUtils {
   public static final String DEFAULT_PARAMETER_CLOSE_CHARS = ",){}";
 
-  @Nullable
-  public static <T extends PsiElement> T findParentOfType (PsiFile file, int offset, Class<T> parentClass) {
+  public static @Nullable <T extends PsiElement> T findParentOfType (PsiFile file, int offset, Class<T> parentClass) {
     return ParameterInfoUtilsBase.findParentOfType(file, offset, parentClass);
   }
 
   @SafeVarargs
-  @Nullable
-  public static <T extends PsiElement> T findParentOfTypeWithStopElements (PsiFile file, int offset, Class<T> parentClass, Class<? extends PsiElement> @NotNull ... stopAt) {
+  public static @Nullable <T extends PsiElement> T findParentOfTypeWithStopElements (PsiFile file, int offset, Class<T> parentClass, Class<? extends PsiElement> @NotNull ... stopAt) {
     return ParameterInfoUtilsBase.findParentOfTypeWithStopElements(file, offset, parentClass, stopAt);
   }
 
@@ -54,9 +52,8 @@ public final class ParameterInfoUtils {
     return index;
   }
 
-  @Nullable
-  public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset,
-                                                          @NotNull ParameterInfoHandlerWithTabActionSupport findArgumentListHelper) {
+  public static @Nullable <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset,
+                                                                    @NotNull ParameterInfoHandlerWithTabActionSupport findArgumentListHelper) {
     return findArgumentList(file, offset, lbraceOffset, findArgumentListHelper, true);
   }
 
@@ -64,8 +61,7 @@ public final class ParameterInfoUtils {
    * @param allowOuter whether it's OK to return enclosing argument list (starting at {@code lbraceOffset}) when there exists an inner
    *                   argument list at a given {@code offset}
    */
-  @Nullable
-  public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset,
+  public static @Nullable <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset,
                                                           @NotNull ParameterInfoHandlerWithTabActionSupport findArgumentListHelper,
                                                           boolean allowOuter){
     if (file == null) return null;

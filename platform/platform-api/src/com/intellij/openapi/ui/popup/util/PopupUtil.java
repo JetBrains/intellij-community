@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup.util;
 
 import com.intellij.codeWithMe.ClientId;
@@ -48,8 +48,7 @@ public final class PopupUtil {
   private PopupUtil() {
   }
 
-  @Nullable
-  public static Component getOwner(@Nullable Component c) {
+  public static @Nullable Component getOwner(@Nullable Component c) {
     if (c == null) return null;
 
     final Window wnd = SwingUtilities.getWindowAncestor(c);
@@ -83,7 +82,7 @@ public final class PopupUtil {
     return null;
   }
 
-  public static void setPopupType(@NotNull final PopupFactory factory, final int type) {
+  public static void setPopupType(final @NotNull PopupFactory factory, final int type) {
     try {
       final Method method = PopupFactory.class.getDeclaredMethod("setPopupType", int.class);
       method.setAccessible(true);
@@ -94,7 +93,7 @@ public final class PopupUtil {
     }
   }
 
-  public static int getPopupType(@NotNull final PopupFactory factory) {
+  public static int getPopupType(final @NotNull PopupFactory factory) {
     try {
       if (!ClientId.isCurrentlyUnderLocalId()) {
         final Field field = PopupFactory.class.getDeclaredField("HEAVY_WEIGHT_POPUP");
@@ -126,7 +125,7 @@ public final class PopupUtil {
     return JOptionPane.getRootFrame();
   }
 
-  public static void showBalloonForActiveFrame(@NotNull final @NlsContexts.PopupContent String message, final MessageType type) {
+  public static void showBalloonForActiveFrame(final @NotNull @NlsContexts.PopupContent String message, final MessageType type) {
     final Runnable runnable = () -> {
       final IdeFrame frame = IdeFocusManager.findInstance().getLastFocusedFrame();
       if (frame == null) {
@@ -145,7 +144,7 @@ public final class PopupUtil {
     UIUtil.invokeLaterIfNeeded(runnable);
   }
 
-  public static void showBalloonForActiveComponent(@NotNull final @NlsContexts.PopupContent String message, final MessageType type) {
+  public static void showBalloonForActiveComponent(final @NotNull @NlsContexts.PopupContent String message, final MessageType type) {
     Runnable runnable = () -> {
       Window[] windows = Window.getWindows();
       Window targetWindow = null;
@@ -165,8 +164,8 @@ public final class PopupUtil {
     UIUtil.invokeLaterIfNeeded(runnable);
   }
 
-  public static void showBalloonForComponent(@NotNull Component component, @NotNull final @NlsContexts.PopupContent String message, final MessageType type,
-                                             final boolean atTop, @Nullable final Disposable disposable) {
+  public static void showBalloonForComponent(@NotNull Component component, final @NotNull @NlsContexts.PopupContent String message, final MessageType type,
+                                             final boolean atTop, final @Nullable Disposable disposable) {
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     if (popupFactory == null) return;
     BalloonBuilder balloonBuilder = popupFactory.createHtmlTextBalloonBuilder(message, type, null);
@@ -299,8 +298,7 @@ public final class PopupUtil {
     content.putClientProperty(POPUP_TOGGLE_COMPONENT, toggleComponent != null ? new WeakReference<>(toggleComponent) : null);
   }
 
-  @Nullable
-  public static Component getPopupToggleComponent(@NotNull JBPopup jbPopup) {
+  public static @Nullable Component getPopupToggleComponent(@NotNull JBPopup jbPopup) {
     return (Component)SoftReference.dereference((WeakReference<?>)jbPopup.getContent().getClientProperty(POPUP_TOGGLE_COMPONENT));
   }
 

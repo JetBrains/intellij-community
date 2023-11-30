@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
-import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTest
+import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTestBase
 
-abstract class AbstractCodeFragmentCompletionTest : AbstractJvmBasicCompletionTest() {
+abstract class AbstractCodeFragmentCompletionTest : AbstractJvmBasicCompletionTestBase() {
     override fun configureFixture(testPath: String) {
         myFixture.configureByCodeFragment(testPath)
     }

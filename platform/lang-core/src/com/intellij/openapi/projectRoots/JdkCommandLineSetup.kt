@@ -35,7 +35,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.URLUtil
-import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.NonNls
@@ -57,6 +56,7 @@ import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 import java.util.jar.Manifest
+import kotlin.io.path.isDirectory
 import kotlin.math.abs
 
 class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
@@ -115,7 +115,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       catch (t: Throwable) {
         LOG.warn(t)
         targetProgressIndicator.stopWithErrorMessage(LangCoreBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot,
-                                                                        t.localizedMessage))
+                                                                            t.localizedMessage))
         result.resolveFailure(t)
       }
     }
@@ -151,7 +151,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       catch (t: Throwable) {
         LOG.warn(t)
         targetProgressIndicator.stopWithErrorMessage(LangCoreBundle.message("progress.message.failed.to.resolve.0.1", volume.localRoot,
-                                                                        t.localizedMessage))
+                                                                            t.localizedMessage))
         result.resolveFailure(t)
       }
     }

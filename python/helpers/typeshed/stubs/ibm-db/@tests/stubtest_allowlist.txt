@@ -1,0 +1,2 @@
+# Bug:
+ibm_db. SQL_ATTR_TXN_ISOLATION

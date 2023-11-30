@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class SdkOrLibraryWeigher extends ProximityWeigher {
+public final class SdkOrLibraryWeigher extends ProximityWeigher {
 
   @Override
   public Comparable weigh(final @NotNull PsiElement element, final @NotNull ProximityLocation location) {

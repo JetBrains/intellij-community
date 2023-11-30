@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -30,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent
 import com.intellij.util.FileContentUtilCore
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBSwingUtilities
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -70,7 +72,7 @@ open class TextEditorComponent(
     editor.component.isFocusable = false
     editor.document.addDocumentListener(MyDocumentListener(), this)
     (editor.markupModel as EditorMarkupModel).isErrorStripeVisible = true
-    editor.gutterComponentEx.setForceShowRightFreePaintersArea(true)
+    editor.gutterComponentEx.setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.SHOW)
     editor.setFile(file)
     editor.contextMenuGroupId = IdeActions.GROUP_EDITOR_POPUP
     editor.setDropHandler(FileDropHandler(editor))
@@ -248,7 +250,7 @@ open class TextEditorComponent(
     override fun contentsChanged(event: VirtualFileEvent) {
       // commit
       if (event.isFromSave) {
-        ApplicationManager.getApplication().assertIsDispatchThread()
+        ThreadingAssertions.assertEventDispatchThread()
         val file = event.file
         LOG.assertTrue(file.isValid)
         if (file == this@TextEditorComponent.file) {

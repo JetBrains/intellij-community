@@ -94,39 +94,43 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
   }
 }
 
-internal class UILatencyLogger : CounterUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("performance", 67)
+internal object UILatencyLogger : CounterUsagesCollector() {
+  private val GROUP = EventLogGroup("performance", 68)
 
-    internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
-    internal val SWAP_LOAD: IntEventField = Int("swap_load")
-    internal val CPU_TIME: IntEventField = Int("cpu_time_ms")
-    internal val GC_TIME: IntEventField = Int("gc_time_ms")
-    internal val POWER_SOURCE: EnumEventField<PowerStatus> = Enum<PowerStatus>("power_source")
-    internal val POWER_SAVE_MODE: BooleanEventField = Boolean("power_save_mode")
-    internal val HEARTBEAT: VarargEventId = GROUP.registerVarargEvent(
-      "heartbeat",
-      SYSTEM_CPU_LOAD,
-      SWAP_LOAD,
-      CPU_TIME,
-      GC_TIME,
-      POWER_SOURCE,
-      POWER_SAVE_MODE
-    )
+  internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
+  internal val SWAP_LOAD: IntEventField = Int("swap_load")
+  internal val CPU_TIME: IntEventField = Int("cpu_time_ms")
+  internal val GC_TIME: IntEventField = Int("gc_time_ms")
+  internal val POWER_SOURCE: EnumEventField<PowerStatus> = Enum<PowerStatus>("power_source")
+  internal val POWER_SAVE_MODE: BooleanEventField = Boolean("power_save_mode")
+  internal val HEARTBEAT: VarargEventId = GROUP.registerVarargEvent(
+    "heartbeat",
+    SYSTEM_CPU_LOAD,
+    SWAP_LOAD,
+    CPU_TIME,
+    GC_TIME,
+    POWER_SOURCE,
+    POWER_SAVE_MODE
+  )
 
-    @JvmField
-    val LATENCY: EventId1<Long> = GROUP.registerEvent("ui.latency", EventFields.DurationMs)
-    @JvmField
-    val LAGGING: EventId1<Long> = GROUP.registerEvent("ui.lagging", EventFields.DurationMs)
-    @JvmField
-    val COLD_START: BooleanEventField = Boolean("cold_start")
-    @JvmField
-    val ACTION_POPUP_LATENCY: VarargEventId = GROUP.registerVarargEvent("popup.latency",
-                                                                        EventFields.DurationMs,
-                                                                        EventFields.ActionPlace,
-                                                                        COLD_START,
-                                                                        EventFields.Language)
-  }
+  @JvmField
+  val LATENCY: EventId1<Long> = GROUP.registerEvent("ui.latency", EventFields.DurationMs)
+
+  @JvmField
+  val LAGGING: EventId1<Long> = GROUP.registerEvent("ui.lagging", EventFields.DurationMs)
+
+  @JvmField
+  val COLD_START: BooleanEventField = Boolean("cold_start")
+
+  @JvmField
+  val ACTION_POPUP_LATENCY: VarargEventId = GROUP.registerVarargEvent("popup.latency",
+                                                                      EventFields.DurationMs,
+                                                                      EventFields.ActionPlace,
+                                                                      COLD_START,
+                                                                      EventFields.Language)
+
+  @JvmField
+  val MAIN_MENU_LATENCY: EventId1<Long> = GROUP.registerEvent("mainmenu.latency", EventFields.DurationMs)
 
   override fun getGroup(): EventLogGroup = GROUP
 }

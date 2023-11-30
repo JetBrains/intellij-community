@@ -8,13 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class HtmlTableCellNavigateLeftAction extends CodeInsightAction {
+public final class HtmlTableCellNavigateLeftAction extends CodeInsightAction {
   private final CodeInsightActionHandler myHandler;
 
   public HtmlTableCellNavigateLeftAction() {
     myHandler = new CodeInsightActionHandler() {
       @Override
-      public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
         TableCellNavigator.moveCaret(project, editor, file, TableCellNavigator.Directions.LEFT);
       }
 
@@ -25,13 +25,12 @@ public class HtmlTableCellNavigateLeftAction extends CodeInsightAction {
     };
   }
   @Override
-  @NotNull
-  protected final CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return myHandler;
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  protected boolean isValidForFile(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
     return TableCellNavigator.isActionAvailable(editor, file);
   }
 }

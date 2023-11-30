@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl
 
 import com.intellij.openapi.components.ComponentManager
@@ -8,12 +8,7 @@ internal fun interface ImplementationClassResolver {
   fun resolveImplementationClass(componentManager: ComponentManager, adapter: ExtensionComponentAdapter): Class<*>
 }
 
-internal class InterfaceExtensionImplementationClassResolver private constructor() : ImplementationClassResolver {
-  companion object {
-    @JvmField
-    val INSTANCE: InterfaceExtensionImplementationClassResolver = InterfaceExtensionImplementationClassResolver()
-  }
-
+internal object InterfaceExtensionImplementationClassResolver : ImplementationClassResolver {
   override fun resolveImplementationClass(componentManager: ComponentManager, adapter: ExtensionComponentAdapter): Class<*> {
     val className = adapter.implementationClassOrName
     if (className !is String) {

@@ -205,7 +205,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
   /**
    * Is it a legacy python version that we still support
    */
-  private static @NotNull Boolean isLegacyPython(@NotNull LanguageLevel languageLevel) {
+  private static boolean isLegacyPython(@NotNull LanguageLevel languageLevel) {
     return languageLevel.isPython2() || languageLevel.isOlderThan(LanguageLevel.PYTHON37);
   }
 

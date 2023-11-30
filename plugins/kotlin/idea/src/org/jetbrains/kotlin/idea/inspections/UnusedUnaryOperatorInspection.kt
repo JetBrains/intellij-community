@@ -34,36 +34,55 @@ import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.types.typeUtil.isPrimitiveNumberType
 
 class UnusedUnaryOperatorInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = prefixExpressionVisitor(fun(prefix) {
-        if (prefix.baseExpression == null) return
-        val operationToken = prefix.operationToken
-        if (operationToken != KtTokens.PLUS && operationToken != KtTokens.MINUS) return
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid = object : KtVisitorVoid() {
+        override fun visitPrefixExpression(expression: KtPrefixExpression) {
+            check(expression)
+        }
 
-        // hack to fix KTIJ-196 (unstable `USED_AS_EXPRESSION` marker for KtAnnotationEntry)
-        if (prefix.isInAnnotationEntry) return
-        val context = prefix.safeAnalyzeNonSourceRootCode()
-        if (context == BindingContext.EMPTY || isUsedAsExpression(prefix, context)) return
-        val operatorDescriptor = prefix.operationReference.getResolvedCall(context)?.resultingDescriptor as? DeclarationDescriptor ?: return
-        if (!KotlinBuiltIns.isUnderKotlinPackage(operatorDescriptor)) return
+        override fun visitBinaryExpression(expression: KtBinaryExpression) {
+            if (expression.parent is KtBinaryExpression) return
+            var left = expression.left
+            while (left is KtBinaryExpression) {
+                left = left.left
+            }
+            val prefix = left as? KtPrefixExpression ?: return
+            check(prefix, expression)
+        }
 
-        holder.registerProblem(prefix, KotlinBundle.message("unused.unary.operator"), *createFixes(prefix, context))
-    })
+        private fun check(prefix: KtPrefixExpression, parentBinary: KtBinaryExpression? = null) {
+            if (prefix.baseExpression == null) return
+            val operationToken = prefix.operationToken
+            if (operationToken != KtTokens.PLUS && operationToken != KtTokens.MINUS) return
 
-    private fun isUsedAsExpression(prefix: KtPrefixExpression, context: BindingContext): Boolean {
+            // Hack to fix KTIJ-196 (unstable `USED_AS_EXPRESSION` marker for KtAnnotationEntry).
+            // Do not remove this line without manually checking the code from KTIJ-196 in a real project,
+            // because the current autotests may not be able to catch the regression.
+            if (prefix.isInAnnotationEntry) return
+
+            val context = prefix.safeAnalyzeNonSourceRootCode()
+            if (context == BindingContext.EMPTY || isUsedAsExpression(prefix, parentBinary, context)) return
+            val operatorDescriptor = prefix.operationReference.getResolvedCall(context)?.resultingDescriptor as? DeclarationDescriptor ?: return
+            if (!KotlinBuiltIns.isUnderKotlinPackage(operatorDescriptor)) return
+
+            holder.registerProblem(prefix, KotlinBundle.message("unused.unary.operator"), *createFixes(parentBinary ?: prefix, context))
+        }
+    }
+
+    private fun isUsedAsExpression(prefix: KtPrefixExpression, parentBinary: KtBinaryExpression?, context: BindingContext): Boolean {
         if (prefix.operationToken == KtTokens.PLUS) {
             // consider the unary plus operator unused in cases like `x -+ 1`
             val prev = prefix.getPrevSiblingIgnoringWhitespaceAndComments()
             if (prev is KtOperationReferenceExpression && prev.parent is KtBinaryExpression) return false
         }
-        return prefix.isUsedAsExpression(context)
+        return (parentBinary ?: prefix).isUsedAsExpression(context)
     }
 
-    private fun createFixes(prefixExpression: KtPrefixExpression, context: BindingContext): Array<LocalQuickFix> {
+    private fun createFixes(expression: KtExpression, context: BindingContext): Array<LocalQuickFix> {
         val fixes = mutableListOf<LocalQuickFix>(RemoveUnaryOperatorFix())
 
-        val prevLeaf = prefixExpression.getPrevLeafIgnoringWhitespaceAndComments()
+        val prevLeaf = expression.getPrevLeafIgnoringWhitespaceAndComments()
         if (prevLeaf != null) {
-            val type = prefixExpression.baseExpression?.getType(context)
+            val type = expression.getType(context)
             val prevType = prevLeaf.getStrictParentOfType<KtExpression>()?.getType(context)
             if (type != null && prevType != null &&
                 (type == prevType || type.isPrimitiveNumberType() && prevType.isPrimitiveNumberType())

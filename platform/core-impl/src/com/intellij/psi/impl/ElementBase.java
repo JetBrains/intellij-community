@@ -180,14 +180,14 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       ElementIconRequest request = (ElementIconRequest)o;
 
       if (myFlags != request.myFlags) return false;
-      if (!myPointer.equals(request.myPointer)) return false;
+      if (myPointer != request.myPointer) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = myPointer.hashCode();
+      int result = System.identityHashCode(myPointer);
       result = 31 * result + myFlags;
       return result;
     }

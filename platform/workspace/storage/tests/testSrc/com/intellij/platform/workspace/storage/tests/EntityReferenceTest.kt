@@ -1,16 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
-import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import org.junit.jupiter.api.Assertions.*
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
 
 class EntityReferenceTest {
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
@@ -62,7 +66,7 @@ class EntityReferenceTest {
     newBuilder.removeEntity(entity)
     newBuilder addEntity SampleEntity(false, "foo", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
                                       SampleEntitySource("test"))
-    val changes = newBuilder.collectChanges(snapshot)
+    val changes = newBuilder.collectChanges()
     //if there is an event about the change, the code which stores EntityReference is supposed to update it
     if (changes.isEmpty()) {
       val updated = newBuilder.toSnapshot()
@@ -73,13 +77,13 @@ class EntityReferenceTest {
   @Test
   @Disabled("Wrong entity reference behaviour")
   fun `wrong entity ref resolve in different storage`() {
-    val mutableStorage = MutableEntityStorageImpl.create()
+    val mutableStorage = MutableEntityStorage.create()
     val sampleEntity = mutableStorage addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
                                                              virtualFileUrlManager.fromUrl("file:///tmp"),
                                                              SampleEntitySource("test"))
     val reference = sampleEntity.createReference<SampleEntity>()
 
-    val mutableStorage1 = MutableEntityStorageImpl.create()
+    val mutableStorage1 = MutableEntityStorage.create()
     mutableStorage1 addEntity SampleEntity(false, "buy", ArrayList(), HashMap(), virtualFileUrlManager.fromUrl("file:///tmp"),
                                            SampleEntitySource("test"))
     assertNull(reference.resolve(mutableStorage1))
@@ -88,7 +92,7 @@ class EntityReferenceTest {
   @Test
   @Disabled("Wrong entity reference behaviour")
   fun `wrong entity ref resolve in same storage`() {
-    val mutableStorage = MutableEntityStorageImpl.create()
+    val mutableStorage = MutableEntityStorage.create()
     val sampleEntity = mutableStorage addEntity SampleEntity(false, "hello", ArrayList(), HashMap(),
                                                              virtualFileUrlManager.fromUrl("file:///tmp"),
                                                              SampleEntitySource("test"))

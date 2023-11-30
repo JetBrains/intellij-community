@@ -3,4 +3,4 @@
 
 val a = <caret>Nested
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */

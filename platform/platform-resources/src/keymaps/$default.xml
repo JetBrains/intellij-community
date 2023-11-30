@@ -1,4 +1,10 @@
 <keymap name="$default" version="1" disable-mnemonics="false">
+  <action id="CodeFloatingToolbar.GotoNextMenu">
+    <keyboard-shortcut first-keystroke="TAB"/>
+  </action>
+  <action id="CodeFloatingToolbar.GotoPrevMenu">
+    <keyboard-shortcut first-keystroke="shift TAB"/>
+  </action>
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>

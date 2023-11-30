@@ -20,8 +20,8 @@ class C {
                 }
                 break bar("o");
             }
-            case 3 -> {
-                if (b) {<caret>
+            case 3 -> {<caret>
+                if (b) {
                     break bar("A");
                 }
                 else {

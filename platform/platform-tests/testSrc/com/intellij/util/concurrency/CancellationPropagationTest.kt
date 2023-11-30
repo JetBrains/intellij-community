@@ -5,27 +5,31 @@ import com.intellij.concurrency.callable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.runnable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.assertReferenced
 import com.intellij.openapi.application.impl.pumpEDT
 import com.intellij.openapi.application.impl.withModality
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.getValue
 import com.intellij.util.setValue
-import com.intellij.util.timeoutRunBlocking
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
+import org.jetbrains.concurrency.AsyncPromise
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -35,12 +39,10 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.reflect.Method
-import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.Result
 import kotlin.test.assertNotNull
 
 /**
@@ -318,7 +320,7 @@ class CancellationPropagationTest {
         result = runCatching<Unit> {
           started.up()
           cancelled.timeoutWaitUp()
-          assertThrows<JobCanceledException> {
+          assertThrows<CeProcessCanceledException> {
             Cancellation.checkCancelled()
           }
         }
@@ -346,7 +348,7 @@ class CancellationPropagationTest {
     }
     val c2: Callable<Int> = childCallable(cs) {
       started.up()
-      throw assertThrows<JobCanceledException> {
+      throw assertThrows<CeProcessCanceledException> {
         while (cs.isActive) {
           Cancellation.checkCancelled()
         }
@@ -442,7 +444,7 @@ class CancellationPropagationTest {
     }
     lock.timeoutWaitUp()
     rootJob.cancel()
-    waitAssertCompletedWith(childFuture, JobCanceledException::class)
+    waitAssertCompletedWith(childFuture, CeProcessCanceledException::class)
     rootJob.timeoutJoinBlocking()
   }
 
@@ -504,7 +506,7 @@ class CancellationPropagationTest {
     childFuture1CanThrow.up()
     waitAssertCompletedWith(childFuture1, E::class)
     childFuture2CanFinish.up()
-    waitAssertCompletedWith(childFuture2, JobCanceledException::class)
+    waitAssertCompletedWith(childFuture2, CeProcessCanceledException::class)
     waitAssertCancelled(rootJob)
   }
 
@@ -563,23 +565,25 @@ class CancellationPropagationTest {
   @Test
   fun `blockingContextScope suspends until all children are cancelled`() = timeoutRunBlocking {
     val allowedToProceed = Semaphore(1)
-    val scheduled = Semaphore(1)
+    val scheduled = Semaphore(2)
     var cancelled: Boolean by AtomicReference(false)
     var blockingJobRef: Job? by AtomicReference(null)
     val job = withRootJob {
       blockingJobRef = it
       ApplicationManager.getApplication().executeOnPooledThread {
+        scheduled.up()
         allowedToProceed.timeoutWaitUp()
         try {
           Cancellation.checkCancelled()
         }
-        catch (e: JobCanceledException) {
+        catch (e: CeProcessCanceledException) {
           cancelled = true
           throw e
         }
       }
       scheduled.up()
     }
+    scheduled.timeoutWaitUp()
     scheduled.timeoutWaitUp()
     assertTrue(job.isActive)
     blockingJobRef!!.cancel(null)
@@ -708,7 +712,7 @@ class CancellationPropagationTest {
         }
       })
       {
-        runBlocking {
+        timeoutRunBlocking {
           val queue = MergingUpdateQueue("test queue", 100, true, null)
           var updateAllowedToComplete by AtomicReference(false)
           var secondUpdateExecuted by AtomicReference(false)
@@ -793,10 +797,11 @@ class CancellationPropagationTest {
     val allowedToCompleteThenAsync = Semaphore(1)
     val finishedThenAsync = Semaphore(1)
     var timesCancelled by AtomicReference(0)
-    val readActionScheduled = Semaphore(1)
+    val readActionScheduled = Semaphore(2)
     val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test NBRA", 1)
     val job = withRootJob { job ->
       ReadAction.nonBlocking(Callable {
+        readActionScheduled.up()
         while (!allowedToCompleteRA) {
           try {
             ProgressManager.checkCanceled()
@@ -824,6 +829,7 @@ class CancellationPropagationTest {
         }
       readActionScheduled.up()
     }
+    readActionScheduled.timeoutWaitUp()
     readActionScheduled.timeoutWaitUp()
     assertTrue(job.isActive)
     assertEquals(0, timesCancelled)
@@ -866,5 +872,12 @@ class CancellationPropagationTest {
     job.join()
     Disposer.dispose(dummyDisposable)
     assertFalse(job.isCancelled)
+  }
+
+  @Test
+  fun `failing promise`() = timeoutRunBlocking {
+    withRootJob {
+      AsyncPromise<Unit>().apply { setError("bad") }.then {}
+    }.join()
   }
 }

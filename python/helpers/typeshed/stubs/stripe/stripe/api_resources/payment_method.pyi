@@ -1,4 +1,4 @@
-from _typeshed import Self
+from typing_extensions import Self
 
 from stripe.api_resources.abstract import (
     CreateableAPIResource as CreateableAPIResource,
@@ -9,5 +9,5 @@ from stripe.api_resources.abstract import (
 
 class PaymentMethod(CreateableAPIResource, ListableAPIResource, UpdateableAPIResource):
     OBJECT_NAME: str
-    def attach(self: Self, idempotency_key: str | None = ..., **params) -> Self: ...
-    def detach(self: Self, idempotency_key: str | None = ..., **params) -> Self: ...
+    def attach(self, idempotency_key: str | None = None, **params) -> Self: ...
+    def detach(self, idempotency_key: str | None = None, **params) -> Self: ...

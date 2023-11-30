@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.ImaginaryEditor
@@ -65,7 +66,7 @@ class ShowSettingsWithAddedPattern : AnAction() {
   }
 }
 
-class ShowParameterHintsSettings : AnAction() {
+class ShowParameterHintsSettings : AnAction(), ActionRemoteBehaviorSpecification.Frontend {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -262,7 +263,7 @@ private fun InlayParameterHintsProvider.hasDisabledOptionHintInfo(element: PsiEl
 }
 
 
-class ToggleInlineHintsAction : AnAction() {
+class ToggleInlineHintsAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

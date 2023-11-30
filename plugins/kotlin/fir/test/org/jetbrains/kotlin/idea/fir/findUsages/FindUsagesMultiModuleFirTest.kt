@@ -20,9 +20,9 @@ class FindUsagesMultiModuleFirTest : FindUsagesMultiModuleTest() {
     }
 
     override fun doFindUsagesTest() {
-        IgnoreTests.runTestIfEnabledByFileDirective(
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
             getTestdataFile().toPath().resolve("directives.txt"),
-            IgnoreTests.DIRECTIVES.FIR_COMPARISON,
+            IgnoreTests.DIRECTIVES.IGNORE_K2,
             directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
         ) {
             super.doFindUsagesTest()

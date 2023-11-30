@@ -2,7 +2,10 @@
 package com.intellij.util.indexing.mocks
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.ID
+import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension
+import com.intellij.util.indexing.SingleEntryIndexer
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import java.io.DataInput
@@ -40,7 +43,7 @@ abstract class ConfigurableFileIndexerBase : SingleEntryFileBasedIndexExtension<
   }
 
   override fun toString(): String {
-    return "${javaClass.simpleName}: (INDEX_ID=$INDEX_ID, indexVersion=$indexVersion)"
+    return "${javaClass.simpleName}: (INDEX_ID=$INDEX_ID, indexVersion=$indexVersion, content=${dependsOnFileContent()})"
   }
 
   companion object {

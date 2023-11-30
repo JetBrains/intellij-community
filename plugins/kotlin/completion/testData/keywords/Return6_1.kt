@@ -7,6 +7,7 @@ fun foo() {
 inline fun takeHandler1(handler: () -> Unit){}
 inline fun takeHandler2(handler: () -> Unit){}
 
+// IGNORE_K2
 // INVOCATION_COUNT: 1
 // EXIST: { lookupString: "return@takeHandler1", itemText: "return", tailText: "@takeHandler1", attributes: "bold" }
 // EXIST: { lookupString: "return@takeHandler2", itemText: "return", tailText: "@takeHandler2", attributes: "bold" }

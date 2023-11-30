@@ -5,9 +5,9 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
@@ -235,6 +235,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
       val toolbarSettingsState = ToolbarSettings.getInstance().state!!
       toolbarSettingsState.showNewMainToolbar = !value && toolbarSettingsState.showNewMainToolbar
+    }
+
+  var showNewMainToolbar: Boolean
+    get() = state.showNewMainToolbar
+    set(value) {
+      state.showNewMainToolbar = value
     }
 
   var showIconsInMenus: Boolean
@@ -494,6 +500,16 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showBreakpointsOverLineNumbers = value
     }
 
+  var currentIdeScale: Float
+    get() = if (presentationMode) presentationModeIdeScale else ideScale
+    set(scale) {
+      when {
+        scale.percentValue == currentIdeScale.percentValue -> return
+        presentationMode -> presentationModeIdeScale = scale
+        else -> ideScale = scale
+      }
+    }
+
   companion object {
     init {
       if (JBUIScale.SCALE_VERBOSE) {
@@ -651,12 +667,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       }
       return size
     }
-
-    const val MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY: String = "ide.win.frame.decoration"
-
-    @JvmStatic
-    val mergeMainMenuWithWindowTitleOverrideValue: Boolean? = System.getProperty(MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY)?.toBoolean()
-    val isMergeMainMenuWithWindowTitleOverridden: Boolean = mergeMainMenuWithWindowTitleOverrideValue != null
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
@@ -675,19 +685,15 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     // todo remove when all old properties will be converted
     state._incrementModificationCount()
 
-    IconLoader.setFilter(ColorBlindnessSupport.get(state.colorBlindness)?.filter)
+    ColorBlindnessSupport.get(state.colorBlindness)?.filter?.let {
+      IconLoader.setFilter(it)
+    }
 
-    // if this is the main UISettings instance (and not on first call to getInstance) push event to bus and to all current components
+    // if this is the main UISettings instance (and not on first call to getInstance), push event to bus and to all current components
     if (this === cachedInstance) {
-      try {
+      runCatching {
         treeDispatcher.multicaster.uiSettingsChanged(this)
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-      }
+      }.getOrLogException(LOG)
 
       ApplicationManager.getApplication().messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this)
     }
@@ -701,7 +707,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   override fun getState(): UISettingsState = state
 
   override fun noStateLoaded() {
-    super.noStateLoaded()
     migrateFontParameters()
   }
 
@@ -778,8 +783,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   }
 
   private fun migrateFontParameters() {
-    notRoamableOptions.migratePresentationModeFontSize(state.presentationModeFontSize)
-    notRoamableOptions.migrateOverrideLafFonts(state.overrideLafFonts)
+    notRoamableOptions.migratePresentationModeIdeScale(state.presentationModeFontSize)
   }
 
   //<editor-fold desc="Deprecated stuff.">

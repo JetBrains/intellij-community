@@ -13,23 +13,57 @@ import com.intellij.platform.workspace.storage.impl.EntityId
  * For example, entity implementations may use some advanced functionality of the storage (e.g. get entities by reference).
  */
 @EntityStorageInstrumentationApi
-interface EntityStorageInstrumentation : EntityStorage {
+public interface EntityStorageInstrumentation : EntityStorage {
   /**
    * Create entity using [newInstance] function.
    * In some implementations of the storage ([EntityStorageSnapshot]), the entity is cached and the new instance is created only once.
    */
-  fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T
-  fun <T : WorkspaceEntity> resolveReference(reference: EntityReference<T>): T?
+  public fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T
+  public fun <T : WorkspaceEntity> resolveReference(reference: EntityReference<T>): T?
 
-  fun <Child : WorkspaceEntity> extractOneToAbstractOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): Child?
-  fun <Child : WorkspaceEntity> extractOneToManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<Child>
+  public fun getOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): WorkspaceEntity?
+  public fun getManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<WorkspaceEntity>
+
+  public fun getParent(connectionId: ConnectionId, child: WorkspaceEntity): WorkspaceEntity?
 }
 
 @EntityStorageInstrumentationApi
-interface EntityStorageSnapshotInstrumentation : EntityStorageSnapshot, EntityStorageInstrumentation
+public interface EntityStorageSnapshotInstrumentation : EntityStorageSnapshot, EntityStorageInstrumentation
 
 @EntityStorageInstrumentationApi
-interface MutableEntityStorageInstrumentation : MutableEntityStorage, EntityStorageInstrumentation
+public interface MutableEntityStorageInstrumentation : MutableEntityStorage, EntityStorageInstrumentation {
+  /**
+   * Replaces existing children of a given parent with a new list of children.
+   *
+   * The old children of the parent will be removed from the storage if they have a not-null reference to the parent
+   *
+   *   If the reference to the parent is nullable, they'll remain in the storage but with null as parent.
+   *   ^^^ This behaviour is questionable. See IDEA-307409
+   *
+   * If any of child already has a parent, the link to this child will be removed from the old parent and added to the new one.
+   *
+   * @param connectionId The ID of the connection.
+   * @param parent The parent WorkspaceEntity whose children will be replaced.
+   * @param newChildren The new list of WorkspaceEntities to replace the children with.
+   */
+  public fun replaceChildren(connectionId: ConnectionId, parent: WorkspaceEntity, newChildren: List<WorkspaceEntity>)
+
+  /**
+   * Adds a child to the list of children of parent.
+   *
+   * If the parent is null, we just remove the link to this parent from child entity.
+   *   This works only if the parent reference in child is nullable.
+   *
+   * If the connection is one-to-one it works like replacing an existing child with a new one.
+   *
+   * If the child already has a parent, the link from this parent to this child will be removed.
+   *
+   * @param connectionId The ConnectionId identifying the connection.
+   * @param parent The parent WorkspaceEntity.
+   * @param child The WorkspaceEntity to be added as a child.
+   */
+  public fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity?, child: WorkspaceEntity)
+}
 
 
 /**
@@ -47,8 +81,21 @@ interface MutableEntityStorageInstrumentation : MutableEntityStorage, EntityStor
 @RequiresOptIn("This is an internal entity storage API and it's usage requires an explicit opt-in")
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY)
-annotation class EntityStorageInstrumentationApi
+public annotation class EntityStorageInstrumentationApi
 
 @EntityStorageInstrumentationApi
 internal val EntityStorage.instrumentation: EntityStorageInstrumentation
   get() = this as EntityStorageInstrumentation
+
+@EntityStorageInstrumentationApi
+internal val EntityStorageSnapshot.instrumentation: EntityStorageSnapshotInstrumentation
+  get() = this as EntityStorageSnapshotInstrumentation
+
+@EntityStorageInstrumentationApi
+internal val MutableEntityStorage.instrumentation: MutableEntityStorageInstrumentation
+  get() {
+    check(this is MutableEntityStorageInstrumentation) {
+      "Every implementation of MutableEntityStorage must also implement the MutableEntityStorageInstrumentation"
+    }
+    return this
+  }

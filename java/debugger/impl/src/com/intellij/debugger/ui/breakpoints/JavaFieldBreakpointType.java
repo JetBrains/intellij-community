@@ -5,7 +5,6 @@ import com.intellij.CommonBundle;
 import com.intellij.debugger.HelpID;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -163,7 +162,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
           return false;
         }
         PsiFile psiFile = psiClass.getContainingFile();
-        Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+        Document document = psiFile.getViewProvider().getDocument();
         if (document == null) {
           return false;
         }
@@ -177,17 +176,14 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
           );
           return false;
         }
-        int line = document.getLineNumber(field.getTextOffset());
-        WriteAction.run(() -> {
-          XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint =
-            XDebuggerManager.getInstance(project).getBreakpointManager().addLineBreakpoint(
-              JavaFieldBreakpointType.this,
-              psiFile.getVirtualFile().getUrl(),
-              line,
-              new JavaFieldBreakpointProperties(fieldName, className)
-            );
-          result.set(fieldBreakpoint);
-        });
+        XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint =
+          XDebuggerManager.getInstance(project).getBreakpointManager().addLineBreakpoint(
+            JavaFieldBreakpointType.this,
+            psiFile.getVirtualFile().getUrl(),
+            document.getLineNumber(field.getTextOffset()),
+            new JavaFieldBreakpointProperties(fieldName, className)
+          );
+        result.set(fieldBreakpoint);
         return true;
       }
     };

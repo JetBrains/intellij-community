@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public abstract class ChangeSetsProcessor {
-  @NotNull protected String myPath;
+  protected @NotNull String myPath;
 
   public ChangeSetsProcessor(@NotNull String path) {
     myPath = path;

@@ -6,6 +6,7 @@ import com.intellij.lang.parameterInfo.CreateParameterInfoContext
 import com.intellij.lang.parameterInfo.ParameterInfoHandlerWithTabActionSupport
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.parameterInfo.KotlinParameterInfoBase
@@ -242,7 +244,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             .count { it.node.elementType == KtTokens.COMMA }
     }
 
-    private fun KtAnalysisSession.renderParameter(
+    context(KtAnalysisSession)
+    private fun renderParameter(
         parameter: KtVariableLikeSignature<KtValueParameterSymbol>,
         includeName: Boolean
     ): String {
@@ -479,13 +482,12 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
                 if (length == 0) {
                     append(CodeInsightBundle.message("parameter.info.no.parameters"))
-                } else if (argumentIndex > SINGLE_LINE_PARAMETERS_COUNT) {
-                    parameterDelimiterIndexes.forEach { offset ->
-                        val start = offset - 1
-                        val end = offset
-                        replace(start, end, "\n")
-                        if (start < highlightStartOffset) highlightStartOffset--
-                        if (start < highlightEndOffset) highlightEndOffset--
+                } else {
+                    val useMultilineParameters = Registry.`is`("kotlin.multiline.function.parameters.info")
+                    if (useMultilineParameters && argumentIndex > SINGLE_LINE_PARAMETERS_COUNT) {
+                        parameterDelimiterIndexes.forEach { offset ->
+                            replace(offset - 1, offset, "\n")
+                        }
                     }
                 }
             }

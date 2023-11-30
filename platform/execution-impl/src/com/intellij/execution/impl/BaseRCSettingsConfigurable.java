@@ -57,8 +57,7 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
     return super.isModified();
   }
 
-  @NotNull
-  protected RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
+  protected @NotNull RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     return getEditor().getSnapshot();
   }
 
@@ -71,8 +70,7 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
     return wrapWithScrollPane(super.createComponent());
   }
 
-  @NotNull
-  protected static JBScrollPane wrapWithScrollPane(@Nullable JComponent component) {
+  protected static @NotNull JBScrollPane wrapWithScrollPane(@Nullable JComponent component) {
     JBScrollPane scrollPane =
       new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
         @Override

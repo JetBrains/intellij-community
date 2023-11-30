@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -180,7 +180,7 @@ public abstract class EditorActionHandler {
    * @param editor      the editor in which the action is invoked.
    * @param dataContext the data context for the action.
    */
-  public final void execute(@NotNull Editor editor, @Nullable final Caret contextCaret, final DataContext dataContext) {
+  public final void execute(@NotNull Editor editor, final @Nullable Caret contextCaret, final DataContext dataContext) {
     Editor hostEditor = dataContext == null ? null : CommonDataKeys.HOST_EDITOR.getData(dataContext);
     if (hostEditor == null) {
       hostEditor = editor;
@@ -222,7 +222,7 @@ public abstract class EditorActionHandler {
     void perform(@NotNull Caret caret, @Nullable DataContext dataContext);
   }
 
-  public static abstract class ForEachCaret extends EditorActionHandler {
+  public abstract static class ForEachCaret extends EditorActionHandler {
     protected ForEachCaret() {
       super(true);
     }

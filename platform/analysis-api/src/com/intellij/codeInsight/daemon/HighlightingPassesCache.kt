@@ -4,6 +4,9 @@ package com.intellij.codeInsight.daemon
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
+/**
+ * A cache for scheduling and loading highlighting passes for a set of files in the background, doesn't require opened editor.
+ */
 interface HighlightingPassesCache {
   /**
    * Schedules a list of VirtualFile for the loading highlighting passes in the background without the editor

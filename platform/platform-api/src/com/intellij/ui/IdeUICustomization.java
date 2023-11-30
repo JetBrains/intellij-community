@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.DynamicBundle;
@@ -52,8 +52,12 @@ public class IdeUICustomization {
   /**
    * Allows to replace the description of the given action (only for the actions/groups that support this mechanism)
    */
-  public @Nullable @Nls String getActionDescription(@NotNull String actionId) {
+  public @Nullable @Nls String getActionDescription(@SuppressWarnings("unused") @NotNull String actionId) {
     return null;
+  }
+
+  public @Nullable String getUiThemeEditorSchemeId(@SuppressWarnings("unused") @NotNull String themeId, @Nullable String editorSchemeId) {
+    return editorSchemeId;
   }
 
   /**

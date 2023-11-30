@@ -7,7 +7,7 @@ class TestFieldConversion
          * doc1
          */
         int someInt = 0;
-      switch (s) {
+        switch (s) {
       case 1:
         System.out.println(someInt);
         break;

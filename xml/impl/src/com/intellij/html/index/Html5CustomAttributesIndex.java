@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.index;
 
 import com.intellij.ide.highlighter.HtmlFileType;
@@ -20,16 +6,13 @@ import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
-import com.intellij.lexer.HtmlHighlightingLexer;
+import com.intellij.lexer.HtmlLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.XHtmlHighlightingLexer;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.lexer.XHtmlLexer;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
-import java.util.HashMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -37,6 +20,7 @@ import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
@@ -44,14 +28,13 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
 
   private final DataIndexer<String, Void, FileContent> myIndexer = new DataIndexer<>() {
     @Override
-    @NotNull
-    public Map<String, Void> map(@NotNull FileContent inputData) {
+    public @NotNull Map<String, Void> map(@NotNull FileContent inputData) {
       CharSequence input = inputData.getContentAsText();
       Language language = ((LanguageFileType)inputData.getFileType()).getLanguage();
       if (language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE) {
         final Lexer lexer = (language == HTMLLanguage.INSTANCE
-                             ? new HtmlHighlightingLexer(FileTypeManager.getInstance().getStdFileType("CSS"))
-                             : new XHtmlHighlightingLexer());
+                             ? new HtmlLexer(true)
+                             : new XHtmlLexer(true));
         lexer.start(input);
         Map<String, Void> result = new HashMap<>();
         IElementType tokenType = lexer.getTokenType();
@@ -75,30 +58,26 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
     }
   };
 
-  @NotNull
   @Override
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return INDEX_ID;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<String, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Void, FileContent> getIndexer() {
     return myIndexer;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(HtmlFileType.INSTANCE, XHtmlFileType.INSTANCE) {
       @Override
-      public boolean acceptInput(@NotNull final VirtualFile file) {
+      public boolean acceptInput(final @NotNull VirtualFile file) {
         return file.isInLocalFileSystem();
       }
     };

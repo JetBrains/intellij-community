@@ -21,7 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.model.ExternalTask;
 import org.jetbrains.plugins.gradle.model.GradleExtensions;
 import org.jetbrains.plugins.gradle.model.GradleProperty;
@@ -43,7 +42,7 @@ public class GradleExtensionsSettings {
   private final Settings myState = new Settings();
 
   public GradleExtensionsSettings(Project project) {
-    ExternalSystemApiUtil.subscribe(project, GradleConstants.SYSTEM_ID, new GradleSettingsListenerAdapter() {
+    ExternalSystemApiUtil.subscribe(project, GradleConstants.SYSTEM_ID, new GradleSettingsListener() {
       @Override
       public void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths) {
         myState.remove(linkedProjectPaths);

@@ -42,6 +42,8 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
     addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
     getProject().registerService(PyPsiFacade.class, PyPsiFacadeImpl.class);
+    getApplication().registerService(PyElementTypesFacade.class, PyElementTypesFacadeImpl.class);
+    getApplication().registerService(PyLanguageFacade.class, PyLanguageFacadeImpl.class);
 
     if (PythonRuntimeService.getInstance() == null) {
       myServiceDisposable = Disposer.newDisposable();

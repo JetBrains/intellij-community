@@ -91,4 +91,6 @@ internal class AttachTreeNodeWrapper(
     if (column == 0) return this
     return node.getValueAtColumn(column)
   }
+
+  override fun toString(): String = "($node)"
 }

@@ -8,8 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 interface DiffPreview {
-  fun updatePreview(fromModelRefresh: Boolean) = Unit
-
   fun openPreview(requestFocus: Boolean): Boolean
   fun closePreview()
 

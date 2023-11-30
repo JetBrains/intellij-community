@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xsltDebugger.impl;
 
 import com.intellij.openapi.editor.Document;
@@ -8,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -35,11 +37,12 @@ public class XsltDebuggerEditorsProvider extends XDebuggerEditorsProvider {
   @NotNull
   @Override
   public Document createDocument(@NotNull Project project,
-                                 @NotNull String text,
+                                 @NotNull XExpression expression,
                                  @Nullable XSourcePosition sourcePosition,
                                  @NotNull EvaluationMode mode) {
     final PsiFile psiFile = PsiFileFactory.getInstance(project)
-      .createFileFromText("XPathExpr." + myFileType.getDefaultExtension(), myFileType, text, LocalTimeCounter.currentTime(), true);
+      .createFileFromText("XPathExpr." + myFileType.getDefaultExtension(), myFileType, expression.getExpression(),
+                          LocalTimeCounter.currentTime(), true);
 
     if (sourcePosition instanceof XsltSourcePosition && ((XsltSourcePosition)sourcePosition).getLocation() instanceof Debugger.StyleFrame) {
       final Debugger.Locatable location = ((XsltSourcePosition)sourcePosition).getLocation();

@@ -1,3 +1,4 @@
+# Diff with EE: approved not included
 fragment mergeRequest on MergeRequest {
   id
   iid

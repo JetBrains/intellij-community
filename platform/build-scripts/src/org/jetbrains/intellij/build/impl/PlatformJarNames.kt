@@ -36,8 +36,7 @@ object PlatformJarNames {
   internal const val LIB_CLIENT_JAR: String = "lib-client.jar"
 
   /**
-   * Temporary created during the build for modules and libraries included in the platform part which need to be scrambled. 
-   * Its content is merged in [APP_JAR] after scrambling.  
+   * Used for modules and libraries included in the platform part which need to be scrambled. 
    */
   const val PRODUCT_JAR: String = "product.jar"
 

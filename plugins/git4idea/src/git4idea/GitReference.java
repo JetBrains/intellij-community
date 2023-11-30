@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -16,7 +16,7 @@ public abstract class GitReference implements Comparable<GitReference> {
   public static final HashingStrategy<String> BRANCH_NAME_HASHING_STRATEGY =
     SystemInfoRt.isFileSystemCaseSensitive ? HashingStrategy.canonical() : HashingStrategy.caseInsensitive();
 
-  @NotNull protected final String myName;
+  protected final @NotNull String myName;
 
   public GitReference(@NotNull String name) {
     myName = name;
@@ -26,18 +26,14 @@ public abstract class GitReference implements Comparable<GitReference> {
    * @return the name of the reference, e.g. "origin/master" or "feature".
    * @see #getFullName()
    */
-  @NlsSafe
-  @NotNull
-  public String getName() {
+  public @NlsSafe @NotNull String getName() {
     return myName;
   }
 
   /**
    * @return the full name of the reference, e.g. "refs/remotes/origin/master" or "refs/heads/master".
    */
-  @NlsSafe
-  @NotNull
-  public abstract String getFullName();
+  public abstract @NlsSafe @NotNull String getFullName();
 
   @Override
   public String toString() {

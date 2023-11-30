@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -148,7 +148,7 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
   }
 }
 
-class HighlightAction extends DumbAwareAction {
+final class HighlightAction extends DumbAwareAction {
   private final TextAttributesKey myEditorAttributesKey;
   private final TextAttributes myTextAttributes;
   private final Consumer<? super TextAttributesKey> myActionPerformed;
@@ -174,7 +174,7 @@ class HighlightAction extends DumbAwareAction {
   }
 }
 
-class HighlightPopup extends PopupFactoryImpl.ActionGroupPopup {
+final class HighlightPopup extends PopupFactoryImpl.ActionGroupPopup {
 
   HighlightPopup(@NlsContexts.PopupTitle @Nullable String title,
                  @NotNull ActionGroup actionGroup,
@@ -192,7 +192,7 @@ class HighlightPopup extends PopupFactoryImpl.ActionGroupPopup {
   }
 }
 
-class HighlightElementRenderer implements ListCellRenderer<PopupFactoryImpl.ActionItem> {
+final class HighlightElementRenderer implements ListCellRenderer<PopupFactoryImpl.ActionItem> {
 
   private final RendererComponent myTextComponent = new SimpleRendererComponent(null, null, true);
   private final JPanel myTextPanel = new NonOpaquePanel();

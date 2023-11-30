@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.*
-import com.intellij.psi.impl.cache.TypeInfo
 import com.intellij.psi.impl.compiled.ClsTypeElementImpl
 import com.intellij.psi.impl.compiled.SignatureParsing
 import com.intellij.psi.impl.compiled.StubBuildingVisitor
@@ -15,6 +14,7 @@ import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
@@ -70,9 +70,8 @@ import org.jetbrains.uast.kotlin.internal.KotlinUastTypeMapper
 import org.jetbrains.uast.kotlin.psi.UastFakeDescriptorLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
-import java.text.StringCharacterIterator
 
-val kotlinUastPlugin: UastLanguagePlugin by lz {
+val kotlinUastPlugin: UastLanguagePlugin by lazyPub {
     UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE }
         ?: KotlinUastLanguagePlugin()
 }
@@ -169,11 +168,10 @@ internal fun KotlinType.toPsiType(
         }
     KotlinUastTypeMapper.mapType(approximatedType, signatureWriter, typeMappingMode)
 
-    val signature = StringCharacterIterator(signatureWriter.toString())
+    val signature = SignatureParsing.CharIterator(signatureWriter.toString())
 
-    val javaType = SignatureParsing.parseTypeString(signature, StubBuildingVisitor.GUESSING_MAPPER)
-    val typeInfo = TypeInfo.fromString(javaType, false)
-    val typeText = TypeInfo.createTypeText(typeInfo) ?: return UastErrorType
+    val typeInfo = SignatureParsing.parseTypeStringToTypeInfo(signature, StubBuildingVisitor.GUESSING_PROVIDER)
+    val typeText = typeInfo.text() ?: return UastErrorType
 
     val psiTypeParent: PsiElement = containingLightDeclaration ?: context
     if (psiTypeParent.containingFile == null) {

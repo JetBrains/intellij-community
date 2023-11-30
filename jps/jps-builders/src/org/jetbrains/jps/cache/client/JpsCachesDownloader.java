@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.client;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +19,9 @@ import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.cache.model.DownloadableFileUrl;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +34,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import static org.jetbrains.jps.cache.JpsCachesLoaderUtil.EXECUTOR_SERVICE;
 import static org.jetbrains.jps.cache.client.JpsServerConnectionUtil.saveToFile;
 
-class JpsCachesDownloader {
+final class JpsCachesDownloader {
   private static final Logger LOG = Logger.getInstance(JpsCachesDownloader.class);
   private static final byte MAX_RETRY_COUNT = 3;
   private static final String CDN_CACHE_HEADER = "X-Cache";
@@ -152,8 +155,7 @@ class JpsCachesDownloader {
     }
   }
 
-  @NotNull
-  private File downloadFile(@NotNull final DownloadableFileUrl description, @NotNull final File existingFile, int expectedDownloads) throws IOException {
+  private @NotNull File downloadFile(final @NotNull DownloadableFileUrl description, final @NotNull File existingFile, int expectedDownloads) throws IOException {
     final String presentableUrl = description.getPresentableDownloadUrl();
     Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders();
 

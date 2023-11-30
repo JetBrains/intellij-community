@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
-import com.intellij.openapi.progress.progressSink
+import com.intellij.platform.util.progress.rawProgressReporter
 import kotlinx.coroutines.job
 import org.eclipse.jgit.lib.ProgressMonitor
 import org.jetbrains.annotations.Nls
@@ -17,7 +17,7 @@ private class JGitCoroutineProgressMonitor(private val context: CoroutineContext
   }
 
   override fun beginTask(@Nls title: String, totalWork: Int) {
-    context.progressSink?.details(title)
+    context.rawProgressReporter?.details(title)
   }
 
   override fun update(completed: Int) {
@@ -25,7 +25,7 @@ private class JGitCoroutineProgressMonitor(private val context: CoroutineContext
   }
 
   override fun endTask() {
-    context.progressSink?.details("")
+    context.rawProgressReporter?.details("")
   }
 
   override fun isCancelled() = context.job.isCancelled

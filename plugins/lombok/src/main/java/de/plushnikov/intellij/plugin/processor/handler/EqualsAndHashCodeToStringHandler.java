@@ -89,13 +89,11 @@ public final class EqualsAndHashCodeToStringHandler {
 
   public static Collection<MemberInfo> filterMembers(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation,
                                                      boolean filterTransient, String includeAnnotationProperty,
-                                                     @Nullable ConfigKey onlyExplicitlyIncludedConfigKey) {
+                                                     @Nullable ConfigKey onlyExplicitlyIncludedConfigKey,
+                                                     @NotNull String annotationIncludeFQN,
+                                                     @NotNull String annotationExcludeFQN) {
     final boolean explicitOf = PsiAnnotationUtil.hasDeclaredProperty(psiAnnotation, "of");
     final boolean onlyExplicitlyIncluded = checkOnlyExplicitlyIncluded(psiClass, psiAnnotation, onlyExplicitlyIncludedConfigKey);
-
-    final String annotationFQN = psiAnnotation.getQualifiedName();
-    final String annotationIncludeFQN = annotationFQN + ".Include";
-    final String annotationExcludeFQN = annotationFQN + ".Exclude";
 
     //Having both exclude and of generates a warning; the exclude parameter will be ignored in that case.
     final Collection<String> ofProperty;

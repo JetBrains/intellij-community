@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,12 +8,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VagrantBasedCredentialsHolder {
+public final class VagrantBasedCredentialsHolder {
   private static final @NonNls String VAGRANT_FOLDER = "VAGRANT_FOLDER";
   private static final @NonNls String MACHINE_NAME = "MACHINE_NAME";
 
-  @NotNull
-  private String myVagrantFolder;
+  private @NotNull String myVagrantFolder;
   private String myMachineName;
 
   public VagrantBasedCredentialsHolder() {
@@ -29,13 +28,11 @@ public class VagrantBasedCredentialsHolder {
     myVagrantFolder = vagrantFolder;
   }
 
-  @NotNull
-  public String getVagrantFolder() {
+  public @NotNull String getVagrantFolder() {
     return myVagrantFolder;
   }
 
-  @Nullable
-  public String getMachineName() {
+  public @Nullable String getMachineName() {
     return myMachineName;
   }
 
@@ -79,9 +76,8 @@ public class VagrantBasedCredentialsHolder {
     return result;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "VagrantBasedCredentialsHolder{" +
            "myVagrantFolder='" + myVagrantFolder + '\'' +
            ", myMachineName='" + myMachineName + '\'' +

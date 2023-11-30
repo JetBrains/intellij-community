@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.macro;
 
@@ -87,7 +87,7 @@ public abstract class BaseCompleteMacro extends Macro {
     UIUtil.dispatchAllInvocationEvents();
   }
 
-  private static class MyLookupListener implements LookupListener {
+  private static final class MyLookupListener implements LookupListener {
     private final ExpressionContext myContext;
     private final boolean myCheckCompletionChar;
 

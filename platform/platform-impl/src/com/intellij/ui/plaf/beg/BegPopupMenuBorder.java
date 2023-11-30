@@ -1,5 +1,5 @@
 
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ui.paint.LinePainter2D;
@@ -8,12 +8,12 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 
-public class BegPopupMenuBorder extends AbstractBorder implements UIResource {
-  protected static Insets borderInsets = new Insets(3, 2, 2, 2);
-  protected static Color color1 = new Color(214, 211, 206);
-  protected static Color color2 = Color.white;
-  protected static Color color3 = new Color(132, 130, 132);
-  protected static Color color4 = new Color(66, 65, 66);
+public final class BegPopupMenuBorder extends AbstractBorder implements UIResource {
+  private static Insets borderInsets = new Insets(3, 2, 2, 2);
+  private static Color color1 = new Color(214, 211, 206);
+  private static Color color2 = Color.white;
+  private static Color color3 = new Color(132, 130, 132);
+  private static Color color4 = new Color(66, 65, 66);
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {

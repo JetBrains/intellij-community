@@ -50,7 +50,6 @@ public final class PlatformUtils {
   public static final String GOIDE_PREFIX = "GoLand";
   public static final String FLEET_PREFIX = "FleetBackend";
   public static final String STUDIO_PREFIX = "AndroidStudio";
-
   public static final String RUSTROVER_PREFIX = "RustRover";
 
   /**

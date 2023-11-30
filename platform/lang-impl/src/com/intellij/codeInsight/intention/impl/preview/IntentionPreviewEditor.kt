@@ -38,14 +38,6 @@ internal class IntentionPreviewEditor(psiFileCopy: PsiFile, private val settings
     return LogicalPosition(visiblePos.line, visiblePos.column)
   }
 
-  override fun offsetToLogicalPosition(offset: Int): LogicalPosition {
-    val clamped = offset.coerceIn(0, document.textLength)
-    val document = document
-    val line = document.getLineNumber(clamped)
-    val col = clamped - document.getLineStartOffset(line)
-    return LogicalPosition(line, col)
-  }
-
   override fun getSoftWrapModel(): SoftWrapModel = EmptySoftWrapModel()
 }
 

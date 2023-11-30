@@ -1,0 +1,29 @@
+package test.pkg
+
+public final class Test {
+    @org.jetbrains.annotations.Nullable @kotlin.Deprecated(level = DeprecationLevel.HIDDEN) private var pOld_setter_deprecatedOnProperty: java.lang.String = null
+    @org.jetbrains.annotations.Nullable private var pOld_setter_deprecatedOnGetter: java.lang.String = null
+    @org.jetbrains.annotations.Nullable private var pOld_setter_deprecatedOnSetter: java.lang.String = null
+    @org.jetbrains.annotations.Nullable private var pNew_setter: java.lang.String = null
+    public final fun getPNew_setter() : java.lang.String = UastEmptyExpression
+    public final fun setPNew_setter(@org.jetbrains.annotations.Nullable value: java.lang.String) : void {
+        if (field == null) {
+            field = value
+        }
+    }
+    public fun Test() = UastEmptyExpression
+    @kotlin.Deprecated(level = DeprecationLevel.HIDDEN)
+    public fun getPOld_setter_deprecatedOnProperty() : java.lang.String = UastEmptyExpression
+    public fun setPOld_setter_deprecatedOnProperty(@org.jetbrains.annotations.Nullable value: java.lang.String) : void {
+        if (field == null) {
+            field = value
+        }
+    }
+    @kotlin.Deprecated(level = DeprecationLevel.HIDDEN)
+    public fun getPOld_setter_deprecatedOnGetter() : java.lang.String = UastEmptyExpression
+    public fun setPOld_setter_deprecatedOnSetter(@org.jetbrains.annotations.Nullable value: java.lang.String) : void {
+        if (field == null) {
+            field = value
+        }
+    }
+}

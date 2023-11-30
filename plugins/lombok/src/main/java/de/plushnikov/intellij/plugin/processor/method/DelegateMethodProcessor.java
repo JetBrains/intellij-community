@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class DelegateMethodProcessor extends AbstractMethodProcessor {
+public final class DelegateMethodProcessor extends AbstractMethodProcessor {
 
   public DelegateMethodProcessor() {
     super(PsiMethod.class, LombokClassNames.DELEGATE, LombokClassNames.EXPERIMENTAL_DELEGATE);

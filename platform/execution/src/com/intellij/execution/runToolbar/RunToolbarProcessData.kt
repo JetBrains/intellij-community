@@ -36,13 +36,13 @@ class RunToolbarProcessData {
 
     @ApiStatus.Internal
     @JvmStatic
-    fun prepareSuppressMainSlotCustomization(project: Project, addition: Consumer<in ExecutionEnvironment>? = null): Consumer<in ExecutionEnvironment> {
+    fun prepareSuppressMainSlotCustomization(project: Project, addition: Consumer<ExecutionEnvironment>? = null): Consumer<in ExecutionEnvironment> {
       return Consumer { ee: ExecutionEnvironment ->
         val runManager = getInstance(project)
         if (runManager.isRiderRunWidgetActive()) {
           ee.putUserData(RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY, true)
         }
-      }
+      }.mix(addition)
     }
 
     private fun Consumer<ExecutionEnvironment>.mix(addition: Consumer<ExecutionEnvironment>?): Consumer<ExecutionEnvironment> {

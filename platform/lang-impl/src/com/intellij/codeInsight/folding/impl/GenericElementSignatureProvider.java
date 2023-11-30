@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Thread-safe.
  */
-public class GenericElementSignatureProvider implements ElementSignatureProvider {
+public final class GenericElementSignatureProvider implements ElementSignatureProvider {
 
   private static final ElementSignatureProvider[] PROVIDERS = {
     new PsiNamesElementSignatureProvider(), new OffsetsElementSignatureProvider()

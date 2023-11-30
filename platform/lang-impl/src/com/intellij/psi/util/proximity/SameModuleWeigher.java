@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NotNull;
 
-public class SameModuleWeigher extends ProximityWeigher {
+public final class SameModuleWeigher extends ProximityWeigher {
 
   @Override
   public Comparable weigh(final @NotNull PsiElement element, final @NotNull ProximityLocation location) {

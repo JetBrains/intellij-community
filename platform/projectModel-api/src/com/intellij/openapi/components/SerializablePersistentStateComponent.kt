@@ -4,6 +4,9 @@ package com.intellij.openapi.components
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
 
+/**
+ * Use the updateState() method to atomically change the persistent state
+ */
 abstract class SerializablePersistentStateComponent<T : Any>(private var state: T) : PersistentStateComponentWithModificationTracker<T> {
   companion object {
     private val STATE_HANDLE: VarHandle

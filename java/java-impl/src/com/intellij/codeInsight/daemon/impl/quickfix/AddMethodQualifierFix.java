@@ -1,80 +1,28 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
+import com.intellij.modcommand.*;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.Objects.requireNonNullElse;
+
 /**
  * @author Dmitry Batkovich
  */
-public class AddMethodQualifierFix implements IntentionAction {
+public class AddMethodQualifierFix extends PsiBasedModCommandAction<PsiMethodCallExpression> {
   private enum SearchMode { MAX_2_CANDIDATES, FULL_SEARCH }
 
-  private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
-  private volatile List<PsiVariable> myCandidates;
-
   public AddMethodQualifierFix(@NotNull PsiMethodCallExpression methodCallExpression) {
-    myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
-  }
-
-  @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiMethodCallExpression element = myMethodCall.getElement();
-    if (element == null || myCandidates.isEmpty()) {
-      return IntentionPreviewInfo.EMPTY;
-    }
-    PsiMethodCallExpression copyExpression = PsiTreeUtil.findSameElementInCopy(element, file);
-    replaceWithQualifier(myCandidates.get(0), copyExpression);
-    return IntentionPreviewInfo.DIFF;
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    if (myCandidates == null || myCandidates.isEmpty()) {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        return "";
-      }
-      throw new IllegalStateException();
-    }
-    if (myCandidates.size() == 1) {
-      return QuickFixBundle.message("add.method.qualifier.fix.text", myCandidates.get(0).getName());
-    }
-    return getFamilyName();
+    super(methodCallExpression);
   }
 
   @NotNull
@@ -84,23 +32,18 @@ public class AddMethodQualifierFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiMethodCallExpression element = myMethodCall.getElement();
-    if (element == null || !element.isValid() || element.getMethodExpression().getQualifierExpression() != null) {
-      return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethodCallExpression element) {
+    if (element.getMethodExpression().getQualifierExpression() != null) return null;
+    List<PsiVariable> candidates = findCandidates(element, SearchMode.MAX_2_CANDIDATES);
+    if (candidates.isEmpty()) return null;
+    if (candidates.size() == 1) {
+      return Presentation.of(QuickFixBundle.message("add.method.qualifier.fix.text", candidates.get(0).getName()));
     }
-    if (myCandidates == null) {
-      myCandidates = findCandidates(SearchMode.MAX_2_CANDIDATES);
-    }
-    return !myCandidates.isEmpty();
+    return Presentation.of(getFamilyName());
   }
 
   @NotNull
-  private List<PsiVariable> findCandidates(@NotNull SearchMode mode) {
-    PsiMethodCallExpression methodCallElement = myMethodCall.getElement();
-    if (methodCallElement == null) {
-      return Collections.emptyList();
-    }
+  private static List<PsiVariable> findCandidates(@NotNull PsiMethodCallExpression methodCallElement, @NotNull SearchMode mode) {
     String methodName = methodCallElement.getMethodExpression().getReferenceName();
     if (methodName == null) {
       return Collections.emptyList();
@@ -129,77 +72,32 @@ public class AddMethodQualifierFix implements IntentionAction {
     return List.copyOf(candidates);
   }
 
-  @TestOnly
-  public List<PsiVariable> getCandidates() {
-    return findCandidates(SearchMode.FULL_SEARCH);
-  }
-
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-    return myMethodCall.getElement();
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiMethodCallExpression element) {
+    List<PsiVariable> candidates = findCandidates(element, IntentionPreviewUtils.isIntentionPreviewActive() ?
+                                                           SearchMode.MAX_2_CANDIDATES : SearchMode.FULL_SEARCH);
+    SmartPsiElementPointer<PsiMethodCallExpression> pointer = SmartPointerManager.createPointer(element);
+    List<ModCommandAction> qualifyActions = ContainerUtil.map(candidates, candidate -> createAction(candidate, pointer));
+    return new ModChooseAction(QuickFixBundle.message("add.qualifier"), qualifyActions);
   }
 
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    List<PsiVariable> candidates = findCandidates(SearchMode.FULL_SEARCH);
-    if (candidates.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
-      qualify(candidates.get(0), editor);
-    }
-    else {
-      chooseAndQualify(project, editor, candidates);
-    }
+  @NotNull
+  private static ModCommandAction createAction(PsiVariable candidate, SmartPsiElementPointer<PsiMethodCallExpression> pointer) {
+    return ModCommand.psiUpdateStep(
+        candidate, requireNonNullElse(candidate.getName(), ""), (var, updater) -> {
+          PsiMethodCallExpression call = updater.getWritable(pointer.getElement());
+          if (call == null) return;
+          replaceWithQualifier(var, call);
+          updater.moveTo(call.getTextOffset() + call.getTextLength());
+        }, var -> requireNonNullElse(var.getNameIdentifier(), var).getTextRange())
+      .withPresentation(p -> p.withIcon(candidate.getIcon(0)));
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  private void chooseAndQualify(Project project, Editor editor, List<? extends PsiVariable> candidates) {
-    BaseListPopupStep<PsiVariable> step =
-      new BaseListPopupStep<>(QuickFixBundle.message("add.qualifier"), candidates) {
-        @Override
-        public PopupStep<?> onChosen(PsiVariable selectedValue, boolean finalChoice) {
-          if (selectedValue != null && finalChoice) {
-            qualify(selectedValue, editor);
-          }
-          return FINAL_CHOICE;
-        }
-
-        @NotNull
-        @Override
-        public String getTextFor(PsiVariable value) {
-          String name = value.getName();
-          return name == null ? "" : name;
-        }
-
-        @Override
-        public Icon getIconFor(PsiVariable aValue) {
-          return aValue.getIcon(0);
-        }
-      };
-
-    JBPopup popup = JBPopupFactory.getInstance().createListPopup(project, step, (baseRenderer) -> baseRenderer);
-    popup.showInBestPositionFor(editor);
-  }
-
-  private void qualify(@NotNull PsiVariable qualifier, @NotNull Editor editor) {
-    WriteCommandAction.runWriteCommandAction(qualifier.getProject(), () -> {
-      PsiMethodCallExpression element = myMethodCall.getElement();
-      if (element == null) {
-        return;
-      }
-      PsiElement replacedExpression = replaceWithQualifier(qualifier, element);
-      editor.getCaretModel().moveToOffset(replacedExpression.getTextOffset() + replacedExpression.getTextLength());
-    });
-  }
-
-  private static PsiElement replaceWithQualifier(@NotNull PsiVariable qualifier, @NotNull PsiMethodCallExpression oldExpression) {
+  private static void replaceWithQualifier(@NotNull PsiVariable qualifier, @NotNull PsiMethodCallExpression oldExpression) {
     String qualifierPresentableText = qualifier.getName();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(qualifier.getProject());
-    PsiExpression expression = elementFactory
+    PsiMethodCallExpression expression = (PsiMethodCallExpression)elementFactory
       .createExpressionFromText(qualifierPresentableText + "." + oldExpression.getMethodExpression().getReferenceName() + "()", null);
-    return oldExpression.replace(expression);
+    oldExpression.getMethodExpression().replace(expression.getMethodExpression());
   }
 }

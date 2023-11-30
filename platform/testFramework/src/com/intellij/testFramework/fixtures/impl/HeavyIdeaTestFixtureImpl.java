@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.OpenProjectTask;
@@ -177,7 +176,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
   private void setUpProject() throws Exception {
     OpenProjectTask options = OpenProjectTaskBuilderKt.createTestOpenProjectOptions(true, project -> {
-      project.getMessageBus().simpleConnect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
+      project.getMessageBus().simpleConnect().subscribe(ModuleListener.TOPIC, new ModuleListener() {
         @Override
         public void moduleAdded(@NotNull Project __, @NotNull Module module) {
           if (myModule == null) {

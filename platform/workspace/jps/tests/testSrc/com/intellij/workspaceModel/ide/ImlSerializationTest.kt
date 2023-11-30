@@ -2,16 +2,16 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2
 import com.intellij.platform.workspace.storage.tests.SerializationRoundTripChecker
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -40,15 +40,15 @@ class ImlSerializationTest {
 
   @Test
   fun sizeCheck() {
-    val expectedSize = 17_000
+    val expectedSize = 17_500
     val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
     val bytes = loadProjectAndCheck(projectDir)
 
-    checkSerializationSize(bytes, expectedSize, 2_000)
+    checkSerializationSize(bytes, expectedSize, 3_500)
 
     @Suppress("KotlinConstantConditions")
-    assertTrue("v50" == EntityStorageSerializerImpl.SERIALIZER_VERSION,
-               "This assertion is a reminder. Have you updated the serializer? Update the serializer version!")
+    assertTrue("version2" == EntityStorageSerializerImpl.STORAGE_SERIALIZATION_VERSION,
+               "This assertion is a reminder. Have you updated the serializer? Update the serialization version!")
   }
 
   @Test

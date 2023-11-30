@@ -4,7 +4,7 @@ project
 project.appleMain
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:jvmAndNativeMain, project:nativeMain
     targetPlatform = Native (ios_arm64)/Native (ios_x64)/Native (macos_x64)
@@ -12,7 +12,7 @@ project.appleMain
 project.appleTest
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonTest, project:jvmAndNativeTest, project:nativeTest
     additionalVisibleModuleNames = project:appleMain, project:commonMain, project:jvmAndNativeMain, project:nativeMain
@@ -23,7 +23,7 @@ project.commonMain
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
-    targetPlatform = JS/JVM (1.8)/Native (general)
+    targetPlatform = JS/JVM (17)/Native (general)
 
 project.commonTest
     externalProjectId = project
@@ -31,12 +31,12 @@ project.commonTest
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     additionalVisibleModuleNames = project:commonMain
-    targetPlatform = JS/JVM (1.8)/Native (general)
+    targetPlatform = JS/JVM (17)/Native (general)
 
 project.iosArm64Main
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:appleMain, project:commonMain, project:jvmAndNativeMain, project:nativeMain
     targetPlatform = Native (ios_arm64)
@@ -44,7 +44,7 @@ project.iosArm64Main
 project.iosArm64Test
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:appleTest, project:commonTest, project:jvmAndNativeTest, project:nativeTest
     additionalVisibleModuleNames = project:appleMain, project:commonMain, project:iosArm64Main, project:jvmAndNativeMain, project:nativeMain
@@ -53,7 +53,7 @@ project.iosArm64Test
 project.iosX64Main
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:appleMain, project:commonMain, project:jvmAndNativeMain, project:nativeMain
     targetPlatform = Native (ios_x64)
@@ -61,7 +61,7 @@ project.iosX64Main
 project.iosX64Test
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:appleTest, project:commonTest, project:jvmAndNativeTest, project:nativeTest
     additionalVisibleModuleNames = project:appleMain, project:commonMain, project:iosX64Main, project:jvmAndNativeMain, project:nativeMain
@@ -92,7 +92,7 @@ project.jvmAndNativeMain
     apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonMain
-    targetPlatform = JVM (1.8)/Native (general)
+    targetPlatform = JVM (17)/Native (general)
 
 project.jvmAndNativeTest
     externalProjectId = project
@@ -101,7 +101,7 @@ project.jvmAndNativeTest
     mppVersion = M3
     dependsOnModuleNames = project:commonTest
     additionalVisibleModuleNames = project:commonMain, project:jvmAndNativeMain
-    targetPlatform = JVM (1.8)/Native (general)
+    targetPlatform = JVM (17)/Native (general)
 
 project.jvmMain
     externalProjectId = project
@@ -123,7 +123,7 @@ project.jvmTest
 project.linuxX64Main
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:jvmAndNativeMain, project:nativeMain
     targetPlatform = Native (linux_x64)
@@ -131,7 +131,7 @@ project.linuxX64Main
 project.linuxX64Test
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonTest, project:jvmAndNativeTest, project:nativeTest
     additionalVisibleModuleNames = project:commonMain, project:jvmAndNativeMain, project:linuxX64Main, project:nativeMain
@@ -140,7 +140,7 @@ project.linuxX64Test
 project.macosX64Main
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:appleMain, project:commonMain, project:jvmAndNativeMain, project:nativeMain
     targetPlatform = Native (macos_x64)
@@ -148,7 +148,7 @@ project.macosX64Main
 project.macosX64Test
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:appleTest, project:commonTest, project:jvmAndNativeTest, project:nativeTest
     additionalVisibleModuleNames = project:appleMain, project:commonMain, project:jvmAndNativeMain, project:macosX64Main, project:nativeMain
@@ -157,7 +157,7 @@ project.macosX64Test
 project.nativeMain
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:jvmAndNativeMain
     targetPlatform = Native (ios_arm64)/Native (ios_x64)/Native (linux_x64)/Native (macos_x64)
@@ -165,7 +165,7 @@ project.nativeMain
 project.nativeTest
     externalProjectId = project
     languageLevel = {{LATEST_STABLE}}
-    apiLevel = 1.8
+    apiLevel = {{LATEST_STABLE}}
     mppVersion = M3
     dependsOnModuleNames = project:commonTest, project:jvmAndNativeTest
     additionalVisibleModuleNames = project:commonMain, project:jvmAndNativeMain, project:nativeMain

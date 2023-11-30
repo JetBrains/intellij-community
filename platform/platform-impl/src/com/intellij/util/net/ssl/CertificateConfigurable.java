@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.ide.IdeBundle;
@@ -35,14 +35,14 @@ import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManag
  * @author Mikhail Golubev
  */
 @ApiStatus.Internal
-public class CertificateConfigurable implements SearchableConfigurable, Configurable.NoScroll, CertificateListener {
+public final class CertificateConfigurable implements SearchableConfigurable, Configurable.NoScroll, CertificateListener {
   private static final FileTypeDescriptor CERTIFICATE_DESCRIPTOR =
     new FileTypeDescriptor(IdeBundle.message("settings.certificate.choose.certificate"),
                            ".crt", ".CRT",
                            ".cer", ".CER",
                            ".pem", ".PEM",
                            ".der", ".DER");
-  @NonNls public static final String EMPTY_PANEL = "empty.panel";
+  public static final @NonNls String EMPTY_PANEL = "empty.panel";
 
   private JPanel myRootPanel;
 
@@ -145,27 +145,23 @@ public class CertificateConfigurable implements SearchableConfigurable, Configur
     return certificate.getSubjectX500Principal().getName();
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "http.certificates";
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return UIBundle.message("configurable.CertificateConfigurable.display.name");
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     return "reference.idesettings.server.certificates";
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     // lazily initialized to ensure that disposeUIResources() will be called, if
     // tree builder was created
     initializeUI();

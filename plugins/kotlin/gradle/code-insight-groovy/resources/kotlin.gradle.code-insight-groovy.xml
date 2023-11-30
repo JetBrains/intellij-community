@@ -36,9 +36,10 @@
 
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.groovy.inspections.GradleKotlinxCoroutinesDeprecationInspection"
-            groupPath="Kotlin,Migration"
+            groupPathKey="group.path.kotlin.migration"
             groupBundle="messages.KotlinBundle" groupKey="group.names.gradle"
             enabledByDefault="false"
+            cleanupTool="true"
             language="Groovy"
             hasStaticDescription="true"
             level="ERROR" key="inspection.gradle.kotlinx.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>

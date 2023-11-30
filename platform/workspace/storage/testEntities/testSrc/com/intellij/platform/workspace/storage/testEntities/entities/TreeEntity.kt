@@ -45,6 +45,6 @@ interface TreeEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: TreeEntity, modification: TreeEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: TreeEntity, modification: TreeEntity.Builder.() -> Unit): TreeEntity = modifyEntity(
   TreeEntity.Builder::class.java, entity, modification)
 //endregion

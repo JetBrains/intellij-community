@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.Disposable
@@ -31,10 +31,11 @@ import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.awt.Dimension
 import java.awt.Point
-import java.time.Duration
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class EditorEmbeddedComponentManagerTest {
   private val fontWidth = 10
@@ -307,7 +308,7 @@ class EditorEmbeddedComponentManagerTest {
 
   /** Used for awaiting for RepaintManager validating all invalid components. */
   private suspend inline fun pollAssertions(crossinline handler: () -> Unit) {
-    pollAssertionsAsync(total = Duration.ofSeconds(5), interval = Duration.ofMillis(50)) {
+    pollAssertionsAsync(5.seconds, 50.milliseconds) {
       editor.component.validate()
       handler()
     }

@@ -6,19 +6,16 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiRecordHeader;
 import com.intellij.psi.impl.java.stubs.impl.PsiRecordHeaderStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiRecordHeaderImpl;
 import com.intellij.psi.impl.source.tree.java.RecordHeaderElement;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-
-public class JavaRecordHeaderElementType extends JavaStubElementType<PsiRecordHeaderStub, PsiRecordHeader> {
+public class JavaRecordHeaderElementType extends JavaStubElementType<PsiRecordHeaderStub, PsiRecordHeader>
+  implements EmptyStubSerializer<PsiRecordHeaderStub> {
   public JavaRecordHeaderElementType() {
-    super("RECORD_HEADER");
+    super("RECORD_HEADER", BasicJavaElementType.BASIC_RECORD_HEADER);
   }
 
   @NotNull
@@ -27,13 +24,9 @@ public class JavaRecordHeaderElementType extends JavaStubElementType<PsiRecordHe
     return new RecordHeaderElement();
   }
 
-  @Override
-  public void serialize(@NotNull PsiRecordHeaderStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-  }
-
   @NotNull
   @Override
-  public PsiRecordHeaderStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public PsiRecordHeaderStub instantiate(StubElement parentStub) {
     return new PsiRecordHeaderStubImpl(parentStub);
   }
 

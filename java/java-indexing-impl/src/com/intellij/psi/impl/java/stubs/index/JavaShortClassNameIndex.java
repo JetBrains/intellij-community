@@ -30,8 +30,16 @@ public class JavaShortClassNameIndex extends StringStubIndexExtension<PsiClass> 
     return JavaStubIndexKeys.CLASS_SHORT_NAMES;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getClasses(String, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
   public Collection<PsiClass> get(@NotNull final String shortName, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+    return getClasses(shortName, project, scope);
+  }
+
+  public Collection<PsiClass> getClasses(@NotNull final String shortName, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), shortName, project, new JavaSourceFilterScope(scope), PsiClass.class);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
@@ -89,8 +89,7 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
   }
 
   @Override
-  @Nullable
-  public Pair<Component, Rectangle> getCellRendererAndBounds(TableCell key) {
+  public @Nullable Pair<Component, Rectangle> getCellRendererAndBounds(TableCell key) {
     if (key.row < 0 || key.row >= myComponent.getRowCount() ||
         key.column < 0 || key.column >= myComponent.getColumnCount() ||
         key.row == myComponent.getEditingRow() && key.column == myComponent.getEditingColumn() ||

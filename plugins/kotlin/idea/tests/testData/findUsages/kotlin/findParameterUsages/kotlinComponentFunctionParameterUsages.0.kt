@@ -6,4 +6,4 @@ package test
 public data class KotlinDataClass(val <caret>foo: Int, val bar: String)
 
 
-// IGNORE_FIR_LOG
+// IGNORE_K2_LOG

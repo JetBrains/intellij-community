@@ -5,10 +5,10 @@ package org.jetbrains.kotlin.idea.maven.compilerPlugin
 import org.jdom.Element
 import org.jdom.Text
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
-import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
-import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPluginWithFacetSettings
 import org.jetbrains.kotlin.idea.maven.KotlinMavenImporter.Companion.KOTLIN_PLUGIN_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.maven.KotlinMavenImporter.Companion.KOTLIN_PLUGIN_GROUP_ID
 import org.jetbrains.kotlin.idea.maven.MavenProjectImportHandler
@@ -19,10 +19,12 @@ abstract class AbstractMavenImportHandler : MavenProjectImportHandler {
     abstract val mavenPluginArtifactName: String
     abstract val pluginJarFileFromIdea: String
 
-    override fun invoke(facet: KotlinFacet, mavenProject: MavenProject) {
-        modifyCompilerArgumentsForPlugin(facet, getPluginSetup(mavenProject),
-                                         compilerPluginId = compilerPluginId,
-                                         pluginName = pluginName)
+    override fun invoke(facetSettings: IKotlinFacetSettings, mavenProject: MavenProject) {
+        modifyCompilerArgumentsForPluginWithFacetSettings(
+            facetSettings, getPluginSetup(mavenProject),
+            compilerPluginId = compilerPluginId,
+            pluginName = pluginName
+        )
     }
 
     abstract fun getOptions(
@@ -39,15 +41,15 @@ abstract class AbstractMavenImportHandler : MavenProjectImportHandler {
         val configuration = kotlinPlugin.configurationElement ?: return null
 
         val enabledCompilerPlugins = configuration.getElement("compilerPlugins")
-                ?.getElements()
-                ?.flatMap { plugin -> plugin.content.mapNotNull { (it as? Text)?.text } }
-                ?: emptyList()
+            ?.getElements()
+            ?.flatMap { plugin -> plugin.content.mapNotNull { (it as? Text)?.text } }
+            ?: emptyList()
 
         val compilerPluginOptions = configuration.getElement("pluginOptions")
-                ?.getElements()
-                ?.flatMap { it.content }
-                ?.mapTo(mutableListOf()) { (it as Text).text }
-                ?: mutableListOf<String>()
+            ?.getElements()
+            ?.flatMap { it.content }
+            ?.mapTo(mutableListOf()) { (it as Text).text }
+            ?: mutableListOf<String>()
 
         // We can't use the plugin from Gradle as it may have the incompatible version
         val classpath = listOf(pluginJarFileFromIdea)

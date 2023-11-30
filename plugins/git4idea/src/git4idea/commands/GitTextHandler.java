@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
@@ -9,7 +9,6 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -68,9 +67,8 @@ public abstract class GitTextHandler extends GitHandler {
     myTerminationTimeoutMs = timeoutMs;
   }
 
-  @Nullable
   @Override
-  protected Process startProcess() throws ExecutionException {
+  protected @Nullable Process startProcess() throws ExecutionException {
     synchronized (myProcessStateLock) {
       if (myIsDestroyed) {
         return null;
@@ -84,7 +82,7 @@ public abstract class GitTextHandler extends GitHandler {
   protected void startHandlingStreams() {
     myHandler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(@NotNull final ProcessEvent event) {
+      public void processTerminated(final @NotNull ProcessEvent event) {
         final int exitCode = event.getExitCode();
         OUTPUT_LOG.debug(String.format("%s %% %s terminated (%s)", getCommand(), GitTextHandler.this.hashCode(), exitCode));
         try {
@@ -107,28 +105,14 @@ public abstract class GitTextHandler extends GitHandler {
   protected abstract void processTerminated(int exitCode);
 
   @Override
-  public void destroyProcess() {
-    synchronized (myProcessStateLock) {
-      myIsDestroyed = true;
-      if (myHandler != null) {
-        myHandler.destroyProcess();
-      }
-    }
-  }
-
-  @Override
   protected void waitForProcess() {
     if (myHandler != null) {
-      ProgressManager progressManager = ProgressManager.getInstance();
       while (!myHandler.waitFor(WAIT_TIMEOUT_MS)) {
         try {
-          ProgressIndicator indicator = progressManager.getProgressIndicator();
-          if (indicator != null) {
-            indicator.checkCanceled();
-          }
+          ProgressManager.checkCanceled();
         }
         catch (ProcessCanceledException pce) {
-          progressManager.executeNonCancelableSection(() -> {
+          ProgressManager.getInstance().executeNonCancelableSection(() -> {
             if (!tryKill()) {
               LOG.warn("Could not terminate [" + printableCommandLine() + "].");
             }
@@ -162,9 +146,8 @@ public abstract class GitTextHandler extends GitHandler {
       super(commandLine, withMediator);
     }
 
-    @NotNull
     @Override
-    protected BaseOutputReader.Options readerOptions() {
+    protected @NotNull BaseOutputReader.Options readerOptions() {
       return Registry.is("git.blocking.read") ? BaseOutputReader.Options.BLOCKING : BaseOutputReader.Options.NON_BLOCKING;
     }
   }

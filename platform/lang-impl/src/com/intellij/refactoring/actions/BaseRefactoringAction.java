@@ -51,7 +51,7 @@ public abstract class BaseRefactoringAction extends AnAction {
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context,
                                                         @NotNull String place) {
-    if (ActionPlaces.isPopupPlace(place)) {
+    if (ActionPlaces.isPopupPlace(place) || place.contains(ActionPlaces.EDITOR_FLOATING_TOOLBAR)) {
       final RefactoringActionHandler handler = getHandler(context);
       if (handler == null) return false;
       if (handler instanceof ContextAwareActionHandler contextAwareActionHandler) {

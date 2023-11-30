@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor.actions;
 
 import com.intellij.largeFilesEditor.actions.LfeBaseEditorActionHandler;
@@ -11,7 +11,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LfeEditorActionTextStartEndHandler extends LfeBaseEditorActionHandler {
+public final class LfeEditorActionTextStartEndHandler extends LfeBaseEditorActionHandler {
 
   private final boolean isStart;
 

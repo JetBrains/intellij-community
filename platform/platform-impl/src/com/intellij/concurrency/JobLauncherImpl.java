@@ -158,9 +158,8 @@ public final class JobLauncherImpl extends JobLauncher {
     return null;
   }
 
-  @NotNull
   @Override
-  public Job<Void> submitToJobThread(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
+  public @NotNull Job<Void> submitToJobThread(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
     VoidForkJoinTask task = new VoidForkJoinTask(action, onDoneCallback);
     task.submit();
     return task;
@@ -169,7 +168,6 @@ public final class JobLauncherImpl extends JobLauncher {
   private static final class VoidForkJoinTask implements Job<Void> {
     private final Runnable myAction;
     private final Consumer<? super Future<?>> myOnDoneCallback;
-    private final CoroutineContext myContext;
     private enum Status { STARTED, EXECUTED } // null=not yet executed, STARTED=started execution, EXECUTED=finished
     private volatile Status myStatus;
     private final ForkJoinTask<Void> myForkJoinTask = new ForkJoinTask<>() {
@@ -186,9 +184,7 @@ public final class JobLauncherImpl extends JobLauncher {
       protected boolean exec() {
         myStatus = Status.STARTED;
         try {
-          try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
-            myAction.run();
-          }
+          myAction.run();
           complete(null); // complete manually before calling callback
         }
         catch (Throwable throwable) {
@@ -198,9 +194,7 @@ public final class JobLauncherImpl extends JobLauncher {
         finally {
           myStatus = Status.EXECUTED;
           if (myOnDoneCallback != null) {
-            try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
-              myOnDoneCallback.accept(this);
-            }
+            myOnDoneCallback.accept(this);
           }
         }
         return true;
@@ -210,7 +204,6 @@ public final class JobLauncherImpl extends JobLauncher {
     private VoidForkJoinTask(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
       myAction = action;
       myOnDoneCallback = onDoneCallback;
-      myContext = ThreadContext.currentThreadContext().minusKey(kotlinx.coroutines.Job.Key);
     }
 
     private void submit() {
@@ -333,8 +326,7 @@ public final class JobLauncherImpl extends JobLauncher {
       }
 
       @Override
-      @NonNls
-      public String toString() {
+      public @NonNls String toString() {
         return super.toString() + " seq="+mySeq;
       }
     }

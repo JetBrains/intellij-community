@@ -11,7 +11,7 @@ import com.intellij.xml.XmlBundle
 import java.util.function.Function
 
 // @formatter:off
-private val model = WebEditorOptions.getInstance()
+private val model get() = WebEditorOptions.getInstance()
 private val myAutomaticallyInsertClosingTagCheckBox         get() = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.closing.tag.on.tag.completion"), model::isAutomaticallyInsertClosingTag, model::setAutomaticallyInsertClosingTag)
 private val myAutomaticallyInsertRequiredAttributesCheckBox get() = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.required.attributes.on.tag.completion"), model::isAutomaticallyInsertRequiredAttributes, model::setAutomaticallyInsertRequiredAttributes)
 private val myAutomaticallyInsertRequiredSubTagsCheckBox    get() = CheckboxDescriptor(XmlBundle.message("smart.keys.insert.required.subtags.on.tag.completion"), model::isAutomaticallyInsertRequiredSubTags, model::setAutomaticallyInsertRequiredSubTags)

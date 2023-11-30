@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.cellvalidators;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -13,22 +13,19 @@ import java.beans.PropertyChangeEvent;
 
 @ApiStatus.Experimental
 public abstract class CellComponentProvider<C extends JComponent> {
-  @NotNull protected final C owner;
+  protected final @NotNull C owner;
 
   public CellComponentProvider(@NotNull C owner) {
     this.owner = owner;
   }
 
-  @NotNull
-  public final C getOwner() {
+  public final @NotNull C getOwner() {
     return owner;
   }
 
-  @Nullable
-  abstract public JComponent getCellRendererComponent(@NotNull MouseEvent e);
+  public abstract @Nullable JComponent getCellRendererComponent(@NotNull MouseEvent e);
 
-  @NotNull
-  abstract public Rectangle getCellRect(@NotNull MouseEvent e);
+  public abstract @NotNull Rectangle getCellRect(@NotNull MouseEvent e);
 
   abstract boolean isEditing(@NotNull MouseEvent e);
 
@@ -48,9 +45,8 @@ public abstract class CellComponentProvider<C extends JComponent> {
       super(owner);
     }
 
-    @Nullable
     @Override
-    public JComponent getCellRendererComponent(@NotNull MouseEvent e) {
+    public @Nullable JComponent getCellRendererComponent(@NotNull MouseEvent e) {
       Point p = e.getPoint();
       int column = owner.columnAtPoint(p);
       int row = owner.rowAtPoint(p);
@@ -63,9 +59,8 @@ public abstract class CellComponentProvider<C extends JComponent> {
       }
     }
 
-    @NotNull
     @Override
-    public Rectangle getCellRect(@NotNull MouseEvent e) {
+    public @NotNull Rectangle getCellRect(@NotNull MouseEvent e) {
       Point p = e.getPoint();
       return owner.getCellRect(owner.rowAtPoint(p), owner.columnAtPoint(p), false);
     }

@@ -76,8 +76,9 @@ public abstract class PyEnvTestCase {
   /**
    * Escape test output to prevent python test be processed as test result
    */
+  @NotNull
   public static String escapeTestMessage(@NotNull final String message) {
-    return message.replace("##", "from test: \\[sharp][sharp]");
+    return message.replace("##teamcity", "from test: \\[sharp][sharp]");
   }
 
   /**

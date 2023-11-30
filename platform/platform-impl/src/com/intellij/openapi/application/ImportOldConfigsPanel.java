@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.application.ImportOldConfigsUsagesCollector.ImportOldConfigsState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
@@ -21,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalVirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,9 +34,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.function.Function;
 
-import static com.intellij.openapi.util.Pair.pair;
-
-class ImportOldConfigsPanel extends JDialog {
+final class ImportOldConfigsPanel extends JDialog {
   private JPanel myRootPanel;
   private JRadioButton myRbImportAuto;
   private JRadioButton myRbImport;
@@ -54,6 +52,8 @@ class ImportOldConfigsPanel extends JDialog {
 
   ImportOldConfigsPanel(List<Path> guessedOldConfigDirs, Function<? super Path, ? extends Pair<Path, Path>> validator) {
     super((Dialog)null, true);
+
+    ComponentUtil.decorateWindowHeader(rootPane);
 
     myGuessedOldConfigDirs = guessedOldConfigDirs;
     myValidator = validator;
@@ -163,7 +163,7 @@ class ImportOldConfigsPanel extends JDialog {
           showError(BootstrapBundle.message("import.chooser.error.invalid", selectedDir));
           return;
         }
-        myResult = pair(selectedDir, null);
+        myResult = new Pair<>(selectedDir, null);
       }
       else {
         if (FileUtil.pathsEqual(selectedDir.toString(), PathManager.getHomePath()) ||
@@ -191,10 +191,14 @@ class ImportOldConfigsPanel extends JDialog {
   }
 
   @Nullable Pair<Path, Path> getSelectedFile() {
-    ImportOldConfigsState.getInstance().saveImportOldConfigType(myRbImportAuto, myRbImport, myRbDoNotImport, myResult != null);
+    ImportOldConfigsState.Companion.getInstance().saveImportOldConfigType(myRbImportAuto, myRbImport, myRbDoNotImport, myResult != null);
 
-    if (myRbImportAuto.isSelected()) return pair(myGuessedOldConfigDirs.get(Math.max(myComboBoxOldPaths.getSelectedIndex(), 0)), null);
-    if (myRbImport.isSelected()) return myResult;
+    if (myRbImportAuto.isSelected()) {
+      return new Pair<>(myGuessedOldConfigDirs.get(Math.max(myComboBoxOldPaths.getSelectedIndex(), 0)), null);
+    }
+    if (myRbImport.isSelected()) {
+      return myResult;
+    }
     return null;
   }
 }

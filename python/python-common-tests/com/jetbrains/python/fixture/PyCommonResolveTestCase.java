@@ -57,14 +57,7 @@ public abstract class PyCommonResolveTestCase extends PythonCommonTestCase {
   }
 
   protected void assertNotResolved() {
-    final PsiElement element;
-    try {
-      element = doResolve();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-    assertNull(element);
+    assertNull(doResolve());
   }
 
   protected <T extends PsiElement> T assertResolvesTo(final Class<T> aClass,

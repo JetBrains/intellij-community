@@ -23,11 +23,11 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.TargetPlatformKind
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.tooling
@@ -139,8 +139,12 @@ class KotlinGradleProjectDataService : AbstractProjectDataService<ModuleData, Vo
         project: Project,
         modelsProvider: IdeModifiableModelsProvider
     ) {
+        if (projectData?.owner != GradleConstants.SYSTEM_ID) return
+
         for (moduleNode in toImport) {
-            // If source sets are present, configure facets in the their modules
+            // This code is used for when resolveModulePerSourceSet is set to false in the Gradle settings.
+            // In this case, a single module is created per Gradle module rather than one per source set,
+            // which means the KotlinGradleSourceSetDataService will not be applicable.
             if (ExternalSystemApiUtil.getChildren(moduleNode, GradleSourceSetData.KEY).isNotEmpty()) continue
 
             val moduleData = moduleNode.data
@@ -218,6 +222,7 @@ fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKin
 }
 
 @Suppress("DEPRECATION_ERROR")
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use detectPlatformKindByPlugin() instead",
     replaceWith = ReplaceWith("detectPlatformKindByPlugin(moduleNode)"),
@@ -312,9 +317,8 @@ fun configureFacetByGradleModule(
     with(kotlinFacet.configuration.settings) {
         implementedModuleNames = implementedModulesAware.implementedModuleNames
         configureOutputPaths(moduleNode, platformKind)
+        noVersionAutoAdvance()
     }
-
-    kotlinFacet.noVersionAutoAdvance()
 
     if (platformKind != null && !platformKind.isJvm) {
         migrateNonJvmSourceFolders(
@@ -326,7 +330,7 @@ fun configureFacetByGradleModule(
     return kotlinFacet
 }
 
-private fun KotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<ModuleData>, platformKind: IdePlatformKind?) {
+private fun IKotlinFacetSettings.configureOutputPaths(moduleNode: DataNode<ModuleData>, platformKind: IdePlatformKind?) {
     if (!platformKind.isJavaScript) {
         productionOutputPath = null
         testOutputPath = null
@@ -348,7 +352,7 @@ fun configureFacetWithCompilerArguments(
     modelsProvider: IdeModifiableModelsProvider?,
     compilerArguments: CommonCompilerArguments,
 ) {
-    applyCompilerArgumentsToFacet(compilerArguments, kotlinFacet, modelsProvider)
+    applyCompilerArgumentsToFacetSettings(compilerArguments, kotlinFacet.configuration.settings, kotlinFacet.module, modelsProvider)
 }
 
 private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, sourceSetName: String): Set<String> {

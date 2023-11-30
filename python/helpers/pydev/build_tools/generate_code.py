@@ -47,7 +47,7 @@ def get_cython_contents(filename):
 
                 if strip == '#':
                     continue
-                    
+
                 assert strip.startswith('# '), 'Line inside # IFDEF CYTHON must start with "# ". Found: %s' % (strip,)
                 new_contents.append(line.replace('# ', '', 1))
 
@@ -73,7 +73,10 @@ def _generate_cython_from_files(target, modules):
 ''']
 
     for mod in modules:
-        contents.append(get_cython_contents(mod.__file__))
+        if isinstance(mod, str):
+            contents.append(get_cython_contents(mod))
+        else:
+            contents.append(get_cython_contents(mod.__file__))
 
     with open(target, 'w') as stream:
         stream.write(''.join(contents))
@@ -172,9 +175,9 @@ def remove_if_exists(f):
         import traceback;traceback.print_exc()
 
 def generate_cython_module():
-    remove_if_exists(os.path.join(root_dir, '_pydevd_bundle', 'pydevd_cython.pyx'))
-
     target = os.path.join(root_dir, '_pydevd_bundle', 'pydevd_cython.pyx')
+    remove_if_exists(target)
+
     curr = os.environ.get('PYDEVD_USE_CYTHON')
     try:
         os.environ['PYDEVD_USE_CYTHON'] = 'NO'
@@ -188,6 +191,16 @@ def generate_cython_module():
         else:
             os.environ['PYDEVD_USE_CYTHON'] = curr
 
+
+def generate_pep669_module():
+    target = os.path.join(root_dir, '_pydevd_bundle',
+                          'pydevd_pep_669_tracing_cython.pyx')
+    remove_if_exists(target)
+
+    _generate_cython_from_files(target,[os.path.join(root_dir, '_pydevd_bundle', 'pydevd_pep_669_tracing.py')])
+
+
 if __name__ == '__main__':
     generate_dont_trace_files()
     generate_cython_module()
+    generate_pep669_module()

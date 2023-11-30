@@ -42,6 +42,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -305,7 +306,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
         final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
         if (toolWindow == null) return;
 
-        final MessageView messageView = project.getService(MessageView.class);
+        final MessageView messageView = MessageView.getInstance(project);
         UIUtil.invokeLaterIfNeeded(() -> {
           if (project.isDisposed()) return;
           for (Content content: messageView.getContentManager().getContents()) {
@@ -404,7 +405,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
   public @NotNull NewErrorTreeViewPanel prepareMessagesView(final @NotNull ProjectSystemId externalSystemId,
                                                             final @NotNull NotificationSource notificationSource,
                                                             boolean activateView) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     final NewErrorTreeViewPanel errorTreeView;
     final String contentDisplayName = getContentDisplayName(notificationSource, externalSystemId);
@@ -412,7 +413,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
     Content targetContent = findContent(contentIdPair, contentDisplayName);
 
     assert myProject != null;
-    final MessageView messageView = myProject.getService(MessageView.class);
+    final MessageView messageView = MessageView.getInstance(myProject);
     if (targetContent == null || !contentIdPair.equals(targetContent.getUserData(CONTENT_ID_KEY))) {
       errorTreeView = new NewEditableErrorTreeViewPanel(myProject, null, true, true, null);
       targetContent = ContentFactory.getInstance().createContent(errorTreeView, contentDisplayName, true);
@@ -437,7 +438,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
   private @Nullable Content findContent(@NotNull Pair<NotificationSource, ProjectSystemId> contentIdPair, @NotNull String contentDisplayName) {
     Content targetContent = null;
     assert myProject != null;
-    final MessageView messageView = myProject.getService(MessageView.class);
+    final MessageView messageView = MessageView.getInstance(myProject);
     for (Content content: messageView.getContentManager().getContents()) {
       if (contentIdPair.equals(content.getUserData(CONTENT_ID_KEY))
           && StringUtil.equals(content.getDisplayName(), contentDisplayName) && !content.isPinned()) {
@@ -447,7 +448,7 @@ public final class ExternalSystemNotificationManager implements Disposable {
     return targetContent;
   }
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull @Nls String getContentDisplayName(
     final @NotNull NotificationSource notificationSource,
     final @NotNull ProjectSystemId externalSystemId

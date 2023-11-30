@@ -9,11 +9,9 @@ import com.intellij.codeInspection.options.OptPane.group
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.annotationRequest
 import com.intellij.lang.jvm.actions.createAddAnnotationActions
-import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.psi.PsiMethod
 import com.intellij.util.EventDispatcher
-import com.intellij.util.asSafely
-import com.intellij.util.concurrency.annotations.*
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.map2Array
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.annotations.PropertyKey
@@ -75,7 +73,7 @@ internal class ThreadingConcurrencyInspection(
     }
 
     override fun visitCallExpression(node: UCallExpression): Boolean {
-      val resolvedMethod = node.resolveToUElement()?.asSafely<UMethod>() ?: return true
+      val resolvedMethod = node.resolveToUElementOfType<UMethod>() ?: return true
 
       val threadingStatus = resolvedMethod.getThreadingStatuses()
       if (threadingStatus.isEmpty()) {
@@ -216,23 +214,4 @@ internal class ThreadingConcurrencyInspection(
     }
   }
 
-  private fun UMethod.getThreadingStatuses(): Set<ThreadingStatus> {
-    val threadingStatuses = mutableSetOf<ThreadingStatus>()
-    for (uAnnotation in this.uAnnotations) {
-      ThreadingStatus.values().filterTo(threadingStatuses) { uAnnotation.qualifiedName == it.annotationFqn }
-    }
-
-    return threadingStatuses
-  }
-
-  private enum class ThreadingStatus(val annotationFqn: String) {
-    REQUIRES_BGT(RequiresBackgroundThread::class.java.canonicalName),
-    REQUIRES_EDT(RequiresEdt::class.java.canonicalName),
-    REQUIRES_RL(RequiresReadLock::class.java.canonicalName),
-    REQUIRES_WL(RequiresWriteLock::class.java.canonicalName),
-    REQUIRES_RL_ABSENCE(RequiresReadLockAbsence::class.java.canonicalName);
-
-    fun getDisplayName() = StringUtilRt.getShortName(annotationFqn)
-  }
 }
-

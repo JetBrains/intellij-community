@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.actionSystem.impl.PresentationFactory.TransparentWrapper;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +45,19 @@ public final class ActionGroupUtil {
   }
 
   @ApiStatus.Experimental
+  public static @NotNull ActionGroup forceHideDisabledChildren(@NotNull ActionGroup actionGroup) {
+    final class Compact extends ActionGroupWrapper implements CompactActionGroup, TransparentWrapper {
+
+      Compact(@NotNull ActionGroup action) {
+        super(action);
+      }
+    }
+    return actionGroup instanceof CompactActionGroup ? actionGroup : new Compact(actionGroup);
+  }
+
+  @ApiStatus.Experimental
   public static @NotNull ActionGroup forceRecursiveUpdateInBackground(@NotNull ActionGroup actionGroup) {
-    class MyGroup extends ActionGroup implements ActionUpdateThreadAware.Recursive {
+    final class MyGroup extends ActionGroup implements ActionUpdateThreadAware.Recursive, TransparentWrapper {
       {
         setPopup(false);
       }
@@ -60,6 +72,6 @@ public final class ActionGroupUtil {
         return new AnAction[] { actionGroup };
       }
     }
-    return new MyGroup();
+    return actionGroup instanceof ActionUpdateThreadAware.Recursive ? actionGroup : new MyGroup();
   }
 }

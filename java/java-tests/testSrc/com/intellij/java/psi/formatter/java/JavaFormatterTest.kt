@@ -4116,4 +4116,30 @@ public enum LevelCode {
       """.trimIndent()
     )
   }
+
+  fun testFormattingUnnamedClassMembers() {
+    doTextTest(
+      """
+      void before() {
+      }
+      class A {}
+      void after() {
+      }
+      String s = "foo";
+      """.trimIndent(),
+
+      """
+      void before() {
+      }
+      
+      class A {
+      }
+      
+      void after() {
+      }
+      
+      String s = "foo";
+      """.trimIndent()
+    )
+  }
 }

@@ -13,12 +13,12 @@ class ReportingKindSorter(
   override val kindVariety: KindVariety
     get() = sorterProvider.kindVariety
 
-  override fun sort(kinds: List<CompletionKind>, parameters: CompletionParameters): List<RankedKind> {
+  override fun sort(kinds: List<CompletionKind>, parameters: CompletionParameters): List<RankedKind>? {
     val sorter = sorterProvider.createSorter()
     listener.onRankingStarted()
     return try {
       val kindsSorted = sorter.sort(kinds, parameters)
-      listener.onRanked(kindsSorted)
+      kindsSorted?.let {listener.onRanked(it) }
       kindsSorted
     }
     finally {

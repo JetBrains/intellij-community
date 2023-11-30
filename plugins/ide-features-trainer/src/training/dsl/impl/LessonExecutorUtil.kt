@@ -92,9 +92,13 @@ internal object LessonExecutorUtil {
     if (balloonConfig.width > 0) {
       balloonBuilder.withMaxWidth(JBUI.scale(balloonConfig.width))
     }
+    // the visual index can be zero, for example, if the balloon is showing with the warning before lesson start,
+    // use '1' number in this case
+    val stepNumber = lessonExecutor.visualIndexNumber.coerceAtLeast(1)
     val balloon: Balloon = balloonBuilder
-      .withStepNumber(lessonExecutor.visualIndexNumber)
+      .withStepNumber(stepNumber)
       .showButton(balloonConfig.gotItCallBack != null)
+      .withButtonLabel(balloonConfig.buttonText)
       .onButtonClick { balloonConfig.gotItCallBack?.invoke() }
       .requestFocus(balloonConfig.gotItCallBack != null)
       .withContrastColors(true)

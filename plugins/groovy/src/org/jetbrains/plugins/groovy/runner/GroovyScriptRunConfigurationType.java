@@ -6,13 +6,10 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.FileTypeIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
 
@@ -73,11 +70,6 @@ public final class GroovyScriptRunConfigurationType implements ConfigurationType
     @Override
     public @NotNull String getId() {
       return "Groovy";
-    }
-
-    @Override
-    public boolean isApplicable(@NotNull Project project) {
-      return FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.allScope(project));
     }
 
     @NotNull

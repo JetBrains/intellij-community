@@ -29,3 +29,5 @@ public class JavaClass {
         int breakpoint = 1;
     }
 }
+
+// IGNORE_K2

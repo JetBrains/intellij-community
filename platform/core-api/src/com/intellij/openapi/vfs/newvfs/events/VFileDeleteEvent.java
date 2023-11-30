@@ -1,41 +1,45 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public final class VFileDeleteEvent extends VFileEvent {
-  @NotNull private final VirtualFile myFile;
+  private final VirtualFile myFile;
 
-  public VFileDeleteEvent(@Nullable Object requestor, @NotNull VirtualFile file, boolean isFromRefresh) {
-    super(requestor, isFromRefresh);
+  /** @deprecated use {@link VFileDeleteEvent#VFileDeleteEvent(Object, VirtualFile)} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("unused")
+  public VFileDeleteEvent(Object requestor, @NotNull VirtualFile file, boolean isFromRefresh) {
+    this(requestor, file);
+  }
+
+  @ApiStatus.Internal
+  public VFileDeleteEvent(Object requestor, @NotNull VirtualFile file) {
+    super(requestor);
     myFile = file;
   }
 
   @Override
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
   @Override
-  @NonNls
   public String toString() {
     return "VfsEvent[deleted: " + myFile.getUrl() + "]";
   }
 
-  @NotNull
   @Override
-  protected String computePath() {
+  protected @NotNull String computePath() {
     return myFile.getPath();
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 

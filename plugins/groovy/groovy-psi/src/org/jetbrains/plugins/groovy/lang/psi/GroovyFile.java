@@ -17,7 +17,7 @@ public interface GroovyFile extends GroovyFileBase {
   GrPackageDefinition getPackageDefinition();
 
   @Override
-  void setPackageName(String packageName);
+  void setPackageName(@NotNull String packageName);
 
   @Nullable
   GrPackageDefinition setPackage(GrPackageDefinition newPackage);

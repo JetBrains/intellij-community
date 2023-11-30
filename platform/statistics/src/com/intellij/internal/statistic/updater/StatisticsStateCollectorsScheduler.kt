@@ -3,10 +3,12 @@ package com.intellij.internal.statistic.updater
 
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.lightEdit.LightEdit
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.internal.statistic.service.fus.collectors.ProjectFUStateUsagesLogger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -18,25 +20,32 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.minutes
 
-internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListener {
-  companion object {
-    private val LOG_APPLICATION_STATE_SMART_MODE_DELAY = 1.minutes
+private val LOG_APPLICATION_STATE_SMART_MODE_DELAY = 1.minutes
 
-    // avoid overlapping logging from periodic scheduler and OneTimeLogger (long indexing case)
-    internal val allowExecution = AtomicBoolean(true) // TODO get rid of this
-  }
+// avoid overlapping logging from periodic scheduler and OneTimeLogger (long indexing case)
+internal val allowExecution = AtomicBoolean(true) // TODO get rid of this
+
+internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListener {
 
   override suspend fun execute(asyncScope: CoroutineScope) : Unit = blockingContext {
     ApplicationManager.getApplication().service<FUStateUsagesLogger>() // init service
   }
 
   internal class MyStartupActivity : ProjectActivity {
+    init {
+      val app = ApplicationManager.getApplication()
+      if (app.isUnitTestMode) {
+        throw ExtensionNotApplicableException.create()
+      }
+    }
+
     override suspend fun execute(project: Project) {
       // smart mode is not available when LightEdit is active
       if (LightEdit.owns(project)) {
         return
       }
 
+      FUCounterUsageLogger.getInstance() // init service
       project.service<ProjectFUStateUsagesLogger>() // init service
 
       if (allowExecution.get()) {

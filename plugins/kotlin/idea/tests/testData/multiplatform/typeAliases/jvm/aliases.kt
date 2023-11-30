@@ -2,9 +2,9 @@
 
 package aliases
 
-actual interface <!LINE_MARKER("descr='Has expects in common module'")!>A<!> {
-    actual fun <!LINE_MARKER("descr='Has expects in common module'")!>commonFun<!>()
-    fun platformFun()
+actual class <!LINE_MARKER("descr='Has expects in common module'")!>A<!> {
+    actual fun <!LINE_MARKER("descr='Has expects in common module'")!>commonFun<!>() {}
+    fun platformFun() {}
 }
 
 typealias A2 = A1

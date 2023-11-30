@@ -1,16 +1,20 @@
-from typing import Any, ClassVar
+import sys
+from _typeshed import Incomplete
+from typing import ClassVar
 from typing_extensions import Literal
 
+from ._imaging import _PixelAccessor
 from .ImageFile import StubImageFile
 
 def register_handler(handler) -> None: ...
 
-class WmfHandler:
-    bbox: Any
-    def open(self, im) -> None: ...
-    def load(self, im): ...
+if sys.platform == "win32":
+    class WmfHandler:
+        bbox: Incomplete
+        def open(self, im) -> None: ...
+        def load(self, im): ...
 
 class WmfStubImageFile(StubImageFile):
     format: ClassVar[Literal["WMF"]]
     format_description: ClassVar[str]
-    def load(self, dpi: Any | None = ...) -> None: ...
+    def load(self, dpi: Incomplete | None = None) -> _PixelAccessor: ...

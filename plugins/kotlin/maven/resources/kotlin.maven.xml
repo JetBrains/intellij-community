@@ -12,7 +12,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
-    <importer implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenImporter" />
+    <importer implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenImporterEx" />
+    <importing.workspaceConfigurator implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenImporterEx"/>
     <importer implementation="org.jetbrains.kotlin.idea.maven.KotlinCodeStyleMavenImporter" />
 
     <archetypesProvider implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenArchetypesProvider" />
@@ -81,10 +82,11 @@
                      level="WARNING" key="inspection.deprecated.maven.dependency.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.MavenCoroutinesDeprecationInspection"
-                     groupPath="Kotlin,Migration"
+                     groupPathKey="group.path.kotlin.migration"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.maven"
                      enabledByDefault="false"
                      language="XML"
+                     cleanupTool="true"
                      hasStaticDescription="true"
                      level="ERROR" key="inspection.maven.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>
 

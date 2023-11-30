@@ -36,21 +36,19 @@ class JUnit5ConverterInspection : AbstractBaseUastLocalInspectionTool(UClass::cl
     if (!shouldInspect(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
     return super.buildVisitor(holder, isOnTheFly)
   }
-
-  companion object {
-    fun canBeConvertedToJUnit5(aClass: PsiClass): Boolean {
-      if (AnnotationUtil.isAnnotated(aClass, TestUtils.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY)) return false
-      for (field in aClass.allFields) {
-        if (AnnotationUtil.isAnnotated(field!!, ruleAnnotations, 0)) return false
-      }
-      for (method in aClass.methods) {
-        if (AnnotationUtil.isAnnotated(method, ruleAnnotations, 0)) return false
-        val testAnnotation = AnnotationUtil.findAnnotation(method, true, JUnitCommonClassNames.ORG_JUNIT_TEST)
-        if (testAnnotation != null && testAnnotation.parameterList.attributes.isNotEmpty()) return false
-      }
-      return true
-    }
-
-    private val ruleAnnotations = listOf(JUnitCommonClassNames.ORG_JUNIT_RULE, JUnitCommonClassNames.ORG_JUNIT_CLASS_RULE)
-  }
 }
+
+internal fun canBeConvertedToJUnit5(aClass: PsiClass): Boolean {
+  if (AnnotationUtil.isAnnotated(aClass, TestUtils.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY)) return false
+  for (field in aClass.allFields) {
+    if (AnnotationUtil.isAnnotated(field!!, ruleAnnotations, 0)) return false
+  }
+  for (method in aClass.methods) {
+    if (AnnotationUtil.isAnnotated(method, ruleAnnotations, 0)) return false
+    val testAnnotation = AnnotationUtil.findAnnotation(method, true, JUnitCommonClassNames.ORG_JUNIT_TEST)
+    if (testAnnotation != null && testAnnotation.parameterList.attributes.isNotEmpty()) return false
+  }
+  return true
+}
+
+private val ruleAnnotations = listOf(JUnitCommonClassNames.ORG_JUNIT_RULE, JUnitCommonClassNames.ORG_JUNIT_CLASS_RULE)

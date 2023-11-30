@@ -12,6 +12,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.UserActivityProviderComponent;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,15 +25,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton.NoPathCompletion implements UserActivityProviderComponent {
   protected EnvironmentVariablesData myData = EnvironmentVariablesData.DEFAULT;
   protected final Map<String, String> myParentDefaults = new LinkedHashMap<>();
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private @NotNull List<String> myEnvFilePaths = new ArrayList<>();
+  private ExtendableTextComponent.Extension myEnvFilesExtension;
 
   public EnvironmentVariablesTextFieldWithBrowseButton() {
     super();
@@ -45,25 +46,56 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        if (!StringUtil.equals(stringifyEnvs(myData), getText())) {
+        if (!StringUtil.equals(getEnvText(), getText())) {
           Map<String, String> textEnvs = EnvVariablesTable.parseEnvsFromText(getText());
           myData = myData.with(textEnvs);
+          updateEnvFilesFromText();
           fireStateChanged();
         }
       }
     });
+    getTextField().getEmptyText().setText(ExecutionBundle.message("status.text.environment.variables"));
   }
 
-  @NotNull
-  protected EnvironmentVariablesDialog createDialog() {
+  private void addEnvFilesExtension() {
+    if (myEnvFilesExtension != null) return;
+    myEnvFilesExtension = ExtendableTextComponent.Extension.create(AllIcons.General.OpenDisk, AllIcons.General.OpenDiskHover,
+                                             ExecutionBundle.message("tooltip.browse.for.environment.files"), () -> browseForEnvFile());
+    getTextField().addExtension(myEnvFilesExtension);
+    getTextField().getEmptyText().setText(ExecutionBundle.message("status.text.environment.variables.or.env.files"));
+  }
+
+  private void browseForEnvFile() {
+    if (myEnvFilePaths.isEmpty()) {
+      EnvFilesDialogKt.addEnvFile(getTextField(), null, s -> {
+        myEnvFilePaths.add(s);
+        updateText();
+        return null;
+      });
+    }
+    else {
+      EnvFilesDialog dialog = new EnvFilesDialog(this, myEnvFilePaths);
+      dialog.show();
+      if (dialog.isOK()) {
+        myEnvFilePaths = new ArrayList<>(dialog.getPaths());
+        updateText();
+      }
+    }
+  }
+
+  @Override
+  public @NotNull ExtendableTextField getTextField() {
+    return (ExtendableTextField)super.getTextField();
+  }
+
+  protected @NotNull EnvironmentVariablesDialog createDialog() {
     return new EnvironmentVariablesDialog(this);
   }
 
   /**
    * @return unmodifiable Map instance
    */
-  @NotNull
-  public Map<String, String> getEnvs() {
+  public @NotNull Map<String, String> getEnvs() {
     return myData.getEnvs();
   }
 
@@ -75,40 +107,50 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     setData(myData.with(envs));
   }
 
-  @NotNull
-  public EnvironmentVariablesData getData() {
+  public @NotNull EnvironmentVariablesData getData() {
     return myData;
   }
 
   public void setData(@NotNull EnvironmentVariablesData data) {
     EnvironmentVariablesData oldData = myData;
     myData = data;
-    setText(stringifyEnvs(data));
+    updateText();
     if (!oldData.equals(data)) {
       fireStateChanged();
     }
   }
 
-  @NotNull
   @Override
-  protected Icon getDefaultIcon() {
+  protected @NotNull Icon getDefaultIcon() {
     return AllIcons.General.InlineVariables;
   }
 
-  @NotNull
   @Override
-  protected Icon getHoveredIcon() {
+  protected @NotNull Icon getHoveredIcon() {
     return AllIcons.General.InlineVariablesHover;
   }
 
-  @NotNull
-  protected String stringifyEnvs(@NotNull EnvironmentVariablesData evd) {
-    if (evd.getEnvs().isEmpty()) {
-      return "";
+  private String getEnvText() {
+    String s = stringifyEnvs(myData);
+    if (myEnvFilePaths.isEmpty()) return s;
+    StringBuilder buf = new StringBuilder(s);
+    for (String path : myEnvFilePaths) {
+      if (!buf.isEmpty()) {
+        buf.append(";");
+      }
+      buf.append(path);
     }
+    return buf.toString();
+  }
+
+  private void updateText() {
+    setText(getEnvText());
+  }
+
+  protected @NotNull String stringifyEnvs(@NotNull EnvironmentVariablesData evd) {
     StringBuilder buf = new StringBuilder();
     for (Map.Entry<String, String> entry : evd.getEnvs().entrySet()) {
-      if (buf.length() > 0) {
+      if (!buf.isEmpty()) {
         buf.append(";");
       }
       buf.append(StringUtil.escapeChar(entry.getKey(), ';'))
@@ -139,6 +181,25 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   private void fireStateChanged() {
     for (ChangeListener listener : myListeners) {
       listener.stateChanged(new ChangeEvent(this));
+    }
+  }
+
+  void setEnvFilePaths(@NotNull List<String> paths) {
+    myEnvFilePaths = new ArrayList<>(paths);
+    setData(myData);
+    addEnvFilesExtension();
+  }
+
+  @NotNull List<String> getEnvFilePaths() {
+    return myEnvFilePaths;
+  }
+
+  private void updateEnvFilesFromText() {
+    String text = StringUtil.trimStart(getText(), stringifyEnvs(myData));
+    if (myEnvFilePaths.isEmpty() || text.isEmpty()) return;
+    List<String> paths = ContainerUtil.filter(ContainerUtil.map(text.split(";"), s -> s.trim()), s -> !s.isEmpty());
+    for (int i = 0; i < Math.min(myEnvFilePaths.size(), paths.size()); i++) {
+      myEnvFilePaths.set(i, paths.get(i));
     }
   }
 

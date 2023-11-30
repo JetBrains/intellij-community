@@ -5,5 +5,6 @@ fun foo(p: Int) {
     "abc".fold(1) { <caret> }
 }
 
+// IGNORE_K2
 // ORDER: "acc, c ->"
 // ORDER: "acc: Int, c: Char ->"

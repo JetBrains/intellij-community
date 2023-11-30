@@ -10,11 +10,12 @@ import javax.swing.Icon
 
 class IdeVersion(
   val transferableId: TransferableIdeId,
-  val transferableVersion: TransferableIdeVersionId?, id: String,
+  val transferableVersion: TransferableIdeVersionId?,
+  id: String,
   icon: Icon,
   name: String,
   subName: String? = null,
-  settingsInit: () -> Settings,
+   settingsInit: () -> Settings,
   val lastUsed: Date? = null,
   val provider: TransferSettingsProvider
 ) : BaseIdeVersion(id, icon, name, subName) {

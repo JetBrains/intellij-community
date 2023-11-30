@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.openapi.wm.impl.WindowInfoImpl;
 import com.intellij.toolWindow.RegisterToolWindowTaskProvider;
 import com.intellij.util.ArrayUtil;
@@ -118,7 +119,7 @@ final class FacetDependentToolWindowManager implements RegisterToolWindowTaskPro
     ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
     ToolWindow toolWindow = toolWindowManager.getToolWindow(extension.id);
     if (toolWindow == null) {
-      toolWindowManager.initToolWindow(extension);
+      ((ToolWindowManagerImpl)toolWindowManager).initToolWindow(extension);
 
       if (!extension.showOnStripeByDefault) {
         toolWindow = toolWindowManager.getToolWindow(extension.id);

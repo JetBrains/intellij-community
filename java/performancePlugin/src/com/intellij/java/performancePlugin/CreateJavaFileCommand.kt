@@ -5,6 +5,7 @@ import com.intellij.core.JavaPsiBundle.message
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
+import com.intellij.openapi.vfs.findDirectory
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.impl.file.PsiJavaDirectoryFactory
@@ -38,8 +39,8 @@ class CreateJavaFileCommand(text: String, line: Int) : PerformanceCommandCorouti
     val directory = PsiJavaDirectoryFactory
       .getInstance(context.project)
       .createDirectory(
-        (context.project.guessProjectDir() ?: throw RuntimeException("'guessProjectDir' dir returned 'null'"))
-          .findFileByRelativePath(filePath) ?: throw RuntimeException("Can't find file $filePath")
+        (context.project.guessProjectDir() ?: throw RuntimeException("Root of the project was not found"))
+          .findDirectory(filePath) ?: throw RuntimeException("Can't find file $filePath")
       )
 
     val templateName = POSSIBLE_FILE_TYPES[fileType.lowercase()]

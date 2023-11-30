@@ -1,19 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
+public class InlineStreamMapAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(InlineStreamMapAction.class.getName());
   public static final class Holder {
     private static final Set<String> MAP_METHODS =
@@ -35,21 +35,23 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
       .of("flatMap", "flatMapToInt", "flatMapToLong", "flatMapToDouble", "forEach", "forEachOrdered", "anyMatch", "noneMatch", "allMatch")
       .append(MAP_METHODS).toSet();
   }
+  
+  public InlineStreamMapAction() {
+    super(PsiIdentifier.class);
+  }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull final PsiElement element) {
-    if (!(element instanceof PsiIdentifier)) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiReferenceExpression)) return false;
+    if (!(parent instanceof PsiReferenceExpression)) return null;
     final PsiElement gParent = parent.getParent();
-    if (!(gParent instanceof PsiMethodCallExpression curCall)) return false;
-    if (!isMapCall(curCall)) return false;
+    if (!(gParent instanceof PsiMethodCallExpression curCall)) return null;
+    if (!isMapCall(curCall)) return null;
     PsiMethodCallExpression nextCall = getNextExpressionToMerge(curCall);
-    if(nextCall == null) return false;
+    if(nextCall == null) return null;
     String key = curCall.getArgumentList().isEmpty() || nextCall.getArgumentList().isEmpty() ?
                  "intention.inline.map.merge.text" : "intention.inline.map.inline.text";
-    setText(JavaBundle.message(key, element.getText(), nextCall.getMethodExpression().getReferenceName()));
-    return true;
+    return Presentation.of(JavaBundle.message(key, element.getText(), nextCall.getMethodExpression().getReferenceName()));
   }
 
   private static boolean isMapCall(@NotNull PsiMethodCallExpression methodCallExpression) {
@@ -165,7 +167,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier element, @NotNull ModPsiUpdater updater) {
     PsiMethodCallExpression mapCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if(mapCall == null) return;
 
@@ -190,7 +192,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
 
     CommentTracker ct = new CommentTracker();
 
-    if (!lambda.isPhysical() && !IntentionPreviewUtils.isPreviewElement(lambda)) {
+    if (lambda.getContainingFile() instanceof DummyHolder) {
       lambda = (PsiLambdaExpression)nextCall.getArgumentList().add(lambda);
     }
     PsiElement body = lambda.getBody();
@@ -201,7 +203,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     LOG.assertTrue(nextParameters.length == 1);
     PsiParameter[] prevParameters = previousLambda.getParameterList().getParameters();
     LOG.assertTrue(prevParameters.length == 1);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
     for(PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(nextParameters[0], body)) {
       PsiExpression replacement = ct.markUnchanged(previousBody);
       if (ref.getParent() instanceof PsiExpression &&
@@ -221,7 +223,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     } else {
       ct.replaceAndRestoreComments(nextQualifier, prevQualifier);
     }
-    CodeStyleManager.getInstance(project).reformat(lambda);
+    CodeStyleManager.getInstance(context.project()).reformat(lambda);
   }
 
   @Nullable

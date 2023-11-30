@@ -36,7 +36,7 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
 
   @Override
   protected PsiFile createFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileType fileType) {
-    FileIndexFacade fileIndex = project.getService(FileIndexFacade.class);
+    FileIndexFacade fileIndex = FileIndexFacade.getInstance(project);
     if (!fileIndex.isInLibraryClasses(file) && fileIndex.isInSource(file)) {
       return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }

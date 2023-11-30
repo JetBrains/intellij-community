@@ -30,10 +30,10 @@ object PatchHunkUtil {
 
   fun getChangeOnlyRanges(hunk: PatchHunk): List<Range> {
     val ranges = mutableListOf<Range>()
-    var start1 = hunk.startLineBefore
-    var start2 = hunk.startLineAfter
-    var end1 = hunk.startLineBefore
-    var end2 = hunk.startLineAfter
+    var start1 = hunk.startLineBefore.coerceAtLeast(0)
+    var start2 = hunk.startLineAfter.coerceAtLeast(0)
+    var end1 = hunk.startLineBefore.coerceAtLeast(0)
+    var end2 = hunk.startLineAfter.coerceAtLeast(0)
     var changeFound = false
     var newLine1 = false
     var newLine2 = false
@@ -188,3 +188,6 @@ object PatchHunkUtil {
     }
   }
 }
+
+fun Collection<PatchHunk>.withoutContext(): Sequence<Range> =
+  asSequence().map { PatchHunkUtil.getChangeOnlyRanges(it) }.flatten()

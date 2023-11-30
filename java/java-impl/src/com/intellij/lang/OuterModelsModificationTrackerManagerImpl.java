@@ -15,7 +15,7 @@ public final class OuterModelsModificationTrackerManagerImpl implements OuterMod
   private final OuterModelsModificationTracker myTracker;
 
   public OuterModelsModificationTrackerManagerImpl(@NotNull Project project) {
-    myTracker = new OuterModelsModificationTracker(project, this, true);
+    myTracker = new OuterModelsModificationTracker(project, this, true, false);
   }
 
   @Override

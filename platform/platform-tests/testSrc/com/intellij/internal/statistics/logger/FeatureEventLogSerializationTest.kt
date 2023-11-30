@@ -98,6 +98,12 @@ class FeatureEventLogSerializationTest {
   }
 
   @Test
+  fun testEventDataWithBooleanValue() {
+    val event = newEvent(groupId = "group-id", eventId = "test-event", data = hashMapOf("first-key" to true, "second-key" to false))
+    testEventSerialization(event, false, "first-key", "second-key")
+  }
+
+  @Test
   fun testEventDataWithListInValue() {
     val event = newEvent(groupId = "group-id", eventId = "test-event", data = hashMapOf("key" to listOf("my value", "some value", "value")))
 

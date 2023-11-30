@@ -19,7 +19,6 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.impl.VcsRefImpl
-import com.intellij.vcs.log.util.PersistentUtil
 import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
@@ -150,16 +149,14 @@ private class ProjectLevelConnectionManager private constructor(@JvmField val st
 }
 
 internal class SqliteVcsLogStorageBackend(project: Project,
+                                          logId: String,
                                           private val logProviders: Map<VirtualFile, VcsLogProvider>,
                                           private val errorHandler: VcsLogErrorHandler,
                                           private val disposable: Disposable) : VcsLogStorageBackend, VcsLogStorage {
   @Volatile
-  private var connectionManager = ProjectLevelConnectionManager(project, PersistentUtil.calcLogId(project, logProviders)).also {
+  private var connectionManager = ProjectLevelConnectionManager(project, logId).also {
     Disposer.register(disposable, it)
   }
-
-  override val storageId: StorageId.File
-    get() = connectionManager.storageId
 
   private val userRegistry = project.service<VcsUserRegistry>()
 
@@ -169,11 +166,16 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     sortedRoots.forEachIndexed { index, root -> put(root, index) }
   }
 
+  override val storageId: StorageId.File
+    get() = connectionManager.storageId
+
   override var isFresh: Boolean
     get() = connectionManager.isFresh
     set(value) {
       connectionManager.isFresh = value
     }
+
+  override val isEmpty: Boolean get() = connection.selectBoolean("select not exists (select 1 from log)")
 
   private val connection: SqliteConnection
     get() = connectionManager.connection
@@ -231,7 +233,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     return result
   }
 
-  override fun getCommitterOrAuthorForCommit(commitId: Int): VcsUser? {
+  override fun getCommitterForCommit(commitId: Int): VcsUser? {
     val batch = IntBinder(paramCount = 1)
     connection.prepareStatement("select isCommitter from log where commitId = ?", batch).use { statement ->
       batch.bind(commitId)
@@ -315,13 +317,6 @@ internal class SqliteVcsLogStorageBackend(project: Project,
           break
         }
       }
-    }
-  }
-
-  override fun getRename(parent: Int, child: Int): IntArray {
-    return connectionManager.selectRename.use { statement, binder ->
-      binder.bind(parent, child)
-      readIntArray(statement)
     }
   }
 
@@ -473,7 +468,10 @@ internal class SqliteVcsLogStorageBackend(project: Project,
   }
 
   override fun findRename(parent: Int, child: Int, root: VirtualFile, path: FilePath, isChildPath: Boolean): EdgeData<FilePath?>? {
-    val renames = getRename(parent, child)
+    val renames = connectionManager.selectRename.use { statement, binder ->
+      binder.bind(parent, child)
+      readIntArray(statement)
+    }
     if (renames.isEmpty()) {
       return null
     }
@@ -566,14 +564,14 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     val sql = "select rowid, position, hash from commit_hashes where rowid in $inClause"
 
     connection.prepareStatement(sql, paramBinder).use { statement ->
-        val rs = statement.executeQuery()
-        while (rs.next()) {
-          val commitId = rs.getInt(0)
-          val root = sortedRoots.get(rs.getInt(1))
-          val hash = rs.getString(2)!!.let(HashImpl::build)
-          result.put(commitId, CommitId(hash, root))
-        }
+      val rs = statement.executeQuery()
+      while (rs.next()) {
+        val commitId = rs.getInt(0)
+        val root = sortedRoots.get(rs.getInt(1))
+        val hash = rs.getString(2)!!.let(HashImpl::build)
+        result.put(commitId, CommitId(hash, root))
       }
+    }
 
     return result
   }
@@ -667,6 +665,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
 
 @Suppress("SqlResolve")
 private class SqliteVcsLogWriter(private val connection: SqliteConnection, private val storage: VcsLogStorage) : VcsLogWriter {
+
   init {
     connection.beginTransaction()
   }
@@ -794,6 +793,8 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection, priva
       }
     }
   }
+
+  override fun interrupt() = connection.interruptAndClose()
 }
 
 private fun readIntArray(statement: SqlitePreparedStatement<IntBinder>): IntArray {
@@ -819,4 +820,4 @@ private fun readIntArray(statement: SqlitePreparedStatement<IntBinder>): IntArra
 
 private fun Iterable<Int>.toInClause() = "(" + joinToString(separator = ",") { "'$it'" } + ")"
 
-internal val VcsLogStorageBackend.isSqliteBackend : Boolean get() = this is SqliteVcsLogStorageBackend
+internal val VcsLogStorageBackend.isSqliteBackend: Boolean get() = this is SqliteVcsLogStorageBackend

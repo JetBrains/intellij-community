@@ -2,11 +2,14 @@
 package org.editorconfig.language.codeinsight
 
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
 import org.editorconfig.language.codeinsight.inspections.*
+import org.editorconfig.language.messages.EditorConfigBundle
 import kotlin.reflect.KClass
 
 class EditorConfigInspectionsTest : BasePlatformTestCase() {
@@ -42,7 +45,13 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   fun testReferenceCorrectness_complex() = doTest(EditorConfigReferenceCorrectnessInspection::class)
   fun testReferenceCorrectness_simple() = doTest(EditorConfigReferenceCorrectnessInspection::class)
   fun testRootDeclarationCorrectness() = doTest(EditorConfigRootDeclarationCorrectnessInspection::class)
-  fun testRootDeclarationUniqueness() = doTest(EditorConfigRootDeclarationUniquenessInspection::class)
+  fun testRootDeclarationUniqueness() {
+    myFixture.enableInspections(EditorConfigRootDeclarationUniquenessInspection::class.java)
+    myFixture.configureByFile("${getTestName(true)}/.editorconfig")
+    val info = UsefulTestCase.assertOneElement(myFixture.doHighlighting(HighlightSeverity.ERROR))
+    assertEquals(EditorConfigBundle.get("inspection.root-declaration.uniqueness.message"), info.description)
+  }
+
   fun testShadowedOption() = doTest(EditorConfigShadowedOptionInspection::class)
   fun testShadowingOption() = doTest(EditorConfigShadowingOptionInspection::class)
   fun testSpaceInHeader() = doTest(EditorConfigSpaceInHeaderInspection::class, checkWeakWarnings = true)

@@ -17,6 +17,7 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.UIBundle
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.Component
@@ -25,6 +26,7 @@ import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.util.function.Supplier
+import javax.swing.Icon
 
 internal abstract class AbstractSquareStripeButton(
   action: AnAction, presentation: Presentation,
@@ -77,28 +79,28 @@ internal open class SquareStripeButton(action: SquareAnActionButton, val toolWin
   override fun updateUI() {
     super.updateUI()
 
-    myPresentation.icon = toolWindow.icon ?: AllIcons.Toolbar.Unknown
-    scaleIcon(myPresentation)
+    myPresentation.icon = scaleIcon((toolWindow.icon ?: AllIcons.Toolbar.Unknown) as ScalableIcon)
     myPresentation.isEnabledAndVisible = true
   }
 
   fun updatePresentation() {
     updateToolTipText()
 
-    myPresentation.icon = toolWindow.icon ?: AllIcons.Toolbar.Unknown
-    scaleIcon(myPresentation)
+    myPresentation.icon = scaleIcon((toolWindow.icon ?: AllIcons.Toolbar.Unknown) as ScalableIcon)
   }
 
   fun isHovered(): Boolean = myRollover
 
   open fun isFocused(): Boolean = toolWindow.isActive
 
-  fun resetDrop(): Unit = resetMouseState()
+  fun resetDrop() {
+    resetMouseState()
+  }
 
   override fun updateToolTipText() {
     @Suppress("DialogTitleCapitalization")
     HelpTooltip()
-      .setTitle(toolWindow.stripeTitle)
+      .setTitle(toolWindow.stripeTitleProvider)
       .setLocation(getAlignment(toolWindow.anchor, toolWindow.isSplitMode))
       .setShortcut(ActionManager.getInstance().getKeyboardShortcut(ActivateToolWindowAction.getActionIdForToolWindow(toolWindow.id)))
       .setInitialDelay(0)
@@ -121,16 +123,17 @@ internal open class SquareStripeButton(action: SquareAnActionButton, val toolWin
 }
 
 private fun createPresentation(toolWindow: ToolWindowImpl): Presentation {
-  val presentation = Presentation(toolWindow.stripeTitle)
-  presentation.icon = toolWindow.icon ?: AllIcons.Toolbar.Unknown
-  scaleIcon(presentation)
+  val presentation = Presentation(toolWindow.stripeTitleProvider)
+  presentation.iconSupplier = SynchronizedClearableLazy {
+    scaleIcon((toolWindow.icon ?: AllIcons.Toolbar.Unknown) as ScalableIcon)
+  }
   presentation.isEnabledAndVisible = true
   return presentation
 }
 
-private fun scaleIcon(presentation: Presentation) {
+private fun scaleIcon(icon: ScalableIcon): Icon {
   val iconSize = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
-  presentation.icon = loadIconCustomVersionOrScale(icon = presentation.icon as ScalableIcon, size = iconSize)
+  return loadIconCustomVersionOrScale(icon = icon, size = iconSize)
 }
 
 private fun createPopupGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
@@ -142,7 +145,7 @@ private fun createPopupGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
 }
 
 private class HideAction(private val toolWindow: ToolWindowImpl)
-  : AnAction(UIBundle.message("tool.window.new.stripe.hide.action.name")), DumbAware {
+  : AnAction(UIBundle.messagePointer("tool.window.new.stripe.hide.action.name")), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     toolWindow.toolWindowManager.hideToolWindow(id = toolWindow.id,
                                                 hideSide = false,
@@ -152,11 +155,12 @@ private class HideAction(private val toolWindow: ToolWindowImpl)
   }
 }
 
-internal open class SquareAnActionButton(protected val window: ToolWindowImpl) : ToggleActionButton(window.stripeTitle, null), DumbAware {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+internal open class SquareAnActionButton(@JvmField protected val window: ToolWindowImpl)
+  : ToggleActionButton(window.stripeTitleProvider, null), DumbAware {
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
   override fun isSelected(e: AnActionEvent): Boolean {
-    e.presentation.icon = window.icon ?: AllIcons.Toolbar.Unknown
-    scaleIcon(e.presentation)
+    e.presentation.icon = scaleIcon((window.icon ?: AllIcons.Toolbar.Unknown) as ScalableIcon)
     e.presentation.isVisible = window.isShowStripeButton && window.isAvailable
     return window.isVisible
   }

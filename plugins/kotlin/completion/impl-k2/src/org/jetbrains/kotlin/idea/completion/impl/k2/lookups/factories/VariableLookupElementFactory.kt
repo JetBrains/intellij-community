@@ -25,7 +25,8 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 
 internal class VariableLookupElementFactory {
-    fun KtAnalysisSession.createLookup(
+    context(KtAnalysisSession)
+fun createLookup(
         signature: KtVariableLikeSignature<*>,
         options: CallableInsertionOptions,
         substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
@@ -42,7 +43,8 @@ internal class VariableLookupElementFactory {
         return withCallableSignatureInfo(signature, builder)
     }
 
-    private fun KtAnalysisSession.createLookupElementBuilder(
+    context(KtAnalysisSession)
+private fun createLookupElementBuilder(
         options: CallableInsertionOptions,
         signature: KtVariableLikeSignature<*>,
         rendered: String,
@@ -86,7 +88,8 @@ internal class VariableLookupElementFactory {
         }
     }
 
-    private fun KtAnalysisSession.markIfSyntheticJavaProperty(
+    context(KtAnalysisSession)
+private fun markIfSyntheticJavaProperty(
         lookupElementBuilder: LookupElementBuilder,
         symbol: KtVariableLikeSymbol
     ): LookupElementBuilder = when (symbol) {
@@ -96,6 +99,7 @@ internal class VariableLookupElementFactory {
             lookupElementBuilder.withTailText((" (from ${buildSyntheticPropertyTailText(getterName, setterName)})"))
                 .withLookupStrings(listOfNotNull(getterName, setterName))
         }
+
         else -> lookupElementBuilder
     }
 
@@ -113,10 +117,12 @@ private data class VariableLookupObject(
 ) : KotlinCallableLookupObject()
 
 
-private object VariableInsertionHandler : QuotedNamesAwareInsertionHandler() {
+private object VariableInsertionHandler : CallableIdentifierInsertionHandler()
+
+internal open class CallableIdentifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val targetFile = context.file as? KtFile ?: return
-        val lookupObject = item.`object` as VariableLookupObject
+        val lookupObject = item.`object` as KotlinCallableLookupObject
 
         super.handleInsert(context, item)
 

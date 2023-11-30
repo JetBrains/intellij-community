@@ -69,3 +69,9 @@ class F {}
  * >
  */
 class G {}
+
+/**
+ * single quotes <a href='http://www.wikipedia.org/'>https://www.wikipedia.org/</a> def
+ */
+class H {
+}

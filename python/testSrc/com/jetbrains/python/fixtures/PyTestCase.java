@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -41,7 +40,9 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
+import com.intellij.util.ContentsUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
@@ -130,7 +131,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
-    Registry.get("python.type.hints.literal.string").setValue(true);
   }
 
   /**
@@ -253,7 +253,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      Registry.get("python.type.hints.literal.string").resetToDefault();
       PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
       PyModuleNameCompletionContributor.ENABLED = true;
       setLanguageLevel(null);

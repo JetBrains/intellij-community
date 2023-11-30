@@ -52,5 +52,10 @@ internal fun SimpleProperties(gradleVersion: GradleVersion, kgpVersion: KotlinTo
         }
     """.trimIndent())
 
+    val target_hierarchy_toggle =
+        if (kgpVersion <= KotlinToolingVersion("1.9.0")) "targetHierarchy.default()"
+        else ""
+    val target_hierarchy by simplePropertyWithValue(target_hierarchy_toggle)
+
     return result
 }

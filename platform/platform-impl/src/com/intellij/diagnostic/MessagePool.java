@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,7 +25,7 @@ public final class MessagePool {
   private static final int MAX_GROUP_SIZE = 20;
   private static final int GROUP_TIME_SPAN_MS = 1000;
 
-  private static class MessagePoolHolder {
+  private static final class MessagePoolHolder {
     private static final MessagePool ourInstance = new MessagePool();
   }
 
@@ -114,21 +113,21 @@ public final class MessagePool {
         attachment.setIncluded(true);
       }
     }
-    if (Strings.areSameInstance(SlowOperations.ERROR_MESSAGE, message.getThrowable().getMessage())) {
+    if (SlowOperations.isMyMessage(message.getThrowable().getMessage())) {
       message.setRead(true);
     }
     myErrors.add(message);
     notifyEntryAdded();
   }
 
-  private class MessageGrouper implements Runnable {
+  private final class MessageGrouper implements Runnable {
     private final List<AbstractMessage> myMessages = new ArrayList<>();
     private Future<?> myAlarm = CompletableFuture.completedFuture(null);
 
     @Override
     public void run() {
       synchronized (myMessages) {
-        if (myMessages.size() > 0) {
+        if (!myMessages.isEmpty()) {
           post();
         }
       }

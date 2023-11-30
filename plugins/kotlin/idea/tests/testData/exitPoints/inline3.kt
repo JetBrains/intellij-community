@@ -1,12 +1,8 @@
-fun Any?.foo(): Int {
+<info descr="null">fun</info> Any?.foo(): Int {
     this?.let {
-        <caret>return 1
+        <info descr="null">~return 1</info>
     }
-    return 2
+    <info descr="null">return 2</info>
 }
 
 public inline fun <T> T.let(block: (T) -> Unit) {}
-
-//HIGHLIGHTED: return 1
-//HIGHLIGHTED: foo
-//HIGHLIGHTED: return 2

@@ -6,4 +6,4 @@ import dep.TTA
 fun use(taa: TTA) {
     taa.ext<caret>()
 }
-/* IGNORE_FIR */
+/* IGNORE_K2 */

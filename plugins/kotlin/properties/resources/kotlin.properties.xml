@@ -1,9 +1,0 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.properties">
-  <dependencies>
-    <plugin id="com.intellij.properties"/>
-  </dependencies>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <completionExtension implementation="org.jetbrains.kotlin.idea.properties.PropertyKeyCompletion"/>
-  </extensions>
-</idea-plugin>

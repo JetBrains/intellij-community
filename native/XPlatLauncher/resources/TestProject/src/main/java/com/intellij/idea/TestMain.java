@@ -4,7 +4,9 @@ package com.intellij.idea;
 import com.google.gson.GsonBuilder;
 import one.profiler.AsyncProfiler;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,28 +15,16 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 public class TestMain {
-  @SuppressWarnings("RedundantLabeledSwitchRuleCodeBlock")
   public static void main(String[] args) throws Exception {
     if (args.length > 0) {
       switch (args[0]) {
-        case "dump-launch-parameters" -> {
-          dumpLaunchParameters(args);
-        }
-        case "print-cwd" -> {
-          printCwd();
-        }
-        case "async-profiler" -> {
-          asyncProfiler();
-        }
-        case "exit-code" -> {
-          exitCode(args);
-        }
-        case "exception" -> {
-          exception();
-        }
-        case "sigsegv" -> {
-          segmentationViolation();
-        }
+        case "dump-launch-parameters" -> dumpLaunchParameters(args);
+        case "print-cwd" -> printCwd();
+        case "async-profiler" -> asyncProfiler();
+        case "exit-code" -> exitCode(args);
+        case "exception" -> exception();
+        case "sigsegv" -> segmentationViolation();
+        case "main-class" -> mainClassName();
         default -> {
           System.err.println(
             "unexpected command: " + Arrays.toString(args) + '\n' +
@@ -44,7 +34,8 @@ public class TestMain {
             "  print-cwd\n" +
             "  async-profiler\n" +
             "  exit-code <number>\n" +
-            "  sigsegv");
+            "  sigsegv\n" +
+            "  main-class");
           System.exit(1);
         }
       }
@@ -118,5 +109,24 @@ public class TestMain {
     f.setAccessible(true);
     var unsafe = (sun.misc.Unsafe) f.get(null);
     unsafe.putAddress(0, 0);
+  }
+
+  private static void mainClassName() {
+    var stdout = System.out;
+    try {
+      var buffer = new ByteArrayOutputStream();
+      System.setOut(new PrintStream(buffer));
+      sun.tools.jps.Jps.main(new String[]{"-l"});
+      var pid = String.valueOf(ProcessHandle.current().pid());
+      var name = buffer.toString().lines()
+        .filter(l -> l.startsWith(pid))
+        .map(l -> l.substring(pid.length()).trim())
+        .findFirst()
+        .orElseThrow(() -> new IllegalStateException("No " + pid + " in: <<<\n" + buffer.toString().trim() + "\n>>>"));
+      stdout.println("main.class=" + name);
+    }
+    finally {
+      System.setOut(stdout);
+    }
   }
 }

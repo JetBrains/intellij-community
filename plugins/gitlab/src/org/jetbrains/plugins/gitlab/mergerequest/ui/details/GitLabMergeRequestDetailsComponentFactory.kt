@@ -13,8 +13,6 @@ import com.intellij.collaboration.ui.util.gap
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.panels.Wrapper
@@ -28,14 +26,15 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
+import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestActionPlaces
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCommit
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
+import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -64,7 +63,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
             val detailsVm = loadingState.detailsVm
             val detailsPanel = createDetailsComponent(project, detailsVm, avatarIconsProvider).apply {
               val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
-              PopupHandler.installPopupMenu(this, actionGroup, ActionPlaces.POPUP)
+              PopupHandler.installPopupMenu(this, actionGroup, GitLabMergeRequestActionPlaces.DETAILS_POPUP)
 
               val changesModelState = detailsVm.changesVm.changeListVm.map { it.getOrNull() }
                 .stateIn(this@bindContentIn, SharingStarted.Eagerly, null)
@@ -97,13 +96,10 @@ internal object GitLabMergeRequestDetailsComponentFactory {
 
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
-      add(CodeReviewDetailsCommitsComponentFactory.create(cs, changesVm, ::createCommitInfoPresenter))
-      add(CodeReviewDetailsBranchComponentFactory.create(
-        cs, branchesVm,
-        checkoutAction = ActionManager.getInstance().getAction("GitLab.Merge.Request.Branch.Checkout.Remote"),
-        dataContext = SimpleDataContext.builder()
-          .add(GitLabMergeRequestsActionKeys.REVIEW_BRANCH_VM, branchesVm)
-          .build()))
+      add(CodeReviewDetailsCommitsComponentFactory.create(cs, changesVm) { commit ->
+        createCommitInfoPresenter(commit)
+      })
+      add(CodeReviewDetailsBranchComponentFactory.create(cs, branchesVm))
     }
     val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
 
@@ -130,10 +126,14 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       add(commitsAndBranches,
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(CodeReviewDetailsCommitInfoComponentFactory.create(cs, changesVm.selectedCommit,
-                                                             commitPresentation = { commit -> createCommitInfoPresenter(commit) },
+                                                             commitPresentation = { commit ->
+                                                               createCommitInfoPresenter(commit) {
+                                                                 GitLabUIUtil.convertToHtml(project, it)
+                                                               }
+                                                             },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
-      add(GitLabMergeRequestDetailsChangesComponentFactory(project).create(cs, changesVm),
+      add(GitLabMergeRequestDetailsChangesComponentFactory.create(cs, changesVm),
           CC().grow().shrinkPrioY(200))
       add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, statusVm, detailsReviewFlowVm, avatarIconsProvider),
           CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
@@ -142,12 +142,12 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     }
   }
 
-  private fun createCommitInfoPresenter(commit: GitLabCommitDTO): CommitPresentation {
+  private fun createCommitInfoPresenter(commit: GitLabCommit, issueProcessor: ((String) -> String)? = null): CommitPresentation {
     val title = commit.fullTitle.orEmpty()
     val description = commit.description?.removePrefix(title).orEmpty()
     return CommitPresentation(
-      title = title,
-      description = description,
+      titleHtml = if (issueProcessor != null) issueProcessor(title) else title,
+      descriptionHtml = if (issueProcessor != null) issueProcessor(description) else description,
       author = commit.author?.name ?: commit.authorName,
       committedDate = commit.authoredDate
     )

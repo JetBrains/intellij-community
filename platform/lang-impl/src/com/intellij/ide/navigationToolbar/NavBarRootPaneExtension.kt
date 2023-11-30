@@ -115,7 +115,7 @@ private fun createNavBarPanel(scrollPane: JScrollPane, navigationBar: JComponent
   navBarPanel.add(scrollPane, BorderLayout.CENTER)
   navBarPanel.isOpaque = !ExperimentalUI.isNewUI()
   navBarPanel.updateUI()
-  if (ExperimentalUI.isNewNavbar()) {
+  if (ExperimentalUI.isNewNavbar) {
     val hoverListener: HoverListener = object : HoverListener() {
       override fun mouseEntered(component: Component, x: Int, y: Int) {
         toggleScrollBar(true, scrollPane)
@@ -289,7 +289,7 @@ internal class MyNavBarWrapperPanel(private val project: Project, useAsComponent
 }
 
 private fun updateScrollBarFlippedState(location: NavBarLocation?, scrollPane: JScrollPane) {
-  if (ExperimentalUI.isNewNavbar()) {
+  if (ExperimentalUI.isNewNavbar) {
     val effectiveLocation = location ?: UISettings.getInstance().navBarLocation
     val flipState = if (effectiveLocation === NavBarLocation.BOTTOM) JBScrollPane.Flip.VERTICAL else JBScrollPane.Flip.NONE
     scrollPane.putClientProperty(JBScrollPane.Flip::class.java, flipState)
@@ -380,7 +380,7 @@ private class NavBarContainer(layout: LayoutManager,
     @Suppress("UNNECESSARY_SAFE_CALL")
     val scrollPane = scrollPane?.takeIf { it.isVisible } ?: return
     var navBarHeight = scrollPane.preferredSize.height
-    if (ExperimentalUI.isNewNavbar()) {
+    if (ExperimentalUI.isNewNavbar) {
       navBarHeight = r.height
     }
     scrollPane.setBounds(x, (r.height - navBarHeight) / 2, r.width - insets.left - insets.right, navBarHeight)
@@ -397,7 +397,7 @@ private class NavBarContainer(layout: LayoutManager,
 
     val settings = UISettings.getInstance()
     val border = if (!ExperimentalUI.isNewUI() || settings.showNavigationBar) NavBarBorder() else JBUI.Borders.empty()
-    if (ExperimentalUI.isNewNavbar()) {
+    if (ExperimentalUI.isNewNavbar) {
       scrollPane.horizontalScrollBar = JBThinOverlappingScrollBar(Adjustable.HORIZONTAL)
       if (scrollPane is JBScrollPane) {
         scrollPane.setOverlappingScrollBar(true)

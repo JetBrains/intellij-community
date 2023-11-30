@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -26,7 +26,7 @@ import java.util.WeakHashMap;
 /**
  * Encapsulates logic for processing {@link EditorSettings#isWrapWhenTypingReachesRightMargin(Project)} option.
  */
-public class AutoHardWrapHandler {
+public final class AutoHardWrapHandler {
 
   /**
    * This key is used as a flag that indicates if {@code 'auto wrap line on typing'} activity is performed now.
@@ -202,7 +202,7 @@ public class AutoHardWrapHandler {
     caretModel.moveToOffset(baseCaretOffset + caretOffsetDiff[0]);
   }
 
-  private static class AutoWrapChange {
+  private static final class AutoWrapChange {
 
     final TextChangeImpl change = new TextChangeImpl("", 0, 0);
     int visualLine;

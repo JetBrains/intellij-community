@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -31,8 +31,7 @@ public final class DumbModeProgressTitle {
   private final Set<ProgressWindow> myWindowSet = ConcurrentCollectionFactory.createConcurrentSet();
   private final Collection<@ProgressTitle @NotNull String> mySubProcessTitles = Collections.synchronizedSet(new LinkedHashSet<>());
 
-  @NotNull
-  public static DumbModeProgressTitle getInstance(@NotNull Project project) {
+  public static @NotNull DumbModeProgressTitle getInstance(@NotNull Project project) {
     return project.getService(DumbModeProgressTitle.class);
   }
 
@@ -40,17 +39,14 @@ public final class DumbModeProgressTitle {
   public DumbModeProgressTitle(@NotNull Project project) {
   }
 
-  @NotNull
-  @ProgressTitle
-  public String getDumbModeProgressTitle() {
+  public @NotNull @ProgressTitle String getDumbModeProgressTitle() {
     var mainMessage = IndexingBundle.message("progress.indexing");
     if (mySubProcessTitles.isEmpty()) return mainMessage;
 
     return mySubProcessTitles.stream().collect(NlsMessages.joiningNarrowAnd());
   }
 
-  @Nullable
-  private static ProgressWindow castProgress(@NotNull ProgressIndicator indicator) {
+  private static @Nullable ProgressWindow castProgress(@NotNull ProgressIndicator indicator) {
     if (indicator instanceof ProgressWindow) {
       return (ProgressWindow)indicator;
     }

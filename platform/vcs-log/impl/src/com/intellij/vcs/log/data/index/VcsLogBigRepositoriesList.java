@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,13 +36,7 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
   @Override
   public void loadState(@NotNull State state) {
     synchronized (myLock) {
-      if (state.diffRenameLimitOne) {
-        myState = new State(state);
-      }
-      else {
-        myState = new State();
-        myState.diffRenameLimitOne = true;
-      }
+      myState = new State(state);
     }
   }
 
@@ -65,8 +58,12 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
   }
 
   public boolean isBig(@NotNull VirtualFile root) {
+    return isBig(root.getPath());
+  }
+
+  public boolean isBig(@NotNull String path) {
     synchronized (myLock) {
-      return myState.repositories.contains(root.getPath());
+      return myState.repositories.contains(path);
     }
   }
 
@@ -87,15 +84,12 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
   public static final class State {
     @XCollection(elementName = "repository", valueAttributeName = "path", style = XCollection.Style.v2)
     public SortedSet<String> repositories = new TreeSet<>();
-    @Attribute("diff-rename-limit-one")
-    public boolean diffRenameLimitOne = false;
 
     public State() {
     }
 
     public State(@NotNull State state) {
       repositories = new TreeSet<>(state.repositories);
-      diffRenameLimitOne = state.diffRenameLimitOne;
     }
   }
 

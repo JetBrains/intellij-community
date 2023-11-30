@@ -3,16 +3,19 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.externalSystem.JavaModuleData
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleGrouper
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -21,26 +24,28 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.indexing.DumbModeAccessType
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
-import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmLibraryKind
-import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.*
 import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
@@ -58,6 +63,9 @@ import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.isWasm
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 private val LOG = Logger.getInstance("#org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtils")
 
@@ -134,20 +142,14 @@ fun isModuleConfigured(moduleSourceRootGroup: ModuleSourceRootGroup): Boolean {
  * DO NOT CALL THIS ON AWT THREAD
  */
 @RequiresBackgroundThread
-fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Module>? = null): Collection<Module> {
+suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Module>? = null): Collection<Module> {
     if (!isUnitTestMode() && isDispatchThread()) {
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
     }
 
-    fun <T> nonBlockingReadActionSync(block: () -> T): T {
-        return ReadAction.nonBlocking(block)
-            .expireWith(KotlinPluginDisposable.getInstance(project))
-            .executeSynchronously()
-    }
-
     val projectScope = project.projectScope()
     // nothing to configure if there is no Kotlin files in entire project
-    val anyKotlinFileInProject = nonBlockingReadActionSync {
+    val anyKotlinFileInProject = readAction {
         FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope)
     }
     if (!anyKotlinFileInProject) {
@@ -158,7 +160,7 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
 
     val modules =
         if (modulesWithKotlinFacets.isNullOrEmpty()) {
-            nonBlockingReadActionSync {
+            readAction {
                 val kotlinFiles = FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
                 kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
                     if (projectFileIndex.isInSourceContent(ktFile)) {
@@ -169,7 +171,7 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
 
         } else {
             // filter modules with Kotlin facet AND have at least a single Kotlin file in them
-            nonBlockingReadActionSync {
+            readAction {
                 modulesWithKotlinFacets.filterTo(mutableSetOf()) { module ->
                     if (module.isDisposed) return@filterTo false
 
@@ -185,7 +187,7 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
  * Note that this method is expensive and should not be called more often than strictly necessary.
  */
 fun getConfigurableModulesWithKotlinFiles(project: Project): List<ModuleSourceRootGroup> {
-    val modules = getModulesWithKotlinFiles(project)
+    val modules = runBlockingMaybeCancellable { getModulesWithKotlinFiles(project) }
     if (modules.isEmpty()) return emptyList()
 
     return ModuleSourceRootMap(project).groupByBaseModules(modules)
@@ -265,6 +267,17 @@ private fun KotlinProjectConfigurator.canConfigure(moduleSourceRootGroup: Module
     getStatus(moduleSourceRootGroup) == ConfigureKotlinStatus.CAN_BE_CONFIGURED &&
             (allConfigurators().toList() - this).none { it.getStatus(moduleSourceRootGroup) == ConfigureKotlinStatus.CONFIGURED }
 
+fun getConfiguredModules(project: Project, configurator: KotlinProjectConfigurator): Map<String, Module> {
+    val projectModules = project.modules.asList()
+    val result = mutableMapOf<String, Module>()
+    for (moduleGroup in ModuleSourceRootMap(project).groupByBaseModules(projectModules)) {
+        if (configurator.getStatus(moduleGroup) == ConfigureKotlinStatus.CONFIGURED) {
+            result[moduleGroup.baseModule.name] = moduleGroup.sourceRootModules.first() // They all either have or don't have Kotlin
+        }
+    }
+    return result
+}
+
 /**
  * Returns a list of modules which contain sources in Kotlin and for which it's possible to run the given configurator.
  * Note that this method is expensive and should not be called more often than strictly necessary.
@@ -335,13 +348,20 @@ fun Module.hasKotlinPluginEnabled(): Boolean {
     }
 }
 
+fun getKotlinCompilerArguments(module: Module): CommonCompilerArguments? {
+    val settings = KotlinFacetSettingsProvider.getInstance(module.project)
+    val moduleSettings = settings?.getSettings(module)
+    return moduleSettings?.compilerArguments
+}
+
 fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
     return syncNonBlockingReadAction(module.project) {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
             scope.hasKotlinJvmRuntime(module.project)
                     || runReadAction { hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind)) }
-                    || hasKotlinCommonRuntimeInScope(scope)
+                    || hasKotlinCommonRuntimeInScope(module)
+                    || hasKotlinCommonLegacyRuntimeInScope(scope)
                     || hasKotlinJsRuntimeInScope(module)
                     || hasKotlinWasmRuntimeInScope(module)
                     || hasKotlinNativeRuntimeInScope(module)
@@ -385,7 +405,17 @@ fun hasKotlinJsLegacyRuntimeInScope(module: Module): Boolean {
     }
 }
 
-fun hasKotlinCommonRuntimeInScope(scope: GlobalSearchScope): Boolean {
+/**
+ * Will check if kotlin is present as klib (knm files)
+ */
+fun hasKotlinCommonRuntimeInScope(module: Module): Boolean {
+    return hasKotlinPlatformRuntimeInScope(module, StandardNames.BUILT_INS_PACKAGE_FQ_NAME, KotlinCommonLibraryKind)
+}
+
+/**
+ * Will check if kotlin is present as .kotlin_metadata (legacy) file
+ */
+fun hasKotlinCommonLegacyRuntimeInScope(scope: GlobalSearchScope): Boolean {
     return IdeVirtualFileFinder(scope).hasMetadataPackage(StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
 }
 
@@ -405,35 +435,107 @@ fun hasKotlinPlatformRuntimeInScope(
     module: Module,
     fqName: FqName,
     libraryKind: PersistentLibraryKind<*>
-    ): Boolean {
+): Boolean {
     return module.project.runReadActionInSmartMode {
         val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
         hasSomethingInPackage(KlibMetaFileIndex.NAME, fqName, LibraryKindSearchScope(module, scope, libraryKind))
     }
 }
 
-typealias ModuleName = String
-typealias TargetJvm = String?
+private val KOTLIN_STDLIB_VERSION_REGEX = Regex("kotlin-stdlib-([A-Za-z]+-)?(\\d\\.\\d(\\.\\d{1,2}(-(M1|M2|Beta|RC(2)?))?)?)")
+private const val ARTIFACT_NAME = "kotlin-stdlib"
+private const val GROUP_WITH_KOTLIN_VERSION = 2
 
-fun getModulesTargetingUnsupportedJvmAndTargetsForAllModules(
-    modulesToConfigure: List<Module>,
-    kotlinVersion: IdeKotlinVersion
-): Pair<Map<String, List<String>>, Map<ModuleName, TargetJvm>> {
-    val modulesAndJvmTargets = mutableMapOf<ModuleName, TargetJvm>()
-    val jvmModulesTargetingUnsupportedJvm = mutableMapOf<String,  MutableList<String>>()
-    for (module in modulesToConfigure) {
-        val jvmTarget = getTargetBytecodeVersionFromModule(module, kotlinVersion)
-        modulesAndJvmTargets[module.name] = jvmTarget
-        jvmTarget?.removePrefix("1.")?.toIntOrNull()?.let {
-            if (it < 8) {
-                val modulesForThisTarget = jvmModulesTargetingUnsupportedJvm.getOrDefault(jvmTarget, mutableListOf())
-                modulesForThisTarget.add(module.name)
-                jvmModulesTargetingUnsupportedJvm[jvmTarget] = modulesForThisTarget
+typealias ModulesNamesAndFirstSourceRootModules = Map<String, Module>
+typealias KotlinVersionsAndModules = Map<String, ModulesNamesAndFirstSourceRootModules>
+
+fun Module.getGradleKotlinVersion(): String? {
+    return getKotlinCompilerArguments(this)?.pluginClasspaths?.let { pluginsClasspaths ->
+        pluginsClasspaths.firstOrNull { it.contains(ARTIFACT_NAME) }?.let {
+            KOTLIN_STDLIB_VERSION_REGEX.find(it)?.groups?.get(GROUP_WITH_KOTLIN_VERSION)?.value
+        }
+    }
+}
+
+fun getKotlinVersionsAndModules(
+    project: Project,
+    configurator: KotlinProjectConfigurator
+): Pair<KotlinVersionsAndModules, String?> {
+    val configuredModules = getConfiguredModules(project, configurator)
+    val kotlinVersionsAndModules: MutableMap<String, MutableMap<String, Module>> = mutableMapOf()
+    val rootModule = getRootModule(project)
+    var rootModuleVersion: String? = null
+    for (moduleEntity in configuredModules) {
+        val module = moduleEntity.value
+        val version = module.getGradleKotlinVersion() ?: continue
+        val modulesForThisVersion = kotlinVersionsAndModules.getOrPut(version) { mutableMapOf() }
+        modulesForThisVersion[moduleEntity.key] = module
+
+        rootModule?.let {
+            if (rootModule.name == moduleEntity.key) {
+                rootModuleVersion = version
             }
         }
     }
-    return Pair(jvmModulesTargetingUnsupportedJvm, modulesAndJvmTargets)
+    return Pair(kotlinVersionsAndModules, rootModuleVersion)
 }
+
+fun getRootModule(project: Project): Module? {
+    val topLevelBuildScript = project.getTopLevelBuildScriptFile()
+    topLevelBuildScript?.module?.let {
+        return it
+    }
+
+    val grouper = ModuleGrouper.instanceFor(project)
+    return grouper.getAllModules().firstOrNull { grouper.getGroupPath(it).isEmpty() }
+}
+
+@NonNls
+private const val DEFAULT_SCRIPT_NAME = "build.gradle"
+
+@NonNls
+private const val KOTLIN_BUILD_SCRIPT_NAME = "build.gradle.kts"
+
+private fun Project.getTopLevelBuildScriptFile(): PsiFile? {
+    val projectDir = this.guessProjectDir() ?: return null
+    val filePath = listOf(DEFAULT_SCRIPT_NAME, KOTLIN_BUILD_SCRIPT_NAME).asSequence()
+        .map { Path("${projectDir.path}/$it") }
+        .firstOrNull(Path::exists)
+    return filePath?.let { path ->
+        VfsUtil.findFile(path, true)?.let {
+            PsiManager.getInstance(this).findFile(it)
+        }
+    }
+}
+
+typealias ModuleName = String
+typealias TargetJvm = String?
+
+class ModuleJvmTargetIncompatibilityResults(
+    val modulesByIncompatibleJvmTarget: Map<String, List<String>>,
+    val moduleJvmTargets: Map<ModuleName, TargetJvm>
+)
+
+fun checkModuleJvmTargetCompatibility(
+    modulesToConfigure: List<Module>,
+    kotlinVersion: IdeKotlinVersion
+): ModuleJvmTargetIncompatibilityResults {
+    val modulesAndJvmTargets = mutableMapOf<ModuleName, TargetJvm>()
+    val jvmModulesTargetingUnsupportedJvm = mutableMapOf<String, MutableList<String>>()
+    for (module in modulesToConfigure) {
+        val jvmTarget = getTargetBytecodeVersionFromModule(module, kotlinVersion)
+        modulesAndJvmTargets[module.name] = jvmTarget
+        jvmTarget?.let(::getJvmTargetNumber)?.let { jvmTargetNumber ->
+            if (jvmTargetNumber < 8) {
+                val modulesForThisTarget = jvmModulesTargetingUnsupportedJvm.getOrPut(jvmTarget) { mutableListOf() }
+                modulesForThisTarget.add(module.name)
+            }
+        }
+    }
+    return ModuleJvmTargetIncompatibilityResults(jvmModulesTargetingUnsupportedJvm, modulesAndJvmTargets)
+}
+
+fun getJvmTargetNumber(jvmTarget: String) = jvmTarget.removePrefix("1.").toIntOrNull()
 
 fun getTargetBytecodeVersionFromModule(
     module: Module,

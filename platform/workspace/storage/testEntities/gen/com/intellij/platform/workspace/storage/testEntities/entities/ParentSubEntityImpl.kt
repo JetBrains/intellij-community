@@ -13,24 +13,24 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ParentSubEntityImpl(val dataSource: ParentSubEntityData) : ParentSubEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ParentSubEntityImpl(private val dataSource: ParentSubEntityData) : ParentSubEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentSubEntity::class.java, ChildSubEntity::class.java,
                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CHILD_CONNECTION_ID,
     )
 
@@ -48,6 +48,7 @@ open class ParentSubEntityImpl(val dataSource: ParentSubEntityData) : ParentSubE
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ParentSubEntityData?) : ModifiableWorkspaceEntityBase<ParentSubEntity, ParentSubEntityData>(
     result), ParentSubEntity.Builder {
@@ -77,7 +78,7 @@ open class ParentSubEntityImpl(val dataSource: ParentSubEntityData) : ParentSubE
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -159,7 +160,7 @@ open class ParentSubEntityImpl(val dataSource: ParentSubEntityData) : ParentSubE
 class ParentSubEntityData : WorkspaceEntityData<ParentSubEntity>() {
   lateinit var parentData: String
 
-  fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
+  internal fun isParentDataInitialized(): Boolean = ::parentData.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentSubEntity> {
     val modifiable = ParentSubEntityImpl.Builder(null)
@@ -176,6 +177,11 @@ class ParentSubEntityData : WorkspaceEntityData<ParentSubEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.ParentSubEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -229,9 +235,5 @@ class ParentSubEntityData : WorkspaceEntityData<ParentSubEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + parentData.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

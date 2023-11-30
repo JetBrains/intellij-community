@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.google.gson.Gson
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.StringReference
@@ -10,10 +11,10 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackTraceProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.LazyCoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineInfoProvider
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfCoroutineContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineJobHierarchyProvider
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class CoroutinesInfoFromJsonAndReferencesProvider(
@@ -21,6 +22,7 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
     private val debugProbesImpl: DebugProbesImpl
 ) : CoroutineInfoProvider {
     private val stackTraceProvider = CoroutineStackTraceProvider(executionContext)
+    private val jobHierarchyProvider = CoroutineJobHierarchyProvider()
 
     override fun dumpCoroutinesInfo(): List<CoroutineInfoData> {
         val array = debugProbesImpl.dumpCoroutinesInfoAsJsonAndReferences(executionContext)
@@ -63,7 +65,8 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
                     coroutineInfoRefs[i],
                     lastObservedThreadRefs[i],
                     lastObservedFrameRefs[i],
-                    stackTraceProvider
+                    stackTraceProvider,
+                    jobHierarchyProvider
                 )
             )
         }
@@ -72,18 +75,27 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
 
     private fun getLazyCoroutineInfoData(
         info: CoroutineInfoFromJson,
-        coroutineInfosRef: ObjectReference,
+        coroutineInfoRef: ObjectReference,
         lastObservedThreadRef: ThreadReference?,
         lastObservedFrameRef: ObjectReference?,
-        stackTraceProvider: CoroutineStackTraceProvider
+        stackTraceProvider: CoroutineStackTraceProvider,
+        jobHierarchyProvider: CoroutineJobHierarchyProvider
     ): LazyCoroutineInfoData {
-        val coroutineContextMirror = MirrorOfCoroutineContext(
+        DebuggerManagerThreadImpl.assertIsManagerThread()
+
+        // coroutineInfo is a DebugCoroutineInfo. Need to get coroutineInfoRef.context to pass in to CoroutineContext
+        val contextRef = CoroutineInfo.instance(debugProbesImpl, executionContext)?.getContextRef(coroutineInfoRef)
+        val coroutineContextMirror = contextRef?.let {
+            CoroutineContext(executionContext).fetchMirror(info.name, info.id, info.dispatcher, it, executionContext)
+        } ?: MirrorOfCoroutineContext(
             info.name,
             info.id,
-            info.dispatcher
+            info.dispatcher,
+            null,
+            null
         )
         val coroutineInfoMirror = debugProbesImpl.getCoroutineInfo(
-            coroutineInfosRef,
+            coroutineInfoRef,
             executionContext,
             coroutineContextMirror,
             info.sequenceNumber,
@@ -92,7 +104,7 @@ class CoroutinesInfoFromJsonAndReferencesProvider(
             lastObservedFrameRef
         )
 
-        return LazyCoroutineInfoData(coroutineInfoMirror, stackTraceProvider)
+        return LazyCoroutineInfoData(coroutineInfoMirror, stackTraceProvider, jobHierarchyProvider)
     }
 
     private data class CoroutineInfoFromJson(

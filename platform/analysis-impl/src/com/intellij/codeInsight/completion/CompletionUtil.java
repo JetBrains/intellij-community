@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
@@ -35,20 +35,19 @@ public final class CompletionUtil {
   private static final CompletionData ourGenericCompletionData = new CompletionData() {
     {
       final CompletionVariant variant = new CompletionVariant(PsiElement.class, TrueFilter.INSTANCE);
-      variant.addCompletionFilter(TrueFilter.INSTANCE, TailType.NONE);
+      variant.addCompletionFilter(TrueFilter.INSTANCE, TailTypes.noneType());
       registerVariant(variant);
     }
   };
   public static final @NonNls String DUMMY_IDENTIFIER = CompletionInitializationContext.DUMMY_IDENTIFIER;
   public static final @NonNls String DUMMY_IDENTIFIER_TRIMMED = DUMMY_IDENTIFIER.trim();
 
-  @Nullable
-  public static CompletionData getCompletionDataByElement(@Nullable final PsiElement position, @NotNull PsiFile originalFile) {
+  public static @Nullable CompletionData getCompletionDataByElement(final @Nullable PsiElement position, @NotNull PsiFile originalFile) {
     if (position == null) return null;
     return ourGenericCompletionData;
   }
 
-  public static boolean shouldShowFeature(CompletionParameters parameters, @NonNls final String id) {
+  public static boolean shouldShowFeature(CompletionParameters parameters, final @NonNls String id) {
     return shouldShowFeature(parameters.getPosition().getProject(), id);
   }
 
@@ -65,8 +64,7 @@ public final class CompletionUtil {
    * The prefix is the longest substring from inside {@code parameters.getPosition()}'s text,
    * ending at {@code parameters.getOffset()}, being a valid Java identifier.
    */
-  @NotNull
-  public static String findJavaIdentifierPrefix(@NotNull CompletionParameters parameters) {
+  public static @NotNull String findJavaIdentifierPrefix(@NotNull CompletionParameters parameters) {
     return findJavaIdentifierPrefix(parameters.getPosition(), parameters.getOffset());
   }
 
@@ -75,16 +73,14 @@ public final class CompletionUtil {
    * The prefix is the longest substring from inside {@code position}'s text,
    * ending at {@code offsetInFile}, being a valid Java identifier.
    */
-  @NotNull
-  public static String findJavaIdentifierPrefix(@Nullable PsiElement position, int offsetInFile) {
+  public static @NotNull String findJavaIdentifierPrefix(@Nullable PsiElement position, int offsetInFile) {
     return findIdentifierPrefix(position, offsetInFile, CharPattern.javaIdentifierPartCharacter(), CharPattern.javaIdentifierStartCharacter());
   }
 
   /**
    * @return the result of {@link #findReferencePrefix}, or {@link #findAlphanumericPrefix} if there's no reference.
    */
-  @NotNull
-  public static String findReferenceOrAlphanumericPrefix(@NotNull CompletionParameters parameters) {
+  public static @NotNull String findReferenceOrAlphanumericPrefix(@NotNull CompletionParameters parameters) {
     String prefix = findReferencePrefix(parameters);
     return prefix == null ? findAlphanumericPrefix(parameters) : prefix;
   }
@@ -94,8 +90,7 @@ public final class CompletionUtil {
    * The prefix is the longest substring from inside {@code parameters.getPosition()}'s text,
    * ending at {@code parameters.getOffset()}, consisting of letters and digits.
    */
-  @NotNull
-  public static String findAlphanumericPrefix(@NotNull CompletionParameters parameters) {
+  public static @NotNull String findAlphanumericPrefix(@NotNull CompletionParameters parameters) {
     return findIdentifierPrefix(parameters.getPosition().getContainingFile(), parameters.getOffset(), CharPattern.letterOrDigitCharacter(), CharPattern.letterOrDigitCharacter());
   }
 
@@ -105,8 +100,7 @@ public final class CompletionUtil {
    * ending at {@code offsetInFile}, beginning with a character
    * satisfying {@code idStart}, and with all other characters satisfying {@code idPart}.
    */
-  @NotNull
-  public static String findIdentifierPrefix(@Nullable PsiElement position, int offsetInFile,
+  public static @NotNull String findIdentifierPrefix(@Nullable PsiElement position, int offsetInFile,
                                             @NotNull ElementPattern<Character> idPart,
                                             @NotNull ElementPattern<Character> idStart) {
     if (position == null) return "";
@@ -120,8 +114,7 @@ public final class CompletionUtil {
     return findInText(offset, 0, idPart, idStart, text);
   }
 
-  @NotNull
-  private static String findInText(int offset, int startOffset, ElementPattern<Character> idPart, ElementPattern<Character> idStart, CharSequence text) {
+  private static @NotNull String findInText(int offset, int startOffset, ElementPattern<Character> idPart, ElementPattern<Character> idStart, CharSequence text) {
     final int offsetInElement = offset - startOffset;
     int start = offsetInElement - 1;
     while (start >=0) {
@@ -140,8 +133,7 @@ public final class CompletionUtil {
    * (the reference text from the beginning until that offset),
    * or {@code null} if there's no reference there.
    */
-  @Nullable
-  public static String findReferencePrefix(@NotNull CompletionParameters parameters) {
+  public static @Nullable String findReferencePrefix(@NotNull CompletionParameters parameters) {
     return findReferencePrefix(parameters.getPosition(), parameters.getOffset());
   }
 
@@ -150,8 +142,7 @@ public final class CompletionUtil {
    * (the reference text from the beginning until that offset),
    * or {@code null} if there's no reference there.
    */
-  @Nullable
-  public static String findReferencePrefix(@NotNull PsiElement position, int offsetInFile) {
+  public static @Nullable String findReferencePrefix(@NotNull PsiElement position, int offsetInFile) {
     try {
       PsiUtilCore.ensureValid(position);
       PsiReference ref = position.getContainingFile().findReferenceAt(offsetInFile);
@@ -220,8 +211,7 @@ public final class CompletionUtil {
     context.setTailOffset(tailOffset);
   }
 
-  @Nullable
-  public static PsiElement getTargetElement(LookupElement lookupElement) {
+  public static @Nullable PsiElement getTargetElement(LookupElement lookupElement) {
     PsiElement psiElement = lookupElement.getPsiElement();
     if (psiElement != null && psiElement.isValid()) {
       return getOriginalElement(psiElement);
@@ -236,22 +226,19 @@ public final class CompletionUtil {
     return null;
   }
 
-  @Nullable
-  public static <T extends PsiElement> T getOriginalElement(@NotNull T psi) {
+  public static @Nullable <T extends PsiElement> T getOriginalElement(@NotNull T psi) {
     return CompletionUtilCoreImpl.getOriginalElement(psi);
   }
 
-  @NotNull
-  public static <T extends PsiElement> T getOriginalOrSelf(@NotNull T psi) {
+  public static @NotNull <T extends PsiElement> T getOriginalOrSelf(@NotNull T psi) {
     final T element = getOriginalElement(psi);
     return element == null ? psi : element;
   }
 
-  public static Iterable<String> iterateLookupStrings(@NotNull final LookupElement element) {
+  public static Iterable<String> iterateLookupStrings(final @NotNull LookupElement element) {
     return new Iterable<>() {
-      @NotNull
       @Override
-      public Iterator<String> iterator() {
+      public @NotNull Iterator<String> iterator() {
         final Iterator<String> original = element.getAllLookupStrings().iterator();
         return new UnmodifiableIterator<>(original) {
           @Override
@@ -287,31 +274,29 @@ public final class CompletionUtil {
     };
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public static CompletionAssertions.WatchingInsertionContext createInsertionContext(@Nullable List<LookupElement> lookupItems,
-                                                                                     LookupElement item,
-                                                                                     char completionChar,
-                                                                                     Editor editor,
-                                                                                     PsiFile psiFile,
-                                                                                     int caretOffset,
-                                                                                     int idEndOffset,
-                                                                                     OffsetMap offsetMap) {
+  public static @NotNull CompletionAssertions.WatchingInsertionContext createInsertionContext(@Nullable List<LookupElement> lookupItems,
+                                                                                              LookupElement item,
+                                                                                              char completionChar,
+                                                                                              Editor editor,
+                                                                                              PsiFile psiFile,
+                                                                                              int caretOffset,
+                                                                                              int idEndOffset,
+                                                                                              OffsetMap offsetMap) {
     int initialStartOffset = Math.max(0, caretOffset - item.getLookupString().length());
 
     return createInsertionContext(lookupItems, completionChar, editor, psiFile, initialStartOffset, caretOffset, idEndOffset, offsetMap);
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public static CompletionAssertions.WatchingInsertionContext createInsertionContext(@Nullable List<LookupElement> lookupItems,
-                                                                                     char completionChar,
-                                                                                     Editor editor,
-                                                                                     PsiFile psiFile,
-                                                                                     int startOffset,
-                                                                                     int caretOffset,
-                                                                                     int idEndOffset,
-                                                                                     OffsetMap offsetMap) {
+  public static @NotNull CompletionAssertions.WatchingInsertionContext createInsertionContext(@Nullable List<LookupElement> lookupItems,
+                                                                                              char completionChar,
+                                                                                              Editor editor,
+                                                                                              PsiFile psiFile,
+                                                                                              int startOffset,
+                                                                                              int caretOffset,
+                                                                                              int idEndOffset,
+                                                                                              OffsetMap offsetMap) {
 
     offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, startOffset);
     offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);

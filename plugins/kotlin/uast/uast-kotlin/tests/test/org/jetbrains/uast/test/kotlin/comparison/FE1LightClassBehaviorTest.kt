@@ -31,6 +31,16 @@ class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
         checkPropertyAccessorModifierListOffsets(myFixture)
     }
 
+    fun testLocalClassCaching() {
+        try {
+            checkLocalClassCaching(myFixture)
+            // TODO: KTIJ-26663
+            error("Unmute me")
+        } catch (e: Throwable) {
+            return
+        }
+    }
+
     fun testFinalModifierOnEnumMembers() {
         checkFinalModifierOnEnumMembers(myFixture)
     }
@@ -65,6 +75,10 @@ class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
 
     fun testUpperBoundWildcardForVar() {
         checkUpperBoundWildcardForVar(myFixture)
+    }
+
+    fun testUpperBoundForRecursiveTypeParameter() {
+        checkUpperBoundForRecursiveTypeParameter(myFixture)
     }
 
     fun testDefaultValueOfAnnotation() {

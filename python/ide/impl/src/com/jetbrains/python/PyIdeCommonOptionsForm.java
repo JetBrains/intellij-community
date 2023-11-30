@@ -25,6 +25,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -38,6 +39,8 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private JComponent labelAnchor;
   private final Project myProject;
   private List<Sdk> myPythonSdks;
+  @NotNull
+  private List<String> myEnvPaths = Collections.emptyList();
   private boolean myInterpreterRemote;
 
   private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = new ArrayList<>();
@@ -288,6 +291,17 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public void removeInterpreterComboBoxActionListener(ActionListener listener) {
     content.interpreterComboBox.removeActionListener(listener);
+  }
+
+  @NotNull
+  @Override
+  public List<String> getEnvFilePaths() {
+    return myEnvPaths;
+  }
+
+  @Override
+  public void setEnvFilePaths(@NotNull List<String> strings) {
+    myEnvPaths = strings;
   }
 
   private static class MyListener implements SdkModel.Listener {

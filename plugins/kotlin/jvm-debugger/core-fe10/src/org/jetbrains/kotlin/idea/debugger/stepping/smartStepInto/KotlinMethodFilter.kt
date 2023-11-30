@@ -91,15 +91,17 @@ open class KotlinMethodFilter(
         val isNameMangledInBytecode = methodInfo.isNameMangledInBytecode
         val actualMethodName = method.name().trimIfMangledInBytecode(isNameMangledInBytecode)
 
+        val isGeneratedLambda = actualMethodName.isGeneratedIrBackendLambdaMethodName()
         return actualMethodName == targetMethodName ||
                actualMethodName == "$targetMethodName${JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX}" ||
-               actualMethodName.isGeneratedIrBackendLambdaMethodName() && getMethodNameInCallerFrame(frameProxy) == targetMethodName ||
+               isGeneratedLambda && getMethodNameInCallerFrame(frameProxy) == targetMethodName ||
                // A correct way here is to memorize the original location (where smart step into was started)
                // and filter out ranges that contain that original location.
                // Otherwise, nested inline with the same method name will not work correctly.
                method.getInlineFunctionAndArgumentVariablesToBordersMap()
                    .filter { location in it.value }
-                   .any { it.key.isInlinedFromFunction(targetMethodName, isNameMangledInBytecode) }
+                   .any { it.key.isInlinedFromFunction(targetMethodName, isNameMangledInBytecode, methodInfo.isInternalMethod) } ||
+               !isGeneratedLambda && methodInfo.isInternalMethod && internalNameMatches(actualMethodName, targetMethodName)
     }
 }
 
@@ -120,10 +122,17 @@ private fun getMethodDescriptorAndDeclaration(
     }
 }
 
-private fun LocalVariable.isInlinedFromFunction(methodName: String, isNameMangledInBytecode: Boolean): Boolean {
+// Internal methods has a '$<MODULE_NAME>' suffix
+private fun internalNameMatches(methodName: String, targetMethodName: String): Boolean {
+    return methodName.startsWith("$targetMethodName\$")
+}
+
+private fun LocalVariable.isInlinedFromFunction(methodName: String, isNameMangledInBytecode: Boolean, isInternalMethod: Boolean): Boolean {
     val variableName = name().trimIfMangledInBytecode(isNameMangledInBytecode)
-    return variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
-           variableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) == methodName
+    if (!variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)) return false
+    val inlineMethodName = variableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
+    return inlineMethodName == methodName ||
+           isInternalMethod && internalNameMatches(inlineMethodName, methodName)
 }
 
 private fun getMethodNameInCallerFrame(frameProxy: StackFrameProxyImpl?): String? {

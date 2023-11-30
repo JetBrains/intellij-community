@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class WorkspaceModelPerformanceTest {
   companion object {
     @RegisterExtension

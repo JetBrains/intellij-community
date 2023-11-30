@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.test.util
 import org.jetbrains.kotlin.idea.test.KotlinBaseTest.TestFile
 
 enum class SteppingInstructionKind(val directiveName: String) {
+    StepIntoIgnoreFilters("STEP_INTO_IGNORE_FILTERS"),
     StepInto("STEP_INTO"),
     StepOut("STEP_OUT"),
     StepOver("STEP_OVER"),

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.propertyTable.editors;
 
 import com.intellij.designer.model.PropertiesContainer;
@@ -32,18 +32,17 @@ public class TextEditor extends PropertyEditor {
     myTextField.getDocument().addDocumentListener(
       new DocumentAdapter() {
         @Override
-        protected void textChanged(@NotNull final DocumentEvent e) {
+        protected void textChanged(final @NotNull DocumentEvent e) {
           preferredSizeChanged();
         }
       }
     );
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent(@Nullable PropertiesContainer container,
-                                 @Nullable PropertyContext context, Object value,
-                                 @Nullable InplaceContext inplaceContext) {
+  public @NotNull JComponent getComponent(@Nullable PropertiesContainer container,
+                                          @Nullable PropertyContext context, Object value,
+                                          @Nullable InplaceContext inplaceContext) {
     setEditorValue(container, value);
 
     if (inplaceContext == null) {

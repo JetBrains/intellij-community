@@ -24,10 +24,12 @@ import javax.swing.event.HyperlinkEvent
 object ErrorStatusPanelFactory {
   private const val ERROR_ACTION_HREF = "ERROR_ACTION"
 
+  @JvmOverloads
   fun <T> create(
     scope: CoroutineScope,
     errorState: Flow<T?>,
-    errorPresenter: ErrorStatusPresenter<T>
+    errorPresenter: ErrorStatusPresenter<T>,
+    alignment: Alignment = Alignment.CENTER
   ): JComponent {
     val htmlEditorPane = JEditorPane().apply {
       editorKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
@@ -37,7 +39,7 @@ object ErrorStatusPanelFactory {
       isOpaque = false
     }
 
-    Controller(scope, errorState, errorPresenter, htmlEditorPane)
+    Controller(scope, errorState, errorPresenter, htmlEditorPane, alignment)
 
     return htmlEditorPane
   }
@@ -46,7 +48,8 @@ object ErrorStatusPanelFactory {
     scope: CoroutineScope,
     errorState: Flow<T?>,
     private val errorPresenter: ErrorStatusPresenter<T>,
-    private val htmlEditorPane: JEditorPane
+    private val htmlEditorPane: JEditorPane,
+    private val alignment: Alignment
   ) {
     private var action: Action? = null
 
@@ -102,8 +105,13 @@ object ErrorStatusPanelFactory {
       htmlEditorPane.isVisible = true
     }
 
-    private fun HtmlBuilder.appendP(chunk: HtmlChunk): HtmlBuilder = append(HtmlChunk.p().attr("align", "center").child(chunk))
+    private fun HtmlBuilder.appendP(chunk: HtmlChunk): HtmlBuilder = append(HtmlChunk.p().attr("align", alignment.htmlValue).child(chunk))
 
     private fun HtmlBuilder.appendP(@Nls text: String): HtmlBuilder = appendP(HtmlChunk.text(text))
+  }
+
+  enum class Alignment(val htmlValue: String) {
+    LEFT("left"),
+    CENTER("center");
   }
 }

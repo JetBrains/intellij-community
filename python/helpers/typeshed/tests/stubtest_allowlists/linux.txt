@@ -1,27 +1,18 @@
 _socket.*
 _posixsubprocess.cloexec_pipe
-os.EX_NOTFOUND
-os.SF_MNOWAIT
-os.SF_NODISKIO
-os.SF_SYNC
+curses.has_key
 os.plock
-posix.EX_NOTFOUND
-posix.NGROUPS_MAX
-select.EPOLL_RDHUP
 selectors.KqueueSelector
-signal.SIGEMT
-signal.SIGINFO
 socket.[A-Z0-9_]+
-errno.[A-Z0-9]+
 
 # Exists at runtime, but missing from stubs
-distutils.msvccompiler.MSVCCompiler.get_msvc_paths
-distutils.msvccompiler.MSVCCompiler.set_path_env_var
-distutils.msvccompiler.MacroExpander
-mimetypes.MimeTypes.read_windows_registry
-selectors.DefaultSelector.fileno
 spwd.struct_spwd.sp_nam
 spwd.struct_spwd.sp_pwd
+
+# Platform differences that cannot be captured by the type system
+(posix.O_[A-Z_]+)?
+(posix.ST_[A-Z]+)?
+(termios.[A-Z0-9_]+)?
 
 _ctypes.dlclose
 _ctypes.dlopen
@@ -44,14 +35,14 @@ winsound
 # multiprocessing.popen_spawn_win32 exists on Linux but fail to import
 multiprocessing.popen_spawn_win32
 
-# Aliases for OSError
-posix.error.characters_written
-resource.error.characters_written
-
 # Platform differences that cannot be captured by the type system
 fcntl.I_[A-Z0-9_]+
 os.SCHED_[A-Z_]+
 posix.SCHED_[A-Z_]+
+
+# Exists on some Unix platforms, but not in CI:
+os.EX_NOTFOUND
+posix.EX_NOTFOUND
 
 # Some of these exist on non-windows, but they are useless and this is not intended
 stat.FILE_ATTRIBUTE_[A-Z_]+

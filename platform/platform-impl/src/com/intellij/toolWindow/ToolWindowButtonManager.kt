@@ -2,6 +2,7 @@
 
 package com.intellij.toolWindow
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
@@ -19,7 +20,7 @@ internal interface ToolWindowButtonManager {
   fun addToToolWindowPane(pane: JComponent) {
   }
 
-  fun initMoreButton() {}
+  fun initMoreButton(project: Project) {}
 
   fun updateToolStripesVisibility(showButtons: Boolean, state: ToolWindowPaneState): Boolean
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.StorageLockContext;
@@ -10,12 +10,14 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.BitSet;
+import java.util.concurrent.locks.Lock;
 
 // Twice as compact as AbstractRecordsTable: 8 bytes per record: int offset ([0..Integer.MAX_INT]), int ((capacity [0..0xFFFF) << 16) | (size [-1..0xFFFF)))
 // if int offset is overflowed then new 8 byte record is created to
 // hold long offset and original record contains negative new record number,
 // same if size / capacity is overflowed: new record is created to hold integer offset / capacity and original record contains its
 // negative number
+//TODO RC: this class is not really thread-safe, even though it does use locks here and there
 final class CompactRecordsTable extends AbstractRecordsTable {
   private final byte[] zeroes;
   private final boolean forceSplit;
@@ -93,14 +95,21 @@ final class CompactRecordsTable extends AbstractRecordsTable {
 
   @Override
   public int getSize(int record) throws IOException {
-    int currentValue = myStorage.getInt(getOffset(record, SIZE_AND_CAPACITY_OFFSET));
-    if (currentValue < 0) {
-      // read size from indirect record
-      return myStorage.getInt(getOffset(-currentValue, SIZE_OFFSET_IN_INDIRECT_RECORD));
+    final Lock readLock = myStorage.getStorageLockContext().readLock();
+    readLock.lock();
+    try {
+      int currentValue = myStorage.getInt(getOffset(record, SIZE_AND_CAPACITY_OFFSET));
+      if (currentValue < 0) {
+        // read size from indirect record
+        return myStorage.getInt(getOffset(-currentValue, SIZE_OFFSET_IN_INDIRECT_RECORD));
+      }
+      int i = currentValue & SIZE_MASK;
+      if (i == SPECIAL_POSITIVE_VALUE_FOR_SPECIAL_NEGATIVE_SIZE) i = SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD;
+      return i;
     }
-    int i = currentValue & SIZE_MASK;
-    if (i == SPECIAL_POSITIVE_VALUE_FOR_SPECIAL_NEGATIVE_SIZE) i = SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD;
-    return i;
+    finally {
+      readLock.unlock();
+    }
   }
 
   @Override
@@ -196,9 +205,9 @@ final class CompactRecordsTable extends AbstractRecordsTable {
       int nextId = scanToNextId();
 
       private int scanToNextId() {
-        while(iterator.hasNextId()) {
+        while (iterator.hasNextId()) {
           int next = iterator.nextId();
-          if ( !extraRecordsIds.get(next)) return next;
+          if (!extraRecordsIds.get(next)) return next;
         }
         return -1;
       }
@@ -220,23 +229,16 @@ final class CompactRecordsTable extends AbstractRecordsTable {
       @Override
       public boolean validId() throws IOException {
         assert hasNextId();
-        myStorage.lockWrite();
-        try {
-          return isSizeOfLiveRecord(getSize(nextId));
-        }
-        finally {
-          myStorage.unlockWrite();
-        }
+        return isSizeOfLiveRecord(getSize(nextId));
       }
     };
   }
 
-  @NotNull
-  private BitSet buildIdSetOfExtraRecords() throws IOException {
+  private @NotNull BitSet buildIdSetOfExtraRecords() throws IOException {
     final BitSet extraRecords = new BitSet();
 
     final RecordIdIterator iterator = super.createRecordIdIterator();
-    while(iterator.hasNextId()) {
+    while (iterator.hasNextId()) {
       int recordId = iterator.nextId();
       final int sizeAndCapacityOfRecordAbsoluteOffset = getOffset(recordId, SIZE_AND_CAPACITY_OFFSET);
       final int sizeAndCapacityValue = myStorage.getInt(sizeAndCapacityOfRecordAbsoluteOffset);

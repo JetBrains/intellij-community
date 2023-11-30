@@ -3,6 +3,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.folding.impl.FoldingUpdate.RegionInfo;
 import com.intellij.lang.folding.CustomFoldingProvider;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.LanguageFolding;
@@ -17,25 +18,31 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
+import com.intellij.openapi.fileEditor.impl.text.foldingGrave.FoldingModelGrave;
+import com.intellij.openapi.fileEditor.impl.text.foldingGrave.FoldingState;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.WeakList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public final class CodeFoldingManagerImpl extends CodeFoldingManager implements Disposable {
@@ -46,8 +53,12 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   private final Key<DocumentFoldingInfo> myFoldingInfoInDocumentKey = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
   private static final Key<Boolean> FOLDING_STATE_KEY = Key.create("FOLDING_STATE_KEY");
 
+  private final FoldingModelGrave myFoldingGrave;
+
   public CodeFoldingManagerImpl(Project project) {
     myProject = project;
+    myFoldingGrave = FoldingModelGrave.Companion.getInstance(project);
+    myFoldingGrave.subscribeFileClosed();
 
     LanguageFolding.EP_NAME.addExtensionPointListener(
       new ExtensionPointListener<>() {
@@ -95,7 +106,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   @Override
   public void releaseFoldings(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     EditorFoldingInfo.disposeForEditor(editor);
   }
 
@@ -134,24 +145,49 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       return null;
     }
 
+    VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
+    FoldingState fileFoldingState = myFoldingGrave.getFoldingState(vFile);
+    List<RegionInfo> regionInfos = fileFoldingState == null
+                                                 ? FoldingUpdate.getFoldingsFor(file, true)
+                                                 : Collections.emptyList();
+
     boolean supportsDumbModeFolding = FoldingUpdate.supportsDumbModeFolding(file);
-    List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, true);
 
     return editor -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       if (myProject.isDisposed() || editor.isDisposed()) return;
       final FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
       if (!foldingModel.isFoldingEnabled()) return;
       if (isFoldingsInitializedInEditor(editor)) return;
       if (DumbService.isDumb(myProject) && !supportsDumbModeFolding) return;
+      if (fileFoldingState != null) {
+        fileFoldingState.applyState(document, foldingModel);
+        file.putUserData(CodeFoldingPass.BeforePass.KEY, new CodeFoldingPass.BeforePass() {
+          @Override
+          public List<RegionInfo> collectRegionInfo() {
+            return FoldingUpdate.getFoldingsFor(file, true);
+          }
 
-      foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, regionInfos,
-                                                                                             UpdateFoldRegionsOperation.ApplyDefaultStateMode.YES,
-                                                                                             false, false));
-      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-319892, EA-838676")) {
-        initFolding(editor);
+          @Override
+          public void applyRegionInfo(List<RegionInfo> regionInfos) {
+            updateAndInitFolding(editor, foldingModel, file, regionInfos);
+          }
+        });
       }
+      else {
+        updateAndInitFolding(editor, foldingModel, file, regionInfos);
+      }
+      myFoldingGrave.setFoldingModel(vFile, foldingModel);
     };
+  }
+
+  private void updateAndInitFolding(Editor editor, FoldingModelEx foldingModel, PsiFile file, List<RegionInfo> regionInfos) {
+    foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, regionInfos,
+                                                                                           UpdateFoldRegionsOperation.ApplyDefaultStateMode.YES,
+                                                                                           false, false));
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-319892, EA-838676")) {
+      initFolding(editor);
+    }
   }
 
   @Nullable
@@ -220,7 +256,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
         runnable.run();
       }
       if (firstTime && !isFoldingsInitializedInEditor(editor)) {
-        SlowOperations.allowSlowOperations(() -> initFolding(editor));
+        initFolding(editor);
       }
     };
   }
@@ -233,7 +269,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   @Override
   public CodeFoldingState saveFoldingState(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     DocumentFoldingInfo info = getDocumentFoldingInfo(editor.getDocument());
     if (isFoldingsInitializedInEditor(editor)) {
       info.loadFromEditor(editor);
@@ -243,7 +279,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   @Override
   public void restoreFoldingState(@NotNull Editor editor, @NotNull CodeFoldingState state) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (isFoldingsInitializedInEditor(editor)) {
       state.setToEditor(editor);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
@@ -23,8 +23,7 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
   implements XmlAttribute, HintedReferenceHost, StubBasedPsiElement<StubT> {
 
   //cannot be final because of clone implementation
-  @Nullable
-  private volatile XmlAttributeDelegate myImpl;
+  private volatile @Nullable XmlAttributeDelegate myImpl;
 
   public XmlStubBasedAttributeBase(@NotNull StubT stub,
                                    @NotNull IStubElementType<? extends StubT, ? extends XmlAttribute> nodeType) {
@@ -35,8 +34,7 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
     super(node);
   }
 
-  @NotNull
-  private XmlAttributeDelegate getImpl() {
+  private @NotNull XmlAttributeDelegate getImpl() {
     XmlAttributeDelegate impl = myImpl;
     if (impl != null) return impl;
     impl = createDelegate();
@@ -45,8 +43,7 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
     return impl;
   }
 
-  @NotNull
-  protected XmlAttributeDelegate createDelegate() {
+  protected @NotNull XmlAttributeDelegate createDelegate() {
     return new XmlStubBasedAttributeBaseDelegate();
   }
 
@@ -66,15 +63,12 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
   }
 
   @Override
-  @NotNull
-  public String getNamespace() {
+  public @NotNull String getNamespace() {
     return getImpl().getNamespace();
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getNamespacePrefix() {
+  public @NonNls @NotNull String getNamespacePrefix() {
     return XmlUtil.findPrefixByQualifiedName(getName());
   }
 
@@ -97,8 +91,7 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
 
 
   @Override
-  @NotNull
-  public String getLocalName() {
+  public @NotNull String getLocalName() {
     return XmlUtil.findLocalNameByQualifiedName(getName());
   }
 
@@ -119,8 +112,7 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
   }
 
   @Override
-  @Nullable
-  public String getDisplayValue() {
+  public @Nullable String getDisplayValue() {
     final XmlAttributeDelegate.VolatileState state = getImpl().getFreshState();
     return state == null ? null : state.myDisplayText;
   }
@@ -135,9 +127,8 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
     return getImpl().displayToPhysical(displayIndex);
   }
 
-  @NotNull
   @Override
-  public TextRange getValueTextRange() {
+  public @NotNull TextRange getValueTextRange() {
     final XmlAttributeDelegate.VolatileState state = getImpl().getFreshState();
     return state == null ? TextRange.EMPTY_RANGE : state.myValueTextRange;
   }
@@ -149,21 +140,19 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     XmlElement element = getNameElement();
     return element != null ? element.getText() : "";
   }
 
   @Override
   public boolean isNamespaceDeclaration() {
-    @NonNls final String name = getName();
+    final @NonNls String name = getName();
     return name.startsWith("xmlns:") || name.equals("xmlns");
   }
 
   @Override
-  @NotNull
-  public PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
+  public @NotNull PsiElement setName(final @NotNull String nameText) throws IncorrectOperationException {
     return getImpl().setName(nameText);
   }
 
@@ -192,8 +181,7 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
   }
 
   @Override
-  @Nullable
-  public XmlAttributeDescriptor getDescriptor() {
+  public @Nullable XmlAttributeDescriptor getDescriptor() {
     return getImpl().getDescriptor();
   }
 

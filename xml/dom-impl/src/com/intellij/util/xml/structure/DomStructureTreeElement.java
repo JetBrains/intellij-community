@@ -22,9 +22,9 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   private final Function<DomElement, DomService.StructureViewMode> myDescriptor;
   private final DomElementNavigationProvider myNavigationProvider;
 
-  public DomStructureTreeElement(@NotNull final DomElement element,
-                                 @NotNull final Function<DomElement,DomService.StructureViewMode> descriptor,
-                                 @Nullable final DomElementNavigationProvider navigationProvider) {
+  public DomStructureTreeElement(final @NotNull DomElement element,
+                                 final @NotNull Function<DomElement,DomService.StructureViewMode> descriptor,
+                                 final @Nullable DomElementNavigationProvider navigationProvider) {
     myElement = element;
     myDescriptor = descriptor;
     myNavigationProvider = navigationProvider;
@@ -35,14 +35,12 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   }
 
   @Override
-  @Nullable
-  public Object getValue() {
+  public @Nullable Object getValue() {
     return myElement.isValid() ? myElement.getXmlElement() : null;
   }
 
   @Override
-  @NotNull
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return this;
   }
 
@@ -99,8 +97,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   }
 
   @Override
-  @Nullable
-  public Icon getIcon(boolean open) {
+  public @Nullable Icon getIcon(boolean open) {
     if (!myElement.isValid()) return null;
     return myElement.getPresentation().getIcon();
   }

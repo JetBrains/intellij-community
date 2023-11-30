@@ -21,6 +21,7 @@ import javax.swing.JComponent
 import kotlin.math.max
 import kotlin.math.min
 
+@Deprecated("Deprecated in favour of using inlays directly - com.intellij.collaboration.ui.codereview.editor.EditorComponentInlaysUtilKt.insertComponentAfter")
 class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
 
   private val managedInlays = mutableMapOf<ComponentWrapper, Disposable>()

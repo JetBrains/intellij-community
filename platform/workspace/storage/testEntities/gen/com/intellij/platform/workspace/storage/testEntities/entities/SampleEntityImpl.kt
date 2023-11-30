@@ -14,13 +14,13 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.util.UUID
 import kotlin.jvm.JvmName
@@ -28,14 +28,14 @@ import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class SampleEntityImpl(private val dataSource: SampleEntityData) : SampleEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(SampleEntity::class.java, ChildSampleEntity::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
     )
 
@@ -69,6 +69,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
     return connections
   }
 
+
   class Builder(result: SampleEntityData?) : ModifiableWorkspaceEntityBase<SampleEntity, SampleEntityData>(result), SampleEntity.Builder {
     constructor() : this(SampleEntityData())
 
@@ -97,7 +98,7 @@ open class SampleEntityImpl(val dataSource: SampleEntityData) : SampleEntity, Wo
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -295,10 +296,10 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
   var randomUUID: UUID? = null
 
 
-  fun isStringPropertyInitialized(): Boolean = ::stringProperty.isInitialized
-  fun isStringListPropertyInitialized(): Boolean = ::stringListProperty.isInitialized
-  fun isStringMapPropertyInitialized(): Boolean = ::stringMapProperty.isInitialized
-  fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
+  internal fun isStringPropertyInitialized(): Boolean = ::stringProperty.isInitialized
+  internal fun isStringListPropertyInitialized(): Boolean = ::stringListProperty.isInitialized
+  internal fun isStringMapPropertyInitialized(): Boolean = ::stringMapProperty.isInitialized
+  internal fun isFilePropertyInitialized(): Boolean = ::fileProperty.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SampleEntity> {
     val modifiable = SampleEntityImpl.Builder(null)
@@ -315,6 +316,11 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity") as EntityMetadata
   }
 
   override fun clone(): SampleEntityData {
@@ -401,13 +407,5 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     result = 31 * result + nullableData.hashCode()
     result = 31 * result + randomUUID.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.stringMapProperty?.let { collector.add(it::class.java) }
-    this.stringListProperty?.let { collector.add(it::class.java) }
-    this.randomUUID?.let { collector.addDataToInspect(it) }
-    this.fileProperty?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

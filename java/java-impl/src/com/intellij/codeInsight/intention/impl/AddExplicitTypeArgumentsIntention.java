@@ -22,7 +22,7 @@ public class AddExplicitTypeArgumentsIntention extends BaseElementAtCaretIntenti
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
     PsiIdentifier identifier = ObjectUtils.tryCast(element, PsiIdentifier.class);
     if (identifier == null) return false;
     PsiReferenceExpression methodExpression = ObjectUtils.tryCast(identifier.getParent(), PsiReferenceExpression.class);
@@ -40,7 +40,7 @@ public class AddExplicitTypeArgumentsIntention extends BaseElementAtCaretIntenti
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     assert callExpression != null;
     PsiExpression withArgs = AddTypeArgumentsFix.addTypeArguments(callExpression, null);

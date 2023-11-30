@@ -15,9 +15,7 @@ class FileChannelStorageIO(private val fc: FileChannel) : StorageIO {
     fc.read(ByteBuffer.wrap(buf, offset, length), position)
   }
 
-  override fun isDirty(): Nothing = throw UnsupportedOperationException("unexpected call")
-
-  override fun force() {
+  override fun flush() {
     fc.force(false)
   }
 

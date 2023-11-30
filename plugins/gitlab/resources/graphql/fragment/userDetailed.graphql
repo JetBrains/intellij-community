@@ -1,0 +1,12 @@
+fragment userDetailed on User {
+  ...user
+  projectMemberships(first: 100) {
+    pageInfo {
+      ...pageInfo
+    }
+
+    nodes {
+      ...projectMember
+    }
+  }
+}

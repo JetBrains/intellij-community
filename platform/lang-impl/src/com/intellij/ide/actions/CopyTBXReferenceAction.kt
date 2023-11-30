@@ -15,7 +15,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.PlatformUtils.*
-import com.intellij.util.io.encodeUrlQueryParameter
+import java.net.URLEncoder
 import java.util.stream.Collectors
 import java.util.stream.IntStream
 
@@ -47,7 +47,7 @@ internal object CopyTBXReferenceAction {
 
     val refsParameters = if (entries.isEmpty()) null
     else entries.joinToString("") {
-      createRefs(isFile(elements[it.key]), if (elements.size > 1) it.value.encodeUrlQueryParameter() else it.value,
+      createRefs(isFile(elements[it.key]), if (elements.size > 1) URLEncoder.encode(it.value, Charsets.UTF_8)!! else it.value,
                  parameterIndex(it.key, elements.size))
     }
 

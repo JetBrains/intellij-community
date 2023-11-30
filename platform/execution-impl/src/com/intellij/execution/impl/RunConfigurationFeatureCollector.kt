@@ -4,12 +4,21 @@ package com.intellij.execution.impl
 import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.ide.plugins.PluginFeatureService
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.minutes
 
 private class RunConfigurationFeatureCollector : ProjectActivity {
+  init {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
   override suspend fun execute(project: Project) {
     // no hurry to update current feature mapping of all run configurations types
     delay(10.minutes)

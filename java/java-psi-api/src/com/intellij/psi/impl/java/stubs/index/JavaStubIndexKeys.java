@@ -16,6 +16,7 @@ public final class JavaStubIndexKeys {
   public static final StubIndexKey<String, PsiClass> CLASS_SHORT_NAMES = StubIndexKey.createIndexKey("java.class.shortname");
   public static final StubIndexKey<CharSequence, PsiClass> CLASS_FQN = StubIndexKey.createIndexKey("java.class.fqn");
   public static final StubIndexKey<String, PsiJavaModule> MODULE_NAMES = StubIndexKey.createIndexKey("java.module.name");
+  public static final StubIndexKey<String, PsiUnnamedClass> UNNAMED_CLASSES = StubIndexKey.createIndexKey("java.unnamed.class");
 
   private JavaStubIndexKeys() { }
 }

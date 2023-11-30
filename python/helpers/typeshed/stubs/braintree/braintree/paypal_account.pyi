@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from braintree.configuration import Configuration as Configuration
@@ -9,7 +10,7 @@ class PayPalAccount(Resource):
     @staticmethod
     def delete(paypal_account_token): ...
     @staticmethod
-    def update(paypal_account_token, params: Any | None = ...): ...
+    def update(paypal_account_token, params: Incomplete | None = None): ...
     @staticmethod
     def signature(): ...
     subscriptions: Any

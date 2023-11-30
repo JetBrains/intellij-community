@@ -3,13 +3,14 @@ package org.jetbrains.intellij.build.pycharm
 
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import java.nio.file.Path
 
 open class PyCharmMacDistributionCustomizer : MacDistributionCustomizer() {
-  override fun copyAdditionalFiles(context: BuildContext, targetDirectory: Path) {
-    super.copyAdditionalFiles(context, targetDirectory)
-    PyCharmBuildUtils.copySkeletons(context, targetDirectory, "skeletons-mac*.zip")
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
+    super.copyAdditionalFiles(context, targetDir, arch)
+    PyCharmBuildUtils.copySkeletons(context, targetDir, "skeletons-mac*.zip")
   }
 
   override fun getCustomIdeaProperties(appInfo: ApplicationInfoProperties): Map<String, String> {

@@ -16,15 +16,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ReplaceHtmlTagWithCssAction implements LocalQuickFix {
-  @NonNls private final String myName;
+public final class ReplaceHtmlTagWithCssAction implements LocalQuickFix {
+  private final @NonNls String myName;
 
-  @NonNls private static final String BODY = "body";
-  @NonNls private static final String HTML = "html";
-  @NonNls private static final String HEAD = "head";
+  private static final @NonNls String BODY = "body";
+  private static final @NonNls String HTML = "html";
+  private static final @NonNls String HEAD = "head";
 
-  private static class Holder {
-    @NonNls private static final Map<String, String> ourTagToCssMap = new HashMap<>();
+  private static final class Holder {
+    private static final @NonNls Map<String, String> ourTagToCssMap = new HashMap<>();
 
     static {
       ourTagToCssMap.put("center", "text-align: center;");
@@ -45,20 +45,16 @@ public class ReplaceHtmlTagWithCssAction implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return HtmlToolsBundle.message("html.replace.tag.with.css.quickfix.text", myName);
   }
 
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return getName();
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getFamilyName() {
+  public @NonNls @NotNull String getFamilyName() {
     return HtmlToolsBundle.message("html.replace.tag.with.css.quickfix.family.name");
   }
 
@@ -90,7 +86,7 @@ public class ReplaceHtmlTagWithCssAction implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     PsiElement parent = descriptor.getPsiElement();
     while (parent != null) {
       if (parent instanceof XmlTag && Holder.ourTagToCssMap.containsKey(StringUtil.toLowerCase(((XmlTag)parent).getLocalName()))) {

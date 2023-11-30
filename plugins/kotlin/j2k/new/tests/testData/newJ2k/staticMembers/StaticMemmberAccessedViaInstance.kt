@@ -1,8 +1,8 @@
 class Rectangle {
-    var y = 0
+    var y: Int = 0
 
     companion object {
-        var x = 0
+        var x: Int = 0
     }
 }
 

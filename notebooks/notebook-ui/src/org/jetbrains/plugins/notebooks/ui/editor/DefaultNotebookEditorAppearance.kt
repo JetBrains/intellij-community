@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.ui.NewUiValue
+import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode.currentMode
 import org.jetbrains.plugins.notebooks.ui.visualization.DefaultNotebookEditorAppearanceSizes
@@ -32,8 +34,14 @@ object DefaultNotebookEditorAppearance : NotebookEditorAppearance,
     scheme.getColor(PROGRESS_STATUS_RUNNING_COLOR) ?: super.getProgressStatusRunningColor(scheme)
 
   val SAUSAGE_BUTTON_APPEARANCE = TextAttributesKey.createTextAttributesKey("JUPYTER.SAUSAGE_BUTTON_APPEARANCE")
-  override fun getSausageButtonAppearanceBackgroundColor(scheme: EditorColorsScheme): Color =
-    scheme.getAttributes(SAUSAGE_BUTTON_APPEARANCE)?.backgroundColor ?: super.getSausageButtonAppearanceBackgroundColor(scheme)
+  override fun getSausageButtonAppearanceBackgroundColor(scheme: EditorColorsScheme): Color {
+    return if (NewUiValue.isEnabled()) {
+      JBUI.CurrentTheme.EditorTabs.background()
+    }
+    else {
+      scheme.getAttributes(SAUSAGE_BUTTON_APPEARANCE)?.backgroundColor
+    } ?: super.getSausageButtonAppearanceBackgroundColor(scheme)
+  }
 
   override fun getSausageButtonAppearanceForegroundColor(scheme: EditorColorsScheme): Color =
     scheme.getAttributes(SAUSAGE_BUTTON_APPEARANCE)?.foregroundColor ?: super.getSausageButtonAppearanceForegroundColor(scheme)

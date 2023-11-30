@@ -1,18 +1,20 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.visitor
 
 import com.intellij.cce.core.*
+import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import com.jetbrains.python.PythonTokenSetContributor
 import com.jetbrains.python.psi.*
-import com.intellij.cce.visitor.exceptions.PsiConverterException
 
-class PythonCompletionEvaluationVisitor : CompletionEvaluationVisitor, PyRecursiveElementVisitor() {
+class PythonCompletionEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVisitor() {
   private var _codeFragment: CodeFragment? = null
   private val tokenSetContributor = PythonTokenSetContributor()
 
   override val language: Language = Language.PYTHON
+  override val feature: String = "token-completion"
 
   override fun getFile(): CodeFragment = _codeFragment
                                          ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
@@ -36,7 +38,8 @@ class PythonCompletionEvaluationVisitor : CompletionEvaluationVisitor, PyRecursi
       val qualifier = node.qualifier?.reference?.resolve()
       val properties = if (qualifier is PyParameter && !qualifier.isSelf) {
         SimpleTokenProperties.create(TypeProperty.PARAMETER_MEMBER, SymbolLocation.PROJECT) {}
-      } else {
+      }
+      else {
         TokenProperties.UNKNOWN
       }
       val token = CodeToken(name.text, name.startOffset, properties)

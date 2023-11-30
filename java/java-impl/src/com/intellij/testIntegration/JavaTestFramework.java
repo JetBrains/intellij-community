@@ -2,12 +2,10 @@
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -60,7 +58,7 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   /**
    * Return {@code true} iff {@link #getMarkerClassFQName()} can be found in the resolve scope of {@code clazz}
    */
-  protected boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
+  public boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
     String markerClassFQName = getMarkerClassFQName();
     return isFrameworkApplicable(clazz, markerClassFQName);
   }
@@ -83,7 +81,7 @@ public abstract class JavaTestFramework implements JvmTestFramework {
 
   @Override
   public boolean isPotentialTestClass(@NotNull PsiElement clazz) {
-    return clazz instanceof PsiClass && isTestClass((PsiClass)clazz, true);
+    return clazz instanceof PsiClass && isFrameworkAvailable(clazz) && isTestClass((PsiClass)clazz, true);
   }
 
   protected abstract boolean isTestClass(PsiClass clazz, boolean canBePotential);
@@ -163,7 +161,9 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   @Override
   @NotNull
   public Language getLanguage() {
-    return JavaLanguage.INSTANCE;
+    // despite the class name, it could handle (utilizing LightClasses) test frameworks
+    // in different (JVM-like) languages like java, groovy, kotlin, scala and so on
+    return Language.ANY;
   }
 
   @Nullable

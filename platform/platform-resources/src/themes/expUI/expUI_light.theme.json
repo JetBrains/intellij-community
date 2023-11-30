@@ -2,8 +2,9 @@
   "name": "Light",
   "dark": false,
   "author": "JetBrains",
-  "editorScheme": "/themes/expUI/expUI_lightScheme.xml",
-
+  "parentTheme": "IntelliJ",
+  "nameKey": "light.theme.name",
+  "editorScheme": "Light",
   "colors": {
     "Grey1": "#000000",
     "Grey2": "#27282E",
@@ -44,7 +45,7 @@
     "Green7": "#89C398",
     "Green8": "#AFDBB8",
     "Green9": "#C5E5CC",
-    "Green10": "#E6F7E9",
+    "Green10": "#E3F7E7",
     "Green11": "#F2FCF3",
 
     "Yellow1": "#A46704",
@@ -55,7 +56,7 @@
     "Yellow6": "#FED277",
     "Yellow7": "#FEE6B1",
     "Yellow8": "#FFF1D1",
-    "Yellow9": "#FFF6DE",
+    "Yellow9": "#FFF5DB",
     "Yellow10": "#FFFAEB",
 
     "Red1": "#AD2B38",
@@ -67,8 +68,9 @@
     "Red7": "#ED99A1",
     "Red8": "#F2B6BB",
     "Red9": "#FAD4D8",
-    "Red10": "#FFF2F3",
-    "Red11": "#FFF7F7",
+    "Red10": "#FFEBEC",
+    "Red11": "#FFF2F3",
+    "Red12": "#FFF7F7",
 
     "Orange1": "#A14916",
     "Orange2": "#B85516",
@@ -77,7 +79,7 @@
     "Orange5": "#EC8F4C",
     "Orange6": "#F2B181",
     "Orange7": "#F9D2B6",
-    "Orange8": "#FCE6D6",
+    "Orange8": "#FFEFE3",
     "Orange9": "#FFF4EB",
 
     "Teal1": "#096A6E",
@@ -98,7 +100,8 @@
     "Purple6": "#BFA1F8",
     "Purple7": "#DCCBFB",
     "Purple8": "#EFE5FF",
-    "Purple9": "#FAF5FF"
+    "Purple9": "#F5EDFF",
+    "Purple10": "#FAF5FF"
   },
 
   "ui": {
@@ -246,8 +249,10 @@
     "DefaultTabs.hoverBackground": "Grey12",
 
     "EditorTabs": {
-      "underlineArc": "4",
-      "unselectedBlend": "0.9",
+      "underlineArc": 4,
+      "underlineHeight": 4,
+      "unselectedAlpha": 0.75,
+      "unselectedBlend": 0.9,
       "background": "Grey14",
       "hoverBackground": "#FFFFFF00",
       "hoverInactiveBackground": "#FFFFFF00",
@@ -264,13 +269,25 @@
       },
       "ToolTip": {
         "foreground": "Grey1",
-        "background": "Grey14"
+        "background": "Grey14",
+        "border": "Grey9",
+        "errorBackground": "Red12",
+        "errorBorder": "Red9",
+        "successBackground": "Green11",
+        "successBorder": "Green8",
+        "warningBackground": "Yellow9",
+        "warningBorder": "Yellow6"
       }
     },
 
     "FileColor": {
       "Yellow": "Yellow9",
-      "Green": "Green10"
+      "Green": "Green10",
+      "Orange": "Orange8",
+      "Rose": "Red10",
+      "Violet": "Purple9",
+      "Blue": "Teal8",
+      "Gray": "#F0F1F5"
     },
 
     "Label.errorForeground": "Red4",
@@ -285,7 +302,7 @@
     },
 
     "List": {
-      "rowHeight": "24",
+      "rowHeight": 24,
       "border": "4,0,4,0",
       "Button": {
         "separatorColor": "#FFFFFFB3",
@@ -319,6 +336,9 @@
       "State": {
         "Background": "Grey11",
         "Foreground": "Grey6"
+      },
+      "ChatItem":{
+        "Hover": "#DFE1E533"
       }
     },
 
@@ -411,7 +431,7 @@
         "informativeBorderColor": "Green8"
       },
       "WelcomeScreen.separatorColor": "#383A42"
-  },
+    },
 
     "NotificationsToolwindow": {
       "newNotification.background": "Grey12",
@@ -508,7 +528,7 @@
         "hoverForeground": "Grey1",
         "hoverBackground": "Grey12",
         "floatingBackground": "Grey14",
-        "chevronInset": "0"
+        "chevronInset": 0
       }
     },
 
@@ -519,7 +539,7 @@
       "contentAreaColor": "Grey12",
       "focusColor": "Blue11",
       "tabInsets": "0,12,0,12"
-      },
+    },
 
     "Table": {
       "gridColor": "Grey12",
@@ -569,10 +589,12 @@
     },
 
     "ValidationTooltip": {
-      "errorBackground": "Red10",
-      "errorBorderColor": "Red10",
+      "errorBackground": "Red11",
+      "errorBorderColor": "Red7",
+      "errorForeground": "Gray1",
       "warningBackground": "Yellow9",
-      "warningBorderColor": "Yellow9"
+      "warningBorderColor": "Yellow5",
+      "warningForeground": "Gray1"
     },
 
     "ToolWindow": {
@@ -898,7 +920,7 @@
         "hoverBackground" : "Grey12"
       },
       "HotLine" : {
-        "labelBackground" : "Red10",
+        "labelBackground" : "Red11",
         "foreground" : "Red3",
         "hoverBackground" : "Red9"
       },
@@ -907,7 +929,29 @@
         "foreground" : "Grey8"
       }
     },
+    "PresentationAssistant": {
+      "Bright": {
+        "Popup": {
+          "foreground": "Grey14",
+          "border": "Grey2"
+        },
+        "PopupBackground": "Grey2",
+        "keymapLabel": "Grey9"
+      },
+      "Pale": {
+        "Popup": {
+          "foreground": "Grey2",
+          "border": "Grey9"
+        },
+        "PopupBackground": "Grey14",
+        "keymapLabel": "Grey7"
+      }
+    },
     "HelpBrowser": {
+      "AiEditor" : {
+        "verticalMarkerColor": "Purple5",
+        "background": "Purple10"
+      },
       "titleHighlightForeground": "Blue4",
       "UserMessage": {
         "background": "Grey11",
@@ -932,7 +976,14 @@
           }
         }
       }
-    }
+    },
+
+    "DataSummary.Chart.barColor": "Blue4",
+
+    "ManagedIdeBadgeBorder": "Grey5",
+    "ManagedIdeBadgeBackground": "Grey3",
+    "ManagedIdeBadgeBackgroundHover": "Grey4",
+    "ManagedIdeMenuItemHover": "Grey12"
   },
 
   "icons": {

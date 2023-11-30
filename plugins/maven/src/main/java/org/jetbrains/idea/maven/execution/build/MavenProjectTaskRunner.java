@@ -10,6 +10,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.scratch.JavaScratchConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -58,6 +59,14 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
   }
 
   @Override
+  public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask, @Nullable ProjectTaskContext context) {
+    if (context != null && context.getRunConfiguration() instanceof JavaScratchConfiguration) {
+      return false;
+    }
+    return canRun(project, projectTask);
+  }
+
+  @Override
   public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask) {
     if (!MavenRunner.getInstance(project).getSettings().isDelegateBuildToMaven()) {
       return false;
@@ -99,6 +108,9 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
 
     if (projectTask instanceof ExecuteRunConfigurationTask task) {
       RunProfile runProfile = task.getRunProfile();
+      if (runProfile instanceof JavaScratchConfiguration) {
+        return false;
+      }
       if (runProfile instanceof ModuleBasedConfiguration) {
         RunConfigurationModule module = ((ModuleBasedConfiguration<?, ?>)runProfile).getConfigurationModule();
         if (!isMavenModule(module.getModule())) {

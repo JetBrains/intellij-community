@@ -11,20 +11,21 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 
 internal class GitLabFileEditorProvider : FileEditorProvider, DumbAware {
-
   override fun accept(project: Project, file: VirtualFile): Boolean {
     return file is GitLabProjectVirtualFile && project.service<GitLabProjectConnectionManager>().connectionState.value != null
   }
 
+  override fun acceptRequiresReadAction() = false
+
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     file as GitLabProjectVirtualFile
-    val ctx = file.findContext() ?: error("Not context for $this")
 
     if (file !is GitLabMergeRequestTimelineFile) error("Unsupported file type")
 
-    return GitLabMergeRequestTimelineFileEditor(project, ctx, file)
+    return GitLabMergeRequestTimelineFileEditor(project, file)
   }
 
   override fun getEditorTypeId(): String = "GitLab"
+
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 }

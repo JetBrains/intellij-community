@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.MethodImplementor;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.editorActions.FixDocCommentAction;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
@@ -20,8 +17,10 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -37,6 +36,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -47,8 +47,13 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.*;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +61,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.*;
+
+import static com.intellij.codeInsight.generation.JavaOverrideImplementMemberChooser.*;
 
 public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   private static final Logger LOG = Logger.getInstance(OverrideImplementUtil.class);
@@ -442,31 +449,37 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                          final Editor editor,
                                                          @NotNull PsiClass aClass,
                                                          final boolean toImplement) {
-    PsiUtilCore.ensureValid(aClass);
-    final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    application.assertReadAccessAllowed();
+    ReadAction.nonBlocking(() -> {
+        return prepareChooser(aClass, toImplement);
+      })
+      .finishOnUiThread(ModalityState.defaultModalityState(), container -> {
+        showAndPerform(project, editor, aClass, toImplement, container);
+      })
+      .expireWhen(() -> !aClass.isValid())
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
 
-    Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
-    Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ?
-                                          new ArrayList<>() : getMethodsToOverrideImplement(aClass, true);
+  public static void showAndPerform(@NotNull Project project,
+                                @NotNull Editor editor,
+                                @NotNull PsiClass aClass,
+                                boolean toImplement,
+                                @Nullable JavaOverrideImplementMemberChooserContainer container) {
+    JavaOverrideImplementMemberChooser showedChooser = showJavaOverrideImplementChooser(container, editor, aClass);
+    if (showedChooser == null) return;
 
-    final JavaOverrideImplementMemberChooser chooser = showJavaOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
-    if (chooser == null) return;
-
-    final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
+    final List<PsiMethodMember> selectedElements = showedChooser.getSelectedElements();
     if (selectedElements == null || selectedElements.isEmpty()) return;
-
     PsiUtilCore.ensureValid(aClass);
     final ThrowableRunnable<RuntimeException> performImplementOverrideRunnable =
-        () -> overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.getOptions());
-    if(Registry.is("run.refactorings.under.progress")) {
+      () -> overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, showedChooser.getOptions());
+    if (Registry.is("run.refactorings.under.progress")) {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(aClass)) {
         return;
       }
       final String commandName = CommandProcessor.getInstance().getCurrentCommandName();
-      String title = ObjectUtils.notNull(commandName, JavaOverrideImplementMemberChooser.getChooserTitle(toImplement, false));
-      Runnable runnable = () -> application
-        .runWriteActionWithCancellableProgressInDispatchThread(title, project, null, 
+      String title = ObjectUtils.notNull(commandName, getChooserTitle(toImplement, false));
+      Runnable runnable = () -> ApplicationManagerEx.getApplicationEx()
+        .runWriteActionWithCancellableProgressInDispatchThread(title, project, null,
                                                                indicator -> performImplementOverrideRunnable.run());
       if (commandName == null) {
         CommandProcessor.getInstance().executeCommand(project, runnable, title, null);
@@ -481,6 +494,20 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   @Nullable
+  public static JavaOverrideImplementMemberChooserContainer prepareChooser(@NotNull PsiClass aClass, boolean toImplement) {
+    PsiUtilCore.ensureValid(aClass);
+    Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
+    Collection<CandidateInfo> secondary =
+      toImplement || aClass.isInterface() ? new ArrayList<>() : getMethodsToOverrideImplement(aClass, true);
+    return prepareJavaOverrideImplementChooser(aClass, toImplement, candidates, secondary);
+  }
+
+
+  /**
+   * @deprecated use {@link OverrideImplementUtil#showJavaOverrideImplementChooser(Editor, PsiElement, boolean, Collection, Collection, java.util.function.Consumer)}
+   */
+  @Deprecated
+  @Nullable
   public static MemberChooser<PsiMethodMember> showOverrideImplementChooser(@NotNull Editor editor,
                                                                             @NotNull PsiElement aClass,
                                                                             final boolean toImplement,
@@ -490,33 +517,59 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   /**
-   * @param candidates, secondary should allow modifications
+   * Can be called on EDT thread.
+   * It is used only for backward compatibility.
+   * @deprecated use {@link OverrideImplementUtil#showJavaOverrideImplementChooser(Editor, PsiElement, boolean, Collection, Collection, java.util.function.Consumer)}
    */
+  @Deprecated
   @Nullable
   public static JavaOverrideImplementMemberChooser showJavaOverrideImplementChooser(@NotNull Editor editor,
                                                                                     @NotNull PsiElement aClass,
                                                                                     final boolean toImplement,
                                                                                     @NotNull Collection<CandidateInfo> candidates,
                                                                                     @NotNull Collection<CandidateInfo> secondary) {
-
-    if (toImplement) {
-      for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
-        CandidateInfo candidate = iterator.next();
-        PsiElement element = candidate.getElement();
-        if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.DEFAULT)) {
-          iterator.remove();
-          secondary.add(candidate);
-        }
-      }
-    }
-
-    final JavaOverrideImplementMemberChooser chooser =
-      JavaOverrideImplementMemberChooser.create(aClass, toImplement, candidates, secondary);
-    if (chooser == null) {
+    final JavaOverrideImplementMemberChooserContainer container =
+      prepareJavaOverrideImplementChooser(aClass, toImplement, candidates, secondary);
+    if (container == null) {
       return null;
     }
+    return showJavaOverrideImplementChooser(container, editor, aClass);
+  }
+
+  /**
+   * Must be call on a background thread
+   * @param candidates, secondary should allow modifications
+   */
+  public static void showJavaOverrideImplementChooser(@NotNull Editor editor,
+                                                      @NotNull PsiElement aClass,
+                                                      final boolean toImplement,
+                                                      @NotNull Collection<CandidateInfo> candidates,
+                                                      @NotNull Collection<CandidateInfo> secondary,
+                                                      @NotNull java.util.function.Consumer<JavaOverrideImplementMemberChooser> callback) {
+    ReadAction.nonBlocking(() -> {
+        return prepareJavaOverrideImplementChooser(aClass, toImplement, candidates, secondary);
+      })
+      .finishOnUiThread(ModalityState.defaultModalityState(), container -> {
+        JavaOverrideImplementMemberChooser chooser = showJavaOverrideImplementChooser(container, editor, aClass);
+        callback.accept(chooser);
+      })
+      .expireWhen(() -> !aClass.isValid())
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  /**
+   * Must be called on EDT thread
+   */
+  @Nullable
+  private static JavaOverrideImplementMemberChooser showJavaOverrideImplementChooser(@Nullable JavaOverrideImplementMemberChooserContainer container,
+                                                                                     @NotNull Editor editor,
+                                                                                     @NotNull PsiElement aClass) {
+    if (container == null) {
+      return null;
+    }
+    final JavaOverrideImplementMemberChooser chooser = create(container);
     Project project = aClass.getProject();
-    registerHandlerForComplementaryAction(project, editor, aClass, toImplement, chooser);
+    registerHandlerForComplementaryAction(project, editor, aClass, container.toImplement(), chooser);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return chooser;
@@ -525,6 +578,34 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) return null;
 
     return chooser;
+  }
+
+  @Nullable
+  private static JavaOverrideImplementMemberChooserContainer prepareJavaOverrideImplementChooser(@NotNull PsiElement aClass,
+                                                                                                 boolean toImplement,
+                                                                                                 @NotNull Collection<CandidateInfo> candidates,
+                                                                                                 @NotNull Collection<CandidateInfo> secondary) {
+    Computable<JavaOverrideImplementMemberChooserContainer> computable = () -> {
+      if (toImplement) {
+        for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
+          CandidateInfo candidate = iterator.next();
+          PsiElement element = candidate.getElement();
+          if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.DEFAULT)) {
+            iterator.remove();
+            secondary.add(candidate);
+          }
+        }
+      }
+
+      return prepare(aClass, toImplement, candidates, secondary);
+    };
+    if (EDT.isCurrentThreadEdt()) {
+      return ActionUtil.underModalProgress(aClass.getProject(),
+                                           CodeInsightBundle.message("progress.title.resolving.reference"), computable);
+    }
+    else {
+      return computable.get();
+    }
   }
 
   private static void registerHandlerForComplementaryAction(@NotNull Project project,

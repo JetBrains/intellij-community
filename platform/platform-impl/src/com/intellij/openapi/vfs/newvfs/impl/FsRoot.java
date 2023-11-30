@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -19,7 +19,8 @@ public final class FsRoot extends VirtualDirectoryImpl {
                 @NotNull NewVirtualFileSystem fs,
                 @NotNull String pathBeforeSlash,
                 @NotNull FileAttributes attributes,
-                @NotNull String originalDebugPath) throws VfsData.FileAlreadyCreatedException {
+                @NotNull String originalDebugPath,
+                @NotNull PersistentFS persistentFs) throws VfsData.FileAlreadyCreatedException {
     super(id, vfsData.getSegment(id, true), new VfsData.DirectoryData(), null, fs);
     if (!looksCanonical(pathBeforeSlash)) {
       throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'. FS: " + fs + "; attributes: " + attributes + "; original path: '" + originalDebugPath + "'; " +
@@ -31,7 +32,7 @@ public final class FsRoot extends VirtualDirectoryImpl {
     // assume root has FS-default case-sensitivity
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVE, attributes.areChildrenCaseSensitive() == FileAttributes.CaseSensitivity.SENSITIVE);
     segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, true);
-    segment.setFlag(id, VfsDataFlags.IS_OFFLINE, PersistentFS.isOfflineByDefault(getPersistence().getFileAttributes(id)));
+    segment.setFlag(id, VfsDataFlags.IS_OFFLINE, PersistentFS.isOfflineByDefault(persistentFs.getFileAttributes(id)));
   }
 
   @Override

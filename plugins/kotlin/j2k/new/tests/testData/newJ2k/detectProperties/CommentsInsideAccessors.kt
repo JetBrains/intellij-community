@@ -1,5 +1,5 @@
 internal class AccessorsArePreserved {
-    var someInt = 1
+    var someInt: Int = 1
         // get header
         get() {
             // get body 1
@@ -23,6 +23,5 @@ internal class AccessorsAreRemoved {
 // get body
 // get footer
 // get header
-    var someInt = 1
-
+    var someInt: Int = 1
 }

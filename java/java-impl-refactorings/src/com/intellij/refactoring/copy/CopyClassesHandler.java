@@ -592,7 +592,8 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       if (element instanceof PsiClass &&
           element.getParent() != null &&
           ((PsiClass)element).getContainingClass() == null &&
-          !(element instanceof PsiAnonymousClass)) {
+          !(element instanceof PsiAnonymousClass) &&
+          !(element instanceof PsiUnnamedClass)) {
         break;
       }
       element = element.getParent();
@@ -602,6 +603,9 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       ArrayList<PsiClass> buffer = new ArrayList<>();
       for (final PsiClass aClass : classes) {
         if (isSynthetic(aClass)) {
+          return null;
+        }
+        if (aClass instanceof PsiUnnamedClass) {
           return null;
         }
         buffer.add(aClass);

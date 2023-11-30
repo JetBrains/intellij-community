@@ -112,7 +112,6 @@ public abstract class TransactionGuard {
   /**
    * @deprecated replace with {@link ModalityState#defaultModalityState()} and use the result for "invokeLater" when replacing "submitTransaction" calls.
    */
-  @Nullable
   @Deprecated
-  public abstract TransactionId getContextTransaction();
+  public abstract @Nullable TransactionId getContextTransaction();
 }

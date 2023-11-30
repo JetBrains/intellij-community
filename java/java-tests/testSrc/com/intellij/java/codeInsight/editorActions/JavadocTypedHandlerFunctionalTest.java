@@ -15,36 +15,6 @@
  */
 package com.intellij.java.codeInsight.editorActions;
 
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.codeInsight.AbstractBasicJavadocTypedHandlerFunctionalTest;
 
-public class JavadocTypedHandlerFunctionalTest extends LightPlatformCodeInsightTestCase {
-  private static final String BASE_PATH = "/codeInsight/editorActions/javadocTypedHandler/";
-
-  public void testEmptyTag() {
-    doTest('>');
-  }
-
-  public void testComment() {
-    doTest('>');
-  }
-
-  public void testCodeTag() {
-    doTest('>');
-  }
-  
-  public void testTypeParam() {
-    doTest('>');
-  }
-
-  public void testDocTagStart() {
-    doTest('@');
-  }
-
-  private void doTest(char typedChar) {
-    String testName = getTestName(true);
-    configureByFile(BASE_PATH + testName + ".java");
-    type(typedChar);
-    checkResultByFile(BASE_PATH + testName + "_after.java");
-  }
-
-}
+public class JavadocTypedHandlerFunctionalTest extends AbstractBasicJavadocTypedHandlerFunctionalTest {}

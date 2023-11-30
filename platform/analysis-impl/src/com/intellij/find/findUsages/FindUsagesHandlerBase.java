@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -22,8 +22,7 @@ import java.util.Collections;
 
 public class FindUsagesHandlerBase {
 
-  @NotNull
-  protected final PsiElement myPsiElement;
+  protected final @NotNull PsiElement myPsiElement;
   private final Project myProject;
 
   public FindUsagesHandlerBase(@NotNull PsiElement psiElement) {
@@ -35,13 +34,11 @@ public class FindUsagesHandlerBase {
     myProject = project;
   }
 
-  @NotNull
-  public final PsiElement getPsiElement() {
+  public final @NotNull PsiElement getPsiElement() {
     return myPsiElement;
   }
 
-  @NotNull
-  public final Project getProject() {
+  public final @NotNull Project getProject() {
     return myProject;
   }
 
@@ -53,21 +50,19 @@ public class FindUsagesHandlerBase {
     return PsiElement.EMPTY_ARRAY;
   }
 
-  @NotNull
-  public FindUsagesOptions getFindUsagesOptions() {
+  public @NotNull FindUsagesOptions getFindUsagesOptions() {
     return getFindUsagesOptions(null);
   }
 
-  @NotNull
-  public FindUsagesOptions getFindUsagesOptions(@Nullable final DataContext dataContext) {
+  public @NotNull FindUsagesOptions getFindUsagesOptions(final @Nullable DataContext dataContext) {
     FindUsagesOptions options = createFindUsagesOptions(getProject(), dataContext);
     options.isSearchForTextOccurrences &= isSearchForTextOccurrencesAvailable(getPsiElement(), false);
     return options;
   }
 
-  public boolean processElementUsages(@NotNull final PsiElement element,
-                                      @NotNull final Processor<? super UsageInfo> processor,
-                                      @NotNull final FindUsagesOptions options) {
+  public boolean processElementUsages(final @NotNull PsiElement element,
+                                      final @NotNull Processor<? super UsageInfo> processor,
+                                      final @NotNull FindUsagesOptions options) {
     final ReadActionProcessor<PsiReference> refProcessor = new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(final PsiReference ref) {
@@ -96,7 +91,7 @@ public class FindUsagesHandlerBase {
     return true;
   }
 
-  public boolean processUsagesInText(@NotNull final PsiElement element,
+  public boolean processUsagesInText(final @NotNull PsiElement element,
                                      @NotNull Processor<? super UsageInfo> processor,
                                      @NotNull GlobalSearchScope searchScope) {
     Collection<String> stringToSearch = ReadAction.compute(() -> getStringsToSearch(element));
@@ -104,8 +99,7 @@ public class FindUsagesHandlerBase {
     return FindUsagesHelper.processUsagesInText(element, stringToSearch, false, searchScope, processor);
   }
 
-  @Nullable
-  protected Collection<String> getStringsToSearch(@NotNull final PsiElement element) {
+  protected @Nullable Collection<String> getStringsToSearch(final @NotNull PsiElement element) {
     if (element instanceof PsiNamedElement) {
       return ContainerUtil.createMaybeSingletonList(((PsiNamedElement)element).getName());
     }
@@ -117,8 +111,7 @@ public class FindUsagesHandlerBase {
     return false;
   }
 
-  @NotNull
-  public Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
+  public @NotNull Collection<PsiReference> findReferencesToHighlight(@NotNull PsiElement target, @NotNull SearchScope searchScope) {
     return ReferencesSearch.search(createSearchParameters(target, searchScope, null)).findAll();
   }
 
@@ -138,8 +131,7 @@ public class FindUsagesHandlerBase {
    * @param searchScope the scope to search in
    * @param findUsagesOptions the options to search
    */
-  @NotNull
-  protected ReferencesSearch.SearchParameters createSearchParameters(@NotNull PsiElement target,
+  protected @NotNull ReferencesSearch.SearchParameters createSearchParameters(@NotNull PsiElement target,
                                                                      @NotNull SearchScope searchScope,
                                                                      @Nullable FindUsagesOptions findUsagesOptions) {
     return new ReferencesSearch.SearchParameters(target,
@@ -150,8 +142,7 @@ public class FindUsagesHandlerBase {
                                                  : findUsagesOptions.fastTrack);
   }
 
-  @NotNull
-  public static FindUsagesOptions createFindUsagesOptions(@NotNull Project project, @Nullable final DataContext dataContext) {
+  public static @NotNull FindUsagesOptions createFindUsagesOptions(@NotNull Project project, final @Nullable DataContext dataContext) {
     FindUsagesOptions findUsagesOptions = new FindUsagesOptions(project, dataContext);
     findUsagesOptions.isUsages = true;
     findUsagesOptions.isSearchForTextOccurrences = true;

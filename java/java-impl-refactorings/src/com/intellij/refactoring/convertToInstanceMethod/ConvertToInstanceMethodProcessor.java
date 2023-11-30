@@ -4,8 +4,6 @@ package com.intellij.refactoring.convertToInstanceMethod;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.model.BranchableUsageInfo;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -201,28 +199,6 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     return showConflicts(conflicts, usagesIn);
   }
 
-
-  @Override
-  protected boolean canPerformRefactoringInBranch() {
-    return true;
-  }
-
-  @Override
-  protected void performRefactoringInBranch(UsageInfo @NotNull [] usages, ModelBranch branch) {
-    UsageInfo[] convertedUsages = BranchableUsageInfo.convertUsages(usages, branch);
-    ConvertToInstanceMethodProcessor processor = new ConvertToInstanceMethodProcessor(
-      myProject, branch.obtainPsiCopy(myMethod),
-      myTargetParameter == null ? null : branch.obtainPsiCopy(myTargetParameter),
-      myNewVisibility);
-    PsiMethod result = processor.doRefactoring(convertedUsages);
-    branch.runAfterMerge(() -> {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      PsiMethod toOpen = branch.findOriginalPsi(result);
-      if (toOpen != null) {
-        EditorHelper.openInEditor(toOpen);
-      }
-    });
-  }
 
   @Override
   protected void performRefactoring(UsageInfo @NotNull [] usages) {

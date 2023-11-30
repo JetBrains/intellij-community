@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
@@ -32,13 +32,13 @@ import kotlin.math.min
 abstract class XmlElementStorage protected constructor(val fileSpec: String,
                                                        protected val rootElementName: String?,
                                                        private val pathMacroSubstitutor: PathMacroSubstitutor? = null,
-                                                       roamingType: RoamingType? = RoamingType.DEFAULT,
+                                                       val roamingType: RoamingType,
                                                        private val provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
-  val roamingType = roamingType ?: RoamingType.DEFAULT
-
   protected abstract fun loadLocalData(): Element?
 
-  final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean) = storageData.getState(componentName, archive)
+  final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? {
+    return storageData.getState(componentName, archive)
+  }
 
   final override fun archiveState(storageData: StateMap, componentName: String, serializedState: Element?) {
     storageData.archive(componentName, serializedState)

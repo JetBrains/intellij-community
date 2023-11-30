@@ -200,7 +200,11 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     @Language("JSON") final String schema = "{\"type\": \"object\", \"minProperties\": 2, \"maxProperties\": 3}";
     doTest(schema, "<warning descr=\"Schema validation: Number of properties is less than 2\">a: 3</warning>");
     doTest(schema, "a: 1\nb: 5");
-    doTest(schema, "<warning descr=\"Schema validation: Number of properties is greater than 3\">a: 1\nb: 22\nc: 333\nd: 4444</warning>");
+    doTest(schema, """
+      <warning descr="Schema validation: Number of properties is greater than 3" textAttributesKey="WARNING_ATTRIBUTES">a: 1</warning>
+      b: 22
+      c: 333
+      d: 4444""");
   }
 
   public void testOneOf() {
@@ -631,7 +635,7 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
       }""";
     doTest(schema, "c: <warning>5</warning>");
     doTest(schema, "c: true");
-    doTest(schema, "<warning>a: a\nc: true</warning>");
+    doTest(schema, "<warning descr=\"Schema validation: Missing required property 'b'\" textAttributesKey=\"WARNING_ATTRIBUTES\">a: a</warning>\nc: true");
     doTest(schema, "a: a\nb: <warning>true</warning>");
     doTest(schema, "a: a\nb: 5");
   }
@@ -1009,5 +1013,15 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
       rule_files:
         # - "first_rules.yml"
         # - "second_rules.yml\"""");
+  }
+
+  public void testReducedTopLevelRangeHighlighting() {
+    doTest("{ \"type\": \"object\",\"required\": [\"test3\"]}",
+           "<warning descr=\"Schema validation: Missing required property 'test3'\">test1: 123</warning>\ntest2: 456\n");
+  }
+
+  public void testTopLevelRangeHighlighting() {
+    doTest("{ \"type\": \"object\",\"required\": [\"test3\"]}",
+           "<warning descr=\"Schema validation: Missing required property 'test3'\"></warning>");
   }
 }

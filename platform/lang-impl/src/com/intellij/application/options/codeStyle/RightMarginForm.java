@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.LangBundle;
@@ -42,7 +42,7 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.ge
  * }
  * </pre>
  */
-public class RightMarginForm {
+public final class RightMarginForm {
   private IntegerField myRightMarginField;
   private JPanel myTopPanel;
   private JComboBox<String> myWrapOnTypingCombo;
@@ -96,14 +96,14 @@ public class RightMarginForm {
     myResetGuidesLink = new AnActionLink(LangBundle.message("action.link.reset"), new ResetGuidesAction());
   }
 
-  private class ResetRightMarginAction extends DumbAwareAction {
+  private final class ResetRightMarginAction extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myRightMarginField.resetToDefault();
     }
   }
 
-  private class ResetGuidesAction extends DumbAwareAction {
+  private final class ResetGuidesAction extends DumbAwareAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myVisualGuidesField.clear();

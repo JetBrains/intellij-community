@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements DumbAware {
+public final class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   public QuickChangeSchemesAction() {
     myActionPlace = ActionPlaces.QUICK_SWITCH_SCHEME_POPUP;
   }

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class TerminalTabState {
+public final class TerminalTabState {
   @Attribute("tabName")
   public @Nls String myTabName;
 

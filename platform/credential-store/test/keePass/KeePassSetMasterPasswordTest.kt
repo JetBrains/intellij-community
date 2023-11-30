@@ -11,9 +11,9 @@ import com.intellij.credentialStore.keePass.TestKeePassFileManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.delete
-import com.intellij.util.io.readText
 import org.junit.Assume
 import org.junit.Test
+import kotlin.io.path.readText
 
 internal class KeePassSetMasterPasswordTest : BaseKeePassFileManagerTest() {
   @Test

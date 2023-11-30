@@ -12,21 +12,21 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class MainEntityImpl(val dataSource: MainEntityData) : MainEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class MainEntityImpl(private val dataSource: MainEntityData) : MainEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -40,6 +40,7 @@ open class MainEntityImpl(val dataSource: MainEntityData) : MainEntity, Workspac
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: MainEntityData?) : ModifiableWorkspaceEntityBase<MainEntity, MainEntityData>(result), MainEntity.Builder {
     constructor() : this(MainEntityData())
@@ -68,7 +69,7 @@ open class MainEntityImpl(val dataSource: MainEntityData) : MainEntity, Workspac
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -115,7 +116,7 @@ open class MainEntityImpl(val dataSource: MainEntityData) : MainEntity, Workspac
 class MainEntityData : WorkspaceEntityData<MainEntity>() {
   lateinit var x: String
 
-  fun isXInitialized(): Boolean = ::x.isInitialized
+  internal fun isXInitialized(): Boolean = ::x.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<MainEntity> {
     val modifiable = MainEntityImpl.Builder(null)
@@ -132,6 +133,11 @@ class MainEntityData : WorkspaceEntityData<MainEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.MainEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -185,9 +191,5 @@ class MainEntityData : WorkspaceEntityData<MainEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + x.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

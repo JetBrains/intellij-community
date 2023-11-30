@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.DataManager;
@@ -59,21 +59,18 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
     return myPopup;
   }
 
-  @Nullable
   @Override
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComboBox));
   }
 
-  @NotNull
   @Override
-  public ListModel<T> getModel() {
+  public @NotNull ListModel<T> getModel() {
     return myComboBox.getModel();
   }
 
-  @NotNull
   @Override
-  public ListCellRenderer<? super T> getRenderer() {
+  public @NotNull ListCellRenderer<? super T> getRenderer() {
     return myComboBox.getRenderer();
   }
 
@@ -295,7 +292,7 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
     return accessibleContext;
   }
 
-  private class AccessibleDarculaJBPopupComboPopup extends AccessibleContext implements JBPopupListener {
+  private final class AccessibleDarculaJBPopupComboPopup extends AccessibleContext implements JBPopupListener {
 
     @Override
     public AccessibleRole getAccessibleRole() {

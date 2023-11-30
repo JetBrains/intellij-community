@@ -54,7 +54,7 @@ class IndexableFilesIndexSymlinkedOriginsTest : IndexableFilesIndexOriginsTestBa
     assertEveryFileOrigin(contentOrigin, symlink, symlinkDir)
     assertOrigin(contentOrigin, symlinkDir, "TargetUnderDir.java")
     val fileInfo = WorkspaceFileIndex.getInstance(project).asSafely<WorkspaceFileIndexEx>()?.getFileInfo(targetUnderDir.file, true, true,
-                                                                                                         true, true)
+                                                                                                         true, true, true)
     assertNotNull(fileInfo)
     assertEquals(WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED, fileInfo)
     assertNoOrigin(targetFile, targetDir, targetUnderDir)

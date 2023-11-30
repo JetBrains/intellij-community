@@ -1,6 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
+import com.intellij.concurrency.ThreadContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -30,7 +32,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 
-public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialog{
+public final class MacPathChooserDialog implements PathChooserDialog, FileChooserDialog{
 
   private FileDialog myFileDialog;
   private final FileChooserDescriptor myFileChooserDescriptor;
@@ -93,7 +95,7 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
 
 
     myFileDialog.setFilenameFilter(FileChooser.safeInvokeFilter((dir, name) -> {
-      return myFileChooserDescriptor.isFileSelectable(PathChooserDialogHelper.fileToCoreLocalVirtualFile(dir, name));
+      return myFileChooserDescriptor.isFileSelectable(PathChooserDialogHelper.Companion.fileToCoreLocalVirtualFile(dir, name));
     }, false));
 
     myFileDialog.setMultipleMode(myFileChooserDescriptor.isChooseMultiple());
@@ -111,7 +113,9 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
     Component parent = myParent.get();
     Component previousFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     try {
-      myFileDialog.setVisible(true);
+      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        myFileDialog.setVisible(true);
+      }
     }
     finally {
       if (appStarted) {
@@ -155,8 +159,7 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
     }
   }
 
-  @NotNull
-  private static FileDialog createFileDialogWithoutOwner(String title, int load) {
+  private static @NotNull FileDialog createFileDialogWithoutOwner(String title, int load) {
     // This is bad. But sometimes we do not have any windows at all.
     // On the other hand, it is a bit strange to show a file dialog without an owner
     // Therefore we should minimize usage of this case.

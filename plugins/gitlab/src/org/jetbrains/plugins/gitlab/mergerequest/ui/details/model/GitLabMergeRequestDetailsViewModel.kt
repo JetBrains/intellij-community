@@ -1,21 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
+import com.intellij.collaboration.ui.codereview.issues.processIssueIdsHtml
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
+import org.jetbrains.plugins.gitlab.mergerequest.data.reviewState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
+import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 
 internal interface GitLabMergeRequestDetailsViewModel : CodeReviewDetailsViewModel, GitLabMergeRequestViewModel {
   val isLoading: Flow<Boolean>
@@ -32,6 +35,8 @@ internal interface GitLabMergeRequestDetailsViewModel : CodeReviewDetailsViewMod
   override fun refreshData()
 }
 
+private val LOG = logger<GitLabMergeRequestDetailsViewModel>()
+
 internal class GitLabMergeRequestDetailsViewModelImpl(
   project: Project,
   parentCs: CoroutineScope,
@@ -42,14 +47,21 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
 
   private val cs = parentCs.childScope()
 
-  override val number: String = "!${mergeRequest.number}"
+  override val number: String = "!${mergeRequest.iid}"
   override val url: String = mergeRequest.url
   override val author: GitLabUserDTO = mergeRequest.author
 
-  override val title: Flow<String> = mergeRequest.title
-  override val description: Flow<String> = mergeRequest.description
-  override val descriptionHtml: Flow<String> = mergeRequest.descriptionHtml
-  override val reviewRequestState: Flow<ReviewRequestState> = mergeRequest.reviewRequestState
+  override val title: SharedFlow<String> = mergeRequest.details.map { it.title }.map { title ->
+    GitLabUIUtil.convertToHtml(project, title)
+  }.modelFlow(cs, LOG)
+  override val description: SharedFlow<String> = mergeRequest.details.map { it.description }.map { description ->
+    processIssueIdsHtml(project, description)
+  }.modelFlow(cs, LOG)
+  override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map {
+    if (it.isNotBlank()) GitLabUIUtil.convertToHtml(project, it) else it
+  }.modelFlow(cs, LOG)
+  override val reviewRequestState: SharedFlow<ReviewRequestState> = mergeRequest.details.map { it.reviewState }
+    .modelFlow(cs, LOG)
 
   override val isLoading: Flow<Boolean> = mergeRequest.isLoading
 
@@ -63,9 +75,9 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   }
 
   override val detailsReviewFlowVm = GitLabMergeRequestReviewFlowViewModelImpl(project, cs, currentUser, projectData, mergeRequest)
-  override val branchesVm = GitLabMergeRequestBranchesViewModel(project, cs, mergeRequest, projectData.projectMapping.remote.repository)
+  override val branchesVm = GitLabMergeRequestBranchesViewModel(cs, mergeRequest, projectData.projectMapping)
   override val statusVm = GitLabMergeRequestStatusViewModel(cs, mergeRequest, projectData.projectMapping.repository.serverPath)
-  override val changesVm = GitLabMergeRequestChangesViewModelImpl(cs, mergeRequest)
+  override val changesVm = GitLabMergeRequestChangesViewModelImpl(project, cs, mergeRequest)
 
   override fun refreshData() {
     cs.launch {

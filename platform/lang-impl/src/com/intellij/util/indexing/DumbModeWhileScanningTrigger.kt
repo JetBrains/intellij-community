@@ -45,7 +45,7 @@ class DumbModeWhileScanningTrigger(private val project: Project, private val cs:
       .estimatedFilesCount()
       .map { it >= DUMB_MODE_THRESHOLD }
 
-    subscribe(manyFilesChanged, project.service<UnindexedFilesScannerExecutor>().isRunning)
+    subscribe(manyFilesChanged, UnindexedFilesScannerExecutor.getInstance(project).isRunning)
   }
 
   private fun subscribe(manyFilesChanged: Flow<Boolean>, scanningInProgress: Flow<Boolean>) {

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.List;
 
 @ApiStatus.Experimental
 public interface InjectedLanguageHighlightingRangeReducer {
@@ -23,5 +23,5 @@ public interface InjectedLanguageHighlightingRangeReducer {
    * @return collection of ranges to highlight or null if this extension doesn't supply any reduced ranges
    * @see InjectedGeneralHighlightingPassFactory
    */
-  Collection<@NotNull TextRange> reduceRange(@NotNull PsiFile file, @NotNull Editor editor);
+  List<@NotNull TextRange> reduceRange(@NotNull PsiFile file, @NotNull Editor editor);
 }

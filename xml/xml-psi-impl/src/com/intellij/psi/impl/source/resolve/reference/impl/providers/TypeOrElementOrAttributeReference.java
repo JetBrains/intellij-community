@@ -37,14 +37,13 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     ElementReference, AttributeReference, GroupReference, AttributeGroupReference, TypeReference
   }
 
-  @NonNls private static final String TARGET_NAMESPACE = "targetNamespace";
+  private static final @NonNls String TARGET_NAMESPACE = "targetNamespace";
 
   private final PsiElement myElement;
   private TextRange myRange;
   private String nsPrefix;
 
-  @Nullable
-  public ReferenceType getType() {
+  public @Nullable ReferenceType getType() {
     return myType;
   }
 
@@ -52,7 +51,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     this.nsPrefix = prefix;
   }
 
-  @Nullable private final ReferenceType myType;
+  private final @Nullable ReferenceType myType;
 
   protected TypeOrElementOrAttributeReference(PsiElement element, TextRange range, @Nullable ReferenceType type) {
     myElement = element;
@@ -67,8 +66,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     this(element, range, determineReferenceType(element));
   }
 
-  @Nullable
-  private static ReferenceType determineReferenceType(PsiElement element) {
+  private static @Nullable ReferenceType determineReferenceType(PsiElement element) {
     final XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
     if (attribute == null) {
       return null;
@@ -91,21 +89,18 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     };
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return myRange;
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     return ResolveCache.getInstance(getElement().getProject())
       .resolveWithCaching(this, (ref, incompleteCode) -> ref.resolveInner(), false, false);
   }
@@ -250,8 +245,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     final String text = myElement.getText();
     String name = myRange.getEndOffset() <= text.length() ? myRange.substring(text) : "";
     if (!name.isEmpty() && nsPrefix != null && !nsPrefix.isEmpty()) {
@@ -355,7 +349,7 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     }
 
     @Override
-    public boolean execute(@NotNull final XmlTag element) {
+    public boolean execute(final @NotNull XmlTag element) {
       String name = element.getAttributeValue(SchemaReferencesProvider.NAME_ATTR_NAME);
       final String prefixByNamespace = tag.getPrefixByNamespace(namespace);
       if (prefixByNamespace != null && !prefixByNamespace.isEmpty() && prefix == null) {

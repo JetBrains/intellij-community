@@ -32,4 +32,5 @@ fun booUnrelated() {
 
 }
 
+// IGNORE_K2
 // ORDER: booFromB, booUnrelated, booleanArrayOf, booExtension

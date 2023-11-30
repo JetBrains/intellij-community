@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Classifier;
@@ -26,7 +26,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
   private static final Key<StatisticsInfo> BASE_STATISTICS_INFO = Key.create("Base statistics info");
 
   @Override
-  public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
+  public Comparable weigh(final @NotNull LookupElement item, final @NotNull CompletionLocation location) {
     throw new UnsupportedOperationException();
   }
 
@@ -61,9 +61,8 @@ public final class StatisticsWeigher extends CompletionWeigher {
       super.addElement(element, context);
     }
 
-    @NotNull
     @Override
-    public Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, @NotNull final ProcessingContext context) {
+    public @NotNull Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, final @NotNull ProcessingContext context) {
       List<LookupElement> initialList;
       Collection<List<LookupElement>> byWeight;
       synchronized (this) {
@@ -146,10 +145,9 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return minRecency == Integer.MAX_VALUE ? 0 : StatisticsManager.RECENCY_OBLIVION_THRESHOLD - minRecency;
     }
 
-    @NotNull
     @Override
-    public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items,
-                                                               @NotNull final ProcessingContext context) {
+    public @NotNull List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items,
+                                                                        final @NotNull ProcessingContext context) {
       return ContainerUtil.map(items, lookupElement -> new Pair<>(lookupElement, getWeight(lookupElement)));
     }
 
@@ -162,8 +160,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
       super.removeElement(element, context);
     }
 
-    @NotNull
-    private StatisticsInfo getBaseStatisticsInfo(LookupElement item) {
+    private @NotNull StatisticsInfo getBaseStatisticsInfo(LookupElement item) {
       StatisticsInfo info = BASE_STATISTICS_INFO.get(item);
       if (info == null) {
         if (myLocation == null) {
@@ -174,8 +171,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
       return info;
     }
 
-    @NotNull
-    private StatisticsInfo calcBaseInfo(LookupElement item) {
+    private @NotNull StatisticsInfo calcBaseInfo(LookupElement item) {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !myLocation.getCompletionParameters().isTestingMode()) {
         ApplicationManager.getApplication().assertIsNonDispatchThread();
       }
@@ -193,8 +189,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
     item.putUserData(BASE_STATISTICS_INFO, null);
   }
 
-  @NotNull
-  public static StatisticsInfo getBaseStatisticsInfo(LookupElement item, @Nullable CompletionLocation location) {
+  public static @NotNull StatisticsInfo getBaseStatisticsInfo(LookupElement item, @Nullable CompletionLocation location) {
     StatisticsInfo info = BASE_STATISTICS_INFO.get(item);
     if (info == null) {
       if (location == null) {
@@ -205,8 +200,7 @@ public final class StatisticsWeigher extends CompletionWeigher {
     return info;
   }
 
-  @NotNull
-  private static StatisticsInfo calcBaseInfo(LookupElement item, @NotNull CompletionLocation location) {
+  private static @NotNull StatisticsInfo calcBaseInfo(LookupElement item, @NotNull CompletionLocation location) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !location.getCompletionParameters().isTestingMode()) {
       ApplicationManager.getApplication().assertIsNonDispatchThread();
     }

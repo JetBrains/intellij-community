@@ -18,9 +18,9 @@ class MarkdownNoTableBordersInspectionTest: LightPlatformCodeInsightFixture4Test
   fun `shows inspection on table without borders`() {
     // language=Markdown
     val expected = """
-    <error descr="$description">none | none
+    <warning descr="$description">none | none
     -----|---
-    some | some</error>
+    some | some</warning>
     """.trimIndent()
     doTest(expected)
   }
@@ -29,9 +29,9 @@ class MarkdownNoTableBordersInspectionTest: LightPlatformCodeInsightFixture4Test
   fun `show inspection on table with partial borders`() {
     // language=Markdown
     val expected = """
-    <error descr="$description">|none | none
+    <warning descr="$description">|none | none
     |-----|---
-    some | some</error>
+    some | some</warning>
     """.trimIndent()
     doTest(expected)
   }

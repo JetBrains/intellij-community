@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -15,13 +15,11 @@ public abstract class ProcessHandlerFactory {
   /**
    * Returns a new instance of the {@link OSProcessHandler}.
    */
-  @NotNull
-  public abstract OSProcessHandler createProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException;
+  public abstract @NotNull OSProcessHandler createProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException;
 
   /**
    * Returns a new instance of the {@link OSProcessHandler} which is aware of ANSI coloring output.
    */
-  @NotNull
-  public abstract OSProcessHandler createColoredProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException;
+  public abstract @NotNull OSProcessHandler createColoredProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException;
 
 }

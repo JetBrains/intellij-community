@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
@@ -73,7 +73,7 @@ public abstract class RunAnythingSearchListModel extends CollectionListModel<Obj
     fireContentsChanged(this, 0, getSize() - 1);
   }
 
-  static class RunAnythingMainListModel extends RunAnythingSearchListModel {
+  static final class RunAnythingMainListModel extends RunAnythingSearchListModel {
     @NotNull private final List<RunAnythingGroup> myGroups = new ArrayList<>();
 
     RunAnythingMainListModel() {
@@ -88,7 +88,7 @@ public abstract class RunAnythingSearchListModel extends CollectionListModel<Obj
     }
   }
 
-  static class RunAnythingHelpListModel extends RunAnythingSearchListModel {
+  static final class RunAnythingHelpListModel extends RunAnythingSearchListModel {
     private final List<RunAnythingGroup> myGroups;
 
     RunAnythingHelpListModel() {

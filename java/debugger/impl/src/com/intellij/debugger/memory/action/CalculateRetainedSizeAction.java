@@ -77,8 +77,8 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
         }
       }
 
-      private void interpretResult(@NotNull MemoryAgentActionResult<Pair<long[], ObjectReference[]>> result,
-                                   @NotNull RetainedSizeDialog dialog) {
+      private static void interpretResult(@NotNull MemoryAgentActionResult<Pair<long[], ObjectReference[]>> result,
+                                          @NotNull RetainedSizeDialog dialog) {
         if (result.executedSuccessfully()) {
           Pair<long[], ObjectReference[]> sizesAndHeldObjects = result.getResult();
           long[] sizes = sizesAndHeldObjects.getFirst();

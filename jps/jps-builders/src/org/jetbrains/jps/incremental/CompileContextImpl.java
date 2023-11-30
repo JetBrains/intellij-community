@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class CompileContextImpl extends UserDataHolderBase implements CompileContext {
+public final class CompileContextImpl extends UserDataHolderBase implements CompileContext {
   private final CompileScope myScope;
   private final MessageHandler myDelegateMessageHandler;
   private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<>();
@@ -86,8 +86,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  @Nullable
-  public String getBuilderParameter(String paramName) {
+  public @Nullable String getBuilderParameter(String paramName) {
     return myBuilderParams.get(paramName);
   }
 
@@ -123,12 +122,12 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public final @NotNull CanceledStatus getCancelStatus() {
+  public @NotNull CanceledStatus getCancelStatus() {
     return myCancelStatus;
   }
 
   @Override
-  public final void checkCanceled() throws ProjectBuildException {
+  public void checkCanceled() throws ProjectBuildException {
     if (getCancelStatus().isCanceled()) {
       throw new StopBuildException(JpsBuildBundle.message("build.message.the.build.has.been.canceled"));
     }

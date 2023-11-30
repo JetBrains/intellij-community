@@ -124,28 +124,29 @@ public final class IgnoredFileBean implements IgnoredFileDescriptor {
 
   @Nullable
   private FilePath resolve() {
+    assert myType != IgnoreSettingsType.MASK;
     if (myCachedResolved == null) {
-      myCachedResolved = doResolve();
+      myCachedResolved = doResolve(myProject, myPath, myType == IgnoreSettingsType.UNDER_DIR);
     }
 
     return myCachedResolved;
   }
 
-  private @Nullable FilePath doResolve() {
-    if (myProject == null || myProject.isDisposed()) {
+  private static @Nullable FilePath doResolve(@Nullable Project project, @NotNull String rawPath, boolean isDirectory) {
+    if (project == null || project.isDisposed()) {
       return null;
     }
-    VirtualFile baseDir = myProject.getBaseDir();
+    VirtualFile baseDir = project.getBaseDir();
 
-    String path = FileUtil.toSystemIndependentName(myPath);
+    String path = FileUtil.toSystemIndependentName(rawPath);
     if (baseDir == null) {
-      return VcsUtil.getFilePath(path);
+      return VcsUtil.getFilePath(path, isDirectory);
     }
 
     VirtualFile resolvedRelative = baseDir.findFileByRelativePath(path);
     if (resolvedRelative != null) return VcsUtil.getFilePath(resolvedRelative);
 
-    return VcsUtil.getFilePath(path);
+    return VcsUtil.getFilePath(path, isDirectory);
   }
 
   public void resetCache() {

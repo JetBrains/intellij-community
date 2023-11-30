@@ -252,7 +252,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     }
   }
 
-  static class AllPluginsLoader extends ClassLoader {
+  static final class AllPluginsLoader extends ClassLoader {
     static final AllPluginsLoader INSTANCE = new AllPluginsLoader();
 
     final ConcurrentMap<Long, ClassLoader> myLuckyGuess = new ConcurrentHashMap<>();

@@ -1,18 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.actions.cache.*
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.FilesScanningTask
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
-import com.intellij.util.BooleanFunction
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
+import com.intellij.util.application
+import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
+import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.function.Predicate
 
 @ApiStatus.Internal
 class RescanIndexesAction : RecoveryAction {
@@ -32,7 +34,7 @@ class RescanIndexesAction : RecoveryAction {
 
   override fun performSync(recoveryScope: RecoveryScope): List<CacheInconsistencyProblem> {
     val project = recoveryScope.project
-    val historyFuture = CompletableFuture<ProjectIndexingHistoryImpl>()
+    val historyFuture = CompletableFuture<ProjectScanningHistory>()
     val stubAndIndexingStampInconsistencies = Collections.synchronizedList(arrayListOf<CacheInconsistencyProblem>())
 
     var predefinedIndexableFilesIterators: List<IndexableFilesIterator>? = null
@@ -40,6 +42,7 @@ class RescanIndexesAction : RecoveryAction {
       predefinedIndexableFilesIterators = recoveryScope.files.map { ProjectIndexableFilesIteratorImpl(it) }
       if (predefinedIndexableFilesIterators.isEmpty()) return emptyList()
     }
+    application.service<AppIndexingDependenciesService>().invalidateAllStamps("Rescanning indexes recovery action")
     object : UnindexedFilesScanner(project, false, false,
                                    predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",
                                    if(predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED) {
@@ -52,15 +55,15 @@ class RescanIndexesAction : RecoveryAction {
           get() = "`$path` should have already indexed stub but it's not present"
       }
 
-      override fun getForceReindexingTrigger(): BooleanFunction<IndexedFile>? {
+      override fun getForceReindexingTrigger(): Predicate<IndexedFile>? {
         if (stubIndex != null) {
-          return BooleanFunction<IndexedFile> {
+          return Predicate<IndexedFile> {
             val fileId = (it.file as VirtualFileWithId).id
             if (stubIndex.getIndexingStateForFile(fileId, it) == FileIndexingState.UP_TO_DATE &&
                 stubIndex.getIndexedFileData(fileId).isEmpty() &&
                 isAbleToBuildStub(it.file)) {
               stubAndIndexingStampInconsistencies.add(StubAndIndexStampInconsistency(it.file.path))
-              return@BooleanFunction true
+              return@Predicate true
             }
             false
           }
@@ -72,10 +75,10 @@ class RescanIndexesAction : RecoveryAction {
         StubTreeBuilder.buildStubTree(FileContentImpl.createByFile(file))
       }.getOrNull() != null
 
-      override fun performScanningAndIndexing(indicator: ProgressIndicator): ProjectIndexingHistoryImpl {
+      override fun performScanningAndIndexing(indicator: CheckCancelOnlyProgressIndicator,
+                                              progressReporter: IndexingProgressReporter): ProjectScanningHistory {
         try {
-          IndexingFlag.cleanupProcessedFlag()
-          val history = super.performScanningAndIndexing(indicator)
+          val history = super.performScanningAndIndexing(indicator, progressReporter)
           historyFuture.complete(history)
           return history
         }
@@ -87,7 +90,7 @@ class RescanIndexesAction : RecoveryAction {
 
       override fun tryMergeWith(taskFromQueue: FilesScanningTask): UnindexedFilesScanner? =
         if (taskFromQueue.javaClass == javaClass) this else null
-    }.queue(project)
+    }.queue()
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems() +
              stubAndIndexingStampInconsistencies
@@ -97,7 +100,7 @@ class RescanIndexesAction : RecoveryAction {
     }
   }
 
-  private fun ProjectIndexingHistoryImpl.extractConsistencyProblems(): List<CacheInconsistencyProblem> =
+  private fun ProjectScanningHistory.extractConsistencyProblems(): List<CacheInconsistencyProblem> =
     scanningStatistics.filter { it.numberOfFilesForIndexing != 0 }.map {
       UnindexedFilesInconsistencyProblem(it.numberOfFilesForIndexing, it.providerName)
     }

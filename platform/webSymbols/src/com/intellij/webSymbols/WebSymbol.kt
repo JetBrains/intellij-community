@@ -28,6 +28,7 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import com.intellij.webSymbols.utils.matchedNameOrName
+import com.intellij.webSymbols.utils.qualifiedName
 import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
@@ -324,7 +325,7 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
    * This method is used by the framework to determine a new name for a symbol based on its occurrence
    */
   fun adjustNameForRefactoring(queryExecutor: WebSymbolsQueryExecutor, newName: String, occurence: String): String =
-    queryExecutor.namesProvider.adjustRename(namespace, kind, name, newName, occurence)
+    queryExecutor.namesProvider.adjustRename(qualifiedName, newName, occurence)
 
 
   enum class Priority(val value: Double) {
@@ -356,6 +357,23 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
     const val KIND_JS_PROPERTIES = "properties"
     const val KIND_JS_SYMBOLS = "symbols"
     const val KIND_JS_STRING_LITERALS = "string-literals"
+
+    val HTML_ELEMENTS = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ELEMENTS)
+    val HTML_ATTRIBUTES = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES)
+    val HTML_ATTRIBUTE_VALUES = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTE_VALUES)
+    val HTML_SLOTS = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_SLOTS)
+
+    val CSS_PROPERTIES = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PROPERTIES)
+    val CSS_PSEUDO_ELEMENTS = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_ELEMENTS)
+    val CSS_PSEUDO_CLASSES = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_CLASSES)
+    val CSS_FUNCTIONS = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_FUNCTIONS)
+    val CSS_CLASSES = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_CLASSES)
+    val CSS_PARTS = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PARTS)
+
+    val JS_EVENTS = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_EVENTS)
+    val JS_PROPERTIES = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_PROPERTIES)
+    val JS_SYMBOLS = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_SYMBOLS)
+    val JS_STRING_LITERALS = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_STRING_LITERALS)
 
     /**
      * Supported by `html/elements` and `html/attributes` symbols,

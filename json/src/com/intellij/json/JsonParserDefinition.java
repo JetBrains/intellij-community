@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json;
 
 import com.intellij.json.psi.impl.JsonFileImpl;
@@ -14,14 +14,13 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.json.JsonElementTypes.*;
+import static com.intellij.json.JsonElementTypes.Factory;
 
 public class JsonParserDefinition implements ParserDefinition {
   public static final IFileElementType FILE = new IFileElementType(JsonLanguage.INSTANCE);
 
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new JsonLexer();
   }
 
@@ -35,21 +34,18 @@ public class JsonParserDefinition implements ParserDefinition {
     return FILE;
   }
 
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return JsonTokenSets.JSON_COMMENTARIES;
   }
 
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return JsonTokenSets.STRING_LITERALS;
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode astNode) {
+  public @NotNull PsiElement createElement(ASTNode astNode) {
     return Factory.createElement(astNode);
   }
 

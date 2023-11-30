@@ -4,11 +4,15 @@ package org.jetbrains.kotlin.idea.completion.checkers
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
+import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 internal fun interface CompletionVisibilityChecker {
     context(KtAnalysisSession)
@@ -27,14 +31,26 @@ internal fun interface CompletionVisibilityChecker {
     companion object {
         fun create(
             basicContext: FirBasicCompletionContext,
-            positionContext: FirRawPositionCompletionContext
+            positionContext: KotlinRawPositionContext
         ): CompletionVisibilityChecker = object : CompletionVisibilityChecker {
             context(KtAnalysisSession)
             override fun isVisible(symbol: KtSymbolWithVisibility): Boolean {
-                return basicContext.parameters.invocationCount > 1 || isVisible(
+                if (positionContext is KDocNameReferencePositionContext) return true
+
+                // Don't offer any deprecated items that could lead to compile errors.
+                if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return false
+
+                if (basicContext.parameters.invocationCount > 1) return true
+
+                if (symbol is KtClassLikeSymbol) {
+                    val classId = (symbol as? KtClassLikeSymbol)?.classIdIfNonLocal
+                    if (classId?.asSingleFqName()?.isJavaClassNotToBeUsedInKotlin() == true) return false
+                }
+
+                return isVisible(
                     symbol,
                     basicContext.originalKtFile.getFileSymbol(),
-                    (positionContext as? FirNameReferencePositionContext)?.explicitReceiver,
+                    (positionContext as? KotlinSimpleNameReferencePositionContext)?.explicitReceiver,
                     positionContext.position
                 )
             }

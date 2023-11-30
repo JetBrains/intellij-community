@@ -189,7 +189,7 @@ class ZipTest {
 
     val archiveFile = tempDir.resolve("archive.zip")
     buildJar(archiveFile, listOf(
-      ZipSource(file = zip, excludes = listOf(Regex("^zip-excl.*")))
+      ZipSource(file = zip, excludes = listOf(Regex("^zip-excl.*")), distributionFileEntryProducer = null)
     ))
 
     checkZip(archiveFile) { zipFile ->

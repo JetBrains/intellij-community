@@ -17,7 +17,6 @@ import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
@@ -25,20 +24,21 @@ import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspac
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : EntityWithSoftLinks, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLinksData) : EntityWithSoftLinks, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithSoftLinks::class.java,
                                                                             SoftLinkReferencedChild::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
     )
 
@@ -93,6 +93,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
     return connections
   }
 
+
   class Builder(result: EntityWithSoftLinksData?) : ModifiableWorkspaceEntityBase<EntityWithSoftLinks, EntityWithSoftLinksData>(
     result), EntityWithSoftLinks.Builder {
     constructor() : this(EntityWithSoftLinksData())
@@ -121,7 +122,7 @@ open class EntityWithSoftLinksImpl(val dataSource: EntityWithSoftLinksData) : En
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -470,16 +471,16 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
   lateinit var justListProperty: MutableList<String>
   lateinit var deepSealedClass: DeepSealedOne
 
-  fun isLinkInitialized(): Boolean = ::link.isInitialized
-  fun isManyLinksInitialized(): Boolean = ::manyLinks.isInitialized
-  fun isInContainerInitialized(): Boolean = ::inContainer.isInitialized
-  fun isInContainerListInitialized(): Boolean = ::inContainerList.isInitialized
-  fun isDeepContainerInitialized(): Boolean = ::deepContainer.isInitialized
-  fun isSealedContainerInitialized(): Boolean = ::sealedContainer.isInitialized
-  fun isListSealedContainerInitialized(): Boolean = ::listSealedContainer.isInitialized
-  fun isJustPropertyInitialized(): Boolean = ::justProperty.isInitialized
-  fun isJustListPropertyInitialized(): Boolean = ::justListProperty.isInitialized
-  fun isDeepSealedClassInitialized(): Boolean = ::deepSealedClass.isInitialized
+  internal fun isLinkInitialized(): Boolean = ::link.isInitialized
+  internal fun isManyLinksInitialized(): Boolean = ::manyLinks.isInitialized
+  internal fun isInContainerInitialized(): Boolean = ::inContainer.isInitialized
+  internal fun isInContainerListInitialized(): Boolean = ::inContainerList.isInitialized
+  internal fun isDeepContainerInitialized(): Boolean = ::deepContainer.isInitialized
+  internal fun isSealedContainerInitialized(): Boolean = ::sealedContainer.isInitialized
+  internal fun isListSealedContainerInitialized(): Boolean = ::listSealedContainer.isInitialized
+  internal fun isJustPropertyInitialized(): Boolean = ::justProperty.isInitialized
+  internal fun isJustListPropertyInitialized(): Boolean = ::justListProperty.isInitialized
+  internal fun isDeepSealedClassInitialized(): Boolean = ::deepSealedClass.isInitialized
 
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
@@ -1111,6 +1112,11 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     }
   }
 
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.EntityWithSoftLinks") as EntityMetadata
+  }
+
   override fun clone(): EntityWithSoftLinksData {
     val clonedEntity = super.clone()
     clonedEntity as EntityWithSoftLinksData
@@ -1225,28 +1231,5 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     result = 31 * result + justListProperty.hashCode()
     result = 31 * result + deepSealedClass.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(OneSymbolicId::class.java)
-    collector.add(SealedContainer.SmallContainer::class.java)
-    collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour::class.java)
-    collector.add(SealedContainer.BigContainer::class.java)
-    collector.add(SealedContainer.EmptyContainer::class.java)
-    collector.add(TooDeepContainer::class.java)
-    collector.add(SealedContainer::class.java)
-    collector.add(DeepSealedOne::class.java)
-    collector.add(Container::class.java)
-    collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree::class.java)
-    collector.add(DeepContainer::class.java)
-    collector.add(DeepSealedOne.DeepSealedTwo::class.java)
-    collector.add(SealedContainer.ContainerContainer::class.java)
-    this.inContainerList?.let { collector.add(it::class.java) }
-    this.sealedContainer?.let { collector.add(it::class.java) }
-    this.justListProperty?.let { collector.add(it::class.java) }
-    this.listSealedContainer?.let { collector.add(it::class.java) }
-    this.manyLinks?.let { collector.add(it::class.java) }
-    this.deepContainer?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

@@ -7,7 +7,6 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
@@ -20,15 +19,14 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
 
 public abstract class JavaClassReferenceListElementType extends JavaStubElementType<PsiClassReferenceListStub, PsiReferenceList> {
-  public JavaClassReferenceListElementType(@NotNull String id) {
-    super(id, true);
+  public JavaClassReferenceListElementType(@NotNull String id, @NotNull IElementType parentElementType) {
+    super(id, true, parentElementType);
   }
 
   @Override
@@ -60,15 +58,9 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
   @Override
   public void serialize(@NotNull PsiClassReferenceListStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     TypeInfo[] types = stub.getTypes();
-    boolean hasAnnotations = ContainerUtil.exists(types, info -> !info.getTypeAnnotations().isEmpty());
-    dataStream.writeVarInt(hasAnnotations ? -types.length : types.length);
+    dataStream.writeVarInt(types.length);
     for (TypeInfo info : types) {
-      dataStream.writeName(info.text);
-    }
-    if (hasAnnotations) {
-      for (TypeInfo info : types) {
-        TypeAnnotationContainer.writeTypeAnnotations(dataStream, info.getTypeAnnotations());
-      }
+      TypeInfo.writeTYPE(dataStream, info);
     }
   }
 
@@ -76,19 +68,9 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
   @Override
   public PsiClassReferenceListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     int len = dataStream.readVarInt();
-    if (len == 0) {
-      return new PsiClassReferenceListStubImpl(this, parentStub, TypeInfo.EMPTY_ARRAY);
-    }
-    boolean hasAnnotations = len < 0;
-    len = Math.abs(len);
-    TypeInfo[] infos = new TypeInfo[len];
+    TypeInfo[] infos = len == 0 ? TypeInfo.EMPTY_ARRAY : new TypeInfo[len];
     for (int i = 0; i < infos.length; i++) {
-      infos[i] = new TypeInfo(dataStream.readNameString());
-    }
-    if (hasAnnotations) {
-      for (int i = 0; i < len; i++) {
-        infos[i].setTypeAnnotations(TypeAnnotationContainer.readTypeAnnotations(dataStream));
-      }
+      infos[i] = TypeInfo.readTYPE(dataStream);
     }
     return new PsiClassReferenceListStubImpl(this, parentStub, infos);
   }

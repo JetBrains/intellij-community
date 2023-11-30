@@ -8,3 +8,15 @@ actual class <!LINE_MARKER("descr='Has expects in common module'")!>Sample<!> {
 actual object <!LINE_MARKER("descr='Has expects in common module'")!>Platform<!> {
     actual val <!LINE_MARKER("descr='Has expects in common module'")!>name<!>: String = "JVM"
 }
+
+actual fun <!LINE_MARKER("descr='Has expects in common module'")!>foo<!>() {}
+
+annotation class PreviewImpl
+
+actual typealias <!LINE_MARKER("descr='Has expects in common module'")!>Preview<!> = PreviewImpl
+
+annotation object SomeMyObject
+
+actual typealias <!LINE_MARKER("descr='Has expects in common module'")!>SomeObject<!> = SomeMyObject
+
+

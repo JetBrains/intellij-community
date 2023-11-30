@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -171,7 +171,7 @@ public final class OldDirectoryCleaner {
     return groups;
   }
 
-  private static class CollectingVisitor extends SimpleFileVisitor<Path> {
+  private static final class CollectingVisitor extends SimpleFileVisitor<Path> {
     private final @Nullable ProgressIndicator indicator;
     long lastUpdated = 0, size = 0;
     int entriesToDelete = 0;
@@ -259,7 +259,7 @@ public final class OldDirectoryCleaner {
     }
   }
 
-  private static class MenuDialog extends DialogWrapper {
+  private static final class MenuDialog extends DialogWrapper {
     private final MenuTableModel myModel;
 
     MenuDialog(Project project, List<DirectoryGroup> groups) {
@@ -324,7 +324,7 @@ public final class OldDirectoryCleaner {
       setOKActionEnabled(n > 0);
     }
 
-    private static class MenuTableModel extends AbstractTableModel {
+    private static final class MenuTableModel extends AbstractTableModel {
       private final List<DirectoryGroup> myGroups;
       private final BitSet mySelected = new BitSet();
       private final @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String[] myColumnNames =

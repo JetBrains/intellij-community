@@ -15,9 +15,9 @@ import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocatorKt;
 
-public final class IntentionDescriptionNotFoundInspection extends DescriptionNotFoundInspectionBase {
+final class IntentionDescriptionNotFoundInspection extends DescriptionNotFoundInspectionBase {
 
-  public IntentionDescriptionNotFoundInspection() {
+  IntentionDescriptionNotFoundInspection() {
     super(DescriptionType.INTENTION);
   }
 

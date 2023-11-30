@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 // Just a wrapper for entity id in THIS store
@@ -23,7 +25,7 @@ internal fun loadClassByName(name: String, classLoader: ClassLoader): Class<*> {
 
 /**
  * This function checks if we try to add an entity as a child to itself.
- * It can't verify a circular dependency and it's performed via a third entity
+ * It can't verify a circular dependency, and it's performed via a third entity
  */
 internal fun checkCircularDependency(connectionId: ConnectionId, childId: Int, parentId: Int, storage: AbstractEntityStorage) {
   if (connectionId.parentClass == connectionId.childClass && childId == parentId) {
@@ -39,7 +41,7 @@ internal fun checkCircularDependency(connectionId: ConnectionId, childId: Int, p
 
 /**
  * This function checks if we try to add an entity as a child to itself.
- * It can't verify a circular dependency and it's performed via a third entity
+ * It can't verify a circular dependency, and it's performed via a third entity
  */
 internal fun checkCircularDependency(childId: EntityId, parentId: EntityId, storage: AbstractEntityStorage) {
   if (childId == parentId) {
@@ -53,3 +55,6 @@ internal fun checkCircularDependency(childId: EntityId, parentId: EntityId, stor
 }
 
 internal fun WorkspaceEntity.asBase(): WorkspaceEntityBase = this as WorkspaceEntityBase
+
+internal val EntityStorage.mutable: MutableEntityStorage
+  get() = this as MutableEntityStorage

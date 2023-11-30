@@ -1,3 +1,5 @@
+// RUNTIME_WITH_FULL_JDK
+
 import java.util.*;
 
 enum E {
@@ -73,8 +75,6 @@ class A {
         Long.parseLong(str, i);
         Long.valueOf(str, i);
 
-        // These functions were added in JDK 9, hence the error on test JDK 8 (None of the following functions can be called...)
-        // Also, they have no equivalent in Kotlin stdlib
         Integer.parseInt(str, i, i, i);
         Long.parseLong(str, i, i, i);
 

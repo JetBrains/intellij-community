@@ -13,27 +13,27 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class MainEntityToParentImpl(val dataSource: MainEntityToParentData) : MainEntityToParent, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class MainEntityToParentImpl(private val dataSource: MainEntityToParentData) : MainEntityToParent, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val CHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(MainEntityToParent::class.java, AttachedEntityToParent::class.java,
                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
     internal val CHILDNULLABLEPARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(MainEntityToParent::class.java,
                                                                                        AttachedEntityToNullableParent::class.java,
                                                                                        ConnectionId.ConnectionType.ONE_TO_ONE, true)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CHILD_CONNECTION_ID,
       CHILDNULLABLEPARENT_CONNECTION_ID,
     )
@@ -55,6 +55,7 @@ open class MainEntityToParentImpl(val dataSource: MainEntityToParentData) : Main
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: MainEntityToParentData?) : ModifiableWorkspaceEntityBase<MainEntityToParent, MainEntityToParentData>(
     result), MainEntityToParent.Builder {
@@ -84,7 +85,7 @@ open class MainEntityToParentImpl(val dataSource: MainEntityToParentData) : Main
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -201,7 +202,7 @@ open class MainEntityToParentImpl(val dataSource: MainEntityToParentData) : Main
 class MainEntityToParentData : WorkspaceEntityData<MainEntityToParent>() {
   lateinit var x: String
 
-  fun isXInitialized(): Boolean = ::x.isInitialized
+  internal fun isXInitialized(): Boolean = ::x.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<MainEntityToParent> {
     val modifiable = MainEntityToParentImpl.Builder(null)
@@ -218,6 +219,11 @@ class MainEntityToParentData : WorkspaceEntityData<MainEntityToParent>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.MainEntityToParent") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -271,9 +277,5 @@ class MainEntityToParentData : WorkspaceEntityData<MainEntityToParent>() {
     var result = javaClass.hashCode()
     result = 31 * result + x.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

@@ -20,8 +20,10 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -226,11 +228,24 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         }
 
         systemPrintln(toDisplayableString(sourcePosition) + positionText);
+        printHighlightingRange((SuspendContextImpl)context);
       }
       else {
         systemPrintln("Context thread is null");
       }
     });
+  }
+
+  protected void printHighlightingRange(SuspendContextImpl context) {
+    SourcePosition position = context.getDebugProcess().getPositionManager().getSourcePosition(context.getLocation());
+    JavaSourcePositionHighlighter highlighter = new JavaSourcePositionHighlighter();
+    TextRange range = ReadAction.compute(() -> highlighter.getHighlightRange(position));
+    String actualText = range == null ? null : range.substring(position.getFile().getText());
+    if (actualText != null) {
+      systemPrintln("Highlight code range: '" + StringUtil.escapeLineBreak(actualText) + "'");
+    } else {
+      systemPrintln("Highlight whole line");
+    }
   }
 
   protected void invokeRatherLater(SuspendContextImpl context, Runnable runnable) {

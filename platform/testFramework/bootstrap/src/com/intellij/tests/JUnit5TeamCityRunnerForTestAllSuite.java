@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
@@ -33,6 +33,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
+// Used to run JUnit 3/4 tests via JUnit 5 runtime
 public final class JUnit5TeamCityRunnerForTestAllSuite {
   public static void main(String[] args) throws ClassNotFoundException {
     try {
@@ -97,6 +98,10 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static class TCExecutionListener implements TestExecutionListener {
+    /**
+     * The same constant as com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION
+     */
+    private static final String CLASS_CONFIGURATION = "Class Configuration";
     private final PrintStream myPrintStream;
     private TestPlan myTestPlan;
     private long myCurrentTestStart = 0;
@@ -108,7 +113,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
 
     public boolean smthExecuted() {
-      return myCurrentTestStart > 0;
+      return myCurrentTestStart != 0;
     }
 
     @Override
@@ -126,10 +131,6 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
 
     @Override
-    public void testPlanExecutionFinished(TestPlan testPlan) {
-    }
-
-    @Override
     public void executionSkipped(TestIdentifier testIdentifier, String reason) {
       executionStarted(testIdentifier);
       executionFinished(testIdentifier, TestExecutionResult.Status.ABORTED, null, reason);
@@ -139,7 +140,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     public void executionStarted(TestIdentifier testIdentifier) {
       if (testIdentifier.isTest()) {
         testStarted(testIdentifier);
-        myCurrentTestStart = System.currentTimeMillis();
+        myCurrentTestStart = System.nanoTime();
       }
       else if (hasNonTrivialParent(testIdentifier)) {
         myFinishCount = 0;
@@ -166,7 +167,6 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
                                    TestExecutionResult.Status status,
                                    Throwable throwableOptional,
                                    String reason) {
-      final String displayName = getName(testIdentifier);
       if (testIdentifier.isTest()) {
         final long duration = getDuration();
         if (status == TestExecutionResult.Status.FAILED) {
@@ -189,9 +189,11 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
         if (messageName != null) {
           if (status == TestExecutionResult.Status.FAILED) {
             String parentId = getParentId(testIdentifier);
-            String nameAndId = " name='CLASS_CONFIGURATION' nodeId='" + escapeName(getId(testIdentifier)) +
-                               "' parentNodeId='" + escapeName(parentId) + "' ";
-            testFailure("CLASS_CONFIGURATION", getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason);
+            String nameAndId = " name='" + CLASS_CONFIGURATION +
+                               "' nodeId='" + escapeName(getId(testIdentifier)) +
+                               "' parentNodeId='" + escapeName(parentId) + "'";
+            myPrintStream.println("##teamcity[testStarted" + nameAndId + "]");
+            testFailure(CLASS_CONFIGURATION, getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason);
             myPrintStream.println("##teamcity[testFinished" + nameAndId + "]");
           }
 
@@ -206,7 +208,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
             myFinishCount = 0;
           }
         }
-        myPrintStream.println("##teamcity[testSuiteFinished " + idAndName(testIdentifier, displayName) + "]");
+        myPrintStream.println("##teamcity[testSuiteFinished" + idAndName(testIdentifier) + "]");
       }
     }
 
@@ -215,7 +217,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
 
     protected long getDuration() {
-      return System.currentTimeMillis() - myCurrentTestStart;
+      return (System.nanoTime() - myCurrentTestStart) / 1_000_000;
     }
 
     private void testStarted(TestIdentifier testIdentifier) {
@@ -333,14 +335,13 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
 
     private String idAndName(TestIdentifier testIdentifier) {
-      return idAndName(testIdentifier, getName(testIdentifier));
-    }
-
-    private String idAndName(TestIdentifier testIdentifier, String displayName) {
-      return " id='" + escapeName(getId(testIdentifier)) +
-             "' name='" + escapeName(displayName) +
-             "' nodeId='" + escapeName(getId(testIdentifier)) +
-             "' parentNodeId='" + escapeName(getParentId(testIdentifier)) + "'";
+      String id = getId(testIdentifier);
+      String name = getName(testIdentifier);
+      String parentId = getParentId(testIdentifier);
+      return " id='" + escapeName(id) +
+             "' name='" + escapeName(name) +
+             "' nodeId='" + escapeName(id) +
+             "' parentNodeId='" + escapeName(parentId) + "'";
     }
 
     private String getParentId(TestIdentifier testIdentifier) {

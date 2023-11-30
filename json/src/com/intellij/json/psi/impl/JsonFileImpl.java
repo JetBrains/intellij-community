@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -12,27 +13,24 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JsonFileImpl extends PsiFileBase implements JsonFile {
+public final class JsonFileImpl extends PsiFileBase implements JsonFile {
 
   public JsonFileImpl(FileViewProvider fileViewProvider, Language language) {
     super(fileViewProvider, language);
   }
 
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return getViewProvider().getFileType();
   }
 
-  @Nullable
   @Override
-  public JsonValue getTopLevelValue() {
+  public @Nullable JsonValue getTopLevelValue() {
     return PsiTreeUtil.getChildOfType(this, JsonValue.class);
   }
 
-  @NotNull
   @Override
-  public List<JsonValue> getAllTopLevelValues() {
+  public @NotNull List<JsonValue> getAllTopLevelValues() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, JsonValue.class);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.AntialiasingType;
@@ -196,6 +196,10 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
 
   protected void setBlockCursor(boolean blockCursor) {
     getEditor().getSettings().setBlockCursor(blockCursor);
+  }
+
+  protected void setFullLineHeightCursor(boolean fullLineHeightCursor) {
+    getEditor().getSettings().setFullLineHeightCursor(fullLineHeightCursor);
   }
 
   @NotNull

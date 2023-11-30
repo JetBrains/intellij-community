@@ -1,5 +1,3 @@
 version = "3.3.*"
-requires = [] # excluding pyasn1, pyrsa, cryptography until typing is available
-
-[tool.stubtest]
-ignore_missing_stub = false
+upstream_repository = "https://github.com/mpdavis/python-jose"
+requires = ["types-pyasn1"] # excluding pyrsa, cryptography until typing is available

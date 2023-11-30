@@ -5,8 +5,10 @@ package org.jetbrains.intellij.build
 
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.BatchSpanProcessor
-import com.intellij.platform.diagnostic.telemetry.impl.JaegerJsonSpanExporter
-import com.intellij.platform.diagnostic.telemetry.impl.OtlpSpanExporter
+import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
+import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
+import com.intellij.platform.diagnostic.telemetry.exporters.normalizeOtlpEndPoint
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
@@ -14,7 +16,6 @@ import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.sdk.trace.data.SpanData
-import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.GlobalScope
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import java.io.IOException
@@ -28,7 +29,7 @@ var traceManagerInitializer: () -> Tracer = {
   @Suppress("OPT_IN_USAGE")
   val tracerProvider = SdkTracerProvider.builder()
     .addSpanProcessor(BatchSpanProcessor(coroutineScope = GlobalScope, spanExporters = TracerProviderManager.spanExporterProvider()))
-    .setResource(Resource.create(Attributes.of(ResourceAttributes.SERVICE_NAME, "builder")))
+    .setResource(Resource.create(Attributes.of(AttributeKey.stringKey("service.name"), "builder")))
     .build()
   val openTelemetry = OpenTelemetrySdk.builder()
     .setTracerProvider(tracerProvider)
@@ -40,7 +41,7 @@ var traceManagerInitializer: () -> Tracer = {
 }
 
 object TraceManager {
-  internal val tracer: Tracer = traceManagerInitializer()
+  private val tracer: Tracer = traceManagerInitializer()
 
   @JvmStatic
   fun spanBuilder(spanName: String): SpanBuilder = tracer.spanBuilder(spanName)
@@ -66,9 +67,8 @@ object TracerProviderManager {
         jaegerJsonSpanExporter.getAndSet(null)?.shutdown()
       }
     })
-    val endpoint = System.getenv("OTLP_ENDPOINT")
-    if (endpoint != null) {
-      list.add(OtlpSpanExporter(endpoint))
+    normalizeOtlpEndPoint(System.getenv("OTLP_ENDPOINT"))?.let {
+      list.add(OtlpSpanExporter(it))
     }
     list
   }

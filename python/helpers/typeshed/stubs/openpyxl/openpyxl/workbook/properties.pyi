@@ -1,95 +1,112 @@
-from typing import Any
+from _typeshed import Incomplete
+from typing import ClassVar
+from typing_extensions import Literal, TypeAlias
 
+from openpyxl.descriptors.base import (
+    Bool,
+    Float,
+    Integer,
+    NoneSet,
+    String,
+    _ConvertibleToBool,
+    _ConvertibleToFloat,
+    _ConvertibleToInt,
+)
 from openpyxl.descriptors.serialisable import Serialisable
 
+_WorkbookPropertiesShowObjects: TypeAlias = Literal["all", "placeholders"]
+_WorkbookPropertiesUpdateLinks: TypeAlias = Literal["userSet", "never", "always"]
+_CalcPropertiesCalcMode: TypeAlias = Literal["manual", "auto", "autoNoTable"]
+_CalcPropertiesRefMode: TypeAlias = Literal["A1", "R1C1"]
+
 class WorkbookProperties(Serialisable):
-    tagname: str
-    date1904: Any
-    dateCompatibility: Any
-    showObjects: Any
-    showBorderUnselectedTables: Any
-    filterPrivacy: Any
-    promptedSolutions: Any
-    showInkAnnotation: Any
-    backupFile: Any
-    saveExternalLinkValues: Any
-    updateLinks: Any
-    codeName: Any
-    hidePivotFieldList: Any
-    showPivotChartFilter: Any
-    allowRefreshQuery: Any
-    publishItems: Any
-    checkCompatibility: Any
-    autoCompressPictures: Any
-    refreshAllConnections: Any
-    defaultThemeVersion: Any
+    tagname: ClassVar[str]
+    date1904: Bool[Literal[True]]
+    dateCompatibility: Bool[Literal[True]]
+    showObjects: NoneSet[_WorkbookPropertiesShowObjects]
+    showBorderUnselectedTables: Bool[Literal[True]]
+    filterPrivacy: Bool[Literal[True]]
+    promptedSolutions: Bool[Literal[True]]
+    showInkAnnotation: Bool[Literal[True]]
+    backupFile: Bool[Literal[True]]
+    saveExternalLinkValues: Bool[Literal[True]]
+    updateLinks: NoneSet[_WorkbookPropertiesUpdateLinks]
+    codeName: String[Literal[True]]
+    hidePivotFieldList: Bool[Literal[True]]
+    showPivotChartFilter: Bool[Literal[True]]
+    allowRefreshQuery: Bool[Literal[True]]
+    publishItems: Bool[Literal[True]]
+    checkCompatibility: Bool[Literal[True]]
+    autoCompressPictures: Bool[Literal[True]]
+    refreshAllConnections: Bool[Literal[True]]
+    defaultThemeVersion: Integer[Literal[True]]
     def __init__(
         self,
-        date1904: Any | None = ...,
-        dateCompatibility: Any | None = ...,
-        showObjects: Any | None = ...,
-        showBorderUnselectedTables: Any | None = ...,
-        filterPrivacy: Any | None = ...,
-        promptedSolutions: Any | None = ...,
-        showInkAnnotation: Any | None = ...,
-        backupFile: Any | None = ...,
-        saveExternalLinkValues: Any | None = ...,
-        updateLinks: Any | None = ...,
-        codeName: Any | None = ...,
-        hidePivotFieldList: Any | None = ...,
-        showPivotChartFilter: Any | None = ...,
-        allowRefreshQuery: Any | None = ...,
-        publishItems: Any | None = ...,
-        checkCompatibility: Any | None = ...,
-        autoCompressPictures: Any | None = ...,
-        refreshAllConnections: Any | None = ...,
-        defaultThemeVersion: Any | None = ...,
+        date1904: _ConvertibleToBool | None = None,
+        dateCompatibility: _ConvertibleToBool | None = None,
+        showObjects: _WorkbookPropertiesShowObjects | Literal["none"] | None = None,
+        showBorderUnselectedTables: _ConvertibleToBool | None = None,
+        filterPrivacy: _ConvertibleToBool | None = None,
+        promptedSolutions: _ConvertibleToBool | None = None,
+        showInkAnnotation: _ConvertibleToBool | None = None,
+        backupFile: _ConvertibleToBool | None = None,
+        saveExternalLinkValues: _ConvertibleToBool | None = None,
+        updateLinks: _WorkbookPropertiesUpdateLinks | Literal["none"] | None = None,
+        codeName: str | None = None,
+        hidePivotFieldList: _ConvertibleToBool | None = None,
+        showPivotChartFilter: _ConvertibleToBool | None = None,
+        allowRefreshQuery: _ConvertibleToBool | None = None,
+        publishItems: _ConvertibleToBool | None = None,
+        checkCompatibility: _ConvertibleToBool | None = None,
+        autoCompressPictures: _ConvertibleToBool | None = None,
+        refreshAllConnections: _ConvertibleToBool | None = None,
+        defaultThemeVersion: _ConvertibleToInt | None = None,
     ) -> None: ...
 
 class CalcProperties(Serialisable):
-    tagname: str
-    calcId: Any
-    calcMode: Any
-    fullCalcOnLoad: Any
-    refMode: Any
-    iterate: Any
-    iterateCount: Any
-    iterateDelta: Any
-    fullPrecision: Any
-    calcCompleted: Any
-    calcOnSave: Any
-    concurrentCalc: Any
-    concurrentManualCount: Any
-    forceFullCalc: Any
+    tagname: ClassVar[str]
+    calcId: Integer[Literal[False]]
+    calcMode: NoneSet[_CalcPropertiesCalcMode]
+    fullCalcOnLoad: Bool[Literal[True]]
+    refMode: NoneSet[_CalcPropertiesRefMode]
+    iterate: Bool[Literal[True]]
+    iterateCount: Integer[Literal[True]]
+    iterateDelta: Float[Literal[True]]
+    fullPrecision: Bool[Literal[True]]
+    calcCompleted: Bool[Literal[True]]
+    calcOnSave: Bool[Literal[True]]
+    concurrentCalc: Bool[Literal[True]]
+    concurrentManualCount: Integer[Literal[True]]
+    forceFullCalc: Bool[Literal[True]]
     def __init__(
         self,
-        calcId: int = ...,
-        calcMode: Any | None = ...,
-        fullCalcOnLoad: bool = ...,
-        refMode: Any | None = ...,
-        iterate: Any | None = ...,
-        iterateCount: Any | None = ...,
-        iterateDelta: Any | None = ...,
-        fullPrecision: Any | None = ...,
-        calcCompleted: Any | None = ...,
-        calcOnSave: Any | None = ...,
-        concurrentCalc: Any | None = ...,
-        concurrentManualCount: Any | None = ...,
-        forceFullCalc: Any | None = ...,
+        calcId: _ConvertibleToInt = 124519,
+        calcMode: _CalcPropertiesCalcMode | Literal["none"] | None = None,
+        fullCalcOnLoad: _ConvertibleToBool | None = True,
+        refMode: _CalcPropertiesRefMode | Literal["none"] | None = None,
+        iterate: _ConvertibleToBool | None = None,
+        iterateCount: _ConvertibleToInt | None = None,
+        iterateDelta: _ConvertibleToFloat | None = None,
+        fullPrecision: _ConvertibleToBool | None = None,
+        calcCompleted: _ConvertibleToBool | None = None,
+        calcOnSave: _ConvertibleToBool | None = None,
+        concurrentCalc: _ConvertibleToBool | None = None,
+        concurrentManualCount: _ConvertibleToInt | None = None,
+        forceFullCalc: _ConvertibleToBool | None = None,
     ) -> None: ...
 
 class FileVersion(Serialisable):
-    tagname: str
-    appName: Any
-    lastEdited: Any
-    lowestEdited: Any
-    rupBuild: Any
-    codeName: Any
+    tagname: ClassVar[str]
+    appName: String[Literal[True]]
+    lastEdited: String[Literal[True]]
+    lowestEdited: String[Literal[True]]
+    rupBuild: String[Literal[True]]
+    codeName: Incomplete
     def __init__(
         self,
-        appName: Any | None = ...,
-        lastEdited: Any | None = ...,
-        lowestEdited: Any | None = ...,
-        rupBuild: Any | None = ...,
-        codeName: Any | None = ...,
+        appName: str | None = None,
+        lastEdited: str | None = None,
+        lowestEdited: str | None = None,
+        rupBuild: str | None = None,
+        codeName: Incomplete | None = None,
     ) -> None: ...

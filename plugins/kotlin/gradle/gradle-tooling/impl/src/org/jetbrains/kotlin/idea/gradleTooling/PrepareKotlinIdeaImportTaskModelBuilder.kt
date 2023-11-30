@@ -1,11 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Project
+import org.gradle.api.artifacts.component.BuildIdentifier
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.internal.build.BuildState
+import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
@@ -88,7 +90,7 @@ class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
             val rootBuild = generateSequence(project.gradle) { it.parent }.last()
             val buildId = (project as ProjectInternal).services.get(BuildState::class.java).buildIdentifier
             val projectPathPart = if (rootProject != project) project.path else ""
-            val absoluteTaskPaths = taskNames.map { taskName -> ":${buildId.name}$projectPathPart:$taskName" }
+            val absoluteTaskPaths = taskNames.map { taskName -> "${buildId.buildPathCompat}$projectPathPart:$taskName" }
             rootBuild.startParameter.setTaskNames(rootBuild.startParameter.taskNames.toSet() + absoluteTaskPaths)
         }
     }
@@ -134,4 +136,13 @@ class PrepareKotlinIdeaImportTaskModelBuilder : AbstractModelBuilderService() {
                 .invoke(Boolean::class.java, project) as Boolean
         }
     }
+
+    /**
+     * Will return [BuildIdentifier.getBuildPath] for Gradle versions higher than 8.2
+     * Will calculate the build path from the previously accessible [BuildIdentifier.getName]:
+     * Note, this calculation will not be correct for nested composite builds!
+     */
+    private val BuildIdentifier.buildPathCompat: String
+        get() = if (GradleVersion.current() >= GradleVersion.version("8.2")) buildPath
+        else @Suppress("DEPRECATION") if (name.startsWith(":")) name else ":$name"
 }

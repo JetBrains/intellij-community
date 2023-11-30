@@ -1,39 +1,35 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
-import com.intellij.feedback.new_ui.dialog.NewUIFeedbackDialog
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.feedback.newUi.NewUIFeedbackDialog
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
-import java.awt.Font
 import javax.swing.JLabel
 
 private const val PROMO_URL = "https://youtu.be/WGwECgPmQ-8"
 
-/**
- * @author Konstantin Bulenkov
- */
-open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.message("configurable.new.ui.name"), "reference.settings.ide.settings.new.ui") {
+@Suppress("ExtensionClassShouldBeFinalAndNonPublic")
+open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.message("configurable.new.ui.name"),
+                                                                    "reference.settings.ide.settings.new.ui") {
+
+  private val EP_NAME: ExtensionPointName<ExperimentalUIConfigurable> = ExtensionPointName.create("com.intellij.newUIConfigurable")
 
   companion object {
-    @JvmStatic
-    val EP_NAME: ExtensionPointName<ExperimentalUIConfigurable> = ExtensionPointName.create("com.intellij.newUIConfigurable")
     const val EXPLORE_NEW_UI_URL_TEMPLATE = "https://www.jetbrains.com/%s/new-ui/?utm_source=product&utm_medium=link&utm_campaign=new_ui_release"
   }
 
@@ -59,8 +55,10 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
             { ExperimentalUI.isNewUI() },
             {
               if (it != ExperimentalUI.isNewUI()) {
-                ExperimentalUiCollector.logSwitchUi(ExperimentalUiCollector.SwitchSource.PREFERENCES, it)
-                ExperimentalUI.setNewUI(it)
+                ApplicationManager.getApplication().invokeLater {
+                  ExperimentalUiCollector.logSwitchUi(ExperimentalUiCollector.SwitchSource.PREFERENCES, it)
+                  ExperimentalUI.setNewUI(it)
+                }
               }
             })
           .enabled(PlatformUtils.isAqua().not()) // the new UI is always enabled for Aqua and cannot be disabled
@@ -91,16 +89,11 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
         .bottomGap(BottomGap.SMALL)
 
       row {
-        icon(IconUtil.scale(AllIcons.Actions.EnableNewUi, newUiCheckBox.component, JBUI.scale(24).toFloat() / AllIcons.Actions.EnableNewUi.iconWidth))
-          .gap(RightGap.SMALL)
-        label(IdeBundle.message("new.ui.title")).applyToComponent {
-          font = JBFont.create(Font("Sans", Font.PLAIN, 18))
-        }
+        icon(AllIcons.Ide.Settings.NewUI)
       }
       row {
         text(IdeBundle.message("new.ui.description"))
-      }.topGap(TopGap.SMALL)
-        .bottomGap(BottomGap.SMALL)
+      }
       row {
         browserLink(getExploreNewUiLabel(), getExploreNewUiUrl())
 /* Android Studio: send feedback to issuetracker.google.com

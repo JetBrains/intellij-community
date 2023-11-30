@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision
 
+import com.intellij.openapi.components.Service
 import java.util.concurrent.TimeUnit
 
-class CodeVisionProvidersWatcher {
-
+@Service(Service.Level.PROJECT)
+internal class CodeVisionProvidersWatcher {
   companion object {
     const val Threshold: Int = 30
     const val MinThreshold: Int = 10

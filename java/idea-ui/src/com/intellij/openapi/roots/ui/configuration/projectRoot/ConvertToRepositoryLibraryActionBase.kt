@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot
 
 import com.intellij.ide.JavaUiBundle
@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase
 import com.intellij.openapi.ui.DialogWrapper
@@ -44,7 +43,7 @@ private val LOG = logger<ConvertToRepositoryLibraryActionBase>()
 
 abstract class ConvertToRepositoryLibraryActionBase(protected val context: StructureConfigurableContext) :
   DumbAwareAction(JavaUiBundle.messagePointer("action.text.convert.to.repository.library"),
-                  JavaUiBundle.messagePointer("action.description.convert.to.repository.library"), null) {
+                  JavaUiBundle.messagePointer("action.description.convert.to.repository.library")) {
 
   protected val project: Project = context.project
 

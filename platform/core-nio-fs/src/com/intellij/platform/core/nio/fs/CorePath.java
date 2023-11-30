@@ -67,6 +67,7 @@ public class CorePath implements Path {
 
   @Override
   public boolean startsWith(Path other) {
+    if (!(other instanceof CorePath))return false;
     return myDelegate.startsWith(unwrap(other));
   }
 
@@ -77,6 +78,7 @@ public class CorePath implements Path {
 
   @Override
   public boolean endsWith(Path other) {
+    if (!(other instanceof CorePath))return false;
     return myDelegate.endsWith(unwrap(other));
   }
 

@@ -488,6 +488,18 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  public void testTypeGuard() {
+    doTest();
+  }
+
+  public void testTypeGuardConjunct() {
+    doTest();
+  }
+
+  public void testTypeGuardWhile() {
+    doTest();
+  }
+
   // PY-23859
   public void testControlFlowIsAbruptAfterSelfFail() {
     final String testName = getTestName(false);
@@ -527,6 +539,24 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   // PY-61877
   public void testTypeParameterListInClassDeclaration() {
     doTestFirstStatement();
+  }
+
+  public void testFunctionAnnotationsAndParameterDefaultsAreExcludedFromItsGraph() {
+    doTestFirstStatement();
+  }
+
+  public void testFunctionAnnotationsAndParameterDefaultsAreIncludedInEnclosingScopeGraph() {
+    doTest();
+  }
+
+  // PY-61877
+  public void testNewStyleGenericFunctionAnnotationsAreIncludedInItsGraph() {
+    doTestFirstStatement();
+  }
+
+  // PY-61877
+  public void testNewStyleGenericFunctionAnnotationsAreNotIncludedInEnclosingScopeGraph() {
+    doTest();
   }
 
   private void doTestFirstStatement() {

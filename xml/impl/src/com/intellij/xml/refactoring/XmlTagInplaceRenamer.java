@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xml.refactoring;
 
@@ -31,19 +31,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class XmlTagInplaceRenamer {
-  @NonNls private static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
-  @NonNls private static final String OTHER_VARIABLE_NAME = "OtherVariable";
+  private static final @NonNls String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
+  private static final @NonNls String OTHER_VARIABLE_NAME = "OtherVariable";
 
   private final Editor myEditor;
 
-  private final static Stack<XmlTagInplaceRenamer> ourRenamersStack = new Stack<>();
+  private static final Stack<XmlTagInplaceRenamer> ourRenamersStack = new Stack<>();
   private ArrayList<RangeHighlighter> myHighlighters;
 
-  private XmlTagInplaceRenamer(@NotNull final Editor editor) {
+  private XmlTagInplaceRenamer(final @NotNull Editor editor) {
     myEditor = editor;
   }
 
-  public static void rename(final Editor editor, @NotNull final XmlTag tag) {
+  public static void rename(final Editor editor, final @NotNull XmlTag tag) {
     if (!ourRenamersStack.isEmpty()) {
       ourRenamersStack.peek().finish();
     }
@@ -53,7 +53,7 @@ public final class XmlTagInplaceRenamer {
     renamer.rename(tag);
   }
 
-  private void rename(@NotNull final XmlTag tag) {
+  private void rename(final @NotNull XmlTag tag) {
     final Pair<ASTNode, ASTNode> pair = getNamePair(tag);
     if (pair == null) return;
 
@@ -79,7 +79,7 @@ public final class XmlTagInplaceRenamer {
         final Template t = buildTemplate(tag, pair);
         TemplateManager.getInstance(project).startTemplate(myEditor, t, new TemplateEditingAdapter() {
           @Override
-          public void templateFinished(@NotNull final Template template, boolean brokenOff) {
+          public void templateFinished(final @NotNull Template template, boolean brokenOff) {
             finish();
           }
 
@@ -111,7 +111,7 @@ public final class XmlTagInplaceRenamer {
     }
   }
 
-  private Pair<ASTNode, ASTNode> getNamePair(@NotNull final XmlTag tag) {
+  private Pair<ASTNode, ASTNode> getNamePair(final @NotNull XmlTag tag) {
     final int offset = myEditor.getCaretModel().getOffset();
 
     final ASTNode node = tag.getNode();
@@ -132,7 +132,7 @@ public final class XmlTagInplaceRenamer {
     return Pair.create(selected, other);
   }
 
-  private static Template buildTemplate(@NotNull final XmlTag tag, @NotNull final Pair<? extends ASTNode, ? extends ASTNode> pair) {
+  private static Template buildTemplate(final @NotNull XmlTag tag, final @NotNull Pair<? extends ASTNode, ? extends ASTNode> pair) {
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(tag);
 
     final ASTNode selected = pair.first;

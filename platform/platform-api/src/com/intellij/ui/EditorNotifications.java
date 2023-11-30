@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.codeInsight.intention.IntentionActionProvider;
+import com.intellij.codeInsight.intention.IntentionActionWithOptions;
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -12,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 
 public abstract class EditorNotifications {
@@ -29,6 +33,15 @@ public abstract class EditorNotifications {
     public void updateAllNotifications() {
     }
   };
+
+  /**
+   * @return intention actions which were registered via {@link IntentionActionProvider#getIntentionAction()} in this {@link EditorNotificationPanel}
+   * @see com.intellij.ui.EditorNotificationsImpl#collectIntentionActions(FileEditor, Project)
+   */
+  @NotNull
+  public List<IntentionActionWithOptions> getStoredFileLevelIntentions(@NotNull FileEditor fileEditor) {
+    return Collections.emptyList();
+  }
 
   /**
    * @deprecated Please use {@link EditorNotificationProvider} instead.

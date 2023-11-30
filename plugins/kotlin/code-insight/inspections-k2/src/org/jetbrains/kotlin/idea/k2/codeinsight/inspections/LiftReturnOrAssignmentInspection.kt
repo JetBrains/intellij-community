@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -15,8 +16,8 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils
+import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils.getFoldableAssignmentsFromBranches
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils.getFoldableReturnsFromBranches
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.branchedTransformations.BranchedFoldingUtils.getNumberOfFoldableAssignmentsOrNull
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -59,8 +60,20 @@ private const val LINES_LIMIT = 15
  *       else -> 4
  *     }
  */
-class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val skipLongExpressions: Boolean = true) :
+internal class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val skipLongExpressions: Boolean = true) :
     AbstractKotlinInspection() {
+
+    @JvmField
+    var reportOnlyIfSingleStatement = true
+
+    override fun getOptionsPane(): OptPane {
+        return OptPane.pane(
+            OptPane.checkbox(
+                "reportOnlyIfSingleStatement",
+                KotlinBundle.message("inspection.lift.return.or.assignment.option.only.single.statement")
+            )
+        )
+    }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
         object : KtVisitorVoid() {
@@ -138,7 +151,8 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
         }
     }
 
-    private fun KtAnalysisSession.getStateForWhenOrTry(expression: KtExpression, keyword: PsiElement): List<LiftState>? {
+    context(KtAnalysisSession)
+    private fun getStateForWhenOrTry(expression: KtExpression, keyword: PsiElement): List<LiftState>? {
         if (skipLongExpressions && expression.getLineCount() > LINES_LIMIT) return null
         if (expression.parent.node.elementType == KtNodeTypes.ELSE) return null
 
@@ -146,19 +160,23 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
         if (foldableReturns.isNotEmpty()) {
             val returns = foldableReturns.returnExpressions
             val hasOtherReturns = expression.anyDescendantOfType<KtReturnExpression> { it !in returns }
-            val isSerious = !hasOtherReturns && returns.size > 1
-            return returns.map {
-                LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT, it, INFORMATION)
-            } + LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT)
+            val allBranchesAreSingleStatement = returns.none { it.hasSiblings() }
+            val isSerious = !hasOtherReturns && returns.size > 1 && (allBranchesAreSingleStatement || !reportOnlyIfSingleStatement)
+            return returns.map { LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT, it, INFORMATION) } +
+                    LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT)
         }
 
-        val assignmentNumber = getNumberOfFoldableAssignmentsOrNull(expression) ?: return null
-        if (assignmentNumber > 0) {
-            val isSerious = assignmentNumber > 1
+        val assignments = getFoldableAssignmentsFromBranches(expression)
+        if (assignments.isNotEmpty()) {
+            val allBranchesAreSingleStatement = assignments.none { it.hasSiblings() }
+            val isSerious = assignments.size > 1 && (allBranchesAreSingleStatement || !reportOnlyIfSingleStatement)
             return listOf(LiftState(keyword, isSerious, LiftType.LIFT_ASSIGNMENT_OUT))
         }
         return null
     }
+
+    private fun KtExpression.hasSiblings(): Boolean =
+        (parent as? KtBlockExpression)?.statements.orEmpty().size > 1
 
     private fun getState(expression: KtExpression) = analyze(expression) {
         when (expression) {

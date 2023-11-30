@@ -26,8 +26,7 @@ import java.util.Collection;
 @ApiStatus.Experimental
 public interface SymbolNavigationService {
 
-  @NotNull
-  static SymbolNavigationService getInstance() {
+  static @NotNull SymbolNavigationService getInstance() {
     return ApplicationManager.getApplication().getService(SymbolNavigationService.class);
   }
 

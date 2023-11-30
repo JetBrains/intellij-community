@@ -2,7 +2,6 @@
 // "Import function 'min'" "true"
 // ERROR: Unresolved reference: min
 // WITH_STDLIB
-/* IGNORE_FIR */
 
 package testing
 
@@ -16,7 +15,6 @@ fun testing() {
 // "Import function 'min'" "true"
 // ERROR: Unresolved reference: min
 // WITH_STDLIB
-/* IGNORE_FIR */
 
 package testing
 

@@ -3,8 +3,7 @@ package com.intellij.concurrency
 
 import com.intellij.openapi.application.impl.*
 import com.intellij.openapi.progress.*
-import com.intellij.util.concurrency.CancellationPropagationTest
-import com.intellij.util.concurrency.ThreadContextPropagationTest
+import com.intellij.util.concurrency.*
 import org.junit.platform.suite.api.SelectClasses
 import org.junit.platform.suite.api.Suite
 
@@ -16,13 +15,14 @@ import org.junit.platform.suite.api.Suite
 
   // contexts
   ContextSwitchTest::class,
-  CurrentJobTest::class,
+  BlockingContextTest::class,
   ExistingThreadContextTest::class,
   IndicatorThreadContextTest::class,
   RunBlockingCancellableTest::class,
   RunWithModalProgressBlockingTest::class,
   WithModalProgressTest::class,
   CoroutineToIndicatorTest::class,
+  CurrentThreadScopeTest::class,
 
   // rw
   CancellableReadActionWithJobTest::class,
@@ -36,5 +36,8 @@ import org.junit.platform.suite.api.Suite
   // propagation
   ThreadContextPropagationTest::class,
   CancellationPropagationTest::class,
+  AlarmContextPropagationTest::class,
+  DocumentManagerPropagationTest::class,
+  DumbServicePropagationTest::class,
 )
 class ContextAndCoroutinesSuite

@@ -27,7 +27,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -52,7 +51,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
-                                                           SearchFieldActionsContributor,
                                                            SearchEverywhereExtendedInfoProvider {
   protected static final Pattern ourPatternToDetectAnonymousClasses = Pattern.compile("([.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
@@ -237,13 +235,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       boolean everywhere = scope.isSearchInLibraries();
       ChooseByNameViewModel viewModel = new MyViewModel(myProject, model);
 
-      if (Registry.is("search.everywhere.recents")) {
-        if (provider.fetchRecents(myProject, progressIndicator, pattern, viewModel,
-                                  item -> processElement(progressIndicator, consumer, model, item.getItem(), item.getWeight()))) {
-          return;
-        }
-      }
-
       if (provider instanceof ChooseByNameInScopeItemProvider) {
         FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, scope);
         ((ChooseByNameInScopeItemProvider)provider).filterElementsWithWeights(viewModel, parameters, progressIndicator,
@@ -275,13 +266,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetchRunnable, progressIndicator);
     }
   }
-
-  @NotNull
-  @Override
-  public List<AnAction> createRightActions(@NotNull String pattern, @NotNull Runnable onChanged) {
-    return ContainerUtil.emptyList();
-  }
-
   protected boolean processElement(@NotNull ProgressIndicator progressIndicator,
                                    @NotNull Processor<? super FoundItemDescriptor<Object>> consumer,
                                    FilteringGotoByModel<?> model, Object element, int degree) {

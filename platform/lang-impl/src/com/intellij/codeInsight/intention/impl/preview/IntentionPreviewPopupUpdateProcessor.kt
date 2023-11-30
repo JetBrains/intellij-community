@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.LOADING_PREVIEW
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.NO_PREVIEW
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -30,6 +31,7 @@ import com.intellij.ui.popup.PopupPositionManager.Position.LEFT
 import com.intellij.ui.popup.PopupPositionManager.Position.RIGHT
 import com.intellij.ui.popup.PopupPositionManager.PositionAdjuster
 import com.intellij.ui.popup.PopupUpdateProcessor
+import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
@@ -100,12 +102,12 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       return
     }
 
-    val action = intentionAction as IntentionAction
+    val action = intentionAction as IntentionActionWithTextCaching
 
     component.startLoading()
 
     ReadAction.nonBlocking(
-      IntentionPreviewComputable(project, action, originalFile, originalEditor))
+      IntentionPreviewComputable(project, action.action, originalFile, originalEditor, action.problemOffset))
       .expireWith(popup)
       .coalesceBy(this)
       .finishOnUiThread(ModalityState.defaultModalityState()) { renderPreview(it) }
@@ -115,7 +117,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
   private fun adjustPosition(originalPopup: JBPopup?, checkResizing: Boolean = false) {
     if (originalPopup != null && originalPopup.content.isShowing) {
       val positionAdjuster = PositionAdjuster(originalPopup.content)
-      val previousDimension = PositionAdjuster.getPopupSize(popup)
+      val previousDimension = PopupImplUtil.getPopupSize(popup)
       val bounds: Rectangle = positionAdjuster.adjustBounds(previousDimension, arrayOf(RIGHT, LEFT))
       val popupSize = popup.size
       if (checkResizing && popupSize != null && bounds.width < MIN_WIDTH) {
@@ -271,7 +273,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                        originalFile: PsiFile,
                        originalEditor: Editor): IntentionPreviewInfo =
       ProgressManager.getInstance().runProcess<IntentionPreviewInfo>(
-        { IntentionPreviewComputable(project, action, originalFile, originalEditor).generatePreview() },
+        { IntentionPreviewComputable(project, action, originalFile, originalEditor, -1).generatePreview() },
         EmptyProgressIndicator()) ?: IntentionPreviewInfo.EMPTY
   }
 

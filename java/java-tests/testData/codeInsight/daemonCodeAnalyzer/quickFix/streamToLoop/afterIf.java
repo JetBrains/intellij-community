@@ -14,15 +14,15 @@ public class Main {
           }
       }
       if(list.size() > 2) {
-          for (String x : list) {
-              if (x != null) {
-                  if (x.startsWith("x")) {
-                      System.out.println("Ok!");
-                      break;
-                  }
-              }
-          }
-      }
+        for (String x : list) {
+            if (x != null) {
+                if (x.startsWith("x")) {
+                    System.out.println("Ok!");
+                    break;
+                }
+            }
+        }
+    }
     if(list.size() > 2) {
         boolean b = false;
         for (String x : list) {

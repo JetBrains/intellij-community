@@ -11,13 +11,13 @@ import java.util.List;
  */
 public interface PreferencesRegistry {
 
-  boolean isPossibleLeftHighlightingBrace(char c);
+  boolean isPossibleLeftHighlightingBrace(char firstLeftBraceChar);
 
-  boolean isPossibleRightHighlightingBrace(char c);
+  boolean isPossibleRightHighlightingBrace(char lastRightBraceChar);
 
-  boolean isPossibleLeftSmartTypingBrace(char c);
+  boolean isPossibleLeftSmartTypingBrace(char lastLeftBraceChar);
 
-  boolean isPossibleRightSmartTypingBrace(char c);
+  boolean isPossibleRightSmartTypingBrace(char lastRightBraceChar);
 
   /**
    * Returns preferences by scope selector.

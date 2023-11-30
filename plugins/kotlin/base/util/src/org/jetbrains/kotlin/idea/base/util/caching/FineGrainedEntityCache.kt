@@ -1,19 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.util.caching
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.assertReadAccessAllowed
-import com.intellij.openapi.application.assertWriteAccessAllowed
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -52,7 +51,7 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
 
     @RequiresReadLock
     fun values(): Collection<Value> {
-        assertReadAccessAllowed()
+        ThreadingAssertions.softAssertReadAccess()
         return useCache { it.values }
     }
 
@@ -97,9 +96,9 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
 
     protected fun invalidate(writeAccessRequired: Boolean = false) {
         if (writeAccessRequired) {
-            assertWriteAccessAllowed()
+            ThreadingAssertions.assertWriteAccess()
         } else {
-            assertReadAccessAllowed()
+            ThreadingAssertions.softAssertReadAccess()
         }
         useCache { cache ->
             doInvalidate(cache)
@@ -118,7 +117,7 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
         keys: Collection<Key>,
         validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL
     ): Collection<Value> {
-        assertWriteAccessAllowed()
+        ThreadingAssertions.assertWriteAccess()
         return useCache { cache ->
             doInvalidateKeysAndGetOutdatedValues(keys, cache).also {
                 invalidationStamp.incInvalidation()
@@ -140,7 +139,7 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
         keys: Collection<Key>,
         validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL
     ) {
-        assertWriteAccessAllowed()
+        ThreadingAssertions.assertWriteAccess()
         useCache { cache ->
             for (key in keys) {
                 cache.remove(key)
@@ -159,7 +158,7 @@ abstract class FineGrainedEntityCache<Key : Any, Value : Any>(protected val proj
         condition: (Key, Value) -> Boolean,
         validityCondition: ((Key, Value) -> Boolean)? = CHECK_ALL
     ) {
-        assertWriteAccessAllowed()
+        ThreadingAssertions.assertWriteAccess()
         useCache { cache ->
             val iterator = cache.entries.iterator()
             while (iterator.hasNext()) {
@@ -253,61 +252,61 @@ abstract class SynchronizedFineGrainedEntityCache<Key : Any, Value : Any>(
     cleanOnLowMemory: Boolean = false
 ) :
     FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
-    @Deprecated("Do not use directly", level = DeprecationLevel.ERROR)
-    override val cache: MutableMap<Key, Value> = HashMap()
+  @Deprecated("Do not use directly", level = DeprecationLevel.ERROR)
+  override val cache: MutableMap<Key, Value> = HashMap()
 
-    private val lock = Any()
+  private val lock = Any()
 
-    init {
-        if (!doSelfInitialization) {
-            initialize()
-        }
+  init {
+    if (!doSelfInitialization) {
+      initialize()
+    }
+  }
+
+  final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T {
+    checkIsInitialized()
+    return synchronized(lock) {
+      @Suppress("DEPRECATION_ERROR")
+      cache.run(block)
+    }
+  }
+
+  override fun get(key: Key): Value {
+    ThreadingAssertions.softAssertReadAccess()
+    checkKeyAndDisposeIllegalEntry(key)
+
+    useCache { cache ->
+      checkEntitiesIfRequired(cache)
+
+      cache[key]
+    }?.let { return it }
+
+    ProgressManager.checkCanceled()
+
+    val newValue = calculate(key)
+
+    if (isValidityChecksEnabled) {
+      checkValueValidity(newValue)
     }
 
-    final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T {
-        checkIsInitialized()
-        return synchronized(lock) {
-            @Suppress("DEPRECATION_ERROR")
-            cache.run(block)
-        }
-    }
+    useCache { cache ->
+      cache.putIfAbsent(key, newValue)
+    }?.let { return it }
 
-    override fun get(key: Key): Value {
-        assertReadAccessAllowed()
-        checkKeyAndDisposeIllegalEntry(key)
+    postProcessNewValue(key, newValue)
 
-        useCache { cache ->
-            checkEntitiesIfRequired(cache)
+    return newValue
+  }
 
-            cache[key]
-        }?.let { return it }
+  /**
+   * it has to be a pure function w/o side effects as a value could be recalculated
+   */
+  abstract fun calculate(key: Key): Value
 
-        ProgressManager.checkCanceled()
-
-        val newValue = calculate(key)
-
-        if (isValidityChecksEnabled) {
-            checkValueValidity(newValue)
-        }
-
-        useCache { cache ->
-            cache.putIfAbsent(key, newValue)
-        }?.let { return it }
-
-        postProcessNewValue(key, newValue)
-
-        return newValue
-    }
-
-    /**
-     * it has to be a pure function w/o side effects as a value could be recalculated
-     */
-    abstract fun calculate(key: Key): Value
-
-    /**
-     * side effect function on a newly calculated value
-     */
-    open fun postProcessNewValue(key: Key, value: Value) {}
+  /**
+   * side effect function on a newly calculated value
+   */
+  open fun postProcessNewValue(key: Key, value: Value) {}
 }
 
 abstract class SynchronizedFineGrainedValueCache<Value : Any>(project: Project, doSelfInitialization: Boolean = true, cleanOnLowMemory: Boolean = false) :
@@ -333,39 +332,39 @@ abstract class LockFreeFineGrainedEntityCache<Key : Any, Value : Any>(
     cleanOnLowMemory: Boolean
 ) :
     FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
-    @Deprecated("Do not use directly", level = DeprecationLevel.ERROR)
-    override val cache: MutableMap<Key, Value> = ConcurrentHashMap()
+  @Deprecated("Do not use directly", level = DeprecationLevel.ERROR)
+  override val cache: MutableMap<Key, Value> = ConcurrentHashMap()
 
-    init {
-        if (!doSelfInitialization) {
-            initialize()
-        }
+  init {
+    if (!doSelfInitialization) {
+      initialize()
     }
+  }
 
-    final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T {
-        checkIsInitialized()
-        @Suppress("DEPRECATION_ERROR")
-        return cache.run(block)
+  final override fun <T> useCache(block: (MutableMap<Key, Value>) -> T): T {
+    checkIsInitialized()
+    @Suppress("DEPRECATION_ERROR")
+    return cache.run(block)
+  }
+
+  override fun get(key: Key): Value {
+    ThreadingAssertions.softAssertReadAccess()
+    checkKeyAndDisposeIllegalEntry(key)
+
+    useCache { cache ->
+      checkEntitiesIfRequired(cache)
+
+      cache[key]
+    }?.let { return it }
+
+    ProgressManager.checkCanceled()
+
+    return useCache { cache ->
+      calculate(cache, key)
     }
+  }
 
-    override fun get(key: Key): Value {
-        assertReadAccessAllowed()
-        checkKeyAndDisposeIllegalEntry(key)
-
-        useCache { cache ->
-            checkEntitiesIfRequired(cache)
-
-            cache[key]
-        }?.let { return it }
-
-        ProgressManager.checkCanceled()
-
-        return useCache { cache ->
-            calculate(cache, key)
-        }
-    }
-
-    abstract fun calculate(cache: MutableMap<Key, Value>, key: Key): Value
+  abstract fun calculate(cache: MutableMap<Key, Value>, key: Key): Value
 }
 
 fun <T : WorkspaceEntity> EntityChange<T>.oldEntity() = when (this) {

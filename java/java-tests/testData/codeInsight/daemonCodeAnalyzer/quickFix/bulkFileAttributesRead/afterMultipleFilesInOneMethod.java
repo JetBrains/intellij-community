@@ -5,13 +5,13 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 class Foo {
   void printDirectory(File file1, File file2) throws IOException {
-      BasicFileAttributes readAttributes1 = Files.readAttributes(file1.toPath(), BasicFileAttributes.class);
-      if (readAttributes1.isDirectory()) {
-      System.out.println(readAttributes1.size());
+      BasicFileAttributes fileAttributes = Files.readAttributes(file1.toPath(), BasicFileAttributes.class);
+      if (fileAttributes.isDirectory()) {
+      System.out.println(fileAttributes.size());
     }
-      BasicFileAttributes readAttributes = Files.readAttributes(file2.toPath(), BasicFileAttributes.class);
-      if (readAttributes.isRegularFile()) {
-      System.out.println(readAttributes.size());
+      BasicFileAttributes basicFileAttributes = Files.readAttributes(file2.toPath(), BasicFileAttributes.class);
+      if (basicFileAttributes.isRegularFile()) {
+      System.out.println(basicFileAttributes.size());
     }
   }
 }

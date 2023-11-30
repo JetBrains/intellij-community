@@ -10,17 +10,15 @@ import org.jetbrains.annotations.Nullable;
 
 @Service
 public final class RunnerRegistry {
-  @NotNull
-  public static RunnerRegistry getInstance() {
+  public static @NotNull RunnerRegistry getInstance() {
     return ApplicationManager.getApplication().getService(RunnerRegistry.class);
   }
 
   /**
    * @deprecated Use {@link ProgramRunner#getRunner(String, RunProfile)}
    */
-  @Nullable
   @Deprecated
-  public ProgramRunner getRunner(@NotNull String executorId, @Nullable RunProfile settings) {
+  public @Nullable ProgramRunner getRunner(@NotNull String executorId, @Nullable RunProfile settings) {
     return settings == null ? null : ProgramRunner.getRunner(executorId, settings);
   }
 }

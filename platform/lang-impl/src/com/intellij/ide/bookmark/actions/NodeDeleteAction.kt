@@ -5,6 +5,7 @@ import com.intellij.ide.bookmark.BookmarkBundle
 import com.intellij.ide.bookmark.BookmarkGroup
 import com.intellij.ide.bookmark.BookmarksListProviderService
 import com.intellij.ide.bookmark.FileBookmark
+import com.intellij.ide.bookmark.ui.BookmarksView
 import com.intellij.ide.bookmark.ui.BookmarksViewState
 import com.intellij.ide.bookmark.ui.tree.FileNode
 import com.intellij.ide.bookmark.ui.tree.GroupNode
@@ -12,6 +13,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 
@@ -33,25 +35,32 @@ internal class NodeDeleteAction : DumbAwareAction() {
     val view = event.bookmarksView ?: return
     val nodes = event.bookmarkNodes ?: return
     val bookmarksViewState = event.bookmarksViewState
+    deleteSelectedNodes(bookmarksViewState, nodes, project, view)
+  }
+
+  fun deleteSelectedNodes(bookmarksViewState: BookmarksViewState?,
+                          nodes: List<AbstractTreeNode<*>>,
+                          project: Project,
+                          view: BookmarksView) {
     val shouldDelete = when {
       bookmarksViewState == null -> true
-      nodes.any { it is GroupNode || it is FileNode } -> {
+      else -> {
         if (!askBeforeDeleting(bookmarksViewState, nodes)) true
         else {
           val fileNode = nodes.any { it is FileNode }
           val title = when {
             fileNode && nodes.size == 1 -> BookmarkBundle.message("dialog.message.delete.single.node.title")
-            fileNode -> BookmarkBundle.message("dialog.message.delete.multiple.nodes.title")
             nodes.size == 1 -> BookmarkBundle.message("dialog.message.delete.single.list.title")
-            else -> BookmarkBundle.message("dialog.message.delete.multiple.lists.title")
+            nodes.all { it is GroupNode } -> BookmarkBundle.message("dialog.message.delete.multiple.lists.title")
+            else -> BookmarkBundle.message("dialog.message.delete.multiple.nodes.title")
           }
           val message = when {
             fileNode && nodes.size == 1 -> BookmarkBundle.message("dialog.message.delete.single.node",
                                                                   nodes.first().children.size,
                                                                   (nodes.first().value as FileBookmark).file.name)
-            fileNode -> BookmarkBundle.message("dialog.message.delete.multiple.nodes")
             nodes.size == 1 -> BookmarkBundle.message("dialog.message.delete.single.list", (nodes.first { it is GroupNode }.value as BookmarkGroup).name)
-            else -> BookmarkBundle.message("dialog.message.delete.multiple.lists")
+            nodes.all { it is GroupNode } -> BookmarkBundle.message("dialog.message.delete.multiple.lists")
+            else -> BookmarkBundle.message("dialog.message.delete.multiple.nodes")
           }
           MessageDialogBuilder
             .yesNo(title, message)
@@ -66,11 +75,10 @@ internal class NodeDeleteAction : DumbAwareAction() {
             .ask(project)
         }
       }
-      else -> true
     }
 
     if (shouldDelete) {
-        BookmarksListProviderService.findProvider(project) { it.canDelete(nodes) }?.performDelete(nodes, view.tree)
+      BookmarksListProviderService.findProvider(project) { it.canDelete(nodes) }?.performDelete(nodes, view.tree)
     }
   }
 

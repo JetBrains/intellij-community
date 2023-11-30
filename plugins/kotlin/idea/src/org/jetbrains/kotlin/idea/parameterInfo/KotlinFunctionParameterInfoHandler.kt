@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.lang.parameterInfo.*
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.Gray
@@ -290,16 +291,13 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
 
             if (length == 0) {
                 append(CodeInsightBundle.message("parameter.info.no.parameters"))
-            } else if (argumentIndex > SINGLE_LINE_PARAMETERS_COUNT) {
-                parameterDelimiterIndexes.forEach { offset ->
-                    val start = offset - 1
-                    val end = offset
-                    replace(start, end, "\n")
-                    if (start < boldStartOffset) boldStartOffset--
-                    if (start < boldEndOffset) boldEndOffset--
+            } else {
+                val useMultilineParameters = Registry.`is`("kotlin.multiline.function.parameters.info")
+                if (useMultilineParameters && argumentIndex > SINGLE_LINE_PARAMETERS_COUNT) {
+                    parameterDelimiterIndexes.forEach { offset ->
+                        replace(offset - 1, offset, "\n")
+                    }
                 }
-
-
             }
         }
 

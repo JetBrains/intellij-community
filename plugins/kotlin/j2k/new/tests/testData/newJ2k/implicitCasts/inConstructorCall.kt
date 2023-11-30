@@ -23,6 +23,7 @@ internal class B {
 
 internal class C(d: Double) {
     fun foo(d: Double) {}
+
     fun testAnonymousClass(i: Int) {
         Runnable {
             println(C(1.0))

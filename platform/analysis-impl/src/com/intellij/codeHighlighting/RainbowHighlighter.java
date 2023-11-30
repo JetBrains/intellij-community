@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -98,7 +84,7 @@ public class RainbowHighlighter {
   public static final TextAttributesKey RAINBOW_GRADIENT_DEMO = TextAttributesKey.createTextAttributesKey("rainbow_demo");
   public static final Boolean DEFAULT_RAINBOW_ON = Boolean.FALSE;
 
-  @NotNull private final TextAttributesScheme myColorsScheme;
+  private final @NotNull TextAttributesScheme myColorsScheme;
   private final Color @NotNull [] myRainbowColors;
 
   public RainbowHighlighter(@NotNull TextAttributesScheme colorsScheme) {
@@ -108,9 +94,8 @@ public class RainbowHighlighter {
 
   public static final HighlightInfoType RAINBOW_ELEMENT = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, DefaultLanguageHighlighterColors.CONSTANT);
 
-  @Nullable
   @Contract("_, null -> !null")
-  public static Boolean isRainbowEnabled(@Nullable TextAttributesScheme colorsScheme, @Nullable Language language) {
+  public static @Nullable Boolean isRainbowEnabled(@Nullable TextAttributesScheme colorsScheme, @Nullable Language language) {
     if (colorsScheme instanceof SchemeMetaInfo) {
       do {
         String value = ((SchemeMetaInfo)colorsScheme).getMetaProperties().getProperty(getKey(language), INHERITED);
@@ -141,8 +126,7 @@ public class RainbowHighlighter {
     }
   }
 
-  @NotNull
-  private static String getKey(@Nullable Language language) {
+  private static @NotNull String getKey(@Nullable Language language) {
     return RAINBOW_TYPE + " " + (language == null ? AnalysisBundle.message("color.settings.common.default.language") : language.getID());
   }
 
@@ -161,8 +145,7 @@ public class RainbowHighlighter {
     });
   }
 
-  @NotNull
-  public static String generatePaletteExample(@NotNull String indent) {
+  public static @NotNull String generatePaletteExample(@NotNull String indent) {
     int stopCount = RAINBOW_COLOR_KEYS.length;
     StringBuilder sb = new StringBuilder();
 
@@ -188,9 +171,8 @@ public class RainbowHighlighter {
     return sb.toString();
   }
 
-  @NotNull
   @Contract(pure = true)
-  private Color calculateForeground(int colorIndex) {
+  private @NotNull Color calculateForeground(int colorIndex) {
     return myRainbowColors[colorIndex];
   }
 
@@ -326,8 +308,7 @@ public class RainbowHighlighter {
     return colors.toArray(new Color[0]);
   }
 
-  @Nullable
-  private static Color getRainbowColorFromAttribute(@NotNull TextAttributes attributes) {
+  private static @Nullable Color getRainbowColorFromAttribute(@NotNull TextAttributes attributes) {
     return attributes.getForegroundColor();
   }
 
@@ -352,8 +333,7 @@ public class RainbowHighlighter {
     return getInfoBuilder(colorIndex, colorKey).range(start, end).create();
   }
 
-  @NotNull
-  private HighlightInfo.Builder getInfoBuilder(int colorIndex, @Nullable TextAttributesKey colorKey) {
+  private @NotNull HighlightInfo.Builder getInfoBuilder(int colorIndex, @Nullable TextAttributesKey colorKey) {
     if (colorKey == null) {
       colorKey = DefaultLanguageHighlighterColors.LOCAL_VARIABLE;
     }
@@ -367,8 +347,7 @@ public class RainbowHighlighter {
   }
 
 
-  @NotNull
-  public static TextAttributes createRainbowAttribute(@Nullable Color color) {
+  public static @NotNull TextAttributes createRainbowAttribute(@Nullable Color color) {
     TextAttributes ret = new TextAttributes();
     setRainbowColorToAttribute(ret, color);
     return ret;

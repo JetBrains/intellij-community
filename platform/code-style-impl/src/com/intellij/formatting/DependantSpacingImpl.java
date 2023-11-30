@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -19,8 +19,8 @@ public class DependantSpacingImpl extends SpacingImpl {
   private static final int DEPENDENCE_CONTAINS_LF_MASK      = 0x10;
   private static final int DEPENDENT_REGION_LF_CHANGED_MASK = 0x20;
 
-  @NotNull private final List<TextRange> myDependentRegionRanges;
-  @NotNull private final DependentSpacingRule myRule;
+  private final @NotNull List<TextRange> myDependentRegionRanges;
+  private final @NotNull DependentSpacingRule myRule;
 
   public DependantSpacingImpl(final int minSpaces,
                               final int maxSpaces,
@@ -89,8 +89,7 @@ public class DependantSpacingImpl extends SpacingImpl {
     else myFlags &= ~DEPENDENCE_CONTAINS_LF_MASK;
   }
 
-  @NotNull
-  public List<TextRange> getDependentRegionRanges() {
+  public @NotNull List<TextRange> getDependentRegionRanges() {
     return myDependentRegionRanges;
   }
 

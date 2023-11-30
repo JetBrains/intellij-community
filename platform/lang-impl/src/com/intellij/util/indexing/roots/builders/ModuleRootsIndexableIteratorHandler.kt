@@ -2,16 +2,17 @@
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.IndexableFilesIterator
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder
+import com.intellij.util.indexing.roots.origin.MutableIndexingRootHolder
 import com.intellij.util.indexing.roots.selectRootVirtualFileUrls
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.jps.entities.ModuleId
 
 class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   override fun accepts(builder: IndexableEntityProvider.IndexableIteratorBuilder): Boolean =
@@ -23,7 +24,7 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
                            entityStorage: EntityStorage): List<IndexableFilesIterator> {
     val fullIndexedModules: Set<ModuleId> = builders.mapNotNull { (it as? FullModuleContentIteratorBuilder)?.moduleId }.toSet()
 
-    val partialIteratorsMap = builders.filterIsInstance(ModuleRootsIteratorBuilder::class.java).filter {
+    val partialIteratorsMap = builders.filterIsInstance<ModuleRootsIteratorBuilder>().filter {
       !fullIndexedModules.contains(it.moduleId)
     }.groupBy { builder -> builder.moduleId }
 
@@ -32,7 +33,7 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
       !fullIndexedModules.contains(it.moduleId)
     }
 
-    val usual = builders.filterIsInstance(ModuleRootsFileBasedIteratorBuilder::class.java)
+    val usual = builders.filterIsInstance<ModuleRootsFileBasedIteratorBuilder>()
     val partialFileBasedIteratorsMap = usual.filter {
       !fullIndexedModules.contains(it.moduleId)
     }.groupBy { builder -> builder.moduleId }.toMutableMap()
@@ -59,7 +60,8 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
 
     fun <E : WorkspaceEntity> registerIterators(builder: ModuleAwareCustomizedContentEntityBuilder<E>, entityStorage: EntityStorage) {
       entityStorage.resolve(builder.moduleId)?.findModule(entityStorage)?.also { module ->
-        result.addAll(builder.customization.createModuleAwareContentIterators(module, builder.entityReference, builder.roots))
+        result.addAll(
+          IndexableEntityProviderMethods.createModuleAwareContentEntityIterators(module, builder.entityReference, builder.roots, builder.presentation))
       }
     }
 
@@ -69,8 +71,10 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   }
 
   private fun resolveRoots(builders: List<ModuleRootsIteratorBuilder>,
-                           fileBasedBuilders: List<ModuleRootsFileBasedIteratorBuilder>): List<VirtualFile> {
-    return selectRootVirtualFileUrls(builders.flatMap { it.urls }).mapNotNull { url -> url.virtualFile } +
-           fileBasedBuilders.flatMap { builder -> builder.files }
+                           fileBasedBuilders: List<ModuleRootsFileBasedIteratorBuilder>): IndexingRootHolder {
+    val rootsFromRecursiveBuilders = selectRootVirtualFileUrls(builders.flatMap { it.urls }).mapNotNull { url -> url.virtualFile }
+    val holder = fileBasedBuilders.foldRight(MutableIndexingRootHolder()) { builder, holder -> holder.addRoots(builder.files); holder }
+    holder.roots.addAll(rootsFromRecursiveBuilders)
+    return holder
   }
 }

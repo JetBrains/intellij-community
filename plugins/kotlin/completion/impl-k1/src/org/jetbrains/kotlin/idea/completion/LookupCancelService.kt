@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
@@ -12,7 +11,7 @@ import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import com.intellij.util.concurrency.ThreadingAssertions
 
 class LookupCancelService {
     internal class Reminiscence(editor: Editor, offset: Int) {
@@ -29,7 +28,7 @@ class LookupCancelService {
         }
 
         init {
-            ApplicationManager.getApplication()!!.assertIsDispatchThread()
+            ThreadingAssertions.assertEventDispatchThread()
             editor.caretModel.addCaretListener(editorListener!!)
         }
 
@@ -38,7 +37,7 @@ class LookupCancelService {
         }
 
         fun dispose() {
-            ApplicationManager.getApplication()!!.assertIsDispatchThread()
+            ThreadingAssertions.assertEventDispatchThread()
             if (marker != null) {
                 editor!!.caretModel.removeCaretListener(editorListener!!)
                 marker = null

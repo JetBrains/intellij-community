@@ -1,37 +1,61 @@
-pkg_resources.Distribution.__cmp__
-pkg_resources.Distribution.activate
-pkg_resources.Distribution.get_entry_map
-pkg_resources.EggMetadata.__init__
-pkg_resources.EggProvider.__init__
-pkg_resources.Environment.best_match
-pkg_resources.Environment.obtain
-pkg_resources.FileMetadata.__init__
+# These are used like protocols, but forgot to specify "self" as the first method param
+pkg_resources.IResourceProvider.get_resource_filename
+pkg_resources.IResourceProvider.get_resource_stream
+pkg_resources.IResourceProvider.get_resource_string
+pkg_resources.IResourceProvider.has_resource
+pkg_resources.IResourceProvider.resource_isdir
+pkg_resources.IResourceProvider.resource_listdir
 pkg_resources.IMetadataProvider.get_metadata
 pkg_resources.IMetadataProvider.get_metadata_lines
 pkg_resources.IMetadataProvider.has_metadata
 pkg_resources.IMetadataProvider.metadata_isdir
 pkg_resources.IMetadataProvider.metadata_listdir
 pkg_resources.IMetadataProvider.run_script
-pkg_resources.IResourceManager
-pkg_resources.NullProvider.__init__
-pkg_resources.Requirement.__init__
-pkg_resources.WorkingSet.find_plugins
-pkg_resources.WorkingSet.resolve
-pkg_resources.WorkingSet.subscribe
-pkg_resources.ZipProvider.__init__
-pkg_resources.declare_namespace
-pkg_resources.fixup_namespace_packages
-pkg_resources.get_entry_map
-pkg_resources.get_provider
-pkg_resources.py31compat
-pkg_resources.split_sections
-pkg_resources.to_filename
 
-# Only available on Windows
-setuptools._distutils.command.bdist_msi
+# Is always set in __init__
+pkg_resources.PathMetadata.egg_info
+pkg_resources.EggMetadata.loader
 
-# Unclear import from stdlib/sub-classing related error
-setuptools._distutils.core.Distribution.parse_config_files
+# 1 used for True as a default value
+setuptools._distutils.dist.Distribution.get_command_obj
 
-# Only present if docutils is installed
-setuptools._distutils.command.check.SilentReporter
+# Dynamically created in __init__
+setuptools._distutils.dist.Distribution.get_name
+setuptools._distutils.dist.Distribution.get_version
+setuptools._distutils.dist.Distribution.get_fullname
+setuptools._distutils.dist.Distribution.get_author
+setuptools._distutils.dist.Distribution.get_author_email
+setuptools._distutils.dist.Distribution.get_maintainer
+setuptools._distutils.dist.Distribution.get_maintainer_email
+setuptools._distutils.dist.Distribution.get_contact
+setuptools._distutils.dist.Distribution.get_contact_email
+setuptools._distutils.dist.Distribution.get_url
+setuptools._distutils.dist.Distribution.get_license
+setuptools._distutils.dist.Distribution.get_licence
+setuptools._distutils.dist.Distribution.get_description
+setuptools._distutils.dist.Distribution.get_long_description
+setuptools._distutils.dist.Distribution.get_keywords
+setuptools._distutils.dist.Distribution.get_platforms
+setuptools._distutils.dist.Distribution.get_classifiers
+setuptools._distutils.dist.Distribution.get_download_url
+setuptools._distutils.dist.Distribution.get_requires
+setuptools._distutils.dist.Distribution.get_provides
+setuptools._distutils.dist.Distribution.get_obsoletes
+
+# Private modules
+setuptools.config._validate_pyproject.*
+setuptools.command.build_py.build_py.existing_egg_info_dir
+
+# Loop variable leak
+setuptools.sandbox.AbstractSandbox.name
+
+# Vendored and modified version of stdlib's distutils. Basically implementation details
+setuptools._distutils.*
+# Other vendored code
+setuptools._vendor.*
+pkg_resources._vendor.*
+# Deprecated in favor of importlib.resources, importlib.metadata and their backports
+# So like distutils, we only add what we need to reference.
+pkg_resources.AvailableDistributions
+pkg_resources.ResourceManager
+pkg_resources.extern

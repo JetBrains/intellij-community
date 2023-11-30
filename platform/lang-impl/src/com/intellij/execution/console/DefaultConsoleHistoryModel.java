@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -17,11 +18,11 @@ import java.util.Map;
 /**
  * @author Gregory.Shrago
  */
-public class DefaultConsoleHistoryModel extends SimpleModificationTracker implements ConsoleHistoryModel {
+public final class DefaultConsoleHistoryModel extends SimpleModificationTracker implements ConsoleHistoryModel {
 
   private final static Map<String, DefaultConsoleHistoryModel> ourModels =
     ConcurrentFactoryMap.create(key -> new DefaultConsoleHistoryModel(null),
-                                   ContainerUtil::createConcurrentWeakValueMap);
+                                () -> CollectionFactory.createConcurrentWeakValueMap());
 
   public static DefaultConsoleHistoryModel createModel(String persistenceId) {
     return ourModels.get(persistenceId).copy();
@@ -73,7 +74,7 @@ public class DefaultConsoleHistoryModel extends SimpleModificationTracker implem
     super.incModificationCount();
   }
 
-  protected void resetIndex() {
+  private void resetIndex() {
     synchronized (myLock) {
       myIndex = myEntries.size();
     }

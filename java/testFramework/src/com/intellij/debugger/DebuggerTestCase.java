@@ -32,6 +32,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.execution.target.TargetedCommandLineBuilder;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.editor.Document;
@@ -49,12 +50,13 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.sun.jdi.Location;
 import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
-import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -200,14 +202,15 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       }
     };
 
+    myExecutionEnvironment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
+      .runProfile(new MockConfiguration(myProject))
+      .build();
+    DefaultDebugEnvironment debugEnvironment =
+      new DefaultDebugEnvironment(myExecutionEnvironment, myRunnableState, debugParameters, false);
+    myDebuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(debugEnvironment);
+
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
-        myExecutionEnvironment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-          .runProfile(new MockConfiguration(myProject))
-          .build();
-        DefaultDebugEnvironment debugEnvironment =
-          new DefaultDebugEnvironment(myExecutionEnvironment, myRunnableState, debugParameters, false);
-        myDebuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(debugEnvironment);
         XDebuggerManager.getInstance(myProject).startSession(myExecutionEnvironment, new XDebugProcessStarter() {
           @Override
           @NotNull
@@ -219,7 +222,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       catch (ExecutionException e) {
         LOG.error(e);
       }
-    });
+    }, ModalityState.any());
     myDebugProcess = myDebuggerSession.getProcess();
 
     myDebugProcess.addProcessListener(new ProcessAdapter() {
@@ -276,16 +279,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         .asyncAgent(true)
         .create(javaParameters);
 
-    DebuggerSession debuggerSession = UIUtil.invokeAndWaitIfNeeded(() -> {
-      try {
-        ExecutionEnvironment env = myExecutionEnvironment;
-        env.putUserData(DefaultDebugEnvironment.DEBUGGER_TRACE_MODE, getTraceMode());
-        return attachVirtualMachine(myRunnableState, env, debugParameters, false);
-      }
-      catch (ExecutionException e) {
-        throw new AssertionFailedError(e.getMessage());
-      }
-    });
+    myExecutionEnvironment.putUserData(DefaultDebugEnvironment.DEBUGGER_TRACE_MODE, getTraceMode());
+    DebuggerSession debuggerSession = attachVirtualMachine(myRunnableState, myExecutionEnvironment, debugParameters, false);
 
     final ProcessHandler processHandler = debuggerSession.getProcess().getProcessHandler();
     debuggerSession.getProcess().addProcessListener(new ProcessAdapter() {
@@ -330,27 +325,24 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   }
 
   protected DebuggerSession attachVM(final RemoteConnection remoteConnection, final boolean pollConnection) {
-    final RemoteState remoteState = new RemoteStateState(myProject, remoteConnection);
-
-    final DebuggerSession[] debuggerSession = new DebuggerSession[1];
-    UIUtil.invokeAndWaitIfNeeded(() -> {
-      try {
-        ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
-          .runProfile(new MockConfiguration(myProject))
-          .build();
-        debuggerSession[0] = attachVirtualMachine(remoteState, environment, remoteConnection, pollConnection);
-      }
-      catch (ExecutionException e) {
-        fail(e.getMessage());
-      }
-    });
-    debuggerSession[0].getProcess().getProcessHandler().addProcessListener(new ProcessAdapter() {
+    RemoteState remoteState = new RemoteStateState(myProject, remoteConnection);
+    ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
+      .runProfile(new MockConfiguration(myProject))
+      .build();
+    DebuggerSession debuggerSession = null;
+    try {
+      debuggerSession = attachVirtualMachine(remoteState, environment, remoteConnection, pollConnection);
+    }
+    catch (ExecutionException e) {
+      fail(e.getMessage());
+    }
+    debuggerSession.getProcess().getProcessHandler().addProcessListener(new ProcessAdapter() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         print(event.getText(), outputType);
       }
     });
-    return debuggerSession[0];
+    return debuggerSession;
   }
 
   protected void createBreakpoints(final String className) {
@@ -512,15 +504,23 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
                                                  ExecutionEnvironment environment,
                                                  RemoteConnection remoteConnection,
                                                  boolean pollConnection) throws ExecutionException {
-    final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject)
+    assertFalse(EDT.isCurrentThreadEdt());
+    DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject)
       .attachVirtualMachine(new DefaultDebugEnvironment(environment, state, remoteConnection, pollConnection));
-    XDebuggerManager.getInstance(myProject).startSession(environment, new XDebugProcessStarter() {
-      @Override
-      @NotNull
-      public XDebugProcess start(@NotNull XDebugSession session) {
-        return JavaDebugProcess.create(session, debuggerSession);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        XDebuggerManager.getInstance(myProject).startSession(environment, new XDebugProcessStarter() {
+          @Override
+          @NotNull
+          public XDebugProcess start(@NotNull XDebugSession session) {
+            return JavaDebugProcess.create(session, debuggerSession);
+          }
+        });
       }
-    });
+      catch (ExecutionException e) {
+        fail(e.getMessage());
+      }
+    }, ModalityState.any());
     return debuggerSession;
   }
 

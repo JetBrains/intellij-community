@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.Utils;
@@ -29,7 +28,7 @@ public final class FormsParsing {
       final Ref<Boolean> isAlien = new Ref<>(Boolean.FALSE);
       parse(in, new IXMLBuilderAdapter() {
         @Override
-        public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
+        public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) {
           if (!FORM_TAG.equalsIgnoreCase(elemName)) {
             stop();
           }
@@ -41,7 +40,7 @@ public final class FormsParsing {
         }
 
         @Override
-        public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) throws Exception {
+        public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) {
           if (UIFormXmlConstants.ATTRIBUTE_BIND_TO_CLASS.equals(key)) {
             result.set(value);
             stop();
@@ -49,7 +48,7 @@ public final class FormsParsing {
         }
 
         @Override
-        public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
+        public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) {
           stop();
         }
       });
@@ -61,87 +60,34 @@ public final class FormsParsing {
   }
 
   public static void parse(final InputStream is, final IXMLBuilder builder) {
-    try {
+    try (is) {
       parse(new MyXMLReader(is), builder);
     }
-    catch(IOException e) {
+    catch (IOException e) {
       LOG.error(e);
-    }
-    finally {
-
-      try {
-        is.close();
-      }
-      catch (IOException ignore) {
-
-      }
     }
   }
 
-  public static void parse(final IXMLReader r, final IXMLBuilder builder) {
+  public static void parse(final StdXMLReader r, final IXMLBuilder builder) {
+    StdXMLParser parser = new StdXMLParser();
+    parser.setReader(r);
+    parser.setBuilder(builder);
+    parser.setValidator(new EmptyValidator());
+    parser.setResolver(new EmptyEntityResolver());
     try {
-      final IXMLParser parser = XMLParserFactory.createDefaultXMLParser();
-      parser.setReader(r);
-      parser.setBuilder(builder);
-      parser.setValidator(new EmptyValidator());
-      parser.setResolver(new EmptyEntityResolver());
-      try {
-        parser.parse();
-      }
-      catch (XMLException e) {
-        if (e.getException() instanceof ParserStoppedException) {
-          return;
-        }
-        LOG.debug(e);
-      }
+      parser.parse();
     }
-    catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
-      LOG.error(e);
+    catch (XMLException e) {
+      if (e.getException() instanceof ParserStoppedException) {
+        return;
+      }
+      LOG.debug(e);
     }
   }
 
-  private static class EmptyValidator extends NonValidator {
-    private IXMLEntityResolver myParameterEntityResolver;
-
-    @Override
-    public void setParameterEntityResolver(IXMLEntityResolver resolver) {
-      myParameterEntityResolver = resolver;
-    }
-
-    @Override
-    public IXMLEntityResolver getParameterEntityResolver() {
-      return myParameterEntityResolver;
-    }
-
-    @Override
-    public void parseDTD(String publicID, IXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception {
-      if (!external) {
-        //super.parseDTD(publicID, reader, entityResolver, external);
-        int cnt = 1;
-        for (char ch = reader.read(); !(ch == ']' && --cnt == 0); ch = reader.read()) {
-          if (ch == '[') cnt ++;
-        }
-      }
-      else {
-        int origLevel = reader.getStreamLevel();
-
-        while (true) {
-          char ch = reader.read();
-
-          if (reader.getStreamLevel() < origLevel) {
-            reader.unread(ch);
-            return; // end external DTD
-          }
-        }
-      }
-    }
-
+  private static final class EmptyValidator extends NonValidator {
     @Override
     public void elementStarted(String name, String systemId, int lineNr) {
-    }
-
-    @Override
-    public void elementEnded(String name, String systemId, int lineNr) {
     }
 
     @Override
@@ -151,13 +97,9 @@ public final class FormsParsing {
     @Override
     public void elementAttributesProcessed(String name, Properties extraAttributes, String systemId, int lineNr) {
     }
-
-    @Override
-    public void PCDataAdded(String systemId, int lineNr)  {
-    }
   }
 
-  private static class EmptyEntityResolver implements IXMLEntityResolver {
+  private static final class EmptyEntityResolver implements IXMLEntityResolver {
     @Override
     public void addInternalEntity(String name, String value) {
     }
@@ -167,7 +109,7 @@ public final class FormsParsing {
     }
 
     @Override
-    public Reader getEntity(IXMLReader xmlReader, String name) throws XMLParseException {
+    public Reader getEntity(StdXMLReader xmlReader, String name) {
       return new StringReader("");
     }
 
@@ -177,23 +119,13 @@ public final class FormsParsing {
     }
   }
 
-  private static class MyXMLReader extends StdXMLReader {
-    private String publicId;
-    private String systemId;
-
-    MyXMLReader(final Reader documentReader) {
-      super(documentReader);
-    }
-
+  private static final class MyXMLReader extends StdXMLReader {
     MyXMLReader(InputStream stream) throws IOException {
       super(stream);
     }
 
     @Override
-    public Reader openStream(String publicId, String systemId) throws IOException {
-      this.publicId = StringUtil.isEmpty(publicId) ? null : publicId;
-      this.systemId = StringUtil.isEmpty(systemId) ? null : systemId;
-
+    public Reader openStream(String publicId, String systemId) {
       return new StringReader(" ");
     }
   }
@@ -201,39 +133,36 @@ public final class FormsParsing {
   public static class IXMLBuilderAdapter implements IXMLBuilder {
 
     @Override
-    public void startBuilding(final String systemID, final int lineNr) throws Exception {
+    public void startBuilding(final String systemID, final int lineNr) {
     }
 
     @Override
-    public void newProcessingInstruction(final String target, final Reader reader) throws Exception {
+    public void newProcessingInstruction(final String target, final Reader reader) {
 
     }
 
     @Override
-    public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr)
-        throws Exception {
+    public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) {
     }
 
     @Override
-    public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type)
-        throws Exception {
+    public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) {
     }
 
     @Override
-    public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
+    public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) {
     }
 
     @Override
-    public void endElement(final String name, final String nsPrefix, final String nsURI) throws Exception {
+    public void endElement(final String name, final String nsPrefix, final String nsURI) {
     }
 
     @Override
-    public void addPCData(final Reader reader, final String systemID, final int lineNr) throws Exception {
+    public void addPCData(final Reader reader, final String systemID, final int lineNr) {
     }
 
     @Override
-    @Nullable
-    public Object getResult() throws Exception {
+    public @Nullable Object getResult() {
       return null;
     }
 
@@ -242,9 +171,9 @@ public final class FormsParsing {
     }
   }
 
-  public static class ParserStoppedException extends RuntimeException {
+  public static final class ParserStoppedException extends RuntimeException {
     @Override
-    public Throwable fillInStackTrace() {
+    public synchronized Throwable fillInStackTrace() {
       return this;
     }
   }

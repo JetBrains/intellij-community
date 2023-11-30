@@ -72,7 +72,7 @@ public final class NumberParser extends TokenParser {
     return c >= '0' && c <= '9';
   }
 
-  private boolean isDelimiter(char c) {
+  private static boolean isDelimiter(char c) {
     return !Character.isLetter(c);
   }
 

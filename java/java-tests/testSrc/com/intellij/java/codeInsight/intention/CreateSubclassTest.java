@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -8,6 +8,7 @@ import com.intellij.ide.scratch.ScratchRootType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -27,11 +28,19 @@ public class CreateSubclassTest extends LightMultiFileTestCase {
   }
 
   public void testInnerClassImplement() {
-    doTestInner();
+    doTestIntention("Implement abstract class");
   }
 
   public void testInnerClass() {
-    doTestInner();
+    doTestIntention("Implement interface");
+  }
+
+  public void testPublicNonStaticInnerClass() {
+    doTestIntention("Create subclass");
+  }
+
+  public void testLocalClass() {
+    doTestIntention("Create subclass");
   }
 
   public void testSealed() {
@@ -49,7 +58,7 @@ public class CreateSubclassTest extends LightMultiFileTestCase {
                            "class Scrat<caret>ch { }", ScratchFileService.Option.create_if_missing);
     assertNotNull(scratch);
     myFixture.configureFromExistingVirtualFile(scratch);
-    IntentionAction intention = myFixture.findSingleIntention("Create Subclass");
+    IntentionAction intention = myFixture.findSingleIntention("Create subclass");
     assertNotNull(intention);
     intention.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
     myFixture.checkResult("""
@@ -59,14 +68,12 @@ public class CreateSubclassTest extends LightMultiFileTestCase {
                             }""");
   }
 
-  private void doTestInner() {
-    doTest(() -> {
-      PsiClass superClass = myFixture.findClass("Test");
-      final PsiClass inner = superClass.findInnerClassByName("Inner", false);
-      assertNotNull(inner);
-      CreateSubclassAction.createInnerClass(inner);
-      UIUtil.dispatchAllInvocationEvents();
-    });
+  private void doTestIntention(String hint) {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    IntentionAction action = myFixture.findSingleIntention(hint);
+    myFixture.launchAction(action);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    myFixture.checkResultByFile(getTestName(false) + ".after.java");
   }
 
   private void doTestSameFileClass() {

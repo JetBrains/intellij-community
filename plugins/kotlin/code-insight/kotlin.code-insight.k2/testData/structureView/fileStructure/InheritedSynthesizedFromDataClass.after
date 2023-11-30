@@ -1,5 +1,0 @@
--InheritedSynthesizedFromDataClass.kt
- -class TestData(a: Int)
-  a: Int
-  constructor(a: Int)
-  fun some()

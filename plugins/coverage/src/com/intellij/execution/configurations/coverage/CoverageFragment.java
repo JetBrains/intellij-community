@@ -52,12 +52,12 @@ public final class CoverageFragment<T extends RunConfigurationBase<?>> extends N
     fragments.add(exclude);
 
     fragments.add(createRunnerFragment());
-    SettingsEditorFragment<T, ?> tracing =
+    SettingsEditorFragment<T, ?> branchCoverage =
       SettingsEditorFragment.createTag("coverage.tracing", JavaCoverageBundle.message("coverage.settings.tracing"), null,
-                                       t -> getConfiguration(t).isTracingEnabled(),
-                                       (t, value) -> getConfiguration(t).setTracingEnabled(value));
-    tracing.setActionHint(JavaCoverageBundle.message("enables.accurate.collection"));
-    fragments.add(tracing);
+                                       t -> getConfiguration(t).isBranchCoverageEnabled(),
+                                       (t, value) -> getConfiguration(t).setBranchCoverage(value));
+    branchCoverage.setActionHint(JavaCoverageBundle.message("enables.accurate.collection"));
+    fragments.add(branchCoverage);
     SettingsEditorFragment<T, ?> tests =
       SettingsEditorFragment.createTag("coverage.test.folders", JavaCoverageBundle.message("coverage.settings.test.folders"), null,
                                        t -> getConfiguration(t).isTrackTestFolders(),

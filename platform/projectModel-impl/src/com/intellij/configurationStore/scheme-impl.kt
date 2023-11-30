@@ -64,6 +64,7 @@ abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(pri
                             name: String,
                             attributeProvider: (String) -> String?,
                             isBundled: Boolean = false): MUTABLE_SCHEME
+
   override fun writeScheme(scheme: MUTABLE_SCHEME): Element? = (scheme as SerializableScheme).writeScheme()
 
   open fun isSchemeFile(name: CharSequence) = true
@@ -86,7 +87,9 @@ abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(
   }
 }
 
-abstract class LazySchemeWrapper<T>(name: String, dataHolder: SchemeDataHolder<SchemeWrapper<T>>, protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
+abstract class LazySchemeWrapper<T>(name: String,
+                                    dataHolder: SchemeDataHolder<SchemeWrapper<T>>,
+                                    protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
   protected val dataHolder: AtomicReference<SchemeDataHolder<SchemeWrapper<T>>> = AtomicReference(dataHolder)
 
   final override fun writeScheme(): Element {
@@ -133,7 +136,7 @@ val LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE: Key<Boolean> = Key.create("LISTEN_VF
 
 @ApiStatus.Internal
 fun hashElement(element: Element): Long {
-  val hashStream = Hashing.komihash4_3().hashStream()
+  val hashStream = Hashing.komihash5_0().hashStream()
   hashElement(element, hashStream)
   return hashStream.asLong
 }

@@ -4,6 +4,10 @@ package com.intellij.codeInsight.navigation;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * @deprecated Use GotoTargetRendererNew instead
+ */
+@Deprecated
 final class GotoTargetActionRenderer extends DefaultListCellRenderer {
 
   @Override

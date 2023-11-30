@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
+import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -94,7 +95,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
       currentIndex = Arrays.asList(objects).indexOf(highlighted);
       if (currentIndex < 0) return;
 
-      PsiMethod currentMethod = (PsiMethod)((CandidateInfo)objects[currentIndex]).getElement();
+      PsiMethod currentMethod = MethodParameterInfoHandler.getMethodFromCandidate(objects[currentIndex]);
       int currentMethodParameterCount = currentMethod.getParameterList().getParametersCount();
       PsiExpression[] enteredExpressions = ((PsiExpressionList)exprList).getExpressions();
       int enteredCount = enteredExpressions.length;
@@ -115,7 +116,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     }
 
     final PsiMethod targetMethod =
-      (PsiMethod)((CandidateInfo)objects[(currentIndex + (mySwitchUp ? -1 : 1) + objects.length) % objects.length]).getElement();
+      MethodParameterInfoHandler.getMethodFromCandidate(objects[(currentIndex + (mySwitchUp ? -1 : 1) + objects.length) % objects.length]);
 
     updateParameterValues(editor, caret, targetMethod, exprList, lbraceOffset, enteredParameters, virtualComma);
 

@@ -2,7 +2,6 @@ package org.jetbrains.plugins.textmate.language.syntax;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.util.containers.Interner;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -25,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p/>
  * Scope name of target language can be find in syntax files of TextMate bundles.
  */
-public class TextMateSyntaxTable {
+public final class TextMateSyntaxTable {
   private static final LoggerRt LOG = LoggerRt.getInstance(TextMateSyntaxTable.class);
   private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new ConcurrentHashMap<>();
   private Object2IntMap<String> ruleIds; // guarded by this
@@ -50,7 +49,7 @@ public class TextMateSyntaxTable {
    *
    * @param scopeName Name of scope defined for some language.
    * @return root syntax rule from table for language with given scope name.
-   * If tables doesn't contain syntax rule for given scope,
+   * If tables don't contain syntax rule for given scope,
    * method returns {@link SyntaxNodeDescriptor#EMPTY_NODE}.
    */
   @NotNull
@@ -115,24 +114,32 @@ public class TextMateSyntaxTable {
     return result;
   }
 
-  @SuppressWarnings("SSBasedInspection")
   @Nullable
-  private static Int2ObjectMap<CharSequence> loadCaptures(@NotNull Plist captures, @NotNull Interner<CharSequence> interner) {
-    Int2ObjectOpenHashMap<CharSequence> result = new Int2ObjectOpenHashMap<>();
+  @SuppressWarnings("SSBasedInspection")
+  private TextMateCapture @Nullable[] loadCaptures(@NotNull Plist captures, @NotNull Interner<CharSequence> interner) {
+    Int2ObjectOpenHashMap<TextMateCapture> map = new Int2ObjectOpenHashMap<>();
+    int maxGroupIndex = -1;
     for (Map.Entry<String, PListValue> capture : captures.entries()) {
       try {
         int index = Integer.parseInt(capture.getKey());
         Plist captureDict = capture.getValue().getPlist();
-        String captureName = captureDict.getPlistValue(Constants.NAME_KEY, "").getString();
-        result.put(index, interner.intern(captureName));
+        PListValue captureName = captureDict.getPlistValue(Constants.NAME_KEY);
+        if (captureName != null) {
+          map.put(index, new TextMateCapture.Name(interner.intern(captureName.getString())));
+        }
+        else {
+          map.put(index, new TextMateCapture.Rule(loadRealNode(captureDict, null, interner)));
+        }
+        maxGroupIndex = Math.max(maxGroupIndex, index);
       }
       catch (NumberFormatException ignore) {
       }
     }
-    if (result.isEmpty()) {
+    if (maxGroupIndex < 0 || map.isEmpty()) {
       return null;
     }
-    result.trim();
+    TextMateCapture[] result = new TextMateCapture[maxGroupIndex + 1];
+    map.int2ObjectEntrySet().fastForEach(e -> result[e.getIntKey()] = e.getValue());
     return result;
   }
 

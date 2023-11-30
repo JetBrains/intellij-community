@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -45,6 +45,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.io.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -127,7 +128,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
         Document document = e.getDocument();
         final VirtualFile file = getFileDocumentManager().getFile(document);
         if (file != null && !(file instanceof LightVirtualFile) && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
-          ApplicationManager.getApplication().assertIsDispatchThread();
+          ThreadingAssertions.assertEventDispatchThread();
           myCurrentCommandHasChanges = true;
           myChangedFilesInCurrentCommand.add(file);
         }
@@ -173,7 +174,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return FileEditorManagerEx.Companion.getInstanceExIfCreated(myProject);
   }
 
-  private @NotNull static PersistentHashMap<String, Long> initRecentFilesTimestampMap(@NotNull Project project) {
+  private static @NotNull PersistentHashMap<String, Long> initRecentFilesTimestampMap(@NotNull Project project) {
     Path file = ProjectUtil.getProjectCachePath(project, "recentFilesTimeStamps.dat");
     try {
       return IOUtil.openCleanOrResetBroken(() -> createMap(file), file);
@@ -294,8 +295,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return createPlaceInfo(selectedEditorWithProvider.getFileEditor(), selectedEditorWithProvider.getProvider());
   }
 
-  private static @Nullable PlaceInfo getPlaceInfoFromFocus() {
-    FileEditor fileEditor = new FocusBasedCurrentEditorProvider().getCurrentEditor();
+  private static @Nullable PlaceInfo getPlaceInfoFromFocus(Project project) {
+    FileEditor fileEditor = new FocusBasedCurrentEditorProvider().getCurrentEditor(project);
     if (fileEditor instanceof TextEditor && fileEditor.isValid()) {
       VirtualFile file = fileEditor.getFile();
       if (file != null) {
@@ -361,7 +362,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       placeInfo = null;
     }
     if (placeInfo == null && acceptPlaceFromFocus) {
-      placeInfo = getPlaceInfoFromFocus();
+      placeInfo = getPlaceInfoFromFocus(myProject);
     }
     if (placeInfo != null && !myChangedFilesInCurrentCommand.contains(placeInfo.getFile())) {
       placeInfo = null;

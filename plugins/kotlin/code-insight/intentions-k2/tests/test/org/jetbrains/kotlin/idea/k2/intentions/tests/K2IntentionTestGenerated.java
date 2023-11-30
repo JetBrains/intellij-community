@@ -783,6 +783,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/destructuringInLambda.kt");
         }
 
+        @TestMetadata("destructuringInLoopParameter.kt")
+        public void testDestructuringInLoopParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/destructuringInLoopParameter.kt");
+        }
+
         @TestMetadata("enumType.kt")
         public void testEnumType() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/enumType.kt");
@@ -891,6 +896,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("overrideNotNullProperty.kt")
         public void testOverrideNotNullProperty() throws Exception {
             runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/overrideNotNullProperty.kt");
+        }
+
+        @TestMetadata("overrideNotNullProperty2.kt")
+        public void testOverrideNotNullProperty2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/specifyTypeExplicitly/overrideNotNullProperty2.kt");
         }
 
         @TestMetadata("overrideNullableFunction.kt")
@@ -1558,6 +1568,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToBlockBody/implicitlyNonUnitFun2.kt");
         }
 
+        @TestMetadata("implicitlyTypedFunWithUnresolvedPrimitiveType.kt")
+        public void testImplicitlyTypedFunWithUnresolvedPrimitiveType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToBlockBody/implicitlyTypedFunWithUnresolvedPrimitiveType.kt");
+        }
+
         @TestMetadata("implicitlyTypedFunWithUnresolvedType.kt")
         public void testImplicitlyTypedFunWithUnresolvedType() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToBlockBody/implicitlyTypedFunWithUnresolvedType.kt");
@@ -1581,6 +1596,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("nothingFun.kt")
         public void testNothingFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToBlockBody/nothingFun.kt");
+        }
+
+        @TestMetadata("nullableNothing.kt")
+        public void testNullableNothing() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToBlockBody/nullableNothing.kt");
         }
 
         @TestMetadata("overrideWithPlatformType.kt")
@@ -2150,6 +2170,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/anonymousFunctionInitializer3.kt");
         }
 
+        @TestMetadata("anonymousFunctionInitializerExtension.kt")
+        public void testAnonymousFunctionInitializerExtension() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/anonymousFunctionInitializerExtension.kt");
+        }
+
+        @TestMetadata("anonymousFunctionInitializerInferredType.kt")
+        public void testAnonymousFunctionInitializerInferredType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/anonymousFunctionInitializerInferredType.kt");
+        }
+
         @TestMetadata("callableInitializerExplicitTypeArguments.kt")
         public void testCallableInitializerExplicitTypeArguments() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/callableInitializerExplicitTypeArguments.kt");
@@ -2175,6 +2205,26 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/callableInitializerImplicitTypeArguments4.kt");
         }
 
+        @TestMetadata("callableReferenceExpressionInitializer.kt")
+        public void testCallableReferenceExpressionInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/callableReferenceExpressionInitializer.kt");
+        }
+
+        @TestMetadata("callableReferenceExpressionInitializer2.kt")
+        public void testCallableReferenceExpressionInitializer2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/callableReferenceExpressionInitializer2.kt");
+        }
+
+        @TestMetadata("callableReferenceExpressionInitializer3.kt")
+        public void testCallableReferenceExpressionInitializer3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/callableReferenceExpressionInitializer3.kt");
+        }
+
+        @TestMetadata("callableReferenceExpressionInitializer4.kt")
+        public void testCallableReferenceExpressionInitializer4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/callableReferenceExpressionInitializer4.kt");
+        }
+
         @TestMetadata("constantExpressionInitializer.kt")
         public void testConstantExpressionInitializer() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/constantExpressionInitializer.kt");
@@ -2185,6 +2235,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/constantExpressionInitializerVar.kt");
         }
 
+        @TestMetadata("dotQualifiedInitializer.kt")
+        public void testDotQualifiedInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/dotQualifiedInitializer.kt");
+        }
+
+        @TestMetadata("dotQualifiedInitializer2.kt")
+        public void testDotQualifiedInitializer2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/dotQualifiedInitializer2.kt");
+        }
+
         @TestMetadata("explicitTypeIsAlias.kt")
         public void testExplicitTypeIsAlias() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/explicitTypeIsAlias.kt");
@@ -2193,6 +2253,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("extensionFunction.kt")
         public void testExtensionFunction() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/extensionFunction.kt");
+        }
+
+        @TestMetadata("extensionFunction2.kt")
+        public void testExtensionFunction2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/extensionFunction2.kt");
         }
 
         @TestMetadata("funNoBody.kt")
@@ -2375,9 +2440,24 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/propertyTypeFromGetter.kt");
         }
 
+        @TestMetadata("referenceExpressionInitializer.kt")
+        public void testReferenceExpressionInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/referenceExpressionInitializer.kt");
+        }
+
+        @TestMetadata("referenceExpressionInitializer2.kt")
+        public void testReferenceExpressionInitializer2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/referenceExpressionInitializer2.kt");
+        }
+
         @TestMetadata("removeUnresolvedType.kt")
         public void testRemoveUnresolvedType() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitType/removeUnresolvedType.kt");
+        }
+
+        @TestMetadata("safeAccessInitializer.kt")
+        public void testSafeAccessInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitType/safeAccessInitializer.kt");
         }
 
         @TestMetadata("stringInitializer.kt")
@@ -2579,6 +2659,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/range.kt");
             }
 
+            @TestMetadata("returnFromNestedForLoop.kt")
+            public void testReturnFromNestedForLoop() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/returnFromNestedForLoop.kt");
+            }
+
             @TestMetadata("sequence.kt")
             public void testSequence() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/forEachIndexed/sequence.kt");
@@ -2640,6 +2725,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("parenthesizedExpression.kt")
             public void testParenthesizedExpression() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/parenthesizedExpression.kt");
+            }
+
+            @TestMetadata("returnFromNestedForLoop.kt")
+            public void testReturnFromNestedForLoop() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertForEachToForLoop/returnFromNestedForLoop.kt");
             }
 
             @TestMetadata("simple.kt")

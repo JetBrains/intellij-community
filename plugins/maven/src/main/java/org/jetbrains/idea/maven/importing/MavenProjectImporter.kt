@@ -24,23 +24,22 @@ interface MavenProjectImporter {
     fun createImporter(project: Project,
                        projectsTree: MavenProjectsTree,
                        projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
-                       importModuleGroupsRequired: Boolean,
                        modelsProvider: IdeModifiableModelsProvider,
                        importingSettings: MavenImportingSettings,
                        previewModule: Module?,
-                       importingActivity: StructuredIdeActivity): MavenProjectImporter {
+                       parentImportingActivity: StructuredIdeActivity): MavenProjectImporter {
       val importer = createImporter(project, projectsTree, projectsToImportWithChanges,
-                                    importModuleGroupsRequired, modelsProvider, importingSettings, previewModule)
+                                    modelsProvider, importingSettings, previewModule)
       return object : MavenProjectImporter {
-        override fun importProject(): List<MavenProjectsProcessorTask>? {
-          val activity = MavenImportStats.startApplyingModelsActivity(project, importingActivity)
+        override fun importProject(): List<MavenProjectsProcessorTask> {
+          val activity = MavenImportStats.startApplyingModelsActivity(project, parentImportingActivity)
           val startTime = System.currentTimeMillis()
           try {
             importingInProgress.incrementAndGet()
 
-            val postImportTasks = importer.importProject()
+            val postImportTasks = importer.importProject()!!
 
-            val statsMarker = PostImportingTaskMarker(importingActivity)
+            val statsMarker = PostImportingTaskMarker(parentImportingActivity)
             return ContainerUtil.concat(listOf(statsMarker.createStartedTask()),
                                         postImportTasks,
                                         listOf(statsMarker.createFinishedTask()))
@@ -84,7 +83,6 @@ interface MavenProjectImporter {
     private fun createImporter(project: Project,
                                projectsTree: MavenProjectsTree,
                                projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
-                               importModuleGroupsRequired: Boolean,
                                modelsProvider: IdeModifiableModelsProvider,
                                importingSettings: MavenImportingSettings,
                                previewModule: Module?): MavenProjectImporter {
@@ -95,7 +93,6 @@ interface MavenProjectImporter {
 
       return MavenProjectLegacyImporter(project, projectsTree,
                                         projectsToImportWithChanges,
-                                        importModuleGroupsRequired,
                                         modelsProvider, importingSettings,
                                         previewModule)
     }

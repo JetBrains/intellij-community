@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -58,13 +58,12 @@ final class GitPushResultNotification extends Notification {
     setDisplayId(GitNotificationIdsHolder.PUSH_RESULT);
   }
 
-  @NotNull
   @RequiresEdt
-  static GitPushResultNotification create(@NotNull Project project,
-                                          @NotNull GitPushResult pushResult,
-                                          @Nullable GitPushOperation pushOperation,
-                                          boolean multiRepoProject,
-                                          @Nullable GitUpdateInfoAsLog.NotificationData notificationData) {
+  static @NotNull GitPushResultNotification create(@NotNull Project project,
+                                                   @NotNull GitPushResult pushResult,
+                                                   @Nullable GitPushOperation pushOperation,
+                                                   boolean multiRepoProject,
+                                                   @Nullable GitUpdateInfoAsLog.NotificationData notificationData) {
     GroupedPushResult grouped = GroupedPushResult.group(pushResult.getResults());
 
     String title;
@@ -185,9 +184,7 @@ final class GitPushResultNotification extends Notification {
     return notification;
   }
 
-  @NlsContexts.NotificationContent
-  @NotNull
-  static String emulateTitle(@NotNull @Nls String title, @NotNull @Nls String content) {
+  static @NlsContexts.NotificationContent @NotNull String emulateTitle(@NotNull @Nls String title, @NotNull @Nls String content) {
     return new HtmlBuilder()
       .append(raw(title).bold()).br()
       .appendRaw(content)
@@ -294,9 +291,9 @@ final class GitPushResultNotification extends Notification {
   }
 
   private static final class ForcePushNotificationAction extends NotificationAction {
-    @NotNull private final Project myProject;
-    @NotNull private final GitPushOperation myOperation;
-    @NotNull private final List<GitRepository> myRepositories;
+    private final @NotNull Project myProject;
+    private final @NotNull GitPushOperation myOperation;
+    private final @NotNull List<GitRepository> myRepositories;
 
     private ForcePushNotificationAction(@NotNull Project project,
                                         @NotNull GitPushOperation pushOperation,

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.packaging.preloader;
 
 import com.intellij.openapi.project.Project;
@@ -12,7 +12,7 @@ import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationClassBrowser;
 
 import javax.swing.*;
 
-public class JavaFxPreloaderArtifactPropertiesEditor extends ArtifactPropertiesEditor {
+public final class JavaFxPreloaderArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private final JavaFxPreloaderArtifactProperties myProperties;
   private JPanel myPanel;
   private TextFieldWithBrowseButton myPreloaderTf;
@@ -28,9 +28,8 @@ public class JavaFxPreloaderArtifactPropertiesEditor extends ArtifactPropertiesE
     return JavaFXBundle.message("javafx.preloader.tab.name");
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     return myPanel;
   }
 
@@ -44,9 +43,8 @@ public class JavaFxPreloaderArtifactPropertiesEditor extends ArtifactPropertiesE
     myProperties.setPreloaderClass(myPreloaderTf.getText());
   }
 
-  @Nullable
   @Override
-  public String getHelpId() {
+  public @Nullable String getHelpId() {
     return "Project_Structure_Artifacts_Java_FX_tab";
   }
 

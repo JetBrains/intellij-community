@@ -23,7 +23,7 @@ import java.nio.file.Path
 import javax.swing.JComponent
 
 @SkipInHeadlessEnvironment
-@RunInEdt(allMethods = false)
+@RunInEdt(allMethods = false, writeIntent = true)
 class MarkdownEditorCreationTest {
   @TestDisposable
   lateinit var disposable: Disposable

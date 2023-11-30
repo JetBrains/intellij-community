@@ -9,7 +9,7 @@ int_and_bool = (42, True)
 expects_many_ints(int_and_bool)
 
 int_and_str = (42, 'foo')
-expects_many_ints(<warning descr="Expected type 'tuple[int, ...]', got 'tuple[int, LiteralString]' instead">int_and_str</warning>)
+expects_many_ints(<warning descr="Expected type 'tuple[int, ...]', got 'tuple[int, str]' instead">int_and_str</warning>)
 
 booleans = (True, False)  # type: Tuple[bool, ...]
 expects_many_ints(booleans)

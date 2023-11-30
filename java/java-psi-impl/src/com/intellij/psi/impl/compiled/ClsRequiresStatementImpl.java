@@ -54,7 +54,7 @@ public final class ClsRequiresStatementImpl extends ClsRepositoryPsiElement<PsiR
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.REQUIRES_STATEMENT);
     setMirror(getModifierList(), SourceTreeToPsiMap.<PsiRequiresStatement>treeToPsiNotNull(element).getModifierList());
   }

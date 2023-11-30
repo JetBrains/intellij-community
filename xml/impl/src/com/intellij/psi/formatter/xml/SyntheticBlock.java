@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.Block;
@@ -49,14 +35,12 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return calculateTextRange(mySubBlocks);
   }
 
   @Override
-  @NotNull
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     return mySubBlocks;
   }
 
@@ -215,7 +199,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
                                  myXmlFormattingPolicy.getKeepBlankLines());
   }
 
-  private boolean isEntityRef(final ASTNode node) {
+  private static boolean isEntityRef(final ASTNode node) {
     return node.getElementType() == XmlElementType.XML_ENTITY_REF || node.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF;
   }
 
@@ -225,10 +209,10 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     return myXmlFormattingPolicy.getShouldAddSpaceAroundTagName();
   }
 
-  private boolean isSpaceInText(final boolean firstIsTag,
-                                final boolean secondIsTag,
-                                final boolean firstIsText,
-                                final boolean secondIsText) {
+  private static boolean isSpaceInText(final boolean firstIsTag,
+                                       final boolean secondIsTag,
+                                       final boolean firstIsText,
+                                       final boolean secondIsText) {
     return
       (firstIsText && secondIsText)
       || (firstIsTag && secondIsTag)
@@ -249,8 +233,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(final int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(final int newChildIndex) {
     if (isOuterLanguageBlock()) return ChildAttributes.DELEGATE_TO_NEXT_CHILD;
     final List<Block> subBlocks = getSubBlocks();
     final int prevBlockIndex = newChildIndex - 1;

@@ -164,7 +164,7 @@ class CustomizeActionGroupPanel(
   private inner class AddAction(
     text: Supplier<String>,
     val block: (selected: Int, model: CollectionListModel<Any>) -> Unit
-  ) : DumbAwareAction(text, Presentation.NULL_STRING, null) {
+  ) : DumbAwareAction(text) {
     override fun actionPerformed(e: AnActionEvent) {
       val selected = list.selectedIndices?.lastOrNull() ?: (list.model.size - 1)
       val model = (list.model as CollectionListModel)
@@ -177,7 +177,6 @@ class CustomizeActionGroupPanel(
     text: Supplier<String>,
     icon: Icon
   ) : DumbAwareAction(text, Presentation.NULL_STRING, icon) {
-
     init {
       registerCustomShortcutSet(direction.shortcut, list)
     }

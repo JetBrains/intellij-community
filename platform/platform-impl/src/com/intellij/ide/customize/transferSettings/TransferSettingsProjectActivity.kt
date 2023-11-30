@@ -54,13 +54,13 @@ class TransferSettingsProjectActivity : ProjectActivity {
         notification.hideBalloon()
       }
     }))
-      .addAction(object : NotificationAction(IdeBundle.messagePointer("label.dont.show")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          notification.expire()
-          notification.setDoNotAskFor(null)
-        }
-      })
-      .notify(project)
+    .addAction(object : NotificationAction(IdeBundle.messagePointer("label.dont.show")) {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        notification.expire()
+        notification.setDoNotAskFor(null)
+      }
+    })
+    .notify(project)
   }
 
   private fun shouldNotShowBalloon(): Boolean {

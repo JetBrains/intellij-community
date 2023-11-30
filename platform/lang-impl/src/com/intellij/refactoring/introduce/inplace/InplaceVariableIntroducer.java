@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -154,7 +154,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     return new MyIntroduceLookupExpression(getInitialName(), myNameSuggestions, myElementToRename, shouldSelectAll(), myAdvertisementText);
   }
 
-  private static class MyIntroduceLookupExpression extends MyLookupExpression {
+  private static final class MyIntroduceLookupExpression extends MyLookupExpression {
     private final SmartPsiElementPointer<PsiNamedElement> myPointer;
 
     MyIntroduceLookupExpression(final String initialName,

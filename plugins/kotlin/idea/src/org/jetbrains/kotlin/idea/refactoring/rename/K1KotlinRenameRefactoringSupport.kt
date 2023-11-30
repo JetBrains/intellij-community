@@ -45,10 +45,6 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
     }
 
-    override fun checkRedeclarations(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkRedeclarations(declaration, newName, result)
-    }
-
     override fun checkOriginalUsagesRetargeting(
         declaration: KtNamedDeclaration,
         newName: String,
@@ -62,17 +58,9 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         org.jetbrains.kotlin.idea.refactoring.rename.checkNewNameUsagesRetargeting(declaration, newName, newUsages)
     }
 
-    override fun checkAccidentalPropertyOverrides(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkAccidentalPropertyOverrides(declaration, newName, result)
-    }
-
     override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {
         val descriptor = function.unsafeResolveToDescriptor() as FunctionDescriptor
         return descriptor.overriddenDescriptors.mapNotNull { it.source.getPsi() }
-    }
-
-    override fun getModuleNameSuffixForMangledName(mangledName: String): String? {
-        return KotlinTypeMapper.InternalNameMapper.getModuleNameSuffix(mangledName)
     }
 
     override fun mangleInternalName(name: String, moduleName: String): String {

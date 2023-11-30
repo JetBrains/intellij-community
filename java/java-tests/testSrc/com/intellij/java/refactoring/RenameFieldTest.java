@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.java.refactoring;
 
@@ -6,7 +6,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
@@ -121,13 +120,5 @@ public class RenameFieldTest extends LightRefactoringTestCase {
       processor.addRenamerFactory(factory);
     }
     processor.run();
-  }
-
-  public static class BranchTest extends RenameFieldTest {
-    @Override
-    protected void setUp() throws Exception {
-      super.setUp();
-      Registry.get("run.refactorings.in.model.branch").setValue(true, getTestRootDisposable());
-    }
   }
 }

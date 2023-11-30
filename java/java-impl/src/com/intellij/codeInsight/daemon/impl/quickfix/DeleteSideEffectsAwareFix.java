@@ -5,13 +5,17 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.StatementExtractor;
@@ -24,8 +28,7 @@ import java.util.Objects;
 
 public class DeleteSideEffectsAwareFix extends PsiUpdateModCommandAction<PsiStatement> {
   private final SmartPsiElementPointer<PsiExpression> myExpressionPtr;
-  private final @IntentionName String myMessage;
-  private final boolean myIsAvailable;
+  private final boolean myAlwaysAvailable;
 
   public DeleteSideEffectsAwareFix(@NotNull PsiStatement statement, PsiExpression expression) {
     this(statement, expression, false);
@@ -33,26 +36,9 @@ public class DeleteSideEffectsAwareFix extends PsiUpdateModCommandAction<PsiStat
 
   public DeleteSideEffectsAwareFix(@NotNull PsiStatement statement, PsiExpression expression, boolean alwaysAvailable) {
     super(statement);
+    myAlwaysAvailable = alwaysAvailable;
     SmartPointerManager manager = SmartPointerManager.getInstance(statement.getProject());
     myExpressionPtr = manager.createSmartPsiElementPointer(expression);
-    List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(expression);
-    if (sideEffects.isEmpty()) {
-      JavaElementKind kind = statement instanceof PsiExpressionStatement ? JavaElementKind.EXPRESSION : JavaElementKind.STATEMENT;
-      myMessage = CommonQuickFixBundle.message("fix.remove.title", kind.object());
-    }
-    else {
-      PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, expression);
-      if (statements.length == 1 && statements[0] instanceof PsiIfStatement) {
-        myMessage = QuickFixBundle.message("extract.side.effects.convert.to.if");
-      }
-      else {
-        myMessage = QuickFixBundle.message("extract.side.effects", statements.length);
-      }
-    }
-    myIsAvailable = alwaysAvailable ||
-                    // "Remove unnecessary parentheses" action is already present which will do the same
-                    sideEffects.size() != 1 || !(statement instanceof PsiExpressionStatement) ||
-                    sideEffects.get(0) != PsiUtil.skipParenthesizedExprDown(expression);
   }
 
   @Nls
@@ -63,8 +49,37 @@ public class DeleteSideEffectsAwareFix extends PsiUpdateModCommandAction<PsiStat
   }
 
   @Override
-  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiStatement element) {
-    return myIsAvailable ? Presentation.of(myMessage).withPriority(PriorityAction.Priority.LOW) : null;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiStatement statement) {
+    PsiExpression expression = myExpressionPtr.getElement();
+    if (expression == null) return null;
+    List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(expression);
+    String message = getMessage(expression, sideEffects);
+    if (!myAlwaysAvailable &&
+        // "Remove unnecessary parentheses" action is already present which will do the same
+        sideEffects.size() == 1 && statement instanceof PsiExpressionStatement &&
+        sideEffects.get(0) == PsiUtil.skipParenthesizedExprDown(expression)) {
+      return null;
+    }
+    return Presentation.of(message).withPriority(PriorityAction.Priority.LOW)
+      .withHighlighting(ContainerUtil.map2Array(sideEffects, TextRange.EMPTY_ARRAY, effect -> effect.getTextRange()));
+  }
+
+  /**
+   * @param expression expression to remove
+   * @param sideEffects side effects
+   * @return inspection message
+   */
+  @IntentionName
+  public static @NotNull String getMessage(@NotNull PsiExpression expression, @NotNull List<@NotNull PsiExpression> sideEffects) {
+    if (sideEffects.isEmpty()) {
+      JavaElementKind kind = expression.getParent() instanceof PsiExpressionStatement ? JavaElementKind.EXPRESSION : JavaElementKind.STATEMENT;
+      return CommonQuickFixBundle.message("fix.remove.title", kind.object());
+    }
+    PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, expression);
+    if (statements.length == 1 && statements[0] instanceof PsiIfStatement) {
+      return QuickFixBundle.message("extract.side.effects.convert.to.if");
+    }
+    return QuickFixBundle.message("extract.side.effects", statements.length);
   }
 
   @Override

@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import javax.swing.*;
 import java.awt.*;
 
-//todo[nik,anyone] feel free to rename this class
+//todo feel free to rename this class
 public abstract class ListCellRendererWithRightAlignedComponent<T> implements ListCellRenderer<T> {
   private final ListCellRenderer<T> myLeftRenderer;
   private final ListCellRenderer<T> myRightRenderer;

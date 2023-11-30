@@ -107,9 +107,8 @@ public class DirectoryEntry extends Entry {
     return !entriesWithUnavailableContent.isEmpty();
   }
 
-  @NotNull
   @Override
-  public DirectoryEntry copy() {
+  public @NotNull DirectoryEntry copy() {
     DirectoryEntry result = copyEntry();
     result.myChildren.ensureCapacity(myChildren.size());
     for (Entry child : myChildren) {

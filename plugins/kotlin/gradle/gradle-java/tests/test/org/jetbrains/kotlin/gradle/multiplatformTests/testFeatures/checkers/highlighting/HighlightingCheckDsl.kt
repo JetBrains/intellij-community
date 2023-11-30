@@ -17,6 +17,10 @@ interface HighlightingCheckDsl {
     var TestConfigurationDslScope.hideHighlightsBelow: HighlightSeverity
         get() = configuration.hideHighlightsBelow
         set(value) { configuration.hideHighlightsBelow = value }
+
+    var TestConfigurationDslScope.checkLibrarySources: Boolean
+        get() = configuration.checkLibrarySources
+        set(value) { configuration.checkLibrarySources = value }
 }
 
 private val TestConfigurationDslScope.configuration

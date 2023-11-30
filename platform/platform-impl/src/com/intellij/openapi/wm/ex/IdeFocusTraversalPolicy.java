@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
@@ -42,13 +42,11 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     return doFind(aContainer, aComponent, before);
   }
 
-  @Nullable
-  protected Project getProject() {
+  protected @Nullable Project getProject() {
     return null;
   }
 
-  @Nullable
-  private Component doFind(Container aContainer, Component aComponent, @Nullable Component siblingComponent) {
+  private @Nullable Component doFind(Container aContainer, Component aComponent, @Nullable Component siblingComponent) {
     if (siblingComponent == null) {
       return findFocusableComponentIn(aContainer, aComponent);
     }
@@ -68,15 +66,13 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
    * Method can return component itself if the {@code component} is legal
    * (JTextField)focusable
    */
-  @Nullable
-  public static JComponent getPreferredFocusedComponent(@NotNull JComponent component, @Nullable FocusTraversalPolicy policyToIgnore) {
+  public static @Nullable JComponent getPreferredFocusedComponent(@NotNull JComponent component, @Nullable FocusTraversalPolicy policyToIgnore) {
     return getPreferredFocusedComponent(component, policyToIgnore, null);
   }
 
-  @Nullable
-  private static JComponent getPreferredFocusedComponent(@NotNull JComponent component,
-                                                         @Nullable FocusTraversalPolicy policyToIgnore,
-                                                         @Nullable Field focusTraversalPolicyField) {
+  private static @Nullable JComponent getPreferredFocusedComponent(@NotNull JComponent component,
+                                                                   @Nullable FocusTraversalPolicy policyToIgnore,
+                                                                   @Nullable Field focusTraversalPolicyField) {
     if (!component.isVisible()) {
       return null;
     }

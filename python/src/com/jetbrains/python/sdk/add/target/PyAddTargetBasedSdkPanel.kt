@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.execution.target.IncompleteTargetEnvironmentConfiguration
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -13,6 +14,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -51,7 +53,7 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
                                private val existingSdks: List<Sdk>,
                                private val targetSupplier: Supplier<TargetEnvironmentConfiguration>?,
                                private val config: PythonLanguageRuntimeConfiguration,
-                               private val introspectable: LanguageRuntimeType.Introspectable?) {
+                               private val introspectable: LanguageRuntimeType.Introspectable?) : Disposable {
   private val mainPanel: JPanel = JPanel(JBCardLayout())
 
   private var selectedPanel: PyAddSdkView? = null
@@ -69,6 +71,7 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
       .filter { it.sdkType is PythonSdkType && it.sdkSeemsValid }
       .sortedWith(PreferredSdkComparator())
     val (panels, initiallySelectedPanel) = createPanels(sdks)
+    (panels + initiallySelectedPanel).filterIsInstance<Disposable>().forEach { Disposer.register(this, it) }
     mainPanel.add(SPLITTER_COMPONENT_CARD_PANE, createCardSplitter(panels, initiallySelectedPanel))
     return mainPanel
   }
@@ -117,14 +120,6 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
   fun doValidateAll(): List<ValidationInfo> = selectedPanel?.validateAll() ?: emptyList()
 
   fun getOrCreateSdk(): Sdk? = selectedPanel?.getOrCreateSdk()
-
-  /**
-   * This method is executed after clicking "Finish" button on the last step of the wizard.
-   *
-   * The provided target [configuration] is expected to be saved within the newly created Python SDK.
-   */
-  fun getOrCreateSdk(configuration: TargetEnvironmentConfiguration): Sdk? =
-    (selectedPanel as? PyAddTargetBasedSdkView)?.getOrCreateSdk(configuration)
 
   private fun createCardSplitter(panels: List<PyAddSdkView>, initiallySelectedPanel: PyAddSdkView): Splitter {
     this.panels = panels
@@ -191,6 +186,8 @@ class PyAddTargetBasedSdkPanel(private val project: Project?,
       return
     }
   }
+
+  override fun dispose() = Unit
 
   companion object {
     private fun allowCreatingNewEnvironments(project: Project?) =

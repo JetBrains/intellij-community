@@ -1,24 +1,26 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
-import com.intellij.platform.workspace.jps.UnloadedModulesNameHolder
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.tests.checkConsistency
+import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.workspaceModel.ide.impl.jps.serialization.*
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity
-import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-import com.intellij.platform.workspace.storage.toBuilder
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.SerializationContextForTests
+import com.intellij.workspaceModel.ide.impl.jps.serialization.TestErrorReporter
+import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.junit.*
@@ -98,10 +100,12 @@ class ImlReplaceBySourceTest {
     builder = before.toBuilder()
     builder.replaceBySource({ true }, replaceWith.toSnapshot())
 
-    val changes = builder.collectChanges(before).values.flatten()
-    Assert.assertEquals(5, changes.size)
+    val changes = builder.collectChanges().values.flatten()
+    Assert.assertEquals(6, changes.size)
 
-    val moduleChange = changes.filterIsInstance<EntityChange.Replaced<ModuleEntity>>().single()
+    @Suppress("UNCHECKED_CAST")
+    val moduleChange = changes.filterIsInstance<EntityChange.Replaced<*>>()
+      .single { it.newEntity is ModuleEntity } as EntityChange.Replaced<ModuleEntity>
     Assert.assertEquals(3, moduleChange.oldEntity.dependencies.size)
     Assert.assertEquals(2, moduleChange.newEntity.dependencies.size)
 
@@ -133,7 +137,7 @@ class ImlReplaceBySourceTest {
     storageBuilder1.replaceBySource(sourceFilter = { true }, replaceWith = storageBuilder2.toSnapshot())
     storageBuilder1.checkConsistency()
 
-    val changes = storageBuilder1.collectChanges(before)
+    val changes = storageBuilder1.collectChanges()
     Assert.assertTrue(changes.toString(), changes.isEmpty())
   }
 

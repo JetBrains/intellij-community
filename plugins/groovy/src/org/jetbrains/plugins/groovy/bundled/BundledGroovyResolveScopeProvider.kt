@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.bundled
 
 import com.intellij.openapi.module.impl.scopes.JdkScope
@@ -20,7 +20,7 @@ class BundledGroovyResolveScopeProvider : ResolveScopeEnlarger() {
     }
 
     val rootFile = VfsUtil.getRootFile(file)
-    if (rootFile == bundledGroovyJarRoot) {
+    if (rootFile == bundledGroovyJarRoot.get()) {
       val scope = createBundledGroovyScope(project) ?: return null
       val sdk = ProjectRootManager.getInstance(project).projectSdk ?: return null
       val jdkScope = JdkScope(project, sdk.rootProvider.getFiles(OrderRootType.CLASSES), sdk.rootProvider.getFiles(OrderRootType.SOURCES), sdk.name)

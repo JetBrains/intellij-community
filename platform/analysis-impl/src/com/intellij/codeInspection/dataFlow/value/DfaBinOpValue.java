@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -51,13 +51,11 @@ public final class DfaBinOpValue extends DfaValue {
     myOp = op;
   }
 
-  @NotNull
-  public DfaVariableValue getLeft() {
+  public @NotNull DfaVariableValue getLeft() {
     return myLeft;
   }
 
-  @NotNull
-  public DfaValue getRight() {
+  public @NotNull DfaValue getRight() {
     return myRight;
   }
 
@@ -66,9 +64,8 @@ public final class DfaBinOpValue extends DfaValue {
     return factory.getBinOpFactory().doCreate(myLeft.bindToFactory(factory), myRight.bindToFactory(factory), myType, myOp);
   }
 
-  @NotNull
   @Override
-  public DfIntegralType getDfType() {
+  public @NotNull DfIntegralType getDfType() {
     return myType;
   }
 
@@ -141,8 +138,7 @@ public final class DfaBinOpValue extends DfaValue {
       return myFactory.fromDfType(resType);
     }
 
-    @Nullable
-    private DfaValue doCreate(DfaValue left, DfaValue right, DfaMemoryState state, DfIntegralType resultType, LongRangeBinOp op) {
+    private @Nullable DfaValue doCreate(DfaValue left, DfaValue right, DfaMemoryState state, DfIntegralType resultType, LongRangeBinOp op) {
       if (op != LongRangeBinOp.PLUS && op != LongRangeBinOp.MINUS && op != LongRangeBinOp.MOD) return null;
       DfType leftDfType = state.getDfType(left);
       Number leftConst = leftDfType.getConstantOfType(Number.class);
@@ -272,8 +268,7 @@ public final class DfaBinOpValue extends DfaValue {
       return false;
     }
 
-    @NotNull
-    private DfaBinOpValue doCreate(DfaVariableValue left, DfaValue right, DfIntegralType resultType, LongRangeBinOp op) {
+    private @NotNull DfaBinOpValue doCreate(DfaVariableValue left, DfaValue right, DfIntegralType resultType, LongRangeBinOp op) {
       long hash = ((long)left.getID() << 32) | right.getID();
       Key key = new Key(hash, op, resultType);
       return myValues.computeIfAbsent(key, k -> new DfaBinOpValue(left, right, resultType, op));

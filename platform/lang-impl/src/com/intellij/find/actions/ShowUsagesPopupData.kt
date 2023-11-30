@@ -9,7 +9,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.usages.UsageView
-import com.intellij.usages.impl.UsageViewStatisticsCollector.Companion.logOpenInFindToolWindow
+import com.intellij.usages.impl.UsageViewStatisticsCollector.logOpenInFindToolWindow
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JTable

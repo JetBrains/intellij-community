@@ -1,4 +1,5 @@
 import org.jetbrains.annotations.Nullable;
+import java.io.File;
 import java.util.*;
 
 class A {
@@ -58,4 +59,10 @@ class A {
             anonymousLocal2 = (I) i;
         }
     }
+
+    // platform type
+    public String s1 = File.separator;
+    protected String s2 = File.separator;
+    String s3 = File.separator;
+    private String s4 = File.separator;
 }

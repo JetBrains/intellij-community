@@ -20,7 +20,7 @@ enum class TransferableIdeVersionId {
 
 enum class TransferableLafId {
   Light,
-  Darcula,
+  Dark,
   HighContrast
 }
 
@@ -33,6 +33,7 @@ enum class TransferableKeymapId {
 }
 
 enum class TransferableIdeFeatureId {
+  AiAssistant,
   CSharp,
   ChineseLanguage,
   Dart,
@@ -48,7 +49,9 @@ enum class TransferableIdeFeatureId {
   Gradle,
   IdeaVim,
   Ideolog,
+  JapaneseLanguage,
   Java,
+  KoreanLanguage,
   Kotlin,
   Kubernetes,
   LanguageSupport,
@@ -56,21 +59,31 @@ enum class TransferableIdeFeatureId {
   Lombok,
   Maven,
   Monokai,
-  NodeJsSupport,
   NuGet,
   Prettier,
   ReSharper,
   RunConfigurations,
-  RustSupport,
   Scala,
+  Rust,
   Solarized,
   SpellChecker,
   TeamCity,
   TestExplorer,
+  Toml,
   TsLint,
   Unity,
   Vue,
   WebSupport,
   Wsl,
   XamlStyler
+}
+
+object TransferableSections {
+  val laf = "LAF"
+  val keymap = "Keymap"
+  val plugins = "Plugins"
+  val recentProjects = "RecentProjects"
+  val syntaxScheme = "SyntaxScheme"
+
+  val types = listOf(laf, keymap, plugins, recentProjects, syntaxScheme)
 }

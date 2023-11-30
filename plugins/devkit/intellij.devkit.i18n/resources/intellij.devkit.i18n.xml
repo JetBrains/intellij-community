@@ -32,7 +32,5 @@
                      implementationClass="org.jetbrains.idea.devkit.i18n.DevKitPropertiesMessageValidationInspection"
                      key="inspection.dev.kit.properties.message.validation.display.name"/>
     <inspectionElementsMerger implementation="org.jetbrains.idea.devkit.i18n.DevKitPropertiesMessageValidationInspectionMerger"/>
-
-    <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.i18n.IntentionsImplicitPropertyUsageProvider"/>
   </extensions>
 </idea-plugin>

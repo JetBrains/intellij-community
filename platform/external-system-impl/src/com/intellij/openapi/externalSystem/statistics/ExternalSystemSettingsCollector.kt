@@ -12,10 +12,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import java.util.*
 
-class ExternalSystemSettingsCollector : ProjectUsagesCollector() {
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+internal class ExternalSystemSettingsCollector : ProjectUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val usages = mutableSetOf<MetricEvent>()
@@ -48,17 +46,15 @@ class ExternalSystemSettingsCollector : ProjectUsagesCollector() {
     return usages
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("build.tools.state", 5)
-    private val AUTO_RELOAD_TYPE = GROUP.registerEvent("autoReloadType",
-                                                       EventFields.Enum("value",
-                                                                        ExternalSystemProjectTrackerSettings.AutoReloadType::class.java) {
-                                                         it.name.lowercase(Locale.ENGLISH)
-                                                       })
-    private val EXTERNAL_SYSTEM_ID = EventFields.StringValidatedByEnum("externalSystemId", "build_tools")
-    private val NUMBER_OF_LINKED_PROJECT = GROUP.registerEvent("numberOfLinkedProject", EventFields.Count, EXTERNAL_SYSTEM_ID)
-    private val USE_QUALIFIED_MODULE_NAMES = GROUP.registerEvent("useQualifiedModuleNames", EventFields.Enabled, EXTERNAL_SYSTEM_ID)
-    private val MODULES_COUNT = GROUP.registerEvent("modules.count", EventFields.RoundedInt("count_rounded"), EXTERNAL_SYSTEM_ID)
-    private val HAS_SHARED_SOURCES = GROUP.registerEvent("has.shared.sources", EventFields.Enabled)
-  }
+  private val GROUP = EventLogGroup("build.tools.state", 5)
+  private val AUTO_RELOAD_TYPE = GROUP.registerEvent("autoReloadType",
+                                                     EventFields.Enum("value",
+                                                                      ExternalSystemProjectTrackerSettings.AutoReloadType::class.java) {
+                                                       it.name.lowercase(Locale.ENGLISH)
+                                                     })
+  private val EXTERNAL_SYSTEM_ID = EventFields.StringValidatedByEnum("externalSystemId", "build_tools")
+  private val NUMBER_OF_LINKED_PROJECT = GROUP.registerEvent("numberOfLinkedProject", EventFields.Count, EXTERNAL_SYSTEM_ID)
+  private val USE_QUALIFIED_MODULE_NAMES = GROUP.registerEvent("useQualifiedModuleNames", EventFields.Enabled, EXTERNAL_SYSTEM_ID)
+  private val MODULES_COUNT = GROUP.registerEvent("modules.count", EventFields.RoundedInt("count_rounded"), EXTERNAL_SYSTEM_ID)
+  private val HAS_SHARED_SOURCES = GROUP.registerEvent("has.shared.sources", EventFields.Enabled)
 }

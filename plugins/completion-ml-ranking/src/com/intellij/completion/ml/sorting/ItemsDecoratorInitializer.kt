@@ -19,7 +19,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -70,7 +70,7 @@ class ItemsDecoratorInitializer : LookupTracker() {
     }
 
     private fun shouldShowStarNotification(): Boolean = Registry.`is`(SHOW_STAR_NOTIFICATION_REGISTRY, true) &&
-                                                        ApplicationInfoEx.getInstanceEx().isEAP
+                                                        ApplicationInfo.getInstance().isEAP
 
     private fun showStarNotificationIfNeeded() {
       val properties = PropertiesComponent.getInstance()
@@ -89,10 +89,13 @@ class ItemsDecoratorInitializer : LookupTracker() {
   override fun lookupCreated(lookup: LookupImpl, storage: MutableLookupStorage) {
     if (shouldShowDiff(storage) || shouldShowRelevant(storage)) {
       lookup.addPresentationCustomizer(object : LookupCellRenderer.ItemPresentationCustomizer {
+        val shouldShowRelevant: Boolean
+          get() = lookup.getUserData(HAS_RELEVANT_KEY) ?: false
+        val shouldShowDiff: Boolean
+          get() = lookup.getUserData(POSITION_CHANGED_KEY) ?: false
+
         override fun customizePresentation(item: LookupElement,
                                            presentation: LookupElementPresentation): LookupElementPresentation {
-          val shouldShowRelevant = lookup.getUserData(HAS_RELEVANT_KEY) ?: false
-          val shouldShowDiff = lookup.getUserData(POSITION_CHANGED_KEY) ?: false
           if (!shouldShowRelevant && !shouldShowDiff) return presentation
 
           val isRelevant = item.getUserData(IS_RELEVANT_KEY) ?: false
@@ -108,6 +111,9 @@ class ItemsDecoratorInitializer : LookupTracker() {
           newPresentation.icon = LeftDecoratedIcon(decorationIcon, newPresentation.icon)
           return newPresentation
         }
+
+        override fun customizeEmptyIcon(emptyIcon: Icon): Icon =
+          if (!shouldShowRelevant && !shouldShowDiff) emptyIcon else LeftDecoratedIcon(EMPTY_ICON, emptyIcon)
       })
     }
   }

@@ -1,34 +1,49 @@
+from _typeshed import Incomplete, Unused
 from collections.abc import Generator
-from typing import Any
+from typing import overload
+from typing_extensions import Literal
 
 from openpyxl.descriptors import Strict
+from openpyxl.descriptors.base import MinMax, String, _ConvertibleToInt
 
 class DummyWorksheet:
-    title: Any
-    def __init__(self, title) -> None: ...
+    title: str
+    def __init__(self, title: str) -> None: ...
 
 class Reference(Strict):
-    min_row: Any
-    max_row: Any
-    min_col: Any
-    max_col: Any
-    range_string: Any
-    worksheet: Any
+    min_row: MinMax[int, Literal[False]]
+    max_row: MinMax[int, Literal[False]]
+    min_col: MinMax[int, Literal[False]]
+    max_col: MinMax[int, Literal[False]]
+    range_string: String[Literal[True]]
+    worksheet: Incomplete | None
+    @overload
     def __init__(
         self,
-        worksheet: Any | None = ...,
-        min_col: Any | None = ...,
-        min_row: Any | None = ...,
-        max_col: Any | None = ...,
-        max_row: Any | None = ...,
-        range_string: Any | None = ...,
+        *,
+        worksheet: Unused = None,
+        min_col: Unused = None,
+        min_row: Unused = None,
+        max_col: Unused = None,
+        max_row: Unused = None,
+        range_string: str,
     ) -> None: ...
-    def __len__(self): ...
+    @overload
+    def __init__(
+        self,
+        worksheet: Incomplete | None,
+        min_col: _ConvertibleToInt,
+        min_row: _ConvertibleToInt,
+        max_col: _ConvertibleToInt | None = None,
+        max_row: _ConvertibleToInt | None = None,
+        range_string: str | None = None,
+    ) -> None: ...
+    def __len__(self) -> int: ...
     def __eq__(self, other): ...
     @property
-    def rows(self) -> Generator[Any, None, None]: ...
+    def rows(self) -> Generator[Reference, None, None]: ...
     @property
-    def cols(self) -> Generator[Any, None, None]: ...
+    def cols(self) -> Generator[Reference, None, None]: ...
     def pop(self): ...
     @property
-    def sheetname(self): ...
+    def sheetname(self) -> str: ...

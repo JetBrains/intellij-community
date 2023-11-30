@@ -29,10 +29,11 @@ UFile (package = )
                         ULambdaExpression
                             UParameter (name = it)
                             UBlockExpression
-                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
-                                    UIdentifier (Identifier (println))
-                                    USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
-                                    USimpleNameReferenceExpression (identifier = it)
+                                UReturnExpression
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                        UIdentifier (Identifier (println))
+                                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
+                                        USimpleNameReferenceExpression (identifier = it)
                 UQualifiedReferenceExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (listOf))

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.pointer.JsonPointerPosition;
@@ -22,14 +22,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker.areSchemaTypesCompatible;
 
-public class JsonSchemaResolver {
-  @NotNull private final Project myProject;
-  @NotNull private final JsonSchemaObject mySchema;
-  @NotNull private final JsonPointerPosition myPosition;
+public final class JsonSchemaResolver {
+  private final @NotNull Project myProject;
+  private final @NotNull JsonSchemaObject mySchema;
+  private final @NotNull JsonPointerPosition myPosition;
 
   public JsonSchemaResolver(@NotNull Project project,
                             @NotNull JsonSchemaObject schema,
@@ -50,8 +49,7 @@ public class JsonSchemaResolver {
     return MatchResult.create(node);
   }
 
-  @NotNull
-  public Collection<JsonSchemaObject> resolve() {
+  public @NotNull Collection<JsonSchemaObject> resolve() {
     final MatchResult result = detailedResolve();
     final List<JsonSchemaObject> list = new LinkedList<>();
     list.addAll(result.mySchemas);
@@ -61,8 +59,7 @@ public class JsonSchemaResolver {
     return list;
   }
 
-  @Nullable
-  public PsiElement findNavigationTarget(@Nullable final PsiElement element) {
+  public @Nullable PsiElement findNavigationTarget(final @Nullable PsiElement element) {
     final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder
       .buildTree(myProject, mySchema, myPosition, true);
     final JsonSchemaObject schema = selectSchema(node, element, myPosition.isEmpty());
@@ -75,10 +72,9 @@ public class JsonSchemaResolver {
     return walker == null ? null : resolvePosition(walker, psiFile, JsonPointerPosition.parsePointer(schema.getPointer()));
   }
 
-  @Nullable
-  private static PsiElement resolvePosition(@NotNull JsonLikePsiWalker walker,
-                                            @Nullable PsiElement element,
-                                            @NotNull JsonPointerPosition position) {
+  private static @Nullable PsiElement resolvePosition(@NotNull JsonLikePsiWalker walker,
+                                                      @Nullable PsiElement element,
+                                                      @NotNull JsonPointerPosition position) {
     PsiElement psiElement = element instanceof PsiFile ? ContainerUtil.getFirstItem(walker.getRoots((PsiFile)element)) : element;
     if (psiElement == null) return null;
     JsonValueAdapter value = walker.createValueAdapter(psiElement);
@@ -135,22 +131,19 @@ public class JsonSchemaResolver {
     return propertyNameElement == null ? delegate : propertyNameElement;
   }
 
-  @Nullable
-  private static JsonValueAdapter getValue(@NotNull JsonPropertyAdapter property) {
+  private static @Nullable JsonValueAdapter getValue(@NotNull JsonPropertyAdapter property) {
     Collection<JsonValueAdapter> values = property.getValues();
     return values.size() == 1 ? values.iterator().next() : null;
   }
 
-  @Nullable
-  private static JsonPropertyAdapter findProperty(@NotNull JsonObjectValueAdapter value, @NotNull String name) {
+  private static @Nullable JsonPropertyAdapter findProperty(@NotNull JsonObjectValueAdapter value, @NotNull String name) {
     List<JsonPropertyAdapter> list = value.getPropertyList();
     return ContainerUtil.find(list, p -> name.equals(p.getName()));
   }
 
-  @Nullable
-  private JsonSchemaObject selectSchema(@NotNull final JsonSchemaTreeNode resolveRoot,
-                                        @Nullable final PsiElement element,
-                                        boolean topLevelSchema) {
+  private @Nullable JsonSchemaObject selectSchema(final @NotNull JsonSchemaTreeNode resolveRoot,
+                                                  final @Nullable PsiElement element,
+                                                  boolean topLevelSchema) {
     final MatchResult matchResult = MatchResult.create(resolveRoot);
     List<JsonSchemaObject> schemas = new ArrayList<>(matchResult.mySchemas);
     schemas.addAll(matchResult.myExcludingSchemas.stream().flatMap(Collection::stream).toList());
@@ -190,12 +183,11 @@ public class JsonSchemaResolver {
     return schemaRef.get();
   }
 
-  @Nullable
-  private static JsonSchemaObject getFirstValidSchema(List<JsonSchemaObject> schemas) {
+  private static @Nullable JsonSchemaObject getFirstValidSchema(List<JsonSchemaObject> schemas) {
     return schemas.stream().findFirst().orElse(null);
   }
 
-  private boolean isCorrect(@NotNull final JsonValueAdapter value, @NotNull final JsonSchemaObject schema) {
+  private boolean isCorrect(final @NotNull JsonValueAdapter value, final @NotNull JsonSchemaObject schema) {
     final JsonSchemaType type = JsonSchemaType.getType(value);
     if (type == null) return true;
     if (!areSchemaTypesCompatible(schema, type)) return false;

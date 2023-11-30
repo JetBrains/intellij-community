@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.*;
@@ -11,7 +10,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -71,7 +69,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     myProject = project;
 
     SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         if (LOG.isTraceEnabled()) {
@@ -226,7 +224,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   private void queueTasks(@NotNull List<? extends Runnable> actions, @NotNull @NonNls String reason) {
     actions.forEach(myTasks::offer);
     DumbModeTask task = new MyDumbModeTask(reason, this);
-    myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    myProject.getMessageBus().connect(task).subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         for (RootsChangeRescanningInfo info : ((ModuleRootEventImpl)event).getInfos()) {
@@ -354,52 +352,30 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   public static void scanProject(@NotNull Project project,
                                  @NotNull Function<? super Module, ? extends ContentIteratorEx> iteratorProducer) {
     Stream<Runnable> tasksStream;
-    if (StandardContributorsKt.shouldIndexProjectBasedOnIndexableEntityProviders()) {
-      Sequence<ModuleEntity> modulesSequence = ReadAction.compute(() ->
-                                                                    WorkspaceModel.getInstance(project).getCurrentSnapshot().entities(ModuleEntity.class));
-      List<ModuleEntity> moduleEntities = SequencesKt.toList(modulesSequence);
-      IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
-      tasksStream = moduleEntities.stream()
-        .flatMap(moduleEntity -> {
-          return ReadAction.compute(() -> {
-            EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
-            Module module = ModuleEntityUtils.findModule(moduleEntity, storage);
-            if (module == null) {
-              return Stream.empty();
-            }
-            ProgressManager.checkCanceled();
-            return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, project),
-                                     it -> new Object() {
-                                       final IndexableFilesIterator files = it;
-                                       final ContentIteratorEx iterator = iteratorProducer.apply(module);
-                                     })
-              .stream()
-              .map(pair -> (Runnable)() -> {
-                pair.files.iterateFiles(project, pair.iterator, indexableFilesDeduplicateFilter);
-              });
-          });
+    Sequence<ModuleEntity> modulesSequence = ReadAction.compute(() ->
+                                                                  WorkspaceModel.getInstance(project).getCurrentSnapshot().entities(ModuleEntity.class));
+    List<ModuleEntity> moduleEntities = SequencesKt.toList(modulesSequence);
+    IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
+    tasksStream = moduleEntities.stream()
+      .flatMap(moduleEntity -> {
+        return ReadAction.compute(() -> {
+          EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
+          Module module = ModuleEntityUtils.findModule(moduleEntity, storage);
+          if (module == null) {
+            return Stream.empty();
+          }
+          ProgressManager.checkCanceled();
+          return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, project),
+                                   it -> new Object() {
+                                     final IndexableFilesIterator files = it;
+                                     final ContentIteratorEx iterator = iteratorProducer.apply(module);
+                                   })
+            .stream()
+            .map(pair -> (Runnable)() -> {
+              pair.files.iterateFiles(project, pair.iterator, indexableFilesDeduplicateFilter);
+            });
         });
-    }
-    else {
-      Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
-      IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
-      tasksStream = Arrays.stream(modules)
-        .flatMap(module -> {
-          return ReadAction.compute(() -> {
-            if (module.isDisposed()) return Stream.empty();
-            ProgressManager.checkCanceled();
-            //noinspection deprecation
-            return ContainerUtil.map(ModuleIndexableFilesIteratorImpl.getModuleIterators(module), it -> new Object() {
-                final IndexableFilesIterator files = it;
-                final ContentIteratorEx iterator = iteratorProducer.apply(it.getOrigin().getModule());
-              })
-              .stream()
-              .map(pair -> (Runnable)() -> {
-                pair.files.iterateFiles(project, pair.iterator, indexableFilesDeduplicateFilter);
-              });
-          });
-        });
-    }
+      });
     List<Runnable> tasks = tasksStream.collect(Collectors.toList());
     invokeConcurrentlyIfPossible(tasks);
   }
@@ -484,7 +460,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     return ContainerUtil.findAll(FilePropertyPusher.EP_NAME.getExtensionList(), pusher -> !pusher.pushDirectoriesOnly());
   }
 
-  private static class MyDumbModeTask extends DumbModeTask {
+  private static final class MyDumbModeTask extends DumbModeTask {
     private final @NotNull @NonNls String myReason;
     private final PushedFilePropertiesUpdaterImpl myUpdater;
 

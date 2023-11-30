@@ -442,4 +442,8 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUninitializedVarComplexTernary() {
     doTest(false);
   }
+
+  public void testArrayInitBeforeSuper() {
+    doTest(false);
+  }
 }

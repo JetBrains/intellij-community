@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml.stub;
 
 import com.intellij.lang.ASTNode;
@@ -27,27 +27,23 @@ public class XmlStubBasedAttributeElementType
     stub.serialize(dataStream);
   }
 
-  @NotNull
   @Override
-  public XmlAttributeStubImpl deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull XmlAttributeStubImpl deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new XmlAttributeStubImpl(parentStub, dataStream, this);
   }
 
   @Override
-  @NotNull
-  public XmlStubBasedAttribute createPsi(@NotNull XmlAttributeStubImpl stub) {
+  public @NotNull XmlStubBasedAttribute createPsi(@NotNull XmlAttributeStubImpl stub) {
     return new XmlStubBasedAttribute(stub, this);
   }
 
   @Override
-  @NotNull
-  public XmlStubBasedAttribute createPsi(@NotNull ASTNode node) {
+  public @NotNull XmlStubBasedAttribute createPsi(@NotNull ASTNode node) {
     return new XmlStubBasedAttribute(node);
   }
 
-  @NotNull
   @Override
-  public XmlAttributeStubImpl createStub(@NotNull XmlStubBasedAttribute psi, StubElement parentStub) {
+  public @NotNull XmlAttributeStubImpl createStub(@NotNull XmlStubBasedAttribute psi, StubElement parentStub) {
     return new XmlAttributeStubImpl(psi, parentStub, this);
   }
 

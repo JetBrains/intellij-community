@@ -14,6 +14,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -62,12 +63,52 @@ class GradleHighlightingTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
+  fun testActionDelegate(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      fixture.enableInspections(GrUnresolvedAccessInspection::class.java)
+      testHighlighting("""
+        tasks.register('jc', Jar) {
+            archiveBaseName
+        }
+      """.trimIndent())
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNamedApplication(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      fixture.enableInspections(GrUnresolvedAccessInspection::class.java)
+      fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
+      testHighlighting("""
+        tasks.named("compileJava", JavaCompile) {
+        }
+      """.trimIndent())
+    }
+  }
+
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
   fun testGeneratedSetter2(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
       fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
       testHighlighting("""
         tasks.register('jc', Jar) {
             archiveBaseName = 'abcde'
+        }
+      """.trimIndent())
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testGeneratedSetter3(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      fixture.enableInspections(GroovyAssignabilityCheckInspection::class.java)
+      testHighlighting("""
+        tasks.withType(JavaCompile).configureEach {
+            options.verbose = true
         }
       """.trimIndent())
     }

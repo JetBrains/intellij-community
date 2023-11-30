@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
@@ -50,7 +50,9 @@ public class RedundantExplicitCloseInspection extends AbstractBaseJavaLocalInspe
                        EquivalenceChecker.getCanonicalPsiEquivalence()
                          .expressionsAreEquivalent(reference, ((PsiResourceExpression)element).getExpression()));
           if(!isReferenceToResourceVariable) return;
-          holder.registerProblem(last, JavaBundle.message("inspection.redundant.explicit.close"), new DeleteElementFix(last, CommonQuickFixBundle.message("fix.remove.redundant", "close()")));
+          holder.problem(last, JavaBundle.message("inspection.redundant.explicit.close"))
+            .fix(new DeleteElementFix(last, CommonQuickFixBundle.message("fix.remove.redundant", "close()")))
+            .register();
         }
       }
     };

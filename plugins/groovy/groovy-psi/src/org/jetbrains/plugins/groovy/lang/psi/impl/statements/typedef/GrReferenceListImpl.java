@@ -18,7 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -92,14 +91,17 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
 
   @Override
   public PsiClassType @NotNull [] getReferencedTypes() {
-    if (myCachedTypes == null || !isValid()) {
-      final ArrayList<PsiClassType> types = new ArrayList<>();
-      for (GrCodeReferenceElement ref : getReferenceElementsGroovy()) {
-        types.add(new GrClassReferenceType(ref));
+    PsiClassType[] cachedTypes = myCachedTypes;
+    if (cachedTypes == null || !isValid()) {
+      GrCodeReferenceElement[] elementsGroovy = getReferenceElementsGroovy();
+      cachedTypes = elementsGroovy.length == 0 ? PsiClassType.EMPTY_ARRAY : new PsiClassType[elementsGroovy.length];
+      for (int i = 0; i < elementsGroovy.length; i++) {
+        GrCodeReferenceElement ref = elementsGroovy[i];
+        cachedTypes[i] = new GrClassReferenceType(ref);
       }
-      myCachedTypes = types.toArray(PsiClassType.EMPTY_ARRAY);
+      myCachedTypes = cachedTypes;
     }
-    return myCachedTypes;
+    return cachedTypes;
   }
 
   @Override

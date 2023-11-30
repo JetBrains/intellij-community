@@ -8,7 +8,9 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import javax.swing.tree.DefaultTreeModel
 
 object NoneChangesGroupingPolicy : ChangesGroupingPolicy {
-  override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? = null
+  override fun getParentNodeFor(nodePath: StaticFilePath,
+                                node: ChangesBrowserNode<*>,
+                                subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? = null
 }
 
 object NoneChangesGroupingFactory : ChangesGroupingPolicyFactory() {
@@ -18,10 +20,10 @@ object NoneChangesGroupingFactory : ChangesGroupingPolicyFactory() {
 }
 
 class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
-  override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
-    val vFile = nodePath.resolve() ?: return null
-    val status = ChangeListManager.getInstance(project).getStatus(vFile)
-    if (status == FileStatus.MERGED_WITH_CONFLICTS) {
+  override fun getParentNodeFor(nodePath: StaticFilePath,
+                                node: ChangesBrowserNode<*>,
+                                subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
+    if (isMergeConflict(nodePath, node)) {
       val cachingRoot = getCachingRoot(subtreeRoot, subtreeRoot)
       CONFLICTS_NODE_CACHE[cachingRoot]?.let { return it }
 
@@ -35,6 +37,25 @@ class DefaultChangesGroupingPolicy(val project: Project, val model: DefaultTreeM
     }
 
     return null
+  }
+
+  private fun isMergeConflict(nodePath: StaticFilePath, node: ChangesBrowserNode<*>): Boolean {
+    if (node is ChangesGroupingPolicy.CompatibilityPlaceholderChangesBrowserNode) {
+      val vFile = nodePath.resolve() ?: return false
+      val status = ChangeListManager.getInstance(project).getStatus(vFile)
+      return isMergeConflict(status)
+    }
+
+    if (node is ChangesBrowserChangeNode) {
+      return isMergeConflict(node.userObject.fileStatus)
+    }
+    return false
+  }
+
+  private fun isMergeConflict(status: FileStatus): Boolean {
+    return status === FileStatus.MERGED_WITH_CONFLICTS ||
+           status === FileStatus.MERGED_WITH_BOTH_CONFLICTS ||
+           status === FileStatus.MERGED_WITH_PROPERTY_CONFLICTS
   }
 
   companion object {

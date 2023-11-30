@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -35,7 +35,7 @@ import java.awt.*;
 
 @SuppressWarnings("HardCodedStringLiteral")
 final class ShowEditorHighlighterTokensAction extends EditorAction {
-  private static class Holder {
+  private static final class Holder {
     private static final Key<String> TOKEN_NAME = Key.create("token.name");
     private static final Key<Boolean> LISTENER_ADDED = Key.create("token.mouse.listener.added");
     private static final TextAttributes OUR_TEXT_ATTRIBUTES = new TextAttributes(null, null,

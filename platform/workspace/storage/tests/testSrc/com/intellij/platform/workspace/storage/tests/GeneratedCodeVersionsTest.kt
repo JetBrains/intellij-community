@@ -7,9 +7,11 @@ import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBas
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.EntityType
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import kotlin.test.assertContains
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -18,13 +20,13 @@ class GeneratedCodeVersionsTest {
   private var prev_api = 0
   private var prev_impl = 0
 
-  @Before
+  @BeforeEach
   fun setUp() {
     prev_api = CodeGeneratorVersions.API_VERSION
     prev_impl = CodeGeneratorVersions.IMPL_VERSION
   }
 
-  @After
+  @AfterEach
   fun tearDown() {
     CodeGeneratorVersions.API_VERSION = prev_api
     CodeGeneratorVersions.IMPL_VERSION = prev_impl
@@ -101,7 +103,7 @@ interface SuperSimpleEntity : WorkspaceEntity {
 
 @GeneratedCodeApiVersion(1000001)
 @GeneratedCodeImplVersion(1000002)
-open class SuperSimpleEntityImpl : SuperSimpleEntity, WorkspaceEntityBase() {
+open class SuperSimpleEntityImpl : SuperSimpleEntity, WorkspaceEntityBase(null) {
 
 
   class Builder(result: SuperSimpleEntityData?) : ModifiableWorkspaceEntityBase<SuperSimpleEntity, SuperSimpleEntityData>(
@@ -204,6 +206,9 @@ open class SuperSimpleEntityImpl : SuperSimpleEntity, WorkspaceEntityBase() {
 
 class SuperSimpleEntityData : WorkspaceEntityData<SuperSimpleEntity>() {
 
+  override fun getMetadata(): EntityMetadata {
+    TODO("Not yet implemented")
+  }
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SuperSimpleEntity> {
     val modifiable = SuperSimpleEntityImpl.Builder(null)

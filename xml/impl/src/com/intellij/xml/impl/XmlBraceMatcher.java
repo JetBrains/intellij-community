@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl;
 
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
@@ -57,7 +43,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   @Override
   public int getBraceTokenGroupId(@NotNull IElementType tokenType) {
     final Language l = tokenType.getLanguage();
-    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(l);
+    PairedBraceMatcher matcher = getPairedBraceMatcher(tokenType);
 
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
@@ -80,7 +66,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   @Override
   public boolean isLBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
-    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
+    PairedBraceMatcher matcher = getPairedBraceMatcher(tokenType);
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
       for (BracePair pair : pairs) {
@@ -95,7 +81,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   @Override
   public boolean isRBraceToken(@NotNull HighlighterIterator iterator, @NotNull CharSequence fileText, @NotNull FileType fileType) {
     final IElementType tokenType = iterator.getTokenType();
-    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
+    PairedBraceMatcher matcher = getPairedBraceMatcher(tokenType);
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
       for (BracePair pair : pairs) {
@@ -131,9 +117,13 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
     return fileType == HtmlFileType.INSTANCE;
   }
 
+  protected @Nullable PairedBraceMatcher getPairedBraceMatcher(IElementType tokenType) {
+    return LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
+  }
+
   @Override
   public boolean isPairBraces(@NotNull IElementType tokenType1, @NotNull IElementType tokenType2) {
-    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType1.getLanguage());
+    PairedBraceMatcher matcher = getPairedBraceMatcher(tokenType1);
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
       for (BracePair pair : pairs) {
@@ -150,7 +140,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   public boolean isStructuralBrace(@NotNull HighlighterIterator iterator, @NotNull CharSequence text, @NotNull FileType fileType) {
     IElementType tokenType = iterator.getTokenType();
 
-    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(tokenType.getLanguage());
+    PairedBraceMatcher matcher = getPairedBraceMatcher(tokenType);
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
       for (BracePair pair : pairs) {
@@ -168,7 +158,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   @Override
-  public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
+  public boolean isPairedBracesAllowedBeforeType(final @NotNull IElementType lbraceType, final @Nullable IElementType contextType) {
     return true;
   }
 
@@ -266,8 +256,8 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   }
 
   @Override
-  public IElementType getOppositeBraceTokenType(@NotNull final IElementType type) {
-    PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(type.getLanguage());
+  public IElementType getOppositeBraceTokenType(final @NotNull IElementType type) {
+    PairedBraceMatcher matcher = getPairedBraceMatcher(type);
     if (matcher != null) {
       BracePair[] pairs = matcher.getPairs();
       for (BracePair pair : pairs) {

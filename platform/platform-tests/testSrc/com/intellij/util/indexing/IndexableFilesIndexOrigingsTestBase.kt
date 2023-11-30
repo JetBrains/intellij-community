@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
-
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
@@ -25,6 +24,7 @@ import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.SdkIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -32,7 +32,7 @@ import java.util.*
 import kotlin.test.assertNotNull
 
 @RunsInEdt
-open class IndexableFilesIndexOriginsTestBase {
+abstract class IndexableFilesIndexOriginsTestBase {
   companion object {
     @JvmField
     @ClassRule
@@ -66,7 +66,7 @@ open class IndexableFilesIndexOriginsTestBase {
   }
 
   protected fun createModuleContentOrigin(fileSpec: ContentSpec, module: com.intellij.openapi.module.Module): IndexableSetOrigin =
-    IndexableEntityProviderMethods.createIterators(module, listOf(fileSpec.file)).first().origin
+    IndexableEntityProviderMethods.createIterators(module, IndexingRootHolder.fromFile(fileSpec.file)).first().origin
 
   protected fun createLibraryOrigin(library: Library): IndexableSetOrigin =
     LibraryIndexableFilesIteratorImpl.createIteratorList(library).also { assertSize(1, it) }.first().origin

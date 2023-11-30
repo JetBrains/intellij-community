@@ -292,7 +292,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     return new TargetDirectoryWrapper(myTargetDirectory);
   }
 
-  public static class TargetDirectoryWrapper {
+  public static final class TargetDirectoryWrapper {
     private TargetDirectoryWrapper myParentDirectory;
     private PsiDirectory myTargetDirectory;
     private String myRelativePath;

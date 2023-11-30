@@ -25,6 +25,8 @@ abstract class AccountManagerBase<A : Account, Cred : Any>(
   private val persistentCredentials get() = credentialsRepository()
   protected abstract fun credentialsRepository(): CredentialsRepository<A, Cred>
 
+  override val canPersistCredentials: Flow<Boolean> by lazy { persistentCredentials.canPersistCredentials }
+
   private val _accountsState = MutableStateFlow(persistentAccounts.accounts)
   override val accountsState: StateFlow<Set<A>> = _accountsState.asStateFlow()
 

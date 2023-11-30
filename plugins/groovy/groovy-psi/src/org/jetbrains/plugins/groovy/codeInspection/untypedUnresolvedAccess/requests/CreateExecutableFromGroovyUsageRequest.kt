@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.requ
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.getTargetSubstitutor
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
-import com.intellij.openapi.components.service
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiType
@@ -44,7 +43,7 @@ internal abstract class CreateExecutableFromGroovyUsageRequest<out T : GrCall>(
   override fun getExpectedParameters(): List<ExpectedParameter> {
     val argumentTypes = getArgumentTypes() ?: return emptyList()
 
-    val codeStyleManager: JavaCodeStyleManager = project.service()
+    val codeStyleManager = JavaCodeStyleManager.getInstance(project)
 
     val names = argumentTypes.map { (type, _) -> type to codeStyleManager.suggestNames(emptyList(), PARAMETER, type).names.toList() }
 

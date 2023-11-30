@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -17,7 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 
-class HighlightingReaderModeProvider : ReaderModeProvider {
+private class HighlightingReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     if (!fileIsOpenAlready) return
 
@@ -29,7 +29,7 @@ class HighlightingReaderModeProvider : ReaderModeProvider {
   }
 }
 
-class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvider() {
+private class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvider() {
   override fun getDefaultSetting(project: Project, file: VirtualFile): FileHighlightingSetting? {
     if (ReaderModeSettings.getInstance(project).enabled
         && !ReaderModeSettings.getInstance(project).showWarnings
@@ -41,7 +41,7 @@ class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvide
   }
 }
 
-class LigaturesReaderModeProvider : ReaderModeProvider {
+private class LigaturesReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     val scheme = editor.colorsScheme
     scheme.isUseLigatures =
@@ -54,7 +54,7 @@ class LigaturesReaderModeProvider : ReaderModeProvider {
   }
 }
 
-class FontReaderModeProvider : ReaderModeProvider {
+private class FontReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     val lineSpacing = AppEditorFontOptions.getInstance().fontPreferences.lineSpacing
     setLineSpacing(editor, if (readerMode && ReaderModeSettings.getInstance(project).increaseLineSpacing) { lineSpacing * 1.2f } else lineSpacing)
@@ -67,7 +67,7 @@ class FontReaderModeProvider : ReaderModeProvider {
   }
 }
 
-class DocsRenderingReaderModeProvider : ReaderModeProvider {
+private class DocsRenderingReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     DocRenderManager.setDocRenderingEnabled(editor, if (readerMode) {
       ReaderModeSettings.getInstance(project).showRenderedDocs
@@ -77,7 +77,7 @@ class DocsRenderingReaderModeProvider : ReaderModeProvider {
   }
 }
 
-class VisualFormattingLayerReaderModeProvider : ReaderModeProvider {
+private class VisualFormattingLayerReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     val settings = ReaderModeSettings.getInstance(project).getVisualFormattingCodeStyleSettings(project)
     val oldSettings = editor.visualFormattingLayerCodeStyleSettings

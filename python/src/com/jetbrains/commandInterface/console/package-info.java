@@ -17,7 +17,7 @@
 /**
  * <h1>Command line console</h1>
  * <p>
- * Package to display command line console on the bottom of the screen. It supports history, execution, syntax highlighting and so on.
+ * Package to display command line console on the Terminal ToolWindow. It supports history, execution, syntax highlighting and so on.
  * Entry point is {@link com.jetbrains.commandInterface.console.CommandLineConsoleApiKt}.
  * </p>
  * <p/>

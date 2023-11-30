@@ -26,12 +26,9 @@ import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.ArrayList;
@@ -91,17 +88,20 @@ public class MavenResumeAction extends AnAction {
   private static String getMavenVersion(MavenRunConfiguration runConfiguration) {
     MavenGeneralSettings generalSettings = runConfiguration.getGeneralSettings();
     if (generalSettings == null) {
-      MavenDistribution maven = MavenDistribution.fromSettings(runConfiguration.getProject());
-      if (maven == null) {
-        String version = MavenDistributionsCache.resolveEmbeddedMavenHome().getVersion();
-        MavenLog.LOG
-          .warn("Cannot determine maven version from run configuration and project settings, use embedded as version: " + version);
-        return version;
-      }
+      MavenDistribution maven = MavenDistributionsCache.getInstance(runConfiguration.getProject())
+        .getMavenDistribution(runConfiguration.getRunnerParameters().getWorkingDirPath());
       return maven.getVersion();
     }
     else {
-      return MavenUtil.getMavenVersion(generalSettings.getEffectiveMavenHome());
+      MavenHomeType type = generalSettings.getMavenHomeType();
+      if (type instanceof StaticResolvedMavenHomeType st) {
+        return MavenUtil.getMavenVersion(st);
+      }
+      else {
+        return MavenDistributionsCache.getInstance(runConfiguration.getProject())
+          .getMavenDistribution(runConfiguration.getRunnerParameters().getWorkingDirPath()).getVersion();
+      }
+
     }
   }
 
@@ -161,7 +161,7 @@ public class MavenResumeAction extends AnAction {
     return candidate;
   }
 
-  public static boolean isApplicable(@Nullable Project project, JavaParameters javaParameters, MavenRunConfiguration runConfiguration) {
+  public static boolean isApplicable(@NotNull Project project, JavaParameters javaParameters, MavenRunConfiguration runConfiguration) {
     if (hasResumeFromParameter(runConfiguration)) { // This runConfiguration was created by other MavenResumeAction.
       MavenRunConfiguration clonedRunConf = runConfiguration.clone();
       List<String> clonedGoals = clonedRunConf.getRunnerParameters().getGoals();

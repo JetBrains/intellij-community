@@ -7,12 +7,12 @@ import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.EnvReader
-import com.intellij.util.io.isDirectory
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable
 
 /**

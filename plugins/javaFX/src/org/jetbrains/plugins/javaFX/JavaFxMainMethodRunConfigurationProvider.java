@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX;
 
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 
-public class JavaFxMainMethodRunConfigurationProvider implements JavaMainMethodProvider {
-  @NonNls public static final String LAUNCH_MAIN = "launch";
+public final class JavaFxMainMethodRunConfigurationProvider implements JavaMainMethodProvider {
+  public static final @NonNls String LAUNCH_MAIN = "launch";
 
   @Override
   public boolean isApplicable(@NotNull PsiClass clazz) {

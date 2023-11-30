@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.Getter;
@@ -39,9 +39,8 @@ public final class SimpleConfigurable<UI extends ConfigurableUi<S>, S> extends C
     return new SimpleConfigurable<>(id, displayName, id, uiClass, settingsGetter);
   }
 
-  @NotNull
   @Override
-  protected S getSettings() {
+  protected @NotNull S getSettings() {
     return settingsGetter.get();
   }
 
@@ -50,9 +49,8 @@ public final class SimpleConfigurable<UI extends ConfigurableUi<S>, S> extends C
     return ReflectionUtil.newInstance(uiClass);
   }
 
-  @NotNull
   @Override
-  public Class<?> getOriginalClass() {
+  public @NotNull Class<?> getOriginalClass() {
     return uiClass;
   }
 }

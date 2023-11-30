@@ -6,25 +6,24 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.actionSystem.*
 
 internal class ActionGroupStub(override val id: String,
-                      @JvmField val actionClass: String,
-                      override val plugin: IdeaPluginDescriptor) : DefaultActionGroup(), ActionStubBase {
+                               @JvmField val actionClass: String,
+                               override val plugin: IdeaPluginDescriptor,
+                               override val iconPath: String?) : DefaultActionGroup(), ActionStubBase {
   val classLoader: ClassLoader
     get() = plugin.classLoader
 
   var popupDefinedInXml: Boolean = false
-
-  override var iconPath: String? = null
 
   fun initGroup(target: ActionGroup, actionManager: ActionManager) {
     ActionStub.copyTemplatePresentation(templatePresentation, target.templatePresentation)
     copyActionTextOverrides(target)
 
     target.shortcutSet = shortcutSet
-    val children = getChildren(null, actionManager)
+    val children = childActionsOrStubs
     if (children.isNotEmpty()) {
-      target as? DefaultActionGroup
-      ?: throw PluginException("Action group class must extend DefaultActionGroup for the group to accept children: $actionClass",
-                               plugin.pluginId)
+      if (target !is DefaultActionGroup) {
+        throw PluginException("To accept children action group class must extend DefaultActionGroup, got `$actionClass`", plugin.pluginId)
+      }
       for (action in children) {
         target.addAction(action, Constraints.LAST, actionManager)
       }

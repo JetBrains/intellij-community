@@ -3,5 +3,6 @@
   "type": "MOVE_KOTLIN_METHOD",
   "methodToMove": "foo",
   "targetObject": "b.B",
-  "outerInstanceParameter": "a"
+  "outerInstanceParameter": "a",
+  "enabledInK2": "false"
 }

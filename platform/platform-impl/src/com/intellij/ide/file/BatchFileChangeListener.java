@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.file;
 
 import com.intellij.openapi.project.Project;
@@ -14,6 +14,8 @@ import org.jetbrains.annotations.Nullable;
  * via the {@link #TOPIC} defined below.
  */
 public interface BatchFileChangeListener {
+
+  @Topic.AppLevel
   Topic<BatchFileChangeListener> TOPIC = new Topic<>(BatchFileChangeListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   /**

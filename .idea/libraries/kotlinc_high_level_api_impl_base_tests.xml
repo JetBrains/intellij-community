@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.high-level-api-impl-base-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-impl-base-tests-for-ide:1.9.20-dev-5606">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-impl-base-tests-for-ide:2.0.0-dev-6894">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/1.9.20-dev-5606/high-level-api-impl-base-tests-for-ide-1.9.20-dev-5606.jar">
-          <sha256sum>5f710036f929be799aff56152822b1aebb81a58143c1322e68a80a67066b98ff</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.0-dev-6894/high-level-api-impl-base-tests-for-ide-2.0.0-dev-6894.jar">
+          <sha256sum>85544f7ad78293a89159195878e5a218fb7547de4456acc22dc7694be1237a78</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/1.9.20-dev-5606/high-level-api-impl-base-tests-for-ide-1.9.20-dev-5606.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.0-dev-6894/high-level-api-impl-base-tests-for-ide-2.0.0-dev-6894.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/1.9.20-dev-5606/high-level-api-impl-base-tests-for-ide-1.9.20-dev-5606-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-tests-for-ide/2.0.0-dev-6894/high-level-api-impl-base-tests-for-ide-2.0.0-dev-6894-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -31,14 +31,6 @@ fun <T> runReadAction(runnable: () -> T): T {
   return ApplicationManager.getApplication().runReadAction(Computable(runnable))
 }
 
-fun assertReadAccessAllowed() {
-  ApplicationManager.getApplication().assertReadAccessAllowed()
-}
-
-fun assertWriteAccessAllowed() {
-  ApplicationManager.getApplication().assertWriteAccessAllowed()
-}
-
 /**
  * @suppress Internal use only
  */

@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.internal.inspector.PropertyBean
+import com.intellij.internal.inspector.UiInspectorContextProvider
 import com.intellij.openapi.ui.popup.JBPopup
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -13,8 +15,8 @@ import kotlin.properties.Delegates
 import kotlin.reflect.KProperty
 
 @Suppress("LeakingThis")
-abstract class ToolbarComboWidget: JComponent() {
-
+@Deprecated(message = "Please use ToolbarComboButton or ToolbarSplitButton instead", level = DeprecationLevel.WARNING)
+abstract class ToolbarComboWidget: JComponent(), UiInspectorContextProvider {
   val pressListeners: MutableList<ActionListener> = mutableListOf()
 
   var text: @Nls String? by Delegates.observable("", this::fireUpdateEvents)
@@ -30,17 +32,27 @@ abstract class ToolbarComboWidget: JComponent() {
   var isPopupShowing: Boolean by Delegates.observable(false, this::fireUpdateEvents)
 
   init {
-    updateUI() //set UI for component
+    // set UI for component
+    updateUI()
     isOpaque = false
+  }
+
+  override fun getUiInspectorContext(): List<PropertyBean> {
+    val res = mutableListOf<PropertyBean>()
+    if (leftIcons.size == 1) res.add(PropertyBean("icon", leftIcons[0], false))
+    if (leftIcons.size > 1) res.add(PropertyBean("leftIcons", leftIcons, false))
+
+    if (rightIcons.size == 1) res.add(PropertyBean("rightIcon", rightIcons[0], false))
+    if (rightIcons.size > 1) res.add(PropertyBean("rightIcons", rightIcons, false))
+
+    return res
   }
 
   abstract fun doExpand(e: InputEvent?)
 
   open fun createPopup(e: InputEvent?): JBPopup? = null
 
-  override fun getUIClassID(): String {
-    return "ToolbarComboWidgetUI"
-  }
+  override fun getUIClassID(): String = "ToolbarComboWidgetUI"
 
   override fun updateUI() {
     setUI(UIManager.getUI(this))
@@ -53,6 +65,7 @@ abstract class ToolbarComboWidget: JComponent() {
   }
 
   private fun fireUpdateEvents(prop: KProperty<*>, oldValue: Any?, newValue: Any?) {
+    if (oldValue?.equals(newValue) == true) return
     firePropertyChange(prop.name, oldValue, newValue)
     invalidate()
     repaint()

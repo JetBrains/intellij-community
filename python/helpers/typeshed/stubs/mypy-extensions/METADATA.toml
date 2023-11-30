@@ -1,4 +1,2 @@
-version = "0.4.*"
-
-[tool.stubtest]
-ignore_missing_stub = false
+version = "1.0.*"
+upstream_repository = "https://github.com/python/mypy_extensions"

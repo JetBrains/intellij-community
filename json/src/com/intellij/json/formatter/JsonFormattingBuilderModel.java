@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.formatter;
 
 import com.intellij.formatting.*;
@@ -21,8 +21,7 @@ public class JsonFormattingBuilderModel implements FormattingModelBuilder {
     return FormattingModelProvider.createFormattingModelForPsiFile(formattingContext.getContainingFile(), block, settings);
   }
 
-  @NotNull
-  static SpacingBuilder createSpacingBuilder(CodeStyleSettings settings) {
+  static @NotNull SpacingBuilder createSpacingBuilder(CodeStyleSettings settings) {
     final JsonCodeStyleSettings jsonSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
     final CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JsonLanguage.INSTANCE);
 

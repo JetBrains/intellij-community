@@ -1,3 +1,4 @@
+// IGNORE_K2
 import dep1.A
 import dep1.B
 import dep2.*

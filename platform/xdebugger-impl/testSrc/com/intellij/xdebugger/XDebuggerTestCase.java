@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -16,7 +15,7 @@ public abstract class XDebuggerTestCase extends HeavyPlatformTestCase {
 
   @NotNull
   static XBreakpoint<MyBreakpointProperties> addBreakpoint(XBreakpointManagerImpl breakpointManager, MyBreakpointProperties abc) {
-    return WriteAction.compute(() -> breakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, abc));
+    return breakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, abc);
   }
 
   @NotNull
@@ -24,11 +23,11 @@ public abstract class XDebuggerTestCase extends HeavyPlatformTestCase {
                                                                    String url,
                                                                    int line,
                                                                    MyBreakpointProperties properties) {
-    return WriteAction.compute(() -> breakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, url, line, properties));
+    return breakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, url, line, properties);
   }
 
   static void removeBreakPoint(XBreakpointManagerImpl breakpointManager, XBreakpoint<?> breakpoint) {
-    WriteAction.run(() -> breakpointManager.removeBreakpoint(breakpoint));
+    breakpointManager.removeBreakpoint(breakpoint);
   }
 
   @Override

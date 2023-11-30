@@ -11,7 +11,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.IdeFocusManager
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
@@ -22,7 +22,7 @@ class TokenLoginDialog(
   project: Project?, parent: Component?,
   private val model: LoginModel,
   @NlsContexts.DialogTitle title: String = CollaborationToolsBundle.message("login.dialog.title"),
-  private val centerPanelSupplier: () -> DialogPanel
+  private val centerPanelSupplier: CoroutineScope.() -> DialogPanel
 ) : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
 
   private val uiScope = DisposingMainScope(disposable) + ModalityState.stateForComponent(rootPane).asContextElement()
@@ -43,7 +43,7 @@ class TokenLoginDialog(
     }
   }
 
-  override fun createCenterPanel(): JComponent = centerPanelSupplier()
+  override fun createCenterPanel(): JComponent = uiScope.centerPanelSupplier()
 
   override fun doOKAction() {
     applyFields()
@@ -51,6 +51,7 @@ class TokenLoginDialog(
 
     uiScope.launch {
       model.login()
+      initValidation()
     }
   }
 
@@ -61,10 +62,5 @@ class TokenLoginDialog(
       return ValidationInfo(errorMessage).withOKEnabled()
     }
     return null
-  }
-
-  override fun getPreferredFocusedComponent(): JComponent? {
-    val focusManager = IdeFocusManager.findInstanceByComponent(contentPanel)
-    return focusManager.getFocusTargetFor(contentPanel)
   }
 }

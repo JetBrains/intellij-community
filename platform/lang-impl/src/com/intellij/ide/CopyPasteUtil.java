@@ -25,7 +25,7 @@ public final class CopyPasteUtil {
     CopyPasteManager.getInstance().addContentChangedListener(new DefaultCopyPasteListener(consumer), parent);
   }
 
-  public static class DefaultCopyPasteListener implements CopyPasteManager.ContentChangedListener {
+  public static final class DefaultCopyPasteListener implements CopyPasteManager.ContentChangedListener {
     private final Consumer<? super PsiElement> consumer;
 
     private DefaultCopyPasteListener(@NotNull Consumer<? super PsiElement> consumer) {

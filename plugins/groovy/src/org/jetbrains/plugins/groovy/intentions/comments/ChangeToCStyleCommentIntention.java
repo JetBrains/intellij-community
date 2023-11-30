@@ -78,7 +78,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
   }
 
   @Nullable
-  private PsiElement getNextNonWhiteSpace(PsiElement nextComment) {
+  private static PsiElement getNextNonWhiteSpace(PsiElement nextComment) {
     PsiElement elementToCheck = nextComment;
     while (true) {
       final PsiElement sibling = elementToCheck.getNextSibling();
@@ -94,7 +94,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
   }
 
   @Nullable
-  private PsiElement getPrevNonWhiteSpace(PsiElement nextComment) {
+  private static PsiElement getPrevNonWhiteSpace(PsiElement nextComment) {
     PsiElement elementToCheck = nextComment;
     while (true) {
       final PsiElement sibling = elementToCheck.getPrevSibling();
@@ -109,7 +109,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
     }
   }
 
-  private boolean isEndOfLineComment(PsiElement element) {
+  private static boolean isEndOfLineComment(PsiElement element) {
     if (!(element instanceof PsiComment comment)) {
       return false;
     }

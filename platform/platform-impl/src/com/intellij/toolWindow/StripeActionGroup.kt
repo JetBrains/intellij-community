@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.icons.AllIcons
@@ -32,17 +33,13 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.impl.AbstractSquareStripeButton
-import com.intellij.openapi.wm.impl.SquareStripeButton
-import com.intellij.openapi.wm.impl.SquareStripeButtonLook
-import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.NewUI
 import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.popup.KeepingPopupOpenAction
-import com.intellij.ui.popup.PopupFactoryImpl.InlineActionItem.ALWAYS_VISIBLE
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
@@ -54,7 +51,7 @@ private const val STRIPE_ACTION_GROUP_ID = "TopStripeActionGroup"
 
 class StripeActionGroup: ActionGroup(), DumbAware {
   private val myFactory: Map<ActivateToolWindowAction, AnAction> = ConcurrentFactoryMap.create(::createAction) {
-    ContainerUtil.createConcurrentWeakKeyWeakValueMap()
+    CollectionFactory.createConcurrentWeakKeyWeakValueMap()
   }
   private val myMore = MyMoreAction()
 
@@ -71,15 +68,15 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
-    val layout = ToolWindowManagerEx.getInstanceEx(project).getLayout()
+    val twm = ToolWindowManagerEx.getInstanceEx(project)
     val toolWindows = ToolWindowsGroup.getToolWindowActions(project, false)
-    val actions = toolWindows.sortedBy { getOrder(layout, it.toolWindowId) }.mapNotNullTo(ArrayList(), myFactory::get)
+    val actions = toolWindows.sortedBy { getOrder(twm, it.toolWindowId) }.mapNotNullTo(ArrayList(), myFactory::get)
     actions += myMore
     return actions.toTypedArray()
   }
 
-  private fun getOrder(layout: DesktopLayout, twId: String): Int =
-    layout.getInfo(twId)?.run {
+  private fun getOrder(twm: ToolWindowManagerEx, twId: String): Int =
+    (twm.getLayout().getInfo(twId) ?: (twm as? ToolWindowManagerImpl)?.getEntry(twId)?.readOnlyWindowInfo)?.run {
       when (anchor) {
         ToolWindowAnchor.LEFT -> order
         ToolWindowAnchor.TOP -> 100 + order
@@ -101,7 +98,25 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     }
 
     override fun setSelected(e: AnActionEvent?, state: Boolean) {
-      if (e != null) activateAction.actionPerformed(e)
+      val project = e?.project ?: return
+      val twm = ToolWindowManager.getInstance(project)
+      val toolWindowId = activateAction.toolWindowId
+      val toolWindow = twm.getToolWindow(toolWindowId)
+      val visible = toolWindow?.isVisible == true
+      if (visible == state) {
+        return
+      }
+      if (visible) {
+        if (twm is ToolWindowManagerImpl) {
+          twm.hideToolWindow(toolWindowId, false, true, false, ToolWindowEventSource.StripeButton)
+        }
+        else {
+          toolWindow!!.hide(null)
+        }
+      }
+      else {
+        activateAction.actionPerformed(e)
+      }
     }
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
@@ -228,7 +243,7 @@ private class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWin
     val pinned = Toggleable.isSelected(e.presentation)
     e.presentation.icon = if (!pinned) ExpUiIcons.General.Pin else ExpUiIcons.General.PinSelected
     e.presentation.selectedIcon = if (!pinned) ExpUiIcons.General.PinHovered else ExpUiIcons.General.PinSelectedHovered
-    e.presentation.putClientProperty(ALWAYS_VISIBLE, pinned)
+    e.presentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, pinned)
   }
 }
 
@@ -278,7 +293,9 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
     }
 
     fun isSingleStripeEnabled() = hasActionOnToolbar()
-                                  && NotRoamableUiSettings.getInstance().experimentalSingleStripe
+                                  && shouldSingleStripeBeEnabled()
+
+    fun shouldSingleStripeBeEnabled() = NotRoamableUiSettings.getInstance().experimentalSingleStripe
 
     fun hasActionOnToolbar() = customizedGroup?.let { isActionGroupAdded(it, STRIPE_ACTION_GROUP_ID) } == true
 

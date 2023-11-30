@@ -39,10 +39,8 @@ class SpinningProgressIcon(
 
   private var iconColor: Color = JBColor.namedColor("ProgressIcon.color", JBColor(0xA8ADBD, 0x6F737A))
 
-  fun getCacheKey(): Int = iconColor.rgb
-
   private val iconCache = arrayOfNulls<Icon>(paths.size)
-  private var iconCacheKey = 0
+  private var iconCacheKey = -1
 
   fun setIconColor(color: Color) {
     iconColor = color
@@ -57,7 +55,7 @@ class SpinningProgressIcon(
     }
   }
 
-  inner class CashedDelegateIcon(private val index: Int) : Icon {
+  private inner class CashedDelegateIcon(private val index: Int) : Icon {
     private fun getDelegate() = getIconFromCache(index)
 
     override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
@@ -71,7 +69,7 @@ class SpinningProgressIcon(
 
   private fun getIconFromCache(i: Int): Icon {
     val icon = iconCache[i]
-    val cacheKey = getCacheKey()
+    val cacheKey = iconColor.hashCode()
     if (icon != null && iconCacheKey == cacheKey) {
       return icon
     }

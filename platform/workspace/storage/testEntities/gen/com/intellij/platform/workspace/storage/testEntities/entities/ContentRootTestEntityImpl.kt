@@ -14,7 +14,6 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
@@ -23,15 +22,17 @@ import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ContentRootTestEntityImpl(val dataSource: ContentRootTestEntityData) : ContentRootTestEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ContentRootTestEntityImpl(private val dataSource: ContentRootTestEntityData) : ContentRootTestEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java, ContentRootTestEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_MANY, false)
     internal val SOURCEROOTORDER_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootTestEntity::class.java,
@@ -41,7 +42,7 @@ open class ContentRootTestEntityImpl(val dataSource: ContentRootTestEntityData) 
                                                                                SourceRootTestEntity::class.java,
                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
       SOURCEROOTORDER_CONNECTION_ID,
       SOURCEROOTS_CONNECTION_ID,
@@ -64,6 +65,7 @@ open class ContentRootTestEntityImpl(val dataSource: ContentRootTestEntityData) 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: ContentRootTestEntityData?) : ModifiableWorkspaceEntityBase<ContentRootTestEntity, ContentRootTestEntityData>(
     result), ContentRootTestEntity.Builder {
@@ -93,7 +95,7 @@ open class ContentRootTestEntityImpl(val dataSource: ContentRootTestEntityData) 
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -285,6 +287,11 @@ class ContentRootTestEntityData : WorkspaceEntityData<ContentRootTestEntity>() {
     }
   }
 
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntity") as EntityMetadata
+  }
+
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ContentRootTestEntity::class.java
   }
@@ -334,9 +341,5 @@ class ContentRootTestEntityData : WorkspaceEntityData<ContentRootTestEntity>() {
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

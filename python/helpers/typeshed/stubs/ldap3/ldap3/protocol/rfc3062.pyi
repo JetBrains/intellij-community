@@ -1,29 +1,25 @@
-from typing import Any
-from typing_extensions import TypeAlias
+from pyasn1.type.namedtype import NamedTypes
+from pyasn1.type.tag import TagSet
+from pyasn1.type.univ import OctetString, Sequence
 
-# Enable when pyasn1 gets stubs:
-# from pyasn1.type.univ import OctetString, Sequence
-_OctetString: TypeAlias = Any
-_Sequence: TypeAlias = Any
-
-class UserIdentity(_OctetString):
-    tagSet: Any
+class UserIdentity(OctetString):
+    tagSet: TagSet
     encoding: str
 
-class OldPasswd(_OctetString):
-    tagSet: Any
+class OldPasswd(OctetString):
+    tagSet: TagSet
     encoding: str
 
-class NewPasswd(_OctetString):
-    tagSet: Any
+class NewPasswd(OctetString):
+    tagSet: TagSet
     encoding: str
 
-class GenPasswd(_OctetString):
-    tagSet: Any
+class GenPasswd(OctetString):
+    tagSet: TagSet
     encoding: str
 
-class PasswdModifyRequestValue(_Sequence):
-    componentType: Any
+class PasswdModifyRequestValue(Sequence):
+    componentType: NamedTypes
 
-class PasswdModifyResponseValue(_Sequence):
-    componentType: Any
+class PasswdModifyResponseValue(Sequence):
+    componentType: NamedTypes

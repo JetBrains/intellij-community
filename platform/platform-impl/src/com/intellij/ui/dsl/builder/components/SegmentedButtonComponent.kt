@@ -21,6 +21,7 @@ import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.builder.VerticalComponentGap
+import com.intellij.ui.dsl.builder.impl.SegmentedButtonImpl
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -29,7 +30,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
@@ -37,17 +37,14 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.swing.Icon
 import javax.swing.JPanel
 import kotlin.math.roundToInt
 
 private const val PLACE = "SegmentedButton"
 
-internal val NO_TOOLTIP_RENDERER: (Any?) -> @Nls String? = { null }
-
 @ApiStatus.Internal
-internal class SegmentedButtonComponent<T>(items: Collection<T>,
-                                           private val renderer: (T) -> @Nls String,
-                                           private val tooltipRenderer: (T) -> @Nls String? = NO_TOOLTIP_RENDERER) : JPanel(GridLayout()) {
+internal class SegmentedButtonComponent<T>(private val segmentedButton: SegmentedButtonImpl<T>) : JPanel(GridLayout()) {
 
   var spacing: SpacingConfiguration = EmptySpacingConfiguration()
     set(value) {
@@ -70,19 +67,12 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>,
       }
     }
 
-  var items: Collection<T> = emptyList()
-    set(value) {
-      field = value
-      rebuild()
-    }
-
   init {
     isFocusable = true
     border = SegmentedButtonBorder()
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(size = DarculaUIUtil.BW.unscaled.roundToInt()))
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(true, true))
 
-    this.items = items
     addFocusListener(object : FocusListener {
       override fun focusGained(e: FocusEvent?) {
         repaint()
@@ -97,6 +87,8 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>,
     actionLeft.registerCustomShortcutSet(ActionUtil.getShortcutSet("SegmentedButton-left"), this)
     val actionRight = DumbAwareAction.create { moveSelection(1) }
     actionRight.registerCustomShortcutSet(ActionUtil.getShortcutSet("SegmentedButton-right"), this)
+
+    rebuild()
   }
 
   fun addModelListener(l: ModelListener) {
@@ -124,7 +116,7 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>,
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
       g2.paint = getSegmentedButtonBorderPaint(this, true)
-      val selectedButton = components.getOrNull(items.indexOf(selectedItem))
+      val selectedButton = components.getOrNull(segmentedButton.items.indexOf(selectedItem))
       if (selectedButton != null) {
         val r = selectedButton.bounds
         JBInsets.addTo(r, JBUI.insets(DarculaUIUtil.LW.unscaled.toInt()))
@@ -136,14 +128,14 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>,
     }
   }
 
-  private fun rebuild() {
+  fun rebuild() {
     removeAll()
     val presentationFactory = PresentationFactory()
     val builder = RowsGridBuilder(this)
-    for (item in items) {
-      val action = SegmentedButtonAction(this, item, renderer.invoke(item))
+    for (item in segmentedButton.items) {
+      val presentation = segmentedButton.presentations[item]!!
+      val action = SegmentedButtonAction(this, item, presentation.text, presentation.toolTipText, presentation.icon, presentation.enabled)
       val button = SegmentedButton(action, presentationFactory.getPresentation(action), spacing)
-      button.toolTipText = tooltipRenderer.invoke(item)
 
       builder.cell(button, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
     }
@@ -154,12 +146,13 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>,
   }
 
   private fun setSelectedState(item: T?, selectedState: Boolean) {
-    val componentIndex = items.indexOf(item)
+    val componentIndex = segmentedButton.items.indexOf(item)
     val segmentedButton = components.getOrNull(componentIndex) as? SegmentedButton<*>
     segmentedButton?.selectedState = selectedState
   }
 
   private fun moveSelection(step: Int) {
+    val items = segmentedButton.items
     if (items.isEmpty()) {
       return
     }
@@ -256,8 +249,16 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>,
   }
 }
 
-private class SegmentedButtonAction<T>(val parent: SegmentedButtonComponent<T>, val item: T, @NlsActions.ActionText itemText: String)
-  : ToggleAction(itemText, null, null), DumbAware {
+private class SegmentedButtonAction<T>(val parent: SegmentedButtonComponent<T>, val item: T, @NlsActions.ActionText text: String?,
+                                       @NlsActions.ActionDescription description: String?,
+                                       icon: Icon?,
+                                       private val enabled: Boolean)
+  : ToggleAction(text, description, icon), DumbAware {
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isEnabled = enabled
+  }
 
   override fun isSelected(e: AnActionEvent): Boolean {
     return parent.selectedItem == item

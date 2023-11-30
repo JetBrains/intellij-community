@@ -344,7 +344,7 @@ public final class PyToxTest extends PyEnvTestCase {
       }
 
       if (!stderr.isEmpty()) {
-        Logger.getInstance(PyToxTest.class).warn(PyEnvTestCase.escapeTestMessage(stderr));
+        Logger.getInstance(PyToxTest.class).warn(stderr);
       }
 
 

@@ -4,10 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
-import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInsight.generation.PsiGenerationInfo;
+import com.intellij.codeInsight.generation.*;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -313,14 +310,20 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
 
       int offset = editor.getCaretModel().getOffset();
       RangeMarker marker = editor.getDocument().createRangeMarker(offset, offset);
-      record OverrideContext(@NotNull PsiAnonymousClass aClass, @NotNull Collection<CandidateInfo> candidatesToImplement) {}
+      record OverrideContext(@NotNull PsiAnonymousClass aClass,
+                             @NotNull Collection<CandidateInfo> candidatesToImplement,
+                             @Nullable JavaOverrideImplementMemberChooser.JavaOverrideImplementMemberChooserContainer container) {}
       ReadAction.nonBlocking(() -> {
         PsiAnonymousClass anonymousClass = PsiTreeUtil.findElementOfClassAtOffset(file, marker.getStartOffset(), PsiAnonymousClass.class, false);
         if (anonymousClass == null) return null;
         final Collection<CandidateInfo> candidatesToImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(anonymousClass, true);
         candidatesToImplement.removeIf(
             candidate -> candidate.getElement() instanceof PsiMethod method && method.hasModifierProperty(PsiModifier.DEFAULT));
-        return new OverrideContext(anonymousClass, candidatesToImplement);
+          JavaOverrideImplementMemberChooser.JavaOverrideImplementMemberChooserContainer container = null;
+          if (candidatesToImplement.isEmpty()) {
+            container = OverrideImplementUtil.prepareChooser(anonymousClass, false);
+          }
+          return new OverrideContext(anonymousClass, candidatesToImplement, container);
       }).withDocumentsCommitted(project)
         .finishOnUiThread(ModalityState.nonModal(), context -> {
         marker.dispose();
@@ -329,7 +332,7 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
           PsiAnonymousClass anonymousClass = context.aClass;
           boolean invokeOverride = context.candidatesToImplement.isEmpty();
           if (invokeOverride) {
-            OverrideImplementUtil.chooseAndOverrideOrImplementMethods(project, editor, anonymousClass, false);
+            OverrideImplementUtil.showAndPerform(project, editor, anonymousClass, false, context.container);
           }
           else {
             ApplicationManagerEx.getApplicationEx()

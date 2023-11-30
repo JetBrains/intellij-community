@@ -2,24 +2,35 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
-import org.jetbrains.annotations.ApiStatus;
 
 /**
  * On app exit report accumulated VFS errors to FUS
  */
-@ApiStatus.Internal
-public class VFSErrorsToFUSReporter implements AppLifecycleListener {
+final class VFSErrorsToFUSReporter implements AppLifecycleListener {
+  VFSErrorsToFUSReporter() {
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+      throw ExtensionNotApplicableException.create();
+    }
+  }
+
   @Override
   public void appWillBeClosed(boolean isRestart) {
-    FSRecordsImpl impl = FSRecords.implOrFail();
+    FSRecordsImpl fsRecords = FSRecords.getInstanceIfCreatedAndNotDisposed();
+    if (fsRecords == null) {
+      return;
+    }
+
     long sessionDurationMs = System.currentTimeMillis() - ApplicationManager.getApplication().getStartTime();
 
     VfsUsageCollector.logVfsInternalErrors(
-      impl.getCreationTimestamp(),
+      fsRecords.getCreationTimestamp(),
       sessionDurationMs,
-      impl.corruptionsDetected()
+      fsRecords.corruptionsDetected()
     );
   }
 }

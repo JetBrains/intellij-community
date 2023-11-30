@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -73,8 +73,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer<T> 
    * @deprecated Use plain {@link JSeparator} instead
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public static Component createSeparator(@Nullable @NlsContexts.Separator String text) {
+  public static @NotNull Component createSeparator(@Nullable @NlsContexts.Separator String text) {
     TitledSeparator separator = new TitledSeparator(text);
     separator.setBorder(JBUI.Borders.emptyLeft(2));
     separator.setOpaque(false);

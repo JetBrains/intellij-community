@@ -5,14 +5,16 @@ import com.intellij.compiler.server.impl.BuildProcessClasspathManager
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.io.File
 
 class BuildProcessClasspathTest : BareTestFixtureTestCase() {
-  @Test fun testBuildProcessClasspath() {
+  @Test fun testBuildProcessClasspath() = runBlocking {
     val classpath = BuildProcessClasspathManager(testRootDisposable).getBuildProcessClasspath(DefaultProjectFactory.getInstance().defaultProject)
     val libs = classpath.mapTo(HashSet()) { LightJavaModule.moduleName(File(it).name) }
     assertThat(libs).contains("intellij.maven.jps", "plexus.utils")
+    return@runBlocking
   }
 }

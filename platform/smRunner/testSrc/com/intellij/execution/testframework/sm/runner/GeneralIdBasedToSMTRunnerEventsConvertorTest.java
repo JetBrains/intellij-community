@@ -20,6 +20,7 @@ import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,6 +120,55 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
     assertStatusLine("Tests ignored: 2 of 2 tests");
     assertEquals(2, myResultsViewer.getFinishedTestCount());
     validateTestIgnored("B", testB);
+  }
+
+  public void testCheckMetaUpdateWithValue() {
+    checkMetainfo("suiteMetaUpdate", "testMetaUpdate");
+  }
+
+  public void testCheckMetaUpdateWithNull() {
+    checkMetainfo(null, null);
+  }
+
+  private void checkMetainfo(@Nullable String updatedSuiteMetainfo, @Nullable String updatedTestMetainfo) {
+    final String suiteName = "some_suite";
+    final String testName = "some_test";
+    final String initSuiteMeta = "suiteMeta";
+    final String initTestMeta = "testMeta";
+
+    myEventsProcessor.onSuiteTreeNodeAdded(true, suiteName, suiteName, initSuiteMeta, suiteName, TreeNodeEvent.ROOT_NODE_ID);
+    myEventsProcessor.onSuiteTreeNodeAdded(false, testName, testName, initTestMeta, testName, suiteName);
+    //myEventsProcessor.onSuiteTreeEnded(testName);
+    //myEventsProcessor.onSuiteTreeEnded(suiteName);
+    myEventsProcessor.onBuildTreeEnded();
+
+    myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent(
+      suiteName,
+      suiteName,
+      TreeNodeEvent.ROOT_NODE_ID,
+      suiteName,
+      updatedSuiteMetainfo,
+      null,
+      null,
+      true));
+    myEventsProcessor.onTestStarted(new TestStartedEvent(
+      testName,
+      testName,
+      suiteName,
+      testName,
+      updatedTestMetainfo,
+      null,
+      null,
+      true));
+
+    myResultsViewer.performUpdate();
+    PlatformTestUtil.waitWhileBusy(myResultsViewer.getTreeView());
+
+    final SMTestProxy suiteProxy = myEventsProcessor.findProxyById(suiteName);
+    assertEquals(updatedSuiteMetainfo == null ? initSuiteMeta : updatedSuiteMetainfo, suiteProxy.getMetainfo());
+
+    final SMTestProxy testProxy = myEventsProcessor.findProxyById(testName);
+    assertEquals(updatedTestMetainfo == null ? initTestMeta : updatedTestMetainfo, testProxy.getMetainfo());
   }
 
   @NotNull

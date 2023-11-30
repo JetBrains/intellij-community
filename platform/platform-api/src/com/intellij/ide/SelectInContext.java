@@ -40,10 +40,19 @@ public interface SelectInContext {
   FileEditorProvider getFileEditorProvider();
 
   /**
+   * Tries to select the object determined by this context in a given target.
+   *
    * @param target       an object that supports a context selection
    * @param requestFocus specifies whether a focus request is needed or not
    * @return {@code true} if a selection request is approved and executed by the given target
+   * @deprecated This method calls both {@link SelectInTarget#canSelect(SelectInContext)}
+   * and {@link SelectInTarget#selectIn(SelectInContext, boolean)}. However, the former should
+   * be called in a read action and not in the EDT (because it may involve some slow ops),
+   * and the latter should be called in the EDT. Avoid using this method and instead call
+   * the two separately (if the return value is needed) or just call {@code target.selectIn}
+   * (otherwise).
    */
+  @Deprecated
   default boolean selectIn(@NotNull SelectInTarget target, boolean requestFocus) {
     if (!target.canSelect(this)) return false;
     target.selectIn(this, requestFocus);

@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -22,14 +23,18 @@ class CaretBasedCellSelectionModel(private val editor: Editor) : NotebookCellSel
   override val selectedCells: List<NotebookCellLines.Interval>
     get() {
       val notebookCellLines = NotebookCellLines.get(editor)
-      return editor.caretModel.allCarets.flatMap { caret ->
-        notebookCellLines.getCells(editor.document.getSelectionLines(caret))
-      }.distinct()
+      return ReadAction.compute<List<NotebookCellLines.Interval>, Throwable> {
+        editor.caretModel.allCarets.flatMap { caret ->
+          notebookCellLines.getCells(editor.document.getSelectionLines(caret))
+        }.distinct()
+      }
     }
 
   override fun isSelectedCell(cell: NotebookCellLines.Interval): Boolean =
-    editor.caretModel.allCarets.any { caret ->
-      editor.document.getSelectionLines(caret).hasIntersectionWith(cell.lines)
+    ReadAction.compute<Boolean, Throwable> {
+      editor.caretModel.allCarets.any { caret ->
+        editor.document.getSelectionLines(caret).hasIntersectionWith(cell.lines)
+      }
     }
 
   override fun selectCell(cell: NotebookCellLines.Interval, makePrimary: Boolean) {

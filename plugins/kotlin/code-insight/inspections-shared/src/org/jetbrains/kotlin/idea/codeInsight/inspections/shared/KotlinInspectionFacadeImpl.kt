@@ -13,7 +13,4 @@ class KotlinInspectionFacadeImpl : KotlinInspectionFacade {
 
     override val sortModifiers: AbstractApplicabilityBasedInspection<KtModifierList>
         get() = SortModifiersInspection()
-
-    override val removeEmptyClassBody: AbstractApplicabilityBasedInspection<KtClassBody>
-        get() = RemoveEmptyClassBodyInspection()
 }

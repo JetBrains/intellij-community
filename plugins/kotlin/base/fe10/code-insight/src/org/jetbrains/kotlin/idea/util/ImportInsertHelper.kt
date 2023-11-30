@@ -19,8 +19,6 @@ abstract class ImportInsertHelper {
 
     abstract fun mayImportOnShortenReferences(descriptor: DeclarationDescriptor, contextFile: KtFile): Boolean
 
-    abstract fun getImportSortComparator(contextFile: KtFile): Comparator<ImportPath>
-
     abstract fun importDescriptor(
         element: KtElement,
         descriptor: DeclarationDescriptor,

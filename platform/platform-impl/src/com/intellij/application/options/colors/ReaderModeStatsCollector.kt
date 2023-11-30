@@ -4,21 +4,22 @@ package com.intellij.application.options.colors
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import org.jetbrains.annotations.ApiStatus
 
-class ReaderModeStatsCollector : CounterUsagesCollector() {
+@ApiStatus.Internal
+object ReaderModeStatsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("reader.mode", 2)
-    private val seeAlsoNavigation = GROUP.registerEvent("see.also.navigation")
-    private val switchedEvent = GROUP.registerEvent("widget.switched", EventFields.Enabled)
+  private val GROUP = EventLogGroup("reader.mode", 2)
+  private val seeAlsoNavigation = GROUP.registerEvent("see.also.navigation")
+  private val switchedEvent = GROUP.registerEvent("widget.switched", EventFields.Enabled)
 
-    @JvmStatic
-    fun logSeeAlsoNavigation(): Unit = seeAlsoNavigation.log()
+  @JvmStatic
+  fun logSeeAlsoNavigation() {
+    seeAlsoNavigation.log()
+  }
 
-    @JvmStatic
-    fun readerModeSwitched(enabled: Boolean) {
-      switchedEvent.log(enabled)
-    }
+  fun readerModeSwitched(enabled: Boolean) {
+    switchedEvent.log(enabled)
   }
 }

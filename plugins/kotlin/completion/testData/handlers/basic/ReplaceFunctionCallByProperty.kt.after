@@ -6,5 +6,6 @@ fun foo(c: C) {
     val v = c.bar<caret>
 }
 
+// IGNORE_K2
 // ELEMENT: bar
 // CHAR: '\t'

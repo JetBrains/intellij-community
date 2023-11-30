@@ -40,7 +40,8 @@ interface SelfLinkedEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SelfLinkedEntity, modification: SelfLinkedEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: SelfLinkedEntity,
+                                      modification: SelfLinkedEntity.Builder.() -> Unit): SelfLinkedEntity = modifyEntity(
   SelfLinkedEntity.Builder::class.java, entity, modification)
 
 var SelfLinkedEntity.Builder.children: @Child List<SelfLinkedEntity>

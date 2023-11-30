@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations
 
 import com.intellij.icons.AllIcons
@@ -21,12 +21,8 @@ import javax.swing.plaf.basic.BasicButtonUI
 
 internal open class CustomFrameTitleButtons(myCloseAction: Action) {
   companion object {
-    private val closeIcon = AllIcons.Windows.CloseActive
-    private val closeHoverIcon = AllIcons.Windows.CloseHover
-    private val closeInactive = AllIcons.Windows.CloseInactive
-
-    fun create(myCloseAction: Action): CustomFrameTitleButtons {
-      val darculaTitleButtons = CustomFrameTitleButtons(myCloseAction)
+    fun create(closeAction: Action): CustomFrameTitleButtons {
+      val darculaTitleButtons = CustomFrameTitleButtons(closeAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
     }
@@ -45,27 +41,27 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
     }
   }
 
-  val closeStyleBuilder: ComponentStyle.ComponentStyleBuilder<JButton> = ComponentStyle.ComponentStyleBuilder<JButton> {
+  private val closeStyleBuilder: ComponentStyle.ComponentStyleBuilder<JButton> = ComponentStyle.ComponentStyleBuilder<JButton> {
     isOpaque = false
     border = Borders.empty()
-    icon = closeIcon
+    icon = AllIcons.Windows.CloseActive
   }.apply {
     style(ComponentStyleState.HOVERED) {
       isOpaque = true
       background = Color(0xe81123)
-      icon = closeHoverIcon
+      icon = AllIcons.Windows.CloseHover
     }
     style(ComponentStyleState.PRESSED) {
       isOpaque = true
       background = Color(0xf1707a)
-      icon = closeHoverIcon
+      icon = AllIcons.Windows.CloseHover
     }
   }
   private val activeCloseStyle = closeStyleBuilder.build()
 
   private val inactiveCloseStyle = closeStyleBuilder
     .updateDefault {
-      icon = closeInactive
+      icon = AllIcons.Windows.CloseInactive
     }.build()
 
   private val panel = TitleButtonsPanel()
@@ -132,7 +128,7 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
   }
 
   protected fun createButton(accessibleName: String, action: Action): JButton {
-    val button = object : JButton() {
+    val button = object : JButton(){
       init {
         super.setUI(HoveredButtonUI())
       }
@@ -147,7 +143,6 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
     return button
   }
 }
-
 private class HoveredButtonUI : BasicButtonUI() {
   override fun paint(g: Graphics, c: JComponent) {
     getHoverColor(c)?.let {
@@ -197,4 +192,3 @@ private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
     }
   }
 }
-

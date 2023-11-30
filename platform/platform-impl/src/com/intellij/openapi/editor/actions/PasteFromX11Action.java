@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,7 +22,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author msk
  */
-public class PasteFromX11Action extends EditorAction {
+public final class PasteFromX11Action extends EditorAction {
   private static final Logger LOG = Logger.getInstance(PasteFromX11Action.class);
 
   public PasteFromX11Action() {
@@ -53,7 +51,7 @@ public class PasteFromX11Action extends EditorAction {
     }
   }
 
-  public static class Handler extends BasePasteHandler {
+  public static final class Handler extends BasePasteHandler {
     @Override
     protected Transferable getContentsToPaste(Editor editor, DataContext dataContext) {
       Clipboard clip = editor.getComponent().getToolkit().getSystemSelection();

@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.ex
 
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -40,7 +39,7 @@ abstract class ProjectManagerEx : ProjectManager() {
     const val PER_PROJECT_SUFFIX: String = "INTERNAL_perProject"
 
     @JvmStatic
-    fun getInstanceEx(): ProjectManagerEx = ApplicationManager.getApplication().getService(ProjectManager::class.java) as ProjectManagerEx
+    fun getInstanceEx(): ProjectManagerEx = getInstance() as ProjectManagerEx
 
     @JvmStatic
     fun getInstanceExIfCreated(): ProjectManagerEx? = getInstanceIfCreated() as ProjectManagerEx?
@@ -66,7 +65,7 @@ abstract class ProjectManagerEx : ProjectManager() {
   }
 
   /**
-   * Creates project but not open it. Use this method only in a test mode or special cases like new project wizard.
+   * Creates a project but not open it. Use this method only in a test mode or special cases like the new project wizard.
    */
   abstract fun newProject(file: Path, options: OpenProjectTask): Project?
 
@@ -97,7 +96,6 @@ abstract class ProjectManagerEx : ProjectManager() {
   abstract fun forceCloseProject(project: Project, save: Boolean): Boolean
 
   @Internal
-  @TestOnly
   abstract suspend fun forceCloseProjectAsync(project: Project, save: Boolean = false): Boolean
 
   @Internal

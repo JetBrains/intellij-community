@@ -1,9 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests.propertyBased
 
-import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
-import com.intellij.platform.workspace.storage.testEntities.entities.MySource
-import com.intellij.platform.workspace.storage.tests.createBuilderFrom
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -14,12 +11,16 @@ import com.intellij.platform.workspace.storage.impl.StorageIndexes
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
 import com.intellij.platform.workspace.storage.impl.exceptions.ReplaceBySourceException
-import junit.framework.TestCase
+import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
+import com.intellij.platform.workspace.storage.tests.createBuilderFrom
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.reflect.full.memberProperties
+import kotlin.test.assertEquals
 
 class PropertyTest {
 
@@ -136,7 +137,7 @@ private fun MutableEntityStorageImpl.restoreFromBackup(backup: EntityStorage) {
   refs.oneToAbstractManyContainer.putAll(backupBuilder.refs.oneToAbstractManyContainer)
   refs.abstractOneToOneContainer.putAll(backupBuilder.refs.abstractOneToOneContainer)
   // Just checking that all properties have been asserted
-  TestCase.assertEquals(4, RefsTable::class.memberProperties.size)
+  assertEquals(4, RefsTable::class.memberProperties.size)
 
 
   indexes.softLinks.clear()
@@ -151,5 +152,5 @@ private fun MutableEntityStorageImpl.restoreFromBackup(backup: EntityStorage) {
   indexes.symbolicIdIndex.copyFrom(backupBuilder.indexes.symbolicIdIndex)
   indexes.externalMappings.putAll(indexes.externalMappings)
   // Just checking that all properties have been asserted
-  TestCase.assertEquals(5, StorageIndexes::class.memberProperties.size)
+  assertEquals(5, StorageIndexes::class.memberProperties.size)
 }

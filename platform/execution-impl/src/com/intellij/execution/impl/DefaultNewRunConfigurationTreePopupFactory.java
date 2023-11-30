@@ -53,9 +53,8 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
     myGroups = createGroups(project, myTypesToShow);
   }
 
-  @NotNull
   @Override
-  public NodeDescriptor<?> getRootElement() {
+  public @NotNull NodeDescriptor<?> getRootElement() {
     return root;
   }
 
@@ -118,7 +117,7 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
   }
 
 
-  protected static class GroupDescriptor extends NodeDescriptor<String> {
+  protected static final class GroupDescriptor extends NodeDescriptor<String> {
     private final List<ConfigurationType> myTypes;
 
     public GroupDescriptor(@NotNull Project project,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.newItemPopup;
 
 import com.intellij.accessibility.TextFieldWithListAccessibleContext;
@@ -9,12 +9,14 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -54,16 +56,19 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     scrollPane.setBorder(JBUI.Borders.empty());
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     templatesListHolder = new Box(BoxLayout.Y_AXIS);
+
+    Border lineBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.NewClassDialog.bordersColor());
+    JBEmptyBorder topMarginBorder = JBUI.Borders.emptyTop(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth());
+    Border outerBorder = JBUI.Borders.merge(topMarginBorder, lineBorder, true);
+
     if (ExperimentalUI.isNewUI()) {
       templatesListHolder.setOpaque(true);
       templatesListHolder.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+      myTemplatesList.setBorder(outerBorder);
     }
     else {
-      Border border = JBUI.Borders.merge(JBUI.Borders.emptyTop(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth()),
-                                         JBUI.Borders.customLineTop(JBUI.CurrentTheme.NewClassDialog.bordersColor()), true);
-      templatesListHolder.setBorder(border);
+      templatesListHolder.setBorder(JBUI.Borders.merge(lineBorder, outerBorder, true));
     }
-
     templatesListHolder.add(scrollPane);
 
     add(templatesListHolder, BorderLayout.CENTER);
@@ -88,8 +93,7 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     myTemplatesListModel.update(templatesList);
   }
 
-  @NotNull
-  private JBList<T> createTemplatesList(@NotNull ListModel<T> model, ListCellRenderer<T> renderer) {
+  private @NotNull JBList<T> createTemplatesList(@NotNull ListModel<T> model, ListCellRenderer<T> renderer) {
     JBList<T> list = new JBList<>(model);
     MouseAdapter mouseListener = new MouseAdapter() {
       @Override
@@ -103,13 +107,6 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     list.setFocusable(false);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
-
-    Border border = JBUI.Borders.merge(
-      JBUI.Borders.emptyLeft(JBUIScale.scale(5)),
-      JBUI.Borders.customLine(JBUI.CurrentTheme.NewClassDialog.bordersColor(), 1, 0, 0, 0),
-      true
-    );
-    list.setBorder(border);
     return list;
   }
 
@@ -149,7 +146,7 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     }
   }
 
-  private static class JBExtendableTextFieldWithMixedAccessibleContext extends ExtendableTextField {
+  private static final class JBExtendableTextFieldWithMixedAccessibleContext extends ExtendableTextField {
     private AccessibleContext myListContext;
 
     @Override

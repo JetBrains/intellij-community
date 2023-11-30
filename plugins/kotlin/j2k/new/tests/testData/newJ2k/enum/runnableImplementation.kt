@@ -1,9 +1,5 @@
 internal enum class Color : Runnable {
-    WHITE,
-    BLACK,
-    RED,
-    YELLOW,
-    BLUE;
+    WHITE, BLACK, RED, YELLOW, BLUE;
 
     override fun run() {
         println(

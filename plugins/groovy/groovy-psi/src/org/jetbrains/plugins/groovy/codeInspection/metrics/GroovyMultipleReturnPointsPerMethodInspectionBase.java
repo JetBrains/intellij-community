@@ -70,7 +70,7 @@ public class GroovyMultipleReturnPointsPerMethodInspectionBase extends GroovyMet
       return count;
     }
 
-    private boolean mayFallThroughBottom(GrMethod method) {
+    private static boolean mayFallThroughBottom(GrMethod method) {
       if (method.isConstructor()) {
         return true;
       }

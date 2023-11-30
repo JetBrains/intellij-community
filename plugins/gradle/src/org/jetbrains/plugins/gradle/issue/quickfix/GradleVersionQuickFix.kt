@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix.Companion.requestImport
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.IN_BACKGROUND_ASYNC
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.NO_PROGRESS_ASYNC
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory.WARNING
 import com.intellij.openapi.externalSystem.service.notification.NotificationData
@@ -22,8 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.TimeoutUtil
-import com.intellij.util.io.createFile
-import com.intellij.util.io.inputStream
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.outputStream
 import org.gradle.internal.impldep.com.google.common.base.Charsets
 import org.gradle.internal.util.PropertiesUtils
@@ -41,6 +40,8 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
+import kotlin.io.path.createFile
+import kotlin.io.path.inputStream
 
 /**
  * @author Vladislav.Soroka
@@ -90,7 +91,7 @@ class GradleVersionQuickFix(private val projectPath: String,
       val distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion.version}-bin.zip"
       if (wrapperPropertiesFile == null) {
         val wrapperPropertiesPath = Paths.get(projectPath, "gradle", "wrapper", "gradle-wrapper.properties")
-        wrapperPropertiesPath.createFile()
+        wrapperPropertiesPath.createParentDirectories().createFile()
         wrapperPropertiesFile = wrapperPropertiesPath
         wrapperProperties = Properties()
         wrapperProperties[WrapperExecutor.DISTRIBUTION_URL_PROPERTY] = distributionUrl
@@ -141,7 +142,7 @@ class GradleVersionQuickFix(private val projectPath: String,
               override fun onFailure() {
                 future.completeExceptionally(RuntimeException("Wrapper task failed"))
               }
-            }, IN_BACKGROUND_ASYNC, false, userData)
+            }, NO_PROGRESS_ASYNC, false, userData)
     return future
   }
 
@@ -149,4 +150,3 @@ class GradleVersionQuickFix(private val projectPath: String,
     private val LOG = logger<GradleVersionQuickFix>()
   }
 }
-

@@ -4,10 +4,8 @@ package com.intellij.openapi.vfs.newvfs.persistent
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.RawProgressReporter
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.io.DataInputOutputUtilRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.FileAttribute
@@ -15,18 +13,23 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.MUST_RELOAD
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.MUST_RELOAD_LENGTH
 import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
-import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult.*
-import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogOperationTrackingContext.Companion.trackPlainOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.AttributesOperation.Companion.fileId
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation.Companion.fileId
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.*
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.buildFiller
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.constrain
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.sum
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SnapshotFillerPresets.toFiller
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.get
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.getOrNull
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.NotAvailable
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Ready
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Companion.isDeleted
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.*
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.get
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.get
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.getOrNull
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus
@@ -45,6 +48,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 object VfsRecoveryUtils {
   fun createStoragesReplacementMarker(oldCachesDir: Path, newCachesDir: Path) {
     val marker = PersistentFSPaths(oldCachesDir).storagesReplacementMarkerFile
@@ -54,14 +58,22 @@ object VfsRecoveryUtils {
     )
   }
 
-  @OptIn(ExperimentalPathApi::class)
-  fun applyStoragesReplacementIfMarkerExists(cachesDir: Path): Boolean {
-    val marker = PersistentFSPaths(cachesDir).storagesReplacementMarkerFile
-    if (marker.notExists()) return false
+  /**
+   * @param cachesBackupSiblingPath path to place caches backup to
+   */
+  @JvmOverloads
+  fun applyStoragesReplacementIfMarkerExists(
+    storagesReplacementMarkerFile: Path,
+    cachesBackupSiblingPath: Path? = Path.of("caches-backup")
+  ): Boolean {
+    if (storagesReplacementMarkerFile.notExists()) return false
+    val cachesDir = storagesReplacementMarkerFile.parent
+    val backupPath = cachesBackupSiblingPath?.let { cachesDir.resolveSibling(it).normalize() }
+    require(backupPath != cachesDir)
 
-    val newCachesDirPath = marker.readLines().firstOrNull()
+    val newCachesDirPath = storagesReplacementMarkerFile.readLines().firstOrNull()
     LOG.info("storages replacement marker detected: new caches content is in $newCachesDirPath")
-    marker.delete() // consume
+    storagesReplacementMarkerFile.delete() // consume
     if (newCachesDirPath == null) return false
 
     val newCachesDir = cachesDir.resolve(newCachesDirPath).normalize()
@@ -78,16 +90,23 @@ object VfsRecoveryUtils {
       return false
     }
 
-    val backupDir = cachesDir.parent / "caches-backup"
-    if (backupDir.exists()) {
-      LOG.info("deleting an old backup")
-      backupDir.deleteRecursively()
+    // FIXME memory mapped buffers that some storages use can still be open after recovery was done, preventing the file move on Windows
+    //  calling gc should help, but is not guaranteed to work
+    repeat(3) { System.gc() }
+
+    if (backupPath != null) {
+      if (backupPath.exists()) {
+        LOG.info("deleting an old backup")
+        FileUtil.deleteRecursively(backupPath)
+      }
+      FileUtil.moveDirWithContent(cachesDir.toFile(), backupPath.toFile())
+      LOG.info("created a backup successfully")
     }
-
-    cachesDir.moveTo(backupDir)
-    LOG.info("created a backup successfully")
-
-    newCachesDir.moveTo(cachesDir, true)
+    if (cachesDir.exists()) {
+      LOG.info("deleting current caches")
+      FileUtil.deleteRecursively(cachesDir)
+    }
+    FileUtil.moveDirWithContent(newCachesDir.toFile(), cachesDir.toFile())
     LOG.info("successfully replaced storages")
     return true
   }
@@ -96,8 +115,12 @@ object VfsRecoveryUtils {
     var fileStateCounts: Map<RecoveryState, Int> = emptyMap(),
     var recoveredAttributesCount: Long = 0,
     var botchedAttributesCount: Long = 0,
+    var droppedObsoleteAttributesCount: Long = 0,
     var recoveredContentsCount: Int = 0,
     var lostContentsCount: Int = 0,
+    var duplicateChildrenDeduplicated: Int = 0,
+    var duplicateChildrenLost: Int = 0,
+    var duplicateChildrenCount: Int = 0,
     var recoveryTime: Duration = Duration.INFINITE,
     var details: String? = null
   )
@@ -143,29 +166,100 @@ object VfsRecoveryUtils {
     override fun toString(): String = getStatistics().toString()
   }
 
+  private class RecoveryContext(
+    val recoveryResult: RecoveryResult,
+    val point: () -> OperationLogStorage.Iterator,
+    val queryContext: VfsLogQueryContext,
+    val newFsRecords: FSRecordsImpl,
+    val newVfsLog: VfsLogImpl,
+    val progressReporter: RawProgressReporter?,
+    private val vfsTimeMachine: SinglePassVfsTimeMachine,
+    private val setFiller: (SnapshotFillerPresets.Filler) -> Unit,
+    private val compactedVfs: ExtendedVfsSnapshot?,
+    private val namesEnumerator: PersistentStringEnumerator,
+    val payloadReader: PayloadReader = queryContext.payloadReader,
+    val fileStates: FileStateController = FileStateController(),
+  ) : AutoCloseable {
+    val childrenAttributeEnumerated = queryContext.enumerateAttribute(PersistentFSTreeAccessor.CHILDREN_ATTR)
+
+    fun getSnapshot(filler: SnapshotFillerPresets.Filler): ExtendedVfsSnapshot {
+      setFiller(filler)
+      return vfsTimeMachine.getSnapshot(point()).precededByCompactedInstance()
+    }
+
+    private fun ExtendedVfsSnapshot.precededByCompactedInstance(): ExtendedVfsSnapshot =
+      compactedVfs?.let { this.precededBy(it) } ?: this
+
+    fun calculateAttributesAlteredAfterRecoveryPointFilter(fileIdRange: IntRange): (fileId: Int) -> Boolean {
+      //val dropAttrsSet = mutableSetOf<Pair<Int, EnumeratedFileAttribute>>()
+      val erasedFileIds = mutableSetOf<Int>()
+      VfsChronicle.traverseOperationsLog(point(), OperationLogStorage.TraverseDirection.PLAY,
+                                         VfsModificationContract.attributeData.relevantOperations,
+                                         onIncomplete = { /* skip FIXME ? */ },
+                                         onCompleteExceptional = { /* skip FIXME ? */ }) { op ->
+        VfsModificationContract.attributeData.modifier(op) { overwriteData ->
+          val fileId = op.getFileId()!!
+          if (fileId in fileIdRange) {
+            erasedFileIds.add(fileId)
+            // TODO maybe do it per attribute
+            //if (overwriteData.enumeratedAttributeFilter == null) erasedFileIds.add(fileId)
+            //else dropAttrsSet.add(fileId to overwriteData.enumeratedAttributeFilter)
+          }
+        }
+      }
+      return { fileId ->
+        fileId in erasedFileIds // TODO maybe || (fileId to attr) in dropAttrsSet
+      }
+    }
+
+    var lastAllocatedRecord = superRootId
+      private set
+
+    // root record is expected to be initialized already
+    fun ensureAllocated(fileId: Int) {
+      while (lastAllocatedRecord < fileId) {
+        val newRecord = newFsRecords.createRecord()
+        check(newRecord == lastAllocatedRecord + 1) { "newRecord=$newRecord, lastAllocatedRecord=$lastAllocatedRecord" }
+        lastAllocatedRecord = newRecord
+      }
+    }
+
+    override fun close() {
+      // TODO safe close
+      newVfsLog.awaitPendingWrites()
+      newVfsLog.dispose()
+      newFsRecords.close()
+      namesEnumerator.close()
+    }
+  }
+
+  private const val superRootId = PersistentFSTreeAccessor.SUPER_ROOT_ID
+
+  // nameId != getName(fileId) for a child of super root!
+  private data class SuperRootChild(val fileId: Int, val nameId: Int)
+
   /**
    * Enumerators must be ok as they are copied into the new VFS caches directory.
+   *
+   * WARN: attribute record ids are not preserved across recoveries, moreover subsequent recovery may leave VfsLog in a state
+   *       that will produce incorrect attribute record ids in snapshots. Attributes themselves are _not_ affected, because their
+   *       recovery is based on file ids and not attribute record ids.
    */
-  fun recoverFromPoint(point: OperationLogStorage.Iterator,
-                       logContext: VfsLogContext,
-                       oldStorageDir: Path,
-                       newStorageDir: Path,
-                       progressReporter: RawProgressReporter? = null) = wrapRecovery {
+  fun recoverFromPoint(
+    point: OperationLogStorage.Iterator,
+    queryContext: VfsLogQueryContext,
+    oldStorageDir: Path,
+    newStorageDir: Path,
+    progressReporter: RawProgressReporter? = null,
+    invokeReadAction: (Computable<*>) -> Any = { ApplicationManager.getApplication().runReadAction(it) }
+  ) = wrapRecovery {
     check(oldStorageDir.isDirectory())
     FileUtil.ensureExists(newStorageDir.toFile())
     newStorageDir.forEachDirectoryEntry { throw IllegalArgumentException("directory for recovered vfs is not empty") }
 
-    fun recoveryFail(msg: String? = null, cause: Throwable? = null): Nothing = throw VfsRecoveryException(msg, cause)
+    fun recoveryFail(msg: String, cause: Throwable? = null): Nothing = throw VfsRecoveryException(msg, cause)
 
-    class RecoveryContext(
-      val point: () -> OperationLogStorage.Iterator,
-      val vfsTimeMachine: SinglePassVfsTimeMachine,
-      var setFiller: (SnapshotFillerPresets.Filler) -> Unit,
-      val payloadReader: (PayloadRef) -> DefinedState<ByteArray>,
-      val fileStates: FileStateController = FileStateController(),
-    )
-
-    val ctx: RecoveryContext = ApplicationManager.getApplication().runReadAction(Computable {
+    val ctx: RecoveryContext = invokeReadAction(Computable {
       val namesEnumFile = "names"
       val attrEnumFile = "attributes_enums"
       copyFilesStartingWith(namesEnumFile, oldStorageDir, newStorageDir)
@@ -175,288 +269,408 @@ object VfsRecoveryUtils {
       val namesEnum = PersistentStringEnumerator(newStoragePaths.storagePath(namesEnumFile), true)
       val attributeEnumerator = SimpleStringPersistentEnumerator(newStoragePaths.storagePath(attrEnumFile))
 
-      val payloadReader: (PayloadRef) -> DefinedState<ByteArray> = {
-        val data = logContext.payloadStorage.readAt(it)
-        if (data == null) NotAvailable(NotEnoughInformationCause("data is not available anymore"))
-        else Ready(data)
-      }
-      val safeNameDeenum: (Int) -> String? = {
+      val safeNameDeenum: (Int) -> State.DefinedState<String> = {
         try {
-          namesEnum.valueOf(it)
+          namesEnum.valueOf(it)?.let(State::Ready) ?: NotAvailable("null name for $it")
         }
-        catch (ignored: Throwable) {
-          null
+        catch (e: Throwable) {
+          NotAvailable("failed to get name $it", e)
         }
       }
       val fillerHolder = object {
         var filler: SnapshotFillerPresets.Filler? = null // single thread hence not volatile
       }
-      val vtm = SinglePassVfsTimeMachine(logContext, safeNameDeenum, attributeEnumerator, payloadReader) { fillerHolder.filler!! }
-      RecoveryContext(point.constCopier(), vtm, { fillerHolder.filler = it }, payloadReader)
-    })
-    val superRootId = PersistentFSTreeAccessor.SUPER_ROOT_ID
-    val childrenAttributeEnumerated = logContext.enumerateAttribute(PersistentFSTreeAccessor.CHILDREN_ATTR)
+      val compactedVfs = queryContext.getBaseSnapshot(safeNameDeenum) { attributeEnumerator }
+      val vtm = SinglePassVfsTimeMachine(queryContext, safeNameDeenum, { attributeEnumerator }) { fillerHolder.filler!! }
 
-    val newFsRecords = FSRecordsImpl.connect(
-      newStorageDir,
-      emptyList(),
-      FSRecordsImpl.ErrorHandler { records, error ->
-        recoveryFail("Failed to recover VFS due to an error in new FSRecords", error)
-      }
-    )
-
-    AutoCloseable {
-      newFsRecords.dispose()
-    }.use {
-      // root record is expected to be initialized already
-      var lastAllocatedRecord = superRootId
-      fun ensureAllocated(id: Int) {
-        while (lastAllocatedRecord < id) {
-          val newRecord = newFsRecords.createRecord()
-          check(newRecord == lastAllocatedRecord + 1)
-          lastAllocatedRecord = newRecord
+      val newFsRecords = FSRecordsImpl.connect(
+        newStorageDir,
+        emptyList(),
+        false, // vfs log is altered manually, tracking every operation anew is too costly
+        FSRecordsImpl.ErrorHandler { _, error ->
+          recoveryFail("Failed to recover VFS due to an error in new FSRecords", error)
         }
-      }
+      )
 
-      val (maxFileId, childrenCacheMap, superRootChildrenByAttr) = run {
-        val parentIdAndSuperRootAttrsFiller = listOf(
-          SnapshotFillerPresets.RulePropertyRelations.parentId.toFiller(),
-          SnapshotFillerPresets.attributesFiller.constrain {
-            this is VfsOperation.AttributesOperation && fileId == superRootId
-          }
-        ).sum()
-        ctx.setFiller(parentIdAndSuperRootAttrsFiller)
-        val snapshot = ctx.vfsTimeMachine.getSnapshot(ctx.point())
+      copyVfsLog(oldStorageDir, newStorageDir, point.copy())
+      val newVfsLog = VfsLogImpl.open(PersistentFSPaths(newStorageDir).vfsLogStorage, false)
 
-        val superRootChildrenData =
-          snapshot.getFileById(superRootId).attributeDataMap.getOrNull()?.get(childrenAttributeEnumerated)?.let(ctx.payloadReader)
-          ?: throw VfsRecoveryException("Failed to recover VFS because super-root data is unavailable")
+      RecoveryContext(this, point.constCopier(), queryContext, newFsRecords, newVfsLog, progressReporter,
+                      vtm, { fillerHolder.filler = it }, compactedVfs, namesEnum)
+    }) as RecoveryContext
 
-        // nameId != getName(fileId) for a child of super root!
-        data class SuperRootChild(val fileId: Int, val nameId: Int)
+    ctx.use {
+      val (maxFileId, childrenCacheMap, superRootChildrenByAttr) = ctx.buildChildrenCacheMap()
 
-        val superRootChildrenByAttr = when (superRootChildrenData) {
-          is NotAvailable -> throw VfsRecoveryException("Failed to recover VFS because super-root data is unavailable",
-                                                        superRootChildrenData.cause)
-          is Ready -> {
-            try { // TODO this probably should be extracted to a common method (as [PersistentFSTreeAccessor.saveNameIdSequenceWithDeltas])
-              val contentStream = DataInputStream(UnsyncByteArrayInputStream(superRootChildrenData.value))
-              if (PersistentFSTreeAccessor.CHILDREN_ATTR.isVersioned) {
-                val version = DataInputOutputUtil.readINT(contentStream)
-                if (version != childrenAttributeEnumerated.version) {
-                  throw IllegalStateException("version mismatch: expected ${childrenAttributeEnumerated.version} vs actual $version")
-                }
-              }
-              val count = DataInputOutputUtil.readINT(contentStream)
-              val nameIds = mutableListOf<Int>()
-              val fileIds = mutableListOf<Int>()
-              check(count >= 0)
-              repeat(count) {
-                val nameId = DataInputOutputUtil.readINT(contentStream)
-                val fileId = DataInputOutputUtil.readINT(contentStream)
-                nameIds.add((nameIds.lastOrNull() ?: 0) + nameId)
-                fileIds.add((fileIds.lastOrNull() ?: 0) + fileId)
-              }
-              fileIds.zip(nameIds).map { SuperRootChild(it.first, it.second) }
-            }
-            catch (e: Throwable) {
-              throw VfsRecoveryException("Failed to parse super-root data", e)
-            }
-          }
-        }
-
-        var maxFileId = superRootId
-        val childrenCacheMap: Map<Int, List<Int>> = run {
-          val result = mutableMapOf<Int, MutableList<Int>>()
-          snapshot.forEachFile {
-            if (maxFileId < it.fileId) maxFileId = it.fileId
-            if (it.parentId.getOrNull() != null) {
-              result.compute(it.parentId.get()) { _, children ->
-                if (children == null) return@compute mutableListOf(it.fileId)
-                children.add(it.fileId)
-                children
-              }
-            }
-          }
-          result
-        }
-
-        Triple(maxFileId, childrenCacheMap, superRootChildrenByAttr)
-      }
-      fun childrenOf(fileId: Int): Set<Int> =
-        childrenCacheMap[fileId]?.toSet() ?: emptySet()
-
-      val superRootChildren =
-        superRootChildrenByAttr.map { it.fileId }.toSet().let { superRootChildrenByAttrIds ->
-          childrenOf(0) // yes, not superRootId == 1
-            .filter { it in superRootChildrenByAttrIds }
-        }
-      ctx.fileStates.setState(superRootId, RecoveryState.INITIALIZED)
-
-      val stages = 3
+      val stages = 4
       fun reportStage(stage: Int) = progressReporter?.text(IdeBundle.message("progress.cache.recover.from.logs.stage", stage, stages))
-      // stage 1: record initialization
+
       reportStage(1)
+      val lastRecoveredContentId = ctx.recoverAvailableContents()
 
-      // TODO estimate memory consumption and find out what fits into ~1GB(?)
-      val initChunkSize = SystemProperties.getIntProperty("idea.vfs-recovery.records-init-chunk-size", 750_000)
-      for (chunkStart in superRootId..maxFileId step initChunkSize) {
-        val chunkEnd = (chunkStart + initChunkSize).coerceAtMost(maxFileId) + 1 // excluded
-        val chunkRange = chunkStart until chunkEnd
-        // reinit snapshot to free memory
-        ctx.setFiller(SnapshotFillerPresets.everything.constrain {
-          val fileId = getFileId()
-          fileId == null || fileId in chunkRange
-        })
-        val snapshot = ctx.vfsTimeMachine.getSnapshot(ctx.point())
-
-        for (file in chunkRange.map { snapshot.getFileById(it) }) {
-          ensureAllocated(file.fileId)
-          if (file.fileId == superRootId) {
-            ctx.fileStates.setState(file.fileId, RecoveryState.INITIALIZED)
-            continue
-          }
-          try {
-            if (!file.isAvailable()) {
-              ctx.fileStates.setState(file.fileId, RecoveryState.BOTCHED)
-              continue
-            }
-            if (file.isDeleted.get()) {
-              ctx.fileStates.setState(file.fileId, RecoveryState.UNUSED)
-              continue
-            }
-            // set fields
-            newFsRecords.fillRecord(file.fileId, file.timestamp.get(), file.length.get(), file.flags.get(), file.nameId.get(),
-                                    file.parentId.get(), true)
-            // recover content if available
-            if (file.contentRecordId.get() != 0) {
-              file.getContent().mapCases(onNotAvailable = {
-                lostContentsCount++
-                newFsRecords.setFlags(file.fileId, file.flags.get() or MUST_RELOAD_CONTENT or MUST_RELOAD_LENGTH)
-              }) {
-                recoveredContentsCount++
-                newFsRecords.writeContent(
-                  file.fileId,
-                  ByteArraySequence(it),
-                  false // FIXME doesn't look ok
-                )
-              }
-            }
-            // recover available attrs except children
-            for ((enumeratedAttrId, dataRef) in file.attributeDataMap.get()) {
-              if (enumeratedAttrId == childrenAttributeEnumerated) continue
-              val attr = logContext.deenumerateAttribute(enumeratedAttrId) ?: throw IllegalStateException(
-                "cannot deenumerate attribute using vfslog enumerator (enumeratedAttribute=$enumeratedAttrId)")
-              val attrData = ctx.payloadReader(dataRef)
-              if (attrData !is Ready) continue // skip if NotAvailable
-              val attrContent = attrData.value
-                                  .cutOutAttributeVersionPrefix(attr) ?: continue // TODO this doesn't look like it should be here
-              try {
-                newFsRecords.writeAttribute(file.fileId, attr).use {
-                  it.write(attrContent)
-                }
-                recoveredAttributesCount++
-              }
-              catch (e: Throwable) {
-                botchedAttributesCount++
-                if (e is IOException) {
-                  throw e
-                }
-              }
-            }
-            ctx.fileStates.setState(file.fileId, RecoveryState.INITIALIZED)
-          }
-          catch (e: Throwable) {
-            ctx.fileStates.setState(file.fileId, RecoveryState.BOTCHED)
-            continue
-          }
-          val initializedFiles = file.fileId
-          progressReporter?.fraction((file.fileId.toDouble() / maxFileId).coerceIn(0.0, 1.0))
-          if ((initializedFiles and 0xFF) == 0) {
-            progressReporter?.details(IdeBundle.message("progress.cache.recover.from.logs.files.processed", initializedFiles, maxFileId))
-          }
-        }
-      }
-
-      // stage 2: set children attr
       reportStage(2)
-      val superRootValidChildren = superRootChildren.filter { ctx.fileStates.getState(it) == RecoveryState.INITIALIZED }
-      // root children attr is a special case
-      newFsRecords.writeAttribute(superRootId, PersistentFSTreeAccessor.CHILDREN_ATTR).use { output ->
-        val childrenToSave = superRootValidChildren.map { it }.toSet()
-        val (ids, names) = superRootChildrenByAttr.filter { it.fileId in childrenToSave }
-          .sortedBy { it.fileId }.map { it.fileId to it.nameId }.unzip()
-        PersistentFSTreeAccessor.saveNameIdSequenceWithDeltas(names.toIntArray(), ids.toIntArray(), output)
-      }
-      val recoveryQueueIds = ArrayDeque<Int>()
-      recoveryQueueIds.addAll(superRootValidChildren)
-      ctx.fileStates.setState(superRootId, RecoveryState.CONNECTED)
-      superRootValidChildren.forEach {
-        ctx.fileStates.setState(it, RecoveryState.CONNECTED)
-      }
-      while (recoveryQueueIds.isNotEmpty()) {
-        val fileId = recoveryQueueIds.pop()
-        val validChildren = childrenOf(fileId)
-          .filter { ctx.fileStates.getState(it) == RecoveryState.INITIALIZED }
-        if (validChildren.isEmpty()) continue
-        try {
-          val idDeltas =
-            (listOf(fileId) + validChildren.map { it }.sorted())
-              .zipWithNext()
-              .map { it.second - it.first }
-          newFsRecords.writeAttribute(fileId, PersistentFSTreeAccessor.CHILDREN_ATTR).use { out ->
-            DataInputOutputUtil.writeINT(out, idDeltas.size)
-            idDeltas.forEach {
-              DataInputOutputUtil.writeINT(out, it)
-            }
-          }
-          recoveredAttributesCount++
-          recoveryQueueIds.addAll(validChildren)
-          validChildren.forEach { childId ->
-            ctx.fileStates.setState(childId, RecoveryState.CONNECTED)
-          }
-        }
-        catch (e: Throwable) {
-          botchedAttributesCount++
-          ctx.fileStates.setState(fileId, RecoveryState.BOTCHED)
-          validChildren.forEach { childId ->
-            ctx.fileStates.setState(childId, RecoveryState.BOTCHED)
-          }
-          if (e is IOException) throw e
-        }
-        val connectedFiles = ctx.fileStates.getCount(RecoveryState.CONNECTED)
-        progressReporter?.fraction((connectedFiles.toDouble() / maxFileId).coerceIn(0.0, 1.0))
-        if ((connectedFiles and 0xFF) == 0) {
-          progressReporter?.details(IdeBundle.message("progress.cache.recover.from.logs.files.processed", connectedFiles, maxFileId))
-        }
-      }
+      ctx.initializeRecords(lastRecoveredContentId, maxFileId)
 
-      // stage 3: mark unused as deleted
       reportStage(3)
-      for (recordId in (superRootId + 1)..lastAllocatedRecord) {
-        if (ctx.fileStates.getState(recordId) !in listOf(RecoveryState.CONNECTED)) {
-          if (ctx.fileStates.getState(recordId) != RecoveryState.BOTCHED) {
-            ctx.fileStates.setState(recordId, RecoveryState.UNUSED)
-          }
-          try {
-            newFsRecords.setFlags(recordId, PersistentFS.Flags.FREE_RECORD_FLAG)
-          }
-          catch (e: Throwable) {
-            ctx.fileStates.setState(recordId, RecoveryState.BOTCHED)
-          }
-        }
+      ctx.setupChildrenAttr(childrenCacheMap, superRootChildrenByAttr, maxFileId)
 
-        progressReporter?.fraction((recordId.toDouble() / lastAllocatedRecord).coerceIn(0.0, 1.0))
-        if ((recordId and 0xFF) == 0) {
-          progressReporter?.details(IdeBundle.message("progress.cache.recover.from.logs.files.processed", recordId, maxFileId))
-        }
-      }
+      reportStage(4)
+      ctx.markUnusedAsDeleted(maxFileId)
 
       fileStateCounts = ctx.fileStates.getStatistics()
     }
 
     patchVfsCreationTimestamp(oldStorageDir, newStorageDir)
-    copyVfsLog(oldStorageDir, newStorageDir, ctx.point())
+  }
+
+  private fun RecoveryContext.buildChildrenCacheMap(): Triple<Int, Map<Int, List<Int>>, List<SuperRootChild>> {
+    val parentIdAndSuperRootAttrsFiller = listOf(
+      SnapshotFillerPresets.RulePropertyRelations.parentId.toFiller(),
+      SnapshotFillerPresets.attributesFiller.constrain {
+        this is VfsOperation.AttributesOperation && fileId == superRootId
+      }
+    ).sum()
+    val snapshot = getSnapshot(parentIdAndSuperRootAttrsFiller)
+
+    val superRootChildrenData =
+      snapshot.getFileById(superRootId).attributeDataMap.getOrNull()?.get(childrenAttributeEnumerated)?.let(payloadReader)
+      ?: throw VfsRecoveryException("Failed to recover VFS because super-root data is unavailable")
+
+    val superRootChildrenByAttr = when (superRootChildrenData) {
+      is NotAvailable -> throw VfsRecoveryException("Failed to recover VFS because super-root data is unavailable",
+                                                    superRootChildrenData.cause)
+      is Ready -> {
+        try { // TODO this probably should be extracted to a common method (as [PersistentFSTreeAccessor.saveNameIdSequenceWithDeltas])
+          val contentStream = DataInputStream(UnsyncByteArrayInputStream(superRootChildrenData.value))
+          if (PersistentFSTreeAccessor.CHILDREN_ATTR.isVersioned) {
+            val version = DataInputOutputUtil.readINT(contentStream)
+            if (version != childrenAttributeEnumerated.version) {
+              throw IllegalStateException("version mismatch: expected ${childrenAttributeEnumerated.version} vs actual $version")
+            }
+          }
+          val count = DataInputOutputUtil.readINT(contentStream)
+          val nameIds = mutableListOf<Int>()
+          val fileIds = mutableListOf<Int>()
+          check(count >= 0)
+          repeat(count) {
+            val nameId = DataInputOutputUtil.readINT(contentStream)
+            val fileId = DataInputOutputUtil.readINT(contentStream)
+            nameIds.add((nameIds.lastOrNull() ?: 0) + nameId)
+            fileIds.add((fileIds.lastOrNull() ?: 0) + fileId)
+          }
+          fileIds.zip(nameIds).map { SuperRootChild(it.first, it.second) }
+        }
+        catch (e: Throwable) {
+          throw VfsRecoveryException("Failed to parse super-root data", e)
+        }
+      }
+    }
+
+    var maxFileId = superRootId
+    val childrenCacheMap: Map<Int, List<Int>> = run {
+      val result = hashMapOf<Int, MutableList<Int>>()
+      snapshot.forEachFile {
+        if (maxFileId < it.fileId) maxFileId = it.fileId
+        it.parentId.getOrNull()?.let { parentId ->
+          result.compute(parentId) { _, children ->
+            if (children == null) return@compute mutableListOf(it.fileId)
+            children.add(it.fileId)
+            children
+          }
+        }
+      }
+      result
+    }
+
+    return Triple(maxFileId, childrenCacheMap, superRootChildrenByAttr)
+  }
+
+  private fun RecoveryContext.recoverAvailableContents(): Int {
+    var lastRecoveredContentId = 0
+    val snapshot = getSnapshot(SnapshotFillerPresets.contentFiller)
+    while (true) {
+      when (val nextContent = snapshot.getContent(lastRecoveredContentId + 1)) {
+        is NotAvailable -> break
+        is Ready -> {
+          val result = newFsRecords.contentAccessor().allocateContentRecordAndStore(nextContent.value)
+          check(result == lastRecoveredContentId + 1) { "assumption failed: got $result, expected ${lastRecoveredContentId + 1}" }
+          lastRecoveredContentId++
+        }
+      }
+    }
+    return lastRecoveredContentId
+  }
+
+  private fun RecoveryContext.initializeRecords(
+    lastRecoveredContentId: Int,
+    maxFileId: Int,
+  ) {
+    val newVfsLogOperationWriteContext = newVfsLog.getOperationWriteContext()
+    // TODO estimate memory consumption more precisely and find out what fits into ~1GB(?)
+    val initChunkSize = SystemProperties.getIntProperty("idea.vfs-recovery.records-init-chunk-size", 500_000)
+    require(initChunkSize > 0)
+    for (chunkStart in superRootId..maxFileId step initChunkSize) {
+      val chunkEnd = (chunkStart + initChunkSize - 1).coerceAtMost(maxFileId)
+      val chunkRange = chunkStart..chunkEnd
+      // reinit snapshot to free memory
+      val snapshot = getSnapshot(
+        listOf(SnapshotFillerPresets.RulePropertyRelations.allProperties.buildFiller(), SnapshotFillerPresets.attributesFiller).sum()
+          .constrain {
+            val fileId = getFileId()
+            fileId == null || fileId in chunkRange
+          }
+      )
+      val alteredAttributesFilter = calculateAttributesAlteredAfterRecoveryPointFilter(chunkRange)
+
+      for (file in chunkRange.map { snapshot.getFileById(it) }) {
+        ensureAllocated(file.fileId)
+        assert(fileStates.getState(file.fileId) == RecoveryState.UNDEFINED)
+        if (file.fileId == superRootId) {
+          fileStates.setState(file.fileId, RecoveryState.INITIALIZED)
+          continue
+        }
+        try {
+          if (!file.isAvailable()) {
+            fileStates.setState(file.fileId, RecoveryState.BOTCHED)
+            continue
+          }
+          if (file.isDeleted.get()) {
+            fileStates.setState(file.fileId, RecoveryState.UNUSED)
+            continue
+          }
+          // set fields
+          newFsRecords.fillRecord(file.fileId, file.timestamp.get(), file.length.get(), file.flags.get(), file.nameId.get(),
+                                  file.parentId.get(), true)
+          // recover content if available
+          val contentRecordId = file.contentRecordId.get()
+          if (contentRecordId != 0) {
+            if (contentRecordId <= lastRecoveredContentId) {
+              newFsRecords.connection().records.setContentRecordId(file.fileId, contentRecordId)
+              recoveryResult.recoveredContentsCount++
+            }
+            else {
+              val flags = file.flags.get() or MUST_RELOAD_CONTENT or MUST_RELOAD_LENGTH
+              newFsRecords.setFlags(file.fileId, flags)
+              recoveryResult.lostContentsCount++
+              // append content record id clearing operation for fileId. This is needed so that subsequent recovery, being invoked on at a
+              // point after ctx.point(), given that this contentRecordId will be recoverable at that point (with a content that is
+              // different from what was expected in the old vfs at ctx.point()), won't set the obsolete content record id to the file
+              newVfsLogOperationWriteContext.trackPlainOperation(VfsOperationTag.REC_SET_CONTENT_RECORD_ID, {
+                VfsOperation.RecordsOperation.SetContentRecordId(file.fileId, 0, it)
+              }) { true }
+              newVfsLogOperationWriteContext.trackPlainOperation(VfsOperationTag.REC_SET_FLAGS, {
+                VfsOperation.RecordsOperation.SetFlags(file.fileId, flags, it)
+              }) { true }
+            }
+          }
+          if (alteredAttributesFilter(file.fileId)) {
+            val keys = file.attributeDataMap.get().keys
+            recoveryResult.droppedObsoleteAttributesCount += keys.size - if (childrenAttributeEnumerated in keys) 1 else 0
+            // TODO maybe do it per attribute with a special event of some sort
+            newVfsLogOperationWriteContext.trackPlainOperation(VfsOperationTag.ATTR_DELETE_ATTRS, {
+              VfsOperation.AttributesOperation.DeleteAttributes(file.fileId, it)
+            }) { Unit }
+          }
+          else {
+            // recover available attrs except children
+            for ((enumeratedAttrId, dataRef) in file.attributeDataMap.get()) {
+              if (enumeratedAttrId == childrenAttributeEnumerated) continue
+              val attr = queryContext.deenumerateAttribute(enumeratedAttrId) ?: throw IllegalStateException(
+                "cannot deenumerate attribute using vfslog enumerator (enumeratedAttribute=$enumeratedAttrId)")
+              try {
+                val attrData = payloadReader(dataRef)
+                if (attrData !is Ready) continue // skip if NotAvailable
+                val attrContent = attrData.value
+                                    .cutOutAttributeVersionPrefix(attr) ?: continue // TODO this doesn't look like it should be here
+                newFsRecords.writeAttribute(file.fileId, attr).use {
+                  it.write(attrContent)
+                }
+                recoveryResult.recoveredAttributesCount++
+              }
+              catch (e: Throwable) {
+                recoveryResult.botchedAttributesCount++
+                if (e is IOException) {
+                  throw e
+                }
+              }
+            }
+          }
+          fileStates.setState(file.fileId, RecoveryState.INITIALIZED)
+        }
+        catch (e: Throwable) {
+          fileStates.setState(file.fileId, RecoveryState.BOTCHED)
+          continue
+        }
+        val initializedFiles = file.fileId
+        if ((initializedFiles and 0xFF) == 0) {
+          progressReporter?.fraction((file.fileId.toDouble() / maxFileId).coerceIn(0.0, 1.0))
+          progressReporter?.details(IdeBundle.message("progress.cache.recover.from.logs.files.processed", initializedFiles, maxFileId))
+        }
+      }
+    }
+  }
+
+  private class PartialSnapshot(val snapshot: ExtendedVfsSnapshot, val fileIdRange: IntRange)
+
+  private fun RecoveryContext.setupChildrenAttr(childrenCacheMap: Map<Int, List<Int>>,
+                                                superRootChildrenByAttr: List<SuperRootChild>,
+                                                maxFileId: Int) {
+    fun childrenOf(fileId: Int): Set<Int> =
+      childrenCacheMap[fileId]?.toSet() ?: emptySet()
+
+    val superRootChildren =
+      superRootChildrenByAttr.map { it.fileId }.toSet().let { superRootChildrenByAttrIds ->
+        childrenOf(0) // yes, not superRootId == 1
+          .filter { it in superRootChildrenByAttrIds }
+      }
+
+    val childrenAttributeReader = object {
+      private val attrReadChunkSize = SystemProperties.getIntProperty("idea.vfs-recovery.children-deduplication-chunk-size", 100_000)
+
+      @Volatile
+      private var partialSnapshotCache: PartialSnapshot? = null
+
+      private fun getAttributeSnapshotFor(fileId: Int): ExtendedVfsSnapshot {
+        partialSnapshotCache?.let {
+          if (fileId in it.fileIdRange) return it.snapshot
+        }
+        val block = fileId / attrReadChunkSize
+        val range = (block * attrReadChunkSize)..((block + 1) * attrReadChunkSize)
+        val snapshot = getSnapshot(SnapshotFillerPresets.attributesFiller.constrain {
+          getFileId() in range
+        })
+        partialSnapshotCache = PartialSnapshot(snapshot, range)
+        return snapshot
+      }
+
+      fun getChildrenByAttribute(fileId: Int): List<Int>? {
+        val snapshot = getAttributeSnapshotFor(fileId)
+        return snapshot.getFileById(fileId).readAttribute(PersistentFSTreeAccessor.CHILDREN_ATTR).getOrNull()?.use { input ->
+          val count = DataInputOutputUtil.readINT(input)
+          var prevId = fileId
+          val childrenByAttr = mutableListOf<Int>()
+          repeat(count) { _ ->
+            val id = DataInputOutputUtil.readINT(input) + prevId
+            prevId = id
+            childrenByAttr.add(id)
+          }
+          childrenByAttr
+        }
+      }
+    }
+
+    val superRootValidChildren = superRootChildren.filter { fileStates.getState(it) == RecoveryState.INITIALIZED }
+    // root children attr is a special case
+    newFsRecords.writeAttribute(superRootId, PersistentFSTreeAccessor.CHILDREN_ATTR).use { output ->
+      val childrenToSave = superRootValidChildren.toSet()
+      val (ids, names) = superRootChildrenByAttr.filter { it.fileId in childrenToSave }
+        .sortedBy { it.fileId }.map { it.fileId to it.nameId }.unzip()
+      PersistentFSTreeAccessor.saveNameIdSequenceWithDeltas(names.toIntArray(), ids.toIntArray(), output)
+    }
+    val recoveryQueueIds = PriorityQueue<Int>()
+    recoveryQueueIds.addAll(superRootValidChildren)
+    fileStates.setState(superRootId, RecoveryState.CONNECTED)
+    superRootValidChildren.forEach {
+      fileStates.setState(it, RecoveryState.CONNECTED)
+    }
+    var duplicateChildrenLogged = 0
+    val duplicateChildrenToLog = 10
+    while (recoveryQueueIds.isNotEmpty()) {
+      val fileId = recoveryQueueIds.remove()
+      val validChildren: List<Int> = childrenOf(fileId)
+        .filter { fileStates.getState(it) == RecoveryState.INITIALIZED }
+        .let { children -> // filter out same nameId children
+          val childrenIdAndNameId = children.zip(children.map(newFsRecords::getNameIdByFileId))
+          val nameIdToChildrenIds: Map<Int, List<Int>> = childrenIdAndNameId.toMap().entries.groupBy({ it.value }, { it.key })
+          val nameIdToDeduplicatedChildId: Map<Int, Int?> =
+            nameIdToChildrenIds.mapValues { (nameId, childrenIds) ->
+              if (childrenIds.size == 1) childrenIds[0]
+              else {
+                check(childrenIds.size > 1)
+                val childrenByAttr: List<Int>? = childrenAttributeReader.getChildrenByAttribute(fileId)
+                if (childrenByAttr == null) null
+                else {
+                  val intersection = childrenIds.intersect(childrenByAttr.toSet())
+                  duplicateChildrenLogged++
+                  if (duplicateChildrenLogged <= duplicateChildrenToLog) {
+                    LOG.warn("duplicate children: fileId=$fileId, nameId=$nameId, children=$childrenIds, " +
+                             "childrenByAttr=$childrenByAttr, intersection=${intersection.toList()}")
+                  }
+                  else if (duplicateChildrenLogged == duplicateChildrenToLog + 1) {
+                    LOG.warn("there are more duplicate children")
+                  }
+                  if (intersection.size == 1) intersection.first()
+                  else null // empty || size > 1
+                }
+              }
+            }
+          nameIdToChildrenIds.forEach { (nameId, childrenBefore) ->
+            if (childrenBefore.size > 1) {
+              recoveryResult.duplicateChildrenCount += childrenBefore.size
+              val deduplicationResult = nameIdToDeduplicatedChildId[nameId]
+              if (deduplicationResult == null) {
+                recoveryResult.duplicateChildrenLost += childrenBefore.size
+              }
+              else {
+                recoveryResult.duplicateChildrenDeduplicated += 1
+              }
+            }
+          }
+          nameIdToDeduplicatedChildId.mapNotNull { it.value }
+        }
+      if (validChildren.isEmpty()) continue
+      try {
+        val idDeltas =
+          (listOf(fileId) + validChildren.sorted())
+            .zipWithNext()
+            .map { it.second - it.first }
+        newFsRecords.writeAttribute(fileId, PersistentFSTreeAccessor.CHILDREN_ATTR).use { out ->
+          DataInputOutputUtil.writeINT(out, idDeltas.size)
+          idDeltas.forEach {
+            DataInputOutputUtil.writeINT(out, it)
+          }
+        }
+        recoveryResult.recoveredAttributesCount++
+        recoveryQueueIds.addAll(validChildren)
+        validChildren.forEach { childId ->
+          fileStates.setState(childId, RecoveryState.CONNECTED)
+        }
+      }
+      catch (e: Throwable) {
+        recoveryResult.botchedAttributesCount++
+        fileStates.setState(fileId, RecoveryState.BOTCHED)
+        validChildren.forEach { childId ->
+          fileStates.setState(childId, RecoveryState.BOTCHED)
+        }
+        if (e is IOException) throw e
+      }
+      val connectedFiles = fileStates.getCount(RecoveryState.CONNECTED)
+      if ((connectedFiles and 0xFF) == 0) {
+        progressReporter?.fraction((connectedFiles.toDouble() / maxFileId).coerceIn(0.0, 1.0))
+        progressReporter?.details(IdeBundle.message("progress.cache.recover.from.logs.files.processed", connectedFiles, maxFileId))
+      }
+    }
+  }
+
+  private fun RecoveryContext.markUnusedAsDeleted(maxFileId: Int) {
+    for (recordId in (superRootId + 1)..lastAllocatedRecord) {
+      if (fileStates.getState(recordId) !in listOf(RecoveryState.CONNECTED)) {
+        if (fileStates.getState(recordId) != RecoveryState.BOTCHED) {
+          fileStates.setState(recordId, RecoveryState.UNUSED)
+        }
+        try {
+          newFsRecords.setFlags(recordId, PersistentFS.Flags.FREE_RECORD_FLAG)
+        }
+        catch (e: Throwable) {
+          fileStates.setState(recordId, RecoveryState.BOTCHED)
+        }
+      }
+
+      if ((recordId and 0xFF) == 0) {
+        progressReporter?.fraction((recordId.toDouble() / lastAllocatedRecord).coerceIn(0.0, 1.0))
+        progressReporter?.details(IdeBundle.message("progress.cache.recover.from.logs.files.processed", recordId, maxFileId))
+      }
+    }
   }
 
   private fun VfsOperation<*>.getFileId(): Int? = when (this) {
@@ -468,24 +682,29 @@ object VfsRecoveryUtils {
   private fun copyVfsLog(oldStorageDir: Path,
                          newStorageDir: Path,
                          point: OperationLogStorage.Iterator) {
-    if (oldStorageDir == newStorageDir) {
-      throw IllegalArgumentException("oldStorageDir == newStorageDir")
-    }
+    require(oldStorageDir != newStorageDir) { "oldStorageDir == newStorageDir" }
+    // if there are pending writes it is okay, because we overwrite the size property anyway
     val oldPaths = PersistentFSPaths(oldStorageDir)
     val newPaths = PersistentFSPaths(newStorageDir)
+    require(!newPaths.vfsLogStorage.exists()) { "vfsLog exists in new caches directory" }
     oldPaths.vfsLogStorage.copyRecursively(newPaths.vfsLogStorage)
-    val operationsSizePath = newPaths.vfsLogStorage / "operations" / "size"
-    if (!operationsSizePath.exists()) {
-      throw VfsRecoveryException("vfslog operations size file not found")
+    val operationsPath = newPaths.vfsLogStorage / "operations"
+    if (!operationsPath.exists() || !operationsPath.isDirectory()) {
+      throw VfsRecoveryException("vfslog operations directory not found")
     }
     else {
       try {
-        var size by PersistentVar.long(operationsSizePath)
-        size = point.getPosition()
+        AppendLogStorage.resetSize(operationsPath, point.getPosition())
       }
       catch (e: Throwable) {
         throw VfsRecoveryException("failed to truncate new vfslog", e)
       }
+    }
+    try {
+      VfsLogImpl.filterOutRecoveryPoints(newPaths.vfsLogStorage, 0L until point.getPosition())
+    }
+    catch (e: Throwable) {
+      throw VfsRecoveryException("failed to filter out recovery points", e)
     }
   }
 
@@ -504,7 +723,7 @@ object VfsRecoveryUtils {
   }
 
   @OptIn(ExperimentalTime::class)
-  private inline fun wrapRecovery(body: RecoveryResult.() -> Unit): RecoveryResult =
+  private fun wrapRecovery(body: RecoveryResult.() -> Unit): RecoveryResult =
     try {
       val recoveryResult = RecoveryResult()
       recoveryResult.recoveryTime = measureTime { recoveryResult.body() }
@@ -518,7 +737,7 @@ object VfsRecoveryUtils {
     }
 
   private val VfsSnapshot.VirtualFileSnapshot.necessaryProps
-    get() = listOf(name, parentId, length, timestamp, flags, contentRecordId)
+    get() = listOf(nameId, parentId, length, timestamp, flags, contentRecordId)
 
   private fun VfsSnapshot.VirtualFileSnapshot.isAvailable(): Boolean =
     necessaryProps.all { it.observeState() is Ready<*> }
@@ -543,62 +762,15 @@ object VfsRecoveryUtils {
 
   data class RecoveryPoint(val timestamp: Long, val point: OperationLogStorage.Iterator)
 
-  /**
-   * @return iterator <= point, such that there are at least [completeOperationsAtLeast] preceding operations without
-   * exceptions and incomplete descriptors
-   */
-  fun findGoodOperationsSeriesEndPointClosestTo(point: () -> OperationLogStorage.Iterator,
-                                                completeOperationsAtLeast: Int = 50_000): OperationLogStorage.Iterator? {
-    var candidate = point()
-    out@ while (candidate.hasPrevious()) {
-      val checkIter = candidate.copy()
-      for (i in 1..completeOperationsAtLeast) {
-        if (!checkIter.hasPrevious()) return null
-        when (val result = checkIter.previous()) {
-          is Complete -> {
-            if (!result.operation.result.hasValue) { // exceptional operation
-              candidate = checkIter.copy()
-              continue@out
-            }
-          }
-          is Incomplete -> {
-            candidate = checkIter.copy()
-            continue@out
-          }
-          is Invalid -> throw result.cause
-        }
-      }
-      return candidate
-    }
-    return null
-  }
-
-  fun recoveryPointsBefore(point: () -> OperationLogStorage.Iterator): Sequence<RecoveryPoint> {
-    return sequence {
-      val iter = point()
-      // position iter after a vfile event end operation
-      VfsChronicle.traverseOperationsLog(iter, TraverseDirection.REWIND, VfsOperationTagsMask.ALL) {
-        if (it is VfsOperation.VFileEventOperation.EventStart) {
-          yield(RecoveryPoint(it.eventTimestamp, iter.copy()))
-        }
-      }
-    }
-  }
-
-  fun goodRecoveryPointsBefore(
-    point: () -> OperationLogStorage.Iterator,
-    completeOperationsAtLeast: Int = 50_000,
+  fun Sequence<RecoveryPoint>.thinOut(
     skipPeriodMsInit: Long = 30_000,
     periodMultiplier: Double = 1.618 // 30 sec * 1.618 ^ 20 ~= 5 days
   ): Sequence<RecoveryPoint> {
     val fiveYearsInMs = 5L * 365 * 24 * 60 * 60 * 1000
-    val startPoint = findGoodOperationsSeriesEndPointClosestTo(point, completeOperationsAtLeast)
-                     ?: return emptySequence()
     return sequence {
-      val allRecoveryPoints = recoveryPointsBefore(startPoint.constCopier())
       var skipPeriod: Long = skipPeriodMsInit
       var targetTimestamp: Long? = null
-      for (rp in allRecoveryPoints) {
+      for (rp in this@thinOut) {
         if (targetTimestamp == null) {
           yield(rp)
           targetTimestamp = rp.timestamp

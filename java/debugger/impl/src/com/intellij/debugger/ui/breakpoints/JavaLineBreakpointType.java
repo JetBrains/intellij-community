@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -111,7 +112,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
     SourcePosition pos = SourcePosition.createFromLine(file, position.getLine());
 
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    Document document = file.getViewProvider().getDocument();
     if (document == null) {
       return Collections.emptyList();
     }
@@ -173,7 +174,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
   public static @Nullable PsiElement findSingleConditionalReturn(@NotNull PsiFile file, int line) {
     Project project = file.getProject();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    Document document = file.getViewProvider().getDocument();
     if (document == null) return null;
     return findSingleConditionalReturn(project, document, line);
   }
@@ -225,10 +226,12 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   }
 
   public static boolean canStopOnConditionalReturn(@NotNull PsiFile file) {
-    // We haven't implemented Dalvik bytecode parsing yet.
-    Module module = ModuleUtilCore.findModuleForFile(file);
-    return module == null ||
-           !ContainerUtil.exists(FacetManager.getInstance(module).getAllFacets(), f -> f.getName().equals("Android"));
+    try (var ignore = SlowOperations.knownIssue("IDEA-331623, EA-903915")) {
+      // We haven't implemented Dalvik bytecode parsing yet.
+      Module module = ModuleUtilCore.findModuleForFile(file);
+      return module == null ||
+             !ContainerUtil.exists(FacetManager.getInstance(module).getAllFacets(), f -> f.getName().equals("Android"));
+    }
   }
 
   public boolean matchesPosition(@NotNull LineBreakpoint<?> breakpoint, @NotNull SourcePosition position) {
@@ -348,7 +351,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     @Override
     public TextRange getHighlightRange() {
       if (myElement != null) {
-        return DebuggerUtilsEx.intersectWithLine(myElement.getTextRange(), myElement.getContainingFile(), mySourcePosition.getLine());
+        return DebuggerUtilsEx.getHighlightingRangeInsideLine(myElement.getTextRange(), myElement.getContainingFile(), mySourcePosition.getLine());
       }
       return null;
     }
@@ -419,9 +422,12 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         }
       }
     }
-    return highlightedElement != null
-           ? DebuggerUtilsEx.intersectWithLine(highlightedElement.getTextRange(), highlightedElement.getContainingFile(), breakpoint.getLine())
-           : null;
+    if (highlightedElement != null) {
+      PsiFile file = highlightedElement.getContainingFile();
+      int line = breakpoint.getLine();
+      return DebuggerUtilsEx.getHighlightingRangeInsideLine(highlightedElement.getTextRange(), file, line);
+    }
+    return null;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScrollPaneFactory
@@ -98,7 +99,7 @@ internal object UpdateInfoPanel {
       val link = ActionLink(IdeBundle.message("updates.configure.updates.label")) {
         ShowSettingsUtil.getInstance().editConfigurable(infoRow, UpdateSettingsConfigurable(false))
       }
-      link.border = JBUI.Borders.empty(0, 4, 0, 0)
+      link.border = JBUI.Borders.emptyLeft(4)
       link.font = smallFont(link.font)
       infoRow.add(link)
     }
@@ -148,5 +149,10 @@ internal object UpdateInfoPanel {
   @JvmStatic
   fun downloadUrl(newBuild: BuildInfo, updatedChannel: UpdateChannel): String =
     IdeUrlTrackingParametersProvider.getInstance().augmentUrl(
-      newBuild.downloadUrl ?: newBuild.blogPost ?: updatedChannel.url ?: "https://www.jetbrains.com")
+      newBuild.downloadUrl ?:
+      newBuild.blogPost ?:
+      updatedChannel.url ?:
+      ExternalProductResourceUrls.getInstance().downloadPageUrl?.toExternalForm() ?:
+      ApplicationInfo.getInstance().companyURL ?:
+      "https://www.jetbrains.com")
 }

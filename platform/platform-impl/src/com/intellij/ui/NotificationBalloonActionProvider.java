@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class NotificationBalloonActionProvider implements BalloonImpl.ActionProvider {
+public final class NotificationBalloonActionProvider implements BalloonImpl.ActionProvider {
   private final BalloonImpl myBalloon;
   private final BalloonLayoutData myLayoutData;
   private final Component myRepaintPanel;
@@ -50,9 +50,8 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     myNotification = notification;
   }
 
-  @NotNull
   @Override
-  public List<BalloonImpl.ActionButton> createActions() {
+  public @NotNull List<BalloonImpl.ActionButton> createActions() {
     myActions = new ArrayList<>();
 
     if (!myLayoutData.showSettingButton) {
@@ -191,7 +190,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     }
   }
 
-  private static class MyActionGroup extends DefaultActionGroup implements TooltipDescriptionProvider {
+  private static final class MyActionGroup extends DefaultActionGroup implements TooltipDescriptionProvider {
     private MyActionGroup() {
       setPopup(true);
     }

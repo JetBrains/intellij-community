@@ -19,8 +19,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UDeclaration;
 import org.jetbrains.uast.UElementKt;
+import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UParameter;
 
 import javax.swing.*;
@@ -47,14 +47,14 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     }
     List<RefParameter> unusedParameters = getUnusedParameters(refMethod);
     if (unusedParameters.isEmpty()) return null;
-    UDeclaration uMethod = refMethod.getUastElement();
+    UMethod uMethod = refMethod.getUastElement();
     if (uMethod == null) return null;
     PsiElement element = uMethod.getJavaPsi();
     if (refMethod.isAppMain()) {
-      if (element == null || !element.getLanguage().isKindOf("kotlin")) return null;
+      if (!element.getLanguage().isKindOf("kotlin")) return null;
     }
     else if (refMethod.isEntry()) return null;
-    if (element != null && EntryPointsManager.getInstance(manager.getProject()).isEntryPoint(element)) return null;
+    if (EntryPointsManager.getInstance(manager.getProject()).isEntryPoint(element)) return null;
 
     List<ProblemDescriptor> result = new ArrayList<>();
     for (RefParameter refParameter : unusedParameters) {
@@ -98,8 +98,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     AnalysisScope scope = manager.getScope();
     manager.iterate(new RefJavaVisitor() {
       @Override
-      public void visitElement(@NotNull RefEntity refEntity) {
-        if (!(refEntity instanceof RefMethod refMethod)) return;
+      public void visitMethod(@NotNull RefMethod refMethod) {
         if (refMethod.isStatic() || refMethod.isConstructor() ||
             PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
           return;
@@ -109,12 +108,9 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
         if (unusedParameters.isEmpty()) return;
         if (scope != null && scope.isTotalScope()) return;
 
-        UDeclaration uastElement = refMethod.getUastElement();
+        UMethod uastElement = refMethod.getUastElement();
         if (uastElement == null) return;
-        PsiMethod element = (PsiMethod)uastElement.getJavaPsi();
-        if (element == null) {
-          return;
-        }
+        PsiMethod element = uastElement.getJavaPsi();
         PsiMethod[] derived = OverridingMethodsSearch.search(element).toArray(PsiMethod.EMPTY_ARRAY);
         for (RefParameter refParameter : unusedParameters) {
           if (refMethod.isAbstract() && derived.length == 0) {

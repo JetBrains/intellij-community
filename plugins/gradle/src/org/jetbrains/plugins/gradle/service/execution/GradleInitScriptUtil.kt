@@ -18,6 +18,7 @@ const val MAIN_INIT_SCRIPT_NAME = "ijInit"
 const val MAPPER_INIT_SCRIPT_NAME = "ijMapper"
 const val WRAPPER_INIT_SCRIPT_NAME = "ijWrapper"
 const val TEST_INIT_SCRIPT_NAME = "ijTestInit"
+const val IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME = "ijIdeaPluginConfigurator"
 
 fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Set<Class<*>>): Path {
   val jarPaths = GradleExecutionHelper.getToolingExtensionsJarPaths(toolingExtensionClasses)
@@ -31,6 +32,22 @@ fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Se
   )
   return createInitScript(MAIN_INIT_SCRIPT_NAME, initScript)
 }
+
+fun createIdeaPluginConfiguratorInitScript() : Path {
+  val initScript = loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/IdeaPluginConfigurator.gradle")
+  return createInitScript(IDEA_PLUGIN_CONFIGURATOR_SCRIPT_NAME, initScript)
+}
+
+fun loadDownloadSourcesInitScript(dependencyNotation: String,
+                                  taskName: String,
+                                  downloadTarget: String): String = loadDownloadSourcesInitScript(
+  "/org/jetbrains/plugins/gradle/tooling/internal/init/downloadSources.gradle", dependencyNotation, taskName, downloadTarget)
+
+fun loadLegacyDownloadSourcesInitScript(dependencyNotation: String,
+                                        taskName: String,
+                                        downloadTarget: String): String = loadDownloadSourcesInitScript(
+  "/org/jetbrains/plugins/gradle/tooling/internal/init/legacyDownloadSources.gradle", dependencyNotation,
+  taskName, downloadTarget)
 
 fun loadTaskInitScript(
   projectPath: String,
@@ -185,4 +202,12 @@ fun createInitScript(prefix: String, content: String): Path {
 private fun isContentEquals(path: Path, content: ByteArray): Boolean {
   return content.size.toLong() == path.fileSize() &&
          content.contentEquals(path.readBytes())
+}
+
+private fun loadDownloadSourcesInitScript(path: String, dependencyNotation: String, taskName: String, downloadTarget: String): String {
+  return loadInitScript(path, mapOf(
+    "DEPENDENCY_NOTATION" to dependencyNotation.toGroovyStringLiteral(),
+    "TARGET_PATH" to downloadTarget.toGroovyStringLiteral(),
+    "GRADLE_TASK_NAME" to taskName.toGroovyStringLiteral()
+  ))
 }

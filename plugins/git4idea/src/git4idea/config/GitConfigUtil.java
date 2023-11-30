@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.Git;
@@ -67,14 +66,12 @@ public final class GitConfigUtil {
   }
 
 
-  @Nullable
-  public static String getValue(@NotNull Project project, @NotNull VirtualFile root, @NotNull @NonNls String key) throws VcsException {
+  public static @Nullable String getValue(@NotNull Project project, @NotNull VirtualFile root, @NotNull @NonNls String key) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     return getValue(h, key);
   }
 
-  @Nullable
-  private static String getValue(@NotNull GitLineHandler h, @NotNull @NonNls String key) throws VcsException {
+  private static @Nullable String getValue(@NotNull GitLineHandler h, @NotNull @NonNls String key) throws VcsException {
     h.setSilent(true);
     h.addParameters("--null", "--get", key);
     GitCommandResult result = Git.getInstance().runCommand(h);
@@ -90,8 +87,7 @@ public final class GitConfigUtil {
    * Converts the git config boolean value (which can be specified in various ways) to Java Boolean.
    * @return true if the value represents "true", false if the value represents "false", null if the value doesn't look like a boolean value.
    */
-  @Nullable
-  public static Boolean getBooleanValue(@Nullable @NonNls String value) {
+  public static @Nullable Boolean getBooleanValue(@Nullable @NonNls String value) {
     if (value == null) return null;
     value = StringUtil.toLowerCase(value);
     if (ContainerUtil.newHashSet("true", "yes", "on", "1").contains(value)) return true;
@@ -102,8 +98,7 @@ public final class GitConfigUtil {
   /**
    * Get commit encoding for the specified root, or UTF-8 if the encoding is note explicitly specified
    */
-  @NotNull
-  public static String getCommitEncoding(@NotNull Project project, @NotNull VirtualFile root) {
+  public static @NotNull String getCommitEncoding(@NotNull Project project, @NotNull VirtualFile root) {
     String encoding = null;
     try {
       encoding = getValue(project, root, COMMIT_ENCODING);

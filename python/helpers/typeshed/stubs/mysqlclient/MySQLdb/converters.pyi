@@ -1,5 +1,5 @@
 import array
-from typing import Any
+from _typeshed import Incomplete
 
 from MySQLdb._exceptions import ProgrammingError as ProgrammingError
 from MySQLdb._mysql import string_literal as string_literal
@@ -15,7 +15,7 @@ from MySQLdb.times import (
     TimeDelta_or_None as TimeDelta_or_None,
 )
 
-NoneType: Any
+NoneType: Incomplete
 ArrayType = array.array
 
 def Bool2Str(s, d): ...
@@ -27,4 +27,4 @@ def Thing2Literal(o, d): ...
 def Decimal2Literal(o, d): ...
 def array2Str(o, d): ...
 
-conversions: Any
+conversions: Incomplete

@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.fenceInjection
 
 import com.intellij.lang.Language
+import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.openapi.util.TextRange
@@ -34,17 +35,24 @@ internal open class CodeFenceInjector : MultiHostInjector {
   override fun elementsToInjectIn(): List<Class<out PsiElement>?> = toInject
 
   override fun getLanguagesToInject(registrar: MultiHostRegistrar, host: PsiElement) {
-    if (host !is MarkdownCodeFence || !host.isValidHost || host.children.all { it.elementType != MarkdownTokenTypes.CODE_FENCE_CONTENT }) {
+    if (host !is MarkdownCodeFence || !host.isValidHost) {
       return
     }
-
+    if (host.children.all { it.elementType != MarkdownTokenTypes.CODE_FENCE_CONTENT }) {
+      return
+    }
     val language = findLangForInjection(host) ?: return
-
+    if (!canBeInjected(language)) {
+      return
+    }
     registrar.startInjecting(language)
     injectAsOnePlace(host, registrar)
     registrar.doneInjecting()
   }
 
+  private fun canBeInjected(language: Language): Boolean {
+    return LanguageParserDefinitions.INSTANCE.forLanguage(language) != null
+  }
 
   protected open fun findLangForInjection(element: MarkdownCodeFence): Language? {
     val name = element.fenceLanguage ?: return null

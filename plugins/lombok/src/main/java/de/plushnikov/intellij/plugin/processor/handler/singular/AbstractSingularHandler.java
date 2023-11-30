@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static de.plushnikov.intellij.plugin.thirdparty.LombokAddNullAnnotations.createRelevantNonNullAnnotation;
+
 public abstract class AbstractSingularHandler implements BuilderElementHandler {
 
   private static final String BUILDER_TEMP_VAR = "builder";
@@ -70,6 +72,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     final String oneMethodBody = getOneMethodBody(singularName, info);
     oneAddMethodBuilder.withBodyText(oneMethodBody);
 
+    createRelevantNonNullAnnotation(info.getNullAnnotationLibrary(), oneAddMethodBuilder);
+
     methods.add(oneAddMethodBuilder);
 
     final LombokLightMethodBuilder allAddMethodBuilder = new LombokLightMethodBuilder(
@@ -88,6 +92,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     final String allMethodBody = getAllMethodBody(fieldName, info);
     allAddMethodBuilder.withBodyText(allMethodBody);
 
+    createRelevantNonNullAnnotation(info.getNullAnnotationLibrary(), allAddMethodBuilder);
+
     methods.add(allAddMethodBuilder);
 
     final LombokLightMethodBuilder clearMethodBuilder = new LombokLightMethodBuilder(
@@ -100,6 +106,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     final String clearMethodBlockText = getClearMethodBody(info);
     clearMethodBuilder.withBodyText(clearMethodBlockText);
 
+    createRelevantNonNullAnnotation(info.getNullAnnotationLibrary(), clearMethodBuilder);
+
     methods.add(clearMethodBuilder);
 
     return methods;
@@ -111,10 +119,11 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
   }
 
   @Override
-  public List<String> getBuilderMethodNames(@NotNull String fieldName, @Nullable PsiAnnotation singularAnnotation,
+  public List<String> getBuilderMethodNames(@NotNull String fieldName, @NotNull String prefix, @Nullable PsiAnnotation singularAnnotation,
                                             CapitalizationStrategy capitalizationStrategy) {
-    return Arrays.asList(createSingularName(singularAnnotation, fieldName),
-                         fieldName,
+    final String accessorName = LombokUtils.buildAccessorName(prefix, fieldName, capitalizationStrategy);
+    return Arrays.asList(createSingularName(singularAnnotation, accessorName),
+                         accessorName,
                          createSingularClearMethodName(fieldName, capitalizationStrategy));
   }
 

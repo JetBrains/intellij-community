@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.jspecify.nullness.NullMarked;
-import org.jspecify.nullness.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 @NullMarked
 class ContainmentExtendsBounded {
   void x() {
     new Check<Lib<? extends Foo>, Lib<? extends Foo>>();
     new Check<Lib<? extends @Nullable Foo>, Lib<? extends Foo>>();
-    // jspecify_nullness_mismatch
     new Check<Lib<? extends Foo>, Lib<? extends @Nullable Foo>>();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
-public class EditorActionManagerImpl extends EditorActionManager {
+public final class EditorActionManagerImpl extends EditorActionManager {
   private ReadonlyFragmentModificationHandler myReadonlyFragmentsHandler = new DefaultReadOnlyFragmentModificationHandler();
 
   @Override
@@ -25,8 +25,7 @@ public class EditorActionManagerImpl extends EditorActionManager {
   }
 
   @Override
-  @NotNull
-  public TypedAction getTypedAction() {
+  public @NotNull TypedAction getTypedAction() {
     return TypedAction.getInstance();
   }
 
@@ -36,7 +35,7 @@ public class EditorActionManagerImpl extends EditorActionManager {
   }
 
   @Override
-  public ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler(@NotNull final Document document) {
+  public ReadonlyFragmentModificationHandler getReadonlyFragmentModificationHandler(final @NotNull Document document) {
     final Document doc = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
     final ReadonlyFragmentModificationHandler docHandler =
       doc instanceof DocumentImpl ? ((DocumentImpl)doc).getReadonlyFragmentModificationHandler() : null;
@@ -44,7 +43,7 @@ public class EditorActionManagerImpl extends EditorActionManager {
   }
 
   @Override
-  public void setReadonlyFragmentModificationHandler(@NotNull final Document document, final ReadonlyFragmentModificationHandler handler) {
+  public void setReadonlyFragmentModificationHandler(final @NotNull Document document, final ReadonlyFragmentModificationHandler handler) {
     final Document doc = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
     if (doc instanceof DocumentImpl) {
       ((DocumentImpl)document).setReadonlyFragmentModificationHandler(handler);
@@ -59,7 +58,7 @@ public class EditorActionManagerImpl extends EditorActionManager {
   }
 
 
-  private static class DefaultReadOnlyFragmentModificationHandler implements ReadonlyFragmentModificationHandler {
+  private static final class DefaultReadOnlyFragmentModificationHandler implements ReadonlyFragmentModificationHandler {
     @Override
     public void handle(ReadOnlyFragmentModificationException e) {
       Messages.showErrorDialog(EditorBundle.message("guarded.block.modification.attempt.error.message"),

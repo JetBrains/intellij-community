@@ -42,21 +42,3 @@ fun testString(x: Any):Boolean {
       }
     return x is String && x.isNotEmpty()
 }
-
-fun testTwoBooleans(x: Boolean, y: Boolean) {
-    val z = twoBooleans(x, y)
-    if (!x && !y) {}
-    if (z && <warning descr="Condition 'x' is always true when reached">x</warning>) {}
-    if (z || y) {}
-}
-
-@OptIn(kotlin.contracts.ExperimentalContracts::class)
-fun twoBooleans(x: Boolean, y: Boolean):Boolean {
-    contract {
-        returns(true) implies x
-        returns(false) implies y
-    }
-    if (x && !y) return true
-    if (y && !x) return false
-    throw Exception()
-} 

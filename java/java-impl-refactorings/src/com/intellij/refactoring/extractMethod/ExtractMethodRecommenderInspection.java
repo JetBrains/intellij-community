@@ -63,6 +63,7 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
         BitSet declarations = getDeclarations(statements);
         if (declarations.isEmpty()) return;
         int maxLength = body.getTextLength() * 3 / 5;
+        if (maxLength < minLength) return;
         int maxCount;
         if (block == body) {
           maxCount = statements.length - 1;
@@ -110,14 +111,16 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
               List<LocalQuickFix> fixes = new ArrayList<>();
               fixes.add(new ExtractMethodFix(from, count, output, inputVariables));
               if (inputVariables.size() > 1) {
-                fixes.add(new SetInspectionOptionFix(ExtractMethodRecommenderInspection.this, "maxParameters",
-                                                     JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.parameters", inputVariables.size()),
-                                                     inputVariables.size() - 1));
+                fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+                  ExtractMethodRecommenderInspection.this, "maxParameters",
+                  JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.parameters", inputVariables.size()),
+                  inputVariables.size() - 1)));
               }
               if (textRange.getLength() < 10_000) {
-                fixes.add(new SetInspectionOptionFix(ExtractMethodRecommenderInspection.this, "minLength",
-                                                     JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.length"),
-                                                     textRange.getLength() + 1));
+                fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+                  ExtractMethodRecommenderInspection.this, "minLength",
+                  JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.length"),
+                  textRange.getLength() + 1)));
               }
               int firstLineBreak = textRange.substring(block.getText()).indexOf('\n');
               if (firstLineBreak > -1) {

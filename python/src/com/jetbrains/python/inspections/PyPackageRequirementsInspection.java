@@ -46,6 +46,7 @@ import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.requirements.RequirementsFile;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -75,14 +76,14 @@ public class PyPackageRequirementsInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    if (!(holder.getFile() instanceof PyFile) && !(holder.getFile() instanceof PsiPlainTextFile)
+    if (!(holder.getFile() instanceof PyFile) && !(holder.getFile() instanceof RequirementsFile)
         && !isPythonInTemplateLanguages(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new Visitor(holder, ignoredPackages, PyInspectionVisitor.getContext(session));
   }
 
-  private boolean isPythonInTemplateLanguages(PsiFile psiFile) {
+  private static boolean isPythonInTemplateLanguages(PsiFile psiFile) {
     return StreamEx.of(psiFile.getViewProvider().getLanguages())
       .findFirst(x -> x.isKindOf(PythonLanguage.getInstance()))
       .isPresent();
@@ -111,15 +112,17 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPlainTextFile(@NotNull PsiPlainTextFile file) {
-      final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-      if (module != null && file.getVirtualFile().equals(PyPackageUtil.findRequirementsTxt(module))) {
-        if (file.getText().trim().isEmpty()) {
-          registerProblem(file, PyPsiBundle.message("INSP.package.requirements.requirements.file.empty"),
-                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new PyGenerateRequirementsFileQuickFix(module));
-        }
-        else {
-          checkPackagesHaveBeenInstalled(file, module);
+    public void visitFile(@NotNull PsiFile file) {
+      if (file instanceof RequirementsFile) {
+        final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+        if (module != null && file.getVirtualFile().equals(PyPackageUtil.findRequirementsTxt(module))) {
+          if (file.getText().trim().isEmpty()) {
+            registerProblem(file, PyPsiBundle.message("INSP.package.requirements.requirements.file.empty"),
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, new PyGenerateRequirementsFileQuickFix(module));
+          }
+          else {
+            checkPackagesHaveBeenInstalled(file, module);
+          }
         }
       }
     }
@@ -184,11 +187,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
       final String packageName = packageReferenceExpression.getName();
       if (packageName != null && !myIgnoredPackages.contains(packageName)) {
-        final List<String> possiblePyPIPackageNames = PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, Collections.emptyList());
+        final String possiblePyPIPackageNames = PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, "");
 
         if (!ApplicationManager.getApplication().isUnitTestMode() &&
             !PyPIPackageUtil.INSTANCE.isInPyPI(packageName) &&
-            !ContainerUtil.exists(possiblePyPIPackageNames, PyPIPackageUtil.INSTANCE::isInPyPI)) return;
+            !PyPIPackageUtil.INSTANCE.isInPyPI(possiblePyPIPackageNames)) return;
 
         if (PyPackageUtil.SETUPTOOLS.equals(packageName)) return;
 
@@ -208,16 +211,16 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
         for (PyRequirement req : requirements) {
           final String name = req.getName();
-          if (name.equalsIgnoreCase(packageName) || ContainerUtil.exists(possiblePyPIPackageNames, name::equalsIgnoreCase)) {
+          if (name.equalsIgnoreCase(packageName) || name.equalsIgnoreCase(possiblePyPIPackageNames)) {
             return;
           }
           final String nameWhereUnderscoreReplacedWithHyphen = name.replaceAll("_", "-");
-          if (ContainerUtil.exists(possiblePyPIPackageNames, nameWhereUnderscoreReplacedWithHyphen::equalsIgnoreCase)) {
+          if (nameWhereUnderscoreReplacedWithHyphen.equalsIgnoreCase(possiblePyPIPackageNames)) {
             return;
           }
           final String nameWhereHyphenReplacedWithUnderscore = name.replaceAll("-", "_");
           if (nameWhereHyphenReplacedWithUnderscore.equalsIgnoreCase(packageName) ||
-              ContainerUtil.exists(possiblePyPIPackageNames, nameWhereHyphenReplacedWithUnderscore::equalsIgnoreCase)) {
+              nameWhereHyphenReplacedWithUnderscore.equalsIgnoreCase(possiblePyPIPackageNames)) {
             return;
           }
         }

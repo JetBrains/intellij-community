@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.firefox;
 
 import com.intellij.ide.IdeBundle;
@@ -65,14 +65,12 @@ public class FirefoxSettingsConfigurable implements Configurable {
            !Objects.equals(mySettings.getProfilesIniPath(), getConfiguredProfileIniPath());
   }
 
-  @Nullable
-  private String getConfiguredProfileIniPath() {
+  private @Nullable String getConfiguredProfileIniPath() {
     String path = PathUtil.toSystemIndependentName(StringUtil.nullize(myProfilesIniPathField.getText()));
     return myDefaultProfilesIniPath.equals(path) ? null : path;
   }
 
-  @Nullable
-  private String getConfiguredProfileName() {
+  private @Nullable String getConfiguredProfileName() {
     String selected = (String)myProfileCombobox.getSelectedItem();
     return Objects.equals(defaultProfile, selected) ? null : selected;
   }
@@ -117,14 +115,12 @@ public class FirefoxSettingsConfigurable implements Configurable {
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return IdeBundle.message("display.name.firefox.settings");
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     return "reference.settings.ide.settings.web.browsers.edit";
   }
 }

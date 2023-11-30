@@ -260,6 +260,9 @@ public class OutputChecker {
       result = result.replaceAll("\"(-D.*?)\"", "$1");  // unquote extra params
       result = result.replaceAll("-Didea.launcher.port=\\d*", "-Didea.launcher.port=!IDEA_LAUNCHER_PORT!");
       result = result.replaceAll("-Dfile.encoding=[\\w-]*", "-Dfile.encoding=!FILE_ENCODING!");
+      // Since Java 18, these options are added automatically to avoid garbled text in console
+      // See JdkCommandLineSetup::appendEncoding and IDEA-291006
+      result = result.replace("-Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 ", "");
       result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
 
       result = fixSlashes(result, JDK_HOME_STR);

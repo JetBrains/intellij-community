@@ -35,4 +35,5 @@ envs {
   python "python39", "3.9.13"
   python "python310", "3.10.8"
   python "python311", "3.11.0"
+  python "python312", "3.12.0"
 }

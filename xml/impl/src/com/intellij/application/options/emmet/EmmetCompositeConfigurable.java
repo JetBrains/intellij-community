@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.emmet;
 
 import com.intellij.codeInsight.template.impl.TemplateExpandShortcutPanel;
@@ -33,21 +33,18 @@ public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Ab
     myTemplateExpandShortcutPanel = new TemplateExpandShortcutPanel(XmlBundle.message("emmet.expand.abbreviation.with"));
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return XmlBundle.message("emmet.configuration.title");
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     return getId();
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     final JPanel rootPanel = new JPanel(new GridLayoutManager(myInnerConfigurables.length + 1, 1, JBInsets.emptyInsets(), -1, -1, false, false));
     rootPanel.add(myTemplateExpandShortcutPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH,
                                                                      GridConstraints.FILL_HORIZONTAL,
@@ -108,9 +105,8 @@ public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Ab
     super.disposeUIResources();
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "reference.idesettings.emmet";
   }
 

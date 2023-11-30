@@ -191,12 +191,13 @@ public class DirectoryTreeScanningPlayground {
   @Ignore("Not finished yet")
   public void scanWithNIOWalkTreeCreatingFSRecordsEntries() throws IOException {
     final long startedAtNs = System.nanoTime();
+    FSRecordsImpl records = FSRecords.getInstance();
 
     Files.walkFileTree(ROOT.toPath(), new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult visitFile(final Path file,
                                        final BasicFileAttributes attrs) throws IOException {
-        final int fileId = FSRecords.createRecord();
+        final int fileId = records.createRecord();
         // other methods are package-local
         return FileVisitResult.CONTINUE;
       }
@@ -204,7 +205,7 @@ public class DirectoryTreeScanningPlayground {
       @Override
       public FileVisitResult preVisitDirectory(final Path dir,
                                                final BasicFileAttributes attrs) throws IOException {
-        final int fileId = FSRecords.createRecord();
+        final int fileId = records.createRecord();
         return super.preVisitDirectory(dir, attrs);
       }
     });

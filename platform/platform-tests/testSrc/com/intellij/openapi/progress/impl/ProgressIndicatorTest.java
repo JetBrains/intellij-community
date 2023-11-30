@@ -23,6 +23,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -233,7 +234,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         }
       }, myIndicator, null);
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     while (!future.isDone()) {
       if (System.currentTimeMillis() < warmupEnd) {
@@ -1038,7 +1039,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     ProgressIndicator indicator = new ProgressIndicatorBase(false);
     indicator.start();
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     AtomicReference<Future<?>> future = new AtomicReference<>();
     doReadAction();

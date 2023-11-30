@@ -52,7 +52,8 @@ open class AttachToProcessDialog(
   private val project: Project,
   private val attachDebuggerProviders: List<XAttachDebuggerProvider>,
   private val attachHostProviders: List<XAttachHostProvider<XAttachHost>>,
-  isLocalViewDefault: Boolean = true,
+  dataContext: DataContext = DataContext.EMPTY_CONTEXT,
+  defaultHostType: AttachDialogHostType = AttachDialogHostType.LOCAL,
   parentComponent: JComponent? = null) : DialogWrapper(project, parentComponent, true, IdeModalityType.MODELESS) {
 
   companion object {
@@ -86,7 +87,7 @@ open class AttachToProcessDialog(
     })
   }
 
-  private val state = AttachDialogState(disposable)
+  private val state = AttachDialogState(disposable, dataContext)
 
   private val filterTypingMergeQueue: MergingUpdateQueue = MergingUpdateQueue(
     "Attach to process search typing merging queue",
@@ -103,7 +104,7 @@ open class AttachToProcessDialog(
   private val columnsLayout = application.getService(AttachDialogColumnsLayoutService::class.java).getColumnsLayout()
 
   private val localAttachView = AttachToLocalProcessView(project, state, columnsLayout, attachDebuggerProviders)
-  private val remoteAttachView = AttachToRemoteProcessView(project, state, columnsLayout, attachHostProviders, attachDebuggerProviders)
+  private val externalAttachViews: List<AttachToProcessView>
   private val allViews: List<AttachToProcessView>
   private var currentAttachView = AtomicLazyProperty<AttachToProcessView> { localAttachView }
 
@@ -119,15 +120,21 @@ open class AttachToProcessDialog(
   init {
     title = XDebuggerBundle.message("xdebugger.attach.action").trimEnd('.')
 
-    val externalProcessViews = XAttachToProcessViewProvider.getProcessViews(project, state, columnsLayout, attachDebuggerProviders)
-    allViews = listOf(localAttachView, remoteAttachView) + externalProcessViews
-    viewsPanel = panel { row { segmentedButton(allViews) { it.getName() }.bind(currentAttachView) } }
+    externalAttachViews = XAttachToProcessViewProvider
+      .getProcessViews(project, state, columnsLayout, attachDebuggerProviders, attachHostProviders)
+    allViews = listOf(localAttachView) + externalAttachViews
+    viewsPanel = panel { row { segmentedButton(allViews) { text = it.getName() }.bind(currentAttachView) } }
 
     northToolbar = createNorthToolbar()
     viewPanel.add(filterTextField, "wrap, grow")
     updateProblemStripe()
     currentAttachView.afterChange { updateView(it) }
-    currentAttachView.set(if (!isLocalViewDefault && attachHostProviders.any()) remoteAttachView else localAttachView)
+    val view = when (defaultHostType) {
+      AttachDialogHostType.LOCAL -> localAttachView
+      else -> externalAttachViews.firstOrNull { it.getHostType() == defaultHostType } ?: localAttachView
+    }
+
+    currentAttachView.set(view)
 
     currentAttachView.afterChange { AttachDialogStatisticsCollector.hostSwitched(it) } // register view switch logging only after initialization
 
@@ -448,7 +455,7 @@ open class AttachToProcessDialog(
       return panel {
         row {
           label(XDebuggerBundle.message("xdebugger.attach.view.message")).gap(RightGap.SMALL)
-          segmentedButton(AttachViewType.values().toList()) { it.displayText }.bind(state.selectedViewType)
+          segmentedButton(AttachViewType.values().toList()) { text = it.displayText }.bind(state.selectedViewType)
         }
       }
     }
@@ -520,8 +527,11 @@ open class AttachToProcessDialog(
     return AttachViewActionWrapper(view, action)
   }
 
-  fun setShowLocalView(localViewDefault: Boolean) {
-    val viewToSelect = if (localViewDefault) localAttachView else remoteAttachView
+  fun setAttachView(hostType: AttachDialogHostType) {
+    val viewToSelect = when (hostType) {
+      AttachDialogHostType.LOCAL -> localAttachView
+      else -> externalAttachViews.firstOrNull { it.getHostType() == hostType } ?: localAttachView
+    }
     if (currentAttachView.get() == viewToSelect) {
       return
     }

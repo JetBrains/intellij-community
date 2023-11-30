@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.semantic;
 
-import com.intellij.ProjectTopics;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,7 +52,7 @@ public final class SemServiceImpl extends SemService implements Disposable {
     SemContributor.EP_NAME.addChangeListener(() -> producers = null, project);
 
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(this);
-    messageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    messageBusConnection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         producers = null;

@@ -2,56 +2,53 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * if (!a == b) ...  =>  if (!(a == b)) ...
  */
-public class NegationBroadScopeFix implements IntentionAction {
-  private final PsiPrefixExpression myPrefixExpression;
-
+public class NegationBroadScopeFix extends PsiUpdateModCommandAction<PsiPrefixExpression> {
   public NegationBroadScopeFix(@NotNull PsiPrefixExpression prefixExpression) {
-    myPrefixExpression = prefixExpression;
+    super(prefixExpression);
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new NegationBroadScopeFix(PsiTreeUtil.findSameElementInCopy(myPrefixExpression, target));
-  }
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiPrefixExpression expression) {
+    PsiExpression operand = expression.getOperand();
+    if (operand == null) return null;
 
-  @Override
-  @NotNull
-  public String getText() {
-    PsiExpression operand = myPrefixExpression.getOperand();
-    String text = operand == null ? "" : operand.getText() + " ";
-    PsiElement parent = myPrefixExpression.getParent();
+    PsiElement parent = expression.getParent();
+    String text = operand.getText() + " ";
 
     String rop;
-    if (parent instanceof PsiInstanceOfExpression) {
+    if (parent instanceof PsiInstanceOfExpression instanceOf) {
+      if (instanceOf.getOperand() != expression) return null;
       text += PsiKeyword.INSTANCEOF + " ";
-      final PsiTypeElement typeElement = ((PsiInstanceOfExpression)parent).getCheckType();
+      final PsiTypeElement typeElement = instanceOf.getCheckType();
       rop = typeElement == null ? "" : typeElement.getText();
     }
-    else if (parent instanceof PsiBinaryExpression) {
-      text += ((PsiBinaryExpression)parent).getOperationSign().getText() + " ";
-      final PsiExpression rOperand = ((PsiBinaryExpression)parent).getROperand();
+    else if (parent instanceof PsiBinaryExpression binaryExpression) {
+      if (binaryExpression.getLOperand() != expression) return null;
+      if (!TypeConversionUtil.isBooleanType(binaryExpression.getType())) return null;
+      text += binaryExpression.getOperationSign().getText() + " ";
+      final PsiExpression rOperand = binaryExpression.getROperand();
       rop = rOperand == null ? "" : rOperand.getText();
     }
     else {
-      rop = "<expr>";
+      return null;
     }
 
     text += rop;
-    return QuickFixBundle.message("negation.broader.scope.text", text);
+    return Presentation.of(QuickFixBundle.message("negation.broader.scope.text", text));
   }
 
   @Override
@@ -61,40 +58,15 @@ public class NegationBroadScopeFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myPrefixExpression.isValid() || myPrefixExpression.getOperand() == null) return false;
-
-    PsiElement parent = myPrefixExpression.getParent();
-    if (parent instanceof PsiInstanceOfExpression && ((PsiInstanceOfExpression)parent).getOperand() == myPrefixExpression) {
-      return true;
-    }
-    return parent instanceof PsiBinaryExpression binaryExpression &&
-           binaryExpression.getLOperand() == myPrefixExpression &&
-           TypeConversionUtil.isBooleanType(binaryExpression.getType());
-  }
-
-  @NotNull
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myPrefixExpression.getContainingFile();
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!isAvailable(project, editor, file)) return;
-    PsiExpression operand = myPrefixExpression.getOperand();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiPrefixExpression myPrefixExpression, @NotNull ModPsiUpdater updater) {
+    PsiExpression operand = Objects.requireNonNull(myPrefixExpression.getOperand());
     PsiElement unnegated = myPrefixExpression.replace(operand);
     PsiElement parent = unnegated.getParent();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(file.getProject());
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
 
     PsiPrefixExpression negated = (PsiPrefixExpression)factory.createExpressionFromText("!(xxx)", parent);
-    PsiParenthesizedExpression parentheses = (PsiParenthesizedExpression)negated.getOperand();
-    parentheses.getExpression().replace(parent.copy());
+    PsiParenthesizedExpression parentheses = (PsiParenthesizedExpression)Objects.requireNonNull(negated.getOperand());
+    Objects.requireNonNull(parentheses.getExpression()).replace(parent.copy());
     parent.replace(negated);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

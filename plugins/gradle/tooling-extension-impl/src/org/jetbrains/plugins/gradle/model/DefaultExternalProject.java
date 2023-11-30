@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model;
 
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,10 +31,6 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
   private String group;
   @NotNull
   private String version;
-  @Nullable
-  private String sourceCompatibility;
-  @Nullable
-  private String targetCompatibility;
   @NotNull
   private TreeMap<String, DefaultExternalProject> childProjects;
   @NotNull
@@ -45,20 +42,14 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
   @NotNull
   private Map<String, DefaultExternalTask> tasks;
   @NotNull
-  private Map<String, DefaultExternalSourceSet> sourceSets;
-  @NotNull
   private String externalSystemId;
   @NotNull
-  private List<File> artifacts;
-  @NotNull
-  private Map<String, Set<File>> artifactsByConfiguration;
+  private DefaultGradleSourceSetModel sourceSetModel;
 
   public DefaultExternalProject() {
     childProjects = new TreeMap<>();
     tasks = new HashMap<>(0);
-    sourceSets = new HashMap<>(0);
-    artifacts = new ArrayList<>(0);
-    artifactsByConfiguration = new HashMap<>(0);
+    sourceSetModel = new DefaultGradleSourceSetModel();
   }
 
   public DefaultExternalProject(@NotNull ExternalProject externalProject) {
@@ -69,8 +60,6 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
     qName = externalProject.getQName();
     version = externalProject.getVersion();
     group = externalProject.getGroup();
-    sourceCompatibility = externalProject.getSourceCompatibility();
-    targetCompatibility = externalProject.getTargetCompatibility();
     description = externalProject.getDescription();
     projectDir = externalProject.getProjectDir();
     buildDir = externalProject.getBuildDir();
@@ -89,14 +78,7 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
       this.tasks.put(entry.getKey(), new DefaultExternalTask(entry.getValue()));
     }
 
-    Map<String, ? extends ExternalSourceSet> externalProjectSourceSets = externalProject.getSourceSets();
-    sourceSets = new HashMap<>(externalProjectSourceSets.size());
-    for (Map.Entry<String, ? extends ExternalSourceSet> entry : externalProjectSourceSets.entrySet()) {
-      sourceSets.put(entry.getKey(), new DefaultExternalSourceSet(entry.getValue()));
-    }
-
-    artifacts = new ArrayList<>(externalProject.getArtifacts());
-    artifactsByConfiguration = new HashMap<>(externalProject.getArtifactsByConfiguration());
+    sourceSetModel = new DefaultGradleSourceSetModel(externalProject.getSourceSetModel());
   }
 
   @NotNull
@@ -192,21 +174,21 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
   @Override
   @Nullable
   public String getSourceCompatibility() {
-    return sourceCompatibility;
+    return sourceSetModel.getSourceCompatibility();
   }
 
   public void setSourceCompatibility(@Nullable String sourceCompatibility) {
-    this.sourceCompatibility = sourceCompatibility;
+    sourceSetModel.setSourceCompatibility(sourceCompatibility);
   }
 
   @Override
   @Nullable
   public String getTargetCompatibility() {
-    return targetCompatibility;
+    return sourceSetModel.getTargetCompatibility();
   }
 
   public void setTargetCompatibility(@Nullable String targetCompatibility) {
-    this.targetCompatibility = targetCompatibility;
+    sourceSetModel.setTargetCompatibility(targetCompatibility);
   }
 
   @NotNull
@@ -264,34 +246,43 @@ public final class DefaultExternalProject implements ExternalProject, ExternalPr
     this.tasks = tasks;
   }
 
+  @Override
+  public @NotNull DefaultGradleSourceSetModel getSourceSetModel() {
+    return sourceSetModel;
+  }
+
+  public void setSourceSetModel(@NotNull DefaultGradleSourceSetModel sourceSetModel) {
+    this.sourceSetModel = sourceSetModel;
+  }
+
   @NotNull
   @Override
   public Map<String, DefaultExternalSourceSet> getSourceSets() {
-    return sourceSets;
+    return sourceSetModel.getSourceSets();
   }
 
   public void setSourceSets(@NotNull Map<String, DefaultExternalSourceSet> sourceSets) {
-    this.sourceSets = sourceSets;
+    sourceSetModel.setSourceSets(sourceSets);
   }
 
   @NotNull
   @Override
   public List<File> getArtifacts() {
-    return artifacts;
+    return sourceSetModel.getTaskArtifacts();
   }
 
   public void setArtifacts(@NotNull List<File> artifacts) {
-    this.artifacts = artifacts;
+    sourceSetModel.setTaskArtifacts(artifacts);
   }
 
   public void setArtifactsByConfiguration(@NotNull Map<String, Set<File>> artifactsByConfiguration) {
-    this.artifactsByConfiguration = artifactsByConfiguration;
+    sourceSetModel.setConfigurationArtifacts(artifactsByConfiguration);
   }
 
   @NotNull
   @Override
   public Map<String, Set<File>> getArtifactsByConfiguration() {
-    return artifactsByConfiguration;
+    return sourceSetModel.getConfigurationArtifacts();
   }
 
   @Override

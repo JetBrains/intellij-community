@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.notification.NotificationAction
@@ -10,6 +10,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
+import com.intellij.openapi.project.DumbModeBlockedFunctionality
+import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -118,6 +120,7 @@ class PostCommitChecksHandler(val project: Project) {
     if (DumbService.isDumb(project)) {
       if (commitChecks.any { !DumbService.isDumbAware(it) }) {
         problems += TextCommitProblem(VcsBundle.message("before.checkin.post.commit.error.dumb.mode"))
+        DumbModeBlockedFunctionalityCollector.logFunctionalityBlocked(project, DumbModeBlockedFunctionality.PostCommitCheck)
       }
     }
 

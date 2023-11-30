@@ -33,7 +33,7 @@ import java.util.List;
 // correct number of timestamps for each possible revision for comparator.
 // Therefore we have to move along the changelist, revert only content changes
 // and record file and changeset timestamps to call comparator with.
-public class ByteContentRetriever extends ChangeSetsProcessor {
+public final class ByteContentRetriever extends ChangeSetsProcessor {
   private final LocalHistoryFacade myVcs;
   private final FileRevisionTimestampComparator myComparator;
 
@@ -106,6 +106,6 @@ public class ByteContentRetriever extends ChangeSetsProcessor {
   }
 
 
-  private static class ContentFoundException extends RuntimeException {
+  private static final class ContentFoundException extends RuntimeException {
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.coverage.xml
 import com.intellij.coverage.CoverageDataManager
 import com.intellij.coverage.CoverageFileProvider
 import com.intellij.coverage.JavaCoverageSuite
+import com.intellij.coverage.analysis.AnalysisUtils
 import com.intellij.openapi.project.Project
 import com.intellij.rt.coverage.data.ProjectData
 import com.intellij.rt.coverage.report.XMLProjectData
@@ -45,6 +46,6 @@ class XMLReportSuite(engine: XMLReportEngine,
 
   companion object {
     fun getPath(packageName: String, fileName: String) =
-      if (packageName.isEmpty()) fileName else "${packageName.replace('.', '/')}/$fileName"
+      if (packageName.isEmpty()) fileName else "${AnalysisUtils.fqnToInternalName(packageName)}/$fileName"
   }
 }

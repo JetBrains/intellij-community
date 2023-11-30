@@ -31,7 +31,6 @@ class HardCodedPurity {
     // Caches hashCode, but it's better to suppose it's pure
     new Member("java/lang/String", "hashCode", "()I"),
     // Native
-    new Member("java/lang/Object", "getClass", "()Ljava/lang/Class;"),
     new Member("java/lang/Class", "getComponentType", "()Ljava/lang/Class;"),
     new Member("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;I)Ljava/lang/Object;"),
     new Member("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;[I)Ljava/lang/Object;"),
@@ -89,6 +88,10 @@ class HardCodedPurity {
 
   boolean isPureMethod(Member method) {
     if (pureMethods.contains(method)) {
+      return true;
+    }
+    if (method.methodName.equals("getClass") && method.methodDesc.equals("()Ljava/lang/Class;")) {
+      // Can be virtual, so ignore class name
       return true;
     }
     // Array clone() method is a special beast: it's qualifier class is array itself

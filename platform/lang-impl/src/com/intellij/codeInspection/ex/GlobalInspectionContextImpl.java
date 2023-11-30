@@ -78,6 +78,7 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.opentelemetry.api.trace.Span;
@@ -89,9 +90,10 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
-import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.HighlightVisitorScope;
+import static com.intellij.codeInsight.util.GlobalInspectionScopeKt.GlobalInspectionScope;
 import static com.intellij.codeInspection.ex.GlobalInspectionContextImpl.InspectionPerformanceCollector.logPerformance;
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL;
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL_SIMPLE;
@@ -239,7 +241,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {
     //noinspection TestOnlyProblems
     if (ApplicationManager.getApplication().isUnitTestMode() && !TESTING_VIEW) return;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
     runToolsSpan.end();
     LOG.info("Code inspection finished. Took " + elapsed + " ms");
@@ -297,7 +299,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   @Override
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
-    IJTracer tracer = TelemetryManager.getInstance().getTracer(HighlightVisitorScope);
+    IJTracer tracer = TelemetryManager.getInstance().getTracer(GlobalInspectionScope);
     runToolsSpan = tracer.spanBuilder("globalInspections").setNoParent().startSpan();
     myInspectionStartedTimestamp = System.currentTimeMillis();
     ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
@@ -347,10 +349,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     ProgressIndicator fileScanningIndicator = new SensitiveProgressWrapper(progressIndicator);
     Future<?> future = startIterateScopeInBackground(scope, fileScanningIndicator, headlessEnvironment, localScopeFiles, filesToInspect);
 
+    var enabledInspectionsProvider = createEnabledInspectionsProvider(localTools, globalSimpleTools, getProject());
     PsiManager psiManager = PsiManager.getInstance(getProject());
     Processor<VirtualFile> processor = virtualFile -> {
       ProgressManager.checkCanceled();
 
+      final var cachedWrappers = new AtomicReference<EnabledInspectionsProvider.ToolWrappers>(null);
+      
       Boolean readActionSuccess = DumbService.getInstance(getProject()).tryRunReadActionInSmartMode(() -> {
         long start = getPathProfile() == null ? 0 : System.currentTimeMillis();
         PsiFile file = virtualFile.isValid() ? psiManager.findFile(virtualFile) : null;
@@ -362,17 +367,18 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           return true;
         }
         boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
-        Wrappers wrappers = getWrappersFromTools(localTools, globalSimpleTools, file, includeDoNotShow);
+        var wrappers = getWrappersFromTools(enabledInspectionsProvider, file, includeDoNotShow);
+        cachedWrappers.set(wrappers);
 
         inspectFile(file, getEffectiveRange(searchScope, file), inspectionManager, map,
-                    wrappers.globalSimpleWrappers,
-                    wrappers.localWrappers,
+                    wrappers.getGlobalSimpleRegularWrappers(),
+                    wrappers.getLocalRegularWrappers(),
                     inspectInjectedPsi && scope.isAnalyzeInjectedCode());
         if (start != 0) {
           updateProfile(virtualFile, System.currentTimeMillis() - start);
         }
         return true;
-      }, LangBundle.message("popup.content.inspect.code.not.available.until.indices.are.ready"));
+      }, LangBundle.message("popup.content.inspect.code.not.available.until.indices.are.ready"), DumbModeBlockedFunctionality.GlobalInspectionContext);
       if (readActionSuccess == null || !readActionSuccess) {
         throw new ProcessCanceledException();
       }
@@ -384,8 +390,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       getEventPublisher().fileAnalyzed(file, getProject());
 
       boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
-      Wrappers wrappers = getWrappersFromTools(localTools, globalSimpleTools, file, includeDoNotShow);
-      wrappers.externalAnnotatorWrappers.forEach(wrapper -> {
+
+      var cachedWrappersValue = cachedWrappers.get();
+      var wrappers = (cachedWrappersValue != null) ? cachedWrappersValue : getWrappersFromTools(enabledInspectionsProvider, file, includeDoNotShow);
+      wrappers.getExternalAnnotatorWrappers().forEach(wrapper -> {
         ProblemDescriptor[] descriptors = ((ExternalAnnotatorBatchInspection)wrapper.getTool()).checkFile(file, this, inspectionManager);
         InspectionToolResultExporter toolPresentation = getPresentation(wrapper);
         ReadAction.run(() -> BatchModeDescriptorsUtil
@@ -449,16 +457,41 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     addProblemsToView(globalSimpleTools);
   }
 
-  public static void setupCancelOnWriteProgress(Disposable disposable, ProgressIndicator wrapper) {
+  public static void setupCancelOnWriteProgress(@NotNull Disposable disposable, @NotNull ProgressIndicator progressIndicator) {
     // avoid "attach listener"/"write action" race
     ReadAction.run(() -> {
-      wrapper.start();
-      ProgressIndicatorUtils.forceWriteActionPriority(wrapper, disposable);
+      progressIndicator.start();
+      ProgressIndicatorUtils.forceWriteActionPriority(progressIndicator, disposable);
       // there is a chance we are racing with write action, in which case just registered listener might not be called, retry.
       if (ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
         throw new ProcessCanceledException();
       }
     });
+  }
+
+  protected EnabledInspectionsProvider createEnabledInspectionsProvider(
+    @NotNull List<Tools> localTools,
+    @NotNull List<Tools> globalSimpleTools,
+    @NotNull Project project
+  ) {
+    return new EnabledInspectionsProvider() {
+      @NotNull
+      @Override
+      public ToolWrappers getEnabledTools(@Nullable PsiFile psiFile, boolean includeDoNotShow) {
+        return new ToolWrappers(
+          localTools.stream()
+            .map(tool -> tool.getEnabledTool(psiFile, includeDoNotShow))
+            .filter(wrapper -> wrapper instanceof LocalInspectionToolWrapper)
+            .map(wrapper -> (LocalInspectionToolWrapper) wrapper)
+            .toList(),
+          globalSimpleTools.stream()
+            .map(tool -> tool.getEnabledTool(psiFile, includeDoNotShow))
+            .filter(wrapper -> wrapper instanceof GlobalInspectionToolWrapper)
+            .map(wrapper -> (GlobalInspectionToolWrapper) wrapper)
+            .toList()
+        );
+      }
+    };
   }
 
   protected void runExternalTools() {}
@@ -682,7 +715,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (isOfflineInspections && System.getProperty("idea.offline.no.global.inspections") != null) {
       return;
     }
-    IJTracer tracer = TelemetryManager.getInstance().getTracer(HighlightVisitorScope);
+    IJTracer tracer = TelemetryManager.getInstance().getTracer(GlobalInspectionScope);
     long refGraphTimestamp = System.currentTimeMillis();
     TraceUtil.runWithSpanThrows(tracer, "refGraphBuilding", (__) -> {
       buildRefGraphIfNeeded(globalTools);
@@ -915,30 +948,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
   }
 
-  public Wrappers getWrappersFromTools(
-    @NotNull List<? extends Tools> localTools,
-    @NotNull List<? extends Tools> globalSimpleTools,
+  public EnabledInspectionsProvider.ToolWrappers getWrappersFromTools(
+    @NotNull EnabledInspectionsProvider enabledInspectionsProvider,
     @NotNull PsiFile file,
-    boolean includeDoNotShow) {
-
-    List<LocalInspectionToolWrapper> local = getWrappersFromTools(localTools, file, includeDoNotShow);
-    List<GlobalInspectionToolWrapper> globalSimple = getWrappersFromTools(globalSimpleTools, file, includeDoNotShow);
-
-    List<LocalInspectionToolWrapper> localWrappers = new ArrayList<>();
-    List<GlobalInspectionToolWrapper> globalWrappers = new ArrayList<>();
-    List<InspectionToolWrapper<?, ?>> externalAnnotatorWrappers = new ArrayList<>();
-
-    for (LocalInspectionToolWrapper wrapper : local) {
-      if (wrapper.getTool() instanceof ExternalAnnotatorBatchInspection) externalAnnotatorWrappers.add(wrapper);
-      else localWrappers.add(wrapper);
-    }
-
-    for (GlobalInspectionToolWrapper wrapper : globalSimple) {
-      if (wrapper.getTool() instanceof ExternalAnnotatorBatchInspection) externalAnnotatorWrappers.add(wrapper);
-      else globalWrappers.add(wrapper);
-    }
-
-    return new Wrappers(localWrappers, globalWrappers, externalAnnotatorWrappers);
+    boolean includeDoNotShow
+  ) {
+    return enabledInspectionsProvider.getEnabledTools(file, includeDoNotShow);
   }
 
 
@@ -1371,7 +1386,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     });
   }
 
-  public static class Wrappers {
+  public static final class Wrappers {
     @NotNull
     private final List<LocalInspectionToolWrapper> localWrappers;
     @NotNull
@@ -1407,7 +1422,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
   }
 
-  static class InspectionPerformanceCollector extends CounterUsagesCollector {
+  static final class InspectionPerformanceCollector extends CounterUsagesCollector {
     private static final EventLogGroup GROUP = new EventLogGroup("inspection.performance", 3);
 
     static final LongEventField TOTAL_DURATION = new LongEventField("total_duration_ms");

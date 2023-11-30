@@ -556,9 +556,9 @@ class CollectMigration extends BaseStreamApiMigration {
 
     @Nullable
     public static GroupingTerminal tryExtractJava8Style(@NotNull TerminalBlock tb, @Nullable PsiMethodCallExpression call) {
-      if(call == null) return null;
+      if (call == null) return null;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
-      return tryExtractJava8Style(tb, tryCast(qualifier, PsiMethodCallExpression.class), tryCast(call, PsiMethodCallExpression.class));
+      return tryExtractJava8Style(tb, tryCast(qualifier, PsiMethodCallExpression.class), call);
     }
 
     /*
@@ -922,6 +922,10 @@ class CollectMigration extends BaseStreamApiMigration {
       if (!(candidate.myCandidate instanceof PsiCallExpression callExpression)) return null;
       PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(candidate.myCandidate.getType());
       if (!InheritanceUtil.isInheritor(targetClass, JAVA_UTIL_COLLECTION)) return null;
+      if ("java.util.concurrent.PriorityBlockingQueue".equals(targetClass.getQualifiedName()) ||
+          "java.util.PriorityQueue".equals(targetClass.getQualifiedName())) {
+        return null;
+      }
       if (!ConstructionUtils.isPrepopulatedCollectionInitializer(callExpression)) return null;
       if (JAVA_UTIL_HASH_SET.equals(targetClass.getQualifiedName()) && intermediateSteps.equals(".distinct()")) {
         intermediateSteps = "";

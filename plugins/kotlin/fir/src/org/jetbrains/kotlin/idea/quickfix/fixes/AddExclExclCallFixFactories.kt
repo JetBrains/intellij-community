@@ -26,7 +26,8 @@ object AddExclExclCallFixFactories {
         getFixForUnsafeCall(diagnostic.psi)
     }
 
-    private fun KtAnalysisSession.getFixForUnsafeCall(psi: PsiElement): List<AddExclExclCallFix> {
+    context(KtAnalysisSession)
+    private fun getFixForUnsafeCall(psi: PsiElement): List<AddExclExclCallFix> {
         val (target, hasImplicitReceiver) = when (val unwrapped = psi.unwrapParenthesesLabelsAndAnnotations()) {
             // `foo.bar` -> `foo!!.bar`
             is KtDotQualifiedExpression -> unwrapped.receiverExpression to false

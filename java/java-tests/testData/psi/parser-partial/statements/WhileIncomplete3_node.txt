@@ -1,0 +1,10 @@
+test.java.file
+  WHILE_STATEMENT
+    WHILE_KEYWORD
+    LPARENTH
+    REFERENCE_EXPRESSION
+      REFERENCE_PARAMETER_LIST
+        <empty list>
+      IDENTIFIER
+    ERROR_ELEMENT
+      <empty list>

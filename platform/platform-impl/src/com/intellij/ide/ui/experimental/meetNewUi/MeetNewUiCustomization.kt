@@ -10,13 +10,13 @@ import org.jetbrains.annotations.ApiStatus
 interface MeetNewUiCustomization {
   fun addButtons(project: Project, row: Row)
 
+  fun shouldCreateToolWindow(): Boolean = false
+
   fun showToolWindowOnStartup(): Boolean
 
   companion object {
-    val EP_NAME: ExtensionPointName<MeetNewUiCustomization> = ExtensionPointName("com.intellij.meetNewUiCustomization")
+    private val EP_NAME = ExtensionPointName<MeetNewUiCustomization>("com.intellij.meetNewUiCustomization")
 
-    fun firstOrNull(): MeetNewUiCustomization? {
-      return EP_NAME.findFirstSafe { true }
-    }
+    fun firstOrNull(): MeetNewUiCustomization? = EP_NAME.findFirstSafe { true }
   }
 }

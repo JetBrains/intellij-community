@@ -17,7 +17,7 @@ new Bar<String>().f<caret>oo();
   '''
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     assert CtrlMouseHandler.getInfo(ref.resolve(), ref.element) ==
-           """<span style="color:#000000;">Bar</span>\n<a href="psi_element://java.util.List"><code><span style="color:#0000ff;">List</span></code></a><span style="">&lt;</span><a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a><span style="">&gt;</span> <span style="color:#000000;">foo</span><span style="">(</span><a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a> <span style="">param</span><span style="">)</span>"""
+           """<span style="color:#000000;">Bar</span>\n<a href="psi_element://java.util.List"><code><span style="color:#0000ff;">List</span></code></a><span style="">&lt;</span><a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a><span style="">&gt;</span> <span style="color:#000000;">foo</span><span style="">(</span><a href="psi_element://java.lang.String"><code><span style="color:#0000ff;">String</span></code></a> <span style="color:#000000;">param</span><span style="">)</span>"""
   }
 
   void testGenericField() {

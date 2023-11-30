@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @State(name = "UnknownFeatures", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-@Service
+@Service(Service.Level.PROJECT)
 public final class UnknownFeaturesCollector implements PersistentStateComponent<Element> {
 
   private static final @NonNls String FEATURE_ID = "featureType";

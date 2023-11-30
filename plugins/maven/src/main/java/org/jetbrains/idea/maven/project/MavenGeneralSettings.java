@@ -5,39 +5,38 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.config.MavenConfig;
 import org.jetbrains.idea.maven.config.MavenConfigParser;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.jetbrains.idea.maven.config.MavenConfigSettings.*;
+import static org.jetbrains.idea.maven.project.MavenHomeKt.resolveMavenHomeType;
+import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
 
 public class MavenGeneralSettings implements Cloneable {
   private transient Project myProject;
   private boolean workOffline = false;
-  private String mavenHome = MavenServerManager.BUNDLED_MAVEN_3;
+  private MavenHomeType mavenHomeType = BundledMaven3.INSTANCE;
   private String mavenSettingsFile = "";
   private String overriddenLocalRepository = "";
   private boolean printErrorStackTraces = false;
-  private boolean usePluginRegistry = false;
   private boolean nonRecursive = false;
   private boolean alwaysUpdateSnapshots = false;
   private boolean showDialogWithAdvancedSettings = false;
@@ -50,9 +49,6 @@ public class MavenGeneralSettings implements Cloneable {
   private MavenExecutionOptions.FailureMode failureBehavior = MavenExecutionOptions.FailureMode.NOT_SET;
 
   private transient File myEffectiveLocalRepositoryCache;
-  private transient File myEffectiveLocalHomeCache;
-  private transient VirtualFile myEffectiveSuperPomCache;
-  private transient Set<String> myDefaultPluginsCache;
   private transient MavenConfig mavenConfigCache;
 
   private int myBulkUpdateLevel = 0;
@@ -87,9 +83,6 @@ public class MavenGeneralSettings implements Cloneable {
     if (myBulkUpdateLevel > 0) return;
 
     myEffectiveLocalRepositoryCache = null;
-    myDefaultPluginsCache = null;
-    myEffectiveLocalHomeCache = null;
-    myEffectiveSuperPomCache = null;
     mavenConfigCache = null;
     if (fireUpdate) {
       fireChanged();
@@ -160,43 +153,49 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @NotNull
+  @Deprecated
+  /*
+  use get maven home type
+   */
   public String getMavenHome() {
-    return mavenHome;
+    return mavenHomeType.getTitle();
   }
 
+
+  public @NotNull MavenHomeType getMavenHomeType() {
+    MavenHomeType type = mavenHomeType;
+    if (type != null) return type;
+    return BundledMaven3.INSTANCE;
+  }
+
+  @Deprecated
   public void setMavenHome(@NotNull final String mavenHome) {
+    setMavenHome(resolveMavenHomeType(mavenHome), true);
+  }
+
+  public void setMavenHomeType(@NotNull final MavenHomeType mavenHome) {
     setMavenHome(mavenHome, true);
   }
 
   @TestOnly
+  @Deprecated
   public void setMavenHomeNoFire(@NotNull final String mavenHome) {
+    setMavenHome(resolveMavenHomeType(mavenHome), false);
+  }
+
+  @TestOnly
+  public void setMavenHomeNoFire(@NotNull final MavenHomeType mavenHome) {
     setMavenHome(mavenHome, false);
   }
 
-  private void setMavenHome(@NotNull final String mavenHome, boolean fireChanged) {
-    final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(mavenHome);
-    final File bundledMavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(MavenServerManager.BUNDLED_MAVEN_3);
-
-    String mavenHomeToSet = mavenHome;
-    if (FileUtil.filesEqual(mavenHomeDirectory, bundledMavenHomeDirectory)) {
-      mavenHomeToSet = MavenServerManager.BUNDLED_MAVEN_3;
-    }
-    if (!Objects.equals(this.mavenHome, mavenHomeToSet)) {
-      this.mavenHome = mavenHomeToSet;
-      myDefaultPluginsCache = null;
+  private void setMavenHome(@NotNull final MavenHomeType mavenHome, boolean fireChanged) {
+    MavenHomeType mavenHomeToSet = mavenHome;
+    if (!Objects.equals(this.mavenHomeType, mavenHomeToSet)) {
+      this.mavenHomeType = mavenHomeToSet;
       if (fireChanged) {
         changed();
       }
     }
-  }
-
-  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @Deprecated(forRemoval = true)
-  public @Nullable File getEffectiveMavenHome() {
-    if (myEffectiveLocalHomeCache == null) {
-      myEffectiveLocalHomeCache = MavenWslUtil.resolveMavenHome(myProject, getMavenHome());
-    }
-    return myEffectiveLocalHomeCache;
   }
 
   @NotNull
@@ -221,7 +220,7 @@ public class MavenGeneralSettings implements Cloneable {
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
   @Deprecated
   public @Nullable File getEffectiveGlobalSettingsIoFile() {
-    return MavenWslUtil.getGlobalSettings(myProject, getMavenHome(), getMavenConfig());
+    return MavenWslUtil.getGlobalSettings(myProject, staticOrBundled(getMavenHomeType()), getMavenConfig());
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
@@ -232,7 +231,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public List<VirtualFile> getEffectiveSettingsFiles() {
     List<VirtualFile> result = new ArrayList<>(2);
     VirtualFile file = getEffectiveUserSettingsFile();
@@ -243,7 +242,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable VirtualFile getEffectiveGlobalSettingsFile() {
     File file = getEffectiveGlobalSettingsIoFile();
     return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
@@ -272,47 +271,12 @@ public class MavenGeneralSettings implements Cloneable {
     File result = myEffectiveLocalRepositoryCache;
     if (result != null) return result;
 
-    result = MavenWslUtil.getLocalRepo(myProject, overriddenLocalRepository, mavenHome, mavenSettingsFile, getMavenConfig());
+    result =
+      MavenWslUtil.getLocalRepo(myProject, overriddenLocalRepository, staticOrBundled(mavenHomeType), mavenSettingsFile, getMavenConfig());
     myEffectiveLocalRepositoryCache = result;
     return result;
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
-  @Deprecated
-  public @Nullable VirtualFile getEffectiveSuperPom() {
-    VirtualFile result = myEffectiveSuperPomCache;
-    if (result != null && result.isValid()) {
-      return result;
-    }
-    result = MavenUtil.resolveSuperPomFile(getEffectiveMavenHome());
-    myEffectiveSuperPomCache = result;
-    return result;
-  }
-
-  @SuppressWarnings("unused")
-  public boolean isDefaultPlugin(String groupId, String artifactId) {
-    return getDefaultPlugins().contains(groupId + ":" + artifactId);
-  }
-
-  private Set<String> getDefaultPlugins() {
-    Set<String> result = myDefaultPluginsCache;
-    if (result != null) return result;
-
-    result = new HashSet<>();
-
-    VirtualFile effectiveSuperPom = getEffectiveSuperPom();
-    if (effectiveSuperPom != null) {
-      Element superProject = MavenJDOMUtil.read(effectiveSuperPom, null);
-      for (Element each : MavenJDOMUtil.findChildrenByPath(superProject, "build.pluginManagement.plugins", "plugin")) {
-        String groupId = MavenJDOMUtil.findChildValueByPath(each, "groupId", "org.apache.maven.plugins");
-        String artifactId = MavenJDOMUtil.findChildValueByPath(each, "artifactId", null);
-        result.add(groupId + ":" + artifactId);
-      }
-    }
-
-    myDefaultPluginsCache = result;
-    return result;
-  }
 
   public boolean isPrintErrorStackTraces() {
     return printErrorStackTraces;
@@ -321,17 +285,6 @@ public class MavenGeneralSettings implements Cloneable {
   public void setPrintErrorStackTraces(boolean value) {
     if (!Comparing.equal(this.printErrorStackTraces, value)) {
       printErrorStackTraces = value;
-      changed();
-    }
-  }
-
-  public boolean isUsePluginRegistry() {
-    return usePluginRegistry;
-  }
-
-  public void setUsePluginRegistry(final boolean value) {
-    if (!Comparing.equal(this.usePluginRegistry, value)) {
-      this.usePluginRegistry = value;
       changed();
     }
   }
@@ -415,13 +368,12 @@ public class MavenGeneralSettings implements Cloneable {
     if (alwaysUpdateSnapshots != that.alwaysUpdateSnapshots) return false;
     if (showDialogWithAdvancedSettings != that.showDialogWithAdvancedSettings) return false;
     if (printErrorStackTraces != that.printErrorStackTraces) return false;
-    if (usePluginRegistry != that.usePluginRegistry) return false;
     if (useMavenConfig != that.useMavenConfig) return false;
     if (workOffline != that.workOffline) return false;
     if (!checksumPolicy.equals(that.checksumPolicy)) return false;
     if (!failureBehavior.equals(that.failureBehavior)) return false;
     if (!overriddenLocalRepository.equals(that.overriddenLocalRepository)) return false;
-    if (!mavenHome.equals(that.mavenHome)) return false;
+    if (!mavenHomeType.equals(that.mavenHomeType)) return false;
     if (!mavenSettingsFile.equals(that.mavenSettingsFile)) return false;
     if (!Objects.equals(threads, that.threads)) return false;
     if (emulateTerminal != that.emulateTerminal) return false;
@@ -432,11 +384,10 @@ public class MavenGeneralSettings implements Cloneable {
   public int hashCode() {
     int result;
     result = (workOffline ? 1 : 0);
-    result = 31 * result + mavenHome.hashCode();
+    result = 31 * result + mavenHomeType.hashCode();
     result = 31 * result + mavenSettingsFile.hashCode();
     result = 31 * result + overriddenLocalRepository.hashCode();
     result = 31 * result + (printErrorStackTraces ? 1 : 0);
-    result = 31 * result + (usePluginRegistry ? 1 : 0);
     result = 31 * result + (useMavenConfig ? 1 : 0);
     result = 31 * result + (nonRecursive ? 1 : 0);
     result = 31 * result + outputLevel.hashCode();

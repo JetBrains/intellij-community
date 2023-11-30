@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +45,7 @@ final class InclusionProvider implements CachedValueProvider<PsiElement[]> {
     return Result.create(result == null ? PsiElement.EMPTY_ARRAY : result, PsiModificationTracker.MODIFICATION_COUNT);
   }
 
-  private static XmlTag[] extractXpointer(@NotNull XmlTag rootTag, @Nullable final String xpointer) {
+  private static XmlTag[] extractXpointer(@NotNull XmlTag rootTag, final @Nullable String xpointer) {
     if (xpointer != null) {
       Matcher matcher = JDOMUtil.XPOINTER_PATTERN.matcher(xpointer);
       if (matcher.matches()) {

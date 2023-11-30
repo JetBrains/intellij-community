@@ -3,7 +3,7 @@ package org.jetbrains.plugins.textmate.language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.language.syntax.SyntaxNodeDescriptor;
 
-public class TextMateLanguageDescriptor {
+public final class TextMateLanguageDescriptor {
   @NotNull private final CharSequence scopeName;
   @NotNull private final SyntaxNodeDescriptor rootSyntaxNode;
 

@@ -1,5 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij.cce">
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCompletionEvaluationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinMultiLineEvaluationVisitor"/>
+    <completionGolfVisitorFactory implementation="com.intellij.cce.visitor.KotlinCompletionGolfVisitorFactory"/>
   </extensions>
 </idea-plugin>

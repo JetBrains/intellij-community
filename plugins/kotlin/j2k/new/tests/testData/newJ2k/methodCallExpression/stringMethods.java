@@ -1,3 +1,5 @@
+// RUNTIME_WITH_FULL_JDK
+
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -96,6 +98,9 @@ class A {
         useSplit(s.split("\\s+", (limit + 5)));
         s.matches("\\w+");
         s.trim();
+        s.strip();
+        s.stripLeading();
+        s.stripTrailing();
         s.concat(" another");
 
         s.getBytes();

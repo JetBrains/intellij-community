@@ -65,7 +65,7 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
    * @param collectedInfo initial information gathered by {@link ExternalAnnotator#collectInformation}
    * @return annotations to pass to {@link ExternalAnnotator#apply(PsiFile, AnnotationResultType, AnnotationHolder)}
    */
-  public @Nullable AnnotationResultType doAnnotate(@Nullable InitialInfoType collectedInfo) {
+  public @Nullable AnnotationResultType doAnnotate(InitialInfoType collectedInfo) {
     return null;
   }
 
@@ -76,7 +76,7 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
    * @param annotationResult annotations collected in {@link ExternalAnnotator#doAnnotate(InitialInfoType)}
    * @param holder           a container for receiving annotations
    */
-  public void apply(@NotNull PsiFile file, @Nullable AnnotationResultType annotationResult, @NotNull AnnotationHolder holder) { }
+  public void apply(@NotNull PsiFile file, AnnotationResultType annotationResult, @NotNull AnnotationHolder holder) { }
 
   /**
    * <p>Returns an inspection that should run in batch mode.</p>

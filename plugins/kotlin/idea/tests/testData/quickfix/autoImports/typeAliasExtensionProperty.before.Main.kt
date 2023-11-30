@@ -7,4 +7,3 @@ fun use() {
     val ta = TA()
     ta.ext<caret>
 }
-/* IGNORE_FIR */

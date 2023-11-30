@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.resources;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +18,6 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -33,8 +32,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
     super(ResourcesTargetType.ALL_TYPES);
   }
 
-  @NotNull
-  private static @Nls String getBuilderName() {
+  private static @NotNull @Nls String getBuilderName() {
     return JpsBuildBundle.message("builder.name.resource.compiler");
   }
 
@@ -46,7 +44,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
   public void build(@NotNull ResourcesTarget target,
                     @NotNull DirtyFilesHolder<ResourceRootDescriptor, ResourcesTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer,
-                    @NotNull CompileContext context) throws ProjectBuildException, IOException {
+                    @NotNull CompileContext context) throws ProjectBuildException {
     if (!isResourceProcessingEnabled(target.getModule())) {
       return;
     }
@@ -63,17 +61,8 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
         if (isSkipped.booleanValue()) {
           return true;
         }
-        try {
-          copyResource(context, srcRoot, f, outputConsumer);
-          return !context.getCancelStatus().isCanceled();
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          context.processMessage(
-            new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(f.getPath()))
-          );
-          return false;
-        }
+        copyResource(context, srcRoot, f, outputConsumer);
+        return !context.getCancelStatus().isCanceled();
       });
 
       context.checkCanceled();
@@ -99,7 +88,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
     return true;
   }
 
-  private static void copyResource(CompileContext context, ResourceRootDescriptor rd, File file, BuildOutputConsumer outputConsumer) throws IOException {
+  private static void copyResource(CompileContext context, ResourceRootDescriptor rd, File file, BuildOutputConsumer outputConsumer) {
     final File outputRoot = rd.getTarget().getOutputDir();
     if (outputRoot == null) {
       return;
@@ -131,8 +120,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
   }
 
   @Override
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return getBuilderName();
   }
 }

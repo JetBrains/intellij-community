@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jpsBootstrap
 
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.info
 import java.io.IOException
 import java.nio.file.Files
@@ -11,10 +12,6 @@ import java.util.concurrent.*
 object JpsBootstrapUtil {
   const val TEAMCITY_BUILD_PROPERTIES_FILE_ENV = "TEAMCITY_BUILD_PROPERTIES_FILE"
   const val TEAMCITY_CONFIGURATION_PROPERTIES_SYSTEM_PROPERTY = "teamcity.configuration.properties.file"
-  const val JPS_RESOLUTION_RETRY_ENABLED_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.enabled"
-  const val JPS_RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.max.attempts"
-  const val JPS_RESOLUTION_RETRY_DELAY_MS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.delay.ms"
-  const val JPS_RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY = "org.jetbrains.jps.incremental.dependencies.resolution.retry.backoff.limit.ms"
 
   fun String.toBooleanChecked(): Boolean {
     return when (this) {
@@ -53,30 +50,27 @@ object JpsBootstrapUtil {
   }
 
   /**
-   * Create properties to enable artifacts resolution retries in org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder
-   * if ones absent in `existingProperties`. Latest of `existingProperties` has the highest priority.
-   *
-   * @param existingProperties Existing properties to check whether required values already present.
-   * @return Properties to enable artifacts resolution retries while build.
+   * Load JPS-consumed system properties from [existingProperties] and set them using [System.setProperty] if not set yet.
    */
-  fun getJpsArtifactsResolutionRetryProperties(vararg existingProperties: Properties?): Properties {
-    val properties = Properties()
-    val existingPropertiesMerged = Properties()
-    for (it in existingProperties) {
-      existingPropertiesMerged.putAll(it!!)
+  fun loadJpsBuildsystemProperties(vararg existingProperties: Properties) {
+    val merged = Properties()
+    existingProperties.forEach(merged::putAll)
+
+    val propertiesToCopy = merged.stringPropertyNames()
+      .filter { name -> name.startsWith("org.jetbrains.jps.incremental.dependencies.resolution.") }
+      .toMutableList()
+
+    propertiesToCopy += BuildDependenciesConstants.JPS_AUTH_SPACE_PASSWORD
+    propertiesToCopy += BuildDependenciesConstants.JPS_AUTH_SPACE_USERNAME
+
+    propertiesToCopy.forEach { name ->
+      if (System.getProperty(name) == null) {
+        val p = merged.getProperty(name)
+        if (p != null) {
+          System.setProperty(name, p)
+        }
+      }
     }
-    val enabled = existingPropertiesMerged.getProperty(JPS_RESOLUTION_RETRY_ENABLED_PROPERTY, "true")
-    properties[JPS_RESOLUTION_RETRY_ENABLED_PROPERTY] = enabled
-    val maxAttempts = existingPropertiesMerged.getProperty(JPS_RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY, "3")
-    properties[JPS_RESOLUTION_RETRY_MAX_ATTEMPTS_PROPERTY] = maxAttempts
-    val initialDelayMs = existingPropertiesMerged.getProperty(JPS_RESOLUTION_RETRY_DELAY_MS_PROPERTY, "1000")
-    properties[JPS_RESOLUTION_RETRY_DELAY_MS_PROPERTY] = initialDelayMs
-    val backoffLimitMs = existingPropertiesMerged.getProperty(
-      JPS_RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY,
-      java.lang.Long.toString(TimeUnit.MINUTES.toMillis(5))
-    )
-    properties[JPS_RESOLUTION_RETRY_BACKOFF_LIMIT_MS_PROPERTY] = backoffLimitMs
-    return properties
   }
 
   fun <T> executeTasksInParallel(tasks: List<Callable<T>>): List<T> {

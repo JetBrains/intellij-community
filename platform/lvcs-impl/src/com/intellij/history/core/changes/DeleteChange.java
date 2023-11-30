@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeleteChange extends StructuralChange {
+public final class DeleteChange extends StructuralChange {
   private final Entry myDeletedEntry;
 
   public DeleteChange(long id, String path, Entry deletedEntry) {
@@ -75,7 +75,7 @@ public class DeleteChange extends StructuralChange {
     return result;
   }
 
-  private void collectContentsRecursively(Entry e, List<? super Content> result) {
+  private static void collectContentsRecursively(Entry e, List<? super Content> result) {
     if (e.isDirectory()) {
       for (Entry child : e.getChildren()) {
         collectContentsRecursively(child, result);

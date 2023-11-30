@@ -8,7 +8,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class VoidDataExternalizer implements DataExternalizer<Void> {
+public final class VoidDataExternalizer implements DataExternalizer<Void> {
   public static final VoidDataExternalizer INSTANCE = new VoidDataExternalizer();
 
   @Override

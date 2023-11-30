@@ -18,7 +18,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
     fun getInstance(project: Project): ProjectViewState = project.service()
 
     @JvmStatic
-    fun getDefaultInstance(): ProjectViewState = ProjectManager.getInstance().defaultProject.service()
+    fun getDefaultInstance(): ProjectViewState = getInstance(ProjectManager.getInstance().defaultProject)
   }
 
   var abbreviatePackageNames: Boolean = ProjectViewSettings.Immutable.DEFAULT.isAbbreviatePackageNames

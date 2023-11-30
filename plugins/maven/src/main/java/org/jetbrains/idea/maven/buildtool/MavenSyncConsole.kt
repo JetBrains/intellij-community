@@ -39,8 +39,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenArtifactEvent
 import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
-import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
@@ -428,8 +428,7 @@ class MavenSyncConsole(private val myProject: Project) {
 
   @Synchronized
   fun showQuickFixBadMaven(message: String, kind: MessageEvent.Kind) {
-    val bundledVersion = MavenUtil.getMavenVersionByMavenHome(
-      MavenServerManager.BUNDLED_MAVEN_3)
+    val bundledVersion = MavenDistributionsCache.resolveEmbeddedMavenHome().version
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
       override val title = SyncBundle.message("maven.sync.version.issue.title")
       override val description: String = "${message}\n" +
@@ -443,7 +442,25 @@ class MavenSyncConsole(private val myProject: Project) {
     }, kind))
   }
 
-  fun <Result> runTask(@NlsSafe taskName: String, task: () -> Result): Result {
+
+  suspend fun <Result> runTask(@NlsSafe taskName: String, task: suspend () -> Result): Result {
+    startTask(mySyncId, taskName)
+    val startTime = System.currentTimeMillis()
+    try {
+      return task().also {
+        completeTask(mySyncId, taskName, SuccessResultImpl())
+      }
+    }
+    catch (e: Exception) {
+      MavenProjectsManager.getInstance(myProject).showServerException(e)
+      throw e
+    }
+    finally {
+      MavenLog.LOG.info("[maven import] $taskName took ${System.currentTimeMillis() - startTime}ms")
+    }
+  }
+
+  fun <Result> runTaskSync(@NlsSafe taskName: String, task: () -> Result): Result {
     startTask(mySyncId, taskName)
     val startTime = System.currentTimeMillis()
     try {

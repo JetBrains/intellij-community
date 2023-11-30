@@ -7,4 +7,3 @@ import testingExtensionFunctionsImport.data.someFun
 fun String.some() {
     <caret>someFun()
 }
-/* IGNORE_FIR */

@@ -2,80 +2,80 @@
 package git4idea.conflicts;
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitDefaultMergeDialogCustomizer;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.status.GitStagingAreaHolder;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
-@Service(Service.Level.PROJECT)
-public final class GitConflictsToolWindowManager implements Disposable {
-  @NotNull private final Project myProject;
+public final class GitConflictsToolWindowManager {
+  public static final @NotNull @NonNls String CONFLICTS = "Git Conflicts";
 
-  private final AtomicBoolean myRefreshScheduled = new AtomicBoolean();
-  @Nullable private Content myContent;
+  static final class ContentPredicate implements Predicate<Project> {
+    @Override
+    public boolean test(Project project) {
+      if (!Registry.is("git.merge.conflicts.toolwindow")) return false;
 
-  public GitConflictsToolWindowManager(@NotNull Project project) {
-    myProject = project;
-  }
-
-  private void scheduleUpdate() {
-    if (myRefreshScheduled.compareAndSet(false, true)) {
-      ApplicationManager.getApplication().invokeLater(() -> updateToolWindow(), c -> Disposer.isDisposed(this));
+      return ContainerUtil.exists(GitRepositoryManager.getInstance(project).getRepositories(),
+                                  repo -> repo.getStagingAreaHolder().hasConflicts());
     }
   }
 
-  private void updateToolWindow() {
-    myRefreshScheduled.set(false);
-    boolean hasConflicts = ContainerUtil.exists(GitRepositoryManager.getInstance(myProject).getRepositories(),
-                                                repo -> !repo.getStagingAreaHolder().getAllConflicts().isEmpty());
-    if (hasConflicts && myContent == null) {
+  static class ContentPreloader implements ChangesViewContentProvider.Preloader {
+    @Override
+    public void preloadTabContent(@NotNull Content content) {
+      content.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
+                          ChangesViewContentManager.TabOrderWeight.REPOSITORY.getWeight() + 1);
+    }
+  }
+
+  static class ContentProvider implements ChangesViewContentProvider {
+    private final Project myProject;
+
+    ContentProvider(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void initTabContent(@NotNull Content content) {
       GitDefaultMergeDialogCustomizer mergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(myProject);
       GitConflictsView panel = new GitConflictsView(myProject, mergeDialogCustomizer);
-      myContent = ContentFactory.getInstance().createContent(panel.getComponent(), GitBundle.message("tab.title.conflicts"), false);
-      myContent.putUserData(ChangesViewContentManager.ORDER_WEIGHT_KEY,
-                            ChangesViewContentManager.TabOrderWeight.REPOSITORY.getWeight() + 1);
-      myContent.setCloseable(false);
-      myContent.setPreferredFocusedComponent(() -> panel.getPreferredFocusableComponent());
-      Disposer.register(myContent, panel);
-      ChangesViewContentManager.getInstance(myProject).addContent(myContent);
-    }
-    if (!hasConflicts && myContent != null) {
-      ChangesViewContentManager.getInstance(myProject).removeContent(myContent);
-      myContent = null;
+      content.setComponent(panel.getComponent());
+      content.setPreferredFocusedComponent(() -> panel.getPreferredFocusableComponent());
+      content.setDisposer(panel);
     }
   }
 
-  @Override
-  public void dispose() {
-    if (myContent != null) {
-      ChangesViewContentManager.getInstance(myProject).removeContent(myContent);
-      myContent = null;
+  public static class DisplayNameSupplier implements Supplier<String> {
+    @Override
+    public String get() {
+      return GitBundle.message("tab.title.conflicts");
     }
   }
+
 
   public static class MyStagingAreaListener implements GitStagingAreaHolder.StagingAreaListener {
     @Override
     public void stagingAreaChanged(@NotNull GitRepository repository) {
       if (!Registry.is("git.merge.conflicts.toolwindow")) return;
 
-      Project project = repository.getProject();
-      GitConflictsToolWindowManager service = project.getService(GitConflictsToolWindowManager.class);
-      service.scheduleUpdate();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        repository.getProject().getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
+      }, ModalityState.nonModal());
     }
   }
 
@@ -90,8 +90,9 @@ public final class GitConflictsToolWindowManager implements Disposable {
     public void mappingChanged() {
       if (!Registry.is("git.merge.conflicts.toolwindow")) return;
 
-      GitConflictsToolWindowManager service = myProject.getService(GitConflictsToolWindowManager.class);
-      service.scheduleUpdate();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myProject.getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
+      }, ModalityState.nonModal());
     }
   }
 }

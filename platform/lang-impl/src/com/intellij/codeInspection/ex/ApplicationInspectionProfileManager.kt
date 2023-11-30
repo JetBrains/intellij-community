@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.InspectionProfileConvertor
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
+import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -26,24 +27,27 @@ import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
-import java.nio.file.Paths
+import java.nio.file.Path
 
 @State(name = "InspectionProfileManager",
        storages = [Storage("editor.xml")],
        additionalExportDirectory = InspectionProfileManager.INSPECTION_DIR)
 open class ApplicationInspectionProfileManager @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory)
   : ApplicationInspectionProfileManagerBase(schemeManagerFactory), PersistentStateComponent<Element> {
+
   open val converter: InspectionProfileConvertor
     get() = InspectionProfileConvertor(this)
 
   val rootProfileName: String
-    get() = schemeManager.currentSchemeName ?: DEFAULT_PROFILE_NAME
+    get() = schemeManager.currentSchemeName ?: InspectionProfile.DEFAULT_PROFILE_NAME
 
+  @Suppress("TestOnlyProblems")
   constructor() : this(SchemeManagerFactory.getInstance())
 
   companion object {
     @JvmStatic
-    fun getInstanceImpl(): ApplicationInspectionProfileManager = service<InspectionProfileManager>() as ApplicationInspectionProfileManager
+    fun getInstanceImpl(): ApplicationInspectionProfileManager =
+      service<InspectionProfileManager>() as ApplicationInspectionProfileManager
 
     private fun registerProvidedSeverities() {
       val map = HashMap<String, HighlightInfoType>()
@@ -56,7 +60,7 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
             }
             else -> null
           }
-          map.put(highlightSeverity.name, t)
+          map[highlightSeverity.name] = t
           HighlightDisplayLevel.registerSeverity(highlightSeverity, t.attributesKey, icon)
         }
       }
@@ -100,19 +104,13 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
     try {
       return super.loadProfile(path)
     }
-    catch (e: IOException) {
-      throw e
-    }
-    catch (e: JDOMException) {
-      throw e
-    }
+    catch (e: IOException) { throw e }
+    catch (e: JDOMException) { throw e }
     catch (ignored: Exception) {
-      val file = Paths.get(path)
-      ApplicationManager.getApplication().invokeLater({
-                                                        Messages.showErrorDialog(
-                                                          InspectionsBundle.message("inspection.error.loading.message", 0, file),
-                                                          InspectionsBundle.message("inspection.errors.occurred.dialog.title"))
-                                                      }, ModalityState.nonModal())
+      val message = InspectionsBundle.message("inspection.error.loading.message", 0, Path.of(path))
+      ApplicationManager.getApplication().invokeLater(
+        { Messages.showErrorDialog(message, InspectionsBundle.message("inspection.errors.occurred.dialog.title")) },
+        ModalityState.nonModal())
     }
 
     return getProfile(path, false)

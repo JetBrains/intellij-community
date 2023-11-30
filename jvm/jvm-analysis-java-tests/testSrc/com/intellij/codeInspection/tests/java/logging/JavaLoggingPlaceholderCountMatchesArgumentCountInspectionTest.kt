@@ -1,8 +1,8 @@
 package com.intellij.codeInspection.tests.java.logging
 
 import com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase() {
 
@@ -353,8 +353,30 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
           LoggerFactory.getLogger(X.class).atError().log("{} {}", 1, new RuntimeException("test"));
           LoggerFactory.getLogger(X.class).atError().log(<warning descr="More arguments provided (2) than placeholders specified (1)">"{}"</warning>, 1, new RuntimeException("test"));
 
-          builder.log(<warning descr="Fewer arguments provided (1) than placeholders specified (2)">"{} {}"</warning>, 1);
-        }
+          builder.log("{} {}", 1);
+        
+          LoggingEventBuilder loggingEventBuilder = logger.atError();
+          loggingEventBuilder
+                  .log("{} {}", 2); //skip, because it can be complex cases
+  
+          logger.atDebug()
+              .log(<warning descr="Fewer arguments provided (1) than placeholders specified (2)">"{} {}"</warning>, 2); //warn
+  
+          logger.atDebug()
+                  .addArgument("s")
+                  .addKeyValue("1", "1")
+                  .log("{} {}", 2);
+                  
+          logger.atError()
+          .setMessage(<warning descr="Fewer arguments provided (0) than placeholders specified (2)">"{} {}"</warning>)
+          .log();
+  
+          logger.atError()
+          .addArgument("")
+          .addArgument("")
+          .setMessage("{} {}")
+          .log();
+        }        
       }
       """.trimIndent())
   }

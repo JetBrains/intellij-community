@@ -20,8 +20,6 @@ import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.CursorShape;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
-import com.jediterm.terminal.emulator.ColorPalette;
-import com.jediterm.terminal.ui.AwtTransformers;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider;
@@ -130,9 +128,8 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
                                           getKeyStrokesByActionId("Terminal.Find", IdeActions.ACTION_FIND));
   }
 
-  @NotNull
   @Override
-  public ColorPalette getTerminalColorPalette() {
+  public @NotNull TerminalColorPalette getTerminalColorPalette() {
     return myUiSettingsManager.getTerminalColorPalette();
   }
 
@@ -216,8 +213,8 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
 
   @Override
   public TextStyle getDefaultStyle() {
-    return new TextStyle(new TerminalColor(() -> AwtTransformers.fromAwtColor(myUiSettingsManager.getDefaultForeground())),
-                         new TerminalColor(() -> AwtTransformers.fromAwtColor(myUiSettingsManager.getDefaultBackground())));
+    return new TextStyle(new TerminalColor(() -> getTerminalColorPalette().getDefaultForeground()),
+                         new TerminalColor(() -> getTerminalColorPalette().getDefaultBackground()));
   }
 
   @Override

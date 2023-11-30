@@ -13,7 +13,7 @@ public final class InjectedCaret implements Caret {
   private final EditorWindow myEditorWindow;
   final Caret myDelegate;
 
-  InjectedCaret(EditorWindow window, Caret delegate) {
+  InjectedCaret(@NotNull EditorWindow window, @NotNull Caret delegate) {
     myEditorWindow = window;
     myDelegate = delegate;
   }
@@ -28,6 +28,7 @@ public final class InjectedCaret implements Caret {
     return myEditorWindow.getCaretModel();
   }
 
+  @NotNull
   public Caret getDelegate() {
     return myDelegate;
   }

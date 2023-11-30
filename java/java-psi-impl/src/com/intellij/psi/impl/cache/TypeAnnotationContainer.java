@@ -14,6 +14,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -217,7 +218,7 @@ public class TypeAnnotationContainer {
     final @NotNull String myText;
 
     private TypeAnnotationEntry(byte @NotNull [] path, @NotNull String text) {
-      myPath = path;
+      myPath = path.length == 0 ? ArrayUtil.EMPTY_BYTE_ARRAY : path;
       myText = text;
     }
 
@@ -329,7 +330,7 @@ public class TypeAnnotationContainer {
     }
 
     @Override
-    public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+    protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
       setMirrorCheckingType(element, null);
       PsiAnnotation mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
       setMirror(getNameReferenceElement(), mirror.getNameReferenceElement());

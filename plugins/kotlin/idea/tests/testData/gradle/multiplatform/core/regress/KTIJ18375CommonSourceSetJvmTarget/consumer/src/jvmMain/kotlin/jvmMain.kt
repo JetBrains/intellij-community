@@ -1,0 +1,1 @@
+val jvmMain = inlineMe {  }

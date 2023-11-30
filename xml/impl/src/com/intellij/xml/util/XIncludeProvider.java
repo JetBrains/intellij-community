@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -10,19 +10,19 @@ import com.intellij.psi.impl.include.FileIncludeProvider;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.xml.NanoXmlBuilder;
-import com.intellij.util.xml.NanoXmlUtil;
+import com.intellij.util.text.CharSequenceReader;
+import com.intellij.util.xml.dom.StaxFactory;
+import org.codehaus.stax2.XMLStreamReader2;
 import org.jetbrains.annotations.NotNull;
 
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
 import java.util.ArrayList;
+import java.util.List;
 
-/**
- * @author Dmitry Avdeev
- */
-public class XIncludeProvider extends FileIncludeProvider {
-  @NotNull
+final class XIncludeProvider extends FileIncludeProvider {
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "XInclude";
   }
 
@@ -39,27 +39,33 @@ public class XIncludeProvider extends FileIncludeProvider {
   @Override
   public FileIncludeInfo @NotNull [] getIncludeInfos(@NotNull FileContent content) {
     CharSequence contentAsText = content.getContentAsText();
-    if (CharArrayUtil.indexOf(contentAsText, XmlUtil.XINCLUDE_URI, 0) == -1) return FileIncludeInfo.EMPTY;
-    final ArrayList<FileIncludeInfo> infos = new ArrayList<>();
-    NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(contentAsText), new NanoXmlBuilder() {
-      boolean isXInclude;
-      @Override
-      public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) {
-        isXInclude = XmlUtil.XINCLUDE_URI.equals(nsURI) && "include".equals(name);
-      }
+    if (CharArrayUtil.indexOf(contentAsText, XmlUtil.XINCLUDE_URI, 0) == -1) {
+      return FileIncludeInfo.EMPTY;
+    }
 
-      @Override
-      public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) {
-        if (isXInclude && "href".equals(key)) {
-          infos.add(new FileIncludeInfo(value));
+    List<FileIncludeInfo> infos = new ArrayList<>();
+    try {
+      XMLStreamReader2 reader = StaxFactory.createXmlStreamReader(new CharSequenceReader(contentAsText));
+      while (reader.hasNext()) {
+        int next = reader.next();
+        if (next == XMLStreamConstants.START_ELEMENT) {
+          if (XmlUtil.XINCLUDE_URI.equals(reader.getNamespaceURI()) && "include".equals(reader.getLocalName())) {
+            int attributeCount = reader.getAttributeCount();
+            if (attributeCount > 0) {
+              for (int i = 0; i < attributeCount; i++) {
+                String localName = reader.getAttributeLocalName(i);
+                if ("href".equals(localName)) {
+                  infos.add(new FileIncludeInfo(reader.getAttributeValue(i)));
+                }
+              }
+            }
+          }
         }
       }
-
-      @Override
-      public void endElement(String name, String nsPrefix, String nsURI) {
-        isXInclude = false;
-      }
-    });
+    }
+    catch (XMLStreamException e) {
+      // ignore
+    }
     return infos.toArray(FileIncludeInfo.EMPTY);
   }
 }

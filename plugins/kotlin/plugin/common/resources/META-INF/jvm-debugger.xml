@@ -16,6 +16,10 @@
     </action>
   </actions>
 
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.debugger.evaluate.DropCodeFragmentCacheOnRefreshListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+  </projectListeners>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.debugger.kotlinStackFrameValueContributor"
                     interface="org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrameValueContributor" dynamic="true"/>
@@ -47,6 +51,7 @@
 
 
     <debugger.sourcePositionHighlighter implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionHighlighter"/>
+    <debugger.sourcePositionProvider implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionProvider"/>
 
     <debugger.extraSteppingFilter implementation="org.jetbrains.kotlin.idea.debugger.core.filter.KotlinExtraSteppingFilter"/>
     <debugger.syntheticProvider implementation="org.jetbrains.kotlin.idea.debugger.core.filter.KotlinSyntheticTypeComponentProvider"/>

@@ -7,6 +7,7 @@ import javax.swing.Icon
 
 interface AttachHostItem {
   val host: XAttachHost
+  fun getId(): String
   @Nls
   fun getPresentation(): String
   fun getIcon(): Icon

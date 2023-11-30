@@ -1,16 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details
 
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
-import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.bindTextHtmlIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.SingleComponentCenteringLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import net.miginfocom.layout.AC
@@ -20,7 +22,6 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JEditorPane
-import javax.swing.JLabel
 import javax.swing.JPanel
 
 object CodeReviewDetailsTitleComponentFactory {
@@ -44,24 +45,15 @@ object CodeReviewDetailsTitleComponentFactory {
       })
       PopupHandler.installPopupMenu(this, actionGroup, "CodeReviewDetailsPopup")
     }
-    val stateLabel = JLabel().apply {
-      font = JBFont.small()
-      foreground = CodeReviewColorUtil.Review.stateForeground
-      border = JBUI.Borders.empty(0, 4)
-      bindTextIn(scope, detailsVm.reviewRequestState.map { reviewRequestState ->
-        ReviewDetailsUIUtil.getRequestStateText(reviewRequestState)
-      })
-    }.let {
-      RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
-        border = JBUI.Borders.empty()
-        background = CodeReviewColorUtil.Review.stateBackground
-        bindVisibilityIn(scope, detailsVm.reviewRequestState.map { reviewRequestState ->
-          reviewRequestState == ReviewRequestState.CLOSED ||
-          reviewRequestState == ReviewRequestState.MERGED ||
-          reviewRequestState == ReviewRequestState.DRAFT
-        })
-        add(it)
+    val stateTextModel = SingleValueModel<@Nls String?>(null)
+    scope.launchNow {
+      detailsVm.reviewRequestState.collect { reviewRequestState ->
+        stateTextModel.value = ReviewDetailsUIUtil.getRequestStateText(reviewRequestState)
       }
+    }
+
+    val stateLabel = CollaborationToolsUIUtil.createTagLabel(stateTextModel).apply {
+      bindVisibilityIn(scope, detailsVm.reviewRequestState.map { it != ReviewRequestState.OPENED })
     }
 
     return JPanel(MigLayout(

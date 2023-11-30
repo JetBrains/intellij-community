@@ -78,7 +78,7 @@ public final class SourceRootIconProvider {
     return null;
   }
 
-  public static class DirectoryProvider extends IconProvider implements DumbAware {
+  public static final class DirectoryProvider extends IconProvider implements DumbAware {
     @Override
     public Icon getIcon(final @NotNull PsiElement element, final int flags) {
       if (element instanceof PsiDirectory psiDirectory) {
@@ -88,7 +88,7 @@ public final class SourceRootIconProvider {
     }
   }
 
-  public static class FileLayerProvider implements IconLayerProvider, DumbAware {
+  static final class FileLayerProvider implements IconLayerProvider, DumbAware {
     @Override
     public @Nullable Icon getLayerIcon(@NotNull Iconable element, boolean isLocked) {
       if (element instanceof PsiFile) {

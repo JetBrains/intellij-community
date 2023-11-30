@@ -82,7 +82,7 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: EclipseProjectPropertiesEntity,
-                                      modification: EclipseProjectPropertiesEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: EclipseProjectPropertiesEntity.Builder.() -> Unit): EclipseProjectPropertiesEntity = modifyEntity(
   EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
 
 var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity?

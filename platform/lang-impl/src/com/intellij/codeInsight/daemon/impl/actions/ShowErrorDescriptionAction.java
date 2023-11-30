@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
 
-public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements DumbAware {
+public final class ShowErrorDescriptionAction extends BaseCodeInsightAction implements DumbAware {
   private boolean myRequestFocus;
 
   public ShowErrorDescriptionAction() {

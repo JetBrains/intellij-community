@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.execution.ExecutionBundle;
@@ -311,7 +311,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
   }
 
-  private class SwitchDuplexConsoleViewAction extends ToggleAction implements DumbAware {
+  private final class SwitchDuplexConsoleViewAction extends ToggleAction implements DumbAware {
 
     SwitchDuplexConsoleViewAction() {
       super(ExecutionBundle.messagePointer("run.configuration.show.command.line.action.name"), AllIcons.Debugger.Console);

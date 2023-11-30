@@ -1,8 +1,9 @@
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
-import com.intellij.workspaceModel.codegen.impl.writer.javaFullName
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.writer.QualifiedName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
+import com.intellij.workspaceModel.codegen.impl.writer.extensions.kotlinClassName
 import com.intellij.workspaceModel.codegen.impl.writer.toQualifiedName
 
 val ValueType<*>.javaType: QualifiedName
@@ -15,7 +16,7 @@ val ValueType<*>.javaType: QualifiedName
     is ValueType.Map<*, *> -> "Map".toQualifiedName().appendSuffix("<${keyType.javaType}, ${valueType.javaType}>")
     is ValueType.ObjRef -> target.javaFullName
     is ValueType.Optional<*> -> type.javaType.appendSuffix("?")
-    is ValueType.JvmClass -> javaClassName.toQualifiedName()
+    is ValueType.JvmClass -> kotlinClassName.toQualifiedName()
     else -> throw UnsupportedOperationException("$this type isn't supported")
   }
 

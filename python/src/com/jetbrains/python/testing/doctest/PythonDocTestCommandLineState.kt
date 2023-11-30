@@ -9,8 +9,10 @@ import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.plus
 import com.intellij.execution.target.value.targetPath
 import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType.*
 import com.jetbrains.python.testing.PythonTestCommandLineStateBase
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.function.Function
 
@@ -25,6 +27,16 @@ class PythonDocTestCommandLineState(config: PythonDocTestRunConfiguration, env: 
 
   override fun getTestSpecs(request: TargetEnvironmentRequest): List<Function<TargetEnvironment, String>> =
     listOf(configuration.buildTestSpec(request))
+
+  override fun addAfterParameters(targetEnvironmentRequest: TargetEnvironmentRequest,
+                                  testScriptExecution: PythonScriptExecution) {
+    configuration.parametersList.forEach { param -> testScriptExecution.addParameter(param) }
+  }
+
+  @TestOnly
+  override fun addAfterParameters(cmd: GeneralCommandLine) {
+    cmd.parametersList.getParamsGroup(GROUP_SCRIPT)?.addParameters(configuration.parametersList)
+  }
 
   companion object {
     /**

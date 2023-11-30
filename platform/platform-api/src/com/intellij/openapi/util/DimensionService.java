@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,15 +38,15 @@ public final class DimensionService extends SimpleModificationTracker implements
   private final Map<String, Point> myKeyToLocation = new LinkedHashMap<>();
   private final Map<String, Dimension> myKeToSize = new LinkedHashMap<>();
   private final ObjectIntMap<String> myKeyToExtendedState = new ObjectIntHashMap<>();
-  @NonNls private static final String EXTENDED_STATE = "extendedState";
-  @NonNls private static final String KEY = "key";
-  @NonNls private static final String STATE = "state";
-  @NonNls private static final String ELEMENT_LOCATION = "location";
-  @NonNls private static final String ELEMENT_SIZE = "size";
-  @NonNls private static final String ATTRIBUTE_X = "x";
-  @NonNls private static final String ATTRIBUTE_Y = "y";
-  @NonNls private static final String ATTRIBUTE_WIDTH = "width";
-  @NonNls private static final String ATTRIBUTE_HEIGHT = "height";
+  private static final @NonNls String EXTENDED_STATE = "extendedState";
+  private static final @NonNls String KEY = "key";
+  private static final @NonNls String STATE = "state";
+  private static final @NonNls String ELEMENT_LOCATION = "location";
+  private static final @NonNls String ELEMENT_SIZE = "size";
+  private static final @NonNls String ATTRIBUTE_X = "x";
+  private static final @NonNls String ATTRIBUTE_Y = "y";
+  private static final @NonNls String ATTRIBUTE_WIDTH = "width";
+  private static final @NonNls String ATTRIBUTE_HEIGHT = "height";
 
   public static DimensionService getInstance() {
     return ApplicationManager.getApplication().getService(DimensionService.class);
@@ -63,13 +63,11 @@ public final class DimensionService extends SimpleModificationTracker implements
    * @deprecated use {@link #getLocation(String, Project)} instead.
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  public synchronized Point getLocation(String key) {
+  public synchronized @Nullable Point getLocation(String key) {
     return getLocation(key, guessProject());
   }
 
-  @Nullable
-  public synchronized Point getLocation(@NotNull String key, @Nullable Project project) {
+  public synchronized @Nullable Point getLocation(@NotNull String key, @Nullable Project project) {
     Point point = project == null ? null : WindowStateService.getInstance(project).getLocation(key);
     if (point != null) return point;
 
@@ -125,13 +123,11 @@ public final class DimensionService extends SimpleModificationTracker implements
    * @deprecated use {@link #getSize(String, Project)} instead.
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  public synchronized Dimension getSize(@NotNull @NonNls String key) {
+  public synchronized @Nullable Dimension getSize(@NotNull @NonNls String key) {
     return getSize(key, guessProject());
   }
 
-  @Nullable
-  public synchronized Dimension getSize(@NotNull @NonNls String key, @Nullable Project project) {
+  public synchronized @Nullable Dimension getSize(@NotNull @NonNls String key, @Nullable Project project) {
     Dimension size = project == null ? null : WindowStateService.getInstance(project).getSize(key);
     if (size != null) return size;
 
@@ -248,8 +244,7 @@ public final class DimensionService extends SimpleModificationTracker implements
   }
 
   @Deprecated
-  @Nullable
-  private static Project guessProject() {
+  private static @Nullable Project guessProject() {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     return openProjects.length == 1 ? openProjects[0] : null;
   }
@@ -259,8 +254,7 @@ public final class DimensionService extends SimpleModificationTracker implements
    * key is the HiDPI-aware key,
    * scale is the HiDPI-aware factor to transform size metrics.
    */
-  @NotNull
-  private static Pair<String, Float> keyPair(String key, @Nullable Project project) {
+  private static @NotNull Pair<String, Float> keyPair(String key, @Nullable Project project) {
     GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
     if (env.isHeadlessInstance()) {
       return new Pair<>(key + ".headless", 1f);
@@ -310,8 +304,7 @@ public final class DimensionService extends SimpleModificationTracker implements
     return new Pair<>(realKey, scale);
   }
 
-  @NotNull
-  private static WindowStateService getWindowStateService(@Nullable Project project) {
+  private static @NotNull WindowStateService getWindowStateService(@Nullable Project project) {
     return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
   }
 }

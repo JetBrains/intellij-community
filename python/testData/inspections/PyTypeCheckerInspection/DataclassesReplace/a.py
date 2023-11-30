@@ -9,7 +9,7 @@ class A:
 
 replace(A(1))
 replace(A(1), a=1, b="abc")
-replace(A(1), <warning descr="Expected type 'int', got 'LiteralString' instead">a="str"</warning>, <warning descr="Expected type 'str', got 'int' instead">b=1</warning>)
+replace(A(1), <warning descr="Expected type 'int', got 'str' instead">a="str"</warning>, <warning descr="Expected type 'str', got 'int' instead">b=1</warning>)
 
 
 @dataclass
@@ -20,7 +20,7 @@ class B:
 
 replace(B(1))
 replace(B(1), a=1)
-replace(B(1), <warning descr="Expected type 'int', got 'LiteralString' instead">a="str"</warning>)
+replace(B(1), <warning descr="Expected type 'int', got 'str' instead">a="str"</warning>)
 
 
 @dataclass
@@ -31,7 +31,7 @@ class C:
 
 replace(C(1))
 replace(C(1), a=1, b="str")
-replace(C(1), <warning descr="Expected type 'int', got 'LiteralString' instead">a="str"</warning>, <warning descr="Expected type 'str', got 'int' instead">b=1</warning>)
+replace(C(1), <warning descr="Expected type 'int', got 'str' instead">a="str"</warning>, <warning descr="Expected type 'str', got 'int' instead">b=1</warning>)
 
 
 class D:

@@ -868,7 +868,7 @@
       <scope name="android" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="DataClassPrivateConstructor" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="DataProviderReturnType" enabled="false" level="WARNING" enabled_by_default="true">
+    <inspection_tool class="DataProviderReturnType" enabled="false" level="ERROR" enabled_by_default="true">
       <scope name="android" level="ERROR" enabled="false" />
     </inspection_tool>
     <inspection_tool class="DateToString" enabled="false" level="WARNING" enabled_by_default="false">
@@ -980,7 +980,7 @@
     </inspection_tool>
     <inspection_tool class="DuplicatedBeanNamesInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="DuplicatedBlockNamesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="DuplicatedDataProviderNames" enabled="false" level="WARNING" enabled_by_default="true">
+    <inspection_tool class="DuplicatedDataProviderNames" enabled="false" level="ERROR" enabled_by_default="true">
       <scope name="android" level="ERROR" enabled="false" />
     </inspection_tool>
     <inspection_tool class="Duplicates" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
@@ -3367,7 +3367,7 @@
           <module name="intellij.platform.externalSystem.impl" />
         </modules-set>
         <modules-set>
-          <module name="intellij.idea.community.resources" />
+          <module name="intellij.idea.community.customization" />
           <module name="intellij.java" />
           <module name="intellij.java.aetherDependencyResolver" />
           <module name="intellij.java.analysis" />

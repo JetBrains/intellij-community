@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.util.text.Strings;
@@ -11,7 +11,7 @@ import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
 import java.awt.*;
 
-class AbstractButtonLayout {
+final class AbstractButtonLayout {
 
   public final Rectangle iconRect = new Rectangle();
   public final Rectangle textRect = new Rectangle();

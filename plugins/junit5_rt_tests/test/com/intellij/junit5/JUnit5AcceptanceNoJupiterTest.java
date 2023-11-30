@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@RunInEdt
+@RunInEdt(writeIntent = true)
 public class JUnit5AcceptanceNoJupiterTest {
   protected JavaCodeInsightTestFixture myFixture;
 

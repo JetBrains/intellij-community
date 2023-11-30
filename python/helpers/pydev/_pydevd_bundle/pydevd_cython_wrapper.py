@@ -60,3 +60,12 @@ global_cache_frame_skips = mod.global_cache_frame_skips
 _set_additional_thread_info_lock = mod._set_additional_thread_info_lock
 
 fix_top_level_trace_and_get_trace_func = mod.fix_top_level_trace_and_get_trace_func
+
+# Common frame functions to be used in PEP 669 debugger callbacks.
+handle_breakpoint_condition = mod.handle_breakpoint_condition
+handle_breakpoint_expression = mod.handle_breakpoint_expression
+DEBUG_START = mod.DEBUG_START
+DEBUG_START_PY3K = mod.DEBUG_START_PY3K
+should_stop_on_exception = mod.should_stop_on_exception
+handle_exception = mod.handle_exception
+manage_return_values = mod.manage_return_values

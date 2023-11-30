@@ -18,7 +18,8 @@ package com.intellij.testFramework.fixtures;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,9 +32,7 @@ public class EditorHintFixture implements EditorHintListener {
   }
 
   @Override
-  public void hintShown(Project project,
-                        @NotNull LightweightHint hint,
-                        int flags) {
+  public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
     hint.putUserData(LightweightHint.SHOWN_AT_DEBUG, Boolean.TRUE);
     myCurrentHint = hint;
     hint.addHintListener(event -> {

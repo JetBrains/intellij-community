@@ -1,0 +1,1 @@
+Nested class/object 9 MyEnum.valueOf("A")

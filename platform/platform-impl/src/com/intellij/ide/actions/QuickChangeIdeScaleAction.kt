@@ -5,10 +5,11 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.ui.percentStringValue
 import com.intellij.ide.ui.percentValue
-import com.intellij.internal.statistic.service.fus.collectors.IdeZoomChanged
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
-import com.intellij.internal.statistic.service.fus.collectors.IdeZoomSwitcherClosed
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.IdeZoomChanged
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.IdeZoomSwitcherClosed
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -16,12 +17,17 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
+import com.intellij.ui.hover.HoverListener
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
+import java.awt.Component
 import javax.swing.JList
 import javax.swing.event.ListSelectionEvent
+import kotlin.math.roundToInt
 
-class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
+class QuickChangeIdeScaleAction : QuickSwitchSchemeAction(), ActionRemoteBehaviorSpecification.Frontend {
   private val switchAlarm = Alarm()
+  private var popupSession: PopupSession? = null
 
   override fun fillActions(project: Project?, group: DefaultActionGroup, dataContext: DataContext) {
     val initialScale = UISettingsUtils.getInstance().currentIdeScale
@@ -57,6 +63,7 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
             applyUserScale(anAction.scale, true)
             if (!popup.isDisposed) {
               popup.pack(true, true)
+              popupSession?.updateLocation()
             }
           }, SELECTION_THROTTLING_MS)
         }
@@ -66,12 +73,30 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
     popup.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
         switchAlarm.cancelAllRequests()
+        popupSession = null
         if (!event.isOk) {
           applyUserScale(initialScale, false)
           logSwitcherClosed(false)
         }
       }
     })
+
+    val hoverListener = object: HoverListener() {
+      override fun mouseEntered(component: Component, x: Int, y: Int) {
+        popupSession?.updateMouseCoordinates(x, y)
+      }
+
+      override fun mouseMoved(component: Component, x: Int, y: Int) {
+        popupSession?.updateMouseCoordinates(x, y)
+      }
+
+      override fun mouseExited(component: Component) {
+        popupSession?.mouseIsInside = false
+      }
+    }
+
+    hoverListener.addTo(popup.content)
+    popupSession = PopupSession(popup)
 
     super.showPopup(e, popup)
   }
@@ -98,6 +123,46 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
     }
 
     private const val SELECTION_THROTTLING_MS = 500
+  }
+
+  /**
+   * Helper for recalculating popup location to avoid popup jumping after selecting zoom level by a mouse cursor
+   *
+   * @param popup The list popup associated with this session.
+   */
+  private class PopupSession(val popup: ListPopup) {
+    var lastMouseX = -1
+    var lastMouseY = -1
+    var lastScale = 1f
+    var mouseIsInside = false
+
+    fun updateMouseCoordinates(x: Int, y: Int) {
+      mouseIsInside = true
+      lastMouseX = x
+      lastMouseY = y
+      lastScale = JBUIScale.scale(1f)
+    }
+
+    fun updateLocation() {
+      val oldX = lastMouseX
+      val oldY = lastMouseY
+      val oldScale = lastScale
+
+      if (popup.isDisposed || !mouseIsInside || lastMouseX < 0 || lastMouseY < 0) return
+
+      val newScale = JBUIScale.scale(1f)
+
+      val newX = (oldX * newScale / oldScale).roundToInt()
+      val newY = (oldY * newScale / oldScale).roundToInt()
+
+      val dX = newX - oldX
+      val dY = newY - oldY
+
+      val location = popup.locationOnScreen
+      location.x -= dX
+      location.y -= dY
+      popup.setLocation(location)
+    }
   }
 }
 

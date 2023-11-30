@@ -10,6 +10,7 @@ import com.intellij.remote.RemoteSdkException
 import com.jetbrains.env.PyEnvTestSettings
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
@@ -36,7 +37,8 @@ class PySDKRule(private val targetConfigProducer: (() -> TargetEnvironmentConfig
     val (pythonPath, additionalData) = if (targetConfig == null) {
       // Local
       val flavor = if (SystemInfo.isWindows) WinPythonSdkFlavor() else UnixPythonSdkFlavor.getInstance()
-      val pythonPath = flavor.suggestLocalHomePaths(null, null).firstOrNull() ?: PyEnvTestSettings().pythons.firstOrNull()?.toPath()
+      val pythonPath = flavor.suggestLocalHomePaths(null, null).firstOrNull()
+                       ?: PyEnvTestSettings().pythons.firstOrNull()?.toPath()?.let { PythonSdkUtil.getPythonExecutable(it.toString()); }
       Assume.assumeNotNull("No python found on local installation", pythonPath)
       Pair(pythonPath!!.toString(), PythonSdkAdditionalData(PyFlavorAndData(PyFlavorData.Empty, flavor)))
     }

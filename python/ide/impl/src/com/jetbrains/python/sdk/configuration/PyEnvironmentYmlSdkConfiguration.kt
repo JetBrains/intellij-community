@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.configuration
 
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
-import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
@@ -19,10 +18,12 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyCharmCommunityCustomizationBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
+import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkUpdater
@@ -32,9 +33,9 @@ import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
 import com.jetbrains.python.sdk.associateWithModule
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.CondaEnvResult
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.InputData
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.Source
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.CondaEnvResult
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.InputData
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Source
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
@@ -66,6 +67,7 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   private fun getEnvironmentYml(module: Module) = PyUtil.findInRoots(module, "environment.yml")
 
+  @RequiresBackgroundThread
   private fun createAndAddSdk(module: Module, source: Source): Sdk? {
     val targetConfig = PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(module)
     if (targetConfig != null) {
@@ -79,12 +81,13 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
     }
   }
 
+  @RequiresBackgroundThread
   private fun askForEnvData(module: Module, source: Source): PyAddNewCondaEnvFromFilePanel.Data? {
     val environmentYml = getEnvironmentYml(module) ?: return null
     // Again: only local conda is supported for now
     val condaExecutable = runBlocking { suggestCondaPath() }?.let { LocalFileSystem.getInstance().findFileByPath(it) }
 
-    if (source == Source.INSPECTION && CondaEnvSdkFlavor.validateCondaPath(condaExecutable?.path, PathInfo.localPathInfoProvider) == null) {
+    if (source == Source.INSPECTION && CondaEnvSdkFlavor.validateCondaPath(condaExecutable?.path, PlatformAndRoot.local) == null) {
       PySdkConfigurationCollector.logCondaEnvDialogSkipped(module.project, source, executableToEventField(condaExecutable?.path))
       return PyAddNewCondaEnvFromFilePanel.Data(condaExecutable!!.path, environmentYml.path)
     }

@@ -298,7 +298,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     return displayUrlRelativeToProject(f, presentablePath, project, true, true);
   }
 
-  protected static class TargetDirectoryListItem {
+  protected static final class TargetDirectoryListItem {
     private final TargetDirectory myTargetDirectory;
     private final Icon myIcon;
     private final @Nls String myPresentablePath;

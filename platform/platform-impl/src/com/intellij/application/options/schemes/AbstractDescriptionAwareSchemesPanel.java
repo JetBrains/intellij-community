@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
 import com.intellij.ide.IdeBundle;
@@ -43,9 +43,8 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     super(0);
   }
 
-  @NotNull
   @Override
-  protected JPanel createInfoComponent() {
+  protected @NotNull JPanel createInfoComponent() {
     JPanel panel = new JPanel();
     myLayout = new CardLayout();
     panel.setLayout(myLayout);
@@ -139,8 +138,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     myPainter.setNeedsRepaint(true);
   }
 
-  @NotNull
-  protected abstract JComponent getConfigurableFocusComponent();
+  protected abstract @NotNull JComponent getConfigurableFocusComponent();
 
   private void applyDescription() {
     T scheme = getSelectedScheme();
@@ -148,7 +146,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     showDescription(scheme);
   }
 
-  private static class DescriptionLabel extends JBLabel {
+  private static final class DescriptionLabel extends JBLabel {
     private @Nls String myAllText = "";
 
     DescriptionLabel() {

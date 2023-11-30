@@ -69,10 +69,10 @@ final class PyTypeCheckerInspectionProblemRegistrar {
       visitor.registerProblem(argumentResult.getArgument(), getSingleCalleeProblemMessage(argumentResult, context));
     }
 
-    for (PyTypeCheckerInspection.UnmatchedArgument unmatchedArgument : calleeResults.getUnmatchedArguments()) {
-      var argument = unmatchedArgument.getArgument();
-      var paramSpecTypeName = unmatchedArgument.getParamSpecType().getVariableName();
-      visitor.registerProblem(argument, PyPsiBundle.message("INSP.type.checker.unmapped.argument.with.paramspec", paramSpecTypeName));
+    for (PyTypeCheckerInspection.UnexpectedArgumentForParamSpec unexpectedArgumentForParamSpec : calleeResults.getUnmatchedArguments()) {
+      var argument = unexpectedArgumentForParamSpec.getArgument();
+      var paramSpecTypeName = unexpectedArgumentForParamSpec.getParamSpecType().getVariableName();
+      visitor.registerProblem(argument, PyPsiBundle.message("INSP.type.checker.unexpected.argument.from.paramspec", paramSpecTypeName));
     }
 
     if (callSite instanceof PyCallExpression) {
@@ -80,12 +80,18 @@ final class PyTypeCheckerInspectionProblemRegistrar {
       if (argumentList != null) {
         var rpar = PyPsiUtils.getFirstChildOfType(argumentList, PyTokenTypes.RPAR);
         if (rpar != null) {
-          for (PyTypeCheckerInspection.UnmatchedParameter unmatchedParameter : calleeResults.getUnmatchedParameters()) {
-            var parameterName = unmatchedParameter.getParameter().getName();
-            var paramSpecTypeName = unmatchedParameter.getParamSpecType().getVariableName();
+          for (PyTypeCheckerInspection.UnfilledParameterFromParamSpec unfilledParameterFromParamSpec : calleeResults.getUnmatchedParameters()) {
+            var parameterName = unfilledParameterFromParamSpec.getParameter().getName();
+            var paramSpecTypeName = unfilledParameterFromParamSpec.getParamSpecType().getVariableName();
             if (parameterName != null) {
-              visitor.registerProblem(rpar, PyPsiBundle.message("INSP.type.checker.parameter.unfilled", parameterName, paramSpecTypeName));
+              visitor.registerProblem(rpar, PyPsiBundle.message("INSP.type.checker.unfilled.parameter.for.paramspec", parameterName, paramSpecTypeName));
             }
+          }
+
+          for (PyTypeCheckerInspection.UnfilledPositionalVararg unfilledParameterFromParamSpec : calleeResults.getUnfilledPositionalVarargs()) {
+            var varargName = unfilledParameterFromParamSpec.varargName();
+            var expectedTypes = unfilledParameterFromParamSpec.expectedTypes();
+            visitor.registerProblem(rpar, PyPsiBundle.message("INSP.type.checker.unfilled.vararg", varargName, expectedTypes));
           }
         }
       }
@@ -131,7 +137,7 @@ final class PyTypeCheckerInspectionProblemRegistrar {
 
     @Nullable PyType expectedTypeAfterSubstitution = argumentResult.getExpectedTypeAfterSubstitution();
     String expectedTypeName = PythonDocumentationProvider.getTypeName(expectedType, context);
-    String expectedSubstitutedName = expectedTypeAfterSubstitution != null
+    String expectedSubstitutedName = expectedTypeAfterSubstitution != null && !expectedTypeAfterSubstitution.equals(expectedType)
                                      ? PythonDocumentationProvider.getTypeName(expectedTypeAfterSubstitution, context)
                                      : null;
 

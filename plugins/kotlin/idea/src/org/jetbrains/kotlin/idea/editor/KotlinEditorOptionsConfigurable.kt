@@ -6,7 +6,7 @@ import com.intellij.openapi.options.ConfigurableBuilder
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle.message
 
-private val editorOptions = KotlinEditorOptions.getInstance()
+private val editorOptions get() = KotlinEditorOptions.getInstance()
 
 private val cbConvertPastedJavaToKotlin
     get() = CheckboxDescriptor(

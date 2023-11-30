@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
@@ -9,7 +9,6 @@ import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.concurrency.JobLauncher
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -25,6 +24,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.Processor
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.rd.util.reactive.adviseUntil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
@@ -33,18 +33,17 @@ import kotlin.system.measureTimeMillis
 /**
  * Prepares data for [com.intellij.codeInsight.codeVision.CodeVisionHost].
  *
- * Doesn't actually apply result to the editor - just caches the result and notifies CodeVisionHost that
+ * Doesn't actually apply a result to the editor - just caches the result and notifies CodeVisionHost that
  * particular [com.intellij.codeInsight.codeVision.CodeVisionProvider] has to be invalidated.
- * Host relaunches it and takes the result of this pass from cache.
+ * Host relaunches it and takes the result of this pass from the cache.
  */
 class CodeVisionPass(
   rootElement: PsiElement,
   private val editor: Editor
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
   companion object {
-    private val tracer by lazy { TelemetryManager.getInstance().getTracer(CodeVision.toString(), true) }
+    private val tracer by lazy { TelemetryManager.getTracer(CodeVision) }
 
-    @JvmStatic
     @Internal
     fun collectData(editor: Editor, file: PsiFile, providers: List<DaemonBoundCodeVisionProvider>): CodeVisionData {
       val providerIdToLenses = ConcurrentHashMap<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>()
@@ -76,7 +75,7 @@ class CodeVisionPass(
                 val duration = measureTimeMillis {
                   results = provider.computeForEditor(editor, file)
                 }
-                CodeVisionFusCollector.CODE_VISION_FINISHED.log(file.project, duration, provider::class.java, file.language)
+                CodeVisionFusCollector.reportCodeVisionProviderDuration(editor, file.language, duration, provider::class.java)
                 providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
                                                                                                         modificationTracker.modificationCount)
               }
@@ -108,6 +107,7 @@ class CodeVisionPass(
 
   override fun doCollectInformation(progress: ProgressIndicator) {
     val settings = CodeVisionSettings.instance()
+    if (!settings.codeVisionEnabled) return
     val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
       .filter {  settings.isProviderEnabled(it.groupId) }
     collect(progress, editor, myFile, providerIdToLenses, providers)
@@ -134,7 +134,7 @@ class CodeVisionPass(
     private val providerIdToLenses: Map<String, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp>
   ) {
     fun applyTo(editor: Editor, project: Project) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       saveToCache(project, editor, providerIdToLenses)
       updateProviders(project, editor, providerIdToLenses)
     }

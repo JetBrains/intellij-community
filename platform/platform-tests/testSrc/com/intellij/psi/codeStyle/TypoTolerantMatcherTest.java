@@ -33,4 +33,13 @@ public class TypoTolerantMatcherTest {
               "pAeloeorWqXslbSDbv", "asnnWshffqbujmcOd", "adXovaMuDYjyrlexj");
     assertEquals(expected, matched);
   }
+
+  @Test
+  public void testEmptyPattern() {
+    TypoTolerantMatcher matcher = new TypoTolerantMatcher("*", NameUtil.MatchingCaseSensitivity.NONE, "");
+    String[] data = new String[]{"foo", "bar", "buzz"};
+    List<String> matched = ContainerUtil.filter(data, matcher::matches);
+    List<String> expected = List.of("foo", "bar", "buzz");
+    assertEquals(expected, matched);
+  }
 }

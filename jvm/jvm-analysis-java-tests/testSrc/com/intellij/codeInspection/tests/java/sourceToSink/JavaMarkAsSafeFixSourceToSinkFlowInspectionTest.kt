@@ -1,8 +1,8 @@
 package com.intellij.codeInspection.tests.java.sourceToSink
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.codeInspection.tests.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.jvm.analysis.JavaJvmAnalysisTestUtil
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestDataPath
 
@@ -23,7 +23,7 @@ class JavaMarkAsSafeFixSourceToSinkFlowInspectionTest : SourceToSinkFlowInspecti
 
   fun `test unsafe var`() {
     prepareCheckFramework()
-    myFixture.testQuickFixUnavailable("UnsafeVar.java", getMessage())
+    myFixture.testQuickFix("UnsafeVar.java", getMessage(), true)
   }
   fun `test unsafe method call`() {
     prepareCheckFramework()

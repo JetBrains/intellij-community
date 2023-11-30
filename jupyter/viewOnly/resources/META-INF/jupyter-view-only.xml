@@ -4,6 +4,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <httpRequestHandler implementation="org.jetbrains.plugins.notebooks.jupyter.preview.viewOnly.JupyterViewOnlyHandler"/>
-    <fileEditorProvider implementation="org.jetbrains.plugins.notebooks.jupyter.preview.viewOnly.JupyterViewOnlyProvider"/>
+    <fileEditorProvider implementation="org.jetbrains.plugins.notebooks.jupyter.preview.viewOnly.JupyterViewOnlyProvider" fileType="Jupyter"/>
   </extensions>
 </idea-plugin>

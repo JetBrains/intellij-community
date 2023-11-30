@@ -63,24 +63,22 @@ class BoxedTypeOperationsConversion(context: NewJ2kConverterContext) : Recursive
             )
         ).withFormattingFrom(qualifiedExpression)
     }
-
-    companion object {
-        private val boxedTypeFqNames =
-            primitiveTypes.map { it.wrapperFqName.asString() }
-
-        private val boxedTypeToPrimitiveType =
-            primitiveTypes.map { it.wrapperFqName.asString() to it.javaKeywordName }.toMap()
-
-        private val primitiveTypeNames =
-            primitiveTypes.map { it.javaKeywordName }
-
-        private val primitiveTypeUnwrapRegexp =
-            """([\w.]+)\.(\w+)Value""".toRegex()
-
-        private val floatingPointPrimitiveTypeNames =
-            listOf(JvmPrimitiveType.DOUBLE.javaKeywordName, JvmPrimitiveType.FLOAT.javaKeywordName)
-
-        private val typeNameOfIntegersLesserThanInt =
-            listOf(JvmPrimitiveType.SHORT.javaKeywordName, JvmPrimitiveType.BYTE.javaKeywordName)
-    }
 }
+
+private val boxedTypeFqNames: List<String> =
+    primitiveTypes.map { it.wrapperFqName.asString() }
+
+private val boxedTypeToPrimitiveType: Map<String, String> =
+    primitiveTypes.associate { it.wrapperFqName.asString() to it.javaKeywordName }
+
+private val primitiveTypeNames: List<String> =
+    primitiveTypes.map { it.javaKeywordName }
+
+private val primitiveTypeUnwrapRegexp: Regex =
+    """([\w.]+)\.(\w+)Value""".toRegex()
+
+private val floatingPointPrimitiveTypeNames: List<String> =
+    listOf(JvmPrimitiveType.DOUBLE.javaKeywordName, JvmPrimitiveType.FLOAT.javaKeywordName)
+
+private val typeNameOfIntegersLesserThanInt: List<String> =
+    listOf(JvmPrimitiveType.SHORT.javaKeywordName, JvmPrimitiveType.BYTE.javaKeywordName)

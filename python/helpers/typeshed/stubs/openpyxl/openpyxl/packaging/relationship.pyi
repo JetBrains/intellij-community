@@ -1,36 +1,41 @@
+from _typeshed import Incomplete, Unused
 from collections.abc import Generator
-from typing import Any
+from typing import ClassVar, overload
+from typing_extensions import Literal
 
+from openpyxl.descriptors.base import Alias, String
 from openpyxl.descriptors.serialisable import Serialisable
 
 class Relationship(Serialisable):
-    tagname: str
-    Type: Any
-    Target: Any
-    target: Any
-    TargetMode: Any
-    Id: Any
-    id: Any
+    tagname: ClassVar[str]
+    Type: String[Literal[False]]
+    Target: String[Literal[False]]
+    target: Alias
+    TargetMode: String[Literal[True]]
+    Id: String[Literal[True]]
+    id: Alias
+    @overload
     def __init__(
-        self,
-        Id: Any | None = ...,
-        Type: Any | None = ...,
-        type: Any | None = ...,
-        Target: Any | None = ...,
-        TargetMode: Any | None = ...,
+        self, Id: str, Type: Unused = None, *, type: str, Target: str | None = None, TargetMode: str | None = None
+    ) -> None: ...
+    @overload
+    def __init__(self, Id: str, Type: Unused, type: str, Target: str | None = None, TargetMode: str | None = None) -> None: ...
+    @overload
+    def __init__(
+        self, Id: str, Type: str, type: None = None, Target: str | None = None, TargetMode: str | None = None
     ) -> None: ...
 
 class RelationshipList(Serialisable):
-    tagname: str
-    Relationship: Any
-    def __init__(self, Relationship=...) -> None: ...
+    tagname: ClassVar[str]
+    Relationship: Incomplete
+    def __init__(self, Relationship=()) -> None: ...
     def append(self, value) -> None: ...
-    def __len__(self): ...
-    def __bool__(self): ...
-    def find(self, content_type) -> Generator[Any, None, None]: ...
+    def __len__(self) -> int: ...
+    def __bool__(self) -> bool: ...
+    def find(self, content_type) -> Generator[Incomplete, None, None]: ...
     def __getitem__(self, key): ...
     def to_tree(self): ...
 
 def get_rels_path(path): ...
 def get_dependents(archive, filename): ...
-def get_rel(archive, deps, id: Any | None = ..., cls: Any | None = ...): ...
+def get_rel(archive, deps, id: Incomplete | None = None, cls: Incomplete | None = None): ...

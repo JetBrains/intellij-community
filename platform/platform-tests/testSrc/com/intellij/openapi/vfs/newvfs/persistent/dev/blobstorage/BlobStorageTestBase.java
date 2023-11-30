@@ -13,11 +13,12 @@ import org.junit.rules.TemporaryFolder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntSupplier;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage.NULL_ID;
+import static com.intellij.util.io.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -225,7 +226,7 @@ public abstract class BlobStorageTestBase<S> {
   }
 
   @Test
-  public void manyRecordsWritten_AndReWrittenWithLargerSize_AndCouldAllBeReadBackUnchanged_EventAfterStorageReopened() throws Exception {
+  public void manyRecordsWritten_AndReWrittenWithLargerSize_AndCouldAllBeReadBackUnchanged_EvenAfterStorageReopened() throws Exception {
     final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS, 2000);
 
     //write initial records
@@ -284,7 +285,7 @@ public abstract class BlobStorageTestBase<S> {
   
 
   @NotNull
-  public static String randomString(final ThreadLocalRandom rnd,
+  public static String randomString(final Random rnd,
                                     final int size) {
     final char[] chars = new char[size];
     for (int i = 0; i < chars.length; i++) {

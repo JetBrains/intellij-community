@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.lang.ASTNode;
@@ -76,8 +62,7 @@ public abstract class StatementUpDownMover {
     return line == document.getLineCount() ? document.getTextLength() : document.getLineStartOffset(line);
   }
 
-  @NotNull
-  protected static LineRange getLineRangeFromSelection(@NotNull Editor editor) {
+  protected static @NotNull LineRange getLineRangeFromSelection(@NotNull Editor editor) {
     int startLine;
     int endLine;
     SelectionModel selectionModel = editor.getSelectionModel();
@@ -96,8 +81,7 @@ public abstract class StatementUpDownMover {
     return range;
   }
 
-  @Nullable
-  protected static Pair<PsiElement, PsiElement> getElementRange(@NotNull Editor editor, @NotNull PsiFile file, @NotNull LineRange range) {
+  protected static @Nullable Pair<PsiElement, PsiElement> getElementRange(@NotNull Editor editor, @NotNull PsiFile file, @NotNull LineRange range) {
     int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
     PsiElement startingElement = firstNonWhiteElement(startOffset, file, true);
     if (startingElement == null) return null;
@@ -115,14 +99,12 @@ public abstract class StatementUpDownMover {
     return null;
   }
 
-  @Nullable
-  protected static PsiElement firstNonWhiteElement(int offset, @NotNull PsiFile file, boolean lookRight) {
+  protected static @Nullable PsiElement firstNonWhiteElement(int offset, @NotNull PsiFile file, boolean lookRight) {
     ASTNode leafElement = file.getNode().findLeafElementAt(offset);
     return leafElement == null ? null : firstNonWhiteElement(leafElement.getPsi(), lookRight);
   }
 
-  @Nullable
-  protected static PsiElement firstNonWhiteElement(PsiElement element, boolean lookRight) {
+  protected static @Nullable PsiElement firstNonWhiteElement(PsiElement element, boolean lookRight) {
     if (element instanceof PsiWhiteSpace) {
       element = lookRight ? element.getNextSibling() : element.getPrevSibling();
     }

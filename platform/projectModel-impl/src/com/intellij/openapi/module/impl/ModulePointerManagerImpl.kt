@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -28,7 +27,7 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
   private val oldToNewName = CollectionFactory.createSmallMemoryFootprintMap<String, String>()
 
   init {
-    project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
+    project.messageBus.connect().subscribe(ModuleListener.TOPIC, object : ModuleListener {
       override fun beforeModuleRemoved(project: Project, module: Module) {
         unregisterPointer(module)
       }

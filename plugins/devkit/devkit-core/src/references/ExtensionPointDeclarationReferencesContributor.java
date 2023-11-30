@@ -34,7 +34,7 @@ import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.patterns.uast.UastPatterns.*;
 import static com.intellij.psi.UastReferenceRegistrar.registerUastReferenceProvider;
 
-public class ExtensionPointDeclarationReferencesContributor extends PsiReferenceContributor {
+final class ExtensionPointDeclarationReferencesContributor extends PsiReferenceContributor {
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {

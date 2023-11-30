@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.surroundWith;
 
 import com.intellij.json.psi.JsonElementGenerator;
@@ -19,9 +19,8 @@ public abstract class JsonSurrounderBase implements Surrounder {
     return elements.length >= 1 && elements[0] instanceof JsonValue && !JsonPsiUtil.isPropertyKey(elements[0]);
   }
 
-  @Nullable
   @Override
-  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
+  public @Nullable TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
     throws IncorrectOperationException {
     if (!isApplicable(elements)) {
       return null;
@@ -41,8 +40,7 @@ public abstract class JsonSurrounderBase implements Surrounder {
     return null;
   }
 
-  @NotNull
-  protected static String getTextAndRemoveMisc(@NotNull PsiElement firstProperty, @NotNull PsiElement lastProperty) {
+  protected static @NotNull String getTextAndRemoveMisc(@NotNull PsiElement firstProperty, @NotNull PsiElement lastProperty) {
     final TextRange replacedRange = new TextRange(firstProperty.getTextOffset(), lastProperty.getTextRange().getEndOffset());
     final String propertiesText = replacedRange.substring(firstProperty.getContainingFile().getText());
     if (firstProperty != lastProperty) {
@@ -52,6 +50,5 @@ public abstract class JsonSurrounderBase implements Surrounder {
     return propertiesText;
   }
 
-  @NotNull
-  protected abstract String createReplacementText(@NotNull String textInRange);
+  protected abstract @NotNull String createReplacementText(@NotNull String textInRange);
 }

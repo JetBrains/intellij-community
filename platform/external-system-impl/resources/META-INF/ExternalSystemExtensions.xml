@@ -61,6 +61,7 @@
     <projectService serviceInterface="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
                     serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl"/>
     <externalSystemSettingsListener
+      id="external-system"
       implementation="com.intellij.openapi.externalSystem.service.project.autoimport.ExternalProjectsSettingsWatcher"/>
     <projectService serviceInterface="com.intellij.openapi.project.ExternalStorageConfigurationManager"
                     serviceImplementation="com.intellij.openapi.project.ExternalStorageConfigurationManagerImpl"/>
@@ -72,6 +73,8 @@
                  description="Set binding address for server socket listening incoming requests for debugger clients. 0 means address of the first found remote network interface will be used."/>
     <registryKey key="external.system.map.jps.to.gav" defaultValue="false"
                  description="Provide assignment of groupId/artifactId/version for JPS modules"/>
+    <registryKey key="external.system.pause.indexing.during.sync" defaultValue="false"
+                 description="Suspend indexing and scanning during sync with external build system"/>
 
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl"/>
@@ -104,6 +107,7 @@
     <externalSystemViewContributor id="default" order="last"
                                    implementation="com.intellij.openapi.externalSystem.view.ExternalSystemViewDefaultContributor"/>
 
+    <environmentKeyProvider implementation="com.intellij.openapi.externalSystem.importing.ExternalSystemKeyProvider"/>
     <!--Execution-->
     <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskRunner"/>
 
@@ -126,6 +130,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.externalSystem.statistics.ExternalSystemSettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ExternalSystemSourceAttachCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.openapi.externalSystem.statistics.SystemIdValidationRule"/>
     <notificationGroup id="Build sync orphan modules" displayType="TOOL_WINDOW" toolWindowId="Build" bundle="messages.ExternalSystemBundle" key="notification.group.orphan.modules"/>
     <notificationGroup id="Content root duplicates" displayType="BALLOON" bundle="messages.ExternalSystemBundle" key="notification.group.duplicate.content.roots"/>
@@ -133,6 +138,8 @@
     <notificationGroup id="Gradle Wrapper Update" displayType="BALLOON" bundle="messages.ExternalSystemBundle" key="notification.group.gradle.wrapper.update"/>
 
     <externalSystemSettingsListener implementation="com.intellij.openapi.externalSystem.service.ui.ExternalToolWindowManager"/>
+
+    <activityTracker implementation="com.intellij.openapi.externalSystem.util.ExternalSystemTracker"/>
 
     <trustedProjectsLocator implementation="com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectsLocator"/>
   </extensions>

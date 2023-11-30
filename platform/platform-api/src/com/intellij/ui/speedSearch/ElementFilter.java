@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.Disposable;
@@ -17,7 +17,7 @@ public interface ElementFilter<T> {
 
   interface Active<T> extends ElementFilter<T> {
     @NotNull
-    Promise<?> fireUpdate(@Nullable final T preferredSelection, final boolean adjustSelection, final boolean now);
+    Promise<?> fireUpdate(final @Nullable T preferredSelection, final boolean adjustSelection, final boolean now);
 
     void addListener(Listener<T> listener, Disposable parent);
 
@@ -25,8 +25,7 @@ public interface ElementFilter<T> {
       Set<Listener<T>> myListeners = new CopyOnWriteArraySet<>();
 
       @Override
-      @NotNull
-      public Promise<?> fireUpdate(@Nullable T preferredSelection, boolean adjustSelection, boolean now) {
+      public @NotNull Promise<?> fireUpdate(@Nullable T preferredSelection, boolean adjustSelection, boolean now) {
         return Promises.all(ContainerUtil.map(myListeners, listener -> listener.update(preferredSelection, adjustSelection, now)));
       }
 
@@ -45,6 +44,6 @@ public interface ElementFilter<T> {
 
   interface Listener<T> {
     @NotNull
-    Promise<Void> update(@Nullable final T preferredSelection, final boolean adjustSelection, final boolean now);
+    Promise<Void> update(final @Nullable T preferredSelection, final boolean adjustSelection, final boolean now);
   }
 }

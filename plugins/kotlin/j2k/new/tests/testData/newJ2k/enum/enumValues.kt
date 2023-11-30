@@ -14,8 +14,6 @@ internal enum class MyEnum {
 }
 
 internal class EnumTest {
-    //TODO: Remove after Enum.entries is marked as non-experimental in Kotlin 1.9
-    @ExperimentalStdlibApi
     fun replaceWithEntries() {
         val x = MyEnum.entries[1]
 
@@ -27,8 +25,6 @@ internal class EnumTest {
         }
     }
 
-    //TODO: Remove after Enum.entries is marked as non-experimental in Kotlin 1.9
-    @ExperimentalStdlibApi
     fun replaceWithEntriesWithConversionToArray() {
         // Simple call
         val x = MyEnum.entries.toTypedArray()

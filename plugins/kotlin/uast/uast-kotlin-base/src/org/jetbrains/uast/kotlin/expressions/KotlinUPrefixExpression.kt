@@ -17,9 +17,13 @@ class KotlinUPrefixExpression(
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UPrefixExpression, KotlinUElementWithType, KotlinEvaluatableUElement,
     UMultiResolvable {
-    override val operand by lz {
-        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.baseExpression, this)
-    }
+
+    private val operandPart = UastLazyPart<UExpression>()
+
+    override val operand: UExpression
+        get() = operandPart.getOrBuild {
+            baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.baseExpression, this)
+        }
 
     override val operatorIdentifier: UIdentifier
         get() = KotlinUIdentifier(sourcePsi.operationReference.getReferencedNameElement(), this)
@@ -41,6 +45,6 @@ class KotlinUPrefixExpression(
 
     override fun getExpressionType(): PsiType? =
         super<KotlinUElementWithType>.getExpressionType()
-            // For overloaded operator (from binary dependency), we may need call resolution.
+        // For overloaded operator (from binary dependency), we may need call resolution.
             ?: resolveOperator()?.returnType
 }

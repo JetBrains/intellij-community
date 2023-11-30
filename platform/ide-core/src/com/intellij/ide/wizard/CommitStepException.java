@@ -15,10 +15,20 @@
  */
 package com.intellij.ide.wizard;
 
+import com.intellij.ide.IdeCoreBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CommitStepException extends Exception {
-  public CommitStepException(final @Nls String message) {
-    super(message);
+
+  @Override
+  @NotNull
+  public String getMessage() {
+    return super.getMessage();
+  }
+
+  public CommitStepException(final @Nullable @Nls String message) {
+    super(message != null ? message : IdeCoreBundle.message("unknown.error"));
   }
 }

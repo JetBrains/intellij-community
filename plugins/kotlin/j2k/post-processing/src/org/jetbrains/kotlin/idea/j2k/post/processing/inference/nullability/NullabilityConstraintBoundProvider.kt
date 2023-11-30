@@ -10,7 +10,7 @@ class NullabilityConstraintBoundProvider : ConstraintBoundProviderImpl() {
         is TypeParameterLabel -> null
         is GenericLabel -> null
         StarProjectionLabel -> null
-        NullLiteralLabel -> org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.LiteralBound.UPPER
-        LiteralLabel -> org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.LiteralBound.LOWER
+        NullLiteralLabel -> LiteralBound.UPPER
+        LiteralLabel -> LiteralBound.LOWER
     }
 }

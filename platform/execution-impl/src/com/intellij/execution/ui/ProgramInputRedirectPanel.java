@@ -19,7 +19,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class ProgramInputRedirectPanel extends JPanel implements PanelWithAnchor {
+public final class ProgramInputRedirectPanel extends JPanel implements PanelWithAnchor {
   private final JBCheckBox myCheckBox = new JBCheckBox(ExecutionBundle.message("redirect.input.from"));
 
   private final TextFieldWithBrowseButton myInputFile = new TextFieldWithBrowseButton();

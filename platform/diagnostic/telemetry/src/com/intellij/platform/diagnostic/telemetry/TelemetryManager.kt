@@ -1,120 +1,148 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
-import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.CoroutineName
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.util.*
-
-private val LOG = Logger.getInstance(TelemetryManager::class.java)
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
  * [Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/#create-spans-with-events).
+ *
+ * Commonly used entry point to work with OpenTelemetry. Configures and initializes OpenTelemetry instances.
+ *
+ * Using tracer example:
+ * ```
+ * val myTracer = TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope)
+ * val span = myTracer.spanBuilder("my.span").startSpan()
+ * ... code you want to trace ...
+ * span.end()
+ * ```
+ *
+ * Using meter example:
+ * ```
+ * val jvmMeter = TelemetryManager.getMeter(JVM)
+ * val threadCountGauge = jvmMeter.gaugeBuilder("JVM.threadCount").ofLongs().buildObserver()
+ * jvmMeter.batchCallback( { threadCountGauge.record(threadMXBean.threadCount.toLong()) }, threadCountGauge)
+ * ```
  */
-@ApiStatus.Experimental
-@ApiStatus.Internal
+@Experimental
+@Internal
 interface TelemetryManager {
-  var sdk: OpenTelemetry
-  var verboseMode: Boolean
-  var oTelConfigurator: OpenTelemetryDefaultConfigurator
+  companion object {
+    @JvmStatic
+    fun getInstance(): TelemetryManager = instance.value
 
-  fun init(): OpenTelemetrySdkBuilder
+    fun getTracer(scope: Scope): IJTracer = instance.value.getTracer(scope)
+
+    fun getSimpleTracer(scope: Scope): IntelliJTracer = instance.value.getSimpleTracer(scope)
+
+    fun getMeter(scope: Scope): Meter = instance.value.getMeter(scope)
+
+    fun setTelemetryManager(value: TelemetryManager) {
+      require(!instance.isInitialized())
+      instance.value = value
+    }
+
+    @TestOnly
+    fun forceSetTelemetryManager(value: TelemetryManager = NoopTelemetryManager()) {
+      instance.value = value
+    }
+  }
+
+  var verboseMode: Boolean
 
   /**
    * Method creates a tracer with the scope name.
    * Separate tracers define different scopes, and as a result, separate main nodes in the result data.
    * It is expected that for different subsystems different tracers would be used to isolate the results.
+   */
+  fun getTracer(scope: Scope): IJTracer
+
+  fun getSimpleTracer(scope: Scope): IntelliJTracer
+
+  fun getMeter(scope: Scope): Meter
+
+  fun addMetricsExporters(exporters: List<MetricsExporterEntry>)
+
+  /**
+   * Force collection of measurements and metrics flushing to appropriate files (.json for spans and .csv for meters).
    *
-   * @param verbose provides a way to disable by default some tracers.
-   *    Such tracers will be created only if additional system property "verbose" is set to true.
-   */
-  @ApiStatus.Obsolete
-  fun getTracer(scopeName: String, verbose: Boolean = false): IJTracer
+   * [Do not use this method in production code. Since it may be blocking.](https://opentelemetry.io/docs/specs/otel/performance/#shutdown-and-explicit-flushing-could-block)
+   **/
+  @TestOnly
+  fun forceFlushMetrics()
+}
 
-  fun getTracer(scope: Scope, verbose: Boolean = false): IJTracer = scope.tracer(verbose)
-
-  /**
-   * Java shortcut for getTracer(Scope, Boolean)
-   */
-  fun getTracer(scope: Scope): IJTracer = getTracer(scope = scope, verbose = false)
-
-  /**
-   * This function is now obsolete. Please use type-safe alternative getMeter(Scope)
-   */
-  @ApiStatus.Obsolete
-  fun getMeter(scopeName: String): Meter = sdk.getMeter(scopeName)
-
-  fun addSpansExporters(vararg exporters: AsyncSpanExporter) {
-    oTelConfigurator.let {
-      val aggregatedSpansProcessor = it.aggregatedSpansProcessor
-      aggregatedSpansProcessor.addSpansExporters(*exporters)
+private val instance = SynchronizedClearableLazy {
+  val log = logger<TelemetryManager>()
+  // GlobalOpenTelemetry.set(sdk) can be invoked only once
+  val instance = try {
+    val aClass = TelemetryManager::class.java
+    val implementations = ServiceLoader.load(aClass, aClass.classLoader).toList()
+    if (implementations.isEmpty()) {
+      log.info("TelemetryManager is not set explicitly and service is not specified - NOOP implementation will be used")
+      NoopTelemetryManager()
+    }
+    else if (implementations.size > 1) {
+      log.error("More than one implementation for ${aClass.simpleName} found: ${implementations.map { it::class.qualifiedName }}")
+      NoopTelemetryManager()
+    }
+    else {
+      implementations.single()
     }
   }
-
-  fun addMetricsExporters(vararg exporters: MetricsExporterEntry) {
-    oTelConfigurator.let {
-      val aggregatedMetricsExporter = it.aggregatedMetricsExporter
-      aggregatedMetricsExporter.addMetricsExporters(*exporters)
-    }
+  catch (e: Throwable) {
+    log.info("Cannot create TelemetryManager, falling back to NOOP implementation", e)
+    NoopTelemetryManager()
   }
 
-  companion object {
-    private lateinit var instance: TelemetryManager
-    private val lock = Any()
+  log.info("Loaded telemetry tracer service ${instance::class.java.name}")
+  instance
+}
 
-    private fun <T> getImplementationService(serviceClass: Class<T>): T {
-      val implementations: List<T> = ServiceLoader.load(serviceClass, serviceClass.classLoader).toList()
-      if (implementations.isEmpty()) {
-        throw ServiceConfigurationError("Implementation for $serviceClass not found")
-      }
+internal class NoopTelemetryManager : TelemetryManager {
+  override var verboseMode: Boolean = false
 
-      if (implementations.size > 1) {
-        throw ServiceConfigurationError(
-          "More than one implementation for $serviceClass found: ${implementations.map { it!!::class.qualifiedName }}")
-      }
+  override fun getTracer(scope: Scope): IJTracer = IJNoopTracer
 
-      return implementations.single()
-    }
+  override fun getSimpleTracer(scope: Scope) = NoopIntelliJTracer
 
-    @JvmStatic
-    fun getInstance(): TelemetryManager {
-      if (Companion::instance.isInitialized) {
-        return instance
-      }
+  override fun getMeter(scope: Scope): Meter = OpenTelemetry.noop().getMeter(scope.toString())
 
-      synchronized(lock) {
-        if (Companion::instance.isInitialized) {
-          return instance
-        }
-
-        LOG.info("Initializing TelemetryTracer ...")
-
-        // GlobalOpenTelemetry.set(sdk) can be invoked only once
-        try {
-          instance = getImplementationService(TelemetryManager::class.java).apply {
-            LOG.info("Loaded telemetry tracer service ${this::class.java.name}")
-            sdk = init().buildAndRegisterGlobal()
-          }
-          return instance
-        }
-        catch (e: Throwable) {
-          LOG.info("Something unexpected happened during loading TelemetryTracer", e)
-          LOG.info("Falling back to loading default implementation of TelemetryTracer ${TelemetryDefaultManager::class.java.name}")
-
-          instance = TelemetryDefaultManager().apply {
-            LOG.info("Loaded telemetry tracer service ${this::class.java.name}")
-            sdk = init().buildAndRegisterGlobal()
-          }
-
-          return instance
-        }
-      }
-    }
-
-    @JvmStatic
-    fun getMeter(scope: Scope): Meter = scope.meter()
+  override fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
+    logger<NoopTelemetryManager>().info("Noop telemetry manager is in use. No metrics exporters are defined.")
   }
+
+  override fun forceFlushMetrics() {
+    logger<NoopTelemetryManager>().info("Cannot force flushing metrics for Noop telemetry manager")
+  }
+}
+
+// suspend here is required to get parent span from coroutine context; that's why a version without `suspend` is called `rootSpan`.
+@Internal
+@Experimental
+interface IntelliJTracer {
+  suspend fun span(name: String): CoroutineContext
+
+  suspend fun span(name: String, attributes: Array<String>): CoroutineContext
+
+  fun rootSpan(name: String, attributes: Array<String>): CoroutineContext
+}
+
+@Internal
+object NoopIntelliJTracer : IntelliJTracer {
+  override suspend fun span(name: String) = CoroutineName(name)
+
+  override suspend fun span(name: String, attributes: Array<String>) = span(name)
+
+  override fun rootSpan(name: String, attributes: Array<String>) = EmptyCoroutineContext
 }

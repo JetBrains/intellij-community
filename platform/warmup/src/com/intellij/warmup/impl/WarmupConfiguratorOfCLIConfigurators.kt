@@ -6,10 +6,14 @@ import com.intellij.ide.CommandLineInspectionProjectAsyncConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.warmup.util.WarmupLogger
 import java.nio.file.Path
 import java.util.function.Predicate
@@ -47,6 +51,11 @@ internal class WarmupConfiguratorOfCLIConfigurator(val delegate: CommandLineInsp
     get() = delegate.name
 }
 
+internal fun getCommandLineReporter(sectionName: String): CommandLineInspectionProgressReporter = object : CommandLineInspectionProgressReporter {
+  override fun reportError(message: String?) = message?.let { WarmupLogger.logInfo("[$sectionName]: $it") } ?: Unit
+
+  override fun reportMessage(minVerboseLevel: Int, message: String?) = message?.let { WarmupLogger.logInfo("[$sectionName]: $it") } ?: Unit
+}
 
 suspend fun produceConfigurationContext(projectDir: Path?, name: String): CommandLineInspectionProjectConfigurator.ConfiguratorContext {
   val reporter = coroutineContext.rawProgressReporter
@@ -54,12 +63,9 @@ suspend fun produceConfigurationContext(projectDir: Path?, name: String): Comman
     logger<WarmupConfigurator>().warn("No ProgressReporter installed to the coroutine context. Message reporting is disabled")
   }
   return object : CommandLineInspectionProjectConfigurator.ConfiguratorContext {
+    val reporter = getCommandLineReporter(name)
 
-    override fun getLogger(): CommandLineInspectionProgressReporter = object : CommandLineInspectionProgressReporter {
-      override fun reportError(message: String?) = message?.let { WarmupLogger.logInfo("[$name]: $it") } ?: Unit
-
-      override fun reportMessage(minVerboseLevel: Int, message: String?) = message?.let { WarmupLogger.logInfo("[$name]: $it") } ?: Unit
-    }
+    override fun getLogger(): CommandLineInspectionProgressReporter = this.reporter
 
     /**
      * Copy-pasted from [com.intellij.openapi.progress.RawProgressReporterIndicator]. ProgressIndicator will be deprecated,

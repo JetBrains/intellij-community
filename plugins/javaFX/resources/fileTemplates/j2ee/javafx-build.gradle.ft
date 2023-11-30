@@ -47,7 +47,7 @@ kotlin {
 
 javafx {
   version = '${context.getProperty("javafx.version")}'
-  modules = ['javafx.controls', 'javafx.fxml'#if ($context.hasLibrary("tilesfx")), 'javafx.web'#end#if ($context.hasLibrary("fxgl")), 'javafx.media'#end]
+  modules = ['javafx.controls', 'javafx.fxml'#if ($context.hasLibrary("tilesfx")), 'javafx.web', 'javafx.swing' #end#if ($context.hasLibrary("fxgl")), 'javafx.media'#end]
 }
 
 dependencies {

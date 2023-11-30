@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -97,7 +98,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   init {
     val builder = GotItTextBuilderImpl()
     val rawText = textSupplier(builder)
-    val withPatchedShortcuts = ShortcutExtension.patchShortcutTags(rawText)
+    val withPatchedShortcuts = ShortcutExtension.patchShortcutTags(rawText, true)
     this.text = InlineCodeExtension.patchCodeTags(withPatchedShortcuts)
     this.linkActionsMap = builder.getLinkActions()
     this.iconsMap = builder.getIcons()
@@ -217,7 +218,11 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Action to invoke when any link clicked (inline or separated)
    */
   fun onLinkClick(action: () -> Unit): GotItComponentBuilder {
-    afterLinkClickedAction = action
+    val curAction = afterLinkClickedAction
+    afterLinkClickedAction = {
+      curAction()
+      action()
+    }
     return this
   }
 
@@ -250,7 +255,11 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
    * Action to invoke when "Got It" button clicked.
    */
   fun onButtonClick(action: () -> Unit): GotItComponentBuilder {
-    this.buttonAction = action
+    val curAction = buttonAction
+    buttonAction = {
+      curAction()
+      action()
+    }
     return this
   }
 
@@ -728,7 +737,7 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
  *
  * To install this extension you need to add styles returned from [getStyles] to your [StyleSheet].
  */
-private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
+class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
   override fun invoke(elem: Element, defaultView: View): View? {
     val tagAttributes = elem.attributes.getAttribute(HTML.Tag.SPAN) as? AttributeSet
     return if (tagAttributes?.getAttribute(HTML.Attribute.CLASS) == "shortcut") {
@@ -744,7 +753,7 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
              " background-color: ${ColorUtil.toHtmlColor(background)} }"
     }
 
-    fun patchShortcutTags(htmlText: @Nls String): @Nls String {
+    fun patchShortcutTags(htmlText: @Nls String, needLogIncorrectInput: Boolean): @Nls String {
       val shortcuts: Sequence<MatchResult> = SHORTCUT_REGEX.findAll(htmlText)
       if (!shortcuts.any()) return htmlText
 
@@ -752,7 +761,7 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
       var ind = 0
       for (shortcut in shortcuts) {
         builder.append(htmlText.substring(ind, shortcut.range.first))
-        val text = getShortcutText(shortcut.groups["type"]!!.value, shortcut.groups["value"]!!.value)
+        val text = getShortcutText(shortcut.groups["type"]!!.value, shortcut.groups["value"]!!.value, needLogIncorrectInput)
         val span = shortcutSpan(text)
         builder.append("${StringUtil.NON_BREAK_SPACE}$span${StringUtil.NON_BREAK_SPACE}")
         ind = shortcut.range.last + 1
@@ -763,14 +772,20 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
       return builder.toString()
     }
 
-    private fun getShortcutText(type: String, value: String): String {
+    private fun getShortcutText(type: String, value: String, needLogIncorrectInput: Boolean): String {
       return when (type) {
         "actionId" -> {
           val shortcut = ShortcutsRenderingUtil.getShortcutByActionId(value)
           if (shortcut != null) {
             ShortcutsRenderingUtil.getKeyboardShortcutData(shortcut).first
           }
-          else ShortcutsRenderingUtil.getGotoActionData(value).first
+          else {
+            if (ActionManager.getInstance().getAction(value) == null) {
+              if (needLogIncorrectInput) thisLogger().error("No action with $value id is registered")
+              return value
+            }
+            ShortcutsRenderingUtil.getGotoActionData(value, needLogIncorrectInput).first
+          }
         }
         "raw" -> {
           val keyStroke = KeyStroke.getKeyStroke(value)
@@ -778,12 +793,12 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
             ShortcutsRenderingUtil.getKeyStrokeData(keyStroke).first
           }
           else {
-            thisLogger().error("Invalid key stroke: $value")
+            if (needLogIncorrectInput) thisLogger().error("Invalid key stroke: $value")
             value
           }
         }
         else -> {
-          thisLogger().error("Unknown shortcut type: $type, use 'actionId' or 'raw'")
+          if (needLogIncorrectInput) thisLogger().error("Unknown shortcut type: $type, use 'actionId' or 'raw'")
           value
         }
       }
@@ -799,6 +814,7 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
       get() = getFloatAttribute(CSS.Attribute.MARGIN_LEFT, DEFAULT_HORIZONTAL_INDENT)
     private val verticalIndent: Float
       get() = getFloatAttribute(CSS.Attribute.MARGIN_TOP, DEFAULT_VERTICAL_INDENT)
+    private val borderColor: Color? get() = borderColorAttr
     private val arcSize: Float
       get() = JBUIScale.scale(DEFAULT_ARC)
 
@@ -809,14 +825,18 @@ private class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
         rectangles = calculateRectangles(a)
       }
 
-      foreground
+      val borderColor = borderColor
       val backgroundColor = background
       val g2d = g.create() as Graphics2D
       try {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        g2d.color = backgroundColor
         for (rect in rectangles ?: emptyList()) {
+          g2d.color = backgroundColor
           g2d.fill(rect)
+          if (borderColor != null) {
+            g2d.color = borderColor
+            g2d.draw(rect)
+          }
         }
       }
       finally {
@@ -935,8 +955,7 @@ private class InlineCodeExtension : ExtendableHTMLViewFactory.Extension {
       get() = getFloatAttribute(CSS.Attribute.MARGIN_LEFT, DEFAULT_HORIZONTAL_INDENT)
     private val verticalIndent: Float
       get() = getFloatAttribute(CSS.Attribute.MARGIN_TOP, DEFAULT_VERTICAL_INDENT)
-    private val borderColor: Color?
-      get() = attributes.getAttribute(CSS.Attribute.BORDER_TOP_COLOR)?.toString()?.let { ColorUtil.fromHex(it) }
+    private val borderColor: Color? get() = borderColorAttr
     private val arcSize: Float
       get() = JBUIScale.scale(DEFAULT_ARC)
 
@@ -1010,3 +1029,6 @@ private fun View.getFloatAttribute(key: Any, defaultValue: Float): Float {
   val value = attributes.getAttribute(key)?.toString()?.toFloatOrNull() ?: defaultValue
   return JBUIScale.scale(value)
 }
+
+private val InlineView.borderColorAttr: Color? get() =
+  attributes.getAttribute(CSS.Attribute.BORDER_TOP_COLOR)?.toString()?.let { ColorUtil.fromHex(it) }

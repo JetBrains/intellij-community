@@ -74,5 +74,13 @@
       name="inline.completion.provider"
       interface="com.intellij.codeInsight.inline.completion.InlineCompletionProvider"
       dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.element.manipulator"
+      interface="com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.usage.data"
+      interface="com.intellij.codeInsight.inline.completion.logs.InlineCompletionProviderSpecificUsageData"
+      dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

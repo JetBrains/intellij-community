@@ -117,6 +117,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private Dimension commandQueueDimension;
   private boolean isShowQueue;
 
+  private @Nullable OnClearCallback myOnClearCallback;
+
   private ActionToolbar myToolbar;
   private boolean myIsToolwindowHorizontal = true;
 
@@ -148,13 +150,15 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     if (PsiUtilCore.getPsiFile(project, getVirtualFile()) instanceof PyExpressionCodeFragmentImpl codeFragment) {
       codeFragment.setContext(myHistoryPsiFile);
     }
+
+    getConsoleEditor().setFile(getVirtualFile());
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
     VirtualFile virtualFile = getVirtualFile();
     PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, PySdkUtil.getLanguageLevelForSdk(sdk));
     virtualFile.putUserData(CONSOLE_KEY, true);
     // Mark editor as console one, to prevent autopopup completion if runtime completion is enabled
-    if (PyConsoleOptions.getInstance(getProject()).isAutoCompletionEnabled()) {
+    if (PyConsoleOptions.getInstance(getProject()).isRuntimeCodeCompletion()) {
       getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
     }
     getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);
@@ -710,6 +714,19 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     return mySplitView.getTree().getRoot();
   }
 
+  public void setOnClearCallback(@Nullable OnClearCallback onClearCallback) {
+    myOnClearCallback = onClearCallback;
+  }
+
+  @Override
+  public void clear() {
+    super.clear();
+    OnClearCallback onClearCallback = myOnClearCallback;
+    if (onClearCallback != null) {
+      onClearCallback.onClear();
+    }
+  }
+
   @Override
   public void dispose() {
     super.dispose();
@@ -762,5 +779,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return super.getActionUpdateThread();
+  }
+
+  public interface OnClearCallback {
+    void onClear();
   }
 }

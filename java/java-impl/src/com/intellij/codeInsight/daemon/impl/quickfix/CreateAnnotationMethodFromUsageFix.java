@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -90,7 +90,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
     final PsiType type = getAnnotationValueType(nameValuePair.getValue());
     LOG.assertTrue(type != null);
     final ExpectedTypeInfo[] expectedTypes =
-      new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE)};
+      new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.noneType())};
     CreateMethodFromUsageFix.doCreate(targetClass, method, true, Collections.emptyList(), 
                                       getTargetSubstitutor(nameValuePair), expectedTypes, context);
   }

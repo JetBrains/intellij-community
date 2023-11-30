@@ -15,6 +15,7 @@ import org.jetbrains.jps.service.SharedThreadPool;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -49,7 +50,13 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
   }
 
   private static @Nullable JdkVersionInfo detectFromRelease(String homePath) {
-    Path releaseFile = Paths.get(homePath, "release");
+    final Path releaseFile;
+    try {
+      releaseFile = Paths.get(homePath, "release");
+    } catch (InvalidPathException ignored) {
+      return null;
+    }
+
     if (Files.isRegularFile(releaseFile)) {
       Properties p = new Properties();
       try (InputStream stream = Files.newInputStream(releaseFile)) {

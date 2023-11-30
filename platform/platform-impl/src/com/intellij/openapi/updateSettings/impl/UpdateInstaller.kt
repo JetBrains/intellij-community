@@ -1,11 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.DynamicBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.DelegatingProgressIndicator
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -13,13 +12,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.copy
-import com.intellij.util.system.CpuArch
 import java.io.File
 import java.io.IOException
-import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipException
@@ -34,30 +32,20 @@ internal object UpdateInstaller {
   private const val PATCH_FILE_NAME = "patch-file.zip"
   private const val UPDATER_ENTRY = "com/intellij/updater/Runner.class"
 
-  private val patchesUrl: URL
-    get() = URL(System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.patchesUrl)
-
   @JvmStatic
   @Throws(IOException::class)
   fun downloadPatchChain(chain: List<BuildNumber>, indicator: ProgressIndicator): List<File> {
     indicator.text = IdeBundle.message("update.downloading.patch.progress")
 
     val files = mutableListOf<File>()
-    val product = ApplicationInfo.getInstance().build.productCode
-    val runtime = if (CpuArch.isArm64()) "-aarch64" else ""
     val share = 1.0 / (chain.size - 1)
 
     for (i in 1 until chain.size) {
-      val from = chain[i - 1].withoutProductCode().asString()
-      val to = chain[i].withoutProductCode().asString()
-      // Android Studio (b/293378903): For historical reasons we have a custom patch suffix for aarch64 Mac.
-      val patchName = if (SystemInfo.isMac && CpuArch.isArm64()) {
-        "${product}-${from}-${to}-patch-mac_arm.jar"
-      } else {
-        "${product}-${from}-${to}-patch${runtime}-${PatchInfo.OS_SUFFIX}.jar"
-      }
-      val patchFile = File(getTempDir(), patchName)
-      val url = URL(patchesUrl, patchName).toString()
+      val from = chain[i - 1]
+      val to = chain[i]
+      val patchFile = File(getTempDir(), "patch-${from.withoutProductCode().asString()}-${to.withoutProductCode().asString()}.jar")
+      val url = ExternalProductResourceUrls.getInstance().computePatchUrl(from, to)
+                ?: error("Metadata contains information about patch '$from' -> '$to', but 'computePatchUrl' returns 'null'")
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
         override fun setFraction(fraction: Double) {
           super.setFraction((i - 1) * share + fraction / share)
@@ -187,6 +175,8 @@ internal object UpdateInstaller {
     args += "-Djava.io.tmpdir=${tempDir.path}"
     args += "-Didea.updater.log=${PathManager.getLogPath()}"
     args += "-Dswing.defaultlaf=${UIManager.getSystemLookAndFeelClassName()}"
+    args += "-Duser.language=${DynamicBundle.getLocale().language}"
+    args += "-Duser.country=${DynamicBundle.getLocale().country}"
 
     args += UPDATER_MAIN_CLASS
     args += if (patchFiles.size == 1) "install" else "batch-install"

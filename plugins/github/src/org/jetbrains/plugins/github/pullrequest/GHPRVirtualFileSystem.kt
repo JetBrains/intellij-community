@@ -10,7 +10,6 @@ import com.intellij.vcs.editor.GsonComplexPathSerializer
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.data.SimpleGHPRIdentifier
 
 internal class GHPRVirtualFileSystem : ComplexPathVirtualFileSystem<GHPRVirtualFileSystem.GHPRFilePath>(
   GsonComplexPathSerializer(GHPRFilePath::class.java)
@@ -35,12 +34,12 @@ internal class GHPRVirtualFileSystem : ComplexPathVirtualFileSystem<GHPRVirtualF
               id: GHPRIdentifier?,
               sourceId: String?,
               isDiff: Boolean = false): String =
-    getPath(GHPRFilePath(fileManagerId, project.locationHash, repository, id?.let { SimpleGHPRIdentifier(it) }, sourceId, isDiff))
+    getPath(GHPRFilePath(fileManagerId, project.locationHash, repository, id, sourceId, isDiff))
 
   data class GHPRFilePath(override val sessionId: String,
                           override val projectHash: String,
                           val repository: GHRepositoryCoordinates,
-                          val prId: SimpleGHPRIdentifier?,
+                          val prId: GHPRIdentifier?,
                           val sourceId: String?,
                           val isDiff: Boolean) : ComplexPath
 

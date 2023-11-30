@@ -1,11 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.execution.*;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -23,21 +26,20 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
  * <p>
- * Main idea of the class is to accept parameters "as-is", just as they should look to an external process, and quote/escape them
+ * Main idea of the class is to accept parameters as-is, just as they should look to an external process, and quote/escape them
  * as required by the underlying platform - so to run some program with a "parameter with space" all that's needed is
  * {@code new GeneralCommandLine("some program", "parameter with space").createProcess()}.
  * <p>
  * Consider the following things when using this class.
- *
  * <h3>Working directory</h3>
  * By default, a current directory of the IDE process is used (usually a "bin/" directory of IDE installation).
  * If child processes may create files in it, this choice is unwelcome. On the other hand, informational commands (e.g. "git --version")
  * are safe. When unsure, set it to something neutral - like a user's home or a temp directory.
- *
  * <h3>Parent Environment</h3>
  * {@link ParentEnvironmentType Three options here}.
  * For commands designed from the ground up for typing into a terminal, use {@link ParentEnvironmentType#CONSOLE CONSOLE}
@@ -47,7 +49,6 @@ import java.util.*;
  * According to extensive research conducted by British scientists (tm) on a diverse population of both wild and domesticated tools
  * (no one was harmed), most of them are either insensitive to the environment or fall into the first category,
  * thus backing up the choice of CONSOLE as the default value.
- *
  * <h3>Encoding/Charset</h3>
  * The {@link #getCharset()} method is used by classes like {@link com.intellij.execution.process.OSProcessHandler OSProcessHandler}
  * or {@link com.intellij.execution.util.ExecUtil ExecUtil} to decode bytes of a child's output stream. For proper conversion,
@@ -63,6 +64,7 @@ import java.util.*;
  */
 public class GeneralCommandLine implements UserDataHolder {
   private static final Logger LOG = Logger.getInstance(GeneralCommandLine.class);
+  private Function<ProcessBuilder, Process> myProcessCreator;
 
   /**
    * Determines the scope of a parent environment passed to a child process.
@@ -317,7 +319,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   /**
    * Prepares command (quotes and escapes all arguments) and returns it as a newline-separated list
-   * (suitable e.g. for passing in an environment variable).
+   * (suitable, e.g., for passing in an environment variable).
    *
    * @param platform a target platform
    * @return command as a newline-separated list.
@@ -355,6 +357,14 @@ public class GeneralCommandLine implements UserDataHolder {
       }
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
+  }
+
+  protected final Function<ProcessBuilder, Process> getProcessCreator() {
+    return myProcessCreator;
+  }
+
+  public final void setProcessCreator(Function<ProcessBuilder, Process> processCreator) {
+    myProcessCreator = processCreator;
   }
 
   public @NotNull ProcessBuilder toProcessBuilder() throws ExecutionException {
@@ -429,7 +439,8 @@ public class GeneralCommandLine implements UserDataHolder {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Building process with commands: " + escapedCommands);
     }
-    return toProcessBuilderInternal(escapedCommands).start();
+
+    return createProcess(toProcessBuilderInternal(escapedCommands));
   }
 
   // This is caused by the fact there are external usages overriding startProcess(List<String>).
@@ -453,6 +464,10 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   protected @NotNull ProcessBuilder buildProcess(@NotNull ProcessBuilder builder) {
     return builder;
+  }
+
+  protected Process createProcess(ProcessBuilder processBuilder) throws IOException {
+    return myProcessCreator != null ? myProcessCreator.apply(processBuilder) : processBuilder.start();
   }
 
   protected void setupEnvironment(@NotNull Map<String, String> environment) {

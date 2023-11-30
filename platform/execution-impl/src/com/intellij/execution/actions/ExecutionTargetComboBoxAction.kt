@@ -4,6 +4,7 @@ package com.intellij.execution.actions
 import com.intellij.execution.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -24,7 +25,7 @@ const val EXECUTION_TARGETS_COMBO_ADDITIONAL_ACTIONS_GROUP = "ExecutionTargets.A
  *
  * See [com.intellij.execution.actions.RunConfigurationsComboBoxAction] for reference
  */
-class ExecutionTargetComboBoxAction : ComboBoxAction(), DumbAware {
+class ExecutionTargetComboBoxAction : ComboBoxAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -122,10 +123,10 @@ class ExecutionTargetComboBoxAction : ComboBoxAction(), DumbAware {
   override fun shouldShowDisabledActions(): Boolean =
     true
 
-  private class SelectTargetAction constructor(private val project: Project,
-                                               private val target: ExecutionTarget,
-                                               val isSelected: Boolean,
-                                               private val isReady: Boolean) : DumbAwareAction() {
+  private class SelectTargetAction(private val project: Project,
+                                   private val target: ExecutionTarget,
+                                   val isSelected: Boolean,
+                                   private val isReady: Boolean) : DumbAwareAction() {
     init {
       val name = target.displayName
       templatePresentation.setText(name, false)

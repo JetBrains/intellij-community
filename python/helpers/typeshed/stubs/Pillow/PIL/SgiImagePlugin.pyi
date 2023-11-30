@@ -1,9 +1,10 @@
-from typing import Any, ClassVar
+from _typeshed import Incomplete
+from typing import ClassVar
 from typing_extensions import Literal
 
 from .ImageFile import ImageFile, PyDecoder
 
-MODES: Any
+MODES: Incomplete
 
 class SgiImageFile(ImageFile):
     format: ClassVar[Literal["SGI"]]

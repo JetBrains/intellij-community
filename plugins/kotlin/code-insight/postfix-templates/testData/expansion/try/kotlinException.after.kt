@@ -1,12 +1,9 @@
-import java.lang.IllegalArgumentException
-import java.lang.IllegalStateException
-
 fun test() {
     try {
         call()
-    } catch (e: IllegalStateException) {
+    } catch (e: java.lang.IllegalStateException) {
         throw e
-    } catch (e: IllegalArgumentException) {
+    } catch (e: java.lang.IllegalArgumentException) {
         throw e
     }
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.relaxNG.compact;
 
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionProvider;
@@ -57,7 +57,7 @@ public class RncCompletionContributor extends CompletionContributor {
                                     @NotNull CompletionResultSet result) {
         String[] keywords = getKeywords(parameters.getPosition());
         for (String keyword : keywords) {
-          result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(keyword).bold(), TailType.SPACE));
+          result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(keyword).bold(), TailTypes.spaceType()));
         }
       }
     };

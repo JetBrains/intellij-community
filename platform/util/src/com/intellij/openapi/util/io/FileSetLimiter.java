@@ -310,7 +310,7 @@ public final class FileSetLimiter {
 
   /** TODO RC: use it in tryParsePath instead of Pair */
   @SuppressWarnings("unused")
-  public static class FileRecord {
+  public static final class FileRecord {
     public final @NotNull Path path;
     public final @Nullable Date date;
     public final int subMillisecondId;

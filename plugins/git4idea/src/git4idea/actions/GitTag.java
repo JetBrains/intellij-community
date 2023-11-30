@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -19,8 +19,7 @@ public class GitTag extends GitRepositoryAction {
    * {@inheritDoc}
    */
   @Override
-  @NotNull
-  protected String getActionName() {
+  protected @NotNull String getActionName() {
     return GitBundle.message("tag.action.name");
   }
 
@@ -28,9 +27,9 @@ public class GitTag extends GitRepositoryAction {
    * {@inheritDoc}
    */
   @Override
-  protected void perform(@NotNull final Project project,
-                         @NotNull final List<VirtualFile> gitRoots,
-                         @NotNull final VirtualFile defaultRoot) {
+  protected void perform(final @NotNull Project project,
+                         final @NotNull List<VirtualFile> gitRoots,
+                         final @NotNull VirtualFile defaultRoot) {
     GitTagDialog d = new GitTagDialog(project, gitRoots, defaultRoot);
     if (d.showAndGet()) {
       new Task.Modal(project, GitBundle.message("tag.progress.title"), true) {

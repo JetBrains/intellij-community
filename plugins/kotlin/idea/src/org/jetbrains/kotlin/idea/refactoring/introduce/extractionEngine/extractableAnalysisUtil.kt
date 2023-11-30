@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
@@ -743,8 +744,9 @@ fun ExtractionData.performAnalysis(): AnalysisResult {
         )
     }
 
-    val enclosingDeclaration = commonParent.getStrictParentOfType<KtDeclaration>()!!
-    checkDeclarationsMovingOutOfScope(enclosingDeclaration, controlFlow, bindingContext)?.let { messages.add(it) }
+    commonParent.getStrictParentOfType<KtDeclaration>()?.let { enclosingDeclaration ->
+        checkDeclarationsMovingOutOfScope(enclosingDeclaration, controlFlow, bindingContext)?.let { messages.add(it) }
+    }
 
     controlFlow.jumpOutputValue?.elementToInsertAfterCall?.accept(
         object : KtTreeVisitorVoid() {
@@ -817,7 +819,7 @@ private fun ExtractionData.suggestFunctionNames(returnType: KotlinType): List<St
     expressions.singleOrNull()?.let { expr ->
         val property = expr.getStrictParentOfType<KtProperty>()
         if (property?.initializer == expr) {
-            property.name?.let { functionNames.add(Fe10KotlinNameSuggester.suggestNameByName("get" + it.capitalizeAsciiOnly(), validator)) }
+            property.name?.let { functionNames.add(KotlinNameSuggester.suggestNameByName("get" + it.capitalizeAsciiOnly(), validator)) }
         }
     }
 

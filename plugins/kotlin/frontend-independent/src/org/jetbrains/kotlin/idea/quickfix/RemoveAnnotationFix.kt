@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -22,6 +24,8 @@ class RemoveAnnotationFix(@Nls private val text: String, annotationEntry: KtAnno
     override fun getText() = text
 
     override fun getFamilyName() = text
+
+    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = element
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         element?.delete()
@@ -45,6 +49,11 @@ class RemoveAnnotationFix(@Nls private val text: String, annotationEntry: KtAnno
     object UseSiteGetDoesntHaveAnyEffect : AbstractUseSiteGetDoesntHaveAnyEffectQuickFixesFactory() {
         override fun doCreateQuickFixImpl(psiElement: KtAnnotationEntry): IntentionAction =
             RemoveAnnotationFix(KotlinBundle.message("remove.annotation.doesnt.have.any.effect"), psiElement)
+    }
+
+    object RemoveForbiddenOptInRetention : QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        override fun doCreateQuickFix(psiElement: KtAnnotationEntry): List<IntentionAction> =
+            listOf(RemoveAnnotationFix(KotlinBundle.message("fix.opt_in.remove.forbidden.retention"), psiElement))
     }
 
     companion object : QuickFixesPsiBasedFactory<KtAnnotationEntry>(KtAnnotationEntry::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {

@@ -1,28 +1,25 @@
-from typing import Any
-from typing_extensions import TypeAlias
+from pyasn1.type.namedtype import NamedTypes
+from pyasn1.type.tag import TagSet
+from pyasn1.type.univ import Sequence
 
-# Enable when pyasn1 gets stubs:
-# from pyasn1.type.univ import Sequence
-_Sequence: TypeAlias = Any
+class SicilyBindResponse(Sequence):
+    tagSet: TagSet
+    componentType: NamedTypes
 
-class SicilyBindResponse(_Sequence):
-    tagSet: Any
-    componentType: Any
+class DirSyncControlRequestValue(Sequence):
+    componentType: NamedTypes
 
-class DirSyncControlRequestValue(_Sequence):
-    componentType: Any
+class DirSyncControlResponseValue(Sequence):
+    componentType: NamedTypes
 
-class DirSyncControlResponseValue(_Sequence):
-    componentType: Any
+class SdFlags(Sequence):
+    componentType: NamedTypes
 
-class SdFlags(_Sequence):
-    componentType: Any
-
-class ExtendedDN(_Sequence):
-    componentType: Any
+class ExtendedDN(Sequence):
+    componentType: NamedTypes
 
 def dir_sync_control(criticality, object_security, ancestors_first, public_data_only, incremental_values, max_length, cookie): ...
-def extended_dn_control(criticality: bool = ..., hex_format: bool = ...): ...
-def show_deleted_control(criticality: bool = ...): ...
-def security_descriptor_control(criticality: bool = ..., sdflags: int = ...): ...
-def persistent_search_control(criticality: bool = ...): ...
+def extended_dn_control(criticality: bool = False, hex_format: bool = False): ...
+def show_deleted_control(criticality: bool = False): ...
+def security_descriptor_control(criticality: bool = False, sdflags: int = 15): ...
+def persistent_search_control(criticality: bool = False): ...

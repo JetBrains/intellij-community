@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.IdeBundle;
@@ -93,8 +93,7 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
     }
   }
 
-  @NotNull
-  public static JComponent createPluginsPanel(PluginManagerConfigurable configurable) {
+  public static @NotNull JComponent createPluginsPanel(PluginManagerConfigurable configurable) {
     BorderLayoutPanel pluginsPanel = JBUI.Panels.simplePanel(configurable.createComponent()).addToTop(configurable.getTopComponent())
       .withBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0));
     configurable.getTopComponent().setPreferredSize(new JBDimension(configurable.getTopComponent().getPreferredSize().width, 40));

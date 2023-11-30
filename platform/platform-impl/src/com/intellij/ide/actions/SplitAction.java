@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class SplitAction extends AnAction implements DumbAware {
+public abstract class SplitAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   public static final Key<Boolean> FORBID_TAB_SPLIT = new Key<>("FORBID_TAB_SPLIT");
   private final int myOrientation;
   private final boolean myCloseSource;
@@ -30,7 +31,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent event) {
+  public void actionPerformed(final @NotNull AnActionEvent event) {
     final EditorWindow window = event.getRequiredData(EditorWindow.DATA_KEY);
     final VirtualFile file = window.getSelectedFile();
 
@@ -43,7 +44,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent event) {
+  public void update(final @NotNull AnActionEvent event) {
     EditorWindow window = event.getData(EditorWindow.DATA_KEY);
     VirtualFile selectedFile = window != null ? window.getSelectedFile() : null;
 

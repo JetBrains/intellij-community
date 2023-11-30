@@ -2,7 +2,6 @@ package com.intellij.remoteDev.util
 
 import com.intellij.ui.ExperimentalUI
 import org.jetbrains.annotations.ApiStatus
-import kotlin.jvm.Throws
 
 const val CONNECTION_TYPE_SSH = "ssh"
 

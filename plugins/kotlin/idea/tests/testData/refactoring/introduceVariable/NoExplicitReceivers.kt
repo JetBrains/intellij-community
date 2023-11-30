@@ -1,3 +1,4 @@
+// IGNORE_K2
 // WITH_STDLIB
 fun main(args: Array<String>) {
     with(A()) {

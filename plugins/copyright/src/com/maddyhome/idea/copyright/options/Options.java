@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.maddyhome.idea.copyright.options;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -108,10 +107,7 @@ public class Options implements Cloneable {
         for (Element option : root.getChildren("option")) {
           String name = option.getAttributeValue("name");
           String val = option.getAttributeValue("value");
-          if ("body".equals(name)) {
-            opts.setNotice(val);
-          }
-          else if ("location".equals(name)) {
+          if ("location".equals(name)) {
             if(val != null){
               opts.setFileLocation(Integer.parseInt(val));
             }

@@ -14,6 +14,7 @@ package foo
 fun f() {
     foobar<caret>
 }
+/* IGNORE_K2 */
 
 
 // FILE: dependency.before.kt
@@ -23,5 +24,3 @@ object Foo {
     fun foobar() {
     }
 }
-
-/* IGNORE_FIR */

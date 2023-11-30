@@ -56,7 +56,7 @@ import static java.util.stream.Collectors.groupingBy;
  */
 public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   private static final Logger LOG = Logger.getInstance(ProjectTaskManager.class);
-  private static final Key<String> BUILD_ORIGINATOR_KEY = Key.create("project task build originator");
+  private static final Key<Class<?>> BUILD_ORIGINATOR_KEY = Key.create("project task build originator");
 
   private final ProjectTaskRunner myDummyTaskRunner = new DummyTaskRunner();
   private final ProjectTaskListener myEventPublisher;
@@ -172,7 +172,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   public Promise<Result> run(@NotNull ProjectTaskContext context, @NotNull ProjectTask projectTask) {
     Tracer.Span buildSpan = Tracer.start("build");
     AsyncPromise<Result> promiseResult = new AsyncPromise<>();
-    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = groupByRunner(projectTask);
+    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = groupByRunner(projectTask, context);
 
     buildSpan.complete();
     context.putUserData(ProjectTaskScope.KEY, new ProjectTaskScope() {
@@ -266,14 +266,14 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     });
 
     List<EventPair<?>> fields = new SmartList<>();
-    fields.add(TASK_RUNNER.with(map(toRun, it -> it.first.getClass().getName())));
+    fields.add(TASK_RUNNER.with(map(toRun, it -> it.first.getClass())));
     if (incremental.get() != null) {
       fields.add(INCREMENTAL.with(incremental.get()));
     }
     if (modules.get() > 0) {
       fields.add(MODULES.with(modules.get()));
     }
-    String buildOriginator = BUILD_ORIGINATOR_KEY.get(myProject);
+    Class<?> buildOriginator = BUILD_ORIGINATOR_KEY.get(myProject);
     if (buildOriginator != null) {
       myProject.putUserData(BUILD_ORIGINATOR_KEY, null);
       fields.add(BUILD_ORIGINATOR.with(buildOriginator));
@@ -282,13 +282,18 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   private List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> groupByRunner(@NotNull ProjectTask projectTask) {
+    return groupByRunner(projectTask, null);
+  }
+
+  private List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> groupByRunner(@NotNull ProjectTask projectTask,
+                                                                                         @Nullable ProjectTaskContext context) {
     List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = new SmartList<>();
     Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
       Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
         groupingBy(aTask -> stream(ProjectTaskRunner.EP_NAME.getExtensions())
           .filter(runner -> {
             try {
-              return runner.canRun(myProject, aTask);
+              return runner.canRun(myProject, aTask, context);
             }
             catch (ProcessCanceledException e) {
               throw e;
@@ -315,7 +320,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   public static void putBuildOriginator(@Nullable Project project, @NotNull Class<?> clazz) {
     if (BUILD_ORIGINATOR_KEY.get(project) == null) {
-      BUILD_ORIGINATOR_KEY.set(project, clazz.getName());
+      BUILD_ORIGINATOR_KEY.set(project, clazz);
     }
   }
 
@@ -379,7 +384,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     return run(createBuildTask(isIncrementalBuild, buildableElements));
   }
 
-  private static class DummyTaskRunner extends ProjectTaskRunner {
+  private static final class DummyTaskRunner extends ProjectTaskRunner {
     @Override
     public Promise<Result> run(@NotNull Project project,
                                @NotNull ProjectTaskContext context,

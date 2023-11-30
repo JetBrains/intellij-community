@@ -252,8 +252,7 @@ public abstract class ArchiveHandler {
     map.put(normalizedName, entryFun.apply(parent, path.second));
   }
 
-  @NotNull
-  protected String normalizeName(@NotNull String entryName) {
+  protected @NotNull String normalizeName(@NotNull String entryName) {
     return StringUtil.trimTrailing(StringUtil.trimLeading(FileUtil.normalize(entryName), '/'), '/');
   }
 

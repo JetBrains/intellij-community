@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
-public class CopyQuickDocAction extends AnAction implements DumbAware, HintManagerImpl.ActionToIgnore {
+public final class CopyQuickDocAction extends AnAction implements DumbAware, HintManagerImpl.ActionToIgnore {
 
   public CopyQuickDocAction() {
     setEnabledInModalContext(true);

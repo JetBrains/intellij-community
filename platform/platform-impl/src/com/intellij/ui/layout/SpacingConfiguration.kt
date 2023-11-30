@@ -28,7 +28,6 @@ internal interface SpacingConfiguration {
 
   val largeHorizontalGap: Int
   val largeVerticalGap: Int
-  val radioGroupTitleVerticalGap: Int
 
   val shortTextWidth: Int
   val maxShortTextWidth: Int

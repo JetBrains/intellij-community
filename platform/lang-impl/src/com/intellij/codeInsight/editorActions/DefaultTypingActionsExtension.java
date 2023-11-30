@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.formatting.service.FormattingServiceUtil;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -60,6 +61,9 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
                      int endOffset,
                      int anchorColumn,
                      boolean indentBeforeReformat) {
+    if (startOffset < 0 || endOffset > editor.getDocument().getTextLength() || endOffset < startOffset) {
+      throw new IllegalArgumentException("Invalid offsets: startOffset="+startOffset+"; endOffset="+endOffset+"; document length="+editor.getDocument().getTextLength());
+    }
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     switch (howtoReformat) {
       case CodeInsightSettings.INDENT_BLOCK -> indentBlock(project, editor, startOffset, endOffset, anchorColumn);
@@ -111,9 +115,8 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
     documentManager.commitDocument(document);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return;
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     try {
-      codeStyleManager.reformatRange(file, startOffset, endOffset, true);
+      FormattingServiceUtil.asyncFormatElement(file, new TextRange(startOffset, endOffset), true);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

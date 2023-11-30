@@ -1,12 +1,13 @@
 fun foo(i: Int, j: Int): String {
-    val a: Int = return when (i) {
+    val a: Int = when (i) {
         0 -> {
             if (j > 0) {
-                "1"
-            } else "2"
+                return "1"
+            }
+            return "2"
         }
 
-        1 -> "2"
-        else -> "3"
+        1 -> return "2"
+        else -> return "3"
     }
 }

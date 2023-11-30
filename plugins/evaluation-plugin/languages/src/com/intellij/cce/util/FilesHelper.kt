@@ -1,5 +1,7 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.util
 
+import com.intellij.cce.core.Language
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
@@ -10,7 +12,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import org.apache.commons.io.input.UnixLineEndingInputStream
-import com.intellij.cce.core.Language
 import java.io.FileNotFoundException
 import java.nio.file.Paths
 
@@ -20,7 +21,7 @@ object FilesHelper {
            ?: throw IllegalArgumentException("No files for $language found")
   }
 
-  fun getFiles(project: Project, evaluationRoots: List<VirtualFile>): Map<String, Set<VirtualFile>> {
+  private fun getFiles(project: Project, evaluationRoots: List<VirtualFile>): Map<String, Set<VirtualFile>> {
     val language2files = mutableMapOf<String, MutableSet<VirtualFile>>()
     val index = ProjectRootManager.getInstance(project).fileIndex
     for (file in evaluationRoots) {

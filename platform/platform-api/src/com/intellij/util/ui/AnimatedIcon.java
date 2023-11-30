@@ -1,12 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,49 +17,48 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class AnimatedIcon extends JComponent implements Disposable {
-  private final Icon[] myIcons;
-  private final Dimension myPrefSize;
+  private final Icon[] icons;
+  private Dimension preferredSize;
 
-  private int myCurrentIconIndex;
+  private int currentIconIndex;
 
-  protected final Icon myPassiveIcon;
-  private final Icon myEmptyPassiveIcon;
+  protected final Icon passiveIcon;
+  private final Icon emptyPassiveIcon;
 
-  private boolean myPaintPassive = true;
-  private boolean myRunning = true;
+  private boolean isPaintPassive = true;
+  private boolean isRunning = true;
 
-  protected final Animator myAnimator;
+  protected final Animator animator;
 
-  private final String myName;
+  private final String name;
 
   public AnimatedIcon(@NonNls String name, Icon[] icons, Icon passiveIcon, int cycleLength) {
-    myName = name;
-    myIcons = icons.length == 0 ? new Icon[]{passiveIcon} : icons;
-    myPassiveIcon = passiveIcon;
-    myPrefSize = calcPreferredSize();
+    this(name, icons, passiveIcon, cycleLength, null);
+  }
 
-    myAnimator = new Animator(myName, icons.length, cycleLength, true) {
+  public AnimatedIcon(@NonNls String name, Icon[] icons, Icon passiveIcon, int cycleLength, @Nullable CoroutineScope coroutineScope) {
+    this.name = name;
+    this.icons = icons.length == 0 ? new Icon[]{passiveIcon} : icons;
+    this.passiveIcon = passiveIcon;
+    preferredSize = calcPreferredSize();
+
+    animator = new Animator(name, icons.length, cycleLength, true, true, coroutineScope) {
       @Override
-      public void paintNow(final int frame, final int totalFrames, final int cycle) {
-        final int len = myIcons.length;
-        myCurrentIconIndex = frame < 0 ? 0 : frame >= len ? len - 1 : frame;
+      public void paintNow(int frame, int totalFrames, int cycle) {
+        int len = AnimatedIcon.this.icons.length;
+        currentIconIndex = frame < 0 ? 0 : frame >= len ? len - 1 : frame;
         paintImmediately(0, 0, getWidth(), getHeight());
       }
     };
 
-    if (icons.length > 0) {
-      myEmptyPassiveIcon = EmptyIcon.create(icons[0]);
-    }
-    else {
-      myEmptyPassiveIcon = EmptyIcon.ICON_0;
-    }
+    emptyPassiveIcon = icons.length > 0 ? EmptyIcon.create(icons[0]) : EmptyIcon.ICON_0;
 
     setOpaque(false);
 
     UiNotifyConnector.installOn(this, new Activatable() {
       @Override
       public void showNotify() {
-        if (myRunning) {
+        if (isRunning) {
           ensureAnimation(true);
         }
       }
@@ -73,40 +73,44 @@ public class AnimatedIcon extends JComponent implements Disposable {
   protected Dimension calcPreferredSize() {
     Dimension dimension = new Dimension();
 
-    for (Icon each : myIcons) {
+    for (Icon each : icons) {
       dimension.width = Math.max(each.getIconWidth(), dimension.width);
       dimension.height = Math.max(each.getIconHeight(), dimension.height);
     }
 
-    return new Dimension(
-      Math.max(myPassiveIcon.getIconWidth(), dimension.width),
-      Math.max(myPassiveIcon.getIconHeight(), dimension.height));
+    return new Dimension(Math.max(passiveIcon.getIconWidth(), dimension.width), Math.max(passiveIcon.getIconHeight(), dimension.height));
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) preferredSize = calcPreferredSize();
   }
 
   public void setPaintPassiveIcon(boolean paintPassive) {
-    myPaintPassive = paintPassive;
+    isPaintPassive = paintPassive;
   }
 
   private boolean ensureAnimation(boolean running) {
-    boolean changes = myAnimator.isRunning() != running;
+    boolean changes = animator.isRunning() != running;
 
     if (running) {
-      myAnimator.resume();
+      animator.resume();
     }
     else {
-      myAnimator.suspend();
+      animator.suspend();
     }
 
     return changes;
   }
 
   public void resume() {
-    myRunning = true;
+    isRunning = true;
     ensureAnimation(true);
   }
 
   public void suspend() {
-    myRunning = false;
+    isRunning = false;
     if (ensureAnimation(false)) {
       repaint();
     }
@@ -114,13 +118,13 @@ public class AnimatedIcon extends JComponent implements Disposable {
 
   @Override
   public void dispose() {
-    Disposer.dispose(myAnimator);
+    Disposer.dispose(animator);
   }
 
   @Override
   public Dimension getPreferredSize() {
     Insets insets = getInsets();
-    return new Dimension(myPrefSize.width + insets.left + insets.right, myPrefSize.height + insets.top + insets.bottom);
+    return new Dimension(preferredSize.width + insets.left + insets.right, preferredSize.height + insets.top + insets.bottom);
   }
 
   @Override
@@ -143,14 +147,15 @@ public class AnimatedIcon extends JComponent implements Disposable {
       if (parent instanceof JComponent) {
         opaque = (JComponent)UIUtil.findNearestOpaque(parent);
       }
-      Color bg = opaque != null ? opaque.getBackground() : UIUtil.getPanelBackground();
+
+      Color bg = opaque == null ? UIUtil.getPanelBackground() : opaque.getBackground();
       g.setColor(bg);
       g.fillRect(0, 0, getWidth(), getHeight());
     }
 
     Icon icon;
-    if (myAnimator.isRunning()) {
-      icon = myIcons[myCurrentIconIndex];
+    if (animator.isRunning()) {
+      icon = icons[currentIconIndex];
     }
     else {
       icon = getPassiveIcon();
@@ -168,15 +173,15 @@ public class AnimatedIcon extends JComponent implements Disposable {
   }
 
   protected Icon getPassiveIcon() {
-    return myPaintPassive ? myPassiveIcon : myEmptyPassiveIcon;
+    return isPaintPassive ? passiveIcon : emptyPassiveIcon;
   }
 
   public boolean isRunning() {
-    return myAnimator.isRunning();
+    return animator.isRunning();
   }
 
   @Override
   public String toString() {
-    return myName + " isRunning=" + myRunning + " isOpaque=" + isOpaque() + " paintPassive=" + myPaintPassive;
+    return name + " isRunning=" + isRunning + " isOpaque=" + isOpaque() + " paintPassive=" + isPaintPassive;
   }
 }

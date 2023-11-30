@@ -2,21 +2,26 @@
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.ide.IdeView
+import com.intellij.ide.bookmark.ui.tree.FolderNode
 import com.intellij.ide.util.DirectoryChooserUtil
+import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.vfs.validOrNull
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.ui.tree.TreeUtil
 
-internal class IdeViewForBookmarksView(private val view: BookmarksView) : IdeView {
+internal class IdeViewForBookmarksView(private val view: BookmarksView,
+                                       private val selection: List<AbstractTreeNode<*>>?) : IdeView {
 
   override fun getOrChooseDirectory(): PsiDirectory? = DirectoryChooserUtil.getOrChooseDirectory(this)
 
   override fun getDirectories(): Array<PsiDirectory> {
-    val paths = TreeUtil.getSelectedPathsIfAll(view.tree) { it.findFolderNode != null } ?: return PsiDirectory.EMPTY_ARRAY
+    if (selection.isNullOrEmpty()) return PsiDirectory.EMPTY_ARRAY
+    if (selection.any { TreeUtil.getParentNodeOfType(it, FolderNode::class.java) == null }) return PsiDirectory.EMPTY_ARRAY
     val manager = PsiManager.getInstance(view.project)
-    val directories = paths.mapNotNull { it.asAbstractTreeNode?.asVirtualFile?.run { manager.findDirectory(this) } }
+    val directories = selection.mapNotNull { it.asVirtualFile()?.validOrNull()?.let { manager.findDirectory(it) } }
     return if (directories.isEmpty()) PsiDirectory.EMPTY_ARRAY else directories.toTypedArray()
   }
 

@@ -2,6 +2,7 @@ fun foo(javaClass: JavaClass) {
     javaClass.<caret>
 }
 
+// IGNORE_K2
 // WITH_ORDER
 // EXIST: { lookupString: "something3", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/field_variable.svg"}
 // EXIST: { lookupString: "something2", attributes: "bold", icon: "org/jetbrains/kotlin/idea/icons/field_variable.svg"}

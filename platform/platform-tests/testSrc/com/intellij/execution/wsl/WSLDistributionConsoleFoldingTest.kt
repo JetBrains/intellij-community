@@ -89,10 +89,10 @@ class WSLDistributionConsoleFoldingTest {
                              options.initShellCommands.isEmpty()) {
         val shellPath = wslRule.wsl.shellPath
         if (commandLineString.contains(" ")) {
-          "$shellPath -c \"$commandLineString\""
+          "$shellPath -l -c \"$commandLineString\""
         }
         else {
-          "$shellPath -c $commandLineString"
+          "$shellPath -l -c $commandLineString"
         }
       } else {
         commandLineString

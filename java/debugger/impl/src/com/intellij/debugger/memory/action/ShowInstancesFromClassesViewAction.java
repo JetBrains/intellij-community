@@ -2,6 +2,7 @@
 package com.intellij.debugger.memory.action;
 
 import com.intellij.debugger.memory.ui.InstancesWindow;
+import com.intellij.debugger.memory.ui.JavaTypeInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
@@ -19,7 +20,7 @@ public class ShowInstancesFromClassesViewAction extends ShowInstancesAction {
     if (project != null && selectedClass != null) {
       final XDebugSession debugSession = DebuggerUIUtil.getSession(e);
       if (debugSession != null) {
-        new InstancesWindow(debugSession, selectedClass::getInstances, selectedClass.name()).show();
+        new InstancesWindow(debugSession, selectedClass::getInstances, ((JavaTypeInfo)selectedClass).getReferenceType()).show();
       }
     }
   }

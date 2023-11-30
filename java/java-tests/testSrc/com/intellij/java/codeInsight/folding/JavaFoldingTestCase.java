@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class JavaFoldingTestCase extends LightJavaCodeInsightFixtureTestCase {
   protected JavaCodeFoldingSettings myFoldingSettings;
@@ -47,8 +48,12 @@ public abstract class JavaFoldingTestCase extends LightJavaCodeInsightFixtureTes
     }
   }
 
-  protected void configure(String text) {
-    myFixture.configureByText("a.java", text);
+  protected void configure(@NotNull String text) {
+    configure("a.java", text);
+  }
+
+  protected void configure(@NotNull String fileName, @NotNull String text) {
+    myFixture.configureByText(fileName, text);
     performInitialFolding(myFixture.getEditor());
     myFixture.doHighlighting();
   }

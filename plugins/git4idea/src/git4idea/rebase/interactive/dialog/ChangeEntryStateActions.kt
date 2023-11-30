@@ -16,7 +16,6 @@ import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.GitRebaseTodoModel
 import git4idea.rebase.interactive.convertToEntries
 import java.awt.event.InputEvent
-import java.awt.event.KeyEvent
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JButton
@@ -45,7 +44,7 @@ private fun getIndicesToUnite(selection: List<Int>, rebaseTodoModel: GitRebaseTo
 }
 
 internal abstract class ChangeEntryStateSimpleAction(
-  protected val action: GitRebaseEntry.Action,
+  protected val action: GitRebaseEntry.KnownAction,
   title: Supplier<String>,
   description: Supplier<String>,
   icon: Icon?,
@@ -53,7 +52,7 @@ internal abstract class ChangeEntryStateSimpleAction(
   additionalShortcuts: List<Shortcut> = listOf()
 ) : AnActionButton(title, description, icon), DumbAware {
   constructor(
-    action: GitRebaseEntry.Action,
+    action: GitRebaseEntry.KnownAction,
     icon: Icon?,
     table: GitRebaseCommitsTableView,
     additionalShortcuts: List<Shortcut> = listOf()
@@ -61,7 +60,7 @@ internal abstract class ChangeEntryStateSimpleAction(
 
   init {
     val keyStroke = KeyStroke.getKeyStroke(
-      KeyEvent.getExtendedKeyCodeForChar(action.mnemonic),
+      action.mnemonic,
       InputEvent.ALT_MASK
     )
     val shortcuts = additionalShortcuts + KeyboardShortcut(keyStroke, null)
@@ -114,7 +113,7 @@ internal abstract class ChangeEntryStateSimpleAction(
 }
 
 internal abstract class ChangeEntryStateButtonAction(
-  action: GitRebaseEntry.Action,
+  action: GitRebaseEntry.KnownAction,
   table: GitRebaseCommitsTableView,
   additionalShortcuts: List<Shortcut> = listOf()
 ) : ChangeEntryStateSimpleAction(action, null, table, additionalShortcuts), CustomComponentAction, DumbAware {

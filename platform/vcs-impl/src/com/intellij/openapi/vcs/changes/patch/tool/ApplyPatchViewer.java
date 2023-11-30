@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.diff.*;
 import com.intellij.diff.actions.ProxyUndoRedoAction;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
@@ -25,8 +26,10 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -38,7 +41,6 @@ import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.IntListIterator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +105,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     ((EditorMarkupModel)myResultEditor.getMarkupModel()).setErrorStripeVisible(false);
     myResultEditor.setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
 
-    myPatchEditor.getGutterComponentEx().setForceShowRightFreePaintersArea(true);
+    myPatchEditor.getGutterComponentEx().setRightFreePaintersAreaState(EditorGutterFreePainterAreaState.SHOW);
     ((EditorMarkupModel)myPatchEditor.getMarkupModel()).setErrorStripeVisible(false);
 
 
@@ -278,24 +280,23 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
 
 
-    PatchChangeBuilder builder = new PatchChangeBuilder();
-    builder.exec(myPatchRequest.getPatch().getHunks());
+    PatchChangeBuilder.AppliedPatchState state = new PatchChangeBuilder().buildFromApplied(myPatchRequest.getPatch().getHunks());
 
 
     Document patchDocument = myPatchEditor.getDocument();
-    WriteAction.run(() -> patchDocument.setText(builder.getPatchContent()));
+    WriteAction.run(() -> patchDocument.setText(state.getPatchContent()));
 
-    LineNumberConvertor convertor1 = builder.getLineConvertor1();
-    LineNumberConvertor convertor2 = builder.getLineConvertor2();
+    LineNumberConvertor convertor1 = state.getLineConvertor1();
+    LineNumberConvertor convertor2 = state.getLineConvertor2();
     myPatchEditor.getGutter().setLineNumberConverter(new LineNumberConverterAdapter(convertor1.createConvertor()),
                                                      new LineNumberConverterAdapter(convertor2.createConvertor()));
 
-    for (IntListIterator iterator = builder.getSeparatorLines().iterator(); iterator.hasNext(); ) {
-      int offset = patchDocument.getLineStartOffset(iterator.nextInt());
+    state.getSeparatorLines().forEach(line -> {
+      int offset = patchDocument.getLineStartOffset(line);
       DiffDrawUtil.createLineSeparatorHighlighter(myPatchEditor, offset, offset);
-    }
+    });
 
-    List<PatchChangeBuilder.Hunk> hunks = builder.getHunks();
+    List<PatchChangeBuilder.AppliedHunk> hunks = state.getHunks();
 
     int[] modelToPatchIndexes = DiffUtil.getSortedIndexes(hunks, (h1, h2) -> {
       LineRange lines1 = h1.getAppliedToLines();
@@ -310,7 +311,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     List<LineRange> modelRanges = new ArrayList<>();
     for (int modelIndex = 0; modelIndex < hunks.size(); modelIndex++) {
       int patchIndex = modelToPatchIndexes[modelIndex];
-      PatchChangeBuilder.Hunk hunk = hunks.get(patchIndex);
+      PatchChangeBuilder.AppliedHunk hunk = hunks.get(patchIndex);
       LineRange resultRange = hunk.getAppliedToLines();
 
       ApplyPatchChange change = new ApplyPatchChange(hunk, modelIndex, this);
@@ -447,6 +448,16 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     markChangeResolved(change);
   }
 
+  public void copyChangeToClipboard(@NotNull ApplyPatchChange change) {
+    LineRange patchRange = change.getPatchInsertionRange();
+    CharSequence newContent = DiffUtil.getLinesContent(myPatchEditor.getDocument(), patchRange.start, patchRange.end);
+
+    CopyPasteManager.copyTextToClipboard(newContent.toString());
+
+    myPatchEditor.getCaretModel().moveToOffset(myPatchEditor.getDocument().getLineStartOffset(patchRange.start));
+    HintManager.getInstance().showInformationHint(myPatchEditor, DiffBundle.message("patch.dialog.copy.change.command.balloon"), HintManager.UNDER);
+  }
+
   private final class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
     private ApplySelectedChangesAction() {
       getTemplatePresentation().setText(VcsBundle.messagePointer("action.presentation.ApplySelectedChangesAction.text"));
@@ -531,7 +542,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
     private boolean isSomeChangeSelected(@NotNull Side side) {
       EditorEx editor = side.select(myResultEditor, myPatchEditor);
-      return DiffUtil.isSomeRangeSelected(editor, lines -> ContainerUtil.exists(myModelChanges, change -> isChangeSelected(change, lines, side)));
+      return DiffUtil.isSomeRangeSelected(editor, lines -> {
+        return ContainerUtil.exists(myModelChanges, change -> isChangeSelected(change, lines, side));
+      });
     }
 
     @NotNull
@@ -587,7 +600,8 @@ class ApplyPatchViewer implements DataProvider, Disposable {
           switch (change.getStatus()) {
             case ALREADY_APPLIED -> markChangeResolved(change);
             case EXACTLY_APPLIED -> replaceChange(change);
-            case NOT_APPLIED -> {}
+            case NOT_APPLIED -> {
+            }
           }
         }
       });
@@ -732,7 +746,8 @@ class ApplyPatchViewer implements DataProvider, Disposable {
         switch (change.getStatus()) {
           case ALREADY_APPLIED -> alreadyApplied++;
           case NOT_APPLIED -> notApplied++;
-          case EXACTLY_APPLIED -> {}
+          case EXACTLY_APPLIED -> {
+          }
         }
       }
 

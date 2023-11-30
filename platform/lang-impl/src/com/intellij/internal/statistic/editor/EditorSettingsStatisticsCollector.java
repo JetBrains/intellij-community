@@ -24,11 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
@@ -333,7 +329,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     Settings(String internalName) { this.internalName = internalName; }
   }
 
-  public static class ProjectUsages extends ProjectUsagesCollector {
+  public static final class ProjectUsages extends ProjectUsagesCollector {
     private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.project", 3);
     private static final VarargEventId AUTO_OPTIMIZE_IMPORTS = GROUP.registerVarargEvent("autoOptimizeImports", EventFields.Enabled);
 

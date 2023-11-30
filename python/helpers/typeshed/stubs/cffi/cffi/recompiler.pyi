@@ -15,7 +15,7 @@ class GlobalExpr:
     type_op: Incomplete
     size: Incomplete
     check_value: Incomplete
-    def __init__(self, name, address, type_op, size: int = ..., check_value: int = ...) -> None: ...
+    def __init__(self, name, address, type_op, size: int = 0, check_value: int = 0) -> None: ...
     def as_c_expr(self): ...
     def as_python_expr(self): ...
 
@@ -64,7 +64,7 @@ class Recompiler:
     ffi: Incomplete
     module_name: Incomplete
     target_is_python: Incomplete
-    def __init__(self, ffi, module_name, target_is_python: bool = ...) -> None: ...
+    def __init__(self, ffi, module_name, target_is_python: bool = False) -> None: ...
     def needs_version(self, ver) -> None: ...
     cffi_types: Incomplete
     def collect_type_table(self): ...
@@ -76,19 +76,19 @@ class Recompiler:
 
 NativeIO: TypeAlias = io.StringIO
 
-def make_c_source(ffi, module_name, preamble, target_c_file, verbose: bool = ...): ...
-def make_py_source(ffi, module_name, target_py_file, verbose: bool = ...): ...
+def make_c_source(ffi, module_name, preamble, target_c_file, verbose: bool = False): ...
+def make_py_source(ffi, module_name, target_py_file, verbose: bool = False): ...
 def recompile(
     ffi,
     module_name,
     preamble,
-    tmpdir: str = ...,
-    call_c_compiler: bool = ...,
-    c_file: Incomplete | None = ...,
-    source_extension: str = ...,
-    extradir: Incomplete | None = ...,
-    compiler_verbose: int = ...,
-    target: Incomplete | None = ...,
-    debug: Incomplete | None = ...,
+    tmpdir: str = ".",
+    call_c_compiler: bool = True,
+    c_file: Incomplete | None = None,
+    source_extension: str = ".c",
+    extradir: Incomplete | None = None,
+    compiler_verbose: int = 1,
+    target: Incomplete | None = None,
+    debug: Incomplete | None = None,
     **kwds,
 ): ...

@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -23,6 +24,7 @@ import com.intellij.uiDesigner.GuiFormFileType;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,13 +37,15 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
   private UIFormEditor.MyBackgroundEditorHighlighter myBackgroundEditorHighlighter;
 
   public UIFormEditor(@NotNull final Project project, @NotNull final VirtualFile file){
-    final VirtualFile vf = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : file;
-    final Module module = ModuleUtilCore.findModuleForFile(vf, project);
-    if (module == null) {
-      throw new IllegalArgumentException("No module for file " + file + " in project " + project);
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701")) {
+      final VirtualFile vf = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : file;
+      final Module module = ModuleUtilCore.findModuleForFile(vf, project);
+      if (module == null) {
+        throw new IllegalArgumentException("No module for file " + file + " in project " + project);
+      }
+      myFile = file;
+      myEditor = new GuiEditor(this, project, module, file);
     }
-    myFile = file;
-    myEditor = new GuiEditor(this, project, module, file);
   }
 
   @Override

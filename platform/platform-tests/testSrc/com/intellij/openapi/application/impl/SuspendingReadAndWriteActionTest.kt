@@ -4,8 +4,8 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAndWriteAction
 import com.intellij.openapi.progress.*
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.timeoutRunBlocking
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions

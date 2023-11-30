@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.tracing.Tracer;
@@ -65,15 +65,13 @@ public final class BuildTargetIndexImpl implements BuildTargetIndex {
     }
 
     Graph<BuildTarget<?>> graph = GraphGenerator.generate(new InboundSemiGraph<BuildTarget<?>>() {
-      @NotNull
       @Override
-      public Collection<BuildTarget<?>> getNodes() {
+      public @NotNull Collection<BuildTarget<?>> getNodes() {
         return allTargets;
       }
 
-      @NotNull
       @Override
-      public Iterator<BuildTarget<?>> getIn(BuildTarget<?> n) {
+      public @NotNull Iterator<BuildTarget<?>> getIn(BuildTarget<?> n) {
         Collection<BuildTarget<?>> deps = myDependencies.get(n);
         return deps != null ? deps.iterator() : Collections.emptyIterator();
       }
@@ -132,29 +130,25 @@ public final class BuildTargetIndexImpl implements BuildTargetIndex {
     }
   }
 
-  @NotNull
   @Override
-  public Collection<BuildTarget<?>> getDependencies(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
+  public @NotNull Collection<BuildTarget<?>> getDependencies(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
     initializeChunks(context);
     Collection<BuildTarget<?>> deps = myDependencies.get(target);
     return deps != null ? deps : Collections.emptyList();
   }
 
   @Override
-  @NotNull
-  public Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@NotNull JpsModule module, @NotNull ModuleTargetSelector selector) {
+  public @NotNull Collection<ModuleBasedTarget<?>> getModuleBasedTargets(@NotNull JpsModule module, @NotNull ModuleTargetSelector selector) {
     return myRegistry.getModuleBasedTargets(module, selector);
   }
 
   @Override
-  @NotNull
-  public <T extends BuildTarget<?>> List<T> getAllTargets(@NotNull BuildTargetType<T> type) {
+  public @NotNull <T extends BuildTarget<?>> List<T> getAllTargets(@NotNull BuildTargetType<T> type) {
     return myRegistry.getAllTargets(type);
   }
 
   @Override
-  @NotNull
-  public List<BuildTarget<?>> getAllTargets() {
+  public @NotNull List<BuildTarget<?>> getAllTargets() {
     return myRegistry.getAllTargets();
   }
 }

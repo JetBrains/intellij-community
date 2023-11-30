@@ -26,12 +26,12 @@ import static git4idea.history.GitLogParser.GitLogOption.TREE;
 abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer<R> {
   private static final Logger LOG = Logger.getInstance(GitLogRecordCollector.class);
 
-  @NotNull protected final Project myProject;
-  @NotNull protected final VirtualFile myRoot;
-  @NotNull protected final Consumer<? super List<R>> myConsumer;
+  protected final @NotNull Project myProject;
+  protected final @NotNull VirtualFile myRoot;
+  protected final @NotNull Consumer<? super List<R>> myConsumer;
 
-  @NotNull private final MultiMap<String, R> myHashToRecord = MultiMap.createLinked();
-  @Nullable private String myLastHash = null;
+  private final @NotNull MultiMap<String, R> myHashToRecord = MultiMap.createLinked();
+  private @Nullable String myLastHash = null;
 
   protected GitLogRecordCollector(@NotNull Project project,
                                   @NotNull VirtualFile root,
@@ -110,8 +110,7 @@ abstract class GitLogRecordCollector<R extends GitLogRecord> implements Consumer
   /*
    * This method calculates tree hashes for commits and their parents.
    */
-  @NotNull
-  private static <R extends GitLogRecord> Map<String, String> getHashToTreeMap(@NotNull Project project,
+  private static @NotNull <R extends GitLogRecord> Map<String, String> getHashToTreeMap(@NotNull Project project,
                                                                                @NotNull VirtualFile root,
                                                                                @NotNull Collection<? extends R> records)
     throws VcsException {

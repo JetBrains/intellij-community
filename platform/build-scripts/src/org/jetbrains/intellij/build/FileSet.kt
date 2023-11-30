@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtil
@@ -56,7 +56,7 @@ class FileSet(private val root: Path) {
 
   fun enumerate(): List<Path> = toPathListImpl(assertUnusedPatterns = true)
 
-  fun enumerateNoAssertUnusedPatterns(): List<Path> = toPathListImpl(assertUnusedPatterns = false)
+  private fun enumerateNoAssertUnusedPatterns(): List<Path> = toPathListImpl(assertUnusedPatterns = false)
 
   private fun toPathListImpl(assertUnusedPatterns: Boolean): List<Path> {
     if (includePatterns.isEmpty()) {

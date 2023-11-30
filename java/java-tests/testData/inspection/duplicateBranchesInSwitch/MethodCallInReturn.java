@@ -7,10 +7,10 @@ enum T {
         return t.ordinal(); // comment 1
 
       case B:
-        <weak_warning descr="Duplicate branch in 'switch'">return t.ordinal();</weak_warning>
+        <info descr="Duplicate branch in 'switch'">return t.ordinal();</info>
 
       case C:
-        <weak_warning descr="Duplicate branch in 'switch'">return t.ordinal(); // comment 2</weak_warning>
+        <info descr="Duplicate branch in 'switch'">return t.ordinal(); // comment 2</info>
 
       default:
         return 0;

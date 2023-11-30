@@ -279,9 +279,8 @@ class InOutAnalysis extends ContractAnalysis {
         else if (stackTop instanceof ParamValue) {
           subResult = inValue;
         }
-        else if (stackTop instanceof CallResultValue) {
-          Set<EKey> keys = ((CallResultValue)stackTop).inters;
-          subResult = new Pending(new Component[]{new Component(Value.Top, keys)});
+        else if (stackTop instanceof CallResultValue callResultValue) {
+          subResult = new Pending(new Component[]{new Component(Value.Top, callResultValue.inters)});
         }
         else {
           earlyResult = Value.Top;
@@ -341,7 +340,7 @@ class InThrowAnalysis extends ContractAnalysis {
   }
 
   private void updateThrowPaths(State state) {
-    Set<EKey> throwKeys = interpreter.throwKeys;
+    List<EKey> throwKeys = interpreter.throwKeys;
     interpreter.throwKeys = null;
     if (myThrowKeys == null) return;
     Set<EKey> prevKeys = myThrowKeys.remove(state);
@@ -350,12 +349,12 @@ class InThrowAnalysis extends ContractAnalysis {
       return;
     }
     if (prevKeys == null || prevKeys.isEmpty()) {
-      prevKeys = throwKeys != null ? throwKeys : Collections.emptySet();
+      prevKeys = throwKeys != null ? Set.copyOf(throwKeys) : Collections.emptySet();
     } else {
       if (throwKeys != null && !throwKeys.isEmpty()) {
         prevKeys = new HashSet<>(prevKeys);
         prevKeys.addAll(throwKeys);
-        if (prevKeys.size() > 32) {
+        if (prevKeys.size() > 8) {
           myThrowKeys = null;
           return;
         }
@@ -417,7 +416,7 @@ class InOutInterpreter extends BasicInterpreter {
   final InsnList insns;
   final boolean[] resultOrigins;
   final boolean nullAnalysis;
-  Set<EKey> throwKeys = null;
+  List<EKey> throwKeys = null;
 
   boolean deReferenced;
 
@@ -557,7 +556,7 @@ class InOutInterpreter extends BasicInterpreter {
           boolean isRefRetType = retType.getSort() == Type.OBJECT || retType.getSort() == Type.ARRAY;
           if (propagate && !Type.VOID_TYPE.equals(retType) || isThrowAnalysis()) {
             if (direction != null) {
-              HashSet<EKey> keys = new HashSet<>();
+              List<EKey> keys = new ArrayList<>();
               for (int i = shift; i < values.size(); i++) {
                 Direction direction = null;
                 BasicValue value = values.get(i);
@@ -585,7 +584,7 @@ class InOutInterpreter extends BasicInterpreter {
               }
             }
             else if (isRefRetType) {
-              return new CallResultValue(retType, Collections.singleton(new EKey(method, Out, stable)));
+              return new CallResultValue(retType, List.of(new EKey(method, Out, stable)));
             }
           }
         }

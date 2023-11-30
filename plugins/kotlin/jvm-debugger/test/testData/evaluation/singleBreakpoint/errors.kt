@@ -29,3 +29,5 @@ open class Base {
 
 // EXPRESSION: super.baseFun()
 // RESULT: VOID_VALUE
+
+// IGNORE_K2

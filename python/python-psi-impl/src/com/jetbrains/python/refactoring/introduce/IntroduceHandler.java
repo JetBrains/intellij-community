@@ -190,7 +190,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
         return super.add(s);
       }
     };
-    String text = PyStringLiteralUtil.getStringValue(expression);
+    String text = PyPsiUtils.getStringValue(expression);
     final Pair<PsiElement, TextRange> selection = expression.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
     if (selection != null) {
       text = selection.getSecond().substring(selection.getFirst().getText());

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.Disposable;
@@ -25,8 +25,7 @@ public final class MacUtil {
 
   private MacUtil() { }
 
-  @Nullable
-  public static ID findWindowForTitle(@Nullable String title) {
+  public static @Nullable ID findWindowForTitle(@Nullable String title) {
     if (title == null || title.isEmpty()) return null;
     final ID pool = invoke("NSAutoreleasePool", "new");
 
@@ -63,8 +62,7 @@ public final class MacUtil {
   @SuppressWarnings("unused")
   public static void adjustFocusTraversal(@NotNull Disposable disposable) { }
 
-  @NotNull
-  public static ID getWindowFromJavaWindow(@Nullable Window w) {
+  public static @NotNull ID getWindowFromJavaWindow(@Nullable Window w) {
     if (w == null) {
       return ID.NIL;
     }
@@ -84,8 +82,7 @@ public final class MacUtil {
     return ID.NIL;
   }
 
-  @Nullable
-  public static Object getPlatformWindow(@NotNull Window w) {
+  public static @Nullable Object getPlatformWindow(@NotNull Window w) {
     if (SystemInfo.isJetBrainsJvm) {
       try {
         Class<?> awtAccessor = Class.forName("sun.awt.AWTAccessor");
@@ -128,6 +125,10 @@ public final class MacUtil {
     catch (Throwable e) {
       LOG.debug(e);
     }
+    finally {
+      // https://youtrack.jetbrains.com/issue/IDEA-323593
+      window.revalidate();
+    }
   }
 
   public static ID findWindowFromJavaWindow(final Window w) {
@@ -140,8 +141,7 @@ public final class MacUtil {
     return findWindowForTitle(getWindowTitle(w));
   }
 
-  @Nullable
-  public static String getWindowTitle(Window documentRoot) {
+  public static @Nullable String getWindowTitle(Window documentRoot) {
     String windowTitle = null;
     if (documentRoot instanceof Frame) {
       windowTitle = ((Frame)documentRoot).getTitle();

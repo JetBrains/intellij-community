@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,12 +39,12 @@ import static git4idea.merge.GitMergeUtil.*;
 public class GitMergeProvider implements MergeProvider2 {
   private static final Logger LOG = Logger.getInstance(GitMergeProvider.class);
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   /**
    * If true the merge provider has a reverse meaning, i. e. yours and theirs are swapped.
    * It should be used when conflict is resolved after rebase or unstash.
    */
-  @NotNull private final Set<VirtualFile> myReverseRoots;
+  private final @NotNull Set<VirtualFile> myReverseRoots;
 
   private enum ReverseRequest {
     REVERSE,
@@ -61,18 +61,15 @@ public class GitMergeProvider implements MergeProvider2 {
     this(project, findReverseRoots(project, reverse ? ReverseRequest.REVERSE : ReverseRequest.FORWARD));
   }
 
-  @NotNull
-  public static MergeProvider detect(@NotNull Project project) {
+  public static @NotNull MergeProvider detect(@NotNull Project project) {
     return new GitMergeProvider(project, findReverseRoots(project, ReverseRequest.DETECT));
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  private static Set<VirtualFile> findReverseRoots(@NotNull Project project, @NotNull ReverseRequest reverseOrDetect) {
+  private static @NotNull Set<VirtualFile> findReverseRoots(@NotNull Project project, @NotNull ReverseRequest reverseOrDetect) {
     if (Registry.is("git.do.not.swap.merge.conflict.sides")) return Collections.emptySet();
 
     Set<VirtualFile> reverseMap = new HashSet<>();
@@ -92,8 +89,7 @@ public class GitMergeProvider implements MergeProvider2 {
   }
 
   @Override
-  @NotNull
-  public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
+  public @NotNull MergeData loadRevisions(final @NotNull VirtualFile file) throws VcsException {
     VirtualFile root = GitUtil.getRootForFile(myProject, file);
     FilePath path = VcsUtil.getFilePath(file);
     return loadMergeData(myProject, root, path, myReverseRoots.contains(root));
@@ -115,8 +111,7 @@ public class GitMergeProvider implements MergeProvider2 {
   }
 
   @Override
-  @NotNull
-  public MergeSession createMergeSession(@NotNull List<VirtualFile> files) {
+  public @NotNull MergeSession createMergeSession(@NotNull List<VirtualFile> files) {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> new MyMergeSession(files),
       GitBundle.message("merge.progress.indicator.loading.unmerged.files.title"),
@@ -130,8 +125,7 @@ public class GitMergeProvider implements MergeProvider2 {
     return new GitDefaultMergeDialogCustomizer(myProject);
   }
 
-  @NotNull
-  public static @NlsContexts.ColumnName String calcColumnName(boolean isTheirs, @NlsSafe @Nullable String branchName) {
+  public static @NotNull @NlsContexts.ColumnName String calcColumnName(boolean isTheirs, @NlsSafe @Nullable String branchName) {
     if (isTheirs) {
       if (branchName != null) {
         return GitBundle.message("merge.tool.column.theirs.with.branch.status", branchName);
@@ -283,8 +277,7 @@ public class GitMergeProvider implements MergeProvider2 {
       }
     }
 
-    @NotNull
-    private ConflictSide getAcceptedConflictSide(@NotNull Resolution resolution, @NotNull VirtualFile root) {
+    private @NotNull ConflictSide getAcceptedConflictSide(@NotNull Resolution resolution, @NotNull VirtualFile root) {
       assert resolution == Resolution.AcceptedYours || resolution == Resolution.AcceptedTheirs;
       boolean isReversed = myReverseRoots.contains(root);
       boolean acceptYours = !isReversed ? resolution == Resolution.AcceptedYours
@@ -292,8 +285,7 @@ public class GitMergeProvider implements MergeProvider2 {
       return acceptYours ? ConflictSide.OURS : ConflictSide.THEIRS;
     }
 
-    @NotNull
-    private MultiMap<VirtualFile, GitConflict> groupConflictsByRoot(@NotNull List<? extends VirtualFile> files) {
+    private @NotNull MultiMap<VirtualFile, GitConflict> groupConflictsByRoot(@NotNull List<? extends VirtualFile> files) {
       MultiMap<VirtualFile, GitConflict> byRoot = MultiMap.create();
       for (VirtualFile file: files) {
         GitConflict c = myConflicts.get(file);

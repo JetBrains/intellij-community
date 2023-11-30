@@ -15,11 +15,6 @@ abstract class MarkdownHeaderImpl: MarkdownStubBasedPsiElementBase<MarkdownStubE
   constructor(node: ASTNode) : super(node)
   constructor(stub: MarkdownHeaderStubElement, type: MarkdownHeaderStubElementType) : super(stub, type)
 
-  @get:ApiStatus.ScheduledForRemoval
-  @get:Deprecated("Use level instead.", ReplaceWith("level"))
-  val headerNumber
-    get() = calculateHeaderLevel()
-
   protected fun calculateHeaderLevel(): Int {
     val type = node.elementType
     return when {

@@ -1,0 +1,18 @@
+{
+  "names": ["sub"],
+  "options": [
+    {
+      "names": ["--someOpt"],
+      "args": [
+        {
+          "name": "arg",
+          "suggestions": [
+            {
+              "names": ["all", "none"]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

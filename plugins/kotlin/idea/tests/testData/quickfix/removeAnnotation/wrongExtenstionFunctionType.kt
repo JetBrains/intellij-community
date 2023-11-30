@@ -1,5 +1,5 @@
 // "Remove inapplicable @ExtensionFunctionType annotation" "true"
-// IGNORE_FIR
+// IGNORE_K2
 // WITH_STDLIB
 fun bar(f: <caret>@ExtensionFunctionType () -> Int): Int = TODO()
 

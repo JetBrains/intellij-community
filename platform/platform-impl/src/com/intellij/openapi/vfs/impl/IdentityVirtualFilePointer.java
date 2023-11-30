@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements VirtualFilePointer, Disposable {
+final class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements VirtualFilePointer, Disposable {
   private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity;
   private final VirtualFilePointerManagerImpl myVirtualFilePointerManager;
   private final VirtualFile myFile;
@@ -26,8 +26,7 @@ class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements Virtu
   }
 
   @Override
-  @NotNull
-  public String getFileName() {
+  public @NotNull String getFileName() {
     return getUrl();
   }
 
@@ -37,14 +36,12 @@ class IdentityVirtualFilePointer extends VirtualFilePointerImpl implements Virtu
   }
 
   @Override
-  @NotNull
-  public String getUrl() {
+  public @NotNull String getUrl() {
     return myUrl;
   }
 
   @Override
-  @NotNull
-  public String getPresentableUrl() {
+  public @NotNull String getPresentableUrl() {
     return getUrl();
   }
 

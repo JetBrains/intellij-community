@@ -41,7 +41,7 @@ def error_no_pip():
 
 
 def do_list():
-    if sys.version_info < (3, 12):
+    if sys.version_info < (3, 10):
         try:
             import pkg_resources
         except ImportError:

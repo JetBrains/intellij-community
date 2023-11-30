@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.execution.RunnerBundle
+import org.jetbrains.idea.maven.project.BundledMaven3
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -16,7 +17,7 @@ class UseBundledMavenQuickFix: BuildIssueQuickFix {
   override val id: String = ID
 
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.mavenHome = MavenServerManager.BUNDLED_MAVEN_3
+    MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.mavenHomeType = BundledMaven3
     Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
                  RunnerBundle.message("maven.change.version.notification", MavenServerManager.getInstance().currentMavenVersion),
                  NotificationType.INFORMATION).notify(null)

@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.util
 import org.jetbrains.kotlin.load.kotlin.ModuleVisibilityManager
 import org.jetbrains.kotlin.modules.Module
 
-class IdeModuleVisibilityManagerImpl() : ModuleVisibilityManager {
+class IdeModuleVisibilityManagerImpl : ModuleVisibilityManager {
     override val chunk: Collection<Module> = emptyList()
     override val friendPaths: Collection<String> = emptyList()
     override fun addModule(module: Module) {}

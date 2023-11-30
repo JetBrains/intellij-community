@@ -124,7 +124,7 @@ class DynamicPluginsTest {
 
     DynamicPlugins.loadPlugin(descriptor)
     try {
-      DisabledPluginsState.saveDisabledPluginsAndInvalidate(PathManager.getConfigDir(), builder.id)
+      DisabledPluginsState.saveDisabledPluginsAndInvalidate(PathManager.getConfigDir(), listOf(builder.id))
     }
     finally {
       unloadAndUninstallPlugin(descriptor)
@@ -991,9 +991,7 @@ private inline fun runAndCheckThatNoNewPlugins(block: () -> Unit) {
   assertThat(lexicographicallySortedPluginIds()).isEqualTo(expectedPluginIds)
 }
 
-private fun lexicographicallySortedPluginIds() =
-  PluginManagerCore.getLoadedPlugins()
-    .toSortedSet(compareBy { it.pluginId })
+private fun lexicographicallySortedPluginIds() = PluginManagerCore.loadedPlugins.toSortedSet(compareBy { it.pluginId })
 
 private fun findEnabledModuleByName(id: String) = PluginManagerCore.getPluginSet().findEnabledModule(id)
 

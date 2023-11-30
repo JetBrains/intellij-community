@@ -273,16 +273,16 @@ public class GrSetStrongTypeIntention extends Intention {
         return false;
       }
 
-      private boolean isModifierListOfVarDecl(PsiElement element, PsiElement parent) {
+      private static boolean isModifierListOfVarDecl(PsiElement element, PsiElement parent) {
         return parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).getModifierList() == element;
       }
 
-      private boolean isModifierListOfVar(PsiElement element, PsiElement parent) {
+      private static boolean isModifierListOfVar(PsiElement element, PsiElement parent) {
         return parent instanceof GrVariable && ((GrVariable)parent).getModifierList() == element;
       }
 
 
-      private boolean isNameIdentifierOfVariable(PsiElement element, PsiElement parent) {
+      private static boolean isNameIdentifierOfVariable(PsiElement element, PsiElement parent) {
         return parent instanceof GrVariable &&
               ((GrVariable)parent).getTypeElementGroovy() == null &&
               element == ((GrVariable)parent).getNameIdentifierGroovy();

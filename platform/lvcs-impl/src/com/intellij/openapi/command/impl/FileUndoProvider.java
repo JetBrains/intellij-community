@@ -192,7 +192,7 @@ public final class FileUndoProvider implements UndoProvider, BulkFileListener {
     return (UndoManagerImpl)UndoManager.getGlobalInstance();
   }
 
-  private class MyUndoableAction extends GlobalUndoableAction {
+  private final class MyUndoableAction extends GlobalUndoableAction {
     private ChangeRange myActionChangeRange;
     private ChangeRange myUndoChangeRange;
 

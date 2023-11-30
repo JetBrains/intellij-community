@@ -3,27 +3,23 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.workspace.storage.testEntities.entities.*
-import com.intellij.testFramework.ApplicationRule
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import org.junit.Assert.*
-import org.junit.Assume
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions.assumeFalse
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import kotlin.test.*
 
 class VirtualFileIndexTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
-  @Rule
-  @JvmField
-  var application = ApplicationRule()
-
-  @Before
+  @BeforeEach
   fun setUp() {
     virtualFileManager = VirtualFileUrlManagerImpl()
   }
@@ -34,7 +30,8 @@ class VirtualFileIndexTest {
     val builder = createEmptyBuilder() as MutableEntityStorageImpl
     val entity = builder.addVFUEntity("hello", fileUrl, virtualFileManager)
     assertEquals(fileUrl, entity.fileProperty.url)
-    assertEquals(entity.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id).first())
+    assertEquals(entity.fileProperty,
+                            builder.indexes.virtualFileIndex.getVirtualFiles((entity as WorkspaceEntityBase).id).first())
   }
 
   @Test
@@ -187,7 +184,7 @@ class VirtualFileIndexTest {
 
   @Test
   fun `check case sensitivity`() {
-    Assume.assumeFalse(SystemInfo.isFileSystemCaseSensitive)
+    assumeFalse(SystemInfo.isFileSystemCaseSensitive)
     Registry.get("ide.new.project.model.index.case.sensitivity").setValue(true)
     virtualFileManager = VirtualFileUrlManagerImpl()
 

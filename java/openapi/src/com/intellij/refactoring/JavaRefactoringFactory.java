@@ -16,7 +16,7 @@ import java.util.Set;
 
 public abstract class JavaRefactoringFactory extends RefactoringFactory {
   public static JavaRefactoringFactory getInstance(Project project) {
-    return (JavaRefactoringFactory)project.getService(RefactoringFactory.class);
+    return (JavaRefactoringFactory)RefactoringFactory.getInstance(project);
   }
 
   @Override
@@ -72,14 +72,6 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
   public abstract TurnRefsToSuperRefactoring createTurnRefsToSuper(PsiClass aClass,
                                                                    PsiClass aSuper,
                                                                    boolean replaceInstanceOf);
-
-  public abstract ReplaceConstructorWithFactoryRefactoring createReplaceConstructorWithFactory(PsiMethod method,
-                                                                                               PsiClass targetClass,
-                                                                                               String factoryName);
-
-  public abstract ReplaceConstructorWithFactoryRefactoring createReplaceConstructorWithFactory(PsiClass originalClass,
-                                                                                               PsiClass targetClass,
-                                                                                               String factoryName);
 
   public abstract ChangeClassSignatureRefactoring createChangeClassSignatureProcessor(Project project, PsiClass aClass, TypeParameterInfo[] newSignature);
   

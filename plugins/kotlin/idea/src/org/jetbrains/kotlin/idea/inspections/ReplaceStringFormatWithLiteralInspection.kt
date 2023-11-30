@@ -23,6 +23,9 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.util.*
 
+private val placeHolder: Regex by lazy { "%".toRegex() }
+private val stringPlaceHolder: Regex by lazy { "%s".toRegex() }
+
 class ReplaceStringFormatWithLiteralInspection : AbstractKotlinInspection() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -57,11 +60,6 @@ class ReplaceStringFormatWithLiteralInspection : AbstractKotlinInspection() {
                 ReplaceWithStringLiteralFix()
             )
         })
-    }
-
-    private companion object {
-        private val placeHolder: Regex by lazy { "%".toRegex() }
-        private val stringPlaceHolder: Regex by lazy { "%s".toRegex() }
     }
 
     private class ReplaceWithStringLiteralFix : LocalQuickFix {

@@ -3,7 +3,6 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit2.info.LocationUtil;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.openapi.util.Ref;
@@ -13,14 +12,6 @@ import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractAllInPackageConfigurationProducer extends JUnitConfigurationProducer {
-  /**
-   * @deprecated Override {@link #getConfigurationFactory()}.
-   */
-  @Deprecated(forRemoval = true)
-  protected AbstractAllInPackageConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
-  }
-
   protected AbstractAllInPackageConfigurationProducer() {
   }
 

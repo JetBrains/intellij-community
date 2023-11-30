@@ -1,72 +1,60 @@
 package de.plushnikov.intellij.plugin.action.delombok;
 
-import com.intellij.openapi.application.ApplicationManager;
-import de.plushnikov.intellij.plugin.processor.clazz.*;
-import de.plushnikov.intellij.plugin.processor.clazz.builder.*;
-import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsOldProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsPredefinedInnerClassFieldProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants.FieldNameConstantsProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.log.*;
-import de.plushnikov.intellij.plugin.processor.field.*;
-import de.plushnikov.intellij.plugin.processor.method.BuilderClassMethodProcessor;
-import de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor;
-import de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 
 public class DelombokEverythingAction extends AbstractDelombokAction {
 
   @Override
   protected DelombokHandler createHandler() {
+    LombokProcessorManager manager = LombokProcessorManager.getInstance();
+
     return new DelombokHandler(true,
-                               ApplicationManager.getApplication().getService(RequiredArgsConstructorProcessor.class),
-                               ApplicationManager.getApplication().getService(AllArgsConstructorProcessor.class),
-                               ApplicationManager.getApplication().getService(NoArgsConstructorProcessor.class),
+                               manager.getRequiredArgsConstructorProcessor(),
+                               manager.getAllArgsConstructorProcessor(),
+                               manager.getNoArgsConstructorProcessor(),
 
-                               ApplicationManager.getApplication().getService(DataProcessor.class),
-                               ApplicationManager.getApplication().getService(GetterProcessor.class),
-                               ApplicationManager.getApplication().getService(ValueProcessor.class),
-                               ApplicationManager.getApplication().getService(WitherProcessor.class),
-                               ApplicationManager.getApplication().getService(SetterProcessor.class),
-                               ApplicationManager.getApplication().getService(EqualsAndHashCodeProcessor.class),
-                               ApplicationManager.getApplication().getService(ToStringProcessor.class),
+                               manager.getDataProcessor(),
+                               manager.getGetterProcessor(),
+                               manager.getValueProcessor(),
+                               manager.getWitherProcessor(),
+                               manager.getSetterProcessor(),
+                               manager.getEqualsAndHashCodeProcessor(),
+                               manager.getToStringProcessor(),
 
-                               ApplicationManager.getApplication().getService(CommonsLogProcessor.class),
-                               ApplicationManager.getApplication().getService(JBossLogProcessor.class),
-                               ApplicationManager.getApplication().getService(Log4jProcessor.class),
-                               ApplicationManager.getApplication().getService(Log4j2Processor.class),
-                               ApplicationManager.getApplication().getService(LogProcessor.class),
-                               ApplicationManager.getApplication().getService(Slf4jProcessor.class),
-                               ApplicationManager.getApplication().getService(XSlf4jProcessor.class),
-                               ApplicationManager.getApplication().getService(FloggerProcessor.class),
-                               ApplicationManager.getApplication().getService(CustomLogProcessor.class),
+                               manager.getCommonsLogProcessor(),
+                               manager.getJBossLogProcessor(),
+                               manager.getLog4jProcessor(),
+                               manager.getLog4j2Processor(),
+                               manager.getLogProcessor(),
+                               manager.getSlf4jProcessor(),
+                               manager.getXSlf4jProcessor(),
+                               manager.getFloggerProcessor(),
+                               manager.getCustomLogProcessor(),
 
-                               ApplicationManager.getApplication().getService(GetterFieldProcessor.class),
-                               ApplicationManager.getApplication().getService(SetterFieldProcessor.class),
-                               ApplicationManager.getApplication().getService(WitherFieldProcessor.class),
-                               ApplicationManager.getApplication().getService(DelegateFieldProcessor.class),
-                               ApplicationManager.getApplication().getService(DelegateMethodProcessor.class),
+                               manager.getGetterFieldProcessor(),
+                               manager.getSetterFieldProcessor(),
+                               manager.getWitherFieldProcessor(),
+                               manager.getDelegateFieldProcessor(),
+                               manager.getDelegateMethodProcessor(),
 
-                               ApplicationManager.getApplication().getService(FieldNameConstantsOldProcessor.class),
-                               ApplicationManager.getApplication().getService(FieldNameConstantsFieldProcessor.class),
-                               ApplicationManager.getApplication().getService(FieldNameConstantsProcessor.class),
-                               ApplicationManager.getApplication().getService(FieldNameConstantsPredefinedInnerClassFieldProcessor.class),
+                               manager.getFieldNameConstantsOldProcessor(),
+                               manager.getFieldNameConstantsFieldProcessor(),
+                               manager.getFieldNameConstantsProcessor(),
+                               manager.getFieldNameConstantsPredefinedInnerClassFieldProcessor(),
 
-                               ApplicationManager.getApplication().getService(UtilityClassProcessor.class),
-                               ApplicationManager.getApplication().getService(StandardExceptionProcessor.class),
+                               manager.getUtilityClassProcessor(),
+                               manager.getStandardExceptionProcessor(),
 
-                               ApplicationManager.getApplication().getService(BuilderPreDefinedInnerClassFieldProcessor.class),
-                               ApplicationManager.getApplication().getService(BuilderPreDefinedInnerClassMethodProcessor.class),
-                               ApplicationManager.getApplication().getService(BuilderClassProcessor.class),
-                               ApplicationManager.getApplication().getService(BuilderClassMethodProcessor.class),
-                               ApplicationManager.getApplication().getService(BuilderMethodProcessor.class),
-                               ApplicationManager.getApplication().getService(BuilderProcessor.class),
+                               manager.getBuilderPreDefinedInnerClassFieldProcessor(),
+                               manager.getBuilderPreDefinedInnerClassMethodProcessor(),
+                               manager.getBuilderClassProcessor(),
+                               manager.getBuilderClassMethodProcessor(),
+                               manager.getBuilderMethodProcessor(),
+                               manager.getBuilderProcessor(),
 
-                               ApplicationManager.getApplication().getService(SuperBuilderPreDefinedInnerClassFieldProcessor.class),
-                               ApplicationManager.getApplication().getService(SuperBuilderPreDefinedInnerClassMethodProcessor.class),
-                               ApplicationManager.getApplication().getService(SuperBuilderClassProcessor.class),
-                               ApplicationManager.getApplication().getService(SuperBuilderProcessor.class));
+                               manager.getSuperBuilderPreDefinedInnerClassFieldProcessor(),
+                               manager.getSuperBuilderPreDefinedInnerClassMethodProcessor(),
+                               manager.getSuperBuilderClassProcessor(),
+                               manager.getSuperBuilderProcessor());
   }
-
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.maven.testFramework.MavenTestCase;
 import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.ui.TextFieldWithHistory;
@@ -16,14 +17,14 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 
 @RunWith(JUnit4.class)
-public class MavenEnvironmentFormTest extends UsefulTestCase {
+public class MavenEnvironmentFormTest extends MavenTestCase {
 
   @Test
   public void shouldNotShowDuplicatedBundledMavenHome() {
     MavenGeneralPanel panel = new MavenGeneralPanel();
     assertThat(panel,
                t -> assertContainsElements(t.getHistory(),
-                                       Collections.singleton(MavenServerManager.BUNDLED_MAVEN_3)));
+                                           Collections.singleton(BundledMaven3.INSTANCE.getTitle())));
     assertThat(panel,
                t -> assertDoesntContain(t.getHistory(),
                                         MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toAbsolutePath().toString()));
@@ -33,10 +34,10 @@ public class MavenEnvironmentFormTest extends UsefulTestCase {
   public void shouldSetBundledMavenIfSetAbsolutePath() {
     MavenGeneralSettings settings = new MavenGeneralSettings();
     MavenGeneralPanel panel = new MavenGeneralPanel();
-    settings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
+    settings.setMavenHomeType(BundledMaven3.INSTANCE);
     panel.initializeFormData(settings,  DummyProject.getInstance());
     assertThat(panel,
-               t -> assertEquals("Absolute path to bundled maven should resolve to bundle", MavenServerManager.BUNDLED_MAVEN_3,
+               t -> assertEquals("Absolute path to bundled maven should resolve to bundle", BundledMaven3.INSTANCE.getTitle(),
                                  t.getText()));
   }
 
@@ -44,7 +45,7 @@ public class MavenEnvironmentFormTest extends UsefulTestCase {
   public void shouldNotSetBundledMavenIfAnotherMavenSet() {
     MavenGeneralSettings settings = new MavenGeneralSettings();
     MavenGeneralPanel panel = new MavenGeneralPanel();
-    settings.setMavenHome("/path/to/maven/home");
+    settings.setMavenHomeType(new MavenInSpecificPath("/path/to/maven/home"));
     panel.initializeFormData(settings, DummyProject.getInstance());
     assertThat(panel,
                t -> assertEquals("/path/to/maven/home", t.getText()));

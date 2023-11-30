@@ -7,6 +7,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.IssueNavigationConfiguration
+import com.intellij.openapi.vcs.IssueNavigationLink
 import com.intellij.vcs.commit.CommitExceptionWithActions
 import git4idea.checkin.GitCheckinEnvironment
 import git4idea.checkin.GitCheckinExplicitMovementProvider
@@ -442,6 +444,58 @@ class GitCommitTest : GitSingleRepoTest() {
 
     assertMessage("comment", repo.message("HEAD"))
     assertMessage("explicit movement in tests", repo.message("HEAD~1"))
+
+    repo.assertCommitted(1) {
+      modified("a.after")
+    }
+    repo.assertCommitted(2) {
+      rename("a.before", "a.after")
+    }
+  }
+
+  fun `test commit explicit rename with issue links`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("a.before", "before content")
+
+    rm("a.before")
+    touch("a.after", "after content")
+    git("add a.after")
+
+    val changes = assertChangesWithRefresh {
+      deleted("a.before")
+      added("a.after")
+    }
+
+    val originalMessage = """
+      IDEA-1234 message
+      
+      related to KTIJ-1234
+    """.trimIndent()
+
+    val expectedMessageForRenameCommit = """
+      ${myMovementProvider.getCommitMessage(originalMessage)}
+      
+      IDEA-1234
+      KTIJ-1234
+    """.trimIndent()
+
+    val navigationConfiguration = IssueNavigationConfiguration.getInstance(project)
+    val oldLinks = navigationConfiguration.links
+
+    try {
+      navigationConfiguration.links = listOf(
+        IssueNavigationLink("[A-Z]+\\-\\d+", "https://youtrack.jetbrains.com/issue/\$0")
+      )
+
+      commit(changes, originalMessage)
+      assertNoChanges()
+    } finally {
+      navigationConfiguration.links = oldLinks
+    }
+
+    assertMessage(repo.message("HEAD"), originalMessage)
+    assertMessage(repo.message("HEAD~1"), expectedMessageForRenameCommit)
 
     repo.assertCommitted(1) {
       modified("a.after")

@@ -7,16 +7,6 @@ import com.intellij.openapi.util.Pair
 import com.sun.jdi.*
 import java.util.*
 
-object StringParser : ResultParser<String> {
-  override fun parse(value: Value): String {
-    if (value is StringReference) {
-      return value.value()
-    }
-
-    throw UnexpectedValueFormatException("String value is expected")
-  }
-}
-
 object BooleanParser : ResultParser<Boolean> {
   override fun parse(value: Value): Boolean {
     if (value is BooleanValue) {
@@ -154,6 +144,18 @@ object SizeAndHeldObjectsParser : ResultParser<Pair<Array<Long>, Array<ObjectRef
   }
 }
 
+object SizesAndObjectsOfClassParser : ResultParser<MemoryAgent.ObjectsAndSizes> {
+  override fun parse(value: Value): MemoryAgent.ObjectsAndSizes  {
+    if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
+    if (value.length() < 3) throw UnexpectedValueFormatException("two arrays of longs and one array of objects expected")
+    return MemoryAgent.ObjectsAndSizes(
+      ObjectReferencesParser.parse(value.getValue(0)).toTypedArray(),
+      LongArrayParser.parse(value.getValue(1)).toLongArray(),
+      LongArrayParser.parse(value.getValue(2)).toLongArray(),
+    )
+  }
+}
+
 object ErrorCodeParser : ResultParser<Pair<MemoryAgentActionResult.ErrorCode, Value>> {
   override fun parse(value: Value): Pair<MemoryAgentActionResult.ErrorCode, Value> {
     if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
@@ -173,34 +175,7 @@ object BooleanArrayParser : ResultParser<List<Boolean>> {
   }
 }
 
-object StringArrayParser : ResultParser<List<String?>> {
-  override fun parse(value: Value): List<String?> {
-    if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
-    return value.values.map { it?.let { StringParser.parse(it) } }
-  }
-}
-
 object MemoryAgentReferringObjectCreator {
-  fun createRootReferringObject(
-    kind: MemoryAgentReferenceKind,
-    value: Value?): GCRootReferringObject {
-    return if (value == null) GCRootReferringObject(kind) else
-      when (kind) {
-        MemoryAgentReferenceKind.STACK_LOCAL -> {
-          if (value !is ArrayReference) return GCRootReferringObject(kind)
-          val methodName = StringArrayParser.parse(value.getValue(1))[0] ?: return GCRootReferringObject(kind)
-          val longs = LongArrayParser.parse(value.getValue(0))
-          StackLocalReferringObject(kind, methodName, longs[0], longs[1])
-        }
-        MemoryAgentReferenceKind.JNI_LOCAL -> {
-          if (value !is ArrayReference) return GCRootReferringObject(kind)
-          val longs = LongArrayParser.parse(value.getValue(0))
-          JNILocalReferringObject(kind, longs[0], longs[1])
-        }
-        else -> GCRootReferringObject(kind)
-      }
-  }
-
   fun createReferringObject(
     referrer: ObjectReference,
     kind: MemoryAgentReferenceKind,

@@ -2,17 +2,15 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.injected.editor.InjectedFileChangesHandler;
+import com.intellij.injected.editor.InjectionEditService;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.injection.InjectionEditService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
@@ -21,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class InjectionEditServiceImpl implements InjectionEditService {
+public final class InjectionEditServiceImpl implements InjectionEditService {
   @Override
   public @NotNull Disposable synchronizeWithFragment(@NotNull PsiFile injectedFile, @NotNull Document copyDocument) {
     Place shreds = InjectedLanguageUtilBase.getShreds(injectedFile);

@@ -64,4 +64,12 @@ public interface ListPopupStep<T> extends PopupStep<T> {
    * Returns the index of the item to be initially selected in the list.
    */
   int getDefaultOptionIndex();
+
+  default void addListener(@NotNull ListPopupModelListener listener) { }
+
+  default void removeListener(@NotNull ListPopupModelListener listener) { }
+
+  interface ListPopupModelListener {
+    void onModelChanged();
+  }
 }

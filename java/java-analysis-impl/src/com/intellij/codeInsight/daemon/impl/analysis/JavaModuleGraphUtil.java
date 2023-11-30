@@ -288,7 +288,7 @@ public final class JavaModuleGraphUtil {
     JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     GlobalSearchScope scope = ProjectScope.getAllScope(project);
     for (String key : index.getAllKeys(project)) {
-      for (PsiJavaModule module : index.get(key, project, scope)) {
+      for (PsiJavaModule module : index.getModules(key, project, scope)) {
         visit(module, relations, transitiveEdges);
       }
     }

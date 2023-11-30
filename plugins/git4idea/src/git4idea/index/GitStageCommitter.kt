@@ -14,6 +14,7 @@ import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitUtil
 import git4idea.GitUtil.getRepositoryForFile
 import git4idea.checkin.*
+import git4idea.index.ui.stagingAreaActionInvoked
 import git4idea.repo.GitRepository
 import git4idea.repo.isSubmodule
 import git4idea.util.GitFileUtils.addPaths
@@ -62,6 +63,7 @@ internal class GitStageCommitter(
     }
     finally {
       refreshChanges()
+      stagingAreaActionInvoked()
     }
   }
 

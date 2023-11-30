@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
-public class InjectionNodeDescriptor {
+public final class InjectionNodeDescriptor {
   private final String mySelector;
   private final SyntaxNodeDescriptor mySyntaxNodeDescriptor;
 

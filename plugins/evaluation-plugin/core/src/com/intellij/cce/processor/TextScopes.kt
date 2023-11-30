@@ -1,8 +1,9 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.processor
 
 import java.util.*
 
-internal class TextScopes(text: String) {
+class TextScopes(text: String) {
 
   private val closed: Stack<Char> = Stack()
   private val opened: Stack<Char> = Stack()
@@ -40,7 +41,8 @@ internal class TextScopes(text: String) {
           else if (SCOPE_CHARS.containsValue(char)) {
             if (opened.isEmpty()) {
               closed.add(char)
-            } else {
+            }
+            else {
               opened.pop()
             }
           }

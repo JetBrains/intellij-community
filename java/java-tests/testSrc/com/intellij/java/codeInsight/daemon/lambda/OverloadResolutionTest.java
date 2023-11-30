@@ -292,6 +292,9 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     
   }
 
+  public void testStaticAndDefaultMethodInInterfaces() {
+    doTest();
+  }
   private void doTest() {
     doTest(true);
   }

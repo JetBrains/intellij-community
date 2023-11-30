@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.actions;
 
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
@@ -20,11 +19,10 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
-
+public final class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
   public NewScriptAction() {
-    super(GroovyBundle.message("new.script.action.text"), GroovyBundle.message("new.script.action.description"),
-          JetgroovyIcons.Groovy.GroovyFile, false);
+    super(GroovyBundle.messagePointer("new.script.action.text"), GroovyBundle.messagePointer("new.script.action.description"),
+          () -> JetgroovyIcons.Groovy.GroovyFile, null);
   }
 
   @Override

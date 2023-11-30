@@ -21,10 +21,12 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.marketplaceIdeCodes
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.TimeoutCachedValue
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.io.*
 import com.intellij.util.ui.IoErrorText
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
@@ -42,6 +44,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
 import kotlin.io.path.exists
@@ -55,7 +59,7 @@ private val PLUGIN_NAMES_IN_COMMUNITY_EDITION: Map<String, String> = mapOf(
 private val objectMapper by lazy { ObjectMapper() }
 
 @ApiStatus.Internal
-class MarketplaceRequests : PluginInfoProvider {
+class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginInfoProvider {
   companion object {
     @JvmStatic
     fun getInstance(): MarketplaceRequests = PluginInfoProvider.getInstance() as MarketplaceRequests
@@ -212,6 +216,17 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val limitedDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1)
+
+  val marketplaceTagsSupplier: Supplier<Set<String>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
+    getAllPluginsTags()
+  }
+
+  val marketplaceVendorsSupplier: Supplier<Set<String>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
+    getAllPluginsVendors()
+  }
+
   @Throws(IOException::class)
   fun getFeatures(param: Map<String, String>): List<FeatureImpl> {
     if (param.isEmpty()) {
@@ -245,7 +260,7 @@ class MarketplaceRequests : PluginInfoProvider {
     val param = mapOf(
       "featureType" to featureType,
       "implementationName" to implementationName,
-      "build" to ApplicationInfoImpl.getShadowInstanceImpl().pluginsCompatibleBuild,
+      "build" to ApplicationInfoImpl.getShadowInstanceImpl().pluginCompatibleBuild,
     )
     return getFeatures(param)
   }
@@ -373,7 +388,7 @@ class MarketplaceRequests : PluginInfoProvider {
     return products.contains(product)
   }
 
-  fun getAllPluginsVendors(): List<String> {
+  private fun getAllPluginsVendors(): Set<String> {
     try {
       return HttpRequests
         .request(MarketplaceUrls.getSearchAggregationUrl("organizations"))
@@ -381,12 +396,12 @@ class MarketplaceRequests : PluginInfoProvider {
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
-          objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toList()
+          objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toSet()
         }
     }
     catch (e: Exception) {
       LOG.infoOrDebug("Can not get organizations from Marketplace", e)
-      return emptyList()
+      return emptySet()
     }
   }
 
@@ -426,7 +441,7 @@ class MarketplaceRequests : PluginInfoProvider {
     return brokenPluginsMap
   }
 
-  fun getAllPluginsTags(): List<String> {
+  private fun getAllPluginsTags(): Set<String> {
     try {
       return HttpRequests
         .request(MarketplaceUrls.getSearchAggregationUrl("tags"))
@@ -434,12 +449,12 @@ class MarketplaceRequests : PluginInfoProvider {
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
-          objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toList()
+          objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toSet()
         }
     }
     catch (e: Exception) {
       LOG.infoOrDebug("Can not get tags from Marketplace", e)
-      return emptyList()
+      return emptySet()
     }
   }
 
@@ -533,7 +548,7 @@ class MarketplaceRequests : PluginInfoProvider {
   }
 
   @RequiresBackgroundThread
-  private fun getJetBrainsMarketplacePlugins(indicator: ProgressIndicator?): Set<PluginId> {
+  private fun loadJetBrainsMarketplacePlugins(indicator: ProgressIndicator? = null): Set<PluginId> {
     return runCatching {
       readOrUpdateFile(
         Path.of(PathManager.getPluginTempPath(), MarketplaceUrls.JB_PLUGINS_XML_IDS_FILENAME),
@@ -548,10 +563,17 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
-  fun loadJetBrainsPluginsIds(indicator: ProgressIndicator? = null): Future<Set<PluginId>> {
-    return ApplicationManager.getApplication().executeOnPooledThread(Callable {
-      getJetBrainsMarketplacePlugins(indicator)
-    })
+  internal suspend fun updatePluginIdsAndExtensionData() {
+    withContext(limitedDispatcher) {
+      loadJetBrainsMarketplacePlugins()
+      loadExtensionsForIdes()
+    }
+  }
+
+  private fun schedulePluginIdsUpdate() {
+    coroutineScope.launch {
+      updatePluginIdsAndExtensionData()
+    }
   }
 
   fun loadCachedJBPlugins(): Set<PluginId>? {
@@ -563,14 +585,14 @@ class MarketplaceRequests : PluginInfoProvider {
     } catch (_: IOException) { }
 
     // can't find/read jb plugins xml ids cache file, schedule reload
-    loadJetBrainsPluginsIds()
+    schedulePluginIdsUpdate()
     return null
   }
 
   var extensionsForIdes: Map<String, List<String>>? = null
     private set
 
-  fun loadExtensionsForIdes() {
+  private fun loadExtensionsForIdes() {
     if (extensionsForIdes != null) {
       return
     }
@@ -651,7 +673,6 @@ private fun loadETagForFile(file: Path): String {
   return ""
 }
 
-@Suppress("SpellCheckingInspection")
 private fun getETagFile(file: Path): Path = file.parent.resolve("${file.fileName}.etag")
 
 private fun saveETagForFile(file: Path, eTag: String) {
@@ -679,7 +700,7 @@ private data class CompatibleUpdateRequest(
     pluginIds: Set<PluginId>,
     buildNumber: BuildNumber? = null,
   ) : this(
-    ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
+    ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
     pluginIds.map { it.idString },
   )
 }
@@ -695,7 +716,7 @@ private data class CompatibleUpdateForModuleRequest(
     buildNumber: BuildNumber? = null,
   ) : this(
     module,
-    ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
+    ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
   )
 }
 

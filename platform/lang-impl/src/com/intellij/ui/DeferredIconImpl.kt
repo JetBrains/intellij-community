@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.ide.PowerSaveMode
@@ -20,6 +20,7 @@ import com.intellij.util.ui.JBScalableIcon
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.Graphics
@@ -28,7 +29,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.Icon
 import javax.swing.JTree
-import org.jetbrains.annotations.TestOnly
 
 private val repaintScheduler = DeferredIconRepaintScheduler()
 
@@ -55,7 +55,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   private val isScheduled = AtomicBoolean(false)
 
   @JvmField
-  val param: T
+  internal val param: T
 
   @ApiStatus.Internal
   val uniqueId: Long = nextDeferredIconId.getAndIncrement()
@@ -67,7 +67,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     private set
 
   private var modificationCount = AtomicLong(0)
-  private val evalListener: ((DeferredIconImpl<T>, Icon) -> Unit)?
+  private val evaluatedListener: ((DeferredIconImpl<T>, Icon) -> Unit)?
 
   private constructor(icon: DeferredIconImpl<T>) : super(icon) {
     delegateIcon = icon.delegateIcon
@@ -79,7 +79,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     param = icon.param
     isNeedReadAction = icon.isNeedReadAction
     isDone = icon.isDone
-    evalListener = icon.evalListener
+    evaluatedListener = icon.evaluatedListener
     modificationCount = icon.modificationCount
   }
 
@@ -87,30 +87,23 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
                        param: T,
                        needReadAction: Boolean,
                        evaluator: (T) -> Icon?,
-                       listener: ((DeferredIconImpl<T>, Icon?) -> Unit)?) {
+                       listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
     this.param = param
     delegateIcon = baseIcon ?: EMPTY_ICON
     scaledDelegateIcon = delegateIcon
     cachedScaledIcon = null
     this.evaluator = evaluator
     isNeedReadAction = needReadAction
-    evalListener = listener
+    evaluatedListener = listener
     checkDelegationDepth()
   }
 
   constructor(baseIcon: Icon?, param: T, needReadAction: Boolean, evaluator: com.intellij.util.Function<in T, out Icon>) :
-    this(baseIcon = baseIcon,
-         param = param,
-         needReadAction = needReadAction,
-         evaluator = { evaluator.`fun`(it) },
-         listener = null)
+    this(baseIcon = baseIcon, param = param, needReadAction = needReadAction, evaluator = evaluator::`fun`, listener = null)
 
 
   @ApiStatus.Internal
-  constructor(baseIcon: Icon?,
-              param: T,
-              asyncEvaluator: suspend (T) -> Icon,
-              listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
+  constructor(baseIcon: Icon?, param: T, asyncEvaluator: suspend (T) -> Icon, listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
     this.param = param
     delegateIcon = baseIcon ?: EMPTY_ICON
     scaledDelegateIcon = delegateIcon
@@ -118,7 +111,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     this.evaluator = null
     this.asyncEvaluator = asyncEvaluator
     isNeedReadAction = false
-    evalListener = listener
+    evaluatedListener = listener
     checkDelegationDepth()
   }
 
@@ -166,6 +159,17 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     if (needScheduleEvaluation()) {
       scheduleEvaluation(c, x, y)
     }
+  }
+
+  fun currentlyPaintedIcon(): Icon {
+    var result = scaledDelegateIcon
+    if (result is DeferredIconImpl<*>) {
+      result = result.scaledDelegateIcon
+    }
+    if (result is DeferredIconImpl<*>) {
+      result = EMPTY_ICON // SOE protection, matches logic in 'paintIcon'
+    }
+    return result
   }
 
   override fun notifyPaint(c: Component, x: Int, y: Int) {
@@ -225,6 +229,9 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       scaledDelegateIcon = result
       modificationCount.incrementAndGet()
       checkDelegationDepth()
+
+      evaluatedListener?.invoke(this@DeferredIconImpl, result)
+
       processRepaints(oldWidth = oldWidth, result = result)
       setDone(result)
     }
@@ -257,13 +264,13 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   }
 
   private suspend fun setDone(result: Icon) {
+    val deferredIconListener = ApplicationManager.getApplication().messageBus.syncPublisher(DeferredIconListener.TOPIC)
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      evalListener?.invoke(this@DeferredIconImpl, result)
       isDone = true
       evaluator = null
       asyncEvaluator = null
       scheduledRepaints = null
-      ApplicationManager.getApplication().messageBus.syncPublisher(DeferredIconListener.TOPIC).evaluated(this@DeferredIconImpl, result)
+      deferredIconListener.evaluated(this@DeferredIconImpl, result)
     }
   }
 
@@ -284,6 +291,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
     val app = ApplicationManager.getApplication()
     if (app != null && app.isUnitTestMode) {
+      @Suppress("TestOnlyProblems")
       checkDoesntReferenceThis(result)
     }
     return adjustResultWithScale(result)
@@ -321,7 +329,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   override fun equals(other: Any?): Boolean = when {
     this === other -> true
     other === null -> false
-    else -> scaledDelegateIcon == (other as? DeferredIconImpl<*>)?.scaledDelegateIcon ?: other
+    else -> scaledDelegateIcon == ((other as? DeferredIconImpl<*>)?.scaledDelegateIcon ?: other)
   }
 
   override fun hashCode(): Int = Objects.hash(param, scaledDelegateIcon)

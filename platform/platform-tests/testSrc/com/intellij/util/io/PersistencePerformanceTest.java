@@ -14,9 +14,9 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
+import com.intellij.util.indexing.dependencies.IndexingRequestToken;
+import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
-import com.intellij.util.indexing.diagnostic.ScanningType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -108,10 +108,11 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
     FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     while (ContainerUtil.exists(futures, future -> !future.isDone())) {
       Thread.sleep(100);
-      new IndexUpdateRunner(index, UnindexedFilesUpdater.getNumberOfIndexingThreads())
+      IndexingRequestToken indexingRequest =
+        getProject().getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
+      new IndexUpdateRunner(index, indexingRequest, UnindexedFilesUpdater.getNumberOfIndexingThreads())
         .indexFiles(getProject(), Collections.singletonList(new IndexUpdateRunner.FileSet(getProject(), "test files", files)),
-                    new EmptyProgressIndicator(), new ProjectIndexingHistoryImpl(getProject(), "Testing", ScanningType.PARTIAL),
-                    new ProjectDumbIndexingHistoryImpl(getProject()));
+                    new EmptyProgressIndicator(), new ProjectDumbIndexingHistoryImpl(getProject()));
     }
     for (Future<Boolean> future : futures) {
       assertTrue(future.get());

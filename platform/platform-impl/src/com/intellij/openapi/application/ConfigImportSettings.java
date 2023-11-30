@@ -31,14 +31,14 @@ public interface ConfigImportSettings {
 
   /**
    * If the vmoptions are modified during the initial config import, normally the IDE should restart to apply these new vmoptions.
-   * Returning {@code false} from this method allows to override this behavior and not restart.
+   * Returning {@code false} from this method allows overriding this behavior and preventing restart.
    */
   default boolean shouldRestartAfterVmOptionsChange() {
     return true;
   }
 
   /**
-   * Allows to edit lists of plugins that are about to be migrated or downloaded during import
+   * Allows editing lists of plugins that are about to be migrated or downloaded during import.
    */
   default void processPluginsToMigrate(@NotNull Path newConfigDir,
                                        @NotNull Path oldConfigDir,

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.IntRef;
@@ -9,13 +9,12 @@ import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamBase;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
-import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.RepresentableAsByteArraySequence;
-import com.intellij.util.io.UnsyncByteArrayInputStream;
+import com.intellij.util.io.*;
+import com.intellij.util.io.blobstorage.ByteBufferReader;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordAlreadyDeletedException;
+import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -23,16 +22,29 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.checkAttributeValueSize;
+import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.LOG;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 /**
  * Attribute storage implemented on the top of {@link StreamlinedBlobStorage}
  */
-public class AttributesStorageOverBlobStorage implements AbstractAttributesStorage {
+@ApiStatus.Internal
+public final class AttributesStorageOverBlobStorage implements AbstractAttributesStorage, CleanableStorage {
   public static final int MAX_SUPPORTED_ATTRIBUTE_ID = 1 << AttributeEntry.BIG_ENTRY_ATTR_ID_BITS;
+
+  /**
+   * Under correct usage, we should never delete already deleted attribute record -- which is why storage was made
+   * throw exception in such a case.
+   * But in case of unexpected app termination, delete op could be interrupted in the middle, hence continues
+   * on restart, leading to the AlreadyDeletedException. It may be worth ignoring such errors, i.e. effectively
+   * allowing to delete already deleted record one more time. This is risky -- storage is definitely compromised
+   * -- but it could 'self-heal' storage in case of small corruptions without bothering the user with full VFS
+   * rebuild (which is a default way to 'self-heal' compromised VFS).
+   */
+  public static final boolean IGNORE_ALREADY_DELETED_ERRORS = getBooleanProperty("vfs.attributes.ignore-already-deleted-errors", true);
 
   //Persistent format (see AttributesRecord/AttributeEntry):
   //  Storage := (AttributeDirectoryRecord | AttributeDedicatedRecord)*
@@ -53,10 +65,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   //               from directory record)
   //      data[...]: attribute value, size = record.length-header.size(8)
 
-  @NotNull
-  private final StreamlinedBlobStorage storage;
-
-  private final AtomicInteger modCount = new AtomicInteger();
+  private final @NotNull StreamlinedBlobStorage storage;
 
   private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -168,10 +177,14 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   public void deleteAttributes(final @NotNull PersistentFSConnection connection,
                                final int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
+
+    PersistentFSRecordsStorage records = connection.getRecords();
     lock.writeLock().lock();
     try {
-      final int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
+      final int attributeRecordId = records.getAttributeRecordId(fileId);
       deleteAttributes(attributeRecordId, fileId);
+
+      records.setAttributeRecordId(fileId, NON_EXISTENT_ATTR_RECORD_ID);
     }
     finally {
       lock.writeLock().unlock();
@@ -179,21 +192,69 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   @Override
-  public void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,
-                                           final int fileId,
-                                           final @NotNull IntList usedAttributeRecordIds,
-                                           final @NotNull IntList validAttributeIds) throws IOException {
+  public void checkAttributeRecordSanity(int fileId,
+                                         int attributeRecordId) throws IOException {
+    if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+      return;
+    }
+
     lock.readLock().lock();
     try {
-      int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
+      storage.readRecord(attributeRecordId, buffer -> {
+        AttributesRecord attributesRecord = new AttributesRecord(buffer);
+        if (!attributesRecord.isValid()) {
+          throw new IllegalStateException(
+            "record(" + attributeRecordId + ") is invalid: " + attributesRecord
+          );
+        }
+        if (attributesRecord.fileId() != fileId) {
+          throw new IllegalStateException(
+            "record(" + attributeRecordId + ").fileId(" + fileId + ") != backref fileId(" + attributesRecord.fileId() + ")" +
+            ": " + attributesRecord
+          );
+        }
 
-      if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
-        return;
-      }
-
-      if (attributeRecordId > 0) {
-        checkAttributeRecordSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
-      }
+        if (attributesRecord.hasDirectory()) {
+          int entryNo = 0;
+          for (AttributeEntry entry = attributesRecord.currentEntry();
+               entry.isValid();
+               entry.moveToNextEntry(), entryNo++) {
+            int attributeId = entry.attributeId();
+            if (entry.isValueInlined()) {
+              if (attributeId <= DataEnumerator.NULL_ID || attributeId > MAX_SUPPORTED_ATTRIBUTE_ID) {
+                String valueAsHex = IOUtil.toHexString(entry.inlinedValueAsSlice());
+                throw new IllegalStateException(
+                  "attributeRecord[id:" + attributeRecordId + "][#" + entryNo + "]" +
+                  "{attributeId: " + attributeId + ", value: " + valueAsHex + "} attributeId must be in [1.." + MAX_ATTRIBUTE_ID + "]");
+              }
+            }
+            else {
+              int dedicatedRecordId = entry.dedicatedValueRecordId();
+              if (!storage.hasRecord(dedicatedRecordId)) {
+                throw new IllegalStateException(
+                  "attributeRecord[id:" + attributeRecordId + "][#" + entryNo + "]" +
+                  "{attributeId: " + attributeId + ", dedicatedId: " + dedicatedRecordId + "} dedicatedId must be != 0");
+              }
+            }
+          }
+        }
+        else if (attributesRecord.hasDedicatedAttribute()) {
+          int attributeId = attributesRecord.dedicatedRecordAttributeId();
+          throw new IllegalStateException(
+            "attributeRecord[id:" + attributeRecordId + "]{attributeId: " + attributeId + "} " +
+            "is dedicated record, but must be a directory record" +
+            ": " + attributesRecord
+          );
+        }
+        else {//AssertionError because it must be covered by !isValid() branch above
+          throw new AssertionError(
+            "attributeRecord[id:" + attributeRecordId + "] " +
+            "is of unknown type (!directory & !dedicated) record" +
+            ": " + attributesRecord
+          );
+        }
+        return null;
+      });
     }
     finally {
       lock.readLock().unlock();
@@ -201,8 +262,8 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   @Override
-  public int getLocalModificationCount() {
-    return modCount.get();
+  public boolean isEmpty() {
+    return storage.liveRecordsCount() == 0;
   }
 
   /**
@@ -258,7 +319,8 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   public interface Processor<E extends Exception> {
-    void processAttribute(final int recordId, final int fileId,
+    void processAttribute(final int recordId,
+                          final int fileId,
                           final int attributeId,
                           final byte[] attributeValue,
                           final boolean inlinedAttribute) throws E;
@@ -279,8 +341,15 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     storage.close();
   }
 
+  /** @deprecated replace with {@link #closeAndClean()} */
+  @Deprecated
   public static boolean deleteStorageFiles(final Path file) throws IOException {
     return FileUtil.delete(file.toFile());
+  }
+
+  @Override
+  public void closeAndClean() throws IOException {
+    storage.closeAndClean();
   }
 
   /**
@@ -289,7 +358,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
    * by calling code)
    */
   @VisibleForTesting
-  protected static class AttributesRecord {
+  protected static final class AttributesRecord {
 
     public static final int RECORD_FILE_ID_OFFSET = 0;
     public static final int RECORD_HEADER_SIZE = Integer.BYTES;
@@ -299,7 +368,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
 
     /** Record buffer */
     private final ByteBuffer buffer;
-    /** Fill record length (i.e. header + all attributes entries) */
+    /** Full record length (i.e. header + all attributes entries) */
     private final int length;
 
     private final int backRefFileId;
@@ -332,7 +401,15 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       }
     }
 
-    protected int fileId() {
+    /**
+     * @return true if the record is one of valid types: either directory or dedicated.
+     * false otherwise: if it is empty (length=0), or some kind of broken/corrupted record
+     */
+    public boolean isValid() {
+      return hasDirectory() || hasDedicatedAttribute();
+    }
+
+    public int fileId() {
       return backRefFileId;
     }
 
@@ -365,7 +442,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     /**
      * Valid for dedicated attribute record, -1 otherwise
      */
-    protected int dedicatedRecordAttributeId() {
+    private int dedicatedRecordAttributeId() {
       return dedicatedAttributeId;
     }
 
@@ -373,6 +450,13 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       final byte[] recordValue = new byte[length - DEDICATED_RECORD_HEADER_SIZE];
       buffer.get(DEDICATED_RECORD_HEADER_SIZE, recordValue);
       return recordValue;
+    }
+
+    @Override
+    public String toString() {
+      return "AttributesRecord[" + (hasDirectory() ? "directory" : "dedicated") + "][" +
+             buffer.position() + ".." + buffer.limit() + ", length: " + length + "]" +
+             "[backRefFileId: " + backRefFileId + ", dedicatedAttributeId: " + dedicatedAttributeId + "]";
     }
 
     public static ByteBuffer putDirectoryRecordHeader(final ByteBuffer buffer,
@@ -394,7 +478,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   @VisibleForTesting
-  protected static class AttributeEntry {
+  protected static final class AttributeEntry {
     //Entry binary format:
     //    We try hard to be as compact as possible. This is because we have really a lot of very small attributes:
     //    2-10 bytes attributes are very common (and they are the most frequently queried/updated), and >97% of
@@ -533,7 +617,8 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
 
     public ByteBuffer inlinedValueAsSlice() {
       final int valueLength = inlinedValueLength();
-      return buffer.slice(inlinedValueStartOffset(), valueLength);
+      return buffer.slice(inlinedValueStartOffset(), valueLength)
+        .order(buffer.order());
     }
 
     @Override
@@ -557,7 +642,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
                                              final int encodedAttributeId,
                                              final int sizeOrRefId) {
       assert encodedAttributeId <= MAX_SUPPORTED_ATTRIBUTE_ID
-        : "attributeId: " + encodedAttributeId + " > " + MAX_SUPPORTED_ATTRIBUTE_ID;
+        : "attributeId: " + encodedAttributeId + " > max " + MAX_SUPPORTED_ATTRIBUTE_ID;
 
       if (fitsTinyEntry(encodedAttributeId, sizeOrRefId)) {
         final byte firstByte = (byte)((encodedAttributeId << TINY_ENTRY_SIZE_BITS) | sizeOrRefId);
@@ -672,10 +757,8 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
   private final class AttributeOutputStreamImpl extends DataOutputStream implements RepresentableAsByteArraySequence {
-    @NotNull
-    private final PersistentFSConnection connection;
-    @NotNull
-    private final FileAttribute attribute;
+    private final @NotNull PersistentFSConnection connection;
+    private final @NotNull FileAttribute attribute;
     private final int fileId;
 
     private AttributeOutputStreamImpl(final @NotNull PersistentFSConnection connection,
@@ -695,10 +778,11 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       final int attributeValueSize = attributeValueHolder.size();
       checkAttributeValueSize(attribute, attributeValueSize);
 
+      PersistentFSRecordsStorage records = connection.getRecords();
       lock.writeLock().lock();
       try {
         final int encodedAttributeId = connection.getAttributeId(attribute.getId());
-        final int attributesRecordId = connection.getRecords().getAttributeRecordId(fileId);
+        final int attributesRecordId = records.getAttributeRecordId(fileId);
 
         final int updatedAttributesRecordId = updateAttribute(
           attributesRecordId,
@@ -706,13 +790,11 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
           attributeValueHolder.getInternalBuffer(), attributeValueSize
         );
 
-        if (updatedAttributesRecordId != attributesRecordId) {
-          connection.getRecords().setAttributeRecordId(fileId, updatedAttributesRecordId);
-        }
-        modCount.incrementAndGet();
+        //skip (updatedAttributesRecordId != attributesRecordId) check since we want to _always_ update file.modCount
+        records.setAttributeRecordId(fileId, updatedAttributesRecordId);
       }
       catch (Throwable t) {
-        FSRecords.LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
+        LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
         throw FSRecords.handleError(t);
       }
       finally {
@@ -720,20 +802,19 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       }
     }
 
-    @NotNull
     @Override
-    public ByteArraySequence asByteArraySequence() {
+    public @NotNull ByteArraySequence asByteArraySequence() {
       return ((BufferExposingByteArrayOutputStream)out).asByteArraySequence();
     }
   }
 
-  @VisibleForTesting
   //@GuardedBy("lock")
-  protected int updateAttribute(final int attributesRecordId,
-                                final int fileId,
-                                final int attributeId,
-                                final byte[] newValueBytes,
-                                final int newValueSize) throws IOException {
+  @VisibleForTesting
+  int updateAttribute(final int attributesRecordId,
+                      final int fileId,
+                      final int attributeId,
+                      final byte[] newValueBytes,
+                      final int newValueSize) throws IOException {
     checkAttributeId(attributeId);
     final int updatedAttributesRecordId;
     if (newValueSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
@@ -829,7 +910,7 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
       });
 
       if (recordToDelete.get() != NON_EXISTENT_ATTR_RECORD_ID) {
-        storage.deleteRecord(recordToDelete.get());
+        deleteRecordInStorage(recordToDelete.get());
       }
 
       return updatedAttributeRecordId;
@@ -906,15 +987,15 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
 
-  @VisibleForTesting
   //@GuardedBy("lock")
-  protected byte[] readAttributeValue(final int attributesRecordId,
-                                      final int fileId,
-                                      final int attributeId) throws IOException {
+  @VisibleForTesting
+  byte[] readAttributeValue(final int attributesRecordId,
+                            final int fileId,
+                            final int attributeId) throws IOException {
     return storage.readRecord(attributesRecordId, buffer -> {
       final AttributesRecord attributesRecord = new AttributesRecord(buffer);
       assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
-                                                        " != backref fileId(" + attributesRecord.backRefFileId + ")";
+                                                        " != backref fileId(" + attributesRecord.backRefFileId + "), " + attributesRecord;
 
       if (!attributesRecord.findAttributeInDirectoryRecord(attributeId)) {
         return null;
@@ -936,16 +1017,16 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     });
   }
 
-  @VisibleForTesting
   //@GuardedBy("lock")
-  protected <R> R readAttributeValue(final int attributesRecordId,
-                                     final int fileId,
-                                     final int attributeId,
-                                     final ByteBufferReader<R> reader) throws IOException {
+  @VisibleForTesting
+  <R> R readAttributeValue(final int attributesRecordId,
+                           final int fileId,
+                           final int attributeId,
+                           final ByteBufferReader<R> reader) throws IOException {
     return storage.readRecord(attributesRecordId, buffer -> {
       final AttributesRecord attributesRecord = new AttributesRecord(buffer);
       assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
-                                                        " != backref fileId(" + attributesRecord.backRefFileId + ")";
+                                                        " != backref fileId(" + attributesRecord.backRefFileId + "), " + attributesRecord;
 
       if (!attributesRecord.findAttributeInDirectoryRecord(attributeId)) {
         return null;
@@ -970,11 +1051,11 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
   }
 
 
-  @VisibleForTesting
   //@GuardedBy("lock")
-  protected boolean hasAttribute(final int attributesRecordId,
-                                 final int fileId,
-                                 final int attributeId) throws IOException {
+  @VisibleForTesting
+  boolean hasAttribute(final int attributesRecordId,
+                       final int fileId,
+                       final int attributeId) throws IOException {
     if (!storage.hasRecord(attributesRecordId)) {
       return false;
     }
@@ -1001,34 +1082,60 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
     });
   }
 
-  @VisibleForTesting
   //@GuardedBy("lock")
-  protected boolean deleteAttributes(final int attributesRecordId,
-                                     final int fileId) throws IOException {
+  @VisibleForTesting
+  boolean deleteAttributes(final int attributesRecordId,
+                           final int fileId) throws IOException {
     if (attributesRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
       return false;
     }
-    //Use writeToRecord even though we only read is a trick to avoid deadlock: we call .deleteRecord()
-    // inside callback, which tries to acquire storage write lock, which could lead to deadlock
-    // if storage readLock is already acquired, even by current thread (RW lock not allow read->write
-    // lock escalation).
-    storage.writeToRecord(attributesRecordId, buffer -> {
-      final AttributesRecord attributesRecord = new AttributesRecord(buffer);
-      assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
-                                                        " != backref fileId(" + attributesRecord.backRefFileId + ")";
-      for (final AttributeEntry entry = attributesRecord.currentEntry();
-           entry.isValid();
-           entry.moveToNextEntry()) {
-        if (!entry.isValueInlined()) {
-          storage.deleteRecord(entry.dedicatedValueRecordId());
+
+    try {
+      //Use writeToRecord even though we only read is a trick to avoid deadlock: we call .deleteRecord()
+      // inside callback, which tries to acquire storage write lock, which could lead to deadlock
+      // if storage readLock is already acquired, even by current thread (RW lock not allow read->write
+      // lock escalation).
+      storage.writeToRecord(attributesRecordId, buffer -> {
+        final AttributesRecord attributesRecord = new AttributesRecord(buffer);
+        assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
+                                                          " != backref fileId(" + attributesRecord.backRefFileId + ")";
+        for (final AttributeEntry entry = attributesRecord.currentEntry();
+             entry.isValid();
+             entry.moveToNextEntry()) {
+          if (!entry.isValueInlined()) {
+            deleteRecordInStorage(entry.dedicatedValueRecordId());
+            //TODO clear entry.dedicatedRecordId?
+          }
         }
+        return null;//indicate no actual write happened
+      });
+    }
+    catch (RecordAlreadyDeletedException ex) {
+      if (IGNORE_ALREADY_DELETED_ERRORS) {
+        LOG.warn("Record [" + attributesRecordId + "] is already deleted -> likely improper app shutdown?");
       }
-      return null;//indicate no actual write happened
-    });
+      else {
+        throw ex;
+      }
+    }
 
-    storage.deleteRecord(attributesRecordId);
+    return deleteRecordInStorage(attributesRecordId);
+  }
 
-    return true;
+  private boolean deleteRecordInStorage(int recordId) throws IOException {
+    try {
+      storage.deleteRecord(recordId);
+      return true;
+    }
+    catch (RecordAlreadyDeletedException ex) {
+      if (IGNORE_ALREADY_DELETED_ERRORS) {
+        LOG.warn("Record [" + recordId + "] is already deleted -> likely improper app shutdown?");
+        return false;
+      }
+      else {
+        throw ex;
+      }
+    }
   }
 
 
@@ -1061,7 +1168,8 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
                                                "!= backref attributeId(" + backRefAttributeId + ")";
 
     final int valueLength = dedicatedRecordBuffer.remaining() - AttributesRecord.DEDICATED_RECORD_HEADER_SIZE;
-    return dedicatedRecordBuffer.slice(AttributesRecord.DEDICATED_RECORD_HEADER_SIZE, valueLength);
+    return dedicatedRecordBuffer.slice(AttributesRecord.DEDICATED_RECORD_HEADER_SIZE, valueLength)
+      .order(dedicatedRecordBuffer.order());
   }
 
 
@@ -1084,9 +1192,8 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
    * and set position to buffer.position, and limit to requiredLimit. Data from buffer is not copied,
    * use {@link #ensureLimitAndData(ByteBuffer, int)} for that.
    */
-  @NotNull
-  private static ByteBuffer ensureLimit(final ByteBuffer buffer,
-                                        final int requiredLimit) {
+  private static @NotNull ByteBuffer ensureLimit(final ByteBuffer buffer,
+                                                 final int requiredLimit) {
     if (buffer.capacity() >= requiredLimit) {
       return buffer.limit(Math.max(buffer.limit(), requiredLimit));
     }
@@ -1123,10 +1230,10 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
    * into buffer[...offset..(offset+newGapSize)...] keeping data before & after the gap intact.
    */
   @VisibleForTesting
-  protected static ByteBuffer resizeGap(final ByteBuffer buffer,
-                                        final int offset,
-                                        final int oldGapSize,
-                                        final int newGapSize) {
+  static ByteBuffer resizeGap(final ByteBuffer buffer,
+                              final int offset,
+                              final int oldGapSize,
+                              final int newGapSize) {
     final int oldGapEndOffset = offset + oldGapSize;
     final int newGapEndOffset = offset + newGapSize;
     final int limitBefore = buffer.limit();
@@ -1154,13 +1261,4 @@ public class AttributesStorageOverBlobStorage implements AbstractAttributesStora
         "attributeId(=" + attributeId + ") must be in [0.." + MAX_SUPPORTED_ATTRIBUTE_ID + "]");
     }
   }
-
-  private void checkAttributeRecordSanity(int attributeRecordId,
-                                          @NotNull IntList usedAttributeRecordIds,
-                                          @NotNull IntList validAttributeIds) {
-    assert !usedAttributeRecordIds.contains(attributeRecordId);
-    usedAttributeRecordIds.add(attributeRecordId);
-    //FIXME RC: read all the entries in attributeRecordId
-  }
-
 }

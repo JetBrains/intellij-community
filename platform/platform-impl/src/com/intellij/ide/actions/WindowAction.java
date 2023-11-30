@@ -1,19 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class WindowAction extends AnAction implements DumbAware {
+public abstract class WindowAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
 
   private static final String NO_WINDOW_ACTIONS = "no.window.actions";
   private static JLabel ourSizeHelper;
@@ -34,7 +35,8 @@ public abstract class WindowAction extends AnAction implements DumbAware {
 
   @Override
   public final void update(@NotNull AnActionEvent event) {
-    Window window = UIUtil.getWindow(event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+    @Nullable Component component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    Window window = ComponentUtil.getWindow(component);
     boolean enabled = isEnabledFor(window);
     if (enabled && Registry.is("no.window.actions.in.editor")) {
       Editor editor = event.getData(CommonDataKeys.EDITOR);
@@ -60,7 +62,8 @@ public abstract class WindowAction extends AnAction implements DumbAware {
   }
 
   private static void performSizeAction(@NotNull AnActionEvent e, boolean horizontal, boolean positive) {
-    Window window = UIUtil.getWindow(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+    @Nullable Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    Window window = ComponentUtil.getWindow(component);
     if (window == null) return;
     Dimension size = getPreferredDelta();
     int baseValue = horizontal ? size.width : size.height;
@@ -87,7 +90,7 @@ public abstract class WindowAction extends AnAction implements DumbAware {
     return ourSizeHelper.getPreferredSize();
   }
 
-  public static class IncrementWidth extends WindowAction {
+  public static final class IncrementWidth extends WindowAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -95,7 +98,7 @@ public abstract class WindowAction extends AnAction implements DumbAware {
     }
   }
 
-  public static class DecrementWidth extends WindowAction {
+  public static final class DecrementWidth extends WindowAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -103,14 +106,14 @@ public abstract class WindowAction extends AnAction implements DumbAware {
     }
   }
 
-  public static class IncrementHeight extends WindowAction {
+  public static final class IncrementHeight extends WindowAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       performSizeAction(e, false, true);
     }
   }
 
-  public static class DecrementHeight extends WindowAction {
+  public static final class DecrementHeight extends WindowAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       performSizeAction(e, false, false);

@@ -45,6 +45,6 @@ public interface BuilderElementHandler {
 
   Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info);
 
-  List<String> getBuilderMethodNames(@NotNull String newName, @Nullable PsiAnnotation singularAnnotation,
-                                     CapitalizationStrategy capitalizationStrategy);
+  List<String> getBuilderMethodNames(@NotNull String fieldName, @NotNull String prefix,
+                                     @Nullable PsiAnnotation singularAnnotation, CapitalizationStrategy capitalizationStrategy);
 }

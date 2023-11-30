@@ -116,16 +116,11 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
 
     List<Runnable> onSuccessImportTasks = new SmartList<>();
     List<Runnable> onFailureImportTasks = new SmartList<>();
-    final Collection<DataNode<?>> traceNodes = grouped.get(PerformanceTrace.TRACE_NODE_KEY);
 
-    final PerformanceTrace trace;
-    if (traceNodes.size() > 0) {
-      trace = (PerformanceTrace)traceNodes.iterator().next().getData();
-    }
-    else {
-      trace = new PerformanceTrace();
-      grouped.putValue(PerformanceTrace.TRACE_NODE_KEY, new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, trace, null));
-    }
+    final Collection<DataNode<?>> traceNodes = grouped.getOrPut(PerformanceTrace.TRACE_NODE_KEY, () ->
+      new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, new PerformanceTrace(), null)
+    );
+    final PerformanceTrace trace = (PerformanceTrace)ContainerUtil.getFirstItem(traceNodes).getData();
 
     long allStartTime = System.currentTimeMillis();
     long activityId = trace.getId();
@@ -207,6 +202,10 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       Application app = ApplicationManager.getApplication();
       if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
         StartUpPerformanceService.Companion.getInstance().reportStatistics(project);
+      }
+
+      if (importSucceeded) {
+        trace.reportStatistics();
       }
     }
   }

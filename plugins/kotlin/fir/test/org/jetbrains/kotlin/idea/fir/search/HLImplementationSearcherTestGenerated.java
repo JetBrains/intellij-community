@@ -42,6 +42,11 @@ public abstract class HLImplementationSearcherTestGenerated extends AbstractHLIm
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("classObjectInStaticNestedClass.kt")
+            public void testClassObjectInStaticNestedClass() throws Exception {
+                runTest("testData/search/implementations/classes/classObjectInStaticNestedClass.kt");
+            }
+
             @TestMetadata("classWithDeepHeiarchy.kt")
             public void testClassWithDeepHeiarchy() throws Exception {
                 runTest("testData/search/implementations/classes/classWithDeepHeiarchy.kt");
@@ -92,9 +97,19 @@ public abstract class HLImplementationSearcherTestGenerated extends AbstractHLIm
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("EnumEntryFunction.kt")
+            public void testEnumEntryFunction() throws Exception {
+                runTest("testData/search/implementations/methods/EnumEntryFunction.kt");
+            }
+
             @TestMetadata("inLocalClass.kt")
             public void testInLocalClass() throws Exception {
                 runTest("testData/search/implementations/methods/inLocalClass.kt");
+            }
+
+            @TestMetadata("inObjectLiteral.kt")
+            public void testInObjectLiteral() throws Exception {
+                runTest("testData/search/implementations/methods/inObjectLiteral.kt");
             }
 
             @TestMetadata("singleSuperMethod.kt")
@@ -125,6 +140,11 @@ public abstract class HLImplementationSearcherTestGenerated extends AbstractHLIm
         public static class Uncategorized extends AbstractHLImplementationSearcherTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inConstructorParam.kt")
+            public void testInConstructorParam() throws Exception {
+                runTest("testData/search/implementations/properties/inConstructorParam.kt");
             }
 
             @TestMetadata("inLocalClass.kt")

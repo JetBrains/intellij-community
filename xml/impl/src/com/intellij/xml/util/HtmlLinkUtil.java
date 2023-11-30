@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -13,9 +13,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class HtmlLinkUtil {
-  @NonNls public static final String LINK = "link";
+  public static final @NonNls String LINK = "link";
 
-  public static void processLinks(@NotNull final XmlFile xhtmlFile,
+  public static void processLinks(final @NotNull XmlFile xhtmlFile,
                                   @NotNull Processor<? super XmlTag> tagProcessor) {
     final XmlDocument doc = HtmlUtil.getRealXmlDocument(xhtmlFile.getDocument());
     if (doc == null) return;
@@ -31,7 +31,7 @@ public final class HtmlLinkUtil {
     }
   }
 
-  public static void findLinkStylesheets(@NotNull final XmlTag tag,
+  public static void findLinkStylesheets(final @NotNull XmlTag tag,
                                          @NotNull Processor<? super XmlTag> tagProcessor) {
     processInjectedContent(tag, tagProcessor);
 
@@ -45,7 +45,7 @@ public final class HtmlLinkUtil {
   }
 
   public static void processInjectedContent(final XmlTag element,
-                                            @NotNull final Processor<? super XmlTag> tagProcessor) {
+                                            final @NotNull Processor<? super XmlTag> tagProcessor) {
     final PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = (injectedPsi, places) -> {
       if (injectedPsi instanceof XmlFile) {
         final XmlDocument injectedDocument = ((XmlFile)injectedPsi).getDocument();

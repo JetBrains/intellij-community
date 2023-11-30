@@ -180,6 +180,21 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/InvokeCall.kt");
         }
 
+        @TestMetadata("javaFields.kt")
+        public void testJavaFields() throws Exception {
+            runTest("testData/highlighterMetaInfo/javaFields.kt");
+        }
+
+        @TestMetadata("JavaRecord.kt")
+        public void testJavaRecord() throws Exception {
+            runTest("testData/highlighterMetaInfo/JavaRecord.kt");
+        }
+
+        @TestMetadata("javaStaticFields.kt")
+        public void testJavaStaticFields() throws Exception {
+            runTest("testData/highlighterMetaInfo/javaStaticFields.kt");
+        }
+
         @TestMetadata("JavaTypes.kt")
         public void testJavaTypes() throws Exception {
             runTest("testData/highlighterMetaInfo/JavaTypes.kt");
@@ -223,6 +238,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("PropertiesWithPropertyDeclarations.kt")
         public void testPropertiesWithPropertyDeclarations() throws Exception {
             runTest("testData/highlighterMetaInfo/PropertiesWithPropertyDeclarations.kt");
+        }
+
+        @TestMetadata("script.kts")
+        public void testScript() throws Exception {
+            runTest("testData/highlighterMetaInfo/script.kts");
         }
 
         @TestMetadata("Suspend.kt")

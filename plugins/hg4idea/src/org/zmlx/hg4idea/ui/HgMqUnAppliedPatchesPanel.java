@@ -5,6 +5,7 @@ import com.google.common.primitives.Ints;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -103,10 +104,10 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
   private JComponent createToolbar() {
     MqRefreshAction mqRefreshAction = new MqRefreshAction();
-    EmptyAction.setupAction(mqRefreshAction, "hg4idea.QRefresh", this);
+    ActionUtil.mergeFrom(mqRefreshAction, "hg4idea.QRefresh");
 
     MqDeleteAction mqDeleteAction = new MqDeleteAction();
-    EmptyAction.setupAction(mqDeleteAction, "hg4idea.QDelete", this);
+    ActionUtil.mergeFrom(mqDeleteAction, "hg4idea.QDelete");
 
     PopupHandler.installPopupMenu(myPatchTable, POPUP_ACTION_GROUP, ActionPlaces.PROJECT_VIEW_POPUP);
 

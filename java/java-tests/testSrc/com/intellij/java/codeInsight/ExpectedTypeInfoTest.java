@@ -17,7 +17,7 @@ package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -185,6 +185,6 @@ public class ExpectedTypeInfoTest extends LightJavaCodeInsightTestCase {
   @NotNull
   private ExpectedTypeInfo createInfo(String className, @ExpectedTypeInfo.Type int kind) {
     PsiType type = getJavaFacade().getElementFactory().createTypeByFQClassName(className, GlobalSearchScope.allScope(getProject()));
-    return ExpectedTypesProvider.createInfo(type, kind, type, TailType.NONE);
+    return ExpectedTypesProvider.createInfo(type, kind, type, TailTypes.noneType());
   }
 }

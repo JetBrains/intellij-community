@@ -1,4 +1,6 @@
 // IS_APPLICABLE: true
+// HIGHLIGHT: INFORMATION
+
 fun foo() {
     bar(a = 2, b = {<caret> it })
 }

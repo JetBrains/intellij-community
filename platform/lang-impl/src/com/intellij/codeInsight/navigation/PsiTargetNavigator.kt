@@ -91,7 +91,7 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
     if (items.isEmpty()) {
       return false
     }
-    else if (items.size == 1) {
+    else if (items.size == 1 && updater == null) {
       predicate.test(items.first())
     }
     else {
@@ -133,6 +133,11 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
                          project: Project,
                          selected: ItemWithPresentation?,
                          predicate: Predicate<ItemWithPresentation>): JBPopup {
+    if (updater == null) {
+      require(targets.size > 1) {
+        "Attempted to build a target popup with ${targets.size} elements"
+      }
+    }
     val builder = buildTargetPopupWithMultiSelect(targets, Function { it.presentation }, predicate)
     val caption = title ?: this.title ?: updater?.getCaption(targets.size)
     caption?.let { builder.setTitle(caption) }
@@ -146,7 +151,12 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
       }
     }
     selected?.let { builder.setSelectedValue(selected, true) }
-    updater?.let { builder.setCancelCallback { updater!!.cancelTask() }}
+    updater?.let {
+      builder.setCancelCallback {
+        it.cancelTask()
+        true
+      }
+    }
     builderConsumer?.accept(builder)
 
     val popup = builder.createPopup()

@@ -7,6 +7,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.gradle.util.Ranges
 
 @State(name = "GradleJvmSupportMatrix", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)])
@@ -117,6 +118,11 @@ class GradleJvmSupportMatrix : IdeVersionedDataStorage<GradleCompatibilityState>
 
   private fun getOldestRecommendedJavaVersionByIdeaImpl(): JavaVersion {
     return JavaVersion.compose(8)
+  }
+
+  @TestOnly
+  fun resetState() {
+    onStateChanged(newState())
   }
 
   companion object {

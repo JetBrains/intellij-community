@@ -1,10 +1,25 @@
 from _typeshed import Incomplete
-from typing import Any
-from typing_extensions import TypeAlias
+from collections.abc import Callable
+from typing import ClassVar
+from typing_extensions import Self
 
 __all__ = ["TqdmCallback"]
 
-_Callback: TypeAlias = Any  # Actually dask.callbacks.Callback
+# dask.callbacks.Callback
+class _Callback:
+    active: ClassVar[set[tuple[Callable[..., Incomplete] | None, ...]]]
+    def __init__(
+        self,
+        start: Incomplete | None,
+        start_state: Incomplete | None,
+        pretask: Incomplete | None,
+        posttask: Incomplete | None,
+        finish: Incomplete | None,
+    ) -> None: ...
+    def __enter__(self) -> Self: ...
+    def __exit__(self, *args: object) -> None: ...
+    def register(self) -> None: ...
+    def unregister(self) -> None: ...
 
 class TqdmCallback(_Callback):
     tqdm_class: type[Incomplete]

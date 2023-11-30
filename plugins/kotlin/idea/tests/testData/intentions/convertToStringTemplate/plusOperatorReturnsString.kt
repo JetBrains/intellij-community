@@ -1,4 +1,4 @@
-// IGNORE_FE10
+// IGNORE_K1
 // IGNORE_FE10_BINDING_BY_FIR
 // IS_APPLICABLE: false
 class Foo(private val bar: Int) {

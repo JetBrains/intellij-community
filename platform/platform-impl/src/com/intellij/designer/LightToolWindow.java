@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer;
 
 import com.intellij.icons.AllIcons;
@@ -345,7 +345,7 @@ public final class LightToolWindow extends JPanel {
     popupMenu.getComponent().show(component, x, y);
   }
 
-  private class GearAction extends AnAction {
+  private final class GearAction extends AnAction {
     GearAction() {
       Presentation presentation = getTemplatePresentation();
       presentation.setIcon(AllIcons.General.GearPlain);
@@ -365,7 +365,7 @@ public final class LightToolWindow extends JPanel {
     }
   }
 
-  private class HideAction extends AnAction {
+  private final class HideAction extends AnAction {
     HideAction() {
       Presentation presentation = getTemplatePresentation();
       presentation.setText(UIBundle.messagePointer("tool.window.hide.action.name"));
@@ -384,9 +384,8 @@ public final class LightToolWindow extends JPanel {
       ActionUtil.copyFrom(this, mode.getActionID());
     }
 
-    @Nullable
     @Override
-    protected ToolWindow getToolWindow(AnActionEvent e) {
+    protected @Nullable ToolWindow getToolWindow(AnActionEvent e) {
       return myManager.getToolWindow();
     }
 
@@ -397,7 +396,7 @@ public final class LightToolWindow extends JPanel {
     }
   }
 
-  private class ActionButton extends Wrapper implements ActionListener {
+  private final class ActionButton extends Wrapper implements ActionListener {
     private final AnAction myAction;
 
     ActionButton(AnAction action) {
@@ -426,7 +425,7 @@ public final class LightToolWindow extends JPanel {
     }
   }
 
-  private static class HeaderPanel extends JPanel {
+  private static final class HeaderPanel extends JPanel {
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.highlighter;
 
 import com.intellij.openapi.editor.Document;
@@ -92,9 +92,8 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
     }
   }
 
-  @NotNull
   @Override
-  public HighlighterIterator createIterator(int startOffset) {
+  public @NotNull HighlighterIterator createIterator(int startOffset) {
     int index = Collections.binarySearch(myPieces, new Element(startOffset, 0, null, null), Comparator.comparingInt(Element::getStart));
     // index: (-insertion point - 1), where insertionPoint is the index of the first element greater than the key
     // and we need index of the first element that is less or equal (floorElement)

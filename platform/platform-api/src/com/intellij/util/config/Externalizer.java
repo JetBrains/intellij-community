@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.config;
 
 import com.intellij.openapi.util.Factory;
@@ -71,9 +71,9 @@ public interface Externalizer<T> {
   }
 
   final class StorageExternalizer implements Externalizer<Storage> {
-    @NonNls private static final String ITEM_TAG = "item";
-    @NonNls private static final String KEY_ATTR = "key";
-    @NonNls private static final String VALUE_ATTR = "value";
+    private static final @NonNls String ITEM_TAG = "item";
+    private static final @NonNls String KEY_ATTR = "key";
+    private static final @NonNls String VALUE_ATTR = "value";
 
     @Override
     public Storage readValue(Element dataElement) {

@@ -11,11 +11,11 @@ import org.jetbrains.annotations.NotNull;
  * Virtual file that doesn't exist yet
  */
 @ApiStatus.Experimental
-public class FutureVirtualFile extends LightVirtualFile {
+public final class FutureVirtualFile extends LightVirtualFile {
   private final VirtualFile myParent;
 
-  public FutureVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @NotNull FileType fileType, @NotNull CharSequence text) {
-    super(name, fileType, text);
+  public FutureVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @NotNull FileType fileType) {
+    super(name, fileType, "");
     myParent = parent;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 public class FileTypeExtension<T> extends KeyedExtensionCollector<T, FileType> {
-  public FileTypeExtension(@NonNls final String epName) {
+  public FileTypeExtension(final @NonNls String epName) {
     super(epName);
   }
 
@@ -20,14 +20,12 @@ public class FileTypeExtension<T> extends KeyedExtensionCollector<T, FileType> {
     super(epName);
   }
 
-  @NotNull
   @Override
-  protected String keyToString(@NotNull final FileType key) {
+  protected @NotNull String keyToString(final @NotNull FileType key) {
     return key.getName();
   }
 
-  @NotNull
-  public List<T> allForFileType(@NotNull FileType t) {
+  public @NotNull List<T> allForFileType(@NotNull FileType t) {
     return forKey(t);
   }
 

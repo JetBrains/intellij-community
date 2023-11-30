@@ -27,7 +27,9 @@ import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.containers.HashingStrategy
-import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReaderWithCache
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import io.opentelemetry.api.metrics.Meter
 import org.jdom.Element

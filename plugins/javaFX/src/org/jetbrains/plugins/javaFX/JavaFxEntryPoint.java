@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.javaFX;
 
@@ -20,8 +20,7 @@ public final class JavaFxEntryPoint extends EntryPoint {
   public boolean ADD_JAVAFX_TO_ENTRIES = true;
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return JavaFXBundle.message("javafx.entry.point.javafx.app");
   }
 

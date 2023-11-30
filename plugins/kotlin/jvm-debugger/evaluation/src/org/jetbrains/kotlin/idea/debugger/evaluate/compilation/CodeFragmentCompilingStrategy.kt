@@ -1,13 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
-import com.intellij.openapi.diagnostic.Attachment
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.readText
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
-import org.jetbrains.kotlin.idea.debugger.evaluate.*
+import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluatorStatisticsCollector
+import org.jetbrains.kotlin.idea.debugger.evaluate.StatisticsEvaluationResult
+import org.jetbrains.kotlin.idea.debugger.evaluate.StatisticsEvaluator
+import org.jetbrains.kotlin.idea.debugger.evaluate.gatherProjectFilesDependedOnByFragment
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -17,14 +18,17 @@ import org.jetbrains.kotlin.resolve.BindingContext
 
 abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
 
+    internal val stats: CodeFragmentCompilationStats = CodeFragmentCompilationStats()
+
     abstract val compilerBackend: FragmentCompilerCodegen
 
     abstract fun getFilesToCompile(resolutionFacade: ResolutionFacade, bindingContext: BindingContext): List<KtFile>
 
     abstract fun onSuccess()
-    abstract fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext)
+    abstract fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext)
     abstract fun getFallbackStrategy(): CodeFragmentCompilingStrategy?
     abstract fun beforeRunningFallback()
+    abstract fun beforeAnalyzingCodeFragment()
 }
 
 class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragmentCompilingStrategy(codeFragment) {
@@ -43,15 +47,17 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
         KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
             codeFragment.project,
             StatisticsEvaluator.OLD,
-            StatisticsEvaluationResult.SUCCESS
+            StatisticsEvaluationResult.SUCCESS,
+            stats
         )
     }
 
-    override fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+    override fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
         KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
             codeFragment.project,
             StatisticsEvaluator.OLD,
-            StatisticsEvaluationResult.FAILURE
+            StatisticsEvaluationResult.FAILURE,
+            stats,
         )
         throw e
     }
@@ -59,6 +65,9 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
     override fun getFallbackStrategy(): CodeFragmentCompilingStrategy? = null
 
     override fun beforeRunningFallback() {
+    }
+
+    override fun beforeAnalyzingCodeFragment() {
     }
 }
 
@@ -106,15 +115,17 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
             codeFragment.project,
             StatisticsEvaluator.IR,
-            StatisticsEvaluationResult.SUCCESS
+            StatisticsEvaluationResult.SUCCESS,
+            stats
         )
     }
 
-    override fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+    override fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
         KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
             codeFragment.project,
             StatisticsEvaluator.IR,
-            StatisticsEvaluationResult.FAILURE
+            StatisticsEvaluationResult.FAILURE,
+            stats
         )
         if (isFallbackDisabled()) {
             throw e
@@ -122,49 +133,6 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         if (isApplicationInternalMode()) {
             reportErrorWithAttachments(executionContext, codeFragment, e)
         }
-    }
-
-    private fun reportErrorWithAttachments(
-        executionContext: ExecutionContext,
-        codeFragment: KtCodeFragment,
-        e: CodeFragmentCodegenException
-    ) {
-        val evaluationContext = executionContext.evaluationContext
-        val projectName = evaluationContext.project.name
-        val suspendContext = evaluationContext.suspendContext
-
-        val file = suspendContext.activeExecutionStack?.topFrame?.sourcePosition?.file
-        val fileContents = file?.readText()
-
-        val sessionName = suspendContext.debugProcess.session.sessionName
-
-        val debuggerContext = """
-            project: $projectName
-            session: $sessionName
-            location: ${suspendContext.location} at ${file?.path}
-        """.trimIndent()
-
-        val suspendStackTrace = suspendContext.thread?.frames()?.joinToString(System.lineSeparator()) {
-            val location = it.location()
-            "${location.method()} at line ${location.lineNumber()}"
-        }
-
-        val attachments = buildList {
-            add(Attachment("debugger_context.txt", debuggerContext).apply { isIncluded = true })
-            add(Attachment("code_fragment.txt", codeFragment.text).apply { isIncluded = true })
-            suspendStackTrace?.let {
-                add(Attachment("suspend_stack_trace.txt", it).apply { isIncluded = true })
-            }
-            fileContents?.let {
-                add(Attachment("opened_file_contents.txt", it).apply { isIncluded = true })
-            }
-        }
-
-        LOG.error(basicErrorMessage(), RuntimeExceptionWithAttachments(e.reason, *attachments.toTypedArray()))
-    }
-
-    private fun basicErrorMessage(): String {
-        return "Error when compiling code fragment with IR evaluator. Details in attachments."
     }
 
     override fun getFallbackStrategy(): CodeFragmentCompilingStrategy? {
@@ -180,5 +148,9 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
 
     private fun isFallbackDisabled(): Boolean {
         return Registry.`is`("debugger.kotlin.evaluator.disable.fallback.to.old.backend")
+    }
+
+    override fun beforeAnalyzingCodeFragment() {
+        codeFragment.putCopyableUserData(CodeFragmentUtils.USED_FOR_COMPILATION_IN_IR_EVALUATOR, true)
     }
 }

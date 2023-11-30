@@ -302,6 +302,7 @@ public final class PushController implements Disposable {
       result.compareAndSet(null, outgoing);
       try {
         ApplicationManager.getApplication().invokeAndWait(() -> {
+          if (myDialog.isDisposed()) return;
           OutgoingResult outgoing1 = result.get();
           List<VcsError> errors = outgoing1.getErrors();
           boolean shouldBeSelected;

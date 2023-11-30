@@ -228,6 +228,10 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  public void testUnreachableCodeReportedAfterNoReturnWithQuotesFunction() {
+    doTest();
+  }
+
   // PY-24273
   public void testUnreachableCodeReportedAfterImportedNoReturnFunction() {
     doMultiFileTest();

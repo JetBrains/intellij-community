@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.reset;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -38,14 +38,14 @@ import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operat
 public class GitResetOperation {
 
 
-  @NotNull private final Project myProject;
-  @NotNull private final Map<GitRepository, Hash> myCommits;
-  @NotNull private final GitResetMode myMode;
-  @NotNull private final ProgressIndicator myIndicator;
-  @NotNull private final Git myGit;
-  @NotNull private final VcsNotifier myNotifier;
-  @NotNull private final GitBranchUiHandlerImpl myUiHandler;
-  @NotNull private final OperationPresentation myPresentation;
+  private final @NotNull Project myProject;
+  private final @NotNull Map<GitRepository, Hash> myCommits;
+  private final @NotNull GitResetMode myMode;
+  private final @NotNull ProgressIndicator myIndicator;
+  private final @NotNull Git myGit;
+  private final @NotNull VcsNotifier myNotifier;
+  private final @NotNull GitBranchUiHandlerImpl myUiHandler;
+  private final @NotNull OperationPresentation myPresentation;
 
   public GitResetOperation(@NotNull Project project,
                            @NotNull Map<GitRepository, Hash> targetCommits,
@@ -98,7 +98,7 @@ public class GitResetOperation {
   }
 
   private GitCommandResult proposeSmartReset(@NotNull GitLocalChangesWouldBeOverwrittenDetector detector,
-                                             @NotNull final GitRepository repository, @NotNull @NlsSafe String target) {
+                                             final @NotNull GitRepository repository, @NotNull @NlsSafe String target) {
     Collection<String> absolutePaths = toAbsolute(repository.getRoot(), detector.getRelativeFilePaths());
     List<Change> affectedChanges = findLocalChangesForPaths(myProject, repository.getRoot(), absolutePaths, false);
     GitSmartOperationDialog.Choice choice = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths,
@@ -149,9 +149,7 @@ public class GitResetOperation {
     }
   }
 
-  @NlsSafe
-  @NotNull
-  private static String formErrorReport(@NotNull Map<GitRepository, GitCommandResult> errorResults) {
+  private static @NlsSafe @NotNull String formErrorReport(@NotNull Map<GitRepository, GitCommandResult> errorResults) {
     MultiMap<String, GitRepository> grouped = groupByResult(errorResults);
     if (grouped.size() == 1) {
       return "<code>" + grouped.keySet().iterator().next() + "</code>";
@@ -160,8 +158,7 @@ public class GitResetOperation {
   }
 
   // to avoid duplicate error reports if they are the same for different repositories
-  @NotNull
-  private static MultiMap<String, GitRepository> groupByResult(@NotNull Map<GitRepository, GitCommandResult> results) {
+  private static @NotNull MultiMap<String, GitRepository> groupByResult(@NotNull Map<GitRepository, GitCommandResult> results) {
     MultiMap<String, GitRepository> grouped = MultiMap.create();
     for (Map.Entry<GitRepository, GitCommandResult> entry : results.entrySet()) {
       grouped.putValue(entry.getValue().getErrorOutputAsHtmlString(), entry.getKey());
@@ -169,9 +166,7 @@ public class GitResetOperation {
     return grouped;
   }
 
-  @NlsSafe
-  @NotNull
-  private static String joinRepos(@NotNull Collection<? extends GitRepository> repositories) {
+  private static @NlsSafe @NotNull String joinRepos(@NotNull Collection<? extends GitRepository> repositories) {
     return StringUtil.join(DvcsUtil.sortRepositories(repositories), ", ");
   }
 
@@ -179,8 +174,7 @@ public class GitResetOperation {
     ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
   }
 
-  @PropertyKey(resourceBundle = GitBundle.BUNDLE)
-  public static class OperationPresentation {
+  public static @PropertyKey(resourceBundle = GitBundle.BUNDLE) class OperationPresentation {
     public String activityName = "git.reset.process";
     public String operationTitle = "git.reset.operation";
     public String forceButtonTitle = "git.reset.hard.button";

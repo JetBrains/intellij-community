@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.find.findUsages;
 
@@ -15,8 +15,7 @@ import org.jetbrains.annotations.*;
 import java.util.List;
 
 public class FindUsagesOptions implements Cloneable {
-  @NotNull
-  public SearchScope searchScope;
+  public @NotNull SearchScope searchScope;
 
   public boolean isSearchForTextOccurrences = true;
 
@@ -27,7 +26,7 @@ public class FindUsagesOptions implements Cloneable {
     this(project, null);
   }
 
-  public FindUsagesOptions(@NotNull Project project, @Nullable final DataContext dataContext) {
+  public FindUsagesOptions(@NotNull Project project, final @Nullable DataContext dataContext) {
     this(findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName()));
   }
 
@@ -79,9 +78,8 @@ public class FindUsagesOptions implements Cloneable {
     return result;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return getClass().getSimpleName() + "{" +
            "searchScope=" + searchScope +
            ", isSearchForTextOccurrences=" + isSearchForTextOccurrences +
@@ -89,8 +87,7 @@ public class FindUsagesOptions implements Cloneable {
            '}';
   }
 
-  @NotNull
-  public @Nls String generateUsagesString() {
+  public @NotNull @Nls String generateUsagesString() {
     return AnalysisBundle.message("find.usages.panel.title.usages");
   }
 }

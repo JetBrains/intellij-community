@@ -58,6 +58,7 @@ public final class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey MARKUP_TAG = TextAttributesKey.createTextAttributesKey("DEFAULT_TAG", HighlighterColors.TEXT);
   public static final TextAttributesKey MARKUP_ATTRIBUTE = TextAttributesKey.createTextAttributesKey("DEFAULT_ATTRIBUTE", IDENTIFIER);
   public static final TextAttributesKey MARKUP_ENTITY = TextAttributesKey.createTextAttributesKey("DEFAULT_ENTITY", IDENTIFIER);
+  public static final TextAttributesKey INLINE_SUGGESTION = TextAttributesKey.createTextAttributesKey("INLINE_SUGGESTION");
   public static final TextAttributesKey INLINE_PARAMETER_HINT = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT");
   public static final TextAttributesKey INLINE_PARAMETER_HINT_HIGHLIGHTED = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT_HIGHLIGHTED");
   public static final TextAttributesKey INLINE_PARAMETER_HINT_CURRENT = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT_CURRENT");

@@ -10,9 +10,8 @@ import org.jetbrains.annotations.Nullable;
 public final class DockableGridContainerFactory implements DockContainerFactory {
   public static final String TYPE = "runner-grid";
 
-  @NotNull
   @Override
-  public DockContainer createContainer(@Nullable DockableContent content) {
+  public @NotNull DockContainer createContainer(@Nullable DockableContent content) {
     RunnerContentUi.DockableGrid dockableGrid = (RunnerContentUi.DockableGrid)content;
     return new RunnerContentUi(dockableGrid.getRunnerUi(), dockableGrid.getOriginalRunnerUi(), dockableGrid.getWindow());
   }

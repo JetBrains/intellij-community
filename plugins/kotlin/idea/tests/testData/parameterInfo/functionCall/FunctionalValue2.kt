@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 val header = { s: String, s1: String -> }
 fun header(name: String, value: Int) { }
 

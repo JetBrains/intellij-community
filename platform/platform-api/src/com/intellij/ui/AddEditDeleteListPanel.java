@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts.Label;
@@ -12,7 +12,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public abstract class AddEditDeleteListPanel<T> extends AddDeleteListPanel<T> {
-  public AddEditDeleteListPanel(@Label final String title, final List<T> initialList) {
+  public AddEditDeleteListPanel(final @Label String title, final List<T> initialList) {
     super(title, initialList);
     new DoubleClickListener() {
       @Override
@@ -33,8 +33,7 @@ public abstract class AddEditDeleteListPanel<T> extends AddDeleteListPanel<T> {
     });
   }
 
-  @Nullable
-  protected abstract T editSelectedItem(T item);
+  protected abstract @Nullable T editSelectedItem(T item);
 
   private void editSelectedItem() {
     int index = myList.getSelectedIndex();

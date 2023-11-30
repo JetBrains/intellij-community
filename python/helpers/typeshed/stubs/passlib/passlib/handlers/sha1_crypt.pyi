@@ -1,5 +1,5 @@
-from _typeshed import Self
 from typing import Any, ClassVar
+from typing_extensions import Self
 
 import passlib.utils.handlers as uh
 
@@ -18,6 +18,6 @@ class sha1_crypt(uh.HasManyBackends, uh.HasRounds, uh.HasSalt, uh.GenericHandler
     max_rounds: ClassVar[int]
     rounds_cost: ClassVar[str]
     @classmethod
-    def from_string(cls: type[Self], hash: str | bytes) -> Self: ...  # type: ignore[override]
-    def to_string(self, config: bool = ...) -> str: ...
+    def from_string(cls, hash: str | bytes) -> Self: ...  # type: ignore[override]
+    def to_string(self, config: bool = False) -> str: ...
     backends: ClassVar[tuple[str, ...]]

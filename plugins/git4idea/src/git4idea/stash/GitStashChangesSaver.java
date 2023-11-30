@@ -40,8 +40,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitStashChangesSaver.class);
   private static final String NO_LOCAL_CHANGES_TO_SAVE = "No local changes to save";
 
-  @NotNull private final GitRepositoryManager myRepositoryManager;
-  @NotNull private final Map<VirtualFile, /* @Nullable */ Hash> myStashedRoots = new HashMap<>(); // stashed roots & nullable stash commit
+  private final @NotNull GitRepositoryManager myRepositoryManager;
+  private final @NotNull Map<VirtualFile, /* @Nullable */ Hash> myStashedRoots = new HashMap<>(); // stashed roots & nullable stash commit
 
   public GitStashChangesSaver(@NotNull Project project,
                               @NotNull Git git,
@@ -169,21 +169,18 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   private static class UnstashMergeDialogCustomizer extends MergeDialogCustomizer {
 
-    @NotNull
     @Override
-    public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+    public @NotNull String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
       return GitBundle.message("stash.unstash.conflict.dialog.description.label.text");
     }
 
-    @NotNull
     @Override
-    public String getLeftPanelTitle(@NotNull VirtualFile file) {
+    public @NotNull String getLeftPanelTitle(@NotNull VirtualFile file) {
       return getConflictLeftPanelTitle();
     }
 
-    @NotNull
     @Override
-    public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
+    public @NotNull String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
       return getConflictRightPanelTitle();
     }
   }

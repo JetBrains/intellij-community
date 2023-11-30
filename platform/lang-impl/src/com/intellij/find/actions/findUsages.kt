@@ -9,7 +9,6 @@ import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildUsageViewQuery
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Factory
 import com.intellij.psi.impl.search.runSearch
@@ -54,7 +53,7 @@ internal fun findUsages(project: Project, target: SearchTarget, allOptions: AllS
     tabText = UsageViewBundle.message("search.title.0.in.1", searchString, scopeText)
     isOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView || !canReuseTab(project)
   }
-  project.service<UsageViewManager>().searchAndShowUsages(
+  UsageViewManager.getInstance(project).searchAndShowUsages(
     arrayOf(SearchTarget2UsageTarget(project, target, allOptions)),
     factory,
     false,

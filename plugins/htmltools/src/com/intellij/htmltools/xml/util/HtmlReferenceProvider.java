@@ -48,13 +48,13 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.doIfNotNull;
 
-public class HtmlReferenceProvider extends PsiReferenceProvider {
-  @NonNls private static final String NAME_ATTR_LOCAL_NAME = "name";
-  @NonNls private static final String USEMAP_ATTR_NAME = "usemap";
-  @NonNls private static final String FOR_ATTR_NAME = "for";
-  @NonNls private static final String HREF_ATTRIBUTE_NAME = "href";
-  @NonNls private static final String SRC_ATTR_NAME = "src";
-  @NonNls private static final String JAVASCRIPT_PREFIX = "javascript:";
+public final class HtmlReferenceProvider extends PsiReferenceProvider {
+  private static final @NonNls String NAME_ATTR_LOCAL_NAME = "name";
+  private static final @NonNls String USEMAP_ATTR_NAME = "usemap";
+  private static final @NonNls String FOR_ATTR_NAME = "for";
+  private static final @NonNls String HREF_ATTRIBUTE_NAME = "href";
+  private static final @NonNls String SRC_ATTR_NAME = "src";
+  private static final @NonNls String JAVASCRIPT_PREFIX = "javascript:";
 
   public static final FileType[] IMAGE_FILE_TYPES = new FileType[]{ImageFileTypeManager.getInstance().getImageFileType()};
   public static final String LABELLEDBY = "aria-labelledby";
@@ -77,15 +77,15 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
     };
   }
 
-  protected static boolean isAcceptableAttributeValue(PsiElement element) {
+  private static boolean isAcceptableAttributeValue(PsiElement element) {
     final PsiElement parent = element.getParent();
 
     if (parent instanceof XmlAttribute xmlAttribute) {
-      @NonNls final String attrName = xmlAttribute.getName();
+      final @NonNls String attrName = xmlAttribute.getName();
       XmlTag tag = xmlAttribute.getParent();
       if (tag == null) return false;
 
-      @NonNls final String tagName = tag.getName();
+      final @NonNls String tagName = tag.getName();
 
       return
        ( attrName.equalsIgnoreCase(SRC_ATTR_NAME) &&
@@ -170,7 +170,7 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, final @NotNull ProcessingContext context) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof XmlAttribute attribute)) return PsiReference.EMPTY_ARRAY;
     final String localName = attribute.getLocalName();
@@ -295,18 +295,17 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
     };
   }
 
-  static class ContentTypeReference extends BasicAttributeValueReference {
-    private static @NonNls final String ourStyleContentType = "text/css";
+  static final class ContentTypeReference extends BasicAttributeValueReference {
+    private static final @NonNls String ourStyleContentType = "text/css";
 
-    @NonNls static final String TYPE_ATTR_NAME = "type";
+    static final @NonNls String TYPE_ATTR_NAME = "type";
 
     ContentTypeReference(final PsiElement element) {
       super(element);
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return null;
     }
 
@@ -338,10 +337,10 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  public static class SizeReference extends BasicAttributeValueReference {
-    @NonNls static final String WIDTH_ATTR_NAME = "width";
-    @NonNls static final String HEIGHT_ATTR_NAME = "height";
-    @NonNls static final String IMAGE_TAG_NAME = "img";
+  public static final class SizeReference extends BasicAttributeValueReference {
+    static final @NonNls String WIDTH_ATTR_NAME = "width";
+    static final @NonNls String HEIGHT_ATTR_NAME = "height";
+    static final @NonNls String IMAGE_TAG_NAME = "img";
 
     private final boolean myIsWidth;
 
@@ -354,8 +353,7 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       final ImageInfoReader.Info info = getImageInfo();
       if (info != null && info.width != 0 && info.height != 0) {
         String text = getCanonicalText();
@@ -388,8 +386,7 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
       return tag != null ? getImageInfo(tag) : null;
     }
 
-    @Nullable
-    public static ImageInfoReader.Info getImageInfo(@NotNull final XmlTag tag) {
+    public static @Nullable ImageInfoReader.Info getImageInfo(final @NotNull XmlTag tag) {
       return CachedValuesManager.getCachedValue(tag, () -> {
         PsiElement srcValue = JBIterable.from(HtmlAttributeValueProvider.EP_NAME.getExtensionList())
           .filterMap(it -> it.getCustomAttributeValue(tag, SRC_ATTR_NAME))
@@ -453,7 +450,7 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  private static class HtmlIdSelfReference extends AttributeValueSelfReference {
+  private static final class HtmlIdSelfReference extends AttributeValueSelfReference {
     HtmlIdSelfReference(final PsiElement element, int offset) {
       super(element, offset);
     }
@@ -464,7 +461,7 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
 
       IdRefReference.process(new PsiElementProcessor<>() {
         @Override
-        public boolean execute(@NotNull final PsiElement element) {
+        public boolean execute(final @NotNull PsiElement element) {
           if (element instanceof XmlTag) {
             String forValue = ((XmlTag)element).getAttributeValue(IdReferenceProvider.FOR_ATTR_NAME);
             if (forValue != null) {
@@ -479,7 +476,7 @@ public class HtmlReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  public static class HtmlIdRefReference extends IdRefReference {
+  public static final class HtmlIdRefReference extends IdRefReference {
     public HtmlIdRefReference(PsiElement element, int offset) {
       super(element, offset, true);
     }

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 @ApiStatus.Internal
-public class StubUpdatableIndexFactoryImpl extends StubUpdatableIndexFactory {
+public final class StubUpdatableIndexFactoryImpl extends StubUpdatableIndexFactory {
   @Override
   public @NotNull MapReduceIndexBase<Integer, SerializedStubTree, ?> createIndex(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
                                                                                  @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout,

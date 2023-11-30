@@ -54,11 +54,15 @@ public final class ThrowableInterner {
   });
 
   private static int computeHashCode(@NotNull Throwable throwable) {
+    int mHash;
     String message = throwable.getMessage();
-    if (message != null) {
-      return message.hashCode();
+    if (message == null) {
+      mHash = 0;
     }
-    return computeTraceHashCode(throwable);
+    else {
+      mHash = message.hashCode() * 37;
+    }
+    return mHash + computeTraceHashCode(throwable);
   }
 
   public static int computeTraceHashCode(@NotNull Throwable throwable) {

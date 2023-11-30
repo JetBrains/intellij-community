@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.editorActions.wordSelection.DocTagSelectioner;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -147,7 +147,8 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
           for (PsiClassType ref : method.getThrowsList().getReferencedTypes()) {
             final PsiClass exception = ref.resolve();
             if (exception != null && throwsSet.add(exception)) {
-              result.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(exception), TailType.HUMBLE_SPACE_BEFORE_WORD));
+              result.addElement(
+                TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(exception), TailTypes.humbleSpaceBeforeWordType()));
             }
           }
         }
@@ -168,7 +169,8 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         if (list == null) return;
         for (String attribute : ATTRIBUTES) {
           if (list.getAttribute(attribute) == null) {
-            result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(attribute).withTailText("=", true), TailType.EQUALS));
+            result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(attribute).withTailText("=", true),
+                                                         TailTypes.equalsType()));
           }
         }
       }
@@ -313,7 +315,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         result.addElement(LookupElementDecorator.withInsertHandler(LookupElementBuilder.create(lookupString), new InlineInsertHandler()));
       }
       else {
-        result.addElement(TailTypeDecorator.withTail((LookupElement)LookupElementBuilder.create("@" + tag), TailType.INSERT_SPACE));
+        result.addElement(TailTypeDecorator.withTail((LookupElement)LookupElementBuilder.create("@" + tag), TailTypes.insertSpaceType()));
       }
     }
   }
@@ -442,7 +444,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
           result.addElement(LookupElementDecorator.withInsertHandler(LookupElementBuilder.create(s), new InlineInsertHandler()));
         }
         else {
-          result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailType.INSERT_SPACE));
+          result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(s), TailTypes.insertSpaceType()));
         }
       }
       result.stopHere(); // no word completions at this point

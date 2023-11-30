@@ -28,7 +28,7 @@ interface PathsProvider {
     get() = launcherFolder.resolve("system")
 
   val javaHomeFolder: File
-    get() = File(SystemProperties.getJavaHome())
+    get() = JdkDownloader.getJdkHome(BuildDependenciesCommunityRoot(communityRootFolder.toPath())).normalize().toFile()
 
   val mavenRepositoryFolder: File
     get() = File(System.getProperty("user.home")).resolve(".m2/repository")
@@ -37,9 +37,7 @@ interface PathsProvider {
     get() = communityRootFolder.resolve("bin")
 
   val javaExecutable: File
-    get() = JdkDownloader.getJavaExecutable(
-      JdkDownloader.getJdkHome(BuildDependenciesCommunityRoot(communityRootFolder.toPath()))
-    ).normalize().toFile()
+    get() = JdkDownloader.getJavaExecutable(javaHomeFolder.toPath()).normalize().toFile()
 
   val dockerVolumesToWritable: Map<File, Boolean>
     get() = emptyMap()

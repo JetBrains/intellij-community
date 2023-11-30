@@ -2,41 +2,39 @@ MODULES
 wasm20221114
 
 wasm20221114.commonMain
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (COMPILE)
 
 wasm20221114.commonTest
     commonMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test-annotations-common:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test-common:{{KGP_VERSION}} (TEST)
 
 wasm20221114.jsMain
     commonMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-dom-api-compat:klib:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-js:klib:{{KGP_VERSION}} (COMPILE)
 
 wasm20221114.jsTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
-    jsMain (friend, RUNTIME)
     jsMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-dom-api-compat:klib:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-js:klib:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test-annotations-js:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test-js:{{KGP_VERSION}} (TEST)
 
-wasm20221114.wasmMain
+wasm20221114.wasmJsMain
     commonMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-wasm-js:klib:{{KGP_VERSION}} (COMPILE)
 
-wasm20221114.wasmTest
+wasm20221114.wasmJsTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-wasm:klib:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test-annotations-wasm:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-test-wasm:klib:{{KGP_VERSION}} (TEST)
-    wasmMain (friend, RUNTIME)
-    wasmMain (friend, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-wasm-js:klib:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test-annotations-wasm-js:{{KGP_VERSION}} (TEST)
+    org.jetbrains.kotlin:kotlin-test-wasm-js:klib:{{KGP_VERSION}} (TEST)
+    wasmJsMain (friend, TEST)
 
 
 Test configuration:

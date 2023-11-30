@@ -1,5 +1,4 @@
- // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+ // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -33,9 +32,19 @@ import java.util.function.Supplier;
 
 public abstract class BaseRunConfigurationAction extends ActionGroup {
   protected static final Logger LOG = Logger.getInstance(BaseRunConfigurationAction.class);
+  private volatile Boolean isDumbAware = false;
 
   protected BaseRunConfigurationAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, final Icon icon) {
     super(text, description, icon);
+    setPopup(true);
+    setEnabledInModalContext(true);
+  }
+
+  protected BaseRunConfigurationAction(@NotNull Supplier<String> text,
+                                       @NotNull Supplier<String> description,
+                                       @Nullable Supplier<? extends @Nullable Icon> icon) {
+    super(text, description, icon);
+
     setPopup(true);
     setEnabledInModalContext(true);
   }
@@ -59,14 +68,12 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     return createChildActions(context, getConfigurationsFromContext(context)).toArray(EMPTY_ARRAY);
   }
 
-  @Nullable
-  protected RunnerAndConfigurationSettings findExisting(ConfigurationContext context) {
+  protected @Nullable RunnerAndConfigurationSettings findExisting(ConfigurationContext context) {
     return context.findExisting();
   }
 
-  @NotNull
-  protected List<AnAction> createChildActions(@NotNull ConfigurationContext context,
-                                              @NotNull List<? extends ConfigurationFromContext> configurations) {
+  protected @NotNull List<AnAction> createChildActions(@NotNull ConfigurationContext context,
+                                                       @NotNull List<? extends ConfigurationFromContext> configurations) {
     if (configurations.size() <= 1) {
       return Collections.emptyList();
     }
@@ -87,8 +94,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     return childActions;
   }
 
-  @NotNull
-  private List<ConfigurationFromContext> getConfigurationsFromContext(ConfigurationContext context) {
+  private @NotNull List<ConfigurationFromContext> getConfigurationsFromContext(ConfigurationContext context) {
     final List<ConfigurationFromContext> fromContext = context.getConfigurationsFromContext();
     if (fromContext == null) {
       return Collections.emptyList();
@@ -112,7 +118,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, e.getPlace());
     final RunnerAndConfigurationSettings existing = findExisting(context);
@@ -171,10 +177,10 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     fullUpdate(e);
   }
 
-  @Nullable private static Integer ourLastTimeoutStamp = null;
+  private static @Nullable Integer ourLastTimeoutStamp = null;
 
   @Override
-  public void update(@NotNull final AnActionEvent event) {
+  public void update(final @NotNull AnActionEvent event) {
     boolean doFullUpdate = !ApplicationManager.getApplication().isDispatchThread() ||
                            ApplicationManager.getApplication().isUnitTestMode();
     VirtualFile vFile = event.getDataContext().getData(CommonDataKeys.VIRTUAL_FILE);
@@ -213,9 +219,9 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   protected void fullUpdate(@NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, event.getPlace());
-    final Presentation presentation = event.getPresentation();
-    final RunnerAndConfigurationSettings existing = findExisting(context);
+    ConfigurationContext context = ConfigurationContext.getFromEvent(event);
+    Presentation presentation = event.getPresentation();
+    RunnerAndConfigurationSettings existing = findExisting(context);
     RunnerAndConfigurationSettings configuration = existing;
     if (configuration == null) {
       configuration = context.getConfiguration();
@@ -225,6 +231,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       presentation.setPerformGroup(false);
     }
     else{
+      isDumbAware = configuration.getType().isDumbAware();
       presentation.setEnabledAndVisible(true);
       VirtualFile vFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
       if (vFile != null) {
@@ -251,12 +258,10 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   @Override
   public boolean isDumbAware() {
-    return false;
+    return isDumbAware;
   }
 
-  @NotNull
-  @Nls
-  public static String suggestRunActionName(@NotNull RunConfiguration configuration) {
+  public static @NotNull @Nls String suggestRunActionName(@NotNull RunConfiguration configuration) {
     if (configuration instanceof LocatableConfigurationBase && ((LocatableConfigurationBase<?>)configuration).isGeneratedName()) {
       String actionName = ((LocatableConfigurationBase<?>)configuration).getActionName();
       if (actionName != null) {
@@ -266,14 +271,11 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     return ProgramRunnerUtil.shortenName(configuration.getName(), 0); 
   }
   
-  @NotNull
-  public static String suggestRunActionName(@NotNull LocatableConfiguration configuration) {
+  public static @NotNull String suggestRunActionName(@NotNull LocatableConfiguration configuration) {
     return suggestRunActionName((RunConfiguration)configuration);
   }
 
-  @NotNull
-  @Nls
-  private static String childActionName(ConfigurationFromContext configurationFromContext) {
+  private static @NotNull @Nls String childActionName(ConfigurationFromContext configurationFromContext) {
     RunConfiguration configuration = configurationFromContext.getConfiguration();
     if (!(configuration instanceof LocatableConfiguration)) {
       return configurationFromContext.getConfigurationType().getDisplayName();

@@ -18,4 +18,4 @@ fun f(b1: B, b2: B) {
 }
 
 
-// IGNORE_FIR_LOG
+// IGNORE_K2_LOG

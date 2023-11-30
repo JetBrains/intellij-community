@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.sh.highlighting.ShOccurrencesHighlightingSuppressor;
 import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
 import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.ShFile;
@@ -22,17 +23,15 @@ public class ShRenameHandler implements RenameHandler {
   @Override
   public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
-    return editor != null
+    ShFile file = ObjectUtils.tryCast(dataContext.getData(CommonDataKeys.PSI_FILE), ShFile.class);
+    return editor != null && file != null
+           && ShOccurrencesHighlightingSuppressor.isOccurrencesHighlightingEnabled(editor, file)
            && ShRenameAllOccurrencesHandler.INSTANCE.isEnabled(editor, editor.getCaretModel().getPrimaryCaret(), dataContext)
-           && isRenameAvailable(editor, dataContext)
+           && isRenameAvailable(editor, file)
       ;
   }
 
-  private static boolean isRenameAvailable(@NotNull Editor editor, @NotNull DataContext dataContext) {
-    ShFile file = ObjectUtils.tryCast(dataContext.getData(CommonDataKeys.PSI_FILE), ShFile.class);
-    if (file == null) {
-      return false;
-    }
+  private static boolean isRenameAvailable(@NotNull Editor editor, @NotNull ShFile file) {
     if (editor.getCaretModel().getPrimaryCaret().hasSelection()) return true;
     TextRange textRange = ShTextOccurrencesUtil.findTextRangeOfIdentifierAtCaret(editor);
     if (textRange != null) {

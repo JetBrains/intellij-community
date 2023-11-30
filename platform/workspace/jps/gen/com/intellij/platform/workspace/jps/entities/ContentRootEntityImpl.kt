@@ -15,7 +15,6 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
@@ -26,14 +25,15 @@ import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : ContentRootEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) : ContentRootEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_MANY, false)
     internal val EXCLUDEDURLS_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java, ExcludeUrlEntity::class.java,
@@ -47,7 +47,7 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
                                                                                    ExcludeUrlOrderEntity::class.java,
                                                                                    ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
       EXCLUDEDURLS_CONNECTION_ID,
       SOURCEROOTS_CONNECTION_ID,
@@ -85,6 +85,7 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
     return connections
   }
 
+
   class Builder(result: ContentRootEntityData?) : ModifiableWorkspaceEntityBase<ContentRootEntity, ContentRootEntityData>(
     result), ContentRootEntity.Builder {
     constructor() : this(ContentRootEntityData())
@@ -114,7 +115,7 @@ open class ContentRootEntityImpl(val dataSource: ContentRootEntityData) : Conten
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -430,8 +431,8 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
   lateinit var url: VirtualFileUrl
   lateinit var excludedPatterns: MutableList<String>
 
-  fun isUrlInitialized(): Boolean = ::url.isInitialized
-  fun isExcludedPatternsInitialized(): Boolean = ::excludedPatterns.isInitialized
+  internal fun isUrlInitialized(): Boolean = ::url.isInitialized
+  internal fun isExcludedPatternsInitialized(): Boolean = ::excludedPatterns.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ContentRootEntity> {
     val modifiable = ContentRootEntityImpl.Builder(null)
@@ -448,6 +449,10 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.ContentRootEntity") as EntityMetadata
   }
 
   override fun clone(): ContentRootEntityData {
@@ -530,11 +535,5 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
     var result = javaClass.hashCode()
     result = 31 * result + url.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.url?.let { collector.add(it::class.java) }
-    this.excludedPatterns?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

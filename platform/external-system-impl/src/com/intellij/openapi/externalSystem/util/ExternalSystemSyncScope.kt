@@ -4,4 +4,4 @@ package com.intellij.openapi.externalSystem.util
 import com.intellij.platform.diagnostic.telemetry.Scope
 
 @JvmField
-val ExternalSystemSync = Scope("external-system-sync")
+val ExternalSystemSync: Scope = Scope("external-system-sync")

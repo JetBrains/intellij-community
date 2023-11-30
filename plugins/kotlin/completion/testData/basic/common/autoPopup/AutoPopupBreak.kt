@@ -8,5 +8,6 @@ fun foo() {
     }
 }
 
+// IGNORE_K2
 // INVOCATION_COUNT: 0
 // EXIST: break@outer

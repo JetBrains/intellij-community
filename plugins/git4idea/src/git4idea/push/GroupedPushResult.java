@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import git4idea.repo.GitRepository;
@@ -9,10 +9,10 @@ import java.util.Map;
 
 final class GroupedPushResult {
 
-  @NotNull final Map<GitRepository, GitPushRepoResult> successful;
-  @NotNull final Map<GitRepository, GitPushRepoResult> errors;
-  @NotNull final Map<GitRepository, GitPushRepoResult> rejected;
-  @NotNull final Map<GitRepository, GitPushRepoResult> customRejected;
+  final @NotNull Map<GitRepository, GitPushRepoResult> successful;
+  final @NotNull Map<GitRepository, GitPushRepoResult> errors;
+  final @NotNull Map<GitRepository, GitPushRepoResult> rejected;
+  final @NotNull Map<GitRepository, GitPushRepoResult> customRejected;
 
   private GroupedPushResult(@NotNull Map<GitRepository, GitPushRepoResult> successful,
                             @NotNull Map<GitRepository, GitPushRepoResult> errors,
@@ -24,8 +24,7 @@ final class GroupedPushResult {
     this.customRejected = customRejected;
   }
 
-  @NotNull
-  static GroupedPushResult group(@NotNull Map<GitRepository, GitPushRepoResult> results) {
+  static @NotNull GroupedPushResult group(@NotNull Map<GitRepository, GitPushRepoResult> results) {
     Map<GitRepository, GitPushRepoResult> successful = new HashMap<>();
     Map<GitRepository, GitPushRepoResult> rejected = new HashMap<>();
     Map<GitRepository, GitPushRepoResult> customRejected = new HashMap<>();

@@ -15,6 +15,9 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataFile;
@@ -27,6 +30,11 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 public abstract class PluginModuleTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   private static final DefaultLightProjectDescriptor ourProjectDescriptor = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      super.configureModule(module, model, contentEntry);
+      addJetBrainsAnnotations(model);
+    }
 
     @NotNull
     @Override

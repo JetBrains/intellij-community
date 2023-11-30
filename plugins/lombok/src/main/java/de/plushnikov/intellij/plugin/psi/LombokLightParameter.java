@@ -50,6 +50,11 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
     return (LombokLightModifierList)super.getModifierList();
   }
 
+  public LombokLightParameter withAnnotation(@NotNull String annotation) {
+    getModifierList().addAnnotation(annotation);
+    return this;
+  }
+
   @Override
   public TextRange getTextRange() {
     TextRange r = super.getTextRange();

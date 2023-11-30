@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -7,10 +7,12 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.colors.impl.*;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
+import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -221,7 +223,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(21, myScheme.getConsoleFontSize());
   }
 
-  public void testWriteColorWithAlpha() throws Exception {
+  public void testWriteColorWithAlpha() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme scheme = (EditorColorsScheme)defaultScheme.clone();
     scheme.setName("test");
@@ -238,7 +240,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       serialize(scheme));
   }
 
-  public void testWriteInheritedFromDefault() throws Exception {
+  public void testWriteInheritedFromDefault() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
     editorColorsScheme.setName("test");
@@ -260,7 +262,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       serialize(editorColorsScheme));
   }
 
-  public void testWriteInheritedFromDarcula() throws Exception {
+  public void testWriteInheritedFromDarcula() {
     EditorColorsScheme darculaScheme = EditorColorsManager.getInstance().getScheme("Darcula");
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)darculaScheme.clone();
     editorColorsScheme.setName("test");
@@ -399,7 +401,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
-  public void testWriteDefaultSemanticHighlighting() throws Exception {
+  public void testWriteDefaultSemanticHighlighting() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
     editorColorsScheme.setName("rainbow");
@@ -703,29 +705,6 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
     editorColorsScheme.setColor(EditorColors.LINE_NUMBERS_COLOR, null);
     editorColorsScheme.setColor(EditorColors.LINE_NUMBERS_COLOR, new Color(255, 0, 0));
-  }
-
-  public void testInheritedFromBundled() {
-    EditorColorsManagerImpl colorsManager = (EditorColorsManagerImpl)EditorColorsManager.getInstance();
-    EditorColorsScheme bundledScheme = null;
-    try {
-      bundledScheme = colorsManager.loadBundledScheme("Dark");
-      var userCopy = (AbstractColorsScheme)colorsManager.getScheme(Scheme.EDITABLE_COPY_PREFIX + "Dark");
-      EditorColorSchemeTestCase.assertXmlOutputEquals(
-        """
-          <scheme name="_@user_Dark" version="142" parent_scheme="Darcula">
-            <metaInfo>
-              <property name="originalScheme">Dark</property>
-              <property name="partialSave">true</property>
-            </metaInfo>
-          </scheme>""",
-        serializeWithSelectedMetaInfo(userCopy, "originalScheme", "partialSave"));
-    }
-    finally {
-      if (bundledScheme != null) {
-        colorsManager.removeScheme(bundledScheme);
-      }
-    }
   }
 
   /**

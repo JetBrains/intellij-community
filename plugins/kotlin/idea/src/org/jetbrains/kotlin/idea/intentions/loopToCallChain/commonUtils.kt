@@ -6,6 +6,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.idea.base.psi.unwrapIfLabeled
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.imports.importableFqName
@@ -140,13 +141,6 @@ fun KtExpression.nextStatement(): KtExpression? {
     val statement = unwrapIfLabeled()
     if (statement.parent !is KtBlockExpression) return null
     return statement.siblings(forward = true, withItself = false).firstIsInstanceOrNull()
-}
-
-fun KtExpression.unwrapIfLabeled(): KtExpression {
-    var statement = this
-    while (true) {
-        statement = statement.parent as? KtLabeledExpression ?: return statement
-    }
 }
 
 fun KtLoopExpression.deleteWithLabels() {

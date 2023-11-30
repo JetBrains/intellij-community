@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class LocalHistoryGroup extends NonTrivialActionGroup implements DumbAware {
+public final class LocalHistoryGroup extends NonTrivialActionGroup implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {

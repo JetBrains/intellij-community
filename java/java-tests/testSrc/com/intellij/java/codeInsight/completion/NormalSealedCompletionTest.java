@@ -36,4 +36,19 @@ public class NormalSealedCompletionTest extends NormalCompletionTestCase {
 
   @NeedsIndex.Full(reason = "AllClassesGetter.processJavaClasses uses indices, see 0a72bf3a7baa7dc1550e8e4308431d78eb753eb6 commit")
   public void testSealedPermitsInner() { doTest("\n"); }
+
+  @NeedsIndex.Full
+  public void testNestedClassCompletion() {
+    configure();
+    myFixture.completeBasic();
+    myFixture.assertPreferredCompletionItems(0, "AddUserError.NameIsEmpty", "AddUserError.NameIsTooLong");
+  }
+
+  @NeedsIndex.Full
+  public void testNestedClassCompletion2() {
+    configure();
+    myFixture.completeBasic();
+    myFixture.assertPreferredCompletionItems(0, "AddUserError.NameIsEmpty", "AddUserError.NameIsTooLong.T", 
+                                             "AddUserError.NameIsEmpty.T4", "AddUserError.NameIsTooLong", "AddUserError.NameIsTooLong.T3");
+  }
 }

@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.navigation;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +28,7 @@ public final class History {
     myRoot = root;
   }
 
+  @RequiresEdt
   public void pushQueryPlace() {
     if (isNavigatingNow()) return;
 
@@ -33,12 +36,12 @@ public final class History {
     pushPlace(place);
   }
 
-  public void pushPlace(@NotNull Place place) {
+  private synchronized void pushPlace(@NotNull Place place) {
     while (myCurrentPos >= 0 && myCurrentPos < myHistory.size() - 1) {
       myHistory.remove(myHistory.size() - 1);
     }
 
-    if (myHistory.size() > 0) {
+    if (!myHistory.isEmpty()) {
       final Place prev = myHistory.get(myHistory.size() - 1);
       if (prev.equals(place)) return;
 
@@ -50,7 +53,7 @@ public final class History {
     addPlace(place);
   }
 
-  private void addPlace(Place place) {
+  private synchronized void addPlace(Place place) {
     myHistory.add(place);
     myCurrentPos = myHistory.size() - 1;
   }
@@ -63,30 +66,28 @@ public final class History {
     pushPlace(checkPlace.cloneForElement(name, value));
   }
 
-  public Place getPlaceForElement(String name, String value) {
-    final Place checkPlace = getCheckPlace(name);
-    if (checkPlace == null) return new Place();
-
-    return checkPlace.cloneForElement(name, value);
-  }
-
   public void navigateTo(Place place) {
     myRoot.navigateTo(place, false);
   }
 
+  @RequiresEdt
   public void back() {
-    int next = findValid(myCurrentPos, -1);
+    int next = findValid(-1);
     assert next != -1;
     goThere(next);
   }
 
-  private int findValid(int start, int increment) {
-    for (int idx = start + increment; idx >= 0 && idx < myHistory.size(); idx += increment) {
-      if (myRoot.isValid(myHistory.get(idx))) {
-        return idx;
+  private int findValid(int increment) {
+    List<Place> places = new ArrayList<>();
+    int first;
+    synchronized (this) {
+      first = myCurrentPos + increment;
+      for (int idx = first; idx >= 0 && idx < myHistory.size(); idx += increment) {
+        places.add(myHistory.get(idx));
       }
     }
-    return -1;
+    int index = ContainerUtil.indexOf(places, place -> myRoot.isValid(place));
+    return index == -1 ? -1 : first + index * increment;
   }
 
   private void goThere(final int nextPos) {
@@ -96,7 +97,12 @@ public final class History {
     fireStarted(from, next);
     try {
       final ActionCallback callback = myRoot.navigateTo(next, false);
-      callback.doWhenDone(() -> myCurrentPos = nextPos).doWhenProcessed(() -> {
+      assert callback != null;
+      callback.doWhenDone(() -> {
+        synchronized (this) {
+          myCurrentPos = nextPos;
+        }
+      }).doWhenProcessed(() -> {
         myNavigatedNow = false;
         fireFinished(from, next);
       });
@@ -112,20 +118,22 @@ public final class History {
   }
 
   public boolean canGoBack() {
-    return findValid(myCurrentPos, -1) != -1;
+    return findValid(-1) != -1;
   }
 
+  @RequiresEdt
   public void forward() {
-    int next = findValid(myCurrentPos, 1);
+    int next = findValid(1);
     assert next != -1;
     goThere(next);
   }
 
   public boolean canGoForward() {
-    return findValid(myCurrentPos, 1) != -1;
+    return findValid(1) != -1;
   }
 
-  public void clear() {
+  @RequiresEdt
+  public synchronized void clear() {
     myHistory.clear();
     myCurrentPos = -1;
   }
@@ -136,7 +144,7 @@ public final class History {
     return result;
   }
 
-  private Place getCurrent() {
+  private synchronized Place getCurrent() {
     if (myCurrentPos >= 0 && myCurrentPos < myHistory.size()) {
       return myHistory.get(myCurrentPos);
     } else {
@@ -152,8 +160,7 @@ public final class History {
     return checkPlace != null && checkPlace.getPath(pathElement) != null;
   }
 
-  @Nullable
-  private Place getCheckPlace(String pathElement) {
+  private @Nullable Place getCheckPlace(String pathElement) {
     Place checkPlace = getCurrent();
     if (checkPlace == null || checkPlace.getPath(pathElement) == null) {
       checkPlace = query();

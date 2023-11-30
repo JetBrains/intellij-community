@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.codeInspection.tests.SerializableHasSerialVersionUidFieldInspectionTestBase
-import com.intellij.codeInspection.tests.JvmLanguage
+import com.intellij.jvm.analysis.internal.testFramework.SerializableHasSerialVersionUidFieldInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 import com.intellij.pom.java.LanguageLevel
 
 class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHasSerialVersionUidFieldInspectionTestBase() {
@@ -14,6 +14,7 @@ class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHas
   }
 
   fun `test quickfix`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_11)
     myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import java.io.Serializable
       
@@ -30,6 +31,7 @@ class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHas
   }
 
   fun `test quickfix companion exists`() {
+    myFixture.setLanguageLevel(LanguageLevel.JDK_11)
     myFixture.testQuickFix(JvmLanguage.KOTLIN, """
       import java.io.Serializable
       
@@ -57,11 +59,12 @@ class KotlinSerializableHasSerialVersionUidFieldInspectionTest : SerializableHas
       
       class Fo<caret>o : Serializable { }
     """.trimIndent(), """
+      import java.io.Serial
       import java.io.Serializable
       
       class Foo : Serializable {
           companion object {
-              @java.io.Serial
+              @Serial
               private const val serialVersionUID: Long = 7429157667498829299L
           }
       }

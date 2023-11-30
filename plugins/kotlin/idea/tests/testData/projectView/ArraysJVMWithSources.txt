@@ -5,7 +5,7 @@ Value: KtLightClassForDecompiledDeclaration of PsiFile:ArraysKt__ArraysJVMKt.cla
 Value file: kotlin-stdlib.jar!/kotlin/collections/ArraysKt__ArraysJVMKt.class
 
 Navigation item #0: KtFile: ArraysJVM.kt
-Navigation item file #0: kotlin-stdlib-sources.jar!/kotlin/collections/ArraysJVM.kt
+Navigation item file #0: kotlin-stdlib-sources.jar!/jvmMain/kotlin/collections/ArraysJVM.kt
 
 
 -Project
@@ -115,6 +115,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/kotlin/collections/ArraysJVM
      +PsiDirectory: text
      +PsiDirectory: time
      _Assertions
+     AllowDifferentMembersInActual
      BuilderInference
      ContextFunctionTypeParams
      DeepRecursiveFunction

@@ -1,3 +1,4 @@
+// IGNORE_K2
 fun foo(a: Int): String {
     val s = "abc"
     val x = "x$s$a"

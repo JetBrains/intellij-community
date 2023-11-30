@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
@@ -14,15 +14,13 @@ import org.jetbrains.annotations.Nullable;
 
 final class GitRepositoryCreator implements VcsRepositoryCreator {
   @Override
-  @Nullable
-  public Repository createRepositoryIfValid(@NotNull Project project, @NotNull VirtualFile root, @NotNull Disposable parentDisposable) {
+  public @Nullable Repository createRepositoryIfValid(@NotNull Project project, @NotNull VirtualFile root, @NotNull Disposable parentDisposable) {
     VirtualFile gitDir = GitUtil.findGitDir(root);
     return gitDir == null ? null : GitRepositoryImpl.createInstance(root, gitDir, project, parentDisposable);
   }
 
-  @NotNull
   @Override
-  public VcsKey getVcsKey() {
+  public @NotNull VcsKey getVcsKey() {
     return GitVcs.getKey();
   }
 }

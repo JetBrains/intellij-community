@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.presentation
 
@@ -66,7 +66,7 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
     }
 
     override fun getIcon(unused: Boolean): Icon? {
-        for (kotlinIconProvider in IconProvider.EXTENSION_POINT_NAME.extensionList.filterIsInstance<KotlinIconProvider>()) {
+        for (kotlinIconProvider in IconProvider.EXTENSION_POINT_NAME.getIterable().filterIsInstance<KotlinIconProvider>()) {
             kotlinIconProvider.getIcon(declaration, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)?.let { return it }
         }
         return null

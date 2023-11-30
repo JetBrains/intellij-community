@@ -49,6 +49,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.*
@@ -102,6 +103,18 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.setContentUiType(ToolWindowContentUiType.TABBED, null)
     NotificationContent(project, toolWindow)
+  }
+}
+
+@ApiStatus.Internal
+object NotificationsStateWatcher {
+  fun hasNotifications(project: Project): Boolean {
+    return !NotificationsToolWindowFactory.myModel.getNotifications(project).isEmpty()
+  }
+
+  fun hasSuggestionNotifications(project: Project): Boolean {
+    val notifications = NotificationsToolWindowFactory.myModel.getNotifications(project)
+    return notifications.any { it.isSuggestionType }
   }
 }
 
@@ -317,6 +330,10 @@ internal class NotificationContent(val project: Project,
     else {
       remove(notification)
     }
+  }
+
+  fun hasSuggestions(): Boolean {
+    return !suggestions.isEmpty()
   }
 
   private fun remove(notification: Notification) {

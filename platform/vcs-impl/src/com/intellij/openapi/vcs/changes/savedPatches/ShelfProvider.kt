@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.Disposable
@@ -11,9 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.shelf.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.VcsBundleTag
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.ui.SimpleTextAttributes
@@ -29,6 +29,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
   private val shelveManager: ShelveChangesManager get() = ShelveChangesManager.getInstance(project)
 
   override val dataClass: Class<ShelvedChangeList> get() = ShelvedChangeList::class.java
+  override val tag: ChangesBrowserNode.Tag = VcsBundleTag("shelf.root.node.title")
   override val applyAction: AnAction get() = ActionManager.getInstance().getAction("Vcs.Shelf.Apply")
   override val popAction: AnAction get() = ActionManager.getInstance().getAction("Vcs.Shelf.Pop")
 
@@ -72,7 +73,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
 
   override fun buildPatchesTree(modelBuilder: TreeModelBuilder) {
     val shelvesList = mainLists().sortedByDescending { it.DATE }
-    val shelvesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(VcsBundle.message("shelf.root.node.title"))
+    val shelvesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(tag)
     modelBuilder.insertSubtreeRoot(shelvesRoot)
     modelBuilder.insertShelves(shelvesRoot, shelvesList)
 
@@ -108,7 +109,8 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
 
   private fun filterLists(selectedObjects: Stream<SavedPatchesProvider.PatchObject<*>>,
                           predicate: (ShelvedChangeList) -> Boolean): List<ShelvedChangeList> {
-    return StreamEx.of(selectedObjects.map(SavedPatchesProvider.PatchObject<*>::data)).filterIsInstance(dataClass).filter(predicate).toList()
+    return StreamEx.of(selectedObjects.map(SavedPatchesProvider.PatchObject<*>::data)).filterIsInstance(dataClass)
+      .filter(predicate).toList()
   }
 
   override fun dispose() {
@@ -149,14 +151,16 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
       }
       return BackgroundTaskUtil.submitTask(executor, this@ShelfProvider, Computable {
         try {
-          data.loadChangesIfNeededOrThrow(project)
+          data.loadChangesIfNeeded(project)
+
+          val changesLoadingError = data.changesLoadingError
+          if (changesLoadingError != null) {
+            return@Computable SavedPatchesProvider.LoadingResult.Error(changesLoadingError)
+          }
           return@Computable SavedPatchesProvider.LoadingResult.Changes(data.getChangeObjects()!!)
         }
         catch (throwable: Throwable) {
-          return@Computable when (throwable) {
-            is VcsException -> SavedPatchesProvider.LoadingResult.Error(throwable)
-            else -> SavedPatchesProvider.LoadingResult.Error(VcsException(throwable))
-          }
+          return@Computable SavedPatchesProvider.LoadingResult.Error(throwable)
         }
       }).future
     }

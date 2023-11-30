@@ -1,0 +1,28 @@
+<!-- Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <module value="com.intellij.modules.pycharm.community"/>
+  <module value="com.intellij.modules.python-core-capable"/>
+
+  <content>
+    <module name="intellij.notebooks.visualization"/>
+    <module name="intellij.notebooks.ui"/>
+    <module name="intellij.platform.images.copyright"/>
+    <module name="intellij.platform.ide.newUiOnboarding"/>
+    <module name="intellij.platform.ml.embeddings"/>
+    <module name="intellij.ide.startup.importSettings"/>
+  </content>
+
+  <xi:include href="/META-INF/pycharm-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
+                        serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
+                        overrides="true"/>
+    <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls"
+                        serviceImplementation="com.intellij.pycharm.community.customization.PyCharmExternalResourceUrls"
+                        overrides="true"/>
+    <ide.newUiOnboarding ideHelpName="pycharm">
+      <remove stepId="codeWithMe"/>
+    </ide.newUiOnboarding>
+  </extensions>
+</idea-plugin>

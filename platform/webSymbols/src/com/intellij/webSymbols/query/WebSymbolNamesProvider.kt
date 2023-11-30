@@ -3,21 +3,15 @@ package com.intellij.webSymbols.query
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.webSymbols.SymbolKind
-import com.intellij.webSymbols.SymbolNamespace
+import com.intellij.webSymbols.WebSymbolQualifiedName
 
 interface WebSymbolNamesProvider : ModificationTracker {
 
   fun createPointer(): Pointer<WebSymbolNamesProvider>
 
-  fun getNames(namespace: SymbolNamespace,
-               kind: SymbolKind,
-               name: String,
-               target: Target): List<String>
+  fun getNames(qualifiedName: WebSymbolQualifiedName, target: Target): List<String>
 
-  fun adjustRename(namespace: SymbolNamespace,
-                   kind: SymbolKind,
-                   oldName: String,
+  fun adjustRename(qualifiedName: WebSymbolQualifiedName,
                    newName: String,
                    occurence: String): String
 

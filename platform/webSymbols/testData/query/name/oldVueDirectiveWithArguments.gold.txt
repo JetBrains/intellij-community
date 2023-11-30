@@ -79,6 +79,7 @@
    },
    {
     name-part: "bar",
+    display-name: "argument",
     matchScore: 0,
     symbol: {
      matchedName: "html/argument/<pattern>",
@@ -124,6 +125,7 @@
    },
    {
     name-part: "foo",
+    display-name: "modifier",
     matchScore: 0,
     symbol: {
      matchedName: "html/modifiers/<pattern>",

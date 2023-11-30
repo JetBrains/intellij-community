@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.execution.process.OSProcessUtil;
-import com.intellij.ide.ApplicationInitializedListener;
+import com.intellij.ide.ApplicationInitializedListenerJavaShim;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.NonNls;
 import sun.tools.attach.HotSpotVirtualMachine;
@@ -16,16 +17,15 @@ import sun.tools.attach.HotSpotVirtualMachine;
 import java.io.File;
 
 // NOTE: compile with --add-exports jdk.attach/sun.tools.attach=ALL-UNNAMED in module-aware jdk
-final class JitSuppressor implements ApplicationInitializedListener {
+final class JitSuppressor extends ApplicationInitializedListenerJavaShim {
   private static final Logger LOG = Logger.getInstance(JitSuppressor.class);
   private static final String SELF_ATTACH_PROP = "jdk.attach.allowAttachSelf";
   private static final String EXCLUDE_ALL_FROM_C2_CLAUSE = "{ match : [\"*.*\"], c2 : { Exclude : true }}";
 
   // Limit C2 compilation to the given packages only. The package set was computed by test performance analysis:
-  // it's supposed to make performance tests (not all yet) timing comparable with full C2
-  // and at same time the IDE does not load CPU heavily with this limitation.
-  @NonNls
-  private static final String[] C2_WHITELIST = {
+  // it's supposed to make performance tests (not all yet) timing comparable with full C2, and at the same time,
+  //  the IDE does not load CPU heavily with this limitation.
+  private static final @NonNls String[] C2_WHITELIST = {
     "com/intellij/openapi/application/*.*",
     "com/intellij/openapi/editor/*.*",
     "com/intellij/openapi/project/*.*",
@@ -48,8 +48,7 @@ final class JitSuppressor implements ApplicationInitializedListener {
   };
 
   // masks matching methods with longest compilation durations which we have no control over
-  @NonNls
-  private static final String[] C2_BLACKLIST = {
+  private static final @NonNls String[] C2_BLACKLIST = {
     "javax/swing/*.*",
     "javax/awt/*.*",
     "sun/awt/*.*",
@@ -57,17 +56,18 @@ final class JitSuppressor implements ApplicationInitializedListener {
   };
   private static final boolean ourBlacklistMode = true;
 
-  @Override
-  public void componentsInitialized() {
+  JitSuppressor() {
     if (!Boolean.getBoolean("enable.jit.suppressor")) {
-      return;
+      throw ExtensionNotApplicableException.create();
     }
-
     // java.specification.version has values "1.8", "1.7" e.t.c. for jdk <= 8 and "9", "10", "11", 12" for others
     if (System.getProperty("java.specification.version").contains(".")) {
-      return;
+      throw ExtensionNotApplicableException.create();
     }
+  }
 
+  @Override
+  public void componentsInitialized() {
     String javaSpecVendor = System.getProperty("java.vm.specification.vendor");
     if (!"Oracle Corporation".equals(javaSpecVendor)) {
       LOG.warn("JitSuppressor functionality is not supported on non-Oracle vm. This one is " + javaSpecVendor);
@@ -138,9 +138,9 @@ final class JitSuppressor implements ApplicationInitializedListener {
     }
 
     if (ourBlacklistMode) {
-      return StringUtil.join(C2_BLACKLIST, mask -> "{ match: [\"" + mask + "\"], c2: { Exclude: true, }, },", "");
+      return Strings.join(C2_BLACKLIST, mask -> "{ match: [\"" + mask + "\"], c2: { Exclude: true, }, },", "");
     }
-    return StringUtil.join(C2_WHITELIST, mask -> "{ match: [\"" + mask + "\"], c2: { Exclude: false, }, },", "") +
+    return Strings.join(C2_WHITELIST, mask -> "{ match: [\"" + mask + "\"], c2: { Exclude: false, }, },", "") +
            EXCLUDE_ALL_FROM_C2_CLAUSE;
   }
 }

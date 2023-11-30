@@ -19,7 +19,7 @@ class GradleMigrateTest : MultiplePluginVersionGradleImportingTestCase() {
     @Test
     @TargetVersions("6.9+")
     fun testMigrateStdlib() {
-        if (kotlinPluginVersion != KotlinGradlePluginVersions.lastStable) {
+        if (kotlinPluginVersion != KotlinGradlePluginVersions.latestStable) {
             if (IS_UNDER_TEAMCITY) return else throw AssumptionViolatedException("Ignored KGP version $kotlinPluginVersion")
         }
 
@@ -47,14 +47,14 @@ class GradleMigrateTest : MultiplePluginVersionGradleImportingTestCase() {
                     ${GradleKotlinTestUtils.listRepositories(false, gradleVersion)}                    
                 }
                 dependencies {
-                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KotlinGradlePluginVersions.V_1_8_0}"
+                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${KotlinGradlePluginVersions.V_1_8_22}"
                 }
             }
 
             apply plugin: 'kotlin'
 
             dependencies {
-                implementation "org.jetbrains.kotlin:kotlin-stdlib:${KotlinGradlePluginVersions.V_1_8_0}"
+                implementation "org.jetbrains.kotlin:kotlin-stdlib:${KotlinGradlePluginVersions.V_1_8_22}"
             }
             """
         )

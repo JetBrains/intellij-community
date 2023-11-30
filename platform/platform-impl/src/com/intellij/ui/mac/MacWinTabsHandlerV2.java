@@ -2,18 +2,19 @@
 package com.intellij.ui.mac;
 
 import com.intellij.jdkEx.JdkEx;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImplKt;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ArrayUtil;
+import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ import java.util.Objects;
 /**
  * @author Alexander Lobas
  */
-public class MacWinTabsHandlerV2 extends MacWinTabsHandler {
+public final class MacWinTabsHandlerV2 extends MacWinTabsHandler {
   private static final String WINDOW_TABS_CONTAINER = "WINDOW_TABS_CONTAINER_KEY";
 
   static @NotNull JComponent _wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
@@ -48,25 +49,21 @@ public class MacWinTabsHandlerV2 extends MacWinTabsHandler {
     }
   }
 
-  public MacWinTabsHandlerV2(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {
-    super(frame, parentDisposable);
+  public MacWinTabsHandlerV2(@NotNull IdeFrameImpl frame, @NotNull CoroutineScope coroutineScope) {
+    super(frame, coroutineScope);
   }
 
   @Override
-  protected boolean initFrame(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {
+  protected boolean initFrame(@NotNull IdeFrameImpl frame, @NotNull CoroutineScope coroutineScope) {
     boolean allowed = JdkEx.setTabbingMode(frame, getWindowId(), null);
 
     if (allowed) {
       Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
-
-      Disposer.register(parentDisposable, new Disposable() { // don't convert to lambda
-        @Override
-        public void dispose() {
-          updateTabBars(false);
-        }
+      IdeGlassPaneImplKt.executeOnCancelInEdt(coroutineScope, () -> {
+        updateTabBars(false);
+        return Unit.INSTANCE;
       });
-
-      WindowTabsComponent.registerFrameDockContainer(frame, parentDisposable);
+      WindowTabsComponent.registerFrameDockContainer(frame, coroutineScope);
     }
 
     return allowed;
@@ -97,7 +94,7 @@ public class MacWinTabsHandlerV2 extends MacWinTabsHandler {
   public void exitFullScreen() {
   }
 
-  private static class TabsInfo {
+  private static final class TabsInfo {
     final IdeFrameImpl @NotNull [] frames;
     final @NotNull Map<IdeFrameImpl, ProjectFrameHelper> helpersMap;
 
@@ -171,7 +168,7 @@ public class MacWinTabsHandlerV2 extends MacWinTabsHandler {
     else {
       for (IdeFrame _helper : helpers) {
         ProjectFrameHelper helper = (ProjectFrameHelper)_helper;
-        if (Disposer.isDisposed(helper)) {
+        if (helper.rootPane.isCoroutineScopeCancelled$intellij_platform_ide_impl()) {
           continue;
         }
 
@@ -187,8 +184,7 @@ public class MacWinTabsHandlerV2 extends MacWinTabsHandler {
   private static void createTabBarsForFrame(@NotNull IdeFrameImpl frame,
                                             @NotNull ProjectFrameHelper helper,
                                             IdeFrameImpl @NotNull [] tabFrames) {
-    Disposable disposable = Disposer.newDisposable(helper, "");
-    WindowTabsComponent tabs = new WindowTabsComponent(frame, helper.getProject(), disposable);
+    WindowTabsComponent tabs = new WindowTabsComponent(frame, helper.getProject(), helper.rootPane.createDisposable$intellij_platform_ide_impl());
 
     JPanel parentComponent = getTabsContainer(frame);
     parentComponent.add(tabs);

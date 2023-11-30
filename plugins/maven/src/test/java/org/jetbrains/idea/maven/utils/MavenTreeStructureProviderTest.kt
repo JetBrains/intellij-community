@@ -1,13 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.Disposer
 import com.intellij.projectView.TestProjectTreeStructure
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.ui.tree.TreeUtil
 import junit.framework.TestCase
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import javax.swing.JTree
 
@@ -34,7 +35,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testShouldCreateSpecialNode() {
+  fun testShouldCreateSpecialNode() = runBlocking {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -52,7 +53,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
                           "  <version>1</version>" +
                           "</parent>")
 
-    importProject()
+    importProjectAsync()
 
     val projectTree = myStructure.createPane().tree
     expand(projectTree)
@@ -66,7 +67,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
 
   }
 
-  @Test fun testShouldMarkNodeAsIgnored() {
+  @Test fun testShouldMarkNodeAsIgnored() = runBlocking {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -84,9 +85,9 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
                                           "  <version>1</version>" +
                                           "</parent>")
 
-    importProject()
+    importProjectAsync()
 
-    myProjectsManager.setIgnoredState(listOf(myProjectsManager.findProject (modulePom)), true)
+    projectsManager.setIgnoredState(listOf(projectsManager.findProject (modulePom)), true)
     val projectTree = myStructure.createPane().tree
     expand(projectTree)
     val actual = PlatformTestUtil.print(projectTree)

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.cache
 
+import com.intellij.compiler.cache.client.CompilerCacheServerAuthService
 import com.intellij.compiler.cache.client.JpsServerAuthExtension
 import com.intellij.compiler.cache.git.GitRepositoryUtil
 import com.intellij.compiler.cache.ui.CompilerCacheNotifications
@@ -22,7 +23,7 @@ internal class CompilerCacheStartupActivity : ProjectActivity {
       thisLogger().debug("Not an Intellij project, JPS Caches will not be available")
       return
     }
-    JpsServerAuthExtension.checkAuthenticated(project, project) {
+    JpsServerAuthExtension.checkAuthenticated(CompilerCacheServerAuthService.getInstance(project), project) {
       thisLogger().info("User authentication for JPS Cache download complete successfully")
     }
     checkWindowsCRLF(project)

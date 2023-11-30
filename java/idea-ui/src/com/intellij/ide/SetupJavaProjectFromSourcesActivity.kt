@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.google.common.collect.ArrayListMultimap
@@ -15,11 +15,16 @@ import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSources
 import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
@@ -31,9 +36,13 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isOpenedByPlatformProcessor
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.util.SystemProperties
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.swing.event.HyperlinkEvent
@@ -112,6 +121,8 @@ private fun searchImporters(projectDirectory: VirtualFile): ArrayListMultimap<Pr
   return providersAndFiles
 }
 
+@Service(Service.Level.PROJECT)
+private class CoroutineScopeService(val coroutineScope: CoroutineScope)
 
 private fun showNotificationToImport(project: Project,
                                      projectDirectory: VirtualFile,
@@ -143,9 +154,12 @@ private fun showNotificationToImport(project: Project,
   if (providersAndFiles.keySet().all { it.canImportProjectAfterwards() }) {
     val actionName = JavaUiBundle.message("build.script.found.notification.import", providersAndFiles.keySet().size)
     notification.addAction(NotificationAction.createSimpleExpiring(actionName) {
-      for ((provider, files) in providersAndFiles.asMap()) {
-        for (file in files) {
-          provider.importProjectAfterwards(project, file)
+      val cs = project.service<CoroutineScopeService>().coroutineScope
+      cs.launch {
+        for ((provider, files) in providersAndFiles.asMap()) {
+          for (file in files) {
+            provider.importProjectAfterwardsAsync(project, file)
+          }
         }
       }
     })
@@ -193,7 +207,7 @@ private suspend fun setupFromSources(project: Project, projectDir: VirtualFile) 
   }
 
   val modules = ModuleManager.getInstance(project).modules
-  if (modules.any { it is JavaModuleType }) {
+  if (modules.any { ModuleType.get(it) is JavaModuleType }) {
     withRawProgressReporter {
       coroutineToIndicator {
         findAndSetupSdk(project, ProgressManager.getGlobalProgressIndicator(), JavaSdk.getInstance()) {

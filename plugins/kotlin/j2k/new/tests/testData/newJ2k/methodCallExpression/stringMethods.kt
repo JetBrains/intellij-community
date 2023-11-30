@@ -5,12 +5,15 @@ internal class A {
     @Throws(Exception::class)
     fun constructors(s: String?) {
         ""
+
         "original"
         java.lang.String(s) as String
         (java.lang.String(s) as String).length
+
         String(charArrayOf('a', 'b', 'c'))
         String(charArrayOf('b', 'd'), 1, 1)
         String(intArrayOf(32, 65, 127), 0, 3)
+
         val bytes = byteArrayOf(32, 65, 100, 81)
         val charset = Charset.forName("utf-8")
         String(bytes)
@@ -19,6 +22,7 @@ internal class A {
         String(bytes, charset("utf-8"))
         String(bytes, 0, 2, charset("utf-8"))
         String(bytes, 0, 2, charset)
+
         String(StringBuilder("content"))
         String(StringBuffer("content"))
     }
@@ -70,14 +74,16 @@ internal class A {
         val s = "test string"
         s == "test"
         s.equals(
-            "tesT", ignoreCase = true
+            "tesT",
+            ignoreCase = true
         )
         s.compareTo("Test", ignoreCase = true)
         s.regionMatches(
             0,
             "TE",
             0,
-            2, ignoreCase = true
+            2,
+            ignoreCase = true
         )
         s.regionMatches(0, "st", 1, 2)
         s.replace("\\w+".toRegex(), "---")
@@ -93,10 +99,15 @@ internal class A {
         useSplit(s.split("\\s+".toRegex(), (limit + 5).coerceAtLeast(0)).toTypedArray())
         s.matches("\\w+".toRegex())
         s.trim { it <= ' ' }
+        s.trim()
+        s.trimStart()
+        s.trimEnd()
         "$s another"
+
         s.toByteArray()
         s.toByteArray(Charset.forName("utf-8"))
         s.toByteArray(charset("utf-8"))
+
         val chars = CharArray(10)
         s.toCharArray(chars, 0, 1, 11)
     }
@@ -109,19 +120,23 @@ internal class A {
         1.11f.toString()
         3.14.toString()
         Any().toString()
+
         String.format(
             Locale.FRENCH,
             "Je ne mange pas %d jours",
             6
         )
         String.format("Operation completed with %s", "success")
+
         val chars = charArrayOf('a', 'b', 'c')
         String(chars)
         String(chars, 1, 2)
         String(chars)
         String(chars, 1, 2)
+
         val order = java.lang.String.CASE_INSENSITIVE_ORDER
     }
 
-    fun useSplit(result: Array<String?>?) {}
+    fun useSplit(result: Array<String?>?) {
+    }
 }

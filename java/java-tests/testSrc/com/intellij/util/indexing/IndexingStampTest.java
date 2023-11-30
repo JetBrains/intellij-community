@@ -26,7 +26,7 @@ public class IndexingStampTest extends LightJavaCodeInsightFixtureTestCase {
                               .collect(Collectors.toList()));
 
     Generator<ChangeIndexedStampForIndexOp> changeIndexedStampOps =
-      Generator.sampledFrom((id, indexId) -> IndexingStamp.setFileIndexedStateCurrent(id, indexId),
+      Generator.sampledFrom((id, indexId) -> IndexingStamp.setFileIndexedStateCurrent(id, indexId, false),
                             (id, indexId) -> IndexingStamp.setFileIndexedStateOutdated(id, indexId),
                             (id, indexId) -> IndexingStamp.setFileIndexedStateUnindexed(id, indexId));
 

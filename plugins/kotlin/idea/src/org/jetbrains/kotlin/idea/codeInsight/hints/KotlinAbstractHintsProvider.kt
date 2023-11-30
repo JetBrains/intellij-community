@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.lang.Language
@@ -15,8 +16,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -177,5 +178,5 @@ internal fun createKtFile(
 }
 
 internal fun refreshHints(project: Project) {
-    InlayHintsPassFactory.restartDaemonUpdatingHints(project)
+    InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
 }

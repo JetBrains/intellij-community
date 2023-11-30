@@ -16,10 +16,8 @@ import java.util.Set;
 
 public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   private final FileFilter myFilterForExcludedPatterns;
-  @NotNull
-  public final File root;
-  @NotNull
-  public final ModuleBuildTarget target;
+  public final @NotNull File root;
+  public final @NotNull ModuleBuildTarget target;
   public final boolean isGeneratedSources;
   public final boolean isTemp;
   private final String myPackagePrefix;
@@ -64,14 +62,12 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
            '}';
   }
 
-  @NotNull
   @Override
-  public Set<File> getExcludedRoots() {
+  public @NotNull Set<File> getExcludedRoots() {
     return myExcludes;
   }
 
-  @NotNull
-  public String getPackagePrefix() {
+  public @NotNull String getPackagePrefix() {
     return myPackagePrefix;
   }
 
@@ -90,9 +86,8 @@ public class JavaSourceRootDescriptor extends BuildRootDescriptor {
     return target;
   }
 
-  @NotNull
   @Override
-  public FileFilter createFileFilter() {
+  public @NotNull FileFilter createFileFilter() {
     final JpsCompilerExcludes excludes = JpsJavaExtensionService.getInstance().getCompilerConfiguration(target.getModule().getProject()).getCompilerExcludes();
     final FileFilter baseFilter = BuilderRegistry.getInstance().getModuleBuilderFileFilter();
     final JavadocSnippetsSkipFilter snippetsSkipFilter = new JavadocSnippetsSkipFilter(getRootFile());

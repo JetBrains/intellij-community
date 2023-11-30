@@ -51,7 +51,7 @@ public final class EventLogMetadataUtils {
     }
 
     try {
-      EventGroupRemoteDescriptors groups = SerializationHelper.Companion.deserialize(content, EventGroupRemoteDescriptors.class);
+      EventGroupRemoteDescriptors groups = SerializationHelper.INSTANCE.deserialize(content, EventGroupRemoteDescriptors.class);
 
       if (groups == null) {
         throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.INVALID_JSON);

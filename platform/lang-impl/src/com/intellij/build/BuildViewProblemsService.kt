@@ -2,7 +2,7 @@
 package com.intellij.build
 
 import com.intellij.analysis.problemsView.FileProblem
-import com.intellij.analysis.problemsView.HighlightingDuplicate
+import com.intellij.analysis.problemsView.HighlightingDuplicateProblem
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.build.events.FileMessageEvent
@@ -56,7 +56,7 @@ class BuildViewProblemsService(override val project: Project) : ProblemsProvider
 
   class FileBuildProblem(val event: FileMessageEvent,
                          val virtualFile: VirtualFile,
-                         val problemsProvider: ProblemsProvider) : FileProblem, HighlightingDuplicate {
+                         val problemsProvider: ProblemsProvider) : FileProblem, HighlightingDuplicateProblem {
     override val description: String?
       get() = event.description
     override val file: VirtualFile

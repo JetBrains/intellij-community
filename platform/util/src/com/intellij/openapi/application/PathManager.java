@@ -61,6 +61,7 @@ public final class PathManager {
   private static String ourPluginPath;
   private static String ourLogPath;
   private static Path ourStartupScriptDir;
+  private static Path ourOriginalConfigDir;
 
   // IDE installation paths
 
@@ -113,7 +114,7 @@ public final class PathManager {
       else {
         Path root = Paths.get(result);
         if (Boolean.getBoolean("idea.use.dev.build.server")) {
-          root = root.resolve("../../..").normalize();
+          root = root.resolve("../../../..").normalize();
         }
         ourBinDirectories = getBinDirectories(root);
       }
@@ -615,7 +616,7 @@ public final class PathManager {
               log(path + ": '" + key + "' cannot be redefined");
             }
             else if (!sysProperties.containsKey(key)) {
-              sysProperties.put(key, substituteVars((String)value, homePath));
+              sysProperties.setProperty((String)key, substituteVars((String)value, homePath));
             }
             return null;
           }
@@ -628,8 +629,8 @@ public final class PathManager {
       }
     }
 
-    // Check and fix conflicting properties.
-    if ("true".equals(sysProperties.getProperty("jbScreenMenuBar.enabled"))) {
+    // check and fix conflicting properties
+    if (SystemInfoRt.isJBSystemMenu) {
       sysProperties.setProperty("apple.laf.useScreenMenuBar", "false");
     }
   }
@@ -644,6 +645,7 @@ public final class PathManager {
       if (customizer instanceof PathCustomizer) {
         PathCustomizer.CustomPaths paths = ((PathCustomizer)customizer).customizePaths();
         if (paths != null) {
+          ourOriginalConfigDir = getConfigDir();
           if (paths.configPath != null) System.setProperty(PROPERTY_CONFIG_PATH, paths.configPath);
           if (paths.systemPath != null) System.setProperty(PROPERTY_SYSTEM_PATH, paths.systemPath);
           if (paths.pluginsPath != null) System.setProperty(PROPERTY_PLUGINS_PATH, paths.pluginsPath);
@@ -660,8 +662,16 @@ public final class PathManager {
       }
     }
     catch (Throwable e) {
-      log(e.getMessage());
+      log("Failed to set up '" + property + "' as PathCustomizer: " + e);
     }
+  }
+
+  /**
+   * Return original value of the config path ignoring possible customizations made by {@link PathCustomizer}. 
+   */
+  @ApiStatus.Internal
+  public static @NotNull Path getOriginalConfigDir() {
+    return ourOriginalConfigDir != null ? ourOriginalConfigDir : getConfigDir();
   }
 
   private static String getCustomPropertiesFile() {

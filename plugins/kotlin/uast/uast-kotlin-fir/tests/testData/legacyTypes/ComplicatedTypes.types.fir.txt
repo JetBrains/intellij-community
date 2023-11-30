@@ -19,7 +19,7 @@ UFile (package = ) [import java.lang.reflect.ParameterizedType...]
                             UQualifiedReferenceExpression [TypeBase<T>.java.genericSuperclass] : PsiType:Type
                                 UQualifiedReferenceExpression [TypeBase<T>.java] : PsiType:Class<? extends TypeBase<T>>
                                     UClassLiteralExpression [TypeBase<T>] : PsiType:KClass<? extends TypeBase<T>>
-                                    USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Class<T>
+                                    USimpleNameReferenceExpression (identifier = java) [java] : PsiType:Class<? extends TypeBase<T>>
                                 USimpleNameReferenceExpression (identifier = genericSuperclass) [genericSuperclass] : PsiType:Type
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [getGenericSuperclass()]
                                         UIdentifier (Identifier (genericSuperclass)) [UIdentifier (Identifier (genericSuperclass))]

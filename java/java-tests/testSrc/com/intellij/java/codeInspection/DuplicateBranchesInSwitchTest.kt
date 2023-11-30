@@ -42,10 +42,11 @@ class DuplicateBranchesInSwitchTest : LightJavaCodeInsightFixtureTestCase() {
   fun testAssignment() = doTest()
   fun testNoExceptionWhenFirstLabelIsMissing() = doTest()
   fun testUnresolvedQualifier() = doTest()
-  fun testNullDuplicatesPattern() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_20_PREVIEW) { doTest() }
-  fun testPatternDuplicatesNull() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_20_PREVIEW) { doTest() }
+  fun testCatchTypeReference() = doTest()
+  fun testNullDuplicatesPattern() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
+  fun testPatternDuplicatesNull() = IdeaTestUtil.withLevel(module, LanguageLevel.JDK_21) { doTest() }
 
   private fun doTest() {
-    myFixture.testHighlighting("${getTestName(false)}.java")
+    myFixture.testHighlighting(true, true, true,"${getTestName(false)}.java")
   }
 }

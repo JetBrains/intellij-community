@@ -15,7 +15,6 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
@@ -77,7 +76,7 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
   @NotNull private final RemoteProcessSupport<Object, RemoteExternalSystemFacade, String> mySupport;
 
   public RemoteExternalSystemCommunicationManager() {
-    myProgressManager = (ExternalSystemProgressNotificationManagerImpl)ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
+    myProgressManager = (ExternalSystemProgressNotificationManagerImpl)ExternalSystemProgressNotificationManager.getInstance();
     mySupport = new RemoteProcessSupport<>(RemoteExternalSystemFacade.class) {
       @Override
       protected void fireModificationCountChanged() {

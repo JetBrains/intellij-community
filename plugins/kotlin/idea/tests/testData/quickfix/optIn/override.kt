@@ -1,4 +1,5 @@
 // "Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Derived'" "false"
+// IGNORE_K2
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 // ACTION: Add '-opt-in=MyExperimentalAPI' to module light_idea_test_case compiler arguments

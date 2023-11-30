@@ -7,9 +7,12 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.forEachContainedOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.*
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.SinglePassVfsTimeMachine
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.getOrNull
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.mapCases
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.SimpleStringPersistentEnumerator
@@ -33,7 +36,7 @@ private data class Stats(
   var operationsStorageSize: Long = 0,
   var payloadStorageSize: Long = 0,
   val operationsCount: AtomicInteger = AtomicInteger(0),
-  val nullPayloads: AtomicInteger = AtomicInteger(0),
+  val notAvailablePayloads: AtomicInteger = AtomicInteger(0),
   val nullEnumeratedString: AtomicInteger = AtomicInteger(0),
   val exceptionResultCount: AtomicInteger = AtomicInteger(0),
   val payloadSizeHist: IntHistogram = IntHistogram(listOf(0, 1, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 1024 * 16, 1024 * 128, 1024 * 1024)),
@@ -47,7 +50,7 @@ private data class Stats(
 }
 
 @OptIn(ExperimentalTime::class)
-private fun calcStats(log: VfsLog): Stats {
+private fun calcStats(log: VfsLogImpl): Stats {
   fun <T> incStat(key: T, value: Int?) = if (value != null) {
     value + 1
   }
@@ -58,7 +61,7 @@ private fun calcStats(log: VfsLog): Stats {
   val stats = Stats()
   stats.elapsedTime = measureTime {
     runBlocking {
-      log.context.run {
+      log.getContextImpl().run {
         stats.operationsStorageSize = operationLogStorage.size()
         stats.payloadStorageSize = payloadStorage.size()
         //val attrCount: MutableMap<String, Int> = mutableMapOf<String, Int>()
@@ -71,7 +74,7 @@ private fun calcStats(log: VfsLog): Stats {
             }
             is OperationReadResult.Complete -> {
               stats.operationsCount.incrementAndGet()
-              if (!it.operation.result.hasValue) stats.exceptionResultCount.incrementAndGet()
+              if (!it.operation.result.isSuccess) stats.exceptionResultCount.incrementAndGet()
               stats.tagsCount.compute(it.operation.tag, ::incStat)
               when (val op = it.operation) {
                 is VfsOperation.AttributesOperation.WriteAttribute -> {
@@ -80,21 +83,15 @@ private fun calcStats(log: VfsLog): Stats {
                   //else {
                   //  attrCount[attributeId] = attrCount.getOrDefault(attributeId, 0) + 1
                   //}
-                  val data = payloadStorage.readAt(op.attrDataPayloadRef)
-                  if (data == null) {
-                    stats.nullPayloads.incrementAndGet()
-                  }
-                  else {
-                    stats.payloadSizeHist.add(data.size)
+                  val data = payloadReader(op.dataRef)
+                  data.mapCases({ stats.notAvailablePayloads.incrementAndGet() }) {
+                    stats.payloadSizeHist.add(it.size)
                   }
                 }
                 is VfsOperation.ContentsOperation.WriteBytes -> {
-                  val data = payloadStorage.readAt(op.dataPayloadRef)
-                  if (data == null) {
-                    stats.nullPayloads.incrementAndGet()
-                  }
-                  else {
-                    stats.payloadSizeHist.add(data.size)
+                  val data = payloadReader(op.dataRef)
+                  data.mapCases({ stats.notAvailablePayloads.incrementAndGet() }) {
+                    stats.payloadSizeHist.add(it.size)
                   }
                 }
                 else -> {
@@ -121,7 +118,7 @@ private fun calcStats(log: VfsLog): Stats {
 private fun Double.format(fmt: String) = String.format(fmt, this)
 
 
-private fun benchmark(log: VfsLog, runs: Int = 30, heatRuns: Int = 20) {
+private fun benchmark(log: VfsLogImpl, runs: Int = 30, heatRuns: Int = 20) {
   val statsArr = mutableListOf<Stats>()
 
   repeat(heatRuns + runs) {
@@ -158,7 +155,7 @@ private fun benchmark(log: VfsLog, runs: Int = 30, heatRuns: Int = 20) {
   println("descriptor read speed: ${statsArr.meanDev { it.avgDescPS / 1000.0 }} KDesc/s")
 }
 
-private fun single(log: VfsLog) {
+private fun single(log: VfsLogImpl) {
   val stats = calcStats(log)
   println(stats)
   println("Single run")
@@ -171,37 +168,23 @@ private fun single(log: VfsLog) {
 private typealias Diff = Pair<List<String>, List<String>>
 
 @OptIn(ExperimentalTime::class)
-private fun vfsRecoveryDraft(log: VfsLog,
+private fun vfsRecoveryDraft(queryContext: VfsLogQueryContext,
                              attributeEnumerator: SimpleStringPersistentEnumerator,
                              fsRecordsOracle: FSRecordsOracle) {
   var singleOp = 0
   var vfileEvents = 0
   var vfileEventContentOps = 0
 
-  val payloadReadAt = log.context.payloadStorage::readAt
-  val payloadReader: (PayloadRef) -> State.DefinedState<ByteArray> = {
-    val data = payloadReadAt(it)
-    if (data == null) State.NotAvailable(NotEnoughInformationCause("data is not available anymore"))
-    else State.Ready(data)
-  }
-  val perPropVTM = PerPropertyCachingVfsTimeMachine(
-    log.context,
-    id2filename = fsRecordsOracle::getNameByNameId,
-    payloadReader = payloadReader,
-    attributeEnumerator = attributeEnumerator
-  )
   val singlePassVTM = SinglePassVfsTimeMachine(
-    log.context,
-    id2filename = fsRecordsOracle::getNameByNameId,
-    payloadReader = payloadReader,
-    attributeEnumerator = attributeEnumerator
+    queryContext,
+    nameByNameId = fsRecordsOracle::getNameByNameId,
+    getAttributeEnumerator = { attributeEnumerator }
   )
   val vfsTimeMachine = singlePassVTM
-    //.withOracle(fsRecordsOracle)
-    .withContradictionCheck(perPropVTM)
+  //.withOracle(fsRecordsOracle)
 
   fun VfsSnapshot.VirtualFileSnapshot.represent(): String =
-    "file: name=$name parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
+    "file: name=${getName()} parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
 
   fun buildDiff(textBefore: String, textAfter: String): Diff {
     val linesBefore = textBefore.strip().split("\n").toMutableList()
@@ -273,8 +256,8 @@ private fun vfsRecoveryDraft(log: VfsLog,
     else "Diff:\n" + first.joinToString("\n", postfix = "\n") { "- $it" } + second.joinToString("\n") { "+ $it" }
 
   val time = measureTime {
-    log.context.run {
-      val iter = IteratorUtils.VFileEventBasedIterator(operationLogStorage.begin())
+    queryContext.run {
+      val iter = IteratorUtils.VFileEventBasedIterator(begin())
       while (iter.hasNext()) {
         when (val rec = iter.next()) {
           is ReadResult.Invalid -> throw rec.cause
@@ -298,17 +281,21 @@ private fun vfsRecoveryDraft(log: VfsLog,
                 val oldParent = snapshotBefore.getFileById(startOp.oldParentId)
                 val oldParentAfter = snapshotAfter.getFileById(startOp.oldParentId)
                 val newParent = snapshotBefore.getFileById(startOp.newParentId)
-                println("MOVE FROM PARENT ${oldParent.name} to ${newParent.name}")
+                println("MOVE FROM PARENT ${oldParent.getName()} to ${newParent.getName()}")
                 //println("old parent's children ids before: ${oldParent.readChildAttr()}")
                 //println("old parent's children ids after: ${oldParentAfter.readChildAttr()}")
-                println("old parent's children ids before: ${oldParent.getChildrenIds().fmap { it.map { snapshotBefore.getFileById(it).name } }}")
-                println("old parent's children ids after: ${oldParentAfter.getChildrenIds().fmap { it.map { snapshotAfter.getFileById(it).name } }}")
+                println("old parent's children ids before: ${
+                  snapshotBefore.getChildrenIdsOf(oldParent.fileId).fmap { it.map { snapshotBefore.getFileById(it).getName() } }
+                }")
+                println("old parent's children ids after: ${
+                  snapshotAfter.getChildrenIdsOf(oldParentAfter.fileId).fmap { it.map { snapshotAfter.getFileById(it).getName() } }
+                }")
               }
               VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE -> {
                 val startOp =
                   (rec.begin().next() as OperationReadResult.Complete).operation as VfsOperation.VFileEventOperation.EventStart.ContentChange
                 val fileBefore = snapshotBefore.getFileById(startOp.fileId)
-                if (fileBefore.name.getOrNull()?.endsWith(".kt") != true) continue
+                if (fileBefore.getName().getOrNull()?.endsWith(".kt") != true) continue
                 val fileAfter = snapshotAfter.getFileById(startOp.fileId)
                 println(fileBefore.represent())
                 //println("stub index stamp data: ${fileBefore.readStubIndexStampAttr()}")
@@ -354,24 +341,28 @@ fun main(args: Array<String>) {
   assert(args.size == 1) { "Usage: <LogStats> <path to vfslog folder>" }
 
   val logPath = Path.of(args[0])
-  val log = VfsLog(logPath, true)
+  val log = VfsLogImpl.open(logPath, true)
+
+  //val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)::valueOf
+  val attributeEnumerator = SimpleStringPersistentEnumerator(logPath.parent / "attributes_enums.dat")
 
   //single(log)
   //benchmark(log, 30)
   //return
 
-  val fsRecordsOracle = FSRecordsOracle(logPath.parent,
-                                        FSRecordsImpl.ErrorHandler { records, error ->
-                                          ExceptionUtil.rethrow(error)
-                                        },
-                                        log.context)
-  //val names = PersistentStringEnumerator(logPath.parent / "names.dat", true)::valueOf
-  val attributeEnumerator = SimpleStringPersistentEnumerator(logPath.parent / "attributes_enums.dat")
+  val queryContext = log.query()
+  queryContext.use {
+    val fsRecordsOracle = FSRecordsOracle(logPath.parent,
+                                          FSRecordsImpl.ErrorHandler { records, error ->
+                                            ExceptionUtil.rethrow(error)
+                                          },
+                                          queryContext)
 
-  Closeable {
-    fsRecordsOracle.disposeConnection()
-    AppExecutorUtil.shutdownApplicationScheduledExecutorService()
-  }.use {
-    vfsRecoveryDraft(log, attributeEnumerator, fsRecordsOracle)
+    Closeable {
+      fsRecordsOracle.disposeConnection()
+      AppExecutorUtil.shutdownApplicationScheduledExecutorService()
+    }.use {
+      vfsRecoveryDraft(queryContext, attributeEnumerator, fsRecordsOracle)
+    }
   }
 }

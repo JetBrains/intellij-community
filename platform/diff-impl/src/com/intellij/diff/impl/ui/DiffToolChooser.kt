@@ -6,9 +6,13 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.util.ui.UIUtil
 import javax.swing.JComponent
 
 @Suppress("DialogTitleCapitalization")
@@ -50,9 +54,18 @@ abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
     panel {
       row {
-        segmentedButton(getTools(), DiffTool::getName).apply {
+        segmentedButton(getTools()) { text = it.getName() }.apply {
           selectedItem = getActiveTool()
           whenItemSelected { if (project != null) onSelected(project, it) }
+        }.customize(UnscaledGaps.EMPTY)
+      }
+    }.apply {
+      // todo: fix segmented button
+      UIUtil.forEachComponentInHierarchy(this) {
+        if (it is ActionButtonWithText) {
+          it.background = JBColor.lazy {
+            UIUtil.getComboBoxDisabledBackground()
+          }
         }
       }
     }

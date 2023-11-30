@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.io.writeChild
+import com.intellij.util.io.write
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.eclipse.jgit.lib.Repository
@@ -24,7 +24,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 fun Repository.add(path: String, data: String) = add(path, data.toByteArray())
 
 fun Repository.add(path: String, data: ByteArray): Repository {
-  workTreePath.writeChild(path, data)
+  workTreePath.resolve(path).write(data)
   edit(AddLoadedFile(path, data))
   return this
 }
@@ -80,7 +80,7 @@ abstract class IcsTestCase {
     icsManager
   }
 
-  open fun createAndActivateRepository() : Boolean = true
+  open fun createAndActivateRepository(): Boolean = true
 
   val provider by lazy(LazyThreadSafetyMode.NONE) { icsManager.IcsStreamProvider() }
 

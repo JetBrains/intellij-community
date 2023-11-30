@@ -6,6 +6,8 @@ import com.intellij.codeInsight.hints.declarative.InlayPosition
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
+import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.util.NlsContexts
 
 
 /**
@@ -13,12 +15,14 @@ import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
  *
  * @param isInPreview whether the provider is collected in preview (in settings). In this mode, all the options are anyway collected.
  * @param enabledOptions an exhaustive set of options
+ * @param providerClass used for diagnostics only
  */
 class InlayTreeSinkImpl(
   private val providerId: String,
   private val enabledOptions: Map<String, Boolean>,
   private val isInPreview: Boolean,
-  private val providerIsDisabled: Boolean
+  private val providerIsDisabled: Boolean,
+  private val providerClass: Class<*>
 ) : InlayTreeSink {
   private val inlayDataToPresentation = ArrayList<InlayData>()
 
@@ -27,19 +31,23 @@ class InlayTreeSinkImpl(
 
   override fun addPresentation(position: InlayPosition,
                                payloads: List<InlayPayload>?,
-                               tooltip: String?,
+                               @NlsContexts.HintText tooltip: String?,
                                hasBackground: Boolean,
                                builder: PresentationTreeBuilder.() -> Unit) {
     val b = PresentationTreeBuilderImpl.createRoot()
     b.builder()
     val tree = b.complete()
+    if (tree.size == 0) {
+      throw PluginException.createByClass("Provider didn't provide any presentation. It is forbidden - do not try to create it in this case.", RuntimeException(
+        "${providerClass.canonicalName} id: $providerId"), providerClass)
+    }
     val disabled = providerIsDisabled || if (activeOptions.isNotEmpty()) {
       activeOptions.values.any { !it }
     }
     else {
       false
     }
-    inlayDataToPresentation.add(InlayData(position, tooltip, hasBackground, tree, providerId, disabled, payloads))
+    inlayDataToPresentation.add(InlayData(position, tooltip, hasBackground, tree, providerId, disabled, payloads, providerClass))
   }
 
   override fun whenOptionEnabled(optionId: String, block: () -> Unit) {
@@ -68,10 +76,16 @@ class InlayTreeSinkImpl(
 
 data class InlayData(
   val position: InlayPosition,
-  val tooltip: String?,
+  @NlsContexts.HintText val tooltip: String?,
   val hasBackground: Boolean,
   val tree: TinyTree<Any?>,
   val providerId: String,
   val disabled: Boolean,
   val payloads: List<InlayPayload>?,
-)
+  /**
+   * Just for debugging purposes
+   */
+  val providerClass: Class<*>
+) {
+
+}

@@ -2,6 +2,7 @@
 fun <T> doSomething(a: T) {}
 
 fun foo() {
-    //comment
-    if (true) doSomething("test")
+    if (true)
+        //comment
+        doSomething("test")
 }

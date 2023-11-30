@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.toml
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,12 +20,15 @@ import org.jetbrains.plugins.gradle.util.*
 import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.name
 
-internal fun getVersions(context: PsiElement) : List<TomlKeySegment> {
+private fun getTableEntries(context: PsiElement, tableName: @NlsSafe String) : List<TomlKeySegment> {
   val file = context.containingFile.asSafely<TomlFile>() ?: return emptyList()
-  val targetTable = file.childrenOfType<TomlTable>().find { it.header.key?.name == "versions" } ?: return emptyList()
+  val targetTable = file.childrenOfType<TomlTable>().find { it.header.key?.name == tableName } ?: return emptyList()
   return targetTable.childrenOfType<TomlKeyValue>().mapNotNull { it.key.segments.singleOrNull() }
 }
 
+internal fun getVersions(context: PsiElement): List<TomlKeySegment> = getTableEntries(context, "versions")
+
+internal fun getLibraries(context: PsiElement): List<TomlKeySegment> = getTableEntries(context, "libraries")
 
 internal fun String.getVersionCatalogParts() : List<String> = split("_", "-")
 

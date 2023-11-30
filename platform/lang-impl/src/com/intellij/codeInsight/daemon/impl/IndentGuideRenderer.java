@@ -163,10 +163,10 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
     if (ExperimentalUI.isNewUI()) {
       List<RangeHighlighter> highlighters = ContainerUtil.filter(editor.getMarkupModel().getAllHighlighters(),
                                                                  x -> x.getLineMarkerRenderer() instanceof DefaultLineMarkerRenderer);
-      if (!highlighters.isEmpty()) {
-        DefaultLineMarkerRenderer renderer = (DefaultLineMarkerRenderer)highlighters.get(0).getLineMarkerRenderer();
+      for (RangeHighlighter highlighter: highlighters) {
+        DefaultLineMarkerRenderer renderer = (DefaultLineMarkerRenderer)highlighter.getLineMarkerRenderer();
         assert renderer != null;
-        if (editor.offsetToVisualLine(startOffset, false) == editor.offsetToVisualLine(highlighters.get(0).getStartOffset(), false)) {
+        if (editor.offsetToVisualLine(startOffset, false) == editor.offsetToVisualLine(highlighter.getStartOffset(), false)) {
           Color color = renderer.getColor();
           if (color != null) {
             Color matched = scheme.getColor(EditorColors.MATCHED_BRACES_INDENT_GUIDE_COLOR);
@@ -184,7 +184,7 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
         return isCaretOnGuide(editor, endOffset, off, indentColumn);
     }
 
-    protected final boolean isCaretOnGuide(@NotNull Editor editor, int endOffset, int off, int indentColumn) {
+    protected static boolean isCaretOnGuide(@NotNull Editor editor, int endOffset, int off, int indentColumn) {
         CaretModel caretModel = editor.getCaretModel();
         int caretOffset = caretModel.getOffset();
         return caretOffset >= off && caretOffset < endOffset && caretModel.getLogicalPosition().column == indentColumn;

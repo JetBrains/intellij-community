@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NonNls
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.bufferedWriter
+import kotlin.io.path.div
 
 class CollectAllFilesCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
@@ -22,12 +24,11 @@ class CollectAllFilesCommand(text: String, line: Int) : PlaybackCommandCoroutine
   override suspend fun doExecute(context: PlaybackContext) {
     val project = context.project
     val parameters = extractCommandArgument(PREFIX).split(" ")
-    if (parameters.size != 2) {
+    if (parameters.size != 1) {
       throw IllegalArgumentException("Wrong parameters for command $parameters")
     }
     val extension = parameters[0]
-    val fileToWrite = parameters[1]
-    val res: Path = Path.of(fileToWrite)
+    val res: Path = PathManager.getLogDir() / "collected-files.txt"
     if (!Files.exists(res))
       withContext(Dispatchers.IO) {
         Files.createFile(res)
@@ -36,7 +37,7 @@ class CollectAllFilesCommand(text: String, line: Int) : PlaybackCommandCoroutine
     withContext(Dispatchers.EDT) {
       val index = ProjectFileIndex.getInstance(project)
       val fileProcessor = { file: VirtualFile ->
-        if (file.extension != "kts" && !index.isInLibrary(file) && (index.isInSourceContent(file) || index.isInTestSourceContent(file))) {
+        if (file.extension != "kts" && !index.isInLibrary(file) && index.isInSourceContent(file)) {
           bufferedWriter.write(file.path)
           bufferedWriter.newLine()
         }

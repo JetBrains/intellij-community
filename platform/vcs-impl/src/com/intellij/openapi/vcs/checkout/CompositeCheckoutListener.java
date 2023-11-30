@@ -47,8 +47,9 @@ public final class CompositeCheckoutListener implements CheckoutProvider.Listene
           break;
         }
       }
-      catch (ProcessCanceledException ignore) {
-        LOG.info("Checkout listener " + listener + " has been canceled");
+      catch (ProcessCanceledException pce) {
+        LOG.info("CompositeCheckoutListener.directoryCheckedOut call has been canceled by: " + pce);
+        break;
       }
       catch (Exception e) {
         LOG.warn("Error in checkout listener: " + listener, e);
@@ -62,9 +63,6 @@ public final class CompositeCheckoutListener implements CheckoutProvider.Listene
           LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
           break;
         }
-      }
-      catch (ProcessCanceledException ignore) {
-        LOG.info("Checkout listener " + listener + " has been canceled");
       }
       catch (Exception e) {
         LOG.warn("Error in checkout listener: " + listener, e);
@@ -91,9 +89,6 @@ public final class CompositeCheckoutListener implements CheckoutProvider.Listene
           LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
           break;
         }
-      }
-      catch (ProcessCanceledException ignore) {
-        LOG.info("Checkout listener " + listener + " has been canceled");
       }
       catch (Exception e) {
         LOG.warn("Error in checkout listener: " + listener, e);

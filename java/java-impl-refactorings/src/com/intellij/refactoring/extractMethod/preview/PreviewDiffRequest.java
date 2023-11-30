@@ -8,7 +8,6 @@ import com.intellij.diff.tools.fragmented.UnifiedDiffViewer;
 import com.intellij.diff.tools.simple.SimpleDiffViewer;
 import com.intellij.diff.tools.util.base.DiffViewerBase;
 import com.intellij.diff.tools.util.base.DiffViewerListener;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.ScrollType;
@@ -17,6 +16,7 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -41,7 +41,7 @@ class PreviewDiffRequest extends SimpleDiffRequest {
   }
 
   public void setViewer(FrameDiffTool.DiffViewer viewer) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (viewer instanceof UnifiedDiffViewer) {
       myCaretTracker = new UnifiedCaretTracker((UnifiedDiffViewer)viewer);
@@ -55,7 +55,7 @@ class PreviewDiffRequest extends SimpleDiffRequest {
   }
 
   public void onNodeSelected(@NotNull FragmentNode node) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     Couple<TextRange> bounds = myLinesBounds.get(node);
     if (bounds != null && myCaretTracker != null) {
@@ -64,7 +64,7 @@ class PreviewDiffRequest extends SimpleDiffRequest {
   }
 
   public void onInitialized() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myInitialized = true;
   }

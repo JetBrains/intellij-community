@@ -7,7 +7,13 @@ import com.intellij.util.indexing.ID
 class FileIndexingStatistics(
   val fileType: FileType,
   val indexesProvidedByExtensions: Set<ID<*, *>>,
-  val wasFullyIndexedByExtensions: Boolean,
   val perIndexerEvaluateIndexValueTimes: Map<ID<*, *>, TimeNano>,
-  val perIndexerEvaluatingIndexValueRemoversTimes: Map<ID<*, *>, TimeNano>
+  val perIndexerEvaluatingIndexValueRemoversTimes: Map<ID<*, *>, TimeNano>,
+  val indexesEvaluated: IndexesEvaluated,
 )
+
+enum class IndexesEvaluated {
+  BY_EXTENSIONS,
+  BY_USUAL_INDEXES,
+  NOTHING_TO_WRITE,
+}

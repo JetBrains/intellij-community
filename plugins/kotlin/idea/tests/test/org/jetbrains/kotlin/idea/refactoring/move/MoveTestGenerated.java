@@ -268,6 +268,11 @@ public class MoveTestGenerated extends AbstractMoveTest {
         runTest("testData/refactoring/move/kotlin/moveFile/longName/longName.test");
     }
 
+    @TestMetadata("kotlin/moveFile/moveClassWithExtensionFunction/moveClassWithExtensionFunction.test")
+    public void testKotlin_moveFile_moveClassWithExtensionFunction_MoveClassWithExtensionFunction() throws Exception {
+        runTest("testData/refactoring/move/kotlin/moveFile/moveClassWithExtensionFunction/moveClassWithExtensionFunction.test");
+    }
+
     @TestMetadata("kotlin/moveFile/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir.test")
     public void testKotlin_moveFile_moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir_MoveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir() throws Exception {
         runTest("testData/refactoring/move/kotlin/moveFile/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir.test");
@@ -406,6 +411,16 @@ public class MoveTestGenerated extends AbstractMoveTest {
     @TestMetadata("kotlin/moveNestedClass/innerToTopLevelWithThis/innerToTopLevelWithThis.test")
     public void testKotlin_moveNestedClass_innerToTopLevelWithThis_InnerToTopLevelWithThis() throws Exception {
         runTest("testData/refactoring/move/kotlin/moveNestedClass/innerToTopLevelWithThis/innerToTopLevelWithThis.test");
+    }
+
+    @TestMetadata("kotlin/moveNestedClass/nameClashes/nestedToAnotherClassNoConflicts/nestedToAnotherClassNoConflicts.test")
+    public void testKotlin_moveNestedClass_nameClashes_nestedToAnotherClassNoConflicts_NestedToAnotherClassNoConflicts() throws Exception {
+        runTest("testData/refactoring/move/kotlin/moveNestedClass/nameClashes/nestedToAnotherClassNoConflicts/nestedToAnotherClassNoConflicts.test");
+    }
+
+    @TestMetadata("kotlin/moveNestedClass/nameClashes/nestedToTopLevelConflicts/nestedToTopLevelConflicts.test")
+    public void testKotlin_moveNestedClass_nameClashes_nestedToTopLevelConflicts_NestedToTopLevelConflicts() throws Exception {
+        runTest("testData/refactoring/move/kotlin/moveNestedClass/nameClashes/nestedToTopLevelConflicts/nestedToTopLevelConflicts.test");
     }
 
     @TestMetadata("kotlin/moveNestedClass/nonInnerToOuterClass1/nonInnerToOuterClass1.test")

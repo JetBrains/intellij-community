@@ -3,15 +3,15 @@ package org.jetbrains.builtInWebServer.ssi
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SmartList
-import com.intellij.util.io.inputStream
-import com.intellij.util.io.lastModified
 import com.intellij.util.io.readChars
-import com.intellij.util.io.size
 import com.intellij.util.text.CharArrayUtil
 import io.netty.buffer.ByteBufUtf8Writer
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.fileSize
+import kotlin.io.path.getLastModifiedTime
+import kotlin.io.path.inputStream
 
 internal val LOG = Logger.getInstance(SsiProcessor::class.java)
 
@@ -87,7 +87,7 @@ internal open class SsiProcessor {
             }
 
             file.inputStream().use {
-              writer.write(it, file.size().toInt())
+              writer.write(it, file.fileSize().toInt())
             }
           }
           catch (e: IOException) {
@@ -192,12 +192,12 @@ internal open class SsiProcessor {
    */
   fun process(ssiExternalResolver: SsiExternalResolver, file: Path, writer: ByteBufUtf8Writer): Long {
     val fileContents = file.readChars()
-    var lastModifiedDate = file.lastModified().toMillis()
+    var lastModifiedDate = file.getLastModifiedTime().toMillis()
     val ssiProcessingState = SsiProcessingState(ssiExternalResolver, lastModifiedDate)
     var index = 0
     var inside = false
     val command = StringBuilder()
-    writer.ensureWritable(file.size().toInt())
+    writer.ensureWritable(file.fileSize().toInt())
     try {
       while (index < fileContents.length) {
         val c = fileContents[index]

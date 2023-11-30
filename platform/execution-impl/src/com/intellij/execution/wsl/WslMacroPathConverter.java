@@ -13,7 +13,7 @@ import java.io.File;
 import java.util.List;
 
 @ApiStatus.Internal
-public class WslMacroPathConverter implements MacroPathConverter {
+public final class WslMacroPathConverter implements MacroPathConverter {
   private static final Logger LOG = Logger.getInstance(WslMacroPathConverter.class);
 
   private final WSLDistribution myWsl;

@@ -19,6 +19,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -282,7 +283,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     protected abstract void perform(AnActionEvent e, ProcessProxy proxy, ProcessHandler handler);
   }
 
-  public static final class ControlBreakAction extends ProxyBasedAction {
+  public static final class ControlBreakAction extends ProxyBasedAction implements ActionRemoteBehaviorSpecification.Disabled {
     private final ExecutorService myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Thread Dumper", 1);
 
     public ControlBreakAction() {

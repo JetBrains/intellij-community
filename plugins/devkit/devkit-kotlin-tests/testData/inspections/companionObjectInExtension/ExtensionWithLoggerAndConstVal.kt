@@ -20,6 +20,9 @@ class MyExtensionImpl : MyExtension {
 
     // logger subclass via alias
     private val LOGGER_SUBCLASS_ALIAS: LoggerChildAlias = LOGGER_SUBCLASS
+    
+    // nullable loggers are allowed
+    private val NULLABLE_LOGGER: Logger? = null
 
     // const val are allowed
     const val MY_CONST = 0

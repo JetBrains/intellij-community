@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,28 +44,23 @@ public final class JBCefCookie {
     this(name, value, domain, path, secure, httponly, null, null, false, null);
   }
 
-  @NotNull
-  public CefCookie getCefCookie() {
+  public @NotNull CefCookie getCefCookie() {
     return myCefCookie;
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myCefCookie.name;
   }
 
-  @NotNull
-  public String getValue() {
+  public @NotNull String getValue() {
     return myCefCookie.value;
   }
 
-  @NotNull
-  public String getDomain() {
+  public @NotNull String getDomain() {
     return myCefCookie.domain;
   }
 
-  @NotNull
-  public String getPath() {
+  public @NotNull String getPath() {
     return myCefCookie.path;
   }
 
@@ -77,13 +72,11 @@ public final class JBCefCookie {
     return myCefCookie.httponly;
   }
 
-  @Nullable
-  public Date getCreation() {
+  public @Nullable Date getCreation() {
     return myCefCookie.creation;
   }
 
-  @Nullable
-  public Date getLastAccess() {
+  public @Nullable Date getLastAccess() {
     return myCefCookie.lastAccess;
   }
 
@@ -92,8 +85,7 @@ public final class JBCefCookie {
     return myCefCookie.hasExpires;
   }
 
-  @Nullable
-  public Date getExpires() {
+  public @Nullable Date getExpires() {
     return myCefCookie.expires;
   }
 

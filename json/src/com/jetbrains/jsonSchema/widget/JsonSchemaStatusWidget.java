@@ -432,7 +432,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Override
   protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
-    class Listener implements DumbService.DumbModeListener {
+    final class Listener implements DumbService.DumbModeListener {
       volatile boolean isDumbMode;
 
       @Override

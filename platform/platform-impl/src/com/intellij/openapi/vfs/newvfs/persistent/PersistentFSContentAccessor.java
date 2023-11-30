@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,85 +21,98 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public final class PersistentFSContentAccessor {
   private static final Logger LOG = Logger.getInstance(PersistentFSContentAccessor.class);
-  private final boolean myUseContentHashes;
-  private final PersistentFSConnection myFSConnection;
-  private final ReadWriteLock myLock = new ReentrantReadWriteLock();
+
+  private static final boolean USE_CONTENT_HASHES = true;
+
+  private final @NotNull PersistentFSConnection connection;
+
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
   private long totalContents;
   private long totalReuses;
   private long time;
   private int contents;
   private int reuses;
 
-  PersistentFSContentAccessor(boolean useContentHashes, @NotNull PersistentFSConnection connection) {
-    myUseContentHashes = useContentHashes;
-    myFSConnection = connection;
+  PersistentFSContentAccessor(@NotNull PersistentFSConnection connection) {
+    this.connection = connection;
   }
 
   @Nullable
   DataInputStream readContent(int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
-    myLock.readLock().lock();
+    lock.readLock().lock();
     try {
-      int page = myFSConnection.getRecords().getContentRecordId(fileId);
+      int page = connection.getRecords().getContentRecordId(fileId);
       if (page == 0) return null;
       return readContentDirectly(page);
     }
     finally {
-      myLock.readLock().unlock();
+      lock.readLock().unlock();
     }
   }
 
   @NotNull
   DataInputStream readContentDirectly(int contentId) throws IOException {
-    myLock.readLock().lock();
+    lock.readLock().lock();
     try {
-      return myFSConnection.getContents().readStream(contentId);
+      return connection.getContents().readStream(contentId);
     }
     finally {
-      myLock.readLock().unlock();
+      lock.readLock().unlock();
     }
   }
 
   void deleteContent(int fileId) throws IOException {
-    myLock.writeLock().lock();
+    lock.writeLock().lock();
     try {
-      final int contentRecordId = myFSConnection.getRecords().getContentRecordId(fileId);
+      final int contentRecordId = connection.getRecords().getContentRecordId(fileId);
       if (contentRecordId != 0) {
-        //IDEA-302595: we really don't use refCounts for anything now, with contentHashes introduction
-        //             contentStorage really works as an append-only log, with no defrag/GC. And also
-        //             refCounting is prone to unexpected app shutdowns anyway.
-        final int refCount = myFSConnection.getContents().getRefCount(contentRecordId);
-        if (refCount > 0) {
-          releaseContentRecord(contentRecordId);
-        }
+        releaseContentRecord(contentRecordId);
       }
     }
     finally {
-      myLock.writeLock().unlock();
+      lock.writeLock().unlock();
     }
   }
 
-  void releaseContentRecord(int contentId) throws IOException {
-    myLock.writeLock().lock();
+  void releaseContentRecord(int contentRecordId) throws IOException {
+    if (USE_CONTENT_HASHES) {
+      return;
+    }
+    lock.writeLock().lock();
     try {
-      myFSConnection.getContents().releaseRecord(contentId);
+      RefCountingContentStorage contentStorage = connection.getContents();
+      //IDEA-302595: Don't decrement counter if already 0.
+      // Ideally, it is a bug if we ever reach here with refCount==0 -- attempt to release something
+      // that was already released. But in practice, refCount mechanic currently is not smooth enough
+      // to rely on the invariant 'contentStorage.refCount == count of contentId references across the
+      // app'. Ref-counting is prone to unexpected app shutdowns, and with contentHashes introduction,
+      // contentStorage works mostly as an append-only log anyway. So I see no reason to blow logs with
+      // useless warnings -- better just make releaseContentRecord() idempotent, allowing to release
+      // the same contentId as many times as one wants:
+      final int refCount = contentStorage.getRefCount(contentRecordId);
+      if (refCount > 0) {
+        contentStorage.releaseRecord(contentRecordId);
+      }
     }
     finally {
-      myLock.writeLock().unlock();
+      lock.writeLock().unlock();
     }
   }
 
-  boolean writeContent(int fileId, @NotNull ByteArraySequence bytes, boolean fixedSize) throws IOException {
+  boolean writeContent(int fileId, @NotNull ByteArraySequence bytes, @SuppressWarnings("ParameterCanBeLocal") boolean fixedSize)
+    throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
-    myLock.writeLock().lock();
+    lock.writeLock().lock();
     try {
-      PersistentFSConnection connection = myFSConnection;
+      PersistentFSConnection connection = this.connection;
 
       boolean modified;
       RefCountingContentStorage contentStorage = connection.getContents();
 
       int contentRecordId;
-      if (myUseContentHashes) {
+      if (USE_CONTENT_HASHES) {
         contentRecordId = findOrCreateContentRecord(bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
 
         modified = connection.getRecords().setContentRecordId(fileId, (contentRecordId > 0 ? contentRecordId : -contentRecordId));
@@ -120,44 +133,44 @@ public final class PersistentFSContentAccessor {
       return true;
     }
     finally {
-      myLock.writeLock().unlock();
+      lock.writeLock().unlock();
     }
   }
 
   int allocateContentRecordAndStore(byte @NotNull [] bytes) throws IOException {
-    myLock.writeLock().lock();
+    lock.writeLock().lock();
     try {
       int recordId;
-      if (myUseContentHashes) {
+      if (USE_CONTENT_HASHES) {
         recordId = findOrCreateContentRecord(bytes, 0, bytes.length);
         if (recordId > 0) return recordId;
         recordId = -recordId;
       }
       else {
-        recordId = myFSConnection.getContents().acquireNewRecord();
+        recordId = connection.getContents().acquireNewRecord();
       }
-      try (IStorageDataOutput output = myFSConnection.getContents().writeStream(recordId, true)) {
+      try (IStorageDataOutput output = connection.getContents().writeStream(recordId, true)) {
         output.write(bytes);
       }
       return recordId;
     }
     finally {
-      myLock.writeLock().unlock();
+      lock.writeLock().unlock();
     }
   }
 
   byte @Nullable [] getContentHash(int fileId) throws IOException {
-    if (!myUseContentHashes) return null;
+    if (!USE_CONTENT_HASHES) return null;
 
-    int contentId = myFSConnection.getRecords().getContentRecordId(fileId);
-    return contentId <= 0 ? null : myFSConnection.getContentHashesEnumerator().valueOf(contentId);
+    int contentId = connection.getRecords().getContentRecordId(fileId);
+    return contentId <= 0 ? null : connection.getContentHashesEnumerator().valueOf(contentId);
   }
 
   /**
    * @return -recordId for newly created record, or recordId (>0) of existent record with matching hash
    */
   private int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
-    assert myUseContentHashes;
+    assert USE_CONTENT_HASHES;
 
     long started = System.nanoTime();
     byte[] contentHash = calculateHash(bytes, offset, length);
@@ -171,58 +184,43 @@ public final class PersistentFSContentAccessor {
       LOG.info("Contents:" + contents + " of " + totalContents + ", reuses:" + reuses + " of " + totalReuses + " for " + time / 1000000);
     }
 
-    ContentHashEnumerator hashesEnumerator = myFSConnection.getContentHashesEnumerator();
-    final int largestId = hashesEnumerator.getLargestId();
-    int contentRecordId = hashesEnumerator.enumerate(contentHash);
+    ContentHashEnumerator hashesEnumerator = connection.getContentHashesEnumerator();
+    int hashId = hashesEnumerator.enumerateEx(contentHash);
 
-    if (contentRecordId <= largestId) {
+    if (hashId < 0) {//already known hash -> already stored content
+      int contentRecordId = -hashId;
       ++reuses;
-      myFSConnection.getContents().acquireRecord(contentRecordId);
+      connection.getContents().acquireRecord(contentRecordId);
       totalReuses += length;
 
       return contentRecordId;
     }
     else {
-      int newRecord = myFSConnection.getContents().acquireNewRecord();
-      assert contentRecordId == newRecord : "Unexpected content storage modification: contentRecordId=" +
-                                            contentRecordId +
-                                            "; newRecord=" +
-                                            newRecord;
-
+      int contentRecordId = hashId;
+      int newRecord = connection.getContents().acquireNewRecord();
+      //We assume we call contents.acquireNewRecord() when and only when
+      //hashesEnumerator.enumerateEx() returns positive value (which means 'new hash')
+      assert contentRecordId == newRecord
+        : "Unexpected content storage modification: contentHashId=" + hashId + "; newContentRecord=" + newRecord;
       return -contentRecordId;
     }
   }
 
   int acquireContentRecord(int fileId) throws IOException {
-    myLock.writeLock().lock();
+    lock.writeLock().lock();
     try {
-      int record = myFSConnection.getRecords().getContentRecordId(fileId);
+      int record = connection.getRecords().getContentRecordId(fileId);
       if (record > 0) {
-        myFSConnection.getContents().acquireRecord(record);
+        connection.getContents().acquireRecord(record);
       }
       return record;
     }
     finally {
-      myLock.writeLock().unlock();
+      lock.writeLock().unlock();
     }
   }
 
-  void checkContentsStorageSanity(int fileId) throws IOException {
-    myLock.readLock().lock();
-    try {
-      int recordId = myFSConnection.getRecords().getContentRecordId(fileId);
-      assert recordId >= 0;
-      if (recordId > 0) {
-        myFSConnection.getContents().checkSanity(recordId);
-      }
-    }
-    finally {
-      myLock.readLock().unlock();
-    }
-  }
-
-  @NotNull
-  private static MessageDigest getContentHashDigest() {
+  private static @NotNull MessageDigest getContentHashDigest() {
     // MAYBE: consider replace it with sha-256? It is 20%-30% slower than sha1, but more secure.
     //        For now I think this is not really a priority -- but we may consider the move at some point.
 
@@ -237,7 +235,7 @@ public final class PersistentFSContentAccessor {
     return DigestUtil.sha1();
   }
 
-  private static byte @NotNull [] calculateHash(byte[] bytes, int offset, int length) {
+  public static byte @NotNull [] calculateHash(byte[] bytes, int offset, int length) {
     // Probably we don't need to hash the length and "\0000".
     MessageDigest digest = getContentHashDigest();
     digest.update(String.valueOf(length).getBytes(StandardCharsets.UTF_8));

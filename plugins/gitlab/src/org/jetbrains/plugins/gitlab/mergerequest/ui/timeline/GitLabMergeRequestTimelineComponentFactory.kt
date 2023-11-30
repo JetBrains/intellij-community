@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.ComponentType
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
@@ -25,20 +26,25 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.ListLayout
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.StyleSheetUtil
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestTimelineErrorStatusPresenter
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineUIUtil.createTitleTextPane
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditorComponentFactory
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.submitActionIn
+import org.jetbrains.plugins.gitlab.ui.comment.*
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 
@@ -58,21 +64,15 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     val descriptionComponent = GitLabMergeRequestTimelineDescriptionComponent
       .createComponent(cs, timelineVm, avatarIconsProvider)
 
-    val content = ComponentListPanelFactory.createVertical(cs, timelineVm.timelineItems, GitLabMergeRequestTimelineItemViewModel::id,
-                                                           panelInitializer = {
-                                                             add(LoadingLabel().apply {
-                                                               border = Borders.empty(ComponentType.FULL.paddingInsets)
-                                                             }, ListLayout.Alignment.CENTER)
-                                                           }) { itemCs, item ->
-      createItemComponent(project, itemCs, avatarIconsProvider, item)
-    }
+    val errorOrTimelineComponent = createErrorOrTimelineComponent(cs, project, avatarIconsProvider, timelineVm)
+
     val newNoteField = timelineVm.newNoteVm?.let {
       cs.createNewNoteField(project, avatarIconsProvider, it)
     }
     val timelinePanel = VerticalListPanel(0).apply {
       add(titleComponent)
       add(descriptionComponent)
-      add(content)
+      add(errorOrTimelineComponent)
       if (newNoteField != null) {
         add(newNoteField)
       }
@@ -102,10 +102,6 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         val scheme = EditorColorsManager.getInstance().globalScheme
         scheme.defaultBackground
       }
-    }.also {
-      UiNotifyConnector.doWhenFirstShown(it) {
-        timelineVm.requestLoad()
-      }
     }
   }
 
@@ -113,8 +109,16 @@ internal object GitLabMergeRequestTimelineComponentFactory {
                                                 iconsProvider: IconsProvider<GitLabUserDTO>,
                                                 editVm: NewGitLabNoteViewModel): JComponent {
     val noteCs = this
+
+    val addAction = editVm.submitActionIn(noteCs, CollaborationToolsBundle.message("review.comment.submit"),
+                                          project, NewGitLabNoteType.STANDALONE, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
+    val addAsDraftAction = editVm.submitAsDraftActionIn(noteCs, CollaborationToolsBundle.message("review.comments.save-as-draft.action"),
+                                                        project, NewGitLabNoteType.STANDALONE,
+                                                        GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
+
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(editVm.submitActionIn(noteCs, CollaborationToolsBundle.message("review.comments.reply.action"))),
+      primaryAction = editVm.primarySubmitActionIn(noteCs, addAction, addAsDraftAction),
+      secondaryActions = editVm.secondarySubmitActionIn(noteCs, addAction, addAsDraftAction),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comments.reply.hint",
                                                                      CommentInputActionsComponentFactory.submitShortcutText))
     )
@@ -127,19 +131,51 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     }
   }
 
+  private fun createErrorOrTimelineComponent(cs: CoroutineScope,
+                                             project: Project,
+                                             avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+                                             timelineVm: GitLabMergeRequestTimelineViewModel): JComponent {
+    val timelineOrErrorPanel = Wrapper()
+
+    val timelineItems = MutableSharedFlow<List<GitLabMergeRequestTimelineItemViewModel>>()
+    val timelineItemContent = ComponentListPanelFactory.createVertical(cs, timelineItems,
+                                                                       { it.id },
+                                                                       panelInitializer = {
+                                                                         add(LoadingLabel().apply {
+                                                                           border = Borders.empty(ComponentType.FULL.paddingInsets)
+                                                                         }, ListLayout.Alignment.CENTER)
+                                                                       }) { itemCs, item ->
+      createItemComponent(project, itemCs, avatarIconsProvider, item)
+    }
+    timelineOrErrorPanel.setContent(timelineItemContent)
+
+    cs.launch(Dispatchers.Main) {
+      timelineVm.timelineItems.collect {
+        it.fold(onSuccess = { items -> timelineItems.emit(items) }, onFailure = { exception ->
+          val errorPresenter = GitLabMergeRequestTimelineErrorStatusPresenter()
+          val errorPanel = ErrorStatusPanelFactory.create(cs, flowOf(exception), errorPresenter)
+
+          timelineOrErrorPanel.setContent(CollaborationToolsUIUtil.moveToCenter(errorPanel))
+        })
+      }
+    }
+
+    return timelineOrErrorPanel
+  }
+
   private fun createItemComponent(project: Project,
                                   cs: CoroutineScope,
                                   avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                                   item: GitLabMergeRequestTimelineItemViewModel): JComponent =
     when (item) {
       is GitLabMergeRequestTimelineItemViewModel.Immutable -> {
-        val immutatebleItem = item.item
-        val content = createContent(immutatebleItem)
+        val immutableItem = item.item
+        val content = createContent(project, immutableItem)
 
         CodeReviewChatItemUIUtil.build(ComponentType.FULL,
-                                       { avatarIconsProvider.getIcon(immutatebleItem.actor, it) },
+                                       { avatarIconsProvider.getIcon(immutableItem.actor, it) },
                                        content) {
-          withHeader(createTitleTextPane(immutatebleItem.actor, immutatebleItem.date))
+          withHeader(createTitleTextPane(immutableItem.actor, immutableItem.date))
         }
       }
       is GitLabMergeRequestTimelineDiscussionViewModel -> {
@@ -147,15 +183,15 @@ internal object GitLabMergeRequestTimelineComponentFactory {
       }
     }
 
-  private fun createContent(item: GitLabMergeRequestTimelineItem.Immutable): JComponent =
+  private fun createContent(project: Project, item: GitLabMergeRequestTimelineItem.Immutable): JComponent =
     when (item) {
-      is GitLabMergeRequestTimelineItem.SystemNote -> createSystemDiscussionContent(item)
+      is GitLabMergeRequestTimelineItem.SystemNote -> createSystemDiscussionContent(project, item)
       is GitLabMergeRequestTimelineItem.LabelEvent -> createLabeledEventContent(item)
       is GitLabMergeRequestTimelineItem.MilestoneEvent -> createMilestonedEventContent(item)
       is GitLabMergeRequestTimelineItem.StateEvent -> createStateChangeContent(item)
     }
 
-  private fun createSystemDiscussionContent(item: GitLabMergeRequestTimelineItem.SystemNote): JComponent {
+  private fun createSystemDiscussionContent(project: Project, item: GitLabMergeRequestTimelineItem.SystemNote): JComponent {
     val content = item.content
     if (content.contains("Compare with previous version")) {
       try {
@@ -171,7 +207,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         thisLogger().warn("Error occurred while parsing the note with added commits", e)
       }
     }
-    return StatusMessageComponentFactory.create(SimpleHtmlPane(GitLabUIUtil.convertToHtml(content)))
+    return StatusMessageComponentFactory.create(SimpleHtmlPane(GitLabUIUtil.convertToHtml(project, content)))
   }
 
   private val noUlGapsStyleSheet by lazy {

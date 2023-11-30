@@ -15,7 +15,7 @@ import java.util.StringTokenizer;
  * <p/>
  * Thread-safe.
  */
-public class PsiNamesElementSignatureProvider extends AbstractElementSignatureProvider {
+public final class PsiNamesElementSignatureProvider extends AbstractElementSignatureProvider {
 
   private static final String TYPE_MARKER            = "n";
   private static final String TOP_LEVEL_CHILD_MARKER = "!!top";

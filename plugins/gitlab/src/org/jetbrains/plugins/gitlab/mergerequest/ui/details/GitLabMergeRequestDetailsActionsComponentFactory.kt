@@ -17,12 +17,14 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.Wrapper
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.*
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewPopup
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewPopup
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestReviewFlowViewModelImpl.Companion.toReviewState
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -121,11 +123,21 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     reviewActions: CodeReviewActions,
     moreActionsGroup: DefaultActionGroup
   ): JComponent {
-    val submitButton = JButton(GitLabMergeRequestSubmitReviewAction(this, reviewFlowVm)).apply {
+    val cs = this
+    val submitButton = JButton(GitLabMergeRequestSubmitReviewAction(cs, reviewFlowVm)).apply {
       toolTipText = GitLabBundle.message("merge.request.review.submit.action.tooltip")
     }
     reviewFlowVm.submitReviewInputHandler = {
-      GitLabMergeRequestSubmitReviewPopup.show(it, submitButton, true)
+      val result = cs.async {
+        GitLabMergeRequestSubmitReviewPopup.show(it, submitButton, true)
+      }
+      try {
+        result.await()
+      }
+      catch (ce: CancellationException) {
+        result.cancel()
+        throw ce
+      }
     }
 
     moreActionsGroup.add(reviewActions.requestReviewAction.toAnAction())

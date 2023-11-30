@@ -28,7 +28,7 @@ import java.util.concurrent.locks.ReentrantLock
 private val LOG = logger<CodeStyleCachedValueProvider>()
 
 @Service(Service.Level.PROJECT)
-private class CodeStyleCachedValueProviderService(val coroutineScope: CoroutineScope) {
+private class CodeStyleCachedValueProviderService(@JvmField val coroutineScope: CoroutineScope) {
 }
 
 internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewProvider,
@@ -66,6 +66,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
     }
     catch (ignored: ProcessCanceledException) {
       computation.reset()
+      LOG.debug { "Computation was cancelled for ${viewProvider.virtualFile.name}" }
       return CachedValueProvider.Result(null, ModificationTracker.EVER_CHANGED)
     }
     if (settings != null) {
@@ -122,6 +123,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
     private fun start() {
       val app = ApplicationManager.getApplication()
       if (app.isDispatchThread && !app.isUnitTestMode && !app.isHeadlessEnvironment) {
+        LOG.debug { "async for ${viewProvider.virtualFile.name}" }
         job = project.service<CodeStyleCachedValueProviderService>().coroutineScope.launch {
           readAction {
             computeSettings()
@@ -132,6 +134,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
         }
       }
       else {
+        LOG.debug { "sync for ${viewProvider.virtualFile.name}" }
         app.runReadAction(::computeSettings)
         if (app.isDispatchThread) {
           notifyCachedValueComputed()
@@ -145,6 +148,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
     }
 
     fun cancel() {
+      LOG.debug { "expire computation for ${viewProvider.virtualFile.name}" }
       job?.cancel()
       currentResult = null
     }
@@ -180,8 +184,9 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
           modifiableSettings.applyIndentOptionsFromProviders(project, file)
           LOG.debug { "Created TransientCodeStyleSettings for ${file.name}" }
           for (modifier in CodeStyleSettingsModifier.EP_NAME.extensionList) {
+            LOG.debug { "Modifying ${file.name}: ${modifier.javaClass.name}" }
             if (modifier.modifySettings(modifiableSettings, psiFile)) {
-              LOG.debug { "Modifier: ${modifier.javaClass.name}" }
+              LOG.debug { "Modified ${file.name}: ${modifier.javaClass.name}" }
               modifiableSettings.setModifier(modifier)
               currSettings = modifiableSettings
               break
@@ -227,6 +232,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
       if (oldTrackerSetting < newTrackerSetting && !insideRestartedComputation) {
         insideRestartedComputation = true
         try {
+          LOG.debug { "restarted for ${viewProvider.virtualFile.name}" }
           start()
         }
         finally {
@@ -234,6 +240,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
         }
         return
       }
+      LOG.debug { "running scheduled runnables for ${viewProvider.virtualFile.name}" }
       for (runnable in scheduledRunnables) {
         runnable.run()
       }
@@ -241,6 +248,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
         CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(viewProvider.virtualFile)
       }
       computation.reset()
+      LOG.debug { "Computation finished normally for ${viewProvider.virtualFile.name}" }
     }
 
     override fun equals(other: Any?): Boolean {

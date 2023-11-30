@@ -405,11 +405,13 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
   @Override
   public boolean processUsage(ChangeInfo changeInfo, UsageInfo usageInfo, boolean beforeMethodChange, UsageInfo[] usages) {
-    if (!(changeInfo instanceof JavaChangeInfo info)) return false;
-
     PsiElement element = usageInfo.getElement();
     if (element == null) return false;
     if (!GroovyLanguage.INSTANCE.equals(element.getLanguage())) return false;
+
+    JavaChangeInfo info = JavaChangeInfoConverters.getJavaChangeInfo(changeInfo, usageInfo);
+    if (info == null) return false;
+
 
     if (beforeMethodChange) {
       if (usageInfo instanceof OverriderUsageInfo overriderUsageInfo) {

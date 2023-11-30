@@ -13,12 +13,17 @@ public class PyTypeParameterStubImpl extends StubBase<PyTypeParameter> implement
   private final String myName;
   private final String myBoundExpressionText;
 
+  private final PyTypeParameter.Kind myKind;
+
+
   public PyTypeParameterStubImpl(@Nullable String name,
+                                 @NotNull PyTypeParameter.Kind type,
                                  @Nullable String boundExpressionText,
                                  @Nullable StubElement parent,
                                  @NotNull IStubElementType stubElementType) {
     super(parent, stubElementType);
     myName = name;
+    myKind = type;
     myBoundExpressionText = boundExpressionText;
   }
 
@@ -29,6 +34,12 @@ public class PyTypeParameterStubImpl extends StubBase<PyTypeParameter> implement
   }
 
   @Override
+  @NotNull
+  public PyTypeParameter.Kind getKind() {
+    return myKind;
+  }
+
+  @Override
   @Nullable
   public String getName() {
     return myName;
@@ -36,6 +47,6 @@ public class PyTypeParameterStubImpl extends StubBase<PyTypeParameter> implement
 
   @Override
   public String toString() {
-    return "PyTypeParameterStub(name=" + myName + ", bound=" + myBoundExpressionText + ")";
+    return "PyTypeParameterStub(name=" + myName + ", kind=" + myKind + ", bound=" + myBoundExpressionText + ")";
   }
 }

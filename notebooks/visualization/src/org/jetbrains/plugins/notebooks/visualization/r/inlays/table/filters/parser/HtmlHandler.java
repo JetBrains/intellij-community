@@ -91,7 +91,7 @@ class HtmlHandler {
 	 * It returns the string contained inside the tags, or null if the tags
 	 * are not present
 	 */
-	private String getSubstringUnderHtmlTag(String s) {
+	private static String getSubstringUnderHtmlTag(String s) {
 		int l = s.length();
 		if (l >= 6 && (s.charAt(0) == '<') && (s.charAt(5) == '>')
 				&& (s.charAt(1) == 'h' || s.charAt(1) == 'H')

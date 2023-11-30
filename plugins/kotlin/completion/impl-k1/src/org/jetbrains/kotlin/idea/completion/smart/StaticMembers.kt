@@ -26,7 +26,8 @@ class StaticMembers(
     private val bindingContext: BindingContext,
     private val lookupElementFactory: LookupElementFactory,
     private val resolutionFacade: ResolutionFacade,
-    private val moduleDescriptor: ModuleDescriptor
+    private val moduleDescriptor: ModuleDescriptor,
+    private val descriptorFilter: (DeclarationDescriptor) -> Boolean,
 ) {
     fun addToCollection(
         collection: MutableCollection<LookupElement>,
@@ -80,6 +81,8 @@ class StaticMembers(
         defaultPriority: SmartCompletionItemPriority
     ) {
         fun processMember(descriptor: DeclarationDescriptor) {
+            if (!descriptorFilter(descriptor)) return
+
             if (descriptor is DeclarationDescriptorWithVisibility && !descriptor.isVisible(
                     context,
                     null,

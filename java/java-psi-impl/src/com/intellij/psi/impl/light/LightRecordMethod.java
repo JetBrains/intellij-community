@@ -1,8 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
-import com.intellij.model.BranchableSyntheticPsiElement;
-import com.intellij.model.ModelBranch;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -13,11 +11,10 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public final class LightRecordMethod extends LightMethod implements LightRecordMember, BranchableSyntheticPsiElement {
+public final class LightRecordMethod extends LightMethod implements LightRecordMember {
   private final @NotNull PsiRecordComponent myRecordComponent;
   private final @NotNull LightRecordComponentModifierList myModifierList;
 
@@ -77,19 +74,6 @@ public final class LightRecordMethod extends LightMethod implements LightRecordM
       VisibilityIcons.setVisibilityIcon(PsiUtil.ACCESS_LEVEL_PUBLIC, baseIcon);
     }
     return baseIcon;
-  }
-
-  @Override
-  public @NotNull LightRecordMethod obtainBranchCopy(@NotNull ModelBranch branch) {
-    PsiClass recordCopy = branch.obtainPsiCopy(myContainingClass);
-    PsiMethod accessorCopy = recordCopy.findMethodBySignature(this, false);
-    assert accessorCopy instanceof LightRecordMethod;
-    return (LightRecordMethod)accessorCopy;
-  }
-
-  @Override
-  public @Nullable ModelBranch getModelBranch() {
-    return ModelBranch.getPsiBranch(myRecordComponent);
   }
 
   @Override

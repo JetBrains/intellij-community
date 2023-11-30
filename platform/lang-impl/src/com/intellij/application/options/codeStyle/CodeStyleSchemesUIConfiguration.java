@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,7 +20,7 @@ import java.net.URL;
   name = "CodeStyleSchemesUIConfiguration",
   storages = {@Storage(value = "other.xml", roamingType = RoamingType.DISABLED)}
 )
-public class CodeStyleSchemesUIConfiguration implements PersistentStateComponent<CodeStyleSchemesUIConfiguration> {
+public final class CodeStyleSchemesUIConfiguration implements PersistentStateComponent<CodeStyleSchemesUIConfiguration> {
   public String RECENT_IMPORT_FILE_LOCATION = "";
 
   @Nullable

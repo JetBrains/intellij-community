@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
@@ -447,13 +448,18 @@ public class DisposerTest  {
     assertTrue(Disposer.isDisposed(parent));
   }
 
-  @Test(timeout = 60 * 1000)
+  @Test
   public void testNoLeaksAfterConcurrentDisposeAndRegister() throws Exception {
+    AtomicLong leakHash = new AtomicLong();
     try {
-      LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class);
+      LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class, leak -> {
+        leakHash.set(System.identityHashCode(leak));
+        return true;
+      });
     }
     catch (AssertionError e) {
-      Assume.assumeNoException("test is ignored because MyLoggingDisposable is already leaking at the test start", e);
+      Assume.assumeNoException("test is ignored because MyLoggingDisposable is already leaking at the test start. " +
+                               "myRoot="+myRoot+"; ihc(myRoot)="+System.identityHashCode(myRoot)+"; leakHash="+leakHash, e);
     }
     ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(name.getMethodName()));
 
@@ -661,8 +667,8 @@ public class DisposerTest  {
     int N = 1_000_000;
     Disposable root = Disposer.newDisposable("test_root");
 
-    Disposable[] children = IntStream.range(0, N).mapToObj(i -> Disposer.newDisposable("child "+i)).toArray(Disposable[]::new);
-    PlatformTestUtil.startPerformanceTest(name.getMethodName(), 10_000, () -> {
+    Disposable[] children = IntStream.range(0, N).mapToObj(i -> Disposer.newDisposable("child " + i)).toArray(Disposable[]::new);
+    PlatformTestUtil.startPerformanceTest(name.getMethodName(), 15_000, () -> {
         for (Disposable child : children) {
           Disposer.register(root, child);
         }

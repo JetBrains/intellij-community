@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
+import com.intellij.util.lang.Xx3UnencodedString
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
-import org.jetbrains.xxh3.Xx3UnencodedString
 
 class PackageIndexBuilder {
   @JvmField
@@ -15,7 +15,7 @@ class PackageIndexBuilder {
 
   fun addFile(name: String, addClassDir: Boolean = false) {
     val i = name.lastIndexOf('/')
-    val packageNameHash = if (i == -1) 0 else Xx3UnencodedString.hashUnencodedStringRange(name, 0, i)
+    val packageNameHash = if (i == -1) 0 else Xx3UnencodedString.hashUnencodedStringRange(name, i)
     if (name.endsWith(".class")) {
       classPackageHashSet.add(packageNameHash)
       if (addClassDir) {
@@ -58,7 +58,7 @@ class PackageIndexBuilder {
     stream.setPackageIndex(classPackages = classPackages, resourcePackages = resourcePackages)
   }
 
-  // add to index only directories where some non-class files are located (as it can be requested in runtime, e.g. stubs, fileTemplates)
+  // add to index only directories where some non-class files are located (as it can be requested in runtime, e.g., stubs, fileTemplates)
   private fun computeDirsToAddToIndex(name: String) {
     if (name.endsWith("/package.html") || name == "META-INF/MANIFEST.MF") {
       return

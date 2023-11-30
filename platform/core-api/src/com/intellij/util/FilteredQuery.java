@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util;
 
@@ -20,9 +20,8 @@ public class FilteredQuery<T> extends AbstractQuery<T> {
     return delegateProcessResults(myOriginal, new MyProcessor(consumer));
   }
 
-  @NotNull
   @Override
-  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super T> consumer) {
+  public @NotNull AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super T> consumer) {
     return myOriginal.forEachAsync(new MyProcessor(consumer));
   }
 

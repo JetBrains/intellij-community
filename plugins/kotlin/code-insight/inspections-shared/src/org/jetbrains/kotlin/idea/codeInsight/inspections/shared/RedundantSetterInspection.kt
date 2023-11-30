@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.propertyAccessorVisitor
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class RedundantSetterInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+internal class RedundantSetterInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return propertyAccessorVisitor { accessor ->
             val rangeInElement = accessor.namePlaceholder.textRange?.shiftRight(-accessor.startOffset) ?: return@propertyAccessorVisitor
@@ -29,7 +29,7 @@ class RedundantSetterInspection : AbstractKotlinInspection(), CleanupLocalInspec
     }
 }
 
-class RemoveRedundantSetterFix : LocalQuickFix {
+private class RemoveRedundantSetterFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("remove.redundant.setter.fix.text")
 
     override fun getFamilyName() = name

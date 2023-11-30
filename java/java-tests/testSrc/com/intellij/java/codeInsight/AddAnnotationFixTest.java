@@ -77,6 +77,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
         javaCodeStyleSettings.USE_EXTERNAL_ANNOTATIONS = false;
       }
     });
+    ModuleRootModificationUtil.updateModel(myFixture.getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
   }
 
   @Override

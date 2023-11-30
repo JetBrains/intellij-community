@@ -17,18 +17,18 @@ package com.jetbrains.env.ut;
 
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.env.ProcessWithConsoleRunner;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * {@link ProcessWithConsoleRunner} to run unittest
@@ -41,8 +41,7 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
    */
   public static final String TEST_PATTERN_PREFIX = "pattern:";
 
-  // Needs for correct exit code handling if all tests were skipped
-  private boolean isPython312OrGreater = false;
+  private static final Set<Integer> EXIT_CODES_FOR_SKIPPED_TESTS = Set.of(0, 5);
 
   public PyUnitTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
     super(new PyUnitTestFactory(PythonTestConfigurationType.getInstance()),
@@ -60,7 +59,6 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
       configuration.setInterpreterOptions("-Werror");
     }
 
-    isPython312OrGreater = isPython312OrGreater(sdk);
     if (myScriptName.startsWith(TEST_PATTERN_PREFIX)) {
       configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
       configuration.getTarget().setTarget(".");
@@ -69,15 +67,8 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
   }
 
   @Override
-  protected int getExitCodeForSkippedTests() {
-    return isPython312OrGreater ? 5 : 0;
-  }
-
-  private static boolean isPython312OrGreater(@Nullable Sdk sdk) {
-    if (sdk != null) {
-      LanguageLevel languageLevel = PySdkUtil.getLanguageLevelForSdk(sdk);
-      return languageLevel.getMajorVersion() == 3 && languageLevel.getMinorVersion() >= 12;
-    }
-    return false;
+  protected void assertExitCodeForSkippedTests(int code) {
+    //TODO: Return `isPython312OrGreater ? 5 : 0` when the bug in СPython is fixed
+    MatcherAssert.assertThat("Exit code must be 0 or 5 if all tests are ignored", code, Matchers.isIn(EXIT_CODES_FOR_SKIPPED_TESTS));
   }
 }

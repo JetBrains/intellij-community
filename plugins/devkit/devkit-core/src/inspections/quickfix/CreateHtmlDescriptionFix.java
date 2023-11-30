@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
@@ -165,7 +165,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
 
   @Override
   public Icon getIcon(int flags) {
-    return new LayeredIcon(AllIcons.FileTypes.Html, AllIcons.Actions.New);
+    return LayeredIcon.layeredIcon(new Icon[]{AllIcons.FileTypes.Html, AllIcons.Actions.New});
   }
 
   private VirtualFile[] prepare(VirtualFile[] roots) {

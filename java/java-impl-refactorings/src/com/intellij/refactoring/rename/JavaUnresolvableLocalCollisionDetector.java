@@ -41,6 +41,7 @@ public final class JavaUnresolvableLocalCollisionDetector {
       @Override
       public void visitCollidingElement(PsiVariable collidingVariable) {
         if (collidingVariable.equals(element)) return;
+        if (collidingVariable.isUnnamed()) return;
         LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(element, collidingVariable);
         result.add(collision);
       }
@@ -70,7 +71,7 @@ public final class JavaUnresolvableLocalCollisionDetector {
 
   private static void visitDownstreamCollisions(PsiElement scope, PsiElement place, final String newName,
                                                 final CollidingVariableVisitor collidingNameVisitor
-                                               ) {
+  ) {
     ConflictingLocalVariablesVisitor collector =
       new ConflictingLocalVariablesVisitor(newName, collidingNameVisitor);
     if (place == null) {
@@ -81,7 +82,6 @@ public final class JavaUnresolvableLocalCollisionDetector {
       for (PsiElement sibling = place; sibling != null; sibling = sibling.getNextSibling()) {
         sibling.accept(collector);
       }
-
     }
   }
 

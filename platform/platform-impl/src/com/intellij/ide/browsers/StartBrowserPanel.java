@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.intellij.ide.DataManager;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
 
-public class StartBrowserPanel {
+public final class StartBrowserPanel {
   private JCheckBox myStartBrowserCheckBox;
   private JComponent myBrowserComboBox;
 
@@ -65,13 +65,11 @@ public class StartBrowserPanel {
     });
   }
 
-  @NotNull
-  public JPanel getComponent() {
+  public @NotNull JPanel getComponent() {
     return myRoot;
   }
 
-  @Nullable
-  public String getNormalizedUrl() {
+  public @Nullable String getNormalizedUrl() {
     String url = StringUtil.nullize(myUrlField.getText(), true);
     if (url != null) {
       url = url.trim();
@@ -107,14 +105,12 @@ public class StartBrowserPanel {
     myBrowserComboBox = myBrowserSelector.getMainComponent();
   }
 
-  @Nullable
-  private static Url virtualFileToUrl(@NotNull VirtualFile file, @NotNull Project project) {
+  private static @Nullable Url virtualFileToUrl(@NotNull VirtualFile file, @NotNull Project project) {
     PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(project).findFile(file));
     return WebBrowserServiceImpl.getDebuggableUrl(psiFile);
   }
 
-  @NotNull
-  public StartBrowserSettings createSettings() {
+  public @NotNull StartBrowserSettings createSettings() {
     StartBrowserSettings browserSettings = new StartBrowserSettings();
     browserSettings.setSelected(isSelected());
     browserSettings.setBrowser(myBrowserSelector.getSelected());
@@ -130,7 +126,7 @@ public class StartBrowserPanel {
     myBrowserSelector.setSelected(settings.getBrowser());
   }
 
-  public static void setupUrlField(@NotNull TextFieldWithBrowseButton field, @NotNull final Project project) {
+  public static void setupUrlField(@NotNull TextFieldWithBrowseButton field, final @NotNull Project project) {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public boolean isFileSelectable(@Nullable VirtualFile file) {
@@ -143,9 +139,8 @@ public class StartBrowserPanel {
     descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
 
     field.addBrowseFolderListener(new TextBrowseFolderListener(descriptor, project) {
-      @NotNull
       @Override
-      protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+      protected @NotNull String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
         if (chosenFile.isDirectory()) {
           return chosenFile.getPath();
         }

@@ -23,6 +23,7 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -106,7 +107,7 @@ public final class LambdaRefactoringUtil {
     else {
       isReceiver = false;
     }
-    final PsiParameter[] psiParameters = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getParameterList().getParameters() : null;
+    final PsiParameter[] psiParameters = resolve instanceof PsiMethod method ? method.getParameterList().getParameters() : null;
 
     final PsiParameterList parameterList = interfaceMethod.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
@@ -159,7 +160,7 @@ public final class LambdaRefactoringUtil {
     final JavaResolveResult resolveResult = referenceExpression.advancedResolve(false);
     final PsiElement resolveElement = resolveResult.getElement();
 
-    if (resolveElement instanceof PsiMember) {
+    if (resolveElement instanceof PsiMember member) {
       buf.append("{");
 
       if (!PsiTypes.voidType().equals(interfaceMethod.getReturnType())) {
@@ -176,8 +177,8 @@ public final class LambdaRefactoringUtil {
         buf.append(map.get(parameters[0])).append(".");
       } else {
         if (!(referenceNameElement instanceof PsiKeyword)) {
-          if (qualifier instanceof PsiTypeElement) {
-            final PsiJavaCodeReferenceElement referenceElement = ((PsiTypeElement)qualifier).getInnermostComponentReferenceElement();
+          if (qualifier instanceof PsiTypeElement typeElement) {
+            final PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();
             if (referenceElement != null && !PsiTreeUtil.isAncestor(containingClass, referenceExpression, false)) {
               buf.append(referenceElement.getReferenceName()).append(".");
             }
@@ -195,8 +196,8 @@ public final class LambdaRefactoringUtil {
         //class name
         buf.append(" ");
         if (onArrayRef) {
-          if (qualifier instanceof PsiTypeElement) {
-            final PsiType type = ((PsiTypeElement)qualifier).getType();
+          if (qualifier instanceof PsiTypeElement typeElement) {
+            final PsiType type = typeElement.getType();
             int dim = type.getArrayDimensions();
             buf.append(type.getDeepComponentType().getCanonicalText());
             buf.append("[");
@@ -207,12 +208,13 @@ public final class LambdaRefactoringUtil {
             }
           }
         } else {
-          buf.append(getMemberQualifier((PsiMember)resolveElement));
+          buf.append(getMemberQualifier(member));
 
           final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
 
           LOG.assertTrue(containingClass != null);
-          if (containingClass.hasTypeParameters() && !PsiUtil.isRawSubstitutor(containingClass, substitutor)) {
+          if (containingClass.hasTypeParameters() &&
+              ContainerUtil.all(containingClass.getTypeParameters(), tp -> substitutor.substitute(tp) != null)) {
             buf.append("<").append(StringUtil.join(containingClass.getTypeParameters(), parameter -> {
               final PsiType psiType = substitutor.substitute(parameter);
               LOG.assertTrue(psiType != null);

@@ -464,7 +464,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @Override
   public boolean hasTestSuites() {
-    return getRoot().getChildren().size() > 0;
+    return !getRoot().getChildren().isEmpty();
   }
 
   @Override
@@ -778,9 +778,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   AnAction[] getAdditionalToolbarActions() { return myToolbarPanel.additionalActionsToMerge; }
 
-  void hideToolbar() {
+
+  @Override
+  protected void hideToolbar() {
+    super.hideToolbar();
     myToolbarPanel.setVisible(false);
-    myLeftPane.setBorder(JBUI.Borders.empty());
   }
 
   private static class MySaveHistoryTask extends Task.Backgroundable {

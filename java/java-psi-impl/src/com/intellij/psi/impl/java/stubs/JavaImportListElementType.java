@@ -6,17 +6,16 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiImportList;
 import com.intellij.psi.impl.java.stubs.impl.PsiImportListStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiImportListImpl;
 import com.intellij.psi.impl.source.tree.java.ImportListElement;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.stubs.*;
 import org.jetbrains.annotations.NotNull;
 
-public final class JavaImportListElementType extends JavaStubElementType<PsiImportListStub, PsiImportList> {
+public final class JavaImportListElementType extends JavaStubElementType<PsiImportListStub, PsiImportList>
+  implements EmptyStubSerializer<PsiImportListStub> {
   public JavaImportListElementType() {
-    super("IMPORT_LIST");
+    super("IMPORT_LIST", BasicJavaElementType.BASIC_IMPORT_LIST);
   }
 
   @NotNull
@@ -41,13 +40,9 @@ public final class JavaImportListElementType extends JavaStubElementType<PsiImpo
     return new PsiImportListStubImpl(parentStub);
   }
 
-  @Override
-  public void serialize(@NotNull final PsiImportListStub stub, @NotNull final StubOutputStream dataStream) {
-  }
-
   @NotNull
   @Override
-  public PsiImportListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) {
+  public PsiImportListStub instantiate(final StubElement parentStub) {
     return new PsiImportListStubImpl(parentStub);
   }
 

@@ -11,13 +11,13 @@ import com.intellij.lang.properties.psi.Property
 import com.intellij.lang.properties.references.PropertyReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.resolve.calls.model.ExpressionValueArgument
-import org.jetbrains.kotlin.resolve.calls.model.VarargValueArgument
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 class KotlinInvalidBundleOrPropertyInspection : AbstractKotlinInspection() {
@@ -55,20 +55,22 @@ class KotlinInvalidBundleOrPropertyInspection : AbstractKotlinInspection() {
                 if (argument.getArgumentExpression() != KtPsiUtil.deparenthesize(template)) return
 
                 val callExpression = argument.getStrictParentOfType<KtCallExpression>() ?: return
-                val resolvedCall = callExpression.resolveToCall() ?: return
-
-                val resolvedArguments = resolvedCall.valueArgumentsByIndex ?: return
-                val keyArgumentIndex = resolvedArguments.indexOfFirst { it is ExpressionValueArgument && it.valueArgument == argument }
+                val keyArgumentIndex = callExpression.valueArguments.indexOf(argument)
                 if (keyArgumentIndex < 0) return
 
-                val callable = resolvedCall.resultingDescriptor
-                if (callable.valueParameters.size != keyArgumentIndex + 2) return
+                analyze(callExpression) {
+                    val callable = callExpression.resolveCall()?.singleFunctionCallOrNull()?.symbol ?: return
+                    if (callable.valueParameters.size != keyArgumentIndex + 2) return
+                    if (!callable.valueParameters.last().isVararg) return
+                }
 
-                val messageArgument = resolvedArguments[keyArgumentIndex + 1] as? VarargValueArgument ?: return
-                if (messageArgument.arguments.singleOrNull()?.getSpreadElement() != null) return
+                val argsSize = callExpression.valueArguments.size
+                val messageArgument = if (argsSize > keyArgumentIndex + 1) callExpression.valueArguments[keyArgumentIndex + 1] else null
+
+                if (messageArgument?.isSpread == true) return
 
                 val expectedArgumentCount = JavaI18nUtil.getPropertyValuePlaceholdersCount(property.value ?: "")
-                val actualArgumentCount = messageArgument.arguments.size
+                val actualArgumentCount = argsSize - keyArgumentIndex - 1
                 if (actualArgumentCount < expectedArgumentCount) {
                     val description = JavaI18nBundle.message(
                         "property.has.more.parameters.than.passed",

@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.junit.JUnitAssertEqualsMayBeAssertSameInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.junit.JUnitAssertEqualsMayBeAssertSameInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinJUnitAssertEqualsMayBeAssertSameInspectionTest : JUnitAssertEqualsMayBeAssertSameInspectionTestBase() {
   fun `test JUnit 3 highlighting`() {

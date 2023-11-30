@@ -5,6 +5,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ProjectWindowCustomizerService;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.DefaultCutStrategy;
+import com.intellij.openapi.wm.impl.TextCutStrategy;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
@@ -36,7 +38,7 @@ import java.util.Objects;
 
 import static com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes.*;
 
-public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeListener {
+public final class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeListener {
   private static final Icon EXPAND_ICON = AllIcons.General.ChevronDown;
   private static final int SEPARATOR_WIDTH = 1;
   private static final int SEPARATOR_HEIGHT = 20;
@@ -95,9 +97,10 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     }
   }
 
-  private void tryUpdateHtmlRenderer(ToolbarComboWidget widget, String text) {
-    if (widget.getFont() == null && BasicHTML.isHTMLString(text))
+  private static void tryUpdateHtmlRenderer(ToolbarComboWidget widget, String text) {
+    if (widget.getFont() == null && BasicHTML.isHTMLString(text)) {
       return;
+    }
     BasicHTML.updateRenderer(widget, text);
   }
 
@@ -210,7 +213,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
 
       if (c.isEnabled()) {
         Rectangle hoverRect = hoverTracker.getHoverRect();
-        Color hoverBackground = ProjectWindowCustomizerService.getInstance().isActive()
+        Color hoverBackground = ProjectWindowCustomizerService.Companion.getInstance().isActive()
                                 ? c.getTransparentHoverBackground() : c.getHoverBackground();
         if (hoverRect != null && hoverBackground != null) {
           g2.setColor(hoverBackground);
@@ -336,7 +339,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     return res;
   }
 
-  private @Nls String getText(ToolbarComboWidget widget) {
+  private static @Nls String getText(ToolbarComboWidget widget) {
     View v = (View)widget.getClientProperty(BasicHTML.propertyKey);
     if (v != null) {
       try {
@@ -354,7 +357,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     return !widget.getPressListeners().isEmpty() && widget.isExpandable();
   }
 
-  private static abstract class MyMouseTracker extends MouseAdapter implements PropertyChangeListener {
+  private abstract static class MyMouseTracker extends MouseAdapter implements PropertyChangeListener {
     protected ToolbarComboWidget comp;
 
     public void installTo(ToolbarComboWidget c) {
@@ -372,7 +375,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     }
   }
 
-  private class HoverAreaTracker extends MyMouseTracker {
+  private final class HoverAreaTracker extends MyMouseTracker {
     private boolean mouseInside = false;
     private Rectangle hoverRect;
 
@@ -434,7 +437,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     }
   }
 
-  private static class ToolbarComboWidgetClickListener extends ClickListener {
+  private static final class ToolbarComboWidgetClickListener extends ClickListener {
     private static void notifyPressListeners(MouseEvent e) {
       ToolbarComboWidget comp = (ToolbarComboWidget)e.getComponent();
       ActionEvent ae = new ActionEvent(comp, 0, null, System.currentTimeMillis(), e.getModifiersEx());
@@ -468,13 +471,12 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     }
   }
 
-  private static class DefaultCutStrategy implements TextCutStrategy {
+  private static final class DefaultCutStrategy implements TextCutStrategy {
 
     private static final int MIN_TEXT_LENGTH = 5;
 
-    @NotNull
     @Override
-    public String calcShownText(@NotNull String text, @NotNull FontMetrics metrics, int maxWidth) {
+    public @NotNull String calcShownText(@NotNull String text, @NotNull FontMetrics metrics, int maxWidth) {
       int width = metrics.stringWidth(text);
       if (width <= maxWidth) return text;
 

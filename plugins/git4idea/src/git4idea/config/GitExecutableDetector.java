@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -54,15 +54,14 @@ public class GitExecutableDetector {
   private final ScheduledExecutorService myWslExecutor =
     AppExecutorUtil.createBoundedScheduledExecutorService("GitExecutableDetector WSL thread", 1);
 
-  @NotNull private final Object DETECTED_EXECUTABLE_LOCK = new Object();
-  @NotNull private final AtomicReference<DetectedPath> myEnvExecutable = new AtomicReference<>();
-  @NotNull private final AtomicReference<DetectedPath> mySystemExecutable = new AtomicReference<>();
-  @NotNull private final Map<WSLDistribution, DetectedPath> myWslExecutables = new ConcurrentHashMap<>();
+  private final @NotNull Object DETECTED_EXECUTABLE_LOCK = new Object();
+  private final @NotNull AtomicReference<DetectedPath> myEnvExecutable = new AtomicReference<>();
+  private final @NotNull AtomicReference<DetectedPath> mySystemExecutable = new AtomicReference<>();
+  private final @NotNull Map<WSLDistribution, DetectedPath> myWslExecutables = new ConcurrentHashMap<>();
   private volatile boolean myWslDistributionsProcessed;
 
 
-  @Nullable
-  public String getExecutable(@Nullable WSLDistribution projectWslDistribution, boolean detectIfNeeded) {
+  public @Nullable String getExecutable(@Nullable WSLDistribution projectWslDistribution, boolean detectIfNeeded) {
     if (detectIfNeeded) {
       return detect(projectWslDistribution);
     }
@@ -71,14 +70,12 @@ public class GitExecutableDetector {
     }
   }
 
-  @Nullable
-  private String getCachedExecutable(@Nullable WSLDistribution projectWslDistribution) {
+  private @Nullable String getCachedExecutable(@Nullable WSLDistribution projectWslDistribution) {
     List<Detector> detectors = collectDetectors(projectWslDistribution);
     return getExecutable(detectors);
   }
 
-  @NotNull
-  public String detect(@Nullable WSLDistribution distribution) {
+  public @NotNull String detect(@Nullable WSLDistribution distribution) {
     List<Detector> detectors = collectDetectors(distribution);
 
     String detectedPath = getExecutable(detectors);
@@ -88,9 +85,8 @@ public class GitExecutableDetector {
                                     () -> detectExecutable(detectors));
   }
 
-  @NotNull
   @RequiresBackgroundThread
-  private String detectExecutable(@NotNull List<Detector> detectors) {
+  private @NotNull String detectExecutable(@NotNull List<Detector> detectors) {
     String path = null;
     boolean fireEvent = false;
     synchronized (DETECTED_EXECUTABLE_LOCK) {
@@ -132,8 +128,7 @@ public class GitExecutableDetector {
   /**
    * @return 'null' if detection was not finished yet. Otherwise, return our best guess.
    */
-  @Nullable
-  private static String getExecutable(@NotNull List<Detector> detectors) {
+  private static @Nullable String getExecutable(@NotNull List<Detector> detectors) {
     for (Detector detector : detectors) {
       DetectedPath path = detector.getPath();
       if (path == null) return null; // not detected yet
@@ -142,8 +137,7 @@ public class GitExecutableDetector {
     return getDefaultExecutable();
   }
 
-  @NotNull
-  public List<Detector> collectDetectors(@Nullable WSLDistribution projectWslDistribution) {
+  public @NotNull List<Detector> collectDetectors(@Nullable WSLDistribution projectWslDistribution) {
     List<Detector> detectors = new ArrayList<>();
     if (projectWslDistribution != null &&
         GitExecutableManager.supportWslExecutable()) {
@@ -252,13 +246,11 @@ public class GitExecutableDetector {
   /**
    * Default choice if detection failed - just an executable name to be resolved by $PATH.
    */
-  @NotNull
-  public static String getDefaultExecutable() {
+  public static @NotNull String getDefaultExecutable() {
     return SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
   }
 
-  @Nullable
-  private static String detectForUnix() {
+  private static @Nullable String detectForUnix() {
     for (String p : UNIX_PATHS) {
       File f = new File(p, UNIX_EXECUTABLE);
       if (f.exists()) {
@@ -268,8 +260,7 @@ public class GitExecutableDetector {
     return null;
   }
 
-  @Nullable
-  private String detectForWindows() {
+  private @Nullable String detectForWindows() {
     String exec = checkProgramFiles();
     if (exec != null) {
       return exec;
@@ -283,8 +274,7 @@ public class GitExecutableDetector {
     return null;
   }
 
-  @Nullable
-  private String checkProgramFiles() {
+  private @Nullable String checkProgramFiles() {
     final String[] PROGRAM_FILES = {"Program Files", "Program Files (x86)"};
 
     // collecting all potential msys distributives
@@ -310,8 +300,7 @@ public class GitExecutableDetector {
     return null;
   }
 
-  @Nullable
-  private String checkCygwin() {
+  private @Nullable String checkCygwin() {
     final String[] OTHER_WINDOWS_PATHS = {FileUtil.toSystemDependentName("cygwin/bin/git.exe")};
     for (String otherPath : OTHER_WINDOWS_PATHS) {
       File file = new File(getWinRoot(), otherPath);
@@ -322,8 +311,7 @@ public class GitExecutableDetector {
     return null;
   }
 
-  @Nullable
-  private static String checkWslDistribution(@NotNull WSLDistribution distribution) {
+  private static @Nullable String checkWslDistribution(@NotNull WSLDistribution distribution) {
     if (distribution.getVersion() != 2) return null;
 
     Path root = distribution.getUNCRootPath();
@@ -352,13 +340,11 @@ public class GitExecutableDetector {
   }
 
   @VisibleForTesting
-  @NotNull
-  protected File getWinRoot() {
+  protected @NotNull File getWinRoot() {
     return WIN_ROOT;
   }
 
-  @Nullable
-  private static String checkDistributive(@Nullable File gitDir) {
+  private static @Nullable String checkDistributive(@Nullable File gitDir) {
     if (gitDir == null || !gitDir.exists()) {
       return null;
     }
@@ -373,8 +359,7 @@ public class GitExecutableDetector {
     return null;
   }
 
-  @Nullable
-  private static String checkBinDir(@NotNull File binDir) {
+  private static @Nullable String checkBinDir(@NotNull File binDir) {
     if (!binDir.exists()) {
       return null;
     }
@@ -388,13 +373,11 @@ public class GitExecutableDetector {
   }
 
   @VisibleForTesting
-  @Nullable
-  protected String getPathEnv() {
+  protected @Nullable String getPathEnv() {
     return PathEnvironmentVariableUtil.getPathVariableValue();
   }
 
-  @Nullable
-  public static String patchExecutablePath(@NotNull String path) {
+  public static @Nullable String patchExecutablePath(@NotNull String path) {
     if (SystemInfo.isWindows) {
       File file = new File(path.trim());
       if (file.getName().equals("git-cmd.exe") || file.getName().equals("git-bash.exe")) {
@@ -405,8 +388,7 @@ public class GitExecutableDetector {
     return null;
   }
 
-  @Nullable
-  public static String getBashExecutablePath(@NotNull String gitExecutable) {
+  public static @Nullable String getBashExecutablePath(@NotNull String gitExecutable) {
     if (!SystemInfo.isWindows) return null;
 
     File gitFile = new File(gitExecutable.trim());
@@ -464,8 +446,7 @@ public class GitExecutableDetector {
 
     // not using GitVersion#parse(), because it requires at least 3 items in the version (1.7.3),
     // and parses the `git version` command output, not just the version string.
-    @Nullable
-    private static GitVersion parseGitVersion(@Nullable String name) {
+    private static @Nullable GitVersion parseGitVersion(@Nullable String name) {
       if (name == null) {
         return null;
       }

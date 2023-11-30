@@ -3,9 +3,8 @@ import java.util.*;
 
 public class GenerateThrow {
   void foo(int i) {
-      // convert to 'old style' switch
       int res;
-      switch (i) {
+      switch (i) { // convert to 'old style' switch
           case 0:
               res = 1;
               break;

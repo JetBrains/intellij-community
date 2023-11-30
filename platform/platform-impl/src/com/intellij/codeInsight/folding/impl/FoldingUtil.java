@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.folding.impl;
 
@@ -16,14 +16,12 @@ import java.util.*;
 public final class FoldingUtil {
   private FoldingUtil() {}
 
-  @Nullable
-  public static FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
+  public static @Nullable FoldRegion findFoldRegion(@NotNull Editor editor, int startOffset, int endOffset) {
     FoldRegion region = editor.getFoldingModel().getFoldRegion(startOffset, endOffset);
     return region != null && region.isValid() ? region : null;
   }
 
-  @Nullable
-  public static FoldRegion findFoldRegionStartingAtLine(@NotNull Editor editor, int line){
+  public static @Nullable FoldRegion findFoldRegionStartingAtLine(@NotNull Editor editor, int line){
     if (line < 0 || line >= editor.getDocument().getLineCount()) {
       return null;
     }

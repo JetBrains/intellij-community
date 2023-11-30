@@ -40,7 +40,7 @@ class PluginSet internal constructor(
     // in tests or on plugin installation it is not present in a plugin list, may exist on plugin update, though
     // linear search is ok here - not a hot method
     val oldModule = enabledPlugins.find { it == module } // todo may exist on update
-    PluginManagerCore.getLogger().assertTrue((oldModule == null || !oldModule.isEnabled) && module.isEnabled)
+    PluginManagerCore.logger.assertTrue((oldModule == null || !oldModule.isEnabled) && module.isEnabled)
 
     val unsortedPlugins = LinkedHashSet(allPlugins)
     unsortedPlugins.removeIf { it == module }

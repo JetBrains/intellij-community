@@ -4,12 +4,13 @@ package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirSuperTypeCallNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirSuperEntriesProvider.getSuperClassesAvailableForSuperCall
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallLookupObject
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallInsertionHandler
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperTypeCallNameReferencePositionContext
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 
@@ -17,10 +18,12 @@ import org.jetbrains.kotlin.name.Name
 internal class FirSuperEntryContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
-) : FirCompletionContributorBase<FirSuperTypeCallNameReferencePositionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(
-        positionContext: FirSuperTypeCallNameReferencePositionContext,
-        weighingContext: WeighingContext
+) : FirCompletionContributorBase<KotlinSuperTypeCallNameReferencePositionContext>(basicContext, priority) {
+    context(KtAnalysisSession)
+    override fun complete(
+        positionContext: KotlinSuperTypeCallNameReferencePositionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
     ) = getSuperClassesAvailableForSuperCall(positionContext.nameExpression).forEach { superType ->
         val tailText = superType.classIdIfNonLocal?.asString()?.let { "($it)" }
         LookupElementBuilder.create(SuperLookupObject(superType.name, superType.classIdIfNonLocal), superType.name.asString())

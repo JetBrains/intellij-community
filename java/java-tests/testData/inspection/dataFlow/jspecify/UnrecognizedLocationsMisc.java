@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.jspecify.nullness.NullMarked;
-import org.jspecify.nullness.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 @NullMarked
 abstract class UnrecognizedLocationsMisc {
@@ -27,14 +26,22 @@ abstract class UnrecognizedLocationsMisc {
       // jspecify_nullness_intrinsically_not_nullable
       implements @Nullable Super {
     // jspecify_nullness_intrinsically_not_nullable
-    @Nullable
-    Sub() {}
+    @Nullable Sub() {}
   }
 
   void foo() throws Exception {
     try {
       // jspecify_unrecognized_location
       @Nullable Object o;
+
+      @Nullable Object[] a0;
+
+      // jspecify_unrecognized_location
+      Object @Nullable [] a1;
+
+      // jspecify_unrecognized_location
+      @Nullable Object @Nullable [] a2;
+
       // jspecify_unrecognized_location
     } catch (@Nullable Exception e) {
     }

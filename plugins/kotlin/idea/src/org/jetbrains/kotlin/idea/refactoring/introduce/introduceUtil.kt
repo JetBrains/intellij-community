@@ -5,19 +5,17 @@ package org.jetbrains.kotlin.idea.refactoring.introduce
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
+import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
+import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.findElements
-import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
-import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.SmartList
@@ -147,24 +145,6 @@ fun selectElementsWithTargetParent(
     selectSingleElement()
 }
 
-fun PsiElement.findExpressionByCopyableDataAndClearIt(key: Key<Boolean>): KtExpression? {
-    val result = findDescendantOfType<KtExpression> { it.getCopyableUserData(key) != null } ?: return null
-    result.putCopyableUserData(key, null)
-    return result
-}
-
-fun PsiElement.findElementByCopyableDataAndClearIt(key: Key<Boolean>): PsiElement? {
-    val result = findDescendantOfType<PsiElement> { it.getCopyableUserData(key) != null } ?: return null
-    result.putCopyableUserData(key, null)
-    return result
-}
-
-fun PsiElement.findExpressionsByCopyableDataAndClearIt(key: Key<Boolean>): List<KtExpression> {
-    val results = collectDescendantsOfType<KtExpression> { it.getCopyableUserData(key) != null }
-    results.forEach { it.putCopyableUserData(key, null) }
-    return results
-}
-
 fun findExpressionOrStringFragment(file: KtFile, startOffset: Int, endOffset: Int): KtExpression? {
     val entry1 = file.findElementAt(startOffset)?.getNonStrictParentOfType<KtStringTemplateEntry>() ?: return null
     val entry2 = file.findElementAt(endOffset - 1)?.getNonStrictParentOfType<KtStringTemplateEntry>() ?: return null
@@ -209,13 +189,6 @@ fun ExtractableSubstringInfo.replaceWith(replacement: KtExpression): KtExpressio
 
         addedRefEntry.expression!!
     }
-}
-
-fun KtExpression.mustBeParenthesizedInInitializerPosition(): Boolean {
-    if (this !is KtBinaryExpression) return false
-
-    if (left?.mustBeParenthesizedInInitializerPosition() == true) return true
-    return PsiChildRange(left, operationReference).any { (it is PsiWhiteSpace) && it.textContains('\n') }
 }
 
 fun isObjectOrNonInnerClass(e: PsiElement): Boolean = e is KtObjectDeclaration || (e is KtClass && !e.isInner())

@@ -3,7 +3,8 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.UnknownFieldEntity
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 import java.util.*
 import kotlin.test.assertEquals
 

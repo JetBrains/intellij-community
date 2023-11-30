@@ -37,10 +37,10 @@ abstract class UAbstractConstant : UValueBase(), UConstant {
 enum class UNumericType(val prefix: String = "") {
   BYTE("(byte)"),
   SHORT("(short)"),
-  INT(),
+  INT,
   LONG("(long)"),
   FLOAT("(float)"),
-  DOUBLE();
+  DOUBLE;
 
   fun merge(other: UNumericType): UNumericType {
     if (this == DOUBLE || other == DOUBLE) return DOUBLE

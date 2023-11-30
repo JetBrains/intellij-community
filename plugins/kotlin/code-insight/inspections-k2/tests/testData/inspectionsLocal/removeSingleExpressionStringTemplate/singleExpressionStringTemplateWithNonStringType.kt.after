@@ -1,1 +1,2 @@
+// HIGHLIGHT: INFORMATION
 val bar = 1.hashCode().toString()

@@ -48,7 +48,7 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: JavaSourceRootPropertiesEntity,
-                                      modification: JavaSourceRootPropertiesEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: JavaSourceRootPropertiesEntity.Builder.() -> Unit): JavaSourceRootPropertiesEntity = modifyEntity(
   JavaSourceRootPropertiesEntity.Builder::class.java, entity, modification)
 
 var SourceRootEntity.Builder.javaSourceRoots: @Child List<JavaSourceRootPropertiesEntity>
@@ -95,7 +95,7 @@ interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: JavaResourceRootPropertiesEntity,
-                                      modification: JavaResourceRootPropertiesEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: JavaResourceRootPropertiesEntity.Builder.() -> Unit): JavaResourceRootPropertiesEntity = modifyEntity(
   JavaResourceRootPropertiesEntity.Builder::class.java, entity, modification)
 
 var SourceRootEntity.Builder.javaResourceRoots: @Child List<JavaResourceRootPropertiesEntity>

@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -52,7 +53,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   }
 
   public void run(final MavenRunnerParameters parameters, final MavenRunnerSettings settings, final Runnable onComplete) {
-    FileDocumentManager.getInstance().saveAllDocuments();
+    ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
 
     ProgramRunner.Callback callback = descriptor -> {
       ProcessHandler handler = descriptor.getProcessHandler();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ServiceContainerUtil")
 package com.intellij.testFramework
 
@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusOwner
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 private val testDescriptor by lazy { DefaultPluginDescriptor("test") }
@@ -92,7 +91,7 @@ fun ComponentManager.getServiceImplementationClassNames(prefix: String): List<St
 }
 
 fun processAllServiceDescriptors(componentManager: ComponentManager, consumer: (ServiceDescriptor) -> Unit) {
-  for (plugin in PluginManagerCore.getLoadedPlugins()) {
+  for (plugin in PluginManagerCore.loadedPlugins) {
     val pluginDescriptor = plugin as IdeaPluginDescriptorImpl
     val containerDescriptor = when (componentManager) {
       is Application -> pluginDescriptor.appContainerDescriptor

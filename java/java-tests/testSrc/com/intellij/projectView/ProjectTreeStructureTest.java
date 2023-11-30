@@ -48,6 +48,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
         Class2
         Class3
        Class4.java
+        PsiUnnamedClass
        Form1
        Form1.form
        Form2.form
@@ -131,6 +132,8 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
            Class2
            Class3
           Class4.java
+           PsiUnnamedClass
+            Class4
           Form1
           Form1.form
           Form2.form
@@ -213,7 +216,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
     PsiTestUtil.addContentRoot(b, testDataRoot.findFileByRelativePath("a/b"));
     myStructure.setShowLibraryContents(false);
 
-    //todo[nik] this function is generic enough, it can be moved to testFramework
+    //todo this function is generic enough, it can be moved to testFramework
     Function<Object, String> nodePresenter = o -> {
       AbstractTreeNode node = (AbstractTreeNode)o;
       node.update();

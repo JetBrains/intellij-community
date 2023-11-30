@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -20,6 +20,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * Holds information about the UI and content shown in the Run tool window.
+ */
 public class RunContentDescriptor implements Disposable {
   // Should be used in com.intellij.ui.content.Content
   public static final Key<RunContentDescriptor> DESCRIPTOR_KEY = Key.create("Descriptor");

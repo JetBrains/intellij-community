@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class SaveProjectAsTemplateDialog extends DialogWrapper {
+public final class SaveProjectAsTemplateDialog extends DialogWrapper {
 
   @NotNull private final Project myProject;
   private JPanel myPanel;
@@ -43,7 +43,7 @@ public class SaveProjectAsTemplateDialog extends DialogWrapper {
   private JLabel myModuleLabel;
   private JBCheckBox myReplaceParameters;
 
-  protected SaveProjectAsTemplateDialog(@NotNull Project project, @Nullable VirtualFile descriptionFile) {
+  SaveProjectAsTemplateDialog(@NotNull Project project, @Nullable VirtualFile descriptionFile) {
     super(project);
     myProject = project;
 

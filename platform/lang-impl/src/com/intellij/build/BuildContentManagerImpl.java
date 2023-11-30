@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.process.BuildProcessHandler;
@@ -24,6 +24,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.MultiMap;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,9 @@ import java.util.function.Supplier;
  */
 public final class BuildContentManagerImpl implements BuildContentManager, Disposable {
   public static final Supplier<@NlsContexts.TabTitle String> BUILD_TAB_TITLE_SUPPLIER = LangBundle.messagePointer("tab.title.build");
-  private static final BadgeIconSupplier TW_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.ToolWindowBuild);
+  private final Supplier<BadgeIconSupplier> TW_ICON = new SynchronizedClearableLazy<>(() -> {
+    return new BadgeIconSupplier(AllIcons.Toolwindows.ToolWindowBuild);
+  });
 
   private static final List<Supplier<@NlsContexts.TabTitle String>> presetOrder = List.of(
     LangBundle.messagePointer("tab.title.sync"),
@@ -74,7 +77,7 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
 
     toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, builder -> {
       builder.stripeTitle = UIBundle.messagePointer("tool.window.name.build");
-      builder.icon = TW_ICON.getOriginalIcon();
+      builder.icon = AllIcons.Toolwindows.ToolWindowBuild;
       return Unit.INSTANCE;
     });
     toolWindow.setToHideOnEmptyContent(true);
@@ -192,7 +195,7 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
       JComponent component = content.getComponent();
       component.invalidate();
       if (!liveContentsMap.isEmpty()) {
-        getOrCreateToolWindow().setIcon(TW_ICON.getLiveIndicatorIcon());
+        getOrCreateToolWindow().setIcon(TW_ICON.get().getLiveIndicatorIcon());
       }
     });
   }
@@ -220,7 +223,7 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
 
     invokeLaterIfNeeded(() -> {
       if (liveContentsMap.isEmpty()) {
-        getOrCreateToolWindow().setIcon(TW_ICON.getOriginalIcon());
+        getOrCreateToolWindow().setIcon(AllIcons.Toolwindows.ToolWindowBuild);
       }
     });
   }

@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components;
 
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
@@ -16,7 +17,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.function.Consumer;
 
-final class ComponentsNavBarPanel extends Breadcrumbs {
+final class ComponentsNavBarPanel extends Breadcrumbs implements Scrollable {
   private boolean isAccessibleEnabled = false;
 
   ComponentsNavBarPanel(@NotNull Component selectedComponent, @NotNull Consumer<? super Component> selectionHandler) {
@@ -28,6 +29,32 @@ final class ComponentsNavBarPanel extends Breadcrumbs {
       }
     });
     SwingUtilities.invokeLater(() -> scrollToLastItem());
+  }
+
+  @Override
+  public Dimension getPreferredScrollableViewportSize() {
+    var preferredSize = getPreferredSize();
+    return new Dimension(JBUIScale.scale(300), preferredSize.height);
+  }
+
+  @Override
+  public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+    return 1;
+  }
+
+  @Override
+  public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+    return 50;
+  }
+
+  @Override
+  public boolean getScrollableTracksViewportWidth() {
+    return false;
+  }
+
+  @Override
+  public boolean getScrollableTracksViewportHeight() {
+    return true;
   }
 
   public void setSelectedComponent(@NotNull Component component) {
@@ -67,7 +94,7 @@ final class ComponentsNavBarPanel extends Breadcrumbs {
     return font != null ? font.deriveFont(13f) : null;
   }
 
-  private class ComponentItem implements Crumb {
+  private final class ComponentItem implements Crumb {
     private final @NotNull Component myComponent;
 
     ComponentItem(@NotNull Component component) {
@@ -79,9 +106,8 @@ final class ComponentsNavBarPanel extends Breadcrumbs {
       return HierarchyTree.Icons.findIconFor(myComponent);
     }
 
-    @Nls
     @Override
-    public String getText() {
+    public @Nls String getText() {
       Object obj = isAccessibleEnabled ? myComponent.getAccessibleContext() : myComponent;
       return UiInspectorUtil.getClassPresentation(obj);
     }

@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import org.jetbrains.annotations.NotNull;
 
-public class ProblemDescriptorWithReporterName extends ProblemDescriptorBase {
+public final class ProblemDescriptorWithReporterName extends ProblemDescriptorBase {
   private final String myReportingToolName;
 
   public ProblemDescriptorWithReporterName(@NotNull ProblemDescriptorBase pd, @NotNull String reportingToolName) {

@@ -1,9 +1,10 @@
+from _typeshed import ReadableBuffer
 from socket import _RetAddress, socket
 from threading import Thread
 from typing import Protocol
 
 from paramiko.channel import Channel
-from paramiko.message import Message
+from paramiko.message import Message, _LikeBytes
 from paramiko.pkey import PKey
 from paramiko.transport import Transport
 
@@ -61,7 +62,8 @@ class AgentKey(PKey):
     blob: bytes
     public_blob: None
     name: str
-    def __init__(self, agent: AgentSSH, blob: bytes) -> None: ...
+    comment: str
+    def __init__(self, agent: AgentSSH, blob: ReadableBuffer, comment: str = "") -> None: ...
     def asbytes(self) -> bytes: ...
     def get_name(self) -> str: ...
-    def sign_ssh_data(self, data: bytes, algorithm: str | None = ...) -> Message: ...
+    def sign_ssh_data(self, data: _LikeBytes, algorithm: str | None = None) -> Message: ...

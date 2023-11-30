@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
@@ -69,19 +69,19 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   private static final TextIcon NEW_BRANCH_LABEL =
     new TextIcon(GitBundle.message("push.dialog.target.panel.new"), NEW_BRANCH_LABEL_FG, NEW_BRANCH_LABEL_BG, 0);
 
-  @NotNull private final GitPushSupport myPushSupport;
-  @NotNull private final GitRepository myRepository;
-  @NotNull private final GitPushSource mySource;
-  @NotNull private final Git myGit;
+  private final @NotNull GitPushSupport myPushSupport;
+  private final @NotNull GitRepository myRepository;
+  private final @NotNull GitPushSource mySource;
+  private final @NotNull Git myGit;
 
-  @NotNull private final VcsEditableTextComponent myTargetRenderer;
-  @NotNull private final PushTargetTextField myTargetEditor;
-  @NotNull private final VcsLinkedTextComponent myRemoteRenderer;
-  @NotNull private final Project myProject;
+  private final @NotNull VcsEditableTextComponent myTargetRenderer;
+  private final @NotNull PushTargetTextField myTargetEditor;
+  private final @NotNull VcsLinkedTextComponent myRemoteRenderer;
+  private final @NotNull Project myProject;
 
-  @Nullable private GitPushTarget myCurrentTarget;
-  @Nullable @Nls private String myError;
-  @Nullable private Runnable myFireOnChangeAction;
+  private @Nullable GitPushTarget myCurrentTarget;
+  private @Nullable @Nls String myError;
+  private @Nullable Runnable myFireOnChangeAction;
   private boolean myBranchWasUpdatedManually;
   private boolean myEventFromRemoteChooser;
 
@@ -177,7 +177,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     }
   }
 
-  private void addRemoteUnderModal(@NotNull final String remoteName, @NotNull final String remoteUrl) {
+  private void addRemoteUnderModal(final @NotNull String remoteName, final @NotNull String remoteUrl) {
     ProgressManager.getInstance()
       .run(new Task.Modal(myRepository.getProject(), GitBundle.message("push.dialog.target.panel.adding.remote"), true) {
         private GitCommandResult myResult;
@@ -239,9 +239,8 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         });
       }
 
-      @Nullable
       @Override
-      public ListSeparator getSeparatorAbove(PopupItem value) {
+      public @Nullable ListSeparator getSeparatorAbove(PopupItem value) {
         return value.isDefineRemote() ? new ListSeparator() : null;
       }
     }) {
@@ -258,8 +257,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     popup.show(new RelativePoint(component, point));
   }
 
-  @Nullable
-  private String getDefaultPushTargetBranch() {
+  private @Nullable String getDefaultPushTargetBranch() {
     GitLocalBranch sourceBranch = myRepository.getCurrentBranch();
     GitRemote remote = findRemote(myRepository.getRemotes(), myRemoteRenderer.getText());
     if (remote != null && sourceBranch != null) {
@@ -271,8 +269,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     return null;
   }
 
-  @NotNull
-  private List<PopupItem> getPopupItems() {
+  private @NotNull List<PopupItem> getPopupItems() {
     List<PopupItem> items = new ArrayList<>(ContainerUtil.map(myRepository.getRemotes(), PopupItem::forRemote));
     items.add(PopupItem.DEFINE_REMOTE);
     return items;
@@ -317,15 +314,12 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     }
   }
 
-  @Nullable
   @Override
-  public GitPushTarget getValue() {
+  public @Nullable GitPushTarget getValue() {
     return myCurrentTarget;
   }
 
-  @NlsSafe
-  @NotNull
-  private static String getTextFieldText(@Nullable GitPushTarget target) {
+  private static @NlsSafe @NotNull String getTextFieldText(@Nullable GitPushTarget target) {
     return (target != null ? target.getBranch().getNameForRemoteOperations() : "");
   }
 
@@ -355,9 +349,8 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     }
   }
 
-  @Nullable
   @Override
-  public ValidationInfo verify() {
+  public @Nullable ValidationInfo verify() {
     if (myError != null) {
       return new ValidationInfo(myError, myTargetEditor);
     }
@@ -375,8 +368,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     myFireOnChangeAction = action;
   }
 
-  @NotNull
-  private static List<String> getTargetNames(@NotNull GitRepository repository) {
+  private static @NotNull List<String> getTargetNames(@NotNull GitRepository repository) {
     return repository.getBranches().getRemoteBranches().stream().
       sorted(REMOTE_BRANCH_COMPARATOR).
       map(GitRemoteBranch::getNameForRemoteOperations).collect(toList());
@@ -402,7 +394,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   @Override
-  public void addTargetEditorListener(@NotNull final PushTargetEditorListener listener) {
+  public void addTargetEditorListener(final @NotNull PushTargetEditorListener listener) {
     myTargetEditor.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
@@ -450,8 +442,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
     @Nullable GitRemote remote;
 
-    @NotNull
-    static PopupItem forRemote(@NotNull GitRemote remote) {
+    static @NotNull PopupItem forRemote(@NotNull GitRemote remote) {
       return new PopupItem(remote);
     }
 
@@ -476,9 +467,8 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   private class MyGitTargetFocusTraversalPolicy extends ComponentsListFocusTraversalPolicy {
-    @NotNull
     @Override
-    protected List<Component> getOrderedComponents() {
+    protected @NotNull List<Component> getOrderedComponents() {
       return List.of(myTargetEditor.getFocusTarget(), myRemoteRenderer);
     }
 

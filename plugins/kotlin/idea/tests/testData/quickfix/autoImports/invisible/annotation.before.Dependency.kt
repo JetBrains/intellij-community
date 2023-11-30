@@ -2,4 +2,4 @@ package my.pack
 
 private annotation class F
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */

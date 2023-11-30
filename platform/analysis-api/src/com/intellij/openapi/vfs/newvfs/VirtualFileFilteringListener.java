@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NotNull;
 
-public class VirtualFileFilteringListener implements VirtualFileListener {
+public final class VirtualFileFilteringListener implements VirtualFileListener {
   private final VirtualFileListener myDelegate;
   private final @NotNull VirtualFileSystem myFileSystem;
 

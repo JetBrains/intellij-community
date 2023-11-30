@@ -2,16 +2,20 @@
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalProject
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.idea.maven.execution.MavenPomFileChooserDescriptor
 import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
-class MavenWorkingDirectoryInfo(project: Project) : WorkingDirectoryInfo {
+class MavenWorkingDirectoryInfo(
+  private val project: Project
+) : WorkingDirectoryInfo {
+
   override val editorLabel: String = ExecutionBundle.message("run.configuration.working.directory.label")
 
   override val settingsName: String = ExecutionBundle.message("run.configuration.working.directory.name")
@@ -21,16 +25,23 @@ class MavenWorkingDirectoryInfo(project: Project) : WorkingDirectoryInfo {
 
   override val emptyFieldError: String = ExecutionBundle.message("run.configuration.working.directory.empty.error")
 
-  override val externalProjects: List<ExternalProject> by lazy {
-    ArrayList<ExternalProject>().apply {
-      val projectsManager = MavenProjectsManager.getInstance(project)
-      for (mavenProject in projectsManager.projects) {
-        val module = projectsManager.findModule(mavenProject)
-        if (module != null) {
-          val path = FileUtil.toCanonicalPath(mavenProject.directory)
-          add(ExternalProject(module.name, path))
+  override suspend fun collectExternalProjects(): List<ExternalProject> {
+    val externalProjects = ArrayList<ExternalProject>()
+    val projectsManager = MavenProjectsManager.getInstance(project)
+    val mavenProjects = blockingContext {
+      projectsManager.projects
+    }
+    for (mavenProject in mavenProjects) {
+      val module = readAction {
+        projectsManager.findModule(mavenProject)
+      }
+      if (module != null) {
+        val path = blockingContext {
+          mavenProject.directoryFile.path
         }
+        externalProjects.add(ExternalProject(module.name, path))
       }
     }
+    return externalProjects
   }
 }

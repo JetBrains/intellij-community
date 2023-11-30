@@ -36,7 +36,7 @@ public final class VcsFacadeImpl extends VcsFacade {
 
   @NotNull
   public static VcsFacadeImpl getVcsInstance() {
-    return (VcsFacadeImpl)ApplicationManager.getApplication().getService(VcsFacade.class);
+    return (VcsFacadeImpl)VcsFacade.getInstance();
   }
 
   @Override

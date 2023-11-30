@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -27,7 +27,10 @@ internal abstract class CommitChecksProgressIndicator : InlineProgressIndicator(
     component.toolTipText = null
 
     addStateDelegate(object : AbstractProgressIndicatorExBase() {
-      override fun cancel() = updateProgress() // to show "Stopping" text right away
+      override fun cancel()  {
+  queueProgressUpdate()
+ // to show "Stopping" text right away
+}
     })
   }
 
@@ -48,15 +51,15 @@ internal class InlineCommitChecksProgressIndicator(isOnlyRunCommitChecks: Boolea
     val detailsPanel = NonOpaquePanel(HorizontalLayout(6)).apply {
       border = emptyTop(5)
 
-      add(myText)
-      add(myText2)
+      add(text)
+      add(text2)
     }
 
-    component.add(myProgress, BorderLayout.CENTER)
+    component.add(progress, BorderLayout.CENTER)
     component.add(detailsPanel, BorderLayout.SOUTH)
 
-    myText.recomputeSize()
-    myText2.recomputeSize()
+    text.recomputeSize()
+    text2.recomputeSize()
   }
 
   override fun setTextValue(text: String) {
@@ -88,12 +91,12 @@ internal class PopupCommitChecksProgressIndicator(private val original: Progress
   }
 
   override fun createCompactTextAndProgress(component: JPanel) {
-    component.add(myText, BorderLayout.NORTH)
-    component.add(myProgress, BorderLayout.CENTER)
-    component.add(myText2, BorderLayout.SOUTH)
+    component.add(text, BorderLayout.NORTH)
+    component.add(progress, BorderLayout.CENTER)
+    component.add(text2, BorderLayout.SOUTH)
 
-    myText.recomputeSize()
-    myText2.recomputeSize()
+    text.recomputeSize()
+    text2.recomputeSize()
   }
 
   override fun cancelRequest() = original.cancel()

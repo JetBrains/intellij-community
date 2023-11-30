@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.application.Application;
@@ -15,12 +15,16 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class ActionUpdateEdtExecutor {
+  private static final Executor EDT_EXECUTOR = runnable ->
+    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
+
   /**
    * Compute the supplied value on Swing thread, but try to avoid deadlocks by periodically performing {@link ProgressManager#checkCanceled()} in the current thread.
    * Makes sense to be used in background read actions running with a progress indicator that's canceled when a write action is about to occur.
@@ -31,8 +35,7 @@ public final class ActionUpdateEdtExecutor {
     return computeOnEdt(supplier, null);
   }
 
-  static <T> T computeOnEdt(@NotNull Supplier<? extends T> supplier,
-                            @Nullable Consumer<? super Runnable> laterInvocator) {
+  static <T> T computeOnEdt(@NotNull Supplier<? extends T> supplier, @Nullable Executor edtExecutor) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       return supplier.get();
@@ -54,12 +57,7 @@ public final class ActionUpdateEdtExecutor {
         semaphore.up();
       }
     };
-    if (laterInvocator != null) {
-      laterInvocator.accept(runnable);
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
-    }
+    Objects.requireNonNullElse(edtExecutor, EDT_EXECUTOR).execute(runnable);
 
     ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator);
     ExceptionUtil.rethrowAllAsUnchecked(result.get().second);

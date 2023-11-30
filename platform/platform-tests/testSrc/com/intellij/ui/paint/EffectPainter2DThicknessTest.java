@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.paint;
 
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.scale.Scale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.TestScaleHelper;
 import com.intellij.util.ui.StartupUiUtil;
@@ -33,13 +34,13 @@ public class EffectPainter2DThicknessTest {
 
     overrideJreHiDPIEnabled(false);
     for (int usrScale : new int[] {1, 2, 3}) {
-      test(ScaleContext.Companion.of(SYS_SCALE.of(1), USR_SCALE.of(usrScale)));
+      test(ScaleContext.Companion.of(new Scale[]{SYS_SCALE.of(1), USR_SCALE.of(usrScale)}));
     }
 
     overrideJreHiDPIEnabled(true);
     for (int sysScale : new int[] {1, 2, 3}) {
       for (int usrScale : new int[] {1, 2, 3}) {
-        test(ScaleContext.Companion.of(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale)));
+        test(ScaleContext.Companion.of(new Scale[]{SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale)}));
       }
     }
   }

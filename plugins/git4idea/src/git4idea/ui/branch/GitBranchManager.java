@@ -7,6 +7,8 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import git4idea.branch.GitBranchType;
 import git4idea.config.GitVcsSettings;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,9 +17,10 @@ import java.util.Collection;
 import static git4idea.log.GitRefManager.*;
 
 @Service(Service.Level.PROJECT)
-public final class GitBranchManager extends DvcsBranchManager {
+public final class GitBranchManager extends DvcsBranchManager<GitRepository> {
   public GitBranchManager(@NotNull Project project) {
-    super(project, GitVcsSettings.getInstance(project).getBranchSettings(), GitBranchType.values());
+    super(project, GitVcsSettings.getInstance(project).getBranchSettings(), GitBranchType.values(),
+          GitRepositoryManager.getInstance(project));
   }
 
   @Override

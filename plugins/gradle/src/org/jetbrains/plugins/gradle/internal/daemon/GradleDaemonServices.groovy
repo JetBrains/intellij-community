@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.internal.daemon
 
 import com.intellij.AbstractBundle
@@ -11,7 +11,6 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.Function
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.lang.UrlClassLoader
-import gnu.trove.TObjectHashingStrategy
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
@@ -46,6 +45,12 @@ class GradleDaemonServices {
     }
   }
 
+  static void gracefulStopDaemons() {
+    forEachConnection { ConsumerConnection connection, String gradleUserHome ->
+      runAction(gradleUserHome, connection, DaemonStopWhenIdleAction, null)
+    }
+  }
+
   static List<DaemonState> getDaemonsStatus() {
     List<DaemonState> result = new ArrayList<>()
     forEachConnection { ConsumerConnection connection, String gradleUserHome ->
@@ -54,6 +59,7 @@ class GradleDaemonServices {
         result.addAll(daemonStates)
       }
     }
+    result.unique(true, Comparator.comparing(DaemonState::getPid))
     return result
   }
 
@@ -69,7 +75,6 @@ class GradleDaemonServices {
         // jars required for i18n utils
         PathManager.getJarForClass(DynamicBundle),
         PathManager.getJarForClass(AbstractBundle),
-        PathManager.getJarForClass(TObjectHashingStrategy),
         PathManager.getJarForClass(HashingStrategy),
         PathManager.getJarForClass(Hash),
         PathManager.getJarForClass(Function)

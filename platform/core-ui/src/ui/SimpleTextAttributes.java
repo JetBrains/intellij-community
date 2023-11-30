@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.markup.EffectType;
@@ -126,8 +126,7 @@ public final class SimpleTextAttributes {
   /**
    * @return background color
    */
-  @Nullable
-  public Color getBgColor() {
+  public @Nullable Color getBgColor() {
     return myBgColor;
   }
 
@@ -135,8 +134,7 @@ public final class SimpleTextAttributes {
    * @return wave color. The method can return {@code null}. {@code null}
    *         means that color of wave is the same as foreground color.
    */
-  @Nullable
-  public Color getWaveColor() {
+  public @Nullable Color getWaveColor() {
     return myWaveColor;
   }
 
@@ -199,8 +197,7 @@ public final class SimpleTextAttributes {
     return BitUtil.isSet(myStyle, STYLE_USE_EFFECT_COLOR);
   }
 
-  @NotNull
-  public static SimpleTextAttributes fromTextAttributes(TextAttributes attributes) {
+  public static @NotNull SimpleTextAttributes fromTextAttributes(TextAttributes attributes) {
     if (attributes == null) return REGULAR_ATTRIBUTES;
 
     Color fgColor = attributes.getForegroundColor();

@@ -8,9 +8,7 @@ import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.*
-import org.jetbrains.idea.maven.project.MavenConfigurableBundle
-import org.jetbrains.idea.maven.project.MavenGeneralSettings
-import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenEnvironmentSettingsDialog(private val project: Project,
@@ -50,7 +48,8 @@ class MavenEnvironmentSettingsDialog(private val project: Project,
   }
 
   private fun resolveDefaultLocalRepository(): String {
-    return MavenUtil.resolveLocalRepository("", settings.mavenHome, userSettingsProperty.get()).path
+    val mavenHomeType = settings.mavenHomeType.let { it as? StaticResolvedMavenHomeType } ?: BundledMaven3
+    return MavenUtil.resolveLocalRepository("", mavenHomeType, userSettingsProperty.get()).path
   }
 
   override fun createActions() = arrayOf(okAction)

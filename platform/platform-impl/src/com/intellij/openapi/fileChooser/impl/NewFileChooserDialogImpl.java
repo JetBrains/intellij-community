@@ -89,7 +89,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
   protected JComponent createCenterPanel() {
     Path[] recentPaths = FileChooserUtil.getRecentPaths().stream().map(NioFiles::toPath).filter(Objects::nonNull).toArray(Path[]::new);
     myPanel = new FileChooserPanelImpl(myDescriptor, this::doOKAction, this::setErrorText, recentPaths);
-    myPanel.setPreferredSize(JBUI.size(800));
+    myPanel.setPreferredSize(JBUI.size(600, 450));
 
     var dndLabel = new JLabel(UIBundle.message("file.chooser.tooltip.drag.drop"), SwingConstants.CENTER);
     dndLabel.setFont(JBUI.Fonts.miniFont());
@@ -187,7 +187,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
     return "select.path.dialog";
   }
 
-  private class ChooserDialogPanel extends JPanel implements DataProvider {
+  private final class ChooserDialogPanel extends JPanel implements DataProvider {
     private ChooserDialogPanel() {
       super(new BorderLayout());
       setDropTarget(new DropTarget(this, DnDConstants.ACTION_COPY, new ChooserDropTarget()));
@@ -199,7 +199,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
     }
   }
 
-  private class ChooserDropTarget extends DropTargetAdapter {
+  private final class ChooserDropTarget extends DropTargetAdapter {
     @Override
     public void dragEnter(DropTargetDragEvent e) {
       if (FileCopyPasteUtil.isFileListFlavorAvailable(e.getCurrentDataFlavors())) {

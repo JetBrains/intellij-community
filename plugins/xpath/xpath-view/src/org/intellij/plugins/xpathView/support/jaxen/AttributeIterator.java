@@ -31,7 +31,7 @@ class AttributeIterator implements Iterator {
         this.theIterator = filterNamespaceAttrs(((XmlTag)parent).getAttributes());
     }
 
-    private Iterator<XmlAttribute> filterNamespaceAttrs(XmlAttribute[] attributes) {
+    private static Iterator<XmlAttribute> filterNamespaceAttrs(XmlAttribute[] attributes) {
         final List<XmlAttribute> attrs = new ArrayList<>(attributes.length);
         for (XmlAttribute attribute : attributes) {
             final String name = attribute.getName();

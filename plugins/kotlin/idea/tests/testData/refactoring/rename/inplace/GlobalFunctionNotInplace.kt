@@ -1,3 +1,4 @@
+// RENAME: variable
 fun <caret>foo(a: Int) {
 }
 

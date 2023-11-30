@@ -12,4 +12,3 @@ fun test(a: Any) {
         a.<caret>foo()
     }
 }
-/* IGNORE_FIR */

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 // todo disable in guest (no file types)
-public class FileTypeUsagesCollector extends ProjectUsagesCollector {
+public final class FileTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String DEFAULT_ID = "third.party";
 
   private final EventLogGroup GROUP = new EventLogGroup("file.types", 7);
@@ -50,9 +50,8 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     return GROUP;
   }
 
-  @NotNull
   @Override
-  protected Set<MetricEvent> getMetrics(@NotNull Project project) {
+  protected @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     if (project.isDisposed()) {
       return Collections.emptySet();
     }
@@ -87,16 +86,14 @@ public class FileTypeUsagesCollector extends ProjectUsagesCollector {
     return info.isDevelopedByJetBrains() ? fileType.getName() : DEFAULT_ID;
   }
 
-  public static class ValidationRule extends CustomValidationRule {
-    @NotNull
+  public static final class ValidationRule extends CustomValidationRule {
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return "file_type";
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (isThirdPartyValue(data)) return ValidationResultType.ACCEPTED;
 
       final FileType fileType = FileTypeManager.getInstance().findFileTypeByName(data);

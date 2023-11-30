@@ -163,7 +163,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       .getData(SingleConfigurationConfigurable.RUN_ON_TARGET_NAME_KEY);
   }
 
-  public JavaParameters createJavaParameters(@Nullable Project project) throws ExecutionException {
+  public JavaParameters createJavaParameters(@NotNull Project project) throws ExecutionException {
     return MavenExternalParameters.createJavaParameters(project, getRunnerParameters(), getGeneralSettings(), getRunnerSettings(), this);
   }
 
@@ -576,7 +576,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
           new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment(), eventProcessor.getParsingContext());
         restartActions.add(resumeAction);
       }
-      res.setRestartActions(restartActions.toArray(new AnAction[0]));
+      res.setRestartActions(restartActions.toArray(AnAction.EMPTY_ARRAY));
       return res;
     }
 

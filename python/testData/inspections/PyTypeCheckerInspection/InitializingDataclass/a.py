@@ -8,10 +8,10 @@ class A:
     z: float = 0.0
 
 A(1, "a")
-A(<warning descr="Expected type 'int', got 'LiteralString' instead">"a"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
+A(<warning descr="Expected type 'int', got 'str' instead">"a"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
 
 A(1, "a", 1.0)
-A(<warning descr="Expected type 'int', got 'LiteralString' instead">"a"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>, <warning descr="Expected type 'float', got 'LiteralString' instead">"b"</warning>)
+A(<warning descr="Expected type 'int', got 'str' instead">"a"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>, <warning descr="Expected type 'float', got 'str' instead">"b"</warning>)
 
 
 @dataclasses.dataclass(init=True)
@@ -21,10 +21,10 @@ class A2:
     z: float = 0.0
 
 A2(1, "a")
-A2(<warning descr="Expected type 'int', got 'LiteralString' instead">"a"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
+A2(<warning descr="Expected type 'int', got 'str' instead">"a"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
 
 A2(1, "a", 1.0)
-A2(<warning descr="Expected type 'int', got 'LiteralString' instead">"a"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>, <warning descr="Expected type 'float', got 'LiteralString' instead">"b"</warning>)
+A2(<warning descr="Expected type 'int', got 'str' instead">"a"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>, <warning descr="Expected type 'float', got 'str' instead">"b"</warning>)
 
 
 @dataclasses.dataclass(init=False)
@@ -55,7 +55,7 @@ class B2:
         self.z = 0.0
 
 B2(1)
-B2(<warning descr="Expected type 'int', got 'LiteralString' instead">"1"</warning>)
+B2(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>)
 
 
 @dataclasses.dataclass
@@ -64,7 +64,7 @@ class C1:
     b: int
 
 C1(1)
-C1(<warning descr="Expected type 'int', got 'LiteralString' instead">"1"</warning>)
+C1(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>)
 
 
 @dataclasses.dataclass
@@ -73,7 +73,7 @@ class C2:
     b: int
 
 C2(1)
-C2(<warning descr="Expected type 'int', got 'LiteralString' instead">"1"</warning>)
+C2(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>)
 
 
 @dataclasses.dataclass
@@ -82,7 +82,7 @@ class D1:
     b: int
 
 D1(1, 2)
-D1(<warning descr="Expected type 'int', got 'LiteralString' instead">"1"</warning>, <warning descr="Expected type 'int', got 'LiteralString' instead">"2"</warning>)
+D1(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>, <warning descr="Expected type 'int', got 'str' instead">"2"</warning>)
 
 
 @dataclasses.dataclass
@@ -94,13 +94,13 @@ class E1:
     e: int = dataclasses.field(default_factory=int)
 
 E1(1, "1")
-E1(<warning descr="Expected type 'int', got 'LiteralString' instead">"1"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
+E1(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
 
 E1(1, "1", b"1")
 E1(<warning descr="Expected type 'int', got 'bytes' instead">b"1"</warning>, "1", <warning descr="Expected type 'bytes', got 'int' instead">1</warning>)
 
 E1(1, "1", b"1", 1)
-E1(<warning descr="Expected type 'int', got 'LiteralString' instead">"1"</warning>, <warning descr="Expected type 'str', got 'bytes' instead">b"1"</warning>, <warning descr="Expected type 'bytes', got 'LiteralString' instead">"1"</warning>, <warning descr="Expected type 'int', got 'LiteralString' instead">"1"</warning>)
+E1(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>, <warning descr="Expected type 'str', got 'bytes' instead">b"1"</warning>, <warning descr="Expected type 'bytes', got 'str' instead">"1"</warning>, <warning descr="Expected type 'int', got 'str' instead">"1"</warning>)
 
 
 @dataclasses.dataclass

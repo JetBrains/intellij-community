@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -27,25 +27,21 @@ public final class DomFileIndex extends ScalarIndexExtension<DomFileIndex.DomInd
   private static final String NULL_NAMESPACE = "-NULL-";
 
   @Override
-  @NotNull
-  public ID<DomIndexKey, Void> getName() {
+  public @NotNull ID<DomIndexKey, Void> getName() {
     return INDEX_ID;
   }
 
-  @NotNull
-  public static Collection<VirtualFile> findFiles(@NotNull String rootTagName,
-                                                  @Nullable String namespace,
-                                                  @NotNull GlobalSearchScope scope) {
+  public static @NotNull Collection<VirtualFile> findFiles(@NotNull String rootTagName,
+                                                           @Nullable String namespace,
+                                                           @NotNull GlobalSearchScope scope) {
     return FileBasedIndex.getInstance().getContainingFiles(INDEX_ID, new DomIndexKey(rootTagName, ObjectUtils.notNull(namespace, NULL_NAMESPACE)), scope);
   }
 
   @Override
-  @NotNull
-  public DataIndexer<DomIndexKey, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<DomIndexKey, Void, FileContent> getIndexer() {
     return new DataIndexer<>() {
       @Override
-      @NotNull
-      public Map<DomIndexKey, Void> map(@NotNull FileContent inputData) {
+      public @NotNull Map<DomIndexKey, Void> map(@NotNull FileContent inputData) {
         XmlFileHeader header = NanoXmlUtil.parseHeader(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
         String rootTagName = header.getRootTagLocalName();
         if (rootTagName == null) {
@@ -64,15 +60,13 @@ public final class DomFileIndex extends ScalarIndexExtension<DomFileIndex.DomInd
     };
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<DomIndexKey> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<DomIndexKey> getKeyDescriptor() {
     return new DomIndexKeyDescriptor();
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE);
   }
 
@@ -87,10 +81,8 @@ public final class DomFileIndex extends ScalarIndexExtension<DomFileIndex.DomInd
   }
 
   public static class DomIndexKey {
-    @NotNull
-    private final String myRootTagName;
-    @NotNull
-    private final String myNamespace;
+    private final @NotNull String myRootTagName;
+    private final @NotNull String myNamespace;
 
     private DomIndexKey(@NotNull String rootTagName, @NotNull String namespace) {
       myRootTagName = rootTagName;

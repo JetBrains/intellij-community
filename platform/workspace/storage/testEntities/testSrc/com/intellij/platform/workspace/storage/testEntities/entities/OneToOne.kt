@@ -51,7 +51,8 @@ interface OoParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoParentEntity, modification: OoParentEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: OoParentEntity,
+                                      modification: OoParentEntity.Builder.() -> Unit): OoParentEntity = modifyEntity(
   OoParentEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -97,7 +98,7 @@ interface OoChildEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoChildEntity, modification: OoChildEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: OoChildEntity, modification: OoChildEntity.Builder.() -> Unit): OoChildEntity = modifyEntity(
   OoChildEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -142,7 +143,7 @@ interface OoChildWithNullableParentEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: OoChildWithNullableParentEntity,
-                                      modification: OoChildWithNullableParentEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: OoChildWithNullableParentEntity.Builder.() -> Unit): OoChildWithNullableParentEntity = modifyEntity(
   OoChildWithNullableParentEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -200,7 +201,8 @@ interface OoParentWithPidEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoParentWithPidEntity, modification: OoParentWithPidEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: OoParentWithPidEntity,
+                                      modification: OoParentWithPidEntity.Builder.() -> Unit): OoParentWithPidEntity = modifyEntity(
   OoParentWithPidEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -248,7 +250,7 @@ interface OoChildForParentWithPidEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: OoChildForParentWithPidEntity,
-                                      modification: OoChildForParentWithPidEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: OoChildForParentWithPidEntity.Builder.() -> Unit): OoChildForParentWithPidEntity = modifyEntity(
   OoChildForParentWithPidEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -298,7 +300,7 @@ interface OoChildAlsoWithPidEntity : WorkspaceEntityWithSymbolicId {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: OoChildAlsoWithPidEntity,
-                                      modification: OoChildAlsoWithPidEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: OoChildAlsoWithPidEntity.Builder.() -> Unit): OoChildAlsoWithPidEntity = modifyEntity(
   OoChildAlsoWithPidEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -347,7 +349,7 @@ interface OoParentWithoutPidEntity : WorkspaceEntity {
 
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: OoParentWithoutPidEntity,
-                                      modification: OoParentWithoutPidEntity.Builder.() -> Unit) = modifyEntity(
+                                      modification: OoParentWithoutPidEntity.Builder.() -> Unit): OoParentWithoutPidEntity = modifyEntity(
   OoParentWithoutPidEntity.Builder::class.java, entity, modification)
 //endregion
 
@@ -399,7 +401,8 @@ interface OoChildWithPidEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OoChildWithPidEntity, modification: OoChildWithPidEntity.Builder.() -> Unit) = modifyEntity(
+fun MutableEntityStorage.modifyEntity(entity: OoChildWithPidEntity,
+                                      modification: OoChildWithPidEntity.Builder.() -> Unit): OoChildWithPidEntity = modifyEntity(
   OoChildWithPidEntity.Builder::class.java, entity, modification)
 //endregion
 

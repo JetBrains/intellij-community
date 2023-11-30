@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.google.common.collect.Maps;
@@ -56,12 +56,12 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   static final String VIEW_COMMITS = getViewCommits();
   static final String DELETE_TRACKED_BRANCH = getDeleteTrackedBranch();
 
-  @NotNull private final String myBranchName;
-  @NotNull private final VcsNotifier myNotifier;
-  @NotNull private final Map<GitRepository, GitRemoteBranch> myTrackedBranches;
+  private final @NotNull String myBranchName;
+  private final @NotNull VcsNotifier myNotifier;
+  private final @NotNull Map<GitRepository, GitRemoteBranch> myTrackedBranches;
 
-  @NotNull private final Map<GitRepository, UnmergedBranchInfo> myUnmergedToBranches;
-  @NotNull private final Map<GitRepository, String> myDeletedBranchTips;
+  private final @NotNull Map<GitRepository, UnmergedBranchInfo> myUnmergedToBranches;
+  private final @NotNull Map<GitRepository, String> myDeletedBranchTips;
 
   GitDeleteBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                            @NotNull Collection<? extends GitRepository> repositories, @NotNull String branchName) {
@@ -190,8 +190,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     }
   }
 
-  @NotNull
-  private GitCompoundResult doRollback() {
+  private @NotNull GitCompoundResult doRollback() {
     GitCompoundResult result = new GitCompoundResult(myProject);
     for (GitRepository repository : getSuccessfulRepositories()) {
       GitCommandResult res = myGit.branchCreate(repository, myBranchName, myDeletedBranchTips.get(repository));
@@ -212,21 +211,17 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     return result;
   }
 
-  @NotNull
-  @NlsContexts.NotificationTitle
-  private String getErrorTitle() {
+  private @NotNull @NlsContexts.NotificationTitle String getErrorTitle() {
     return GitBundle.message("delete.branch.operation.branch.was.not.deleted.error", myBranchName);
   }
 
   @Override
-  @NotNull
-  protected String getSuccessMessage() {
+  protected @NotNull String getSuccessMessage() {
     return GitBundle.message("delete.branch.operation.deleted.branch", formatBranchName(myBranchName));
   }
 
-  @NotNull
   @Override
-  protected String getRollbackProposal() {
+  protected @NotNull String getRollbackProposal() {
     return new HtmlBuilder().append(GitBundle.message("delete.branch.operation.however.branch.deletion.has.succeeded.for.the.following",
                                                       getSuccessfulRepositories().size()))
       .br()
@@ -236,15 +231,12 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       .toString();
   }
 
-  @NotNull
-  @Nls
   @Override
-  protected String getOperationName() {
+  protected @NotNull @Nls String getOperationName() {
     return GitBundle.message("delete.branch.operation.name");
   }
 
-  @NotNull
-  private static String formatBranchName(@NotNull String name) {
+  private static @NotNull String formatBranchName(@NotNull String name) {
     return bold(code(name));
   }
 
@@ -271,10 +263,9 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     return myUiHandler.showBranchIsNotFullyMergedDialog(myProject, history, baseBranches, myBranchName);
   }
 
-  @NotNull
-  private static List<GitCommit> getUnmergedCommits(@NotNull GitRepository repository,
-                                                    @NotNull String branchName,
-                                                    @NotNull String baseBranch) {
+  private static @NotNull List<GitCommit> getUnmergedCommits(@NotNull GitRepository repository,
+                                                             @NotNull String branchName,
+                                                             @NotNull String baseBranch) {
     String range = baseBranch + ".." + branchName;
     try {
       return GitHistoryUtils.history(repository.getProject(), repository.getRoot(), range);
@@ -285,9 +276,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static Map<GitRepository, GitRemoteBranch> findTrackedBranches(@NotNull Collection<? extends GitRepository> repositories,
-                                                                         @NotNull String localBranchName) {
+  private static @NotNull Map<GitRepository, GitRemoteBranch> findTrackedBranches(@NotNull Collection<? extends GitRepository> repositories,
+                                                                                  @NotNull String localBranchName) {
     Map<GitRepository, GitRemoteBranch> trackedBranches = new HashMap<>();
     for (GitRepository repository : repositories) {
       GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfo(repository, localBranchName);
@@ -303,7 +293,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   private static class GitBranchNotMergedToUpstreamDetector implements GitLineHandlerListener {
 
     private static final Pattern PATTERN = Pattern.compile(".*'(.*)', even though it is merged to.*");
-    @Nullable private String myBaseBranch;
+    private @Nullable String myBaseBranch;
 
     @Override
     public void onLineAvailable(String line, Key outputType) {
@@ -313,15 +303,14 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       }
     }
 
-    @Nullable
-    public String getBaseBranch() {
+    public @Nullable String getBaseBranch() {
       return myBaseBranch;
     }
   }
 
   static class UnmergedBranchInfo {
-    @NotNull private final String myTipOfDeletedUnmergedBranch;
-    @NotNull private final String myBaseBranch;
+    private final @NotNull String myTipOfDeletedUnmergedBranch;
+    private final @NotNull String myBaseBranch;
 
     UnmergedBranchInfo(@NotNull String tipOfDeletedUnmergedBranch, @NotNull String baseBranch) {
       myTipOfDeletedUnmergedBranch = tipOfDeletedUnmergedBranch;
@@ -337,8 +326,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     }
   }
 
-  @NotNull
-  private MultiMap<String, GitRepository> groupTrackedBranchesByName() {
+  private @NotNull MultiMap<String, GitRepository> groupTrackedBranchesByName() {
     MultiMap<String, GitRepository> trackedBranchNames = MultiMap.create();
     for (GitRepository repository : myTrackedBranches.keySet()) {
       GitRemoteBranch trackedBranch = myTrackedBranches.get(repository);
@@ -383,21 +371,15 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     }.queue();
   }
 
-  @NotNull
-  @Nls
-  static String getRestore() {
+  static @NotNull @Nls String getRestore() {
     return GitBundle.message("action.NotificationAction.GitDeleteBranchOperation.text.restore");
   }
 
-  @NotNull
-  @Nls
-  static String getViewCommits() {
+  static @NotNull @Nls String getViewCommits() {
     return GitBundle.message("action.NotificationAction.GitDeleteBranchOperation.text.view.commits");
   }
 
-  @NotNull
-  @Nls
-  static String getDeleteTrackedBranch() {
+  static @NotNull @Nls String getDeleteTrackedBranch() {
     return GitBundle.message("action.NotificationAction.GitDeleteBranchOperation.text.delete.tracked.branch");
   }
 }

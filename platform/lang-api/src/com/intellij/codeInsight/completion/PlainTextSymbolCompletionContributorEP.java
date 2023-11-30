@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.lang.Language;
@@ -12,8 +12,7 @@ public class PlainTextSymbolCompletionContributorEP extends LanguageExtensionPoi
   private static final ExtensionPointName<PlainTextSymbolCompletionContributorEP> EP = new ExtensionPointName<>("com.intellij.completion.plainTextSymbol");
   private static final LanguageExtension<PlainTextSymbolCompletionContributor> INSTANCE = new CompletionExtension<>(EP.getName());
 
-  @Nullable
-  public static PlainTextSymbolCompletionContributor forLanguage(@NotNull Language language) {
+  public static @Nullable PlainTextSymbolCompletionContributor forLanguage(@NotNull Language language) {
     return INSTANCE.forLanguage(language);
   }
 }

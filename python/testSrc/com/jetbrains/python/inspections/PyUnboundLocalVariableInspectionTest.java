@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
@@ -382,6 +383,16 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
   // PY-7758
   public void testVariableNotReportedAfterBuiltinExit() {
     doTest();
+  }
+
+  // PY-63357
+  public void testFunctionParameterAnnotatedWithReferenceToTypeParameter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      doTestByText("""
+                   def foo[T](x: T):
+                       pass
+                   """);
+    });
   }
 
   @NotNull

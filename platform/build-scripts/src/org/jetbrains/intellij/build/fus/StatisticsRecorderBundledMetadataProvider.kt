@@ -21,8 +21,7 @@ import java.util.concurrent.CancellationException
  */
 internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher: ModuleOutputPatcher,
                                                                                 context: BuildContext): Job? {
-  val featureUsageStatisticsPropertiesList: List<FeatureUsageStatisticsProperties> =
-    context.proprietaryBuildTools.featureUsageStatisticsProperties ?: return null
+  val featureUsageStatisticsPropertiesList = context.proprietaryBuildTools.featureUsageStatisticsProperties ?: return null
   return createSkippableJob(
     spanBuilder("bundle a default version of feature usage statistics"),
     taskId = BuildOptions.FUS_METADATA_BUNDLE_STEP,
@@ -49,7 +48,6 @@ internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(
     }
   }
 }
-
 
 private fun appendProductCode(uri: String, context: BuildContext): String {
   val name = context.applicationInfo.productCode + ".json"

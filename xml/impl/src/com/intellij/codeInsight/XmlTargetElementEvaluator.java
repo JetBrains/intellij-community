@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.editor.Editor;
@@ -16,9 +16,8 @@ public class XmlTargetElementEvaluator extends TargetElementEvaluatorEx2 {
     return !(parent instanceof XmlAttribute);
   }
 
-  @Nullable
   @Override
-  public PsiElement adjustElement(Editor editor, int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
+  public @Nullable PsiElement adjustElement(Editor editor, int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
     if (element != null) return element;
     if (contextElement == null) return null;
 

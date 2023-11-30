@@ -4,7 +4,7 @@
  * TODO RC: Basically I want _all_ classes around file-page caching to be moved in
  * dedicated package -- i.e. here. Namely:
  * {@link com.intellij.util.io.FilePageCacheLockFree},
- * {@link com.intellij.util.io.PagedFileStorageLockFree}
+ * {@link com.intellij.util.io.PagedFileStorageWithRWLockedPageContent}
  * {@link com.intellij.util.io.OpenChannelsCache}
  * {@link com.intellij.util.io.DirectByteBufferAllocator}
  * <p>

@@ -106,27 +106,23 @@ class FieldAccessorFactory {
       super(object, field);
     }
 
-    @Nullable
     @Override
-    protected String parseString(@NotNull String string) {
+    protected @Nullable String parseString(@NotNull String string) {
       return string;
     }
 
-    @Nullable
     @Override
-    protected String valueToString(@NotNull String value) {
+    protected @Nullable String valueToString(@NotNull String value) {
       return value;
     }
 
-    @Nullable
     @Override
-    protected Boolean fromExternal(@NotNull String str) {
+    protected @Nullable Boolean fromExternal(@NotNull String str) {
       return "tab".equalsIgnoreCase(str);
     }
 
-    @NotNull
     @Override
-    protected String toExternal(@NotNull Boolean value) {
+    protected @NotNull String toExternal(@NotNull Boolean value) {
       return value ? "tab" : "space";
     }
 

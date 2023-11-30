@@ -22,7 +22,7 @@ import java.util.List;
 public final class DefaultSearchScopeProviders {
   private DefaultSearchScopeProviders() {}
 
-  public static class CustomNamed implements SearchScopeProvider {
+  public static final class CustomNamed implements SearchScopeProvider {
     @Override
     public String getDisplayName() {
       return LangBundle.message("default.search.scope.custom.named.display.name");
@@ -52,7 +52,7 @@ public final class DefaultSearchScopeProviders {
     return new MyWeightedScope(scope, weight, color);
   }
 
-  private static class MyWeightedScope extends DelegatingGlobalSearchScope implements WeighedItem, ColoredItem {
+  private static final class MyWeightedScope extends DelegatingGlobalSearchScope implements WeighedItem, ColoredItem {
     final int weight;
     final Color color;
 

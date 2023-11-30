@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -47,7 +46,7 @@ public class ConfigurationContext {
   private static final Logger LOG = Logger.getInstance(ConfigurationContext.class);
   public static final Key<ConfigurationContext> SHARED_CONTEXT = Key.create("SHARED_CONTEXT");
 
-  private final Location<? extends PsiElement> myLocation;
+  private Location<PsiElement> myLocation;
   private final Editor myEditor;
   private RunnerAndConfigurationSettings myConfiguration;
   private boolean myInitialized;
@@ -58,21 +57,29 @@ public class ConfigurationContext {
   private final DataContext myDataContext;
   private final String myPlace;
 
-  private List<RuntimeConfigurationProducer> myPreferredProducers;
-  private List<ConfigurationFromContext> myConfigurationsFromContext;
+  private volatile List<RuntimeConfigurationProducer> myPreferredProducers;
+  private volatile List<ConfigurationFromContext> myConfigurationsFromContext;
 
 
   /**
    * @deprecated use {@link ConfigurationContext#getFromContext(DataContext dataContext, String place)}
    */
-  @NotNull
   @Deprecated
-  public static ConfigurationContext getFromContext(DataContext dataContext) {
+  public static @NotNull ConfigurationContext getFromContext(DataContext dataContext) {
     return getFromContext(dataContext, ActionPlaces.UNKNOWN);
   }
 
-  @NotNull
-  public static ConfigurationContext getFromContext(DataContext dataContext, String place) {
+  public static @NotNull ConfigurationContext getFromEvent(AnActionEvent event) {
+    return event.getUpdateSession().sharedData(SHARED_CONTEXT, () -> {
+      ConfigurationContext context = getFromContext(event.getDataContext(), event.getPlace());
+      context.findExisting(); // precache
+      context.getConfigurationsFromContext(); // precache
+      DataManager.getInstance().saveInDataContext(event.getDataContext(), SHARED_CONTEXT, context);
+      return context;
+    });
+  }
+
+  public static @NotNull ConfigurationContext getFromContext(DataContext dataContext, String place) {
     DataManager dataManager = DataManager.getInstance();
 
     ConfigurationContext sharedContext = dataManager.loadFromDataContext(dataContext, SHARED_CONTEXT);
@@ -88,12 +95,10 @@ public class ConfigurationContext {
       sharedContext = new ConfigurationContext(dataContext, location, module, isMultipleSelection, place);
       dataManager.saveInDataContext(dataContext, SHARED_CONTEXT, sharedContext);
     }
-
     return sharedContext;
   }
 
-  @NotNull
-  public static ConfigurationContext createEmptyContextForLocation(@NotNull Location location) {
+  public static @NotNull ConfigurationContext createEmptyContextForLocation(@NotNull Location location) {
     return new ConfigurationContext(location);
   }
 
@@ -158,7 +163,7 @@ public class ConfigurationContext {
     myPlace = null;
   }
 
-  private ConfigurationContext(@NotNull Location<? extends PsiElement> location) {
+  private ConfigurationContext(@NotNull Location<PsiElement> location) {
     myLocation = location;
     myModule = location.getModule();
     myEditor = null;
@@ -189,8 +194,7 @@ public class ConfigurationContext {
    *
    * @return the configuration, or null if none of the producers were able to create a configuration from this context.
    */
-  @Nullable
-  public synchronized RunnerAndConfigurationSettings getConfiguration() {
+  public synchronized @Nullable RunnerAndConfigurationSettings getConfiguration() {
     if (myConfiguration == null && !myInitialized) {
       createConfiguration();
     }
@@ -200,7 +204,7 @@ public class ConfigurationContext {
   private void createConfiguration() {
     LOG.assertTrue(myConfiguration == null);
     final Location location = getLocation();
-    myConfiguration = location != null && !DumbService.isDumb(location.getProject()) ?
+    myConfiguration = location != null ?
         PreferredProducerFind.createConfiguration(location, this) :
         null;
     myInitialized = true;
@@ -216,8 +220,14 @@ public class ConfigurationContext {
    *
    * @return the source code location, or null if no source code fragment is currently selected.
    */
-  @Nullable
-  public Location getLocation() {
+  public @Nullable Location<PsiElement> getLocation() {
+    if (myLocation == null || !myLocation.getPsiElement().isValid()) {
+      if (myLocation != null) {
+        myConfigurationsFromContext = null;
+        myExistingConfiguration = null;
+      }
+      myLocation = calcLocation(myDataContext, myModule);
+    }
     return myLocation;
   }
 
@@ -225,16 +235,14 @@ public class ConfigurationContext {
    * Returns the place for action which created this context.
    * @return the place for action which created this context.
    */
-  @Nullable
-  public String getPlace() { return myPlace; }
+  public @Nullable String getPlace() { return myPlace; }
 
   /**
    * Returns the PSI element at caret for this context.
    *
    * @return the PSI element, or null if no source code fragment is currently selected.
    */
-  @Nullable
-  public PsiElement getPsiLocation() {
+  public @Nullable PsiElement getPsiLocation() {
     return myLocation != null ? myLocation.getPsiElement() : null;
   }
 
@@ -243,8 +251,7 @@ public class ConfigurationContext {
    *
    * @return an existing configuration, or null if none was found.
    */
-  @Nullable
-  public RunnerAndConfigurationSettings findExisting() {
+  public @Nullable RunnerAndConfigurationSettings findExisting() {
     if (myExistingConfiguration != null) {
       RunnerAndConfigurationSettings configuration = myExistingConfiguration.get();
       if (configuration == null || !Registry.is("suggest.all.run.configurations.from.context") || configuration.equals(myConfiguration)) {
@@ -252,16 +259,17 @@ public class ConfigurationContext {
       }
     }
     myExistingConfiguration = new Ref<>();
-    if (myLocation == null) {
+    Location<? extends PsiElement> location = getLocation();
+    if (location == null) {
       return null;
     }
 
-    final PsiElement psiElement = myLocation.getPsiElement();
+    final PsiElement psiElement = location.getPsiElement();
     if (!psiElement.isValid()) {
       return null;
     }
 
-    if (MultipleRunLocationsProvider.findAlternativeLocations(myLocation) != null) {
+    if (MultipleRunLocationsProvider.findAlternativeLocations(location) != null) {
       myExistingConfiguration.set(null);
       return null;
     }
@@ -270,7 +278,7 @@ public class ConfigurationContext {
     List<ExistingConfiguration> existingConfigurations = new ArrayList<>();
     if (producers != null) {
       for (RuntimeConfigurationProducer producer : producers) {
-        RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(myLocation, this);
+        RunnerAndConfigurationSettings configuration = producer.findExistingConfiguration(location, this);
         if (configuration != null) {
           existingConfigurations.add(new ExistingConfiguration(configuration, null));
         }
@@ -286,9 +294,8 @@ public class ConfigurationContext {
     return myExistingConfiguration.get();
   }
 
-  @Nullable
-  private RunnerAndConfigurationSettings findPreferredConfiguration(@NotNull List<ExistingConfiguration> existingConfigurations,
-                                                                    @NotNull PsiElement psiElement) {
+  private @Nullable RunnerAndConfigurationSettings findPreferredConfiguration(@NotNull List<ExistingConfiguration> existingConfigurations,
+                                                                              @NotNull PsiElement psiElement) {
     List<ConfigurationFromContext> configurationsFromContext = getConfigurationsFromContext();
     if (configurationsFromContext == null) return null;
     for (ExistingConfiguration configuration : existingConfigurations) {
@@ -324,8 +331,7 @@ public class ConfigurationContext {
     return first != null ? first.getSettings() : null;
   }
 
-  @Nullable
-  private static PsiElement getSelectedPsiElement(final DataContext dataContext, final Project project) {
+  private static @Nullable PsiElement getSelectedPsiElement(final DataContext dataContext, final Project project) {
     PsiElement element = null;
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null){
@@ -351,8 +357,7 @@ public class ConfigurationContext {
     return element;
   }
 
-  @NotNull
-  public RunManager getRunManager() {
+  public @NotNull RunManager getRunManager() {
     return RunManager.getInstance(getProject());
   }
 
@@ -376,8 +381,7 @@ public class ConfigurationContext {
    * @param type {@link ConfigurationType} instance to filter original runtime configuration by its type
    * @return {@link RunConfiguration} instance, it could be null
    */
-  @Nullable
-  public RunConfiguration getOriginalConfiguration(@Nullable ConfigurationType type) {
+  public @Nullable RunConfiguration getOriginalConfiguration(@Nullable ConfigurationType type) {
     if (type == null || (myRuntimeConfiguration != null && myRuntimeConfiguration.getType() == type)) {
       return myRuntimeConfiguration;
     }
@@ -399,16 +403,14 @@ public class ConfigurationContext {
   }
 
   @Deprecated
-  @Nullable
-  public List<RuntimeConfigurationProducer> findPreferredProducers() {
+  public @Nullable List<RuntimeConfigurationProducer> findPreferredProducers() {
     if (myPreferredProducers == null) {
       myPreferredProducers = PreferredProducerFind.findPreferredProducers(myLocation, this, true);
     }
     return myPreferredProducers;
   }
 
-  @Nullable
-  public List<ConfigurationFromContext> getConfigurationsFromContext() {
+  public @Nullable List<ConfigurationFromContext> getConfigurationsFromContext() {
     if (myConfigurationsFromContext == null) {
       myConfigurationsFromContext = PreferredProducerFind.getConfigurationsFromContext(myLocation, this, true, true);
     }
@@ -433,13 +435,11 @@ public class ConfigurationContext {
       myProducer = producer;
     }
 
-    @NotNull
-    private RunnerAndConfigurationSettings getSettings() {
+    private @NotNull RunnerAndConfigurationSettings getSettings() {
       return myConfigurationSettings;
     }
 
-    @Nullable
-    private RunConfigurationProducer<?> getProducer() {
+    private @Nullable RunConfigurationProducer<?> getProducer() {
       return myProducer;
     }
   }

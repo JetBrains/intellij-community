@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.chains.DiffRequestProducer
@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
 import com.intellij.openapi.vcs.changes.DiffRequestProcessorWithProducers
 import com.intellij.openapi.vcs.changes.EditorTabPreviewBase
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel.Companion.prepareCombinedDiffModelRequests
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vfs.VirtualFile
@@ -44,11 +45,11 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
 
   override val updatePreviewProcessor get() = model
 
-  protected val model by lazy {
-    createModel().also { model ->
-      model.context.putUserData(COMBINED_DIFF_PREVIEW_TAB_NAME, ::getCombinedDiffTabTitle)
-      project.service<CombinedDiffModelRepository>().registerModel(tree.id, model)
-    }
+  protected open val model by lazy { createModel().also { model -> customizeModel(tree.id, model) } }
+
+  protected fun customizeModel(sourceId: String, model: CombinedDiffPreviewModel) {
+    model.context.putUserData(COMBINED_DIFF_PREVIEW_TAB_NAME, ::getCombinedDiffTabTitle)
+    project.service<CombinedDiffModelRepository>().registerModel(sourceId, model)
   }
 
   override fun updatePreview(fromModelRefresh: Boolean) {
@@ -75,8 +76,8 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
   private fun installCombinedDiffModelListener() {
     tree.addPropertyChangeListener(TREE_MODEL_PROPERTY) {
       if (model.ourDisposable.isDisposed) return@addPropertyChangeListener
-
-      val changes = model.iterateSelectedOrAllChanges().toList()
+      model.context.putUserData(COMBINED_DIFF_VIEWER_KEY, null)
+      val changes = model.iterateAllChanges().toList()
       if (changes.isNotEmpty()) {
         model.refresh(true)
         model.setBlocks(prepareCombinedDiffModelRequests(project, changes))
@@ -126,6 +127,16 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
             ?.let { CombinedPathBlockId(wrapper.filePath, wrapper.fileStatus, wrapper.tag) to it }
         }.toMap()
     }
+
+    @JvmStatic
+    fun prepareCombinedDiffModelRequestsFromProducers(changes: List<ChangeDiffRequestChain.Producer>): Map<CombinedBlockId, DiffRequestProducer> {
+      return changes
+        .asSequence()
+        .map { wrapper ->
+          CombinedPathBlockId(wrapper.filePath, wrapper.fileStatus, null) to wrapper
+        }.toMap()
+    }
+
   }
 
   override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<DiffRequestProducer> {
@@ -172,13 +183,14 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
     selected = newSelected
   }
 
-  internal fun iterateSelectedOrAllChanges(): Iterable<Wrapper> {
+  private fun iterateSelectedOrAllChanges(): Iterable<Wrapper> {
     return if (iterateSelectedChanges().none() && showAllChangesForEmptySelection()) iterateAllChanges() else iterateSelectedChanges()
   }
 
   private fun scrollToChange(change: Wrapper) {
     context.getUserData(COMBINED_DIFF_VIEWER_KEY)
-      ?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), false)
+      ?.scrollToFirstChange(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), false,
+                            CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK)
   }
 
   open fun selectChangeInTree(change: Wrapper) {

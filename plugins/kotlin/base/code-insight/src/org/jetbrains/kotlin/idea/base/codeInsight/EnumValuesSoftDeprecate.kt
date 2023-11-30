@@ -10,8 +10,9 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 
+context(KtAnalysisSession)
 @ApiStatus.Internal
-fun KtAnalysisSession.isSoftDeprecatedEnumValuesMethodAndEntriesPropertyExists(symbol: KtCallableSymbol): Boolean {
+fun isSoftDeprecatedEnumValuesMethodAndEntriesPropertyExists(symbol: KtCallableSymbol): Boolean {
     val enumClassSymbol = (symbol.getContainingSymbol() as? KtClassOrObjectSymbol) ?: return false
     return isSoftDeprecatedEnumValuesMethod(symbol, enumClassSymbol) &&
             getEntriesPropertyOfEnumClass(enumClassSymbol) != null
@@ -28,8 +29,9 @@ fun isSoftDeprecatedEnumValuesMethod(
             valuesMethodSymbol is KtFunctionLikeSymbol && valuesMethodSymbol.valueParameters.isEmpty()
 }
 
+context(KtAnalysisSession)
 @ApiStatus.Internal
-fun KtAnalysisSession.getEntriesPropertyOfEnumClass(enumClassSymbol: KtClassOrObjectSymbol): KtCallableSymbol? =
+fun getEntriesPropertyOfEnumClass(enumClassSymbol: KtClassOrObjectSymbol): KtCallableSymbol? =
     enumClassSymbol.getStaticMemberScope().getCallableSymbols(StandardNames.ENUM_ENTRIES).firstOrNull()
 
 @ApiStatus.Internal

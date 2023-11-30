@@ -1,0 +1,10 @@
+<idea-plugin package="com.jetbrains.performancePlugin.remotedriver">
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="expose.ui.hierarchy.url"
+                 defaultValue="false"
+                 restartRequired="true"
+                 description="Enables UI components hierarchy URL"/>
+
+    <httpRequestHandler implementation="com.jetbrains.performancePlugin.remotedriver.webservice.UiHierarchyWebService"/>
+  </extensions>
+</idea-plugin>

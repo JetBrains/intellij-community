@@ -27,18 +27,21 @@ private class GrazieSearchableOptionContributor : SearchableOptionContributor() 
   }
 
   override fun processOptions(processor: SearchableOptionProcessor) {
+    val languageProofreadingHit = msg("grazie.settings.proofreading.languages.text")
     GrazieStaticSearchableOptions.LanguageProofreading.process { option ->
-      processor.addProofreadOptions(option, hit = msg("grazie.settings.proofreading.languages.text"))
+      processor.addProofreadOptions(option, hit = languageProofreadingHit)
     }
+    val fileTypeHit = msg("grazie.settings.grammar.scope.file-types.text")
     for (language in TextExtractor.getSupportedLanguages()) {
-      processor.addGrammarOptions(language.displayName, hit = msg("grazie.settings.grammar.scope.file-types.text"))
+      processor.addGrammarOptions(language.displayName, hit = fileTypeHit)
     }
     processor.addGrammarOptions("grazie", null, null)
+    val ruleHit = msg("grazie.settings.grammar.scope.rules.text")
     GrazieStaticSearchableOptions.Rules.process { option ->
-      processor.addGrammarOptions(option, hit = msg("grazie.settings.grammar.scope.rules.text"))
+      processor.addGrammarOptions(option, hit = ruleHit)
     }
     GrazieStaticSearchableOptions.RuleCategories.process { option ->
-      processor.addGrammarOptions(option, hit = msg("grazie.settings.grammar.scope.rules.text"))
+      processor.addGrammarOptions(option, hit = ruleHit)
     }
   }
 }

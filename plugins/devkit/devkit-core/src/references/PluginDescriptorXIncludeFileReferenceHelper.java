@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  *
  * @see PluginDescriptorXIncludeReferenceContributor
  */
-public class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHelper {
+final class PluginDescriptorXIncludeFileReferenceHelper extends FileReferenceHelper {
   @Override
   public boolean isMine(@NotNull Project project, @NotNull VirtualFile file) {
     return !DumbService.isDumb(project) &&

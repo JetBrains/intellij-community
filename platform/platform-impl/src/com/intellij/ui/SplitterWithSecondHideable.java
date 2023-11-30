@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.Divider;
@@ -25,7 +25,7 @@ import static com.intellij.icons.AllIcons.General.ArrowRight;
  * @deprecated This component confuses users, because it's not obvious that it allows to change size like by a splitter.
  * Commit form (the only place it's used) is going to be revised/removed in the future. After that this component will be removed
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 @ApiStatus.Internal
 public abstract class SplitterWithSecondHideable {
   public interface OnOffListener {
@@ -33,10 +33,10 @@ public abstract class SplitterWithSecondHideable {
     void off(int hideableHeight);
   }
 
-  @NotNull private final PseudoSplitter mySplitter;
-  @NotNull private final MyTitledSeparator myTitledSeparator;
-  @NotNull private final OnOffListener myListener;
-  @NotNull private final JPanel myFictivePanel;
+  private final @NotNull PseudoSplitter mySplitter;
+  private final @NotNull MyTitledSeparator myTitledSeparator;
+  private final @NotNull OnOffListener myListener;
+  private final @NotNull JPanel myFictivePanel;
   private float myPreviousProportion;
 
   public SplitterWithSecondHideable(boolean vertical,
@@ -58,8 +58,7 @@ public abstract class SplitterWithSecondHideable {
     myTitledSeparator.setText(value);
   }
 
-  @NotNull
-  public Splitter getComponent() {
+  public @NotNull Splitter getComponent() {
     return mySplitter;
   }
 
@@ -91,7 +90,7 @@ public abstract class SplitterWithSecondHideable {
     return myTitledSeparator.myOn;
   }
 
-  private class MyTitledSeparator extends AbstractTitledSeparatorWithIcon {
+  private final class MyTitledSeparator extends AbstractTitledSeparatorWithIcon {
     MyTitledSeparator(@NotNull @NlsContexts.Separator String separatorText, boolean vertical) {
       super(ArrowRight, vertical ? ArrowDown : Objects.requireNonNull(IconLoader.getDisabledIcon(ArrowRight)), separatorText);
     }
@@ -142,8 +141,8 @@ public abstract class SplitterWithSecondHideable {
     }
   }
 
-  private class MySplitter extends PseudoSplitter {
-    @NotNull private final MouseEventHandler myMouseListener = new MouseEventHandler() {
+  private final class MySplitter extends PseudoSplitter {
+    private final @NotNull MouseEventHandler myMouseListener = new MouseEventHandler() {
       @Override
       public void mouseEntered(MouseEvent event) {
         myTitledSeparator.mySeparator.setCursor(new Cursor(isOn() ? Cursor.S_RESIZE_CURSOR : Cursor.DEFAULT_CURSOR));
@@ -188,7 +187,7 @@ public abstract class SplitterWithSecondHideable {
       return isVertical() ? myTitledSeparator.getHeight() : myTitledSeparator.getWidth();
     }
 
-    private class MyDivider extends DividerImpl {
+    private final class MyDivider extends DividerImpl {
       @Override
       public void processMouseMotionEvent(MouseEvent e) {
         super.processMouseMotionEvent(e);

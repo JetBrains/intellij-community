@@ -23,10 +23,6 @@ class UISettingsState : BaseState() {
   @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.fontScale"))
   var fontScale: Float by property(0f)
 
-  @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS")
-  @Deprecated("", replaceWith = ReplaceWith("NotRoamableUiOptions.overrideLafFonts"))
-  var overrideLafFonts: Boolean by property(false)
-
   @get:ReportValue
   @get:OptionTag("RECENT_FILES_LIMIT")
   var recentFilesLimit: Int by property(50)
@@ -76,6 +72,8 @@ class UISettingsState : BaseState() {
   var allowMergeButtons: Boolean by property(true)
   @get:OptionTag("SHOW_MAIN_TOOLBAR")
   var showMainToolbar: Boolean by property(false)
+  @get:OptionTag("SHOW_NEW_MAIN_TOOLBAR")
+  var showNewMainToolbar: Boolean by property(true)
   @get:OptionTag("SHOW_STATUS_BAR")
   var showStatusBar: Boolean by property(true)
   @get:OptionTag("SHOW_MAIN_MENU")

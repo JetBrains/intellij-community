@@ -1,5 +1,7 @@
 {
-  "type": "KOTLIN_CLASS",
-  "classId": "testing/E.FOO",
-  "newName": "BAR"
+  "type": "KOTLIN_ENUM_ENTRY",
+  "classId": "testing/E",
+  "enumEntryName": "FOO",
+  "newName": "BAR",
+  "enabledInK2": "true"
 }

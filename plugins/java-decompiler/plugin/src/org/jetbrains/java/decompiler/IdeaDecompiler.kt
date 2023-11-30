@@ -64,7 +64,8 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
         IFernflowerPreferences.INDENT_STRING to indent,
         IFernflowerPreferences.IGNORE_INVALID_BYTECODE to "1",
         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES to "1",
-        IFernflowerPreferences.UNIT_TEST_MODE to if (ApplicationManager.getApplication().isUnitTestMode) "1" else "0")
+        //IFernflowerPreferences.UNIT_TEST_MODE to if (ApplicationManager.getApplication().isUnitTestMode) "1" else "0"
+      )
     }
 
     private fun canWork(): Boolean =

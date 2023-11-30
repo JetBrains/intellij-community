@@ -1,7 +1,9 @@
 class CtorUsedByOtherCtor {
     constructor()
 
-    constructor(p: String): this()
+    constructor(p: String): this() {
+        println(p)
+    }
 }
 
 open class CtorUsedParent {

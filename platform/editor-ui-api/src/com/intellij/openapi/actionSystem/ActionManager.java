@@ -177,11 +177,5 @@ public abstract class ActionManager {
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(AnActionListener.TOPIC, listener);
   }
 
-  /**
-   * @deprecated Use {@link AnActionListener#TOPIC}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void removeAnActionListener(AnActionListener listener);
-
   public abstract @Nullable KeyboardShortcut getKeyboardShortcut(@NonNls @NotNull String actionId);
 }

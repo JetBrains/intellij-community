@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac
 
 import com.intellij.ide.DataManager
@@ -9,16 +9,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.impl.SystemDock
-import java.awt.Desktop
-import java.awt.Menu
-import java.awt.MenuItem
-import java.awt.PopupMenu
-import java.awt.Taskbar
+import java.awt.*
 
 internal class MacDockDelegate private constructor(private val recentProjectsMenu: Menu) : SystemDock.Delegate {
   companion object {
-    private val LOG = logger<MacDockDelegate>()
-
     val instance: SystemDock.Delegate by lazy {
       val dockMenu = PopupMenu("DockMenu")
       val recentProjectsMenu = Menu("Recent Projects")
@@ -29,7 +23,7 @@ internal class MacDockDelegate private constructor(private val recentProjectsMen
         }
       }
       catch (e: Exception) {
-        LOG.error(e)
+        logger<MacDockDelegate>().error(e)
       }
 
       MacDockDelegate(recentProjectsMenu)

@@ -17,11 +17,10 @@ import java.beans.PropertyChangeEvent
 open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, private val storage: VcsLogStorage, component: VcsLogGraphTable) :
   VcsLogSpeedSearch(component) {
 
-  private val userRegistry: VcsUserRegistry
+  private val userRegistry: VcsUserRegistry = project.getService(VcsUserRegistry::class.java)
   private var matchResult: MatchResult? = null
 
   init {
-    userRegistry = project.getService(VcsUserRegistry::class.java)
     addChangeListener { evt: PropertyChangeEvent ->
       if (evt.propertyName == ENTERED_PREFIX_PROPERTY_NAME) {
         matchResult = matchUsers(matchResult, evt.newValue as? String)

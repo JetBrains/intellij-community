@@ -359,7 +359,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
           }
 
           if (fix != null) {
-            registerProblem(description, null, expression, new LocalQuickFix[]{fix.asQuickFix()});
+            registerProblem(description, null, expression, new LocalQuickFix[]{LocalQuickFix.from(fix)});
           }
         }
       }

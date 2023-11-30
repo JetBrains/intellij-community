@@ -4,7 +4,7 @@ char a = 'a';
 java.lang.String s = "b";
 java.lang.String x = "ab";
 print("a\t\nabc");
-print("a'b\tc");
+print("a'b\t$ac");
 print("a\"b\tc");
 print(4);
 print(4.5f);

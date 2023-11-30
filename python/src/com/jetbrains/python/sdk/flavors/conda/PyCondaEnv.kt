@@ -8,8 +8,10 @@ import com.google.gson.Gson
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.createProcessWithResult
+import com.intellij.openapi.progress.*
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.target.conda.TargetCommandExecutor
+import com.jetbrains.python.ui.pyModalSuspend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -20,6 +22,7 @@ import java.util.*
 import kotlin.io.path.exists
 
 /**
+ * TODO: Once we get rid of [TargetCommandExecutor] and have access to [com.intellij.execution.target.TargetEnvironmentConfiguration] use it validate conda binary in [getEnvs]
  * @see [com.jetbrains.env.conda.PyCondaTest]
  */
 data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
@@ -74,8 +77,10 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
     }
 
     suspend fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): Result<Process> {
+      val (_, env, commandLineBuilder) = withContext(Dispatchers.IO) {
+        command.createRequestEnvAndCommandLine()
+      }.getOrElse { return Result.failure(it) }
 
-      val (_, env, commandLineBuilder) = command.createRequestEnvAndCommandLine().getOrElse { return Result.failure(it) }
 
       val commandLine = commandLineBuilder.apply {
         //conda create -y -n myenv python=3.9

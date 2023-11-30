@@ -48,6 +48,27 @@ UFile (package = )
             UBlockExpression
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = t)
+    UClass (name = CircularArray)
+        UMethod (name = getFirst)
+            UBlockExpression
+                UReturnExpression
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                        UIdentifier (Identifier (TODO))
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)
+        UMethod (name = getLast)
+            UBlockExpression
+                UReturnExpression
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                        UIdentifier (Identifier (TODO))
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)
+        UMethod (name = setLast)
+            UParameter (name = value)
+            UBlockExpression
+                UReturnExpression
+                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                        UIdentifier (Identifier (TODO))
+                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)
+        UMethod (name = CircularArray)
     UClass (name = NonNullUpperBound)
         UMethod (name = inheritedNullability)
             UParameter (name = i)

@@ -1,0 +1,12 @@
+# Internal modules
+qrcode\.compat
+qrcode\.compat\..*
+qrcode\.tests
+qrcode\.tests\..*
+
+# Stubtest hiccup: It doesn't recognize that the annotated type is a base
+# class of the default class assigned to the attribute.
+qrcode\.image\..*\.default_drawer_class
+
+# Leaked loop counter
+qrcode.base.i

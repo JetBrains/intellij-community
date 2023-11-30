@@ -1,9 +1,5 @@
 internal class C {
-    var abc = 0
-
-    init {
-        abc = 2
-    }
+    var abc: Int = 2
 
     init {
         abc = 0

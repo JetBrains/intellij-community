@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.IndexingFlag;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,6 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
   }
 
   public void scheduleForIndexingRecursively(@NotNull VirtualFile file, boolean onlyContentDependent) {
-    IndexingFlag.cleanProcessedFlagRecursively(file);
     if (file.isDirectory()) {
       final ContentIterator iterator = fileOrDir -> {
         myEventMerger.recordFileEvent(fileOrDir, onlyContentDependent);

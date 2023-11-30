@@ -36,5 +36,5 @@ class TableCommand(debugger: RemoteDebugger?,
 }
 
 enum class TableCommandType {
-  DF_INFO, SLICE
+  DF_INFO, SLICE, DF_DESCRIBE
 }

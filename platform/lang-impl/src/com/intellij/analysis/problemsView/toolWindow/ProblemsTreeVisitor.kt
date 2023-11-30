@@ -12,14 +12,14 @@ internal interface ProblemsTreeVisitor : TreeVisitor {
   override fun visit(path: TreePath): TreeVisitor.Action = when (val node = TreeUtil.getLastUserObject(path)) {
     is Root -> visitRoot(node)
     is FileNode -> visitFile(node)
-    is GroupNode -> visitGroup(node)
+    is ProblemsViewGroupNode -> visitGroup(node)
     is ProblemNode -> visitProblem(node)
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }
 
   fun visitRoot(root: Root): TreeVisitor.Action = TreeVisitor.Action.CONTINUE
   fun visitFile(node: FileNode): TreeVisitor.Action
-  fun visitGroup(node: GroupNode): TreeVisitor.Action = TreeVisitor.Action.SKIP_CHILDREN
+  fun visitGroup(node: ProblemsViewGroupNode): TreeVisitor.Action = TreeVisitor.Action.SKIP_CHILDREN
   fun visitProblem(node: ProblemNode): TreeVisitor.Action = TreeVisitor.Action.SKIP_CHILDREN
 }
 
@@ -38,7 +38,7 @@ internal class ProblemNodeFinder(private val problem: Problem) : ProblemsTreeVis
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }
 
-  override fun visitGroup(node: GroupNode): TreeVisitor.Action = when (node.group) {
+  override fun visitGroup(node: ProblemsViewGroupNode): TreeVisitor.Action = when (node.group) {
     problem.group -> TreeVisitor.Action.CONTINUE
     else -> TreeVisitor.Action.SKIP_CHILDREN
   }

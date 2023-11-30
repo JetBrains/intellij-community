@@ -20,12 +20,9 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import java.util.*;
 
-public class MissingAccessibleContextInspection extends DevKitUastInspectionBase {
+final class MissingAccessibleContextInspection extends DevKitUastInspectionBase {
 
   public static final int MAX_EXPRESSIONS_TO_PROCESS = 16;
-
-  public MissingAccessibleContextInspection() {
-  }
 
   @Override
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

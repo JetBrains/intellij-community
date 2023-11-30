@@ -3,10 +3,10 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
-import com.intellij.project.isDirectoryBased
-import com.intellij.project.stateStore
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.project.isDirectoryBased
+import com.intellij.project.stateStore
 
 /**
  * Returns `null` for the default project

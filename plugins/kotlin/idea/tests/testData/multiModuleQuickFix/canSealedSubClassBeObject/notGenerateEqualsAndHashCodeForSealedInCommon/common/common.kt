@@ -4,6 +4,6 @@
 // ACTION: Create test
 // ACTION: Make internal
 // ACTION: Make private
-
+// IGNORE_K2
 sealed class Parent
 cla<caret>ss Child : Parent()

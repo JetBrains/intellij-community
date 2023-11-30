@@ -13,6 +13,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -20,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -37,6 +39,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -59,6 +62,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final @NotNull Project myProject;
@@ -72,6 +76,25 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private int[] cachedErrors = ArrayUtilRt.EMPTY_INT_ARRAY;
   private final Map<Language, FileHighlightingSetting> myFileHighlightingSettings; // each root language -> its highlighting level
   private volatile long myHighlightingSettingsModificationCount;
+
+  public static void setTrafficLightOnEditor(@NotNull Project project,
+                                             @NotNull EditorMarkupModel editorMarkupModel,
+                                             @NotNull ModalityState modalityState,
+                                             @NotNull Supplier<? extends @Nullable TrafficLightRenderer> createTrafficRenderer) {
+    ProjectUtilKt.executeOnPooledThread(project, () -> {
+      TrafficLightRenderer tlRenderer = createTrafficRenderer.get();
+      if (tlRenderer == null) return;
+
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Editor editor = editorMarkupModel.getEditor();
+        if (project.isDisposed() || editor.isDisposed()) {
+          Disposer.dispose(tlRenderer); // would be registered in setErrorStripeRenderer() below
+          return;
+        }
+        editorMarkupModel.setErrorStripeRenderer(tlRenderer);
+      }, modalityState);
+    });
+  }
 
   public TrafficLightRenderer(@NotNull Project project, @NotNull Document document) {
     this(project, document, null);
@@ -567,7 +590,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     // Actions shouldn't be anonymous classes for statistics reasons.
-    private class ShowImportTooltipAction extends ToggleAction {
+    private final class ShowImportTooltipAction extends ToggleAction {
       private ShowImportTooltipAction() {
         super(EditorBundle.message("iw.show.import.tooltip"));
       }

@@ -5,9 +5,9 @@ import com.intellij.compiler.impl.ModuleCompileScope
 import com.intellij.configurationStore.runInAllowSaveMode
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.io.TestFileSystemBuilder
 import java.io.IOException
 

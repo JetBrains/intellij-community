@@ -79,6 +79,7 @@
    },
    {
     name-part: "click",
+    display-name: "argument",
     matchScore: 0,
     symbol: {
      matchedName: "html/argument/<pattern>",

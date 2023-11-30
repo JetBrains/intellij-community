@@ -46,7 +46,7 @@ internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
         }
 }
 
-private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtExpression> {
+private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtElement> {
     // TODO: reuse more standard utility to collect scopes
     return when (val parent = expr.parent) {
         is KtPrefixExpression ->
@@ -66,7 +66,12 @@ private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtExpr
             }
         }
         is KtWhenConditionWithExpression ->
-            if (value == false) emptyList() else listOfNotNull((parent.parent as? KtWhenEntry)?.expression)
+            when (value) {
+              false -> (generateSequence(parent.nextSibling) {it.nextSibling}.filterIsInstance<KtWhenCondition>() + 
+                      generateSequence(parent.parent.nextSibling) {it.nextSibling}.filterIsInstance<KtWhenEntry>()).toList()
+              true -> listOfNotNull((parent.parent as? KtWhenEntry)?.expression)
+              else -> emptyList()
+            }
         is KtContainerNode ->
             when (val gParent = parent.parent) {
                 is KtIfExpression ->

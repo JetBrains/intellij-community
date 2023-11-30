@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -55,8 +54,7 @@ import static com.intellij.ide.projectView.impl.nodes.ProjectViewNodeExtensionsK
 import static com.intellij.ide.util.treeView.NodeRenderer.getSimpleTextAttributes;
 
 /**
- * Class for node descriptors based on PsiElements. Subclasses should define
- * method that extract PsiElement from Value.
+ * Class for node descriptors based on PsiElements. Subclasses should define a method that extracts PsiElement from Value.
  * @param <Value> Value of node descriptor
  */
 public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value> implements ValidateableNode, StatePreservingNavigatable {
@@ -69,22 +67,18 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     super(project, value, viewSettings);
   }
 
-  @Nullable
-  protected abstract PsiElement extractPsiFromValue();
+  protected abstract @Nullable PsiElement extractPsiFromValue();
 
-  @Nullable
-  protected abstract Collection<AbstractTreeNode<?>> getChildrenImpl();
+  protected abstract @Nullable Collection<AbstractTreeNode<?>> getChildrenImpl();
 
   protected abstract void updateImpl(@NotNull PresentationData data);
 
   @Override
-  @NotNull
-  public final Collection<? extends AbstractTreeNode<?>> getChildren() {
+  public final @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
     return AstLoadingFilter.disallowTreeLoading(this::doGetChildren);
   }
 
-  @NotNull
-  private Collection<? extends AbstractTreeNode<?>> doGetChildren() {
+  private @NotNull Collection<? extends AbstractTreeNode<?>> doGetChildren() {
     final PsiElement psiElement = extractPsiFromValue();
     if (psiElement == null) {
       return new ArrayList<>();
@@ -158,7 +152,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   // Should be called in atomic action
 
   @Override
-  public void update(@NotNull final PresentationData data) {
+  public void update(final @NotNull PresentationData data) {
     AstLoadingFilter.disallowTreeLoading(() -> doUpdate(data));
   }
 
@@ -193,8 +187,8 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       }
       else {
         var tagIconAndText = TagManager.getTagIconAndText(value);
-        tagIcon = tagIconAndText.first;
-        tagText = tagIconAndText.second;
+        tagIcon = tagIconAndText.icon();
+        tagText = tagIconAndText.coloredText();
       }
       data.setIcon(withIconMarker(icon, tagIcon));
       data.setPresentableText(myName);
@@ -243,8 +237,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     return flags;
   }
 
-  @Nullable
-  public static Icon patchIcon(@NotNull Project project, @Nullable Icon original, @Nullable VirtualFile file) {
+  public static @Nullable Icon patchIcon(@NotNull Project project, @Nullable Icon original, @Nullable VirtualFile file) {
     if (file == null || original == null) return original;
 
     Icon icon = original;
@@ -283,12 +276,11 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   }
 
   @Override
-  public boolean contains(@NotNull final VirtualFile file) {
+  public boolean contains(final @NotNull VirtualFile file) {
     return file.equals(getVirtualFileForValue());
   }
 
-  @Nullable
-  public NavigationItem getNavigationItem() {
+  public @Nullable NavigationItem getNavigationItem() {
     final PsiElement psiElement = extractPsiFromValue();
     return psiElement instanceof NavigationItem ? (NavigationItem) psiElement : null;
   }
@@ -336,8 +328,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     return item != null && item.canNavigateToSource();
   }
 
-  @Nullable
-  protected String calcTooltip() {
+  protected @Nullable String calcTooltip() {
     return null;
   }
 

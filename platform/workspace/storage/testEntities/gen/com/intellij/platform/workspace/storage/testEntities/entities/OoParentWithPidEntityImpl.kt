@@ -15,20 +15,21 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class OoParentWithPidEntityImpl(val dataSource: OoParentWithPidEntityData) : OoParentWithPidEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class OoParentWithPidEntityImpl(private val dataSource: OoParentWithPidEntityData) : OoParentWithPidEntity, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
     internal val CHILDONE_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentWithPidEntity::class.java,
                                                                             OoChildForParentWithPidEntity::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_ONE, false)
@@ -36,7 +37,7 @@ open class OoParentWithPidEntityImpl(val dataSource: OoParentWithPidEntityData) 
                                                                               OoChildAlsoWithPidEntity::class.java,
                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       CHILDONE_CONNECTION_ID,
       CHILDTHREE_CONNECTION_ID,
     )
@@ -58,6 +59,7 @@ open class OoParentWithPidEntityImpl(val dataSource: OoParentWithPidEntityData) 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: OoParentWithPidEntityData?) : ModifiableWorkspaceEntityBase<OoParentWithPidEntity, OoParentWithPidEntityData>(
     result), OoParentWithPidEntity.Builder {
@@ -87,7 +89,7 @@ open class OoParentWithPidEntityImpl(val dataSource: OoParentWithPidEntityData) 
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -204,7 +206,7 @@ open class OoParentWithPidEntityImpl(val dataSource: OoParentWithPidEntityData) 
 class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculableSymbolicId<OoParentWithPidEntity>() {
   lateinit var parentProperty: String
 
-  fun isParentPropertyInitialized(): Boolean = ::parentProperty.isInitialized
+  internal fun isParentPropertyInitialized(): Boolean = ::parentProperty.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OoParentWithPidEntity> {
     val modifiable = OoParentWithPidEntityImpl.Builder(null)
@@ -221,6 +223,11 @@ class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculableSymbolicId<O
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.OoParentWithPidEntity") as EntityMetadata
   }
 
   override fun symbolicId(): SymbolicEntityId<*> {
@@ -278,9 +285,5 @@ class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculableSymbolicId<O
     var result = javaClass.hashCode()
     result = 31 * result + parentProperty.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

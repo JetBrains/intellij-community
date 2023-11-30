@@ -25,7 +25,7 @@ public final class AllClassesGetter {
   private static final Logger LOG = Logger.getInstance(AllClassesGetter.class);
   public static final InsertHandler<JavaPsiClassReferenceElement> TRY_SHORTENING = new InsertHandler<>() {
 
-    private void _handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
+    private static void _handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       final Editor editor = context.getEditor();
       final PsiClass psiClass = item.getObject();
       if (!psiClass.isValid()) return;

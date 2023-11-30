@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.notification.Notification;
@@ -140,8 +140,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
      This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive).
 
      Generally, this requires that viewport must not be obscured by its ancestors and must be showing. */
-  @Nullable
-  private static Boolean isWindowBlitterAvailableFor(JViewport viewport) {
+  private static @Nullable Boolean isWindowBlitterAvailableFor(JViewport viewport) {
     if (ourCanUseWindowBlitterMethod.isAvailable()) {
       return (Boolean)ourCanUseWindowBlitterMethod.invoke(viewport);
     }
@@ -164,8 +163,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
      Use a breakpoint in JRootPane.disableTrueDoubleBuffering() to detect direct getGraphics() calls.
 
      See GraphicsUtil.safelyGetGraphics() for more info. */
-  @Nullable
-  private static Boolean isTrueDoubleBufferingAvailableFor(JComponent component) {
+  private static @Nullable Boolean isTrueDoubleBufferingAvailableFor(JComponent component) {
     if (ourGetPaintManagerMethod.isAvailable()) {
       Object paintManager = ourGetPaintManagerMethod.invoke(RepaintManager.currentManager(component));
 
@@ -243,9 +241,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     myPaintingNow = false;
   }
 
-  @Nullable
   @Override
-  public Magnificator getMagnificator() {
+  public @Nullable Magnificator getMagnificator() {
     return ClientProperty.get(getView(), Magnificator.CLIENT_PROPERTY_KEY);
   }
 
@@ -508,6 +505,14 @@ public class JBViewport extends JViewport implements ZoomableViewport {
           }
         }
       }
+    }
+
+    @Override
+    public String toString() {
+      return "ViewBorder{" +
+             "myInsets=" + myInsets +
+             ", myBorder=" + myBorder +
+             '}';
     }
   }
 

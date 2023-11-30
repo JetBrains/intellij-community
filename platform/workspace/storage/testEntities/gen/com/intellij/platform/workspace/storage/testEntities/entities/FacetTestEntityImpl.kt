@@ -15,24 +15,24 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestEntity, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) : FacetTestEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
     internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java, FacetTestEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
     )
 
@@ -53,6 +53,7 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: FacetTestEntityData?) : ModifiableWorkspaceEntityBase<FacetTestEntity, FacetTestEntityData>(
     result), FacetTestEntity.Builder {
@@ -82,7 +83,7 @@ open class FacetTestEntityImpl(val dataSource: FacetTestEntityData) : FacetTestE
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -191,8 +192,8 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetTe
   lateinit var data: String
   lateinit var moreData: String
 
-  fun isDataInitialized(): Boolean = ::data.isInitialized
-  fun isMoreDataInitialized(): Boolean = ::moreData.isInitialized
+  internal fun isDataInitialized(): Boolean = ::data.isInitialized
+  internal fun isMoreDataInitialized(): Boolean = ::moreData.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FacetTestEntity> {
     val modifiable = FacetTestEntityImpl.Builder(null)
@@ -209,6 +210,11 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetTe
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEntity") as EntityMetadata
   }
 
   override fun symbolicId(): SymbolicEntityId<*> {
@@ -272,9 +278,5 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetTe
     result = 31 * result + data.hashCode()
     result = 31 * result + moreData.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
@@ -250,8 +249,10 @@ public final class CommitPresentationUtil {
                                      font.getStyle(), font);
   }
 
-  public static @NotNull @Nls String getBranchesText(@Nullable List<@NlsSafe String> branches, boolean expanded, int availableWidth,
-                                                     @NotNull FontMetrics metrics) {
+  public static @NotNull @Nls String getBranchesLinkText(@Nullable List<@NlsSafe String> branches,
+                                                         boolean expanded,
+                                                         int availableWidth,
+                                                         @NotNull FontMetrics metrics) {
     if (branches == null) {
       return VcsLogBundle.message("vcs.log.details.in.branches.loading");
     }
@@ -262,8 +263,7 @@ public final class CommitPresentationUtil {
     if (expanded) {
       return new HtmlBuilder().append(head)
         .append(HtmlChunk.link(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.hide")))
-        .br()
-        .appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(branches, s -> HtmlChunk.text(s))).toString();
+        .toString();
     }
 
     String tail = "… " + HtmlChunk.link(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.show.all"));

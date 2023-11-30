@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.chrome;
 
 import com.intellij.ide.browsers.BrowserSpecificSettings;
@@ -26,9 +26,8 @@ public final class ChromeSettings extends BrowserSpecificSettings {
   public ChromeSettings() {
   }
 
-  @Nullable
   @Tag("user-data-dir")
-  public String getUserDataDirectoryPath() {
+  public @Nullable String getUserDataDirectoryPath() {
     return myUserDataDirectoryPath;
   }
 
@@ -37,9 +36,8 @@ public final class ChromeSettings extends BrowserSpecificSettings {
     return myUseCustomProfile;
   }
 
-  @Nullable
   @Tag("command-line-options")
-  public String getCommandLineOptions() {
+  public @Nullable String getCommandLineOptions() {
     return myCommandLineOptions;
   }
 
@@ -55,9 +53,8 @@ public final class ChromeSettings extends BrowserSpecificSettings {
     myUseCustomProfile = useCustomProfile;
   }
 
-  @NotNull
   @Override
-  public List<String> getAdditionalParameters() {
+  public @NotNull List<String> getAdditionalParameters() {
     if (myCommandLineOptions == null) {
       if (myUseCustomProfile && myUserDataDirectoryPath != null) {
         return Collections.singletonList(USER_DATA_DIR_ARG + FileUtilRt.toSystemDependentName(myUserDataDirectoryPath));
@@ -75,19 +72,17 @@ public final class ChromeSettings extends BrowserSpecificSettings {
   }
 
   @Override
-  @NotNull
   @XMap(propertyElementName = "environment-variables")
-  public Map<String, String> getEnvironmentVariables() {
+  public @NotNull Map<String, String> getEnvironmentVariables() {
     return myEnvironmentVariables;
   }
 
-  public void setEnvironmentVariables(@NotNull final Map<String, String> environmentVariables) {
+  public void setEnvironmentVariables(final @NotNull Map<String, String> environmentVariables) {
     myEnvironmentVariables = environmentVariables;
   }
 
-  @NotNull
   @Override
-  public ChromeSettingsConfigurable createConfigurable() {
+  public @NotNull ChromeSettingsConfigurable createConfigurable() {
     return new ChromeSettingsConfigurable(this);
   }
 

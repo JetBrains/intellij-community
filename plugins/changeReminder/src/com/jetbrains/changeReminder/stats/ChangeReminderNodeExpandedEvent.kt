@@ -3,7 +3,7 @@ package com.jetbrains.changeReminder.stats
 
 import com.intellij.openapi.project.Project
 import com.jetbrains.changeReminder.predict.PredictionData
-import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.NODE_EXPANDED
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.NODE_EXPANDED
 
 internal class ChangeReminderNodeExpandedEvent(
   private val displayedPredictionResult: PredictionData

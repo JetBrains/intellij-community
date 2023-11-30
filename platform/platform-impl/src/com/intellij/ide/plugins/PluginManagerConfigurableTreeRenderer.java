@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.DynamicBundle;
@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 /**
  * @author Alexander Lobas
  */
-public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapter implements ConfigurableTreeRenderer, Consumer<Integer> {
+public final class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapter implements ConfigurableTreeRenderer, Consumer<Integer> {
   private final CountComponent myCountLabel = new CountComponent();
   private final JLabel myExtraLabel = new JLabel();
   private final JPanel myPanel = new NonOpaquePanel();

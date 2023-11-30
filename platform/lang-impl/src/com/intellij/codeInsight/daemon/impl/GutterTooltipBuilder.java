@@ -5,11 +5,13 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +83,9 @@ public abstract class GutterTooltipBuilder {
     if (elementsCount <= 1) return " ";
     StringBuilder sb = new StringBuilder("</p><p style='margin-top:2pt");
     if (marginLeft) sb.append(";margin-left:20pt");
-    if (!firstElement) sb.append(";border-top:thin solid #").append(toHex(SEPARATOR_COLOR));
+    if (!firstElement && (!ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode())) {
+      sb.append(";border-top:thin solid #").append(toHex(SEPARATOR_COLOR));
+    }
     return sb.append(";'>").toString();
   }
 
@@ -171,8 +175,11 @@ public abstract class GutterTooltipBuilder {
     if (action == null) return; // action is not exist
     String text = getPreferredShortcutText(action.getShortcutSet().getShortcuts());
     if (StringUtil.isEmpty(text)) return; // action have no shortcuts
-    sb.append("</p><p style='margin-top:8px;'><font size='2' color='#");
-    sb.append(toHex(CONTEXT_HELP_FOREGROUND));
+    sb.append("</p><p style='margin-top:8px;'><font");
+    if (!ExperimentalUI.isNewUI() || ApplicationManager.getApplication().isUnitTestMode()) {
+      sb.append(" size='2'");
+    }
+    sb.append(" color='#").append(toHex(CONTEXT_HELP_FOREGROUND));
     sb.append("'>").append(LangBundle.message(key, text)).append("</font>");
   }
 

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.WHEN_STATE_CHANGED
-import com.intellij.openapi.ui.validation.WHEN_TEXT_FIELD_TEXT_CHANGED
+import com.intellij.openapi.ui.validation.WHEN_DOCUMENT_CHANGED
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.dsl.builder.*
@@ -90,7 +90,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
           selectAll()
         }
         .validationRequestor(WHEN_STATE_CHANGED(overwriteCheckbox))
-        .validationRequestor(WHEN_TEXT_FIELD_TEXT_CHANGED)
+        .validationRequestor(WHEN_DOCUMENT_CHANGED)
         .validationOnApply(validateBranchName(true, overwriteCheckbox))
         .validationOnInput(validateBranchName(false, overwriteCheckbox))
     }

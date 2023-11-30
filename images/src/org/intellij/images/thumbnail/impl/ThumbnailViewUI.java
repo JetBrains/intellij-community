@@ -429,7 +429,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         return files;
     }
 
-    private boolean isImagesInDirectory(VirtualFile dir) {
+    private static boolean isImagesInDirectory(VirtualFile dir) {
         ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
         VirtualFile[] files = dir.getChildren();
         for (VirtualFile file : files) {

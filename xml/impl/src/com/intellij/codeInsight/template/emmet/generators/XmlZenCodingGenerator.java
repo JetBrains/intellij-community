@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.application.options.emmet.EmmetOptions;
@@ -63,8 +49,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
     return new TemplateImpl("", builder.toString(), "");
   }
 
-  @NotNull
-  private String toString(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
+  private @NotNull String toString(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
     CodeStyleSettings.QuoteStyle quoteStyle = XmlEditUtil.quoteStyle(context.getContainingFile());
     XmlTag tag = token.getXmlTag();
     if (tag != null) {
@@ -105,18 +90,16 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
                                   boolean hasChildren,
                                   @NotNull PsiElement context);
 
-  @NotNull
-  public abstract String buildAttributesString(@NotNull Map<String, String> attribute2value,
-                                               boolean hasChildren,
-                                               int numberInIteration,
-                                               int totalIterations, @Nullable String surroundedText);
+  public abstract @NotNull String buildAttributesString(@NotNull Map<String, String> attribute2value,
+                                                        boolean hasChildren,
+                                                        int numberInIteration,
+                                                        int totalIterations, @Nullable String surroundedText);
 
   @Override
   public abstract boolean isMyContext(@NotNull CustomTemplateCallback callback, boolean wrapping);
 
-  @Nullable
   @Override
-  public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
+  public @Nullable String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
     int currentOffset = editor.getCaretModel().getOffset();
     int startOffset = Math.min(editor.getDocument().getLineStartOffset(editor.getDocument().getLineNumber(currentOffset)), currentOffset);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -97,33 +97,29 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
     LazyDisposable.installOn(this);
 
-    Insets unscaledInsets = UnscaledGapsKt.unscale(myComponent.getInsets());
+    Insets insets = myComponent.getInsets();
     if (!inlineBrowseButton) {
-      unscaledInsets.right = UnscaledGapsKt.unscale(myBrowseButton.getInsets().right);
+      insets.right = myBrowseButton.getInsets().right;
     }
-    UnscaledGaps visualPaddings = UnscaledGapsKt.toUnscaledGaps(unscaledInsets);
+    UnscaledGaps visualPaddings = UnscaledGapsKt.toUnscaledGaps(insets);
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, component);
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, visualPaddings);
   }
 
-  @NotNull
-  protected Icon getDefaultIcon() {
+  protected @NotNull Icon getDefaultIcon() {
     return AllIcons.General.OpenDisk;
   }
 
-  @NotNull
-  protected Icon getHoveredIcon() {
+  protected @NotNull Icon getHoveredIcon() {
     return AllIcons.General.OpenDiskHover;
   }
 
-  @NotNull
-  protected @NlsContexts.Tooltip String getIconTooltip() {
+  protected @NotNull @NlsContexts.Tooltip String getIconTooltip() {
     return getTooltip();
   }
 
-  @NotNull
-  public static @NlsContexts.Tooltip String getTooltip() {
+  public static @NotNull @NlsContexts.Tooltip String getTooltip() {
     return UIBundle.message("component.with.browse.button.browse.button.tooltip.text") + " (" +
            KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)) + ")";
   }
@@ -133,8 +129,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     for (ActionListener listener: myBrowseButton.getActionListeners()) listener.actionPerformed(event);
   }
 
-  @NotNull
-  public final Comp getChildComponent() {
+  public final @NotNull Comp getChildComponent() {
     return myComponent;
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.wizard
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logParentFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Maven.logArtifactIdChanged
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.SortedComboBoxModel
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.text.nullize
@@ -85,7 +87,12 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(
   }
 
   protected fun setupGroupIdUI(builder: Panel) {
-    builder.row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label")) {
+    builder.row {
+      layout(RowLayout.LABEL_ALIGNED)
+      label(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.label"))
+        .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+        .applyToComponent { icon = AllIcons.General.ContextHelp }
+        .applyToComponent { toolTipText = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.help") }
       textField()
         .bindText(groupIdProperty.trim())
         .columns(COLUMNS_MEDIUM)
@@ -96,7 +103,12 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(
   }
 
   protected fun setupArtifactIdUI(builder: Panel) {
-    builder.row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label")) {
+    builder.row {
+      layout(RowLayout.LABEL_ALIGNED)
+      label(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.label"))
+        .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+        .applyToComponent { icon = AllIcons.General.ContextHelp }
+        .applyToComponent { toolTipText = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.help", context.presentationName) }
       textField()
         .bindText(artifactIdProperty.trim())
         .columns(COLUMNS_MEDIUM)

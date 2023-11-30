@@ -4,22 +4,14 @@ package com.intellij.debugger.memory.agent.ui;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XValue;
@@ -27,7 +19,6 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
@@ -43,7 +34,7 @@ import java.util.*;
 
 import static com.intellij.debugger.memory.action.DebuggerTreeAction.getObjectReference;
 
-public class RetainedSizeDialog extends DialogWrapper {
+public class RetainedSizeDialog extends MemoryAgentDialog {
   private static final Icon HELD_OBJECTS_MARK_ICON = AllIcons.Nodes.Locked;
   public static final Color HELD_OBJECTS_BACKGROUND_COLOR;
 
@@ -53,14 +44,9 @@ public class RetainedSizeDialog extends DialogWrapper {
                                                 new Color(background.getRed(), background.getGreen(), background.getBlue(), 30));
   }
 
-  private final boolean myRebuildOnSessionEvents;
   private final Set<ObjectReference> myHeldObjects;
-  private final HighlightableTree myTree;
-  private final BorderLayoutPanel myPanel;
-  private final JProgressBar myProgressBar;
   private final NodeHighlighter myHighlighter;
   private final String myRootName;
-  private final JBLabel myInfoLabel;
   private final JBLabel myRetainedSizeLabel;
 
   public RetainedSizeDialog(@NotNull Project project,
@@ -71,51 +57,23 @@ public class RetainedSizeDialog extends DialogWrapper {
                             XValueMarkers<?, ?> markers,
                             @Nullable XDebugSession session,
                             boolean rebuildOnSessionEvents) {
-    super(project, false);
-    myRebuildOnSessionEvents = rebuildOnSessionEvents;
-    setTitle(JavaDebuggerBundle.message("action.calculate.retained.size.title", name));
-    setModal(false);
+    super(
+      project, name, value, session,
+      new HighlightableTree(project, editorsProvider, sourcePosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, markers),
+      rebuildOnSessionEvents
+    );
 
-    myTree = new HighlightableTree(project, editorsProvider, sourcePosition, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, markers);
-    configureTree(value, name);
+    setTitle(JavaDebuggerBundle.message("action.calculate.retained.size.title", name));
+
     myHighlighter = new NodeHighlighter();
     myTree.addTreeListener(myHighlighter);
 
     myHeldObjects = new HashSet<>();
     myRootName = name;
 
-    JBPanel topPanel = new JBPanel<>();
-    topPanel.setLayout(new VerticalFlowLayout());
     myRetainedSizeLabel = new JBLabel(JavaDebuggerBundle.message("action.calculate.retained.size.waiting.message"));
-    myInfoLabel = new JBLabel();
 
-    topPanel.add(myRetainedSizeLabel);
-    topPanel.add(myInfoLabel);
-    myProgressBar = new JProgressBar();
-    myProgressBar.setVisible(false);
-    topPanel.add(myProgressBar);
-
-    myPanel = JBUI.Panels.simplePanel()
-      .addToCenter(ScrollPaneFactory.createScrollPane(myTree))
-      .addToTop(topPanel);
-
-    if (session != null) {
-      session.addSessionListener(new XDebugSessionListener() {
-        @Override
-        public void sessionPaused() {
-          if (myRebuildOnSessionEvents) {
-            myTree.invokeLater(() -> myTree.rebuildAndRestore(XDebuggerTreeState.saveState(myTree)));
-          }
-        }
-
-        @Override
-        public void sessionResumed() {
-          close(DialogWrapper.OK_EXIT_CODE);
-        }
-      }, myDisposable);
-    }
-
-    init();
+    myTopPanel.add(myRetainedSizeLabel);
   }
 
   public void setCalculationTimeoutMessage() {
@@ -142,34 +100,9 @@ public class RetainedSizeDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
-    return myPanel;
-  }
-
-  @Override
-  @Nullable
-  protected JComponent createSouthPanel() {
-    return null;
-  }
-
-  @Override
   @NonNls
   protected String getDimensionServiceKey() {
     return "#javadebugger.RetainedSizeDialog";
-  }
-
-  private void configureTree(@NotNull XValue value, @NotNull String name) {
-    final XValueNodeImpl root = new XValueNodeImpl(myTree, null, name, value);
-    myTree.setRoot(root, true);
-    myTree.setSelectionRow(0);
-    myTree.expandNodesOnLoad(node -> node == root);
-  }
-
-  @Nullable
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myTree;
   }
 
   private void highlightLoadedChildren() {
@@ -187,32 +120,13 @@ public class RetainedSizeDialog extends DialogWrapper {
     }
   }
 
+  @Override
   public ProgressIndicator createProgressIndicator() {
-    return new ProgressIndicatorBase() {
-      @Override
-      public void setText(String text) {
-        super.setText(text);
-        myInfoLabel.setText(text);
-      }
-
-      @Override
-      public void setFraction(double fraction) {
-        super.setFraction(fraction);
-        myProgressBar.setMinimum(0);
-        myProgressBar.setMaximum(100);
-        myProgressBar.setValue((int)(fraction * 100));
-      }
-
-      @Override
-      public void start() {
-        super.start();
-        myProgressBar.setVisible(true);
-      }
-
+    return new MemoryAgentActionProgressIndicator() {
       @Override
       public void stop() {
         super.stop();
-        myProgressBar.setVisible(false);
+        myInfoLabel.setVisible(true);
         myInfoLabel.setText(JavaDebuggerBundle.message("action.calculate.retained.size.info", myRootName));
         myInfoLabel.setIcon(AllIcons.General.Information);
       }
@@ -246,11 +160,11 @@ public class RetainedSizeDialog extends DialogWrapper {
       if (presentation != null && icon != PlatformDebuggerImplIcons.PinToTop.UnpinnedItem) {
         mySkipNotification = true;
         node.applyPresentation(
-          myCachedIcons.computeIfAbsent(icon, nodeIcon -> new LayeredIcon(nodeIcon, HELD_OBJECTS_MARK_ICON)),
+          myCachedIcons.computeIfAbsent(icon, nodeIcon -> LayeredIcon.layeredIcon(new Icon[]{nodeIcon, HELD_OBJECTS_MARK_ICON})),
           presentation,
           !node.isLeaf()
         );
-        myTree.addColoredPath(node.getPath(), HELD_OBJECTS_BACKGROUND_COLOR);
+        ((HighlightableTree)myTree).addColoredPath(node.getPath(), HELD_OBJECTS_BACKGROUND_COLOR);
       }
     }
   }

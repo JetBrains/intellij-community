@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
@@ -13,7 +13,10 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.BaseButtonBehavior;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +30,8 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class ContentLabel extends BaseLabel {
-  private static final int DEFAULT_HORIZONTAL_INSET = JBUIScale.scale(12);
-  protected static final int ICONS_GAP = JBUIScale.scale(3);
+  private static final int DEFAULT_HORIZONTAL_INSET = 12;
+  protected static final int ICONS_GAP = 3;
 
   private final List<AdditionalIcon> myAdditionalIcons = new SmartList<>();
   protected int myIconWithInsetsWidth;
@@ -52,9 +55,7 @@ public abstract class ContentLabel extends BaseLabel {
 
   protected abstract void handleMouseClick(@NotNull MouseEvent e);
 
-  @Nullable
-  @NlsContexts.Label
-  protected abstract String getOriginalText();
+  protected abstract @Nullable @NlsContexts.Label String getOriginalText();
 
   private void showTooltip(AdditionalIcon icon) {
     if (icon != null) {
@@ -171,8 +172,7 @@ public abstract class ContentLabel extends BaseLabel {
     showTooltip(null);
   }
 
-  @Nullable
-  protected AdditionalIcon findHoveredIcon() {
+  protected @Nullable AdditionalIcon findHoveredIcon() {
     return ContainerUtil.find(myAdditionalIcons, icon -> mouseOverIcon(icon));
   }
 
@@ -192,19 +192,20 @@ public abstract class ContentLabel extends BaseLabel {
     }
 
     boolean additionalIconsOnly = StringUtil.isEmptyOrSpaces(getText()) && getIcon() == null;
-    int left = DEFAULT_HORIZONTAL_INSET;
-    int right = DEFAULT_HORIZONTAL_INSET;
+    int left = JBUI.scale(DEFAULT_HORIZONTAL_INSET);
+    int right = left;
+    int iconsGap = JBUI.scale(ICONS_GAP);
     if (additionalIconsOnly) {
-      left = ICONS_GAP;
-      right = ICONS_GAP;
+      left = iconsGap;
+      right = iconsGap;
     }
 
     if (map.get(false) != null) {
-      int iconWidth = ICONS_GAP;
+      int iconWidth = iconsGap;
 
       for (AdditionalIcon icon : map.get(false)) {
         icon.setX(iconWidth);
-        iconWidth += icon.getIconWidth() + ICONS_GAP;
+        iconWidth += icon.getIconWidth() + iconsGap;
       }
 
       left = iconWidth;
@@ -215,28 +216,29 @@ public abstract class ContentLabel extends BaseLabel {
       if (additionalIconsOnly) {
         for (AdditionalIcon icon : map.get(true)) {
           icon.setX(left + rightIconWidth);
-          rightIconWidth += icon.getIconWidth() + ICONS_GAP;
+          rightIconWidth += icon.getIconWidth() + iconsGap;
         }
-        rightIconWidth -= ICONS_GAP;
+        rightIconWidth -= iconsGap;
       }
       else {
-        right = ICONS_GAP + JBUIScale.scale(4);
+        right = iconsGap + JBUIScale.scale(4);
         int offset = size.width - JBUIScale.scale(4);
 
         for (AdditionalIcon icon : map.get(true)) {
           icon.setX(offset + rightIconWidth);
-          rightIconWidth += icon.getIconWidth() + ICONS_GAP;
+          rightIconWidth += icon.getIconWidth() + iconsGap;
         }
       }
     }
 
+    //noinspection UseDPIAwareBorders
     setBorder(new EmptyBorder(0, left, 0, right));
     myIconWithInsetsWidth = rightIconWidth + right + left;
 
     if (ExperimentalUI.isNewUI()) {
       JBInsets insets = JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets();
       insets.left = Math.max(left, insets.left);
-      setBorder(new JBEmptyBorder(insets));
+      setBorder(new EmptyBorder(insets));
       myIconWithInsetsWidth = rightIconWidth + right + left;
     }
 

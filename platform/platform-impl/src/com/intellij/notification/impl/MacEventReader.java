@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.notification.Notification;
@@ -17,7 +17,8 @@ final class MacEventReader implements Notifications {
 
   @Override
   public void notify(@NotNull Notification notification) {
-    if (!NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldReadAloud() || NotificationsAnnouncer.isEnabled()) {
+    if (!NotificationsConfigurationImpl.getSettings(notification.getGroupId()).isShouldReadAloud() ||
+        NotificationsAnnouncerKt.isNotificationAnnouncerEnabled()) {
       return;
     }
 
@@ -30,8 +31,12 @@ final class MacEventReader implements Notifications {
       String[] words = message.split("\\s");
       StringBuilder sb = new StringBuilder();
       for (String word : words) {
-        if (sb.length() + word.length() >= MAX_MESSAGE_LENGTH - 1) break;
-        if (sb.length() > 0) sb.append(' ');
+        if (sb.length() + word.length() >= MAX_MESSAGE_LENGTH - 1) {
+          break;
+        }
+        if (!sb.isEmpty()) {
+          sb.append(' ');
+        }
         sb.append(word);
       }
       message = sb.toString();

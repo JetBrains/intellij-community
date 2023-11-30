@@ -94,7 +94,7 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean) : TextPart(text) {
       if (shortcut != null) {
         ShortcutsRenderingUtil.getKeyboardShortcutData(shortcut)
       }
-      else ShortcutsRenderingUtil.getGotoActionData(actionId)
+      else ShortcutsRenderingUtil.getGotoActionData(actionId, true)
     }
     else {
       val keyStroke = KeyStroke.getKeyStroke(text)

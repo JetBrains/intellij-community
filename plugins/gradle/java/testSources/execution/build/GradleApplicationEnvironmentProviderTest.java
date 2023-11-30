@@ -162,6 +162,48 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
   }
 
   @Test
+  public void testRunApplicationInnerStaticClass() throws Exception {
+    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
+    @Language("Java")
+    String appClass = """
+      package my;
+
+      public class Outer {
+        public static class Inner {
+          public static void main(String[] args){
+            System.out.println("Hello expected world");
+          }
+        }
+      }
+      """;
+    createProjectSubFile("src/main/java/my/Outer.java", appClass);
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withIdeaPlugin()
+        .withGradleIdeaExtPlugin()
+        .addImport("org.jetbrains.gradle.ext.*")
+        .addPostfix(
+          "idea {",
+          "  project.settings {",
+          "    runConfigurations {",
+          "       MyApp(Application) {",
+          "           mainClass = 'my.Outer$Inner'",
+          "           moduleName = 'moduleName.main'",
+          "       }",
+          "    }",
+          "  }",
+          "}")
+        .generate()
+    );
+
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findConfigurationByName("MyApp");
+    assertAppRunOutput(configurationSettings, "Hello expected world");
+  }
+
+  @Test
   public void testRunApplicationInNestedComposite() throws Exception {
     PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
     @Language("Java")

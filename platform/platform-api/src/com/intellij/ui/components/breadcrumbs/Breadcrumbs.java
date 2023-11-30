@@ -1,6 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.breadcrumbs;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.NlsContexts;
@@ -136,8 +139,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     return hovered == null ? null : hovered.getTooltip();
   }
 
-  @Nullable
-  protected Rectangle getCrumbBounds(@NotNull Crumb crumb) {
+  protected @Nullable Rectangle getCrumbBounds(@NotNull Crumb crumb) {
     Optional<CrumbView> viewOpt = views.stream().filter(v -> v.crumb == crumb).findFirst();
     return viewOpt.map(view -> view.bounds).orElse(null);
   }
@@ -330,15 +332,16 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
               if (crumb == null) break; // crumb is not found
               Collection<? extends Action> actions = crumb.getContextActions();
               if (actions.isEmpty()) break; // nothing to show
-              JPopupMenu popup = new JPopupMenu();
+              DefaultActionGroup group = new DefaultActionGroup();
               for (Action action : actions) {
                 if (action != null) {
-                  popup.add(action);
+                  group.add(ActionUtil.createActionFromSwingAction(action));
                 }
                 else {
-                  popup.addSeparator();
+                  group.addSeparator();
                 }
               }
+              JPopupMenu popup = ActionManager.getInstance().createActionPopupMenu("crumbs", group).getComponent();
               Component invoker = event.getComponent();
               popup.show(invoker, event.getX(), invoker.getHeight());
               event.consume();
@@ -646,9 +649,8 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
         return this;
       }
 
-      @NlsSafe
       @Override
-      public String getAccessibleName() {
+      public @NlsSafe String getAccessibleName() {
         return myText;
       }
 

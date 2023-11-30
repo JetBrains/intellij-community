@@ -28,9 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStructureViewBuilder {
 
@@ -59,9 +57,21 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
   private final VirtualFile myVirtualFile;
   private final Project myProject;
 
+  private final Map<Language, StructureViewBuilder> myLanguageToBuilderMap = new LinkedHashMap<>();
+
   protected TemplateLanguageStructureViewBuilder(PsiElement psiElement) {
     myProject = psiElement.getProject();
     myVirtualFile = psiElement.getContainingFile().getVirtualFile();
+
+    PsiFile file = psiElement.getContainingFile();
+    if (file != null) {
+      for (Language language : getLanguages(psiElement.getContainingFile())) {
+        StructureViewBuilder builder = getBuilder(file, language);
+        if (builder != null) {
+          myLanguageToBuilderMap.put(language, builder);
+        }
+      }
+    }
   }
 
   @Override
@@ -73,12 +83,8 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
   @NotNull
   public StructureView createStructureView(FileEditor fileEditor, @NotNull Project project) {
     List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<>();
-    VirtualFile file = fileEditor == null ? null : fileEditor.getFile();
-    PsiFile psiFile = file == null || !file.isValid()? null : PsiManager.getInstance(project).findFile(file);
-    List<Language> languages = getLanguages(psiFile).toList();
-    for (Language language : languages) {
-      StructureViewBuilder builder = getBuilder(Objects.requireNonNull(psiFile), language);
-      if (builder == null) continue;
+    for (Language language : myLanguageToBuilderMap.keySet()) {
+      StructureViewBuilder builder = myLanguageToBuilderMap.get(language);
       StructureView structureView = builder.createStructureView(fileEditor, project);
       String title = language.getDisplayName();
       Icon icon = ObjectUtils.notNull(LanguageUtil.getLanguageFileType(language), FileTypes.UNKNOWN).getIcon();
@@ -90,9 +96,9 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
       public boolean isOutdated() {
         VirtualFile file = fileEditor == null ? null : fileEditor.getFile();
         PsiFile psiFile = file == null || !file.isValid() ? null : PsiManager.getInstance(project).findFile(file);
-        List<Language> newLanguages = getLanguages(psiFile).toList();
+        Set<Language> newLanguages = getLanguages(psiFile).toSet();
         // think views count depends only on acceptable languages
-        return !Comparing.equal(languages, newLanguages);
+        return !Comparing.equal(myLanguageToBuilderMap.keySet(), newLanguages);
       }
     };
   }
@@ -101,15 +107,15 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
   @NotNull
   public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
     List<StructureViewComposite.StructureViewDescriptor> viewDescriptors = new ArrayList<>();
-    PsiFile psiFile = Objects.requireNonNull(PsiManager.getInstance(myProject).findFile(myVirtualFile));
-    for (Language language : getLanguages(psiFile)) {
-      StructureViewBuilder builder = getBuilder(psiFile, language);
+    for (Language language : myLanguageToBuilderMap.keySet()) {
+      StructureViewBuilder builder = myLanguageToBuilderMap.get(language);
       if (!(builder instanceof TreeBasedStructureViewBuilder)) continue;
       StructureViewModel model = ((TreeBasedStructureViewBuilder)builder).createStructureViewModel(editor);
       String title = language.getDisplayName();
       Icon icon = ObjectUtils.notNull(LanguageUtil.getLanguageFileType(language), FileTypes.UNKNOWN).getIcon();
       viewDescriptors.add(new StructureViewComposite.StructureViewDescriptor(title, model, icon));
     }
+    PsiFile psiFile = Objects.requireNonNull(PsiManager.getInstance(myProject).findFile(myVirtualFile));
     return new StructureViewCompositeModel(psiFile, editor, viewDescriptors);
   }
 

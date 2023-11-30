@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.CommonBundle;
@@ -76,6 +76,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   private final WcInfoLoader myDataLoader;
 
+  @Topic.ProjectLevel
   public static final Topic<Runnable> REFRESH_REQUEST = new Topic<>("REFRESH_REQUEST", Runnable.class);
 
   private MergeInfoHolder getHolder(final String key) {
@@ -332,7 +333,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
   // todo refactor to get rid of duplicate code dealing with separators
-  private String ensureEndsWithSeparator(final String wcPath) {
+  private static String ensureEndsWithSeparator(final String wcPath) {
     return wcPath.endsWith(File.separator) ? wcPath : (wcPath + File.separator);
   }
 

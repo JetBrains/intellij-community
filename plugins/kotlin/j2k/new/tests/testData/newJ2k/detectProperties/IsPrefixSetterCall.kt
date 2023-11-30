@@ -1,6 +1,6 @@
 object TestSetter {
     private var isThing: Int
-        private get() = 42
+        get() = 42
         private set(thing) {}
 
     @JvmStatic

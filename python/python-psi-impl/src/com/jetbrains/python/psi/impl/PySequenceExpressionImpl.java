@@ -2,16 +2,21 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySequenceExpression;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author Mikhail Golubev
  */
-public abstract class PySequenceExpressionImpl extends PyElementImpl implements PySequenceExpression {
+public abstract class PySequenceExpressionImpl extends PyElementImpl implements PySequenceExpression, PsiListLikeElement {
   public PySequenceExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -32,5 +37,10 @@ public abstract class PySequenceExpressionImpl extends PyElementImpl implements 
   @Override
   public boolean isEmpty() {
     return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens()) == null;
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getElements());
   }
 }

@@ -1,6 +1,6 @@
 package com.intellij.buildsystem.model
 
-data class BuildScriptEntryMetadata constructor(
+data class BuildScriptEntryMetadata(
     val startLine: Int,
     val startColumn: Int,
     val endLine: Int,

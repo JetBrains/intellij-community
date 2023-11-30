@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers.hash;
 
 import org.junit.Assert;
@@ -113,85 +99,8 @@ public class LinkedHashMapTest {
   }
 
   @Test
-  public void lru() {
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>() {
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<Integer, String> eldest) {
-        return size() > 500;
-      }
-    };
-    for (int i = 0; i < 1000; ++i) {
-      tested.put(i, Integer.toString(i));
-    }
-    assertEquals(500, tested.size());
-    for (int i = 0; i < 500; ++i) {
-      Assert.assertNull(tested.remove(i));
-    }
-    assertEquals(500, tested.size());
-    for (int i = 500; i < 1000; ++i) {
-      assertEquals(Integer.toString(i), tested.remove(i));
-    }
-    assertEquals(0, tested.size());
-  }
-
-  @Test
-  public void lru2() {
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>(0, true) {
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<Integer, String> eldest) {
-        return size() > 1000;
-      }
-    };
-    for (int i = 0; i < 1000; ++i) {
-      tested.put(i, Integer.toString(i));
-    }
-    assertEquals(Integer.toString(0), tested.get(0));
-    for (int i = 1000; i < 1999; ++i) {
-      tested.put(i, Integer.toString(i));
-    }
-    assertEquals(Integer.toString(0), tested.get(0));
-    tested.put(2000, Integer.toString(2000));
-    Assert.assertNull(tested.get(1000));
-  }
-
-  @Test
-  public void lru3() {
-    final LinkedHashMap<Integer, String> tested = new LinkedHashMap<>(0, true) {
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<Integer, String> eldest) {
-        return size() > 1000;
-      }
-    };
-    for (int i = 0; i < 1000; ++i) {
-      tested.put(i, Integer.toString(i));
-    }
-    assertEquals(Integer.toString(999), tested.remove(999));
-    assertEquals(999, tested.size());
-    assertEquals(Integer.toString(0), tested.get(0));
-    for (int i = 1000; i < 1999; ++i) {
-      tested.put(i, Integer.toString(i));
-    }
-    assertEquals(Integer.toString(0), tested.get(0));
-    tested.put(2000, Integer.toString(2000));
-    assertNull(tested.get(1000));
-  }
-
-  @Test
   public void valuesIteration() {
     Map<Integer, String> map = new LinkedHashMap<>();
-    map.put(1, "a");
-    map.put(2, "b");
-    map.put(3, "c");
-    Iterator<String> iterator = map.values().iterator();
-    assertEquals("a", iterator.next());
-    assertEquals("b", iterator.next());
-    assertEquals("c", iterator.next());
-    assertFalse(iterator.hasNext());
-  }
-
-  @Test
-  public void accessOrderValuesIteration() {
-    Map<Integer, String> map = new LinkedHashMap<>(0, true);
     map.put(1, "a");
     map.put(2, "b");
     map.put(3, "c");

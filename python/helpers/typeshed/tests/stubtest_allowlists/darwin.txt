@@ -1,13 +1,6 @@
-_?curses.A_ITALIC
-
 _posixsubprocess.cloexec_pipe
-os.EX_NOTFOUND
-os.SF_MNOWAIT
-os.SF_NODISKIO
-os.SF_SYNC
+curses.has_key
 (os|posix).sched_param  # system dependent. Unclear if macos has it.
-posix.EX_NOTFOUND
-readline.append_history_file  # not defined in macos
 select.KQ_FILTER_NETDEV  # system dependent
 select.kqueue.__init__  # default C signature is wrong
 select.POLLMSG   # system dependent
@@ -20,24 +13,20 @@ select.POLLMSG   # system dependent
 (os.pwritev)?
 (posix.preadv)?
 (posix.pwritev)?
+(readline.append_history_file)?
+(fcntl.F_GETLEASE)?
+(fcntl.F_SETLEASE)?
+
+# Platform differences that cannot be captured by the type system
+(posix.O_[A-Z_]+)?
+(posix.ST_[A-Z]+)?
+(termios.[A-Z0-9_]+)?
 
 # Exists at runtime, but missing from stubs
-distutils.msvccompiler.MSVCCompiler.get_msvc_paths
-distutils.msvccompiler.MSVCCompiler.set_path_env_var
-distutils.msvccompiler.MacroExpander
-mimetypes.MimeTypes.read_windows_registry
-selectors.DefaultSelector.fileno
-socket.PF_SYSTEM
-socket.SYSPROTO_CONTROL
-
 _ctypes.dlclose
 _ctypes.dlopen
 _ctypes.dlsym
 
-posix.NGROUPS_MAX
-posix.error.characters_written
-resource.error.characters_written
-select.POLLRDHUP
 webbrowser.MacOSX.__init__
 
 # ==========

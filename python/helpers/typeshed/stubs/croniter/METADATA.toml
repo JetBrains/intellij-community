@@ -1,4 +1,2 @@
-version = "1.3.*"
-
-[tool.stubtest]
-ignore_missing_stub = false
+version = "2.0.*"
+upstream_repository = "https://github.com/kiorky/croniter"

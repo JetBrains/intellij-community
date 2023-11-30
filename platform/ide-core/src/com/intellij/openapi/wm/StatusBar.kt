@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.Disposable
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.StatusBar.Info
 import com.intellij.openapi.wm.StatusBar.StandardWidgets
 import com.intellij.util.messages.Topic
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -88,7 +89,7 @@ interface StatusBar : StatusBarInfo {
   fun fireNotificationPopup(content: JComponent, backgroundColor: Color?)
 
   @Internal
-  fun createChild(disposable: Disposable, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar?
+  fun createChild(coroutineScope: CoroutineScope, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar?
 
   val component: JComponent?
 

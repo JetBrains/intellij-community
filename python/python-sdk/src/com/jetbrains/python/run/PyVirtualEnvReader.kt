@@ -54,7 +54,8 @@ internal class PyVirtualEnvReader(private val virtualEnvSdkPath: String) : EnvRe
           LOG.error("Can't find activate script for $virtualEnvSdkPath")
         }
       }
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       LOG.warn("Couldn't read shell environment: ${e.message}")
     }
 
@@ -81,9 +82,11 @@ fun findActivateScript(sdkPath: String?, shellPath: String?): Pair<String, Strin
     val activate = findActivateInPath(sdkPath!!, shellName)
 
     return if (activate != null && activate.exists()) {
-        Pair(activate.absolutePath, null)
-    } else null
-  } else if (PythonSdkUtil.isConda(sdkPath)) {
+      Pair(activate.absolutePath, null)
+    }
+    else null
+  }
+  else if (PythonSdkUtil.isConda(sdkPath)) {
     val condaExecutable = PyCondaPackageService.getCondaExecutable(sdkPath!!)
 
     if (condaExecutable != null) {

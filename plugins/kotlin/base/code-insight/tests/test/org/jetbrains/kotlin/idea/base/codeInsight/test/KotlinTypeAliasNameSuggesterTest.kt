@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.base.codeInsight.test
 
 import com.intellij.psi.util.findParentOfType
-import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
@@ -32,7 +32,7 @@ class KotlinTypeAliasNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCas
 
         executeOnPooledThreadInReadAction {
             analyze(targetDeclaration) {
-                with(KotlinNameSuggester(KotlinNameSuggester.Case.PASCAL)) {
+                with(KotlinNameSuggester(Case.PASCAL)) {
                     val actualName = suggestTypeAliasName(targetTypeElement)
                     assertEquals(expectedName, actualName)
                 }

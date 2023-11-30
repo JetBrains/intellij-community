@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.ide.DataManager;
@@ -12,8 +12,6 @@ import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UiInterceptors;
-import com.intellij.ui.popup.async.AsyncPopupImpl;
-import com.intellij.ui.popup.async.AsyncPopupStep;
 import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
@@ -117,8 +115,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
   }
 
-  @NotNull
-  protected JComponent createPopupComponent(JComponent content) {
+  protected @NotNull JComponent createPopupComponent(JComponent content) {
     JScrollPane scrollPane = createScrollPane(content);
     scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -131,8 +128,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     return scrollPane;
   }
 
-  @NotNull
-  protected JScrollPane createScrollPane(JComponent content) {
+  protected @NotNull JScrollPane createScrollPane(JComponent content) {
     return ScrollPaneFactory.createScrollPane(content);
   }
 
@@ -183,7 +179,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   @Override
-  public void show(@NotNull final Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
+  public void show(final @NotNull Component owner, final int aScreenX, final int aScreenY, final boolean considerForcedXY) {
     if (UiInterceptors.tryIntercept(this)) return;
 
     LOG.assertTrue (!isDisposed());
@@ -299,8 +295,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   @Override
-  @NotNull
-  protected MyContentPanel createContentPanel(final boolean resizable, final @NotNull PopupBorder border, final boolean isToDrawMacCorner) {
+  protected @NotNull MyContentPanel createContentPanel(final boolean resizable, final @NotNull PopupBorder border, final boolean isToDrawMacCorner) {
     return new MyContainer(border);
   }
 
@@ -366,6 +361,9 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   public final boolean dispatch(KeyEvent event) {
+    if (anyModalWindowsKeepPopupOpen()) {
+      return false; // Popups should not process key events if there's a modal dialog on top of them.
+    }
     if (event.getID() == KeyEvent.KEY_PRESSED) {
       myKeyPressedReceived = true;
       final KeyStroke stroke = KeyStroke.getKeyStroke(event.getKeyCode(), event.getModifiers(), false);
@@ -415,9 +413,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-    if (step instanceof AsyncPopupStep) {
-      return new AsyncPopupImpl(getProject(), parent, (AsyncPopupStep)step, parentValue);
-    }
     if (step instanceof ListPopupStep) {
       return new ListPopupImpl(getProject(), parent, (ListPopupStep)step, parentValue);
     }
@@ -482,7 +477,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
 
-  private class MyComponentAdapter extends ComponentAdapter {
+  private final class MyComponentAdapter extends ComponentAdapter {
     @Override
     public void componentMoved(final ComponentEvent e) {
       processParentWindowMoved();

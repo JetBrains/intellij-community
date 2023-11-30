@@ -1,145 +1,116 @@
-# Code Completion Evaluation Plugin
+# Evaluation Plugin
 
 ## Approach
 
-The plugin deals with the code completion evaluation based on artificial queries. General approach:
-1. Collect tokens to be completed for selected files.
-2. For each token: delete it, call completion and save the result variants.
-4. Calculate quality and performance metrics and present results in HTML-report.
+The plugin deals with the evaluation of IDE features based on artificial queries. General approach:
+1. Find places in the source code where to invoke the feature.
+2. For each such place prepare the context, invoke the feature and save the results.
+3. Calculate quality and performance metrics and present results in HTML-report.
 
-It's not only about numerical value of quality. HTML-reports contain examples of source code with completion performed, so you can see how the completion works in specific situations.
+It's not only about numerical value of quality.
+HTML-reports contain examples of source code with the results of invocation, so you can see how the feature works in specific situations.
 
 ## Installation
 
-1. In Intellij IDEA add custom plugin repository `https://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_IntelliJProjectDependencies_CodeCompletionProjects_CompletionEvaluation_Build/lastSuccessful/updatePlugins.xml`. [Instruction](https://www.jetbrains.com/help/idea/managing-plugins.html#repos)
-2. Install plugin `Code Completion Evaluation` in Marketplace.
+1. In Intellij IDEA add custom plugin repository `https://buildserver.labs.intellij.net/guestAuth/repository/download/ijplatform_IntelliJProjectDependencies_CodeCompletionProjects_CompletionEvaluation_BuildFromIdea/lastSuccessful/updatePlugins.xml`. [Instruction](https://www.jetbrains.com/help/idea/managing-plugins.html#repos)
+2. Install plugin `Evaluation Plugin` in Marketplace.
+
+## Supported features
+
+- **token-completion**:
+  - evaluation of default completion engine by calling completion at fixed positions in code tokens
+  - strategy (settings for the feature in the config):
+```json5
+{
+  "context": "ALL", // ALL, PREVIOUS
+  "prefix": {
+    "name": "SimplePrefix", // SimplePrefix (type 1 or more letters), CapitalizePrefix or NoPrefix
+    "n": 1
+  },
+  "filters": { // set of filters that allow to filter some completion locations out
+    "statementTypes": [ // possible values: METHOD_CALL, FIELD, VARIABLE, TYPE_REFERENCE, ARGUMENT_NAME
+      "METHOD_CALL"
+    ],
+    "isStatic": true, // null / true / false
+    "packageRegex": ".*" // regex to check  if java package of resulting token is suitable for evaluation
+  }
+}
+```
+- **line-completion**:
+  - similar to token completion but takes into account full line proposals with specific metrics and reports for this case
+  - strategy:
+```json5
+{
+  "mode": "TOKENS", // call completion only in meaningful tokens or everywhere; possible values: TOKENS, ALL
+  "invokeOnEachChar": true, // close popup after unsuccessful completion and invoke again (only for line-completion-golf feature)
+  "topN": 5, // take only N top proposals, applying after filtering by source
+  "checkLine": true, // accept multi token proposals
+  "source": "INTELLIJ", // take suggestions, with specific source; possible values: INTELLIJ (full-line), TAB_NINE, CODOTA
+  "suggestionsProvider": "DEFAULT" // provider of proposals (DEFAULT - completion engine), can be extended
+}
+```
+  - you can use `pathToModelZip` to use custom ranking model for the completions (do not pass `source` in this case to use the suggestions from all contributors)
+- **line-completion-golf**:
+  - also takes into account full line proposals but tries to write the entire file from the beginning using completion (instead of calling at fixed positions).
+  - strategy the same as for line-completion
+- **rename**:
+  - evaluation of rename refactoring IDE feature by calling on existing variables or other identifiers
+  - strategy:
+```json5
+{
+  "placeholderName": "DUMMY", // identifier for renaming existing variables
+  "suggestionsProvider": "DEFAULT", // provider of proposals (DEFAULT - IDE refactoring engine, LLM-rename - proposals of LLM plugin), can be extended
+  "filters": {
+    "statementTypes": null // currently not supported
+  }
+}
+```
+
+## Metrics
+
+- Recall@K
+- Precision
+- Mean Rank
+- Prefix Similarity
+- Edit Distance
+- Latency
+- etc
+
+You can find descriptions of all metrics in the code (`com.intellij.cce.metric.Metric.getDescription`).
+
+Most of the metrics are also described [here](https://jetbrains.team/p/ccrm/documents/Full-Line-Code-Completion/a/Completion-Benchmark-ex-Golf-Metrics).
 
 ## Usage
-- Full. Evaluation for multiple files with HTML-report as result.
-  1. Select files and/or directories for code completion evaluation.
-  2. Right click and select `Evaluate Completion For Selected Files`.
-  3. Select strategy for actions generation in the opened dialog.
-  4. After generation and interpretation of actions you will be asked to open the report in the browser.
-- Quick. Evaluation for some element (all its content) in code with highlighting of completed tokens in editor.
-  1. Right click on the element you want to complete and select `Evaluate Completion Here`.
-  2. Select strategy for actions generation in the opened dialog.
-  3. After generation and interpretation of actions tokens will be highlighted and provide information about completions by click.
-- Compare multiple evaluations.
-  1. Evaluate completion on different algorithms/strategies multiple times.
-  2. Change `evaluationTitle` in `config.json` in corresponding workspaces. Results will group by this field in HTML-report.
-  3. Select these workspaces.
-  4. Right click and select `Generate Report By Selected Evaluations`.
-  5. After report building you will be asked to open it in the browser.
 
-## Features
-
-- Completion types:
-  - Basic
-  - Smart
-  - ML (basic with reordering based on machine learning)
-- Strategies of actions generation:
-  - Context of completion token (previous and all)
-  - Prefix of completion token (empty, first characters and uppercase characters). Also, it can emulate typing
-  - Type of completion tokens (method calls, variables, static members, etc.)
-  - "Code Golf" Emulate user writing file with completion and count amount of moves (call completion, navigate between suggestions,
-    typing character if completion didn't fit)
-- Metrics:
-  - Found@1
-  - Found@5
-  - Recall
-  - Mean Rank
-  - Latency
-- HTML-reports:
-  - Global report with metrics and links to file reports
-  - Reports for files with all completions
-- Headless mode
-
-
-### Code Golf
-Main idea: estimate how many actions it takes in average to write a line using the code completion.
-
-At worst, we are not using code completion and creating file by typing char-by-char, let it be *Moves Count Normalised* 100% case.
-With completion, we can save some moves by typing multiple chars at once and lower total actions.
-So, lower *Moves Count* means faster creating file and better completion quality.
-
-#### Process
-The options are:
-1. Select completion if it fits (our next input starts with code completion's suggestion)
-2. Select only first token from completion if it fits (same as previous, but using only first token from suggestion.
-   If completion contains only one token, it's equal to standard code completion)
-3. Type next character if there are no suitable suggestions in code completion didn't
-
-#### Metrics
-Code golf has individual metrics:
-- **Moves Count**: Count total amount of moves for writing current file. This includes typing chars, completion invocations and navigations to suggestions. 
-- **Moves Count Normalised** (in percent): Amount, based on non-completion number, in the worst case code completion never helped us
-  and file was created only by typing characters
-- **Perfect Line**: We count a session as perfect line, if we used completion's suggestion for typing more than half of line (>50%)
-- **Recall@k** - Ratio of completions when the selected suggestion was among the first k
-- **Std metrics**: Max Latency, Mean Latency and Sessions (each session is one line in the file)
-
-#### Code golf moves
-We summarize 3 types of actions:
-- Call code completion (1 point)
-- Choice suggestion from completion or symbol (if there is no offer in completion) (1 point)
-- Navigation to the suggestion (if it fits) (N points, based on suggestion index, assuming first index is 0)
-
-Moves = 0% is the best scenario, every line was completed from start to end with first suggestion in list
-Moves > 100% is possible, when navigation in completion takes too many moves
-> first indentation will be skipped up to any meaningful char
-
-#### Settings
-- **Invoke on each char** - Close popup after unsuccessful completion and invoke again. It allows to check completion results on different prefixes.
-- **Top N** (default: -1): We can select only from N top filtered by the source (if there is) suggestions.
-  Sometimes it's easier to type one more character and then navigate to suggestion in completion.
-  *Pass -1 to disable*
-- **Check Line** (default: true): Enable/Disable standard `Enter`completion.
-- **Check Token** (default: true): Enable/Disable completion with first token. Such completion has lower priority then full (line) completion.
-- **Source** (default: null): Pick only suggestion from a certain source, for ex. pick only `Full line` suggestions.
-  *Pass null to disable*
-- **Std filters**: It's possible to filter sessions by applying strategy's filters, such as: `METHOD_CALL`, `FIELD`, `VARIABLE`
-
-## Headless Mode
-
-You can run completion quality evaluation without IDEA UI.
-
-### Usage
-
-To start the evaluation in the headless mode you should describe where the project to evaluate is placed and rules for evaluation (language, strategy, output directories, etc.). We use JSON file for such king of description. The easiest way to create config is using `Create Config` button in settings dialog in UI mode of plugin. Here is an example of such file with description for possible options.
+The plugin works in the headless mode of IDE.
+To start the evaluation you should describe where the project to evaluate is placed and rules for evaluation (language, strategy, output directories, etc.).
+We use JSON file for such king of description.
+Here is an example of such file with description for possible options but the strategy block depends on the feature used for evaluation.
 ```json5
 {
   "projectPath": "", // string with path to idea project
   "language": "Java",
   "outputDir": "", // string with path to output directory
-  "actions": { // part of config about actions generation step
-    "evaluationRoots": [ ], // list of string with paths to files/directories for evaluation
-    "strategy": { // describes evaluation rules
-      "completionGolf": false, // turn on "Code Golf" mode
-      "context": "ALL", // ALL, PREVIOUS
-      "prefix": { // policy how to complete particular token
-        "name": "SimplePrefix", // SimplePrefix (type 1 or more letters), CapitalizePrefix or NoPrefix
-        "emulateTyping": false, // type token char by char and save intermediate results
-        "n": 1 // numbers of char to type before trigger completion
-      },
-      "filters": { // set of filters that allow to filter some completion locations out
-        "statementTypes": [ // possible values: METHOD_CALL, FIELD, VARIABLE, TYPE_REFERENCE, ARGUMENT_NAME
-          "METHOD_CALL"
-        ],
-        "isStatic": true, // null / true / false
-        "packageRegex": ".*" // regex to check  if java package of resulting token is suitable for evaluation
-      }
+  "strategy": { // describes parameters of evaluation - depends on the feature (example below is for token-completion)
+    "context": "ALL",
+    "prefix": {
+      "name": "SimplePrefix",
+      "n": 1
+    },
+    "filters": {
+      "statementTypes": [
+        "METHOD_CALL"
+      ],
+      "isStatic": true,
+      "packageRegex": ".*"
     }
   },
+  "actions": { // part of config about actions generation step
+    "evaluationRoots": [], // list of string with paths to files/directories for evaluation
+  },
   "interpret": { // part of config about actions interpretation step
-    "completionGolfSettings": {
-      "topN": 5, // Take only N top suggestions, applying after filtering by source. Pass -1 to disable
-      "checkLine": true, // Check if expected line starts with suggestion from completion
-      "checkToken": true, // In case first token in suggestion equals to first token in expected string, we can pick only first token from suggestion. Suitable for full line or multiple token completions
-      "source": "INTELLIJ" // Take suggestions, with specific source. Pass null to disable filter, possible values: [null, STANDARD, CODOTA, TAB_NINE, INTELLIJ]
-    },
-    "completionType": "BASIC", // BASIC, SMART, ML
-    "completeTokenProbability": 1.0, // probability that token will be completed
-    "completeTokenSeed": null, // seed for random (for previous option)
+    "sessionProbability": 1.0, // probability that session won't be skipped
+    "sessionSeed": null, // seed for random (for previous option)
     "saveLogs": false, // save completion logs or not (only if stats-collector plugin installed)
     "logsTrainingPercentage": 70 // percentage for logs separation on training/validate
   },
@@ -156,7 +127,8 @@ To start the evaluation in the headless mode you should describe where the proje
           "packageRegex": ".*"
         }
       }
-    ]
+    ],
+    "comparisonFilters": []
   }
 }
 ```
@@ -167,6 +139,21 @@ Example of `config.json` to evaluate code completion on several modules from int
   "projectPath": "PATH_TO_COMMUNITY_PROJECT",
   "language": "Java",
   "outputDir": "PATH_TO_COMMUNITY_PROJECT/completion-evaluation",
+  "strategy": {
+    "type": "BASIC",
+    "context": "ALL",
+    "prefix": {
+      "name": "SimplePrefix",
+      "n": 1
+    },
+    "filters": {
+      "statementTypes": [
+        "METHOD_CALL"
+      ],
+      "isStatic": null,
+      "packageRegex": ".*"
+    }
+  },
   "actions": {
     "evaluationRoots": [
       "java/java-indexing-impl",
@@ -183,63 +170,52 @@ Example of `config.json` to evaluate code completion on several modules from int
       "plugins/sh",
       "plugins/terminal",
       "plugins/yaml"
-    ],
-    "strategy": {
-      "context": "ALL",
-      "prefix": {
-        "name": "SimplePrefix",
-        "emulateTyping": false,
-        "n": 1
-      },
-      "filters": {
-        "statementTypes": [
-          "METHOD_CALL"
-        ],
-        "isStatic": null,
-        "packageRegex": ".*"
-      }
-    }
+    ]
   },
   "interpret": {
-    "completionType": "BASIC",
-    "completeTokenProbability": 1.0,
-    "completeTokenSeed": null,
+    "experimentGroup": null,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
     "saveLogs": false,
+    "saveFeatures": false,
+    "logLocationAndItemText": false,
     "trainTestSplit": 70
   },
   "reports": {
     "evaluationTitle": "Basic",
-    "sessionsFilters": []
+    "sessionsFilters": [],
+    "comparisonFilters": []
   }
 }
 ```
 
-There are several options for the plugin to work in headless mode:
+There are several options for the running plugin:
 - Full. Use the config to execute the plugin on a set of files / directories. As a result of execution, HTML report will be created.
-  - Usage: `ml-evaluate full [PATH_TO_CONFIG]`
+  - Usage: `ml-evaluate full FEATURE_NAME [PATH_TO_CONFIG]`
   - If `PATH_TO_CONFIG` missing, default config will be created.
   - If config missing, default config will be created. Fill settings in default config before restarting evaluation.
 - Generating actions. Allow only to find suitable locations to complete without evaluation.
   Generated actions can be reused later in `custom` mode.
-  - Usage: `ml-evaluate actions [PATH_TO_CONFIG]`
+  - Usage: `ml-evaluate actions FEATURE_NAME [PATH_TO_CONFIG]`
 - Custom. Allows you to interpret actions and/or generate reports on an existing workspace.
-  - Usage: `ml-evaluate custom [--interpret-actions | -i] [--generate-report | -r] PATH_TO_WORKSPACE`
+  - Usage: `ml-evaluate custom FEATURE_NAME [--interpret-actions | -i] [--generate-report | -r] PATH_TO_WORKSPACE`
 - Multiple Evaluations. Create a report based on multiple evaluations.
-  - Usage: `ml-evaluate multiple-evaluations PATH_TO_WORKSPACE...`
+  - Usage: `ml-evaluate multiple-evaluations FEATURE_NAME PATH_TO_WORKSPACE...`
 - Multiple Evaluations in Directory. Works as the previous option to all workspaces in the directory.
-  - Usage: `ml-evaluate compare-in PATH_TO_DIRECTORY`
+  - Usage: `ml-evaluate compare-in FEATURE_NAME PATH_TO_DIRECTORY`
 
 There are many ways to start the evaluation in headless mode. Some of them are listed below.
+
+#### Run with intellij from sources:
+- Use an existing run-configuration for `line-completion` feature among `Machine Learning/[full-line] Completion Evaluation for <Language>`
+- Create a new run-configuration (copy from `IDEA` or another IDE) add required options:
+  1. `-Djava.awt.headless=true` to jvm-options
+  2. `ml-evaluate OPTION FEATURE_NAME OPTION_ARGS` to cli arguments
 
 #### Run from command line:
 1. Add `-Djava.awt.headless=true` to jvm-options. [Instruction](https://www.jetbrains.com/help/idea/tuning-the-ide.html).
 2. Create command line launcher for Intellij IDEA. [Instruction](https://www.jetbrains.com/help/idea/working-with-the-ide-features-from-command-line.html).
-3. Run command `<Intellij IDEA> ml-evaluate OPTION OPTION_ARGS` with corresponding option.
-
-#### Run with intellij from sources:
-1. Create debug-configuration (copy from `IDEA` and add required options):
-   ![run-configuration](https://user-images.githubusercontent.com/7608535/61994170-ef155a80-b07f-11e9-9a5b-fbfba5008875.png)
-2. Start the configuration.
+3. Run command `<Intellij IDEA> ml-evaluate OPTION FEATURE_NAME OPTION_ARGS` with corresponding option and feature.
 
 #### Evaluation framework on TeamCity
 We have a set of [build configurations](https://buildserver.labs.intellij.net/project.html?projectId=ijplatform_IntelliJProjectDependencies_CodeCompletionProjects_CompletionEvaluation&tab=projectOverview
@@ -250,18 +226,18 @@ On top level there are few configurations: [Build](https://buildserver.labs.inte
 (compiles the plugin)
 and [Test](https://buildserver.labs.intellij.net/viewType.html?buildTypeId=ijplatform_IntelliJProjectDependencies_CodeCompletionProjects_CompletionEvaluation_Test)
 (checks everything still work).
-Below there are bunch of language-specific projects - [Java](https://buildserver.labs.intellij.net/project.html?projectId=ijplatform_IntelliJProjectDependencies_CodeCompletionProjects_CompletionEvaluation_Java&tab=projectOverview), Python, Kotlin, etc.
+Below there is a bunch of language-specific projects - [Java](https://buildserver.labs.intellij.net/project.html?projectId=ijplatform_IntelliJProjectDependencies_CodeCompletionProjects_CompletionEvaluation_Java&tab=projectOverview), Python, Kotlin, etc.
 Each of these projects contains a set of build configurations.
 They can be split on three groups:
 * `Evaluate (ML/Basic) *` - takes the latest build of IDE/plugin and starts the evaluation process.
   Usually takes 30 - 120 minutes.
-* `Compare ML and basic *` - takes output of corresponding Evaluate * builds and creates
+* `Compare ML and basic *` - takes output of corresponding "Evaluate * builds" and creates
   a comparison report (see build artifacts).
 * `Generate logs *` - takes nightly IDE build, latest evaluation plugin build and starts evaluation.
   During the evaluation it collects the same logs we send from users.
   These logs can be fed into [ML Pipeline](https://buildserver.labs.intellij.net/project.html?projectId=ijplatform_IntelliJProjectDependencies_CodeCompletionProjects_MlPipeline&tab=projectOverview) project.
 
-#### Q&A
+## Q&A
 
 Q: How can I compare default completion quality vs ML?
 

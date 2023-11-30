@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.emmet;
 
 import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,17 +25,15 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   private boolean myEmmetEnabled = true;
   private int myEmmetExpandShortcut = TemplateSettings.TAB_CHAR;
   private boolean myPreviewEnabled = false;
-  @NotNull
-  private Set<String> myFiltersEnabledByDefault = new HashSet<>();
+  private @NotNull Set<String> myFiltersEnabledByDefault = new HashSet<>();
   private boolean myHrefAutoDetectEnabled = true;
   private boolean myAddEditPointAtTheEndOfTemplate = false;
 
-  @NotNull private String myBemElementSeparator = "__";
-  @NotNull private String myBemModifierSeparator = "_";
-  @NotNull private String myBemShortElementPrefix = "-";
+  private @NotNull String myBemElementSeparator = "__";
+  private @NotNull String myBemModifierSeparator = "_";
+  private @NotNull String myBemShortElementPrefix = "-";
 
-  @NotNull
-  public Set<String> getFiltersEnabledByDefault() {
+  public @NotNull Set<String> getFiltersEnabledByDefault() {
     return myFiltersEnabledByDefault;
   }
 
@@ -87,8 +85,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
     myAddEditPointAtTheEndOfTemplate = addEditPointAtTheEndOfTemplate;
   }
 
-  @NotNull
-  public String getBemElementSeparator() {
+  public @NotNull String getBemElementSeparator() {
     return myBemElementSeparator;
   }
 
@@ -96,8 +93,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
     myBemElementSeparator = StringUtil.notNullize(bemElementSeparator);
   }
 
-  @NotNull
-  public String getBemModifierSeparator() {
+  public @NotNull String getBemModifierSeparator() {
     return myBemModifierSeparator;
   }
 
@@ -105,8 +101,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
     myBemModifierSeparator = StringUtil.notNullize(bemModifierSeparator);
   }
 
-  @NotNull
-  public String getBemShortElementPrefix() {
+  public @NotNull String getBemShortElementPrefix() {
     return myBemShortElementPrefix;
   }
 
@@ -114,14 +109,13 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
     myBemShortElementPrefix = StringUtil.notNullize(bemShortElementPrefix);
   }
 
-  @Nullable
   @Override
-  public EmmetOptions getState() {
+  public @Nullable EmmetOptions getState() {
     return this;
   }
 
   @Override
-  public void loadState(@NotNull final EmmetOptions state) {
+  public void loadState(final @NotNull EmmetOptions state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 

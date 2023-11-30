@@ -7,17 +7,18 @@ import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
-import java.nio.file.Files
+import java.util.Locale
 import java.util.logging.Logger
 
 object Launcher {
 
   private val logger = Logger.getLogger(Launcher::class.java.name)
+  private const val STRACE_PROPERTY_KEY = "com.intellij.tools.launch.Launcher.run.under.strace"
 
   fun launch(paths: PathsProvider,
              modules: ModulesProvider,
              options: LauncherOptions,
-             logClasspath: Boolean): Process {
+             logClasspath: Boolean): Pair<Process, String?> {
     val classPathBuilder = ClassPathBuilder(paths, modules)
     logger.info("Building classpath")
     val classPathArgFile = classPathBuilder.build(logClasspath)
@@ -28,13 +29,13 @@ object Launcher {
 
   fun launch(paths: PathsProvider,
              classPathArgFile: File,
-             options: LauncherOptions): Process {
+             options: LauncherOptions): Pair<Process, String?> {
 
     val cmd = mutableListOf(
       paths.javaExecutable.canonicalPath,
       "-ea",
-      "-Dapple.laf.useScreenMenuBar=true",
       "-Dfus.internal.test.mode=true",
+      "-Didea.updates.url=http://127.0.0.1", // we should not spoil jetstat, which relies on update requests
       "-Djb.privacy.policy.text=\"<!--999.999-->\"",
       "-Djb.consents.confirmation.enabled=false",
       "-Didea.suppress.statistics.report=true",
@@ -69,7 +70,19 @@ object Launcher {
       "-Dshared.indexes.download.auto.consent=true"
     )
 
-    val optionsOpenedFile = paths.communityRootFolder.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
+    val straceValue = System.getProperty(STRACE_PROPERTY_KEY, "false")?.lowercase(Locale.ROOT) ?: "false"
+    if (straceValue == "true" || straceValue == "1") {
+      cmd.addAll(0,
+                 listOf(
+                   "strace",
+                   "-f",
+                   "-e", "trace=file",
+                   "-o", paths.logFolder.resolve("strace.log").canonicalPath,
+                 )
+      )
+    }
+
+    val optionsOpenedFile = paths.communityRootFolder.resolve("platform/platform-impl/resources/META-INF/OpenedPackages.txt")
     val optionsOpenedPackages = JavaModuleOptions.readOptions(optionsOpenedFile.toPath(), OS.CURRENT)
     cmd.addAll(optionsOpenedPackages)
 
@@ -82,7 +95,7 @@ object Launcher {
       val port = options.debugPort
 
       // changed in Java 9, now we have to use *: to listen on all interfaces
-      val host = if (options.runInDocker) "*:" else ""
+      val host = if (options is DockerLauncherOptions) "*:" else ""
       cmd.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=$suspendOnStart,address=$host$port")
     }
 
@@ -97,16 +110,8 @@ object Launcher {
       cmd.add(arg.trim('"'))
     }
 
-    /*
-    println("Starting cmd:")
-    for (arg in cmd) {
-      println("  $arg")
-    }
-    println("-- END")
-*/
-
-    return if (options.runInDocker) {
-      val docker = DockerLauncher(paths, options as DockerLauncherOptions)
+    return if (options is DockerLauncherOptions) {
+      val docker = DockerLauncher(paths, options)
       docker.assertCanRun()
 
       docker.runInContainer(cmd)
@@ -116,9 +121,13 @@ object Launcher {
 
       processBuilder.affixIO(options.redirectOutputIntoParentProcess, paths.logFolder)
       processBuilder.environment().putAll(options.environment)
-      options.beforeProcessStart.invoke(processBuilder)
+      options.beforeProcessStart()
 
-      processBuilder.start()
+      logger.info("Starting cmd:")
+      logger.info(processBuilder.command().joinToString("\n"))
+      logger.info("-- END")
+
+      processBuilder.start() to null
     }
   }
 
@@ -128,9 +137,9 @@ object Launcher {
     }
     else {
       logFolder.mkdirs()
-      // TODO: test logs overwrite launcher logs
-      this.redirectOutput(logFolder.resolve("out.log"))
-      this.redirectError(logFolder.resolve("err.log"))
+      val ts = System.currentTimeMillis()
+      this.redirectOutput(logFolder.resolve("out-$ts.log"))
+      this.redirectError(logFolder.resolve("err-$ts.log"))
     }
   }
 

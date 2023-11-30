@@ -1,5 +1,4 @@
 fun test(p: Penguin) {
-    // For some reason, 'SealedClassInheritorsProviderIdeImpl' works incorrectly here
     p<caret>
 }
 

@@ -236,7 +236,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         if (externalProject == null) {
           return;
         }
-        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project);
+        ProjectDataManager.getInstance().importData(externalProject, project);
       }
     };
   }

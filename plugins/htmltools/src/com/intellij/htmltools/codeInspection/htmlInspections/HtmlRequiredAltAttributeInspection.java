@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class HtmlRequiredAltAttributeInspection extends HtmlLocalInspectionTool {
-  @NonNls private static final Set<String> htmlTagsWithRequiredAltAttribute;
+public final class HtmlRequiredAltAttributeInspection extends HtmlLocalInspectionTool {
+  private static final @NonNls Set<String> htmlTagsWithRequiredAltAttribute;
   private static final String ALT = "alt";
 
   static {
@@ -50,9 +50,8 @@ public class HtmlRequiredAltAttributeInspection extends HtmlLocalInspectionTool 
                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "HtmlRequiredAltAttribute";
   }
 }

@@ -33,7 +33,10 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -155,7 +158,7 @@ public class PyPIPackageUtil {
       }
     }
     if (!failedToConnect.isEmpty()) {
-      PyPackageService packageService = ApplicationManager.getApplication().getService(PyPackageService.class);
+      PyPackageService packageService = PyPackageService.getInstance();
       failedToConnect.forEach(repo -> packageService.removeRepository(repo));
     }
   }
@@ -393,6 +396,7 @@ public class PyPIPackageUtil {
    * @see PyPIPackageCache#containsPackage(String)
    */
   public boolean isInPyPI(@NotNull String packageName) {
+    if (packageName.isEmpty()) return false;
     return PyPIPackageCache.getInstance().containsPackage(packageName);
   }
 

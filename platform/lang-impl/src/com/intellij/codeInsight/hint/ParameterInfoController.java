@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -30,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
@@ -177,9 +178,11 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     hintHint.setExplicitClose(true);
     hintHint.setRequestFocus(requestFocus);
     hintHint.setShowImmediately(true);
-    hintHint.setBorderColor(ParameterInfoComponent.BORDER_COLOR);
-    hintHint.setBorderInsets(JBUI.insets(4, 1, 4, 1));
-    hintHint.setComponentBorder(JBUI.Borders.empty());
+    if (!ExperimentalUI.isNewUI()) {
+      hintHint.setBorderColor(ParameterInfoComponent.BORDER_COLOR);
+      hintHint.setBorderInsets(JBUI.insets(4, 1, 4, 1));
+      hintHint.setComponentBorder(JBUI.Borders.empty());
+    }
 
     int flags = HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;
@@ -471,7 +474,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     }
   }
 
-  private static class MyBestLocationPointProvider {
+  private static final class MyBestLocationPointProvider {
     private final Editor myEditor;
     private int previousOffset = -1;
     private Rectangle previousLookupBounds;
@@ -535,10 +538,11 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     }
   }
 
-  static class WrapperPanel extends JPanel {
+  static final class WrapperPanel extends JPanel {
     WrapperPanel() {
       super(new BorderLayout());
       setBorder(JBUI.Borders.empty());
+      setOpaque(!ExperimentalUI.isNewUI());
     }
 
     // foreground/background/font are used to style the popup (HintManagerImpl.createHintHint)
@@ -549,7 +553,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
     @Override
     public Color getBackground() {
-      return getComponentCount() == 0 ? super.getBackground() : getComponent(0).getBackground();
+      return getComponentCount() == 0 || ExperimentalUI.isNewUI() ? super.getBackground() : getComponent(0).getBackground();
     }
 
     @Override

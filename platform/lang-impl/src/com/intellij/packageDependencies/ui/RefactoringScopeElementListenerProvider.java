@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class RefactoringScopeElementListenerProvider implements RefactoringElementListenerProvider {
+public final class RefactoringScopeElementListenerProvider implements RefactoringElementListenerProvider {
   private static final Logger LOG = Logger.getInstance(RefactoringScopeElementListenerProvider.class);
 
   private enum ReferenceKind {QUALIFIED_NAME, FILE_PATH}

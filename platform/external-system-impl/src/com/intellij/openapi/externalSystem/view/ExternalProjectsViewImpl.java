@@ -214,7 +214,7 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
       private void changed() {
         scheduleStructureRequest(() -> {
           assert myStructure != null;
-          myStructure.visitNodes(ModuleNode.class, node -> node.updateRunConfigurations());
+          myStructure.visitExistingNodes(ModuleNode.class, node -> node.updateRunConfigurations());
         });
       }
 

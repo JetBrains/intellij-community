@@ -10,6 +10,6 @@ import org.jetbrains.annotations.ApiStatus
  * At the moment it's created to support some concrete cases for workspace model.
  */
 @ApiStatus.Internal
-interface WorkspaceModelPreUpdateHandler {
-  fun update(before: EntityStorage, builder: MutableEntityStorage): Boolean
+public interface WorkspaceModelPreUpdateHandler {
+  public fun update(before: EntityStorage, builder: MutableEntityStorage): Boolean
 }

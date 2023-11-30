@@ -1,10 +1,8 @@
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.platform.impl.toolkit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import sun.awt.LightweightFrame
 import sun.awt.SunToolkit
@@ -21,21 +19,18 @@ import java.util.*
 class IdeToolkit : SunToolkit() {
   companion object {
     @JvmStatic
-    private val logger = logger<IdeToolkit>()
-    val instance: IdeToolkit
-      get() = getDefaultToolkit() as IdeToolkit
-
-    private fun clientInstance(): ClientToolkit = service()
+    fun getInstance(): IdeToolkit = getDefaultToolkit() as IdeToolkit
 
     private val clipboard = Clipboard("System")
   }
+
+  fun clientInstance() = ClientToolkit.getInstance()
 
   fun peerCreated(target: Component, peer: ComponentPeer, disposable: Disposable) {
     targetCreatedPeer(target, peer)
     Disposer.register(disposable) { targetDisposedPeer(target, peer) }
   }
 
-  fun createPanelWindow(panel: Component, target: Window): WindowPeer = clientInstance().createPanelWindow(panel, target)
   override fun createWindow(target: Window): WindowPeer = clientInstance().createWindow(target)
   override fun createDialog(target: Dialog): DialogPeer = clientInstance().createDialog(target)
   override fun createFrame(target: Frame): FramePeer = clientInstance().createFrame(target)
@@ -47,7 +42,7 @@ class IdeToolkit : SunToolkit() {
     return super.prepareImage(img, w, h, o)
   }
 
-  override fun createDesktopPeer(target: Desktop): IdeDesktopPeer = IdeDesktopPeer()
+  override fun createDesktopPeer(target: Desktop): DesktopPeer = IdeDesktopPeer()
   override fun getMouseInfoPeer(): IdeMouseInfoPeer = IdeMouseInfoPeer
   override fun getKeyboardFocusManagerPeer(): IdeKeyboardFocusManagerPeer = IdeKeyboardFocusManagerPeer
 
@@ -58,6 +53,7 @@ class IdeToolkit : SunToolkit() {
   override fun createFileDialog(target: FileDialog): FileDialogPeer {
     error("Not implemented")
   }
+
   override fun createButton(target: Button): ButtonPeer {
     error("Not implemented")
   }
@@ -155,4 +151,8 @@ class IdeToolkit : SunToolkit() {
   //TODO(sviatoslav.vlasov): Pass parameters from original toolkit into constructor
   override fun areExtraMouseButtonsEnabled() = true
   override fun getNumberOfButtons() = 5
+
+  override fun initializeDesktopProperties() {
+    desktopProperties["jb.swing.avoid.text.layout"] = true // enables special mode of IME composed text painting in JBR (JBR-5946)
+  }
 }

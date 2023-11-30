@@ -48,9 +48,6 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       "prefix_matched_last_word" to EventFields.Boolean("${PrefixMatchingUtil.baseName}MatchedLastWord"),
     )
 
-    internal fun addMlScore(mlScore: Double?, features: MutableList<EventPair<*>>) =
-      mlScore?.let { features.add(ML_SCORE_KEY.with(it)) }
-
 
     internal fun roundDouble(value: Double): Double {
       if (!value.isFinite()) return -1.0
@@ -78,15 +75,6 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
   protected fun withUpperBound(value: Int): Int {
     if (value > 100) return 101
     return value
-  }
-
-  /**
-   * Associates the specified key with the value, only if the value is not null.
-   */
-  protected fun <T> MutableList<EventPair<*>>.putIfValueNotNull(key: EventField<T>, value: T?) {
-    value?.let {
-      add(key.with(it))
-    }
   }
 
   protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Collection<EventPair<*>> {
@@ -119,6 +107,12 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       return field.with(matchValue.toString())
     }
     return null
+  }
+}
+@ApiStatus.Internal
+fun <T> MutableList<EventPair<*>>.putIfValueNotNull(key: EventField<T>, value: T?) {
+  value?.let {
+    add(key.with(it))
   }
 }
 

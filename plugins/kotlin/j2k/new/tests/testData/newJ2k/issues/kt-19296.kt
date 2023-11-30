@@ -7,6 +7,7 @@ open class A {
 }
 
 class B : A()
+
 class Test {
     var z: I? = null
 }

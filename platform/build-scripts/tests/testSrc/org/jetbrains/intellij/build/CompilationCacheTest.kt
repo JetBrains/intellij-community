@@ -29,7 +29,7 @@ class CompilationCacheTest {
     try {
       fetchAndUnpackCompiledClasses(
         reportStatisticValue = { _, _ -> },
-        withScope = { _, _ -> },
+        withScope = { _, operation -> operation() },
         // parent of classOutput dir is used as a cache dir, so, do not pass temp dir directly as classOutput
         classOutput = outDir.resolve("classes"),
         metadataFile = metadataFile,

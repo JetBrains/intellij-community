@@ -96,7 +96,15 @@ class AbstractSuperCallFix(element: KtNameReferenceExpression) : KotlinPsiOnlyQu
         }
     }
 
-    override fun getFamilyName(): String = text
+    override fun getFamilyName(): String {
+        val expression = element ?: return ""
+        return when (expression.getReferencedName()) {
+            HASH_CODE -> KotlinBundle.message("hash.code.text")
+            EQUALS -> KotlinBundle.message("equals.text")
+            TO_STRING -> KotlinBundle.message("action.generate.tostring.name")
+            else -> KotlinBundle.message("action.generate.super.type")
+        }
+    }
 }
 
 private fun prepareToEqualsHashCode(

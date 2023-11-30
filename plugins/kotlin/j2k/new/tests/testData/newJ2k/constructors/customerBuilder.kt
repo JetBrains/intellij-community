@@ -16,8 +16,9 @@ internal class Customer(first: String, last: String) {
 }
 
 internal class CustomerBuilder {
-    var _firstName = "Homer"
-    var _lastName = "Simpson"
+    var _firstName: String = "Homer"
+    var _lastName: String = "Simpson"
+
     fun WithFirstName(firstName: String): CustomerBuilder {
         _firstName = firstName
         return this

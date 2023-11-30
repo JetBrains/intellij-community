@@ -25,7 +25,11 @@ public final class CompilerCacheConfigurator {
   public static @Nullable CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings getCacheDownloadSettings(@NotNull Project project) {
     if (!Registry.is("compiler.process.use.portable.caches")) return null;
     String serverUrl = getServerUrl(project);
-    if (serverUrl == null || !CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) return null;
+    if (serverUrl == null || !CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
+      LOG.warn("Can't evaluate cache settings server URL: " + serverUrl + "; line ending is correct: "
+               + CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly());
+      return null;
+    }
 
     Map<String, String> authHeaders = CompilerCacheServerAuthService.getInstance(project).getRequestHeaders(true);
     if (authHeaders.isEmpty()) return null;

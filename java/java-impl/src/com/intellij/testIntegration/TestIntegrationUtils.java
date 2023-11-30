@@ -311,7 +311,7 @@ public final class TestIntegrationUtils {
 
   public static List<TestFramework> findSuitableFrameworks(PsiClass targetClass) {
     List<TestFramework> frameworks = ContainerUtil.filter(TestFramework.EXTENSION_NAME.getExtensionList(), framework ->
-      framework.getLanguage() == targetClass.getLanguage()
+      TestFrameworks.isSuitableByLanguage(targetClass, framework)
     );
     Project project = targetClass.getProject();
 

@@ -25,8 +25,16 @@ public class JavaAnnotationIndex extends StringStubIndexExtension<PsiAnnotation>
     return JavaStubIndexKeys.ANNOTATIONS;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getAnnotations(String, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
   public Collection<PsiAnnotation> get(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+    return getAnnotations(s, project, scope);
+  }
+
+  public Collection<PsiAnnotation> getAnnotations(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiAnnotation.class);
   }
 }

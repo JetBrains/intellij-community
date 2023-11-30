@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.pointers;
 
 import com.intellij.facet.Facet;
@@ -28,23 +28,19 @@ public abstract class FacetPointersManager {
     return moduleName + "/" + facetTypeId + "/" + facetName;
   }
 
-  @NotNull
-  public static String constructId(@NotNull Facet facet) {
+  public static @NotNull String constructId(@NotNull Facet facet) {
     return constructId(facet.getModule().getName(), facet.getType().getStringId(), facet.getName());
   }
 
-  @NotNull
-  public static String getFacetName(@NotNull String facetPointerId) {
+  public static @NotNull String getFacetName(@NotNull String facetPointerId) {
     return facetPointerId.substring(facetPointerId.lastIndexOf('/') + 1);
   }
 
-  @NotNull
-  public static String getModuleName(String facetPointerId) {
+  public static @NotNull String getModuleName(String facetPointerId) {
     return facetPointerId.substring(0, facetPointerId.indexOf('/'));
   }
 
-  @NotNull
-  public static String getFacetType(@NotNull String facetPointerId) {
+  public static @NotNull String getFacetType(@NotNull String facetPointerId) {
     return facetPointerId.substring(facetPointerId.indexOf('/') + 1, facetPointerId.lastIndexOf('/'));
   }
 }

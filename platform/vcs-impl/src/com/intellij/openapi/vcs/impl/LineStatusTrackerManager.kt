@@ -106,11 +106,12 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   internal class MyStartupActivity : VcsStartupActivity {
+    override val order: Int
+      get() = VcsInitObject.OTHER_INITIALIZATION.order
+
     override fun runActivity(project: Project) {
       getInstanceImpl(project).startListenForEditors()
     }
-
-    override fun getOrder(): Int = VcsInitObject.OTHER_INITIALIZATION.order
   }
 
   private fun startListenForEditors() {
@@ -180,7 +181,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @RequiresEdt
   override fun requestTrackerFor(document: Document, requester: Any) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     synchronized(LOCK) {
       if (isDisposed) {
         warn("Tracker is being requested after dispose by $requester", document)
@@ -199,7 +199,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @RequiresEdt
   override fun releaseTrackerFor(document: Document, requester: Any) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     synchronized(LOCK) {
       val multiset = forcedDocuments[document]
       if (multiset == null || !multiset.contains(requester)) {
@@ -265,6 +264,9 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
           }
         }
       }
+      if (data.tracker is SimpleLocalLineStatusTracker) {
+        return data.tracker.hasPartialState()
+      }
 
       releaseTracker(document)
     }
@@ -273,7 +275,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @RequiresEdt
   private fun onEverythingChanged() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     synchronized(LOCK) {
       if (isDisposed) return
       log("onEverythingChanged", null)
@@ -981,7 +982,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @RequiresEdt
   fun resetExcludedFromCommitMarkers() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     synchronized(LOCK) {
       val documents = mutableListOf<Document>()
 
@@ -1060,7 +1060,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   @RequiresEdt
   internal fun notifyInactiveRangesDamaged(virtualFile: VirtualFile) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     if (filesWithDamagedInactiveRanges.contains(virtualFile) || virtualFile == FileEditorManagerEx.getInstanceEx(project).currentFile) {
       return
     }
@@ -1391,6 +1390,16 @@ private object ChangelistsLocalStatusTrackerProvider : BaseRevisionStatusTracker
 }
 
 private object DefaultLocalStatusTrackerProvider : BaseRevisionStatusTrackerContentLoader() {
+  override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
+    val vcsFile = VcsUtil.resolveSymlinkIfNeeded(project, file)
+    return super.isTrackedFile(project, vcsFile)
+  }
+
+  override fun getContentInfo(project: Project, file: VirtualFile): ContentInfo? {
+    val vcsFile = VcsUtil.resolveSymlinkIfNeeded(project, file)
+    return super.getContentInfo(project, vcsFile)
+  }
+
   override fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean = tracker is SimpleLocalLineStatusTracker
 
   override fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>? {

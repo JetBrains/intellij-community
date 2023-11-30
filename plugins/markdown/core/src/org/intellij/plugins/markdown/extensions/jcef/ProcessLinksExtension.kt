@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.jcef.JBCefPsiNavigationUtils
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
+import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension.Provider.Companion.OPEN_LINK_EVENT_NAME
 import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelEx
@@ -15,31 +16,33 @@ import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 
 internal class ProcessLinksExtension(private val panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension, ResourceProvider {
-  private val handler = BrowserPipe.Handler { openLink(panel, it) }
-
-  init {
-    panel.browserPipe?.subscribe(openLinkEventName, handler)
-    Disposer.register(this) {
-      panel.browserPipe?.removeSubscription(openLinkEventName, handler)
+  private val handler = object : BrowserPipe.Handler {
+    override fun processMessageReceived(data: String): Boolean {
+      return openLink(panel, data)
     }
   }
 
-  private fun openLink(panel: MarkdownHtmlPanel, link: String) {
-    if (!Registry.`is`("markdown.open.link.in.external.browser")) {
-      return
+  init {
+    panel.browserPipe?.subscribe(OPEN_LINK_EVENT_NAME, handler)
+    Disposer.register(this) {
+      panel.browserPipe?.removeSubscription(OPEN_LINK_EVENT_NAME, handler)
     }
-    if (JBCefPsiNavigationUtils.navigateTo(link)) {
-      return
-    }
+  }
+
+  private fun openLink(panel: MarkdownHtmlPanel, link: String): Boolean {
+    if (!Registry.`is`("markdown.open.link.in.external.browser")) return true
+    if (JBCefPsiNavigationUtils.navigateTo(link)) return true
+
     if (panel is MarkdownHtmlPanelEx) {
       if (panel.getUserData(MarkdownHtmlPanelEx.DO_NOT_USE_LINK_OPENER) == true) {
         runCatching {
           BrowserUtil.browse(link)
         }.getOrLogException(thisLogger())
-        return
+        return false
       }
     }
     MarkdownLinkOpener.getInstance().openLink(panel.project, link)
+    return false
   }
 
   override val scripts: List<String> = listOf("processLinks/processLinks.js")
@@ -58,9 +61,5 @@ internal class ProcessLinksExtension(private val panel: MarkdownHtmlPanel): Mark
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension {
       return ProcessLinksExtension(panel)
     }
-  }
-
-  companion object {
-    private const val openLinkEventName = "openLink"
   }
 }

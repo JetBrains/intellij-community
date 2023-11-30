@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -22,7 +22,7 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxBuiltInAttributeDescr
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttributeDescriptor;
 
-public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionAction{
+public final class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionAction{
   private static final Logger LOG = Logger.getInstance(JavaFxExpandAttributeIntention.class);
 
   @Override
@@ -72,9 +72,8 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
     return false;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaFXBundle.message("javafx.expand.attribute.to.tag.intention.family.name");
   }
 }

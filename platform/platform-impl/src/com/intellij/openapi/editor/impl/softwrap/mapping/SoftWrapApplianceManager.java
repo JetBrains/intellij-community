@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.diagnostic.Dumpable;
@@ -41,7 +41,7 @@ import java.util.List;
  * <p/>
  * Not thread-safe.
  */
-public class SoftWrapApplianceManager implements Dumpable {
+public final class SoftWrapApplianceManager implements Dumpable {
   private static final Logger LOG = Logger.getInstance(SoftWrapApplianceManager.class);
   private static final int QUICK_DUMMY_WRAPPING = Integer.MAX_VALUE; // special value to request a tentative wrapping
                                                                      // before editor is shown and actual available width is known
@@ -445,9 +445,8 @@ public class SoftWrapApplianceManager implements Dumpable {
     return myWidthProvider;
   }
 
-  @NotNull
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     return String.format(
       "recalculation in progress: %b; event being processed: %s, available width: %d, visible width: %d, dirty: %b",
       myInProgress, myEventBeingProcessed, myAvailableWidth, myVisibleAreaWidth, myIsDirty
@@ -490,7 +489,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     int getVisibleAreaWidth();
   }
 
-  private class DefaultVisibleAreaWidthProvider implements VisibleAreaWidthProvider {
+  private final class DefaultVisibleAreaWidthProvider implements VisibleAreaWidthProvider {
 
     @Override
     public int getVisibleAreaWidth() {

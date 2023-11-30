@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -26,7 +26,7 @@ public class ThreadState {
 
   @Nullable
   private ThreadOperation myOperation;
-  private boolean myKnownJDKThread;
+  private Boolean myKnownJDKThread;
   private int myStackDepth;
 
   public ThreadState(final String name, final String state) {
@@ -49,7 +49,7 @@ public class ThreadState {
   public void setStackTrace(@NotNull String stackTrace, boolean isEmpty) {
     myStackTrace = stackTrace;
     myEmptyStackTrace = isEmpty;
-    myKnownJDKThread = ThreadDumpParser.isKnownJdkThread(stackTrace);
+    myKnownJDKThread = null;
     myStackDepth = StringUtil.countNewLines(myStackTrace);
   }
 
@@ -58,6 +58,13 @@ public class ThreadState {
   }
 
   public boolean isKnownJDKThread() {
+    String stackTrace = myStackTrace;
+    if (stackTrace == null) {
+      return false;
+    }
+    if (myKnownJDKThread == null) {
+      myKnownJDKThread = ThreadDumpParser.isKnownJdkThread(stackTrace);
+    }
     return myKnownJDKThread;
   }
 

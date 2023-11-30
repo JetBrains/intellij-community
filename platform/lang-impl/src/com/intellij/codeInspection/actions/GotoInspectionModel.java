@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class GotoInspectionModel extends SimpleChooseByNameModel {
+public final class GotoInspectionModel extends SimpleChooseByNameModel {
   private final Map<String, InspectionToolWrapper> myToolNames = new HashMap<>();
   private final String[] myNames;
   private final InspectionListCellRenderer myListCellRenderer = new InspectionListCellRenderer();

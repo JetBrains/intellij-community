@@ -3,11 +3,11 @@ package com.intellij.openapi.progress
 
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.TestLoggerFactory.TestLoggerAssertionError
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.TEST_TIMEOUT_MS
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
-import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertThrows
@@ -41,12 +41,6 @@ fun Semaphore.timeoutWaitUp() {
   assertTrue(waitFor(TEST_TIMEOUT_MS))
 }
 
-suspend fun KSemaphore.timeoutAcquire() {
-  withTimeout(TEST_TIMEOUT_MS) {
-    acquire()
-  }
-}
-
 fun <X> Future<X>.timeoutGet(): X {
   return get(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS)
 }
@@ -68,20 +62,8 @@ fun waitAssertCompletedWithCancellation(future: Future<*>) {
   waitAssertCompletedWith(future, CancellationException::class)
 }
 
-fun Job.timeoutJoinBlocking(): Unit = runBlocking {
-  timeoutJoin()
-}
-
-suspend fun Job.timeoutJoin() {
-  withTimeout(TEST_TIMEOUT_MS) {
-    join()
-  }
-}
-
-suspend fun <T> Deferred<T>.timeoutAwait(): T {
-  return withTimeout(TEST_TIMEOUT_MS) {
-    await()
-  }
+fun Job.timeoutJoinBlocking(): Unit = timeoutRunBlocking {
+  join()
 }
 
 fun waitAssertCompletedNormally(job: Job) {
@@ -101,9 +83,8 @@ fun assertCurrentJobIsChildOf(parent: Job): Job {
 }
 
 fun assertJobIsChildOf(job: Job, parent: Job) {
-  val children = parent.children.toSet()
-  job.ensureActive()
-  assertTrue(job in children)
+  @OptIn(ExperimentalCoroutinesApi::class)
+  assertSame(parent, job.parent)
 }
 
 fun loggedError(canThrow: Semaphore): Throwable {
@@ -129,16 +110,6 @@ fun loggedError(canThrow: Semaphore): Throwable {
     Thread.setDefaultUncaughtExceptionHandler(savedHandler)
   }
   return throwable
-}
-
-fun currentJobTest(test: (Job) -> Unit) {
-  val job = Job()
-  blockingContext(job) {
-    test(job)
-  }
-  assertTrue(job.isActive)
-  assertFalse(job.isCompleted)
-  assertFalse(job.isCancelled)
 }
 
 fun blockingContextTest(test: () -> Unit) {
@@ -170,7 +141,7 @@ internal suspend fun <X> childCallable(cs: CoroutineScope, action: () -> X): Cal
             continuation.resume(Unit)
           }
         }
-        catch (e: JobCanceledException) {
+        catch (e: CeProcessCanceledException) {
           continuation.resume(Unit)
           throw e
         }

@@ -31,35 +31,34 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
-import com.intellij.util.ObjectUtils
 import com.intellij.util.SmartList
 import java.awt.Color
 import java.awt.event.MouseEvent
-import java.util.function.Consumer
 
-class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
-  companion object {
-    private val PREVIEW_PROBLEMS_KEY = Key.create<Set<Problem>>("preview.problems.key")
-    private const val ID = "java.RelatedProblems"
+private val PREVIEW_PROBLEMS_KEY = Key.create<Set<Problem>>("preview.problems.key")
+private const val ID = "java.RelatedProblems"
 
-    @JvmStatic
-    fun hintsEnabled(ignored: Project): Boolean {
-      val settings = CodeVisionSettings.instance()
-      return settings.codeVisionEnabled && settings.isProviderEnabled(ID)
-    }
-  }
+internal fun isCodeVisionEnabled(ignored: Project): Boolean {
+  val settings = CodeVisionSettings.instance()
+  return settings.codeVisionEnabled && settings.isProviderEnabled(ID)
+}
 
+internal class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
   override fun computeLenses(editor: Editor, psiFile: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
     // we want to let this provider work only in tests dedicated for code vision, otherwise they harm performance
-    if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest()) return emptyList()
+    if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest()) {
+      return emptyList()
+    }
+
     val project = editor.project ?: return emptyList()
     val previewProblems = PREVIEW_PROBLEMS_KEY.get(editor)
     if (previewProblems != null) {
       val problem = previewProblems.first()
-      val lenseColor = getCodeVisionColor()
-      val lensPair = createLensPair(problem.context as PsiMethod, lenseColor, previewProblems)
+      val lensColor = getCodeVisionColor()
+      val lensPair = createLensPair(problem.context as PsiMethod, lensColor, previewProblems)
       return listOf(lensPair)
     }
+
     val problems = ProjectProblemUtils.getReportedProblems(editor)
     if (!CodeVisionSettings.instance().isProviderEnabled(PlatformCodeVisionIds.PROBLEMS.key)) {
       if (!problems.isEmpty()) {
@@ -68,47 +67,46 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
       }
       return emptyList()
     }
-    val prevState = FileStateUpdater.getState(psiFile)
-    if (prevState == null) return emptyList()
+
+    val prevState = FileStateUpdater.getState(psiFile) ?: return emptyList()
     val prevChanges = getPrevChanges(prevState.changes, problems.keys)
     val curState = findState(psiFile, prevState.snapshot, prevChanges)
     val changes = curState.changes
     val snapshot = curState.snapshot
     val editorManager = FileEditorManager.getInstance(project)
     val isInSplitEditorMode = editorManager.selectedEditors.size > 1
-    collectProblems(changes, prevState.changes, problems, isInSplitEditorMode)
+    collectProblems(changes = changes, oldChanges = prevState.changes, oldProblems = problems, isInSplitEditorMode = isInSplitEditorMode)
 
     ProjectProblemUtils.reportProblems(editor, problems)
     val allChanges = HashMap(changes)
-    prevChanges.forEach { (key, value) ->
+    for ((key, value) in prevChanges) {
       allChanges.putIfAbsent(key, value)
     }
     val fileState = FileState(snapshot, allChanges)
     updateState(psiFile, fileState)
 
-    val highlighters: MutableList<HighlightInfo> = SmartList()
-    val lenses: MutableList<Pair<TextRange, CodeVisionEntry>> = ArrayList()
+    val highlighters = SmartList<HighlightInfo>()
+    val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
 
-    val lenseColor = getCodeVisionColor()
-    problems.forEach { (psiMember: PsiMember?, memberProblems: Set<Problem?>?) ->
-      val namedElement = ObjectUtils.tryCast(
-        psiMember,
-        PsiNameIdentifierOwner::class.java) ?: return@forEach
-      val identifier = namedElement.nameIdentifier ?: return@forEach
-      val lensPair = createLensPair(psiMember, lenseColor, memberProblems)
+    val codeVisionColor = getCodeVisionColor()
+    for ((psiMember, memberProblems) in problems) {
+      val namedElement = (psiMember as? PsiNameIdentifierOwner) ?: continue
+      val identifier = namedElement.nameIdentifier ?: continue
+      val lensPair = createLensPair(psiMember = psiMember, codeVisionColor = codeVisionColor, memberProblems = memberProblems)
       lenses.add(lensPair)
-      highlighters.add(ProjectProblemUtils.createHighlightInfo(editor, psiMember!!, identifier))
+      highlighters.add(ProjectProblemUtils.createHighlightInfo(editor, psiMember, identifier))
     }
 
-    updateHighlighters(project, psiFile, editor, highlighters)
-
+    updateHighlighters(project = project, psiFile = psiFile, editor = editor, highlighters = highlighters)
     return lenses
   }
 
-  private fun createLensPair(psiMember: PsiMember, lenseColor: Color, memberProblems: Set<Problem?>): Pair<TextRange, ClickableRichTextCodeVisionEntry> {
+  private fun createLensPair(psiMember: PsiMember,
+                             codeVisionColor: Color,
+                             memberProblems: Set<Problem?>): Pair<TextRange, ClickableRichTextCodeVisionEntry> {
     val text = JavaBundle.message("project.problems.hint.text", memberProblems.size)
     val richText = RichText(text)
-    richText.setForeColor(lenseColor)
+    richText.setForeColor(codeVisionColor)
     val entry = ClickableRichTextCodeVisionEntry(id, richText, longPresentation = text, onClick = ClickHandler(psiMember))
     return InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(psiMember) to entry
   }
@@ -118,20 +116,19 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     editor.putUserData(PREVIEW_PROBLEMS_KEY, setOf(Problem(method, method)))
   }
 
-  private fun updateHighlighters(project: Project,
-                                 psiFile: PsiFile,
-                                 editor: Editor,
-                                 highlighters: MutableList<HighlightInfo>) {
-    ApplicationManager.getApplication()
-      .invokeLater({
-                     if (project.isDisposed || !psiFile.isValid) return@invokeLater
-                     val fileTextLength: Int = psiFile.textLength
-                     val colorsScheme = editor.colorsScheme
-                     UpdateHighlightersUtil.setHighlightersToEditor(project, editor.document, 0, fileTextLength,
-                                                                    highlighters, colorsScheme, -1)
-                   },
-                   ModalityState.nonModal()
-      )
+  private fun updateHighlighters(project: Project, psiFile: PsiFile, editor: Editor, highlighters: MutableList<HighlightInfo>) {
+    ApplicationManager.getApplication().invokeLater(
+      {
+        if (!psiFile.isValid) {
+          return@invokeLater
+        }
+        val fileTextLength = psiFile.textLength
+        val colorsScheme = editor.colorsScheme
+        UpdateHighlightersUtil.setHighlightersToEditor(project, editor.document, 0, fileTextLength, highlighters, colorsScheme, -1)
+      },
+      ModalityState.nonModal(),
+      project.disposed,
+    )
   }
 
   private fun getCodeVisionColor(): Color {
@@ -139,66 +136,73 @@ class ProjectProblemCodeVisionProvider : JavaCodeVisionProviderBase() {
     return globalScheme.getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES).foregroundColor ?: globalScheme.defaultForeground
   }
 
-
   override val name: String
     get() = JavaBundle.message("title.related.problems.inlay.hints")
-  override val relativeOrderings: List<CodeVisionRelativeOrdering> = listOf(CodeVisionRelativeOrdering.CodeVisionRelativeOrderingLast)
+
+  override val relativeOrderings = listOf(CodeVisionRelativeOrdering.CodeVisionRelativeOrderingLast)
   override val defaultAnchor: CodeVisionAnchorKind
     get() = CodeVisionAnchorKind.Default
   override val id: String
     get() = ID
   override val groupId: String
     get() = PlatformCodeVisionIds.PROBLEMS.key
+}
 
-  private fun getPrevChanges(prevChanges: Map<PsiMember, ScopedMember?>,
-                             reportedMembers: Set<PsiMember>): Map<PsiMember, ScopedMember?> {
-    if (reportedMembers.isEmpty()) return prevChanges
-    val changes = HashMap(prevChanges)
-    reportedMembers.forEach(Consumer { m: PsiMember? -> changes.putIfAbsent(m, null) })
-    return changes
+private fun collectProblems(changes: Map<PsiMember, ScopedMember?>,
+                            oldChanges: Map<PsiMember, ScopedMember?>,
+                            oldProblems: MutableMap<PsiMember, Set<Problem>>,
+                            isInSplitEditorMode: Boolean) {
+  var changes = changes
+  if (isInSplitEditorMode && changes.isEmpty()) {
+    changes = oldChanges
   }
-
-  private fun collectProblems(changes: Map<PsiMember, ScopedMember?>,
-                              oldChanges: Map<PsiMember, ScopedMember?>,
-                              oldProblems: MutableMap<PsiMember, Set<Problem>>,
-                              isInSplitEditorMode: Boolean) {
-    var changes = changes
-    if (isInSplitEditorMode && changes.isEmpty()) {
-      changes = oldChanges
+  for ((curMember, prevMember) in changes) {
+    if (hasOtherElementsOnSameLine(curMember)) {
+      oldProblems.remove(curMember)
+      continue
     }
-    changes.forEach { (curMember: PsiMember, prevMember: ScopedMember?) ->
-      if (hasOtherElementsOnSameLine(curMember)) {
-        oldProblems.remove(curMember)
-        return@forEach
-      }
-      val memberProblems = collect(
-        prevMember,
-        curMember)
-      if (memberProblems.isNullOrEmpty()) {
-        oldProblems.remove(curMember)
-      }
-      else {
-        oldProblems[curMember] = memberProblems
-      }
+
+    val memberProblems = collect(prevMember = prevMember, curMember = curMember)
+    if (memberProblems.isNullOrEmpty()) {
+      oldProblems.remove(curMember)
+    }
+    else {
+      oldProblems[curMember] = memberProblems
     }
   }
+}
 
-  private fun hasOtherElementsOnSameLine(psiMember: PsiMember): Boolean {
-    var prevSibling = psiMember.prevSibling
-    while (prevSibling != null && !(prevSibling is PsiWhiteSpace && prevSibling.textContains('\n'))) {
-      if (prevSibling !is PsiWhiteSpace && !prevSibling.text.isEmpty()) return true
-      prevSibling = prevSibling.prevSibling
+private fun hasOtherElementsOnSameLine(psiMember: PsiMember): Boolean {
+  var prevSibling = psiMember.prevSibling
+  while (prevSibling != null && !(prevSibling is PsiWhiteSpace && prevSibling.textContains('\n'))) {
+    if (prevSibling !is PsiWhiteSpace && !prevSibling.text.isEmpty()) {
+      return true
     }
-    return false
+    prevSibling = prevSibling.prevSibling
+  }
+  return false
+}
+
+private class ClickHandler(member: PsiMember) : (MouseEvent?, Editor) -> Unit {
+  private val pointer = SmartPointerManager.createPointer(member)
+
+  override fun invoke(event: MouseEvent?, editor: Editor) {
+    if (event == null) {
+      return
+    }
+    val member = pointer.element ?: return
+    ProjectProblemUtils.showProblems(editor, member)
+  }
+}
+
+private fun getPrevChanges(prevChanges: Map<PsiMember, ScopedMember?>, reportedMembers: Set<PsiMember>): Map<PsiMember, ScopedMember?> {
+  if (reportedMembers.isEmpty()) {
+    return prevChanges
   }
 
-  private class ClickHandler(member: PsiMember) : (MouseEvent?, Editor) -> Unit {
-    private val pointer = SmartPointerManager.createPointer(member)
-
-    override fun invoke(event: MouseEvent?, editor: Editor) {
-      if (event == null) return
-      val member = pointer.element ?: return
-      ProjectProblemUtils.showProblems(editor, member)
-    }
+  val changes = HashMap(prevChanges)
+  for (it in reportedMembers) {
+    changes.putIfAbsent(it, null)
   }
+  return changes
 }

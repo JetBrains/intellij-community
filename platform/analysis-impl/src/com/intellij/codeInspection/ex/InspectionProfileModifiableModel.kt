@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.model.SideEffectGuard
@@ -10,7 +10,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.util.Consumer
 
-open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) : InspectionProfileImpl(source.name, source.myToolSupplier, source.profileManager, source.myBaseProfile, null) {
+open class InspectionProfileModifiableModel(val source: InspectionProfileImpl)
+  : InspectionProfileImpl(source.name, source.myToolSupplier, source.profileManager, source.myBaseProfile, null) {
+
   private var modified = false
 
   init {
@@ -55,7 +57,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
             else {
               tools.addTool(scope, toolWrapper, state.isEnabled, state.level)
             }
-            state.editorAttributesKey?.externalName?.let { tool.setEditorAttributesExternalName(it) }
+            state.editorAttributesKey?.externalName?.let { tool.editorAttributesExternalName = it }
           }
         }
         tools.isEnabled = toolList.isEnabled
@@ -104,11 +106,11 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
   fun resetToEmpty(project: Project) {
     initInspectionTools(project)
     for (toolWrapper in getInspectionTools(null)) {
-      setToolEnabled(toolWrapper.shortName, false, project, fireEvents = false)
+      setToolEnabled(toolWrapper.shortName, false, project, /*fireEvents =*/ false)
     }
   }
 
-  private fun InspectionProfileImpl.commit(model: InspectionProfileImpl) {
+  private fun InspectionProfileImpl.commit(model: InspectionProfileModifiableModel) {
     name = model.name
     description = model.description
     isProjectLevel = model.isProjectLevel

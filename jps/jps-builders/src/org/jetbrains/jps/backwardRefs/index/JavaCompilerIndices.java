@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
@@ -43,27 +43,23 @@ public final class JavaCompilerIndices {
 
   private static IndexExtension<CompilerRef, Void, CompiledFileData> createImplicitToStringExtension() {
     return new IndexExtension<CompilerRef, Void, CompiledFileData>() {
-      @NotNull
       @Override
-      public IndexId<CompilerRef, Void> getName() {
+      public @NotNull IndexId<CompilerRef, Void> getName() {
         return IMPLICIT_TO_STRING;
       }
 
-      @NotNull
       @Override
-      public DataIndexer<CompilerRef, Void, CompiledFileData> getIndexer() {
+      public @NotNull DataIndexer<CompilerRef, Void, CompiledFileData> getIndexer() {
         return CompiledFileData::getImplicitToString;
       }
 
-      @NotNull
       @Override
-      public KeyDescriptor<CompilerRef> getKeyDescriptor() {
+      public @NotNull KeyDescriptor<CompilerRef> getKeyDescriptor() {
         return CompilerRefDescriptor.INSTANCE;
       }
 
-      @NotNull
       @Override
-      public DataExternalizer<Void> getValueExternalizer() {
+      public @NotNull DataExternalizer<Void> getValueExternalizer() {
         return VoidDataExternalizer.INSTANCE;
       }
 
@@ -76,27 +72,23 @@ public final class JavaCompilerIndices {
 
   private static IndexExtension<CompilerRef, Collection<CompilerRef>, CompiledFileData> createBackwardCastExtension() {
     return new IndexExtension<CompilerRef, Collection<CompilerRef>, CompiledFileData>() {
-      @NotNull
       @Override
-      public IndexId<CompilerRef, Collection<CompilerRef>> getName() {
+      public @NotNull IndexId<CompilerRef, Collection<CompilerRef>> getName() {
         return BACK_CAST;
       }
 
-      @NotNull
       @Override
-      public DataIndexer<CompilerRef, Collection<CompilerRef>, CompiledFileData> getIndexer() {
+      public @NotNull DataIndexer<CompilerRef, Collection<CompilerRef>, CompiledFileData> getIndexer() {
         return CompiledFileData::getCasts;
       }
 
-      @NotNull
       @Override
-      public KeyDescriptor<CompilerRef> getKeyDescriptor() {
+      public @NotNull KeyDescriptor<CompilerRef> getKeyDescriptor() {
         return CompilerRefDescriptor.INSTANCE;
       }
 
-      @NotNull
       @Override
-      public DataExternalizer<Collection<CompilerRef>> getValueExternalizer() {
+      public @NotNull DataExternalizer<Collection<CompilerRef>> getValueExternalizer() {
         return createCompilerRefSeqExternalizer();
       }
 
@@ -115,32 +107,28 @@ public final class JavaCompilerIndices {
       }
 
       @Override
-      @NotNull
-      public IndexId<CompilerRef, Integer> getName() {
+      public @NotNull IndexId<CompilerRef, Integer> getName() {
         return BACK_USAGES;
       }
 
       @Override
-      @NotNull
-      public DataIndexer<CompilerRef, Integer, CompiledFileData> getIndexer() {
+      public @NotNull DataIndexer<CompilerRef, Integer, CompiledFileData> getIndexer() {
         return CompiledFileData::getReferences;
       }
 
       @Override
-      @NotNull
-      public KeyDescriptor<CompilerRef> getKeyDescriptor() {
+      public @NotNull KeyDescriptor<CompilerRef> getKeyDescriptor() {
         return CompilerRefDescriptor.INSTANCE;
       }
 
       @Override
-      @NotNull
-      public DataExternalizer<Integer> getValueExternalizer() {
+      public @NotNull DataExternalizer<Integer> getValueExternalizer() {
         return new UnsignedByteExternalizer();
       }
     };
   }
 
-  private static class UnsignedByteExternalizer implements DataExternalizer<Integer> {
+  private static final class UnsignedByteExternalizer implements DataExternalizer<Integer> {
     @Override
     public void save(@NotNull DataOutput out, Integer value) throws IOException {
       int v = value;
@@ -164,26 +152,22 @@ public final class JavaCompilerIndices {
       }
 
       @Override
-      @NotNull
-      public IndexId<CompilerRef, Collection<CompilerRef>> getName() {
+      public @NotNull IndexId<CompilerRef, Collection<CompilerRef>> getName() {
         return BACK_HIERARCHY;
       }
 
       @Override
-      @NotNull
-      public DataIndexer<CompilerRef, Collection<CompilerRef>, CompiledFileData> getIndexer() {
+      public @NotNull DataIndexer<CompilerRef, Collection<CompilerRef>, CompiledFileData> getIndexer() {
         return CompiledFileData::getBackwardHierarchy;
       }
 
       @Override
-      @NotNull
-      public KeyDescriptor<CompilerRef> getKeyDescriptor() {
+      public @NotNull KeyDescriptor<CompilerRef> getKeyDescriptor() {
         return CompilerRefDescriptor.INSTANCE;
       }
 
       @Override
-      @NotNull
-      public DataExternalizer<Collection<CompilerRef>> getValueExternalizer() {
+      public @NotNull DataExternalizer<Collection<CompilerRef>> getValueExternalizer() {
         return createCompilerRefSeqExternalizer();
       }
     };
@@ -197,26 +181,22 @@ public final class JavaCompilerIndices {
       }
 
       @Override
-      @NotNull
-      public IndexId<CompilerRef, Void> getName() {
+      public @NotNull IndexId<CompilerRef, Void> getName() {
         return BACK_CLASS_DEF;
       }
 
       @Override
-      @NotNull
-      public DataIndexer<CompilerRef, Void, CompiledFileData> getIndexer() {
+      public @NotNull DataIndexer<CompilerRef, Void, CompiledFileData> getIndexer() {
         return CompiledFileData::getDefinitions;
       }
 
       @Override
-      @NotNull
-      public KeyDescriptor<CompilerRef> getKeyDescriptor() {
+      public @NotNull KeyDescriptor<CompilerRef> getKeyDescriptor() {
         return CompilerRefDescriptor.INSTANCE;
       }
 
       @Override
-      @NotNull
-      public DataExternalizer<Void> getValueExternalizer() {
+      public @NotNull DataExternalizer<Void> getValueExternalizer() {
         return VoidDataExternalizer.INSTANCE;
       }
     };
@@ -224,27 +204,23 @@ public final class JavaCompilerIndices {
 
   private static IndexExtension<SignatureData, Collection<CompilerRef>, CompiledFileData> createBackwardSignatureExtension() {
     return new IndexExtension<SignatureData, Collection<CompilerRef>, CompiledFileData>() {
-      @NotNull
       @Override
-      public IndexId<SignatureData, Collection<CompilerRef>> getName() {
+      public @NotNull IndexId<SignatureData, Collection<CompilerRef>> getName() {
         return BACK_MEMBER_SIGN;
       }
 
-      @NotNull
       @Override
-      public DataIndexer<SignatureData, Collection<CompilerRef>, CompiledFileData> getIndexer() {
+      public @NotNull DataIndexer<SignatureData, Collection<CompilerRef>, CompiledFileData> getIndexer() {
         return CompiledFileData::getSignatureData;
       }
 
-      @NotNull
       @Override
-      public KeyDescriptor<SignatureData> getKeyDescriptor() {
+      public @NotNull KeyDescriptor<SignatureData> getKeyDescriptor() {
         return createSignatureDataDescriptor();
       }
 
-      @NotNull
       @Override
-      public DataExternalizer<Collection<CompilerRef>> getValueExternalizer() {
+      public @NotNull DataExternalizer<Collection<CompilerRef>> getValueExternalizer() {
         return createCompilerRefSeqExternalizer();
       }
 
@@ -255,16 +231,15 @@ public final class JavaCompilerIndices {
     };
   }
 
-  @NotNull
-  private static DataExternalizer<Collection<CompilerRef>> createCompilerRefSeqExternalizer() {
+  private static @NotNull DataExternalizer<Collection<CompilerRef>> createCompilerRefSeqExternalizer() {
     return new DataExternalizer<Collection<CompilerRef>>() {
       @Override
-      public void save(@NotNull final DataOutput out, Collection<CompilerRef> value) throws IOException {
+      public void save(final @NotNull DataOutput out, Collection<CompilerRef> value) throws IOException {
         DataInputOutputUtilRt.writeSeq(out, value, lightRef -> CompilerRefDescriptor.INSTANCE.save(out, lightRef));
       }
 
       @Override
-      public Collection<CompilerRef> read(@NotNull final DataInput in) throws IOException {
+      public Collection<CompilerRef> read(final @NotNull DataInput in) throws IOException {
         return DataInputOutputUtilRt.readSeq(in, () -> CompilerRefDescriptor.INSTANCE.read(in));
       }
     };

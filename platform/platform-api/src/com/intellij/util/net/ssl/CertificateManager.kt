@@ -10,7 +10,6 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
@@ -19,7 +18,6 @@ import com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
-import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileAlreadyExistsException
@@ -36,6 +34,7 @@ import javax.crypto.BadPaddingException
 import javax.net.ssl.KeyManager
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
+import kotlin.io.path.pathString
 
 /**
  * `CertificateManager` is responsible for negotiation SSL connection with server
@@ -97,7 +96,7 @@ class CertificateManager : PersistentStateComponent<CertificateManager.Config?> 
   companion object {
     const val COMPONENT_NAME: @NonNls String = "Certificate Manager"
     @JvmField
-    val DEFAULT_PATH: @NonNls String = java.lang.String.join(File.separator, PathManager.getConfigPath(), "ssl", "cacerts")
+    val DEFAULT_PATH: @NonNls String = PathManager.getOriginalConfigDir().resolve("ssl").resolve("cacerts").pathString
     @Suppress("SpellCheckingInspection")
     const val DEFAULT_PASSWORD: @NonNls String = "changeit"
     private val LOG = logger<CertificateManager>()

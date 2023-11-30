@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -57,7 +58,7 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
       CodeStyleSettings tempSettings = CodeStyle.getSettings(file);
       tempSettings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_BINARY_OPERATION = true;
       CodeStyleManager manager = CodeStyleManager.getInstance(literalExpression.getProject());
-      CodeStyle.doWithTemporarySettings(project, tempSettings, () -> {
+      CodeStyle.runWithLocalSettings(project, tempSettings, () -> {
         PsiElement result = new CommentTracker().replaceAndRestoreComments(literalExpression, replacement);
         manager.reformat(result);
       });

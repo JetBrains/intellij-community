@@ -8,16 +8,29 @@ data class JpsLibrary(
     val javadoc: List<JpsUrl> = emptyList(),
     val sources: List<JpsUrl> = emptyList(),
 ) {
-    fun render(): String {
+    fun render(jpsResolverSettings: JpsResolverSettings): String {
         return xml("component", "name" to "libraryTable") {
             xml("library", "name" to name, if (type is LibraryType.Repository) "type" to "repository" else null) {
                 if (type is LibraryType.Repository) {
                     val properties = arrayOf(
                         if (!type.includeTransitive) "include-transitive-deps" to "false" else null,
-                        "maven-id" to type.mavenId.toString()
+                        if (jpsResolverSettings.bindRepositoryEnabled) "jar-repository-id" to type.remoteRepository.id else null,
+                        "maven-id" to type.mavenId.toString(),
                     )
 
                     xml("properties", *properties) {
+                        if (jpsResolverSettings.sha256ChecksumsEnabled) {
+                            xml("verification") {
+                                computeSha256Checksums(classes, type.remoteRepository).forEach {
+                                    xml("artifact", "url" to it.url) {
+                                        xml("sha256sum") {
+                                            raw(it.sha256Checksum)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         if (type.excludes.isNotEmpty()) {
                             xml("exclude") {
                                 type.excludes.forEach { xml("dependency", "maven-id" to it.toString()) }
@@ -46,7 +59,12 @@ data class JpsLibrary(
         data class Repository(
             val mavenId: MavenId,
             val excludes: List<MavenId> = emptyList(),
-            val includeTransitive: Boolean = true
-        ) : LibraryType()
+            val includeTransitive: Boolean = true,
+            val remoteRepository: JpsRemoteRepository
+        ) : LibraryType() {
+            companion object {
+                data class ArtifactVerificationEntry(val url: String, val sha256Checksum: String)
+            }
+        }
     }
 }

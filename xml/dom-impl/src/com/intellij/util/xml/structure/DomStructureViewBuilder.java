@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.structure;
 
@@ -18,10 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DomStructureViewBuilder extends TreeBasedStructureViewBuilder {
-  @NotNull
-  private final Function<DomElement, DomService.StructureViewMode> myDescriptor;
-  @NotNull
-  private final XmlFile myFile;
+  private final @NotNull Function<DomElement, DomService.StructureViewMode> myDescriptor;
+  private final @NotNull XmlFile myFile;
 
   public DomStructureViewBuilder(@NotNull XmlFile file, @NotNull Function<DomElement,DomService.StructureViewMode> descriptor) {
     myFile = file;
@@ -29,14 +27,12 @@ public class DomStructureViewBuilder extends TreeBasedStructureViewBuilder {
   }
 
   @Override
-  @NotNull
-  public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+  public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
     return new DomStructureViewTreeModel(myFile, myDescriptor, editor);
   }
 
   @Override
-  @NotNull
-  public StructureView createStructureView(final FileEditor fileEditor, @NotNull final Project project) {
+  public @NotNull StructureView createStructureView(final FileEditor fileEditor, final @NotNull Project project) {
     return new StructureViewComponent(fileEditor, createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null), project, true);
   }
 }

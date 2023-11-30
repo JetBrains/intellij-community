@@ -7,7 +7,7 @@ public final class Foo {
             append(p1)
             append(",")
             append(p2)
-            append(")")
+            return append(")")
         })
     }
     public final fun getP1() : java.lang.String = UastEmptyExpression

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.roots.ContentFolder;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * An implementation of {@link ContentFolderRef} which doesn't correspond to a real {@link ContentFolder} in the project root model.
  */
-public class ExternalContentFolderRef implements ContentFolderRef {
+public final class ExternalContentFolderRef implements ContentFolderRef {
   private final VirtualFilePointer myFilePointer;
 
   public ExternalContentFolderRef(VirtualFilePointer filePointer) {

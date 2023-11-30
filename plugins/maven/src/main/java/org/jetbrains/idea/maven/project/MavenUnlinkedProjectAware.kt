@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectLinkListener
-import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAsyncAware
+import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
@@ -13,7 +13,7 @@ import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 
-internal class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAsyncAware {
+internal class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   override val systemId: ProjectSystemId = MavenUtil.SYSTEM_ID
 
   override fun isBuildFile(project: Project, buildFile: VirtualFile): Boolean {
@@ -30,6 +30,11 @@ internal class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAsyncAwa
   override fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable) {
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     mavenProjectsManager.addProjectsTreeListener(ProjectsTreeListener(project, listener), parentDisposable)
+  }
+
+  @Deprecated("use async method instead")
+  override fun linkAndLoadProject(project: Project, externalProjectPath: String) {
+    MavenOpenProjectProvider().linkToExistingProject(externalProjectPath, project)
   }
 
   override suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {

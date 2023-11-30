@@ -9,7 +9,7 @@ import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-public class EncodingReferenceInjector extends ReferenceInjector {
+public final class EncodingReferenceInjector extends ReferenceInjector {
   @Override
   public PsiReference @NotNull [] getReferences(@NotNull PsiElement element, @NotNull ProcessingContext context, @NotNull TextRange range) {
     return new PsiReference[]{new EncodingReference(element, range.substring(element.getText()), range)};

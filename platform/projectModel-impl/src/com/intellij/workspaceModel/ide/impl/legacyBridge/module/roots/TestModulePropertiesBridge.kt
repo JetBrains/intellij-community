@@ -6,12 +6,12 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity
 import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 
 class TestModulePropertiesBridge(private val currentModule: Module): TestModuleProperties() {
   private val workspaceModel = WorkspaceModel.getInstance(currentModule.project)
@@ -41,9 +41,9 @@ class TestModulePropertiesBridge(private val currentModule: Module): TestModuleP
     }
   }
 
-  fun setProductionModuleNameToBuilder(moduleName: String?, builder: MutableEntityStorage) {
+  fun setProductionModuleNameToBuilder(moduleName: String?, currentModuleName: String, builder: MutableEntityStorage) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    val moduleEntity = builder.resolve(ModuleId(currentModule.name)) ?: error("Module entity with name: ${currentModule.name} should be available")
+    val moduleEntity = builder.resolve(ModuleId(currentModuleName)) ?: error("Module entity with name: ${currentModuleName} should be available")
     if (moduleEntity.testProperties?.productionModuleId?.name == moduleName) return
     moduleEntity.testProperties?.let { builder.removeEntity(it) }
     if (moduleName == null) return

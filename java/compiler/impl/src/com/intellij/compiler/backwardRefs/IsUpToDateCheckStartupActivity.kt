@@ -3,12 +3,10 @@ package com.intellij.compiler.backwardRefs
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompilerManager
-import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.ensureActive
@@ -37,10 +35,7 @@ internal class IsUpToDateCheckStartupActivity : ProjectActivity {
     }
 
     coroutineContext.ensureActive()
-
-    val isUpToDate = withBackgroundProgressIndicator(project, JavaCompilerBundle.message("refresh.compiler.ref.index")) {
-      nonBlockingIsUpToDate(project)
-    }
+    val isUpToDate = nonBlockingIsUpToDate(project)
 
     logger.info("isUpToDate = $isUpToDate")
     for (consumer in isUpToDateConsumers) {

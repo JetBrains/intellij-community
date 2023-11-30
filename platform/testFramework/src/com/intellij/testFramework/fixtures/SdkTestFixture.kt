@@ -19,7 +19,7 @@ import com.intellij.openapi.projectRoots.Sdk
 
 /**
  * A fixture which provides SDKs and cleanups it when test will be finished.
- * Expected that application will be started before first SDK is set up by this fixture.
+ * Expected that application will be started before the first SDK is set up by this fixture.
  */
 interface SdkTestFixture : IdeaTestFixture {
 

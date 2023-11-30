@@ -15,22 +15,23 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.annotations.Open
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.platform.workspace.storage.impl.UsedClassesCollector
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
 import kotlin.jvm.JvmStatic
 
 @GeneratedCodeApiVersion(2)
-@GeneratedCodeImplVersion(2)
-open class OneEntityWithSymbolicIdImpl(val dataSource: OneEntityWithSymbolicIdData) : OneEntityWithSymbolicId, WorkspaceEntityBase() {
+@GeneratedCodeImplVersion(3)
+open class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWithSymbolicIdData) : OneEntityWithSymbolicId, WorkspaceEntityBase(
+  dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -44,6 +45,7 @@ open class OneEntityWithSymbolicIdImpl(val dataSource: OneEntityWithSymbolicIdDa
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: OneEntityWithSymbolicIdData?) : ModifiableWorkspaceEntityBase<OneEntityWithSymbolicId, OneEntityWithSymbolicIdData>(
     result), OneEntityWithSymbolicId.Builder {
@@ -73,7 +75,7 @@ open class OneEntityWithSymbolicIdImpl(val dataSource: OneEntityWithSymbolicIdDa
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -120,7 +122,7 @@ open class OneEntityWithSymbolicIdImpl(val dataSource: OneEntityWithSymbolicIdDa
 class OneEntityWithSymbolicIdData : WorkspaceEntityData.WithCalculableSymbolicId<OneEntityWithSymbolicId>() {
   lateinit var myName: String
 
-  fun isMyNameInitialized(): Boolean = ::myName.isInitialized
+  internal fun isMyNameInitialized(): Boolean = ::myName.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OneEntityWithSymbolicId> {
     val modifiable = OneEntityWithSymbolicIdImpl.Builder(null)
@@ -137,6 +139,11 @@ class OneEntityWithSymbolicIdData : WorkspaceEntityData.WithCalculableSymbolicId
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.platform.workspace.storage.testEntities.entities.OneEntityWithSymbolicId") as EntityMetadata
   }
 
   override fun symbolicId(): SymbolicEntityId<*> {
@@ -194,9 +201,5 @@ class OneEntityWithSymbolicIdData : WorkspaceEntityData.WithCalculableSymbolicId
     var result = javaClass.hashCode()
     result = 31 * result + myName.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.sameForAllEntities = true
   }
 }

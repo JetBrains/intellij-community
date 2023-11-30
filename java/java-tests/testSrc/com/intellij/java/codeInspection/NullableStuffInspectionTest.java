@@ -316,7 +316,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
 
   public void testAnnotateOverridingParametersOnNotNullMethod() {
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
-    doTestWithFix("Annotate overridden method parameters");
+    doTestWithFix("Annotate overriding method parameters");
   }
 
   public void testRemoveMethodAnnotationRemovesOverriders() {
@@ -374,7 +374,7 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testOverridersHaveNonDefaultAnnotation() {
     myFixture.addClass("package org.eclipse.jdt.annotation;\n\nimport java.lang.annotation.*;\n\n@Target(ElementType.PARAMETER) public @interface NonNull { }");
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
-    doTestWithFix("Annotate overridden method parameters");
+    doTestWithFix("Annotate overriding method parameters");
   }
 
   public void testQuickFixOnTypeArgument() {

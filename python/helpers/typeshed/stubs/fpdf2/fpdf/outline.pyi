@@ -1,7 +1,9 @@
-from typing import Any, NamedTuple
+from _typeshed import Incomplete
+from collections.abc import Generator, Iterable
+from typing import NamedTuple
 
 from .structure_tree import StructElem
-from .syntax import Destination, PDFObject
+from .syntax import Destination, PDFObject, PDFString
 
 class OutlineSection(NamedTuple):
     name: str
@@ -11,22 +13,24 @@ class OutlineSection(NamedTuple):
     struct_elem: StructElem | None = ...
 
 class OutlineItemDictionary(PDFObject):
-    title: str
-    parent: Any | None
-    prev: Any | None
-    next: Any | None
-    first: Any | None
-    last: Any | None
+    title: PDFString
+    parent: Incomplete | None
+    prev: Incomplete | None
+    next: Incomplete | None
+    first: Incomplete | None
+    last: Incomplete | None
     count: int
-    dest: str | None
+    dest: Destination | None
     struct_elem: StructElem | None
-    def __init__(self, title: str, dest: str | None = ..., struct_elem: StructElem | None = ..., **kwargs) -> None: ...
+    def __init__(self, title: str, dest: Destination | None = None, struct_elem: StructElem | None = None) -> None: ...
 
 class OutlineDictionary(PDFObject):
     type: str
-    first: Any | None
-    last: Any | None
+    first: Incomplete | None
+    last: Incomplete | None
     count: int
-    def __init__(self, **kwargs) -> None: ...
+    def __init__(self) -> None: ...
 
-def serialize_outline(sections, first_object_id: int = ..., fpdf: Any | None = ...): ...
+def build_outline_objs(
+    sections: Iterable[Incomplete],
+) -> Generator[Incomplete, None, list[OutlineDictionary | OutlineItemDictionary]]: ...

@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <navbar implementation="org.jetbrains.kotlin.idea.navigationToolbar.KotlinNavBarModelExtension" order="first"/>
+    <navbar id="kotlinNavBar"
+            implementation="org.jetbrains.kotlin.idea.navigationToolbar.KotlinNavBarModelExtension"/>
 
     <psi.referenceContributor
             id="kotlinFilePathReferenceContributor"

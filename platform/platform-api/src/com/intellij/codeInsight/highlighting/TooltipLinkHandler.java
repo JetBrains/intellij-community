@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -29,8 +29,7 @@ public abstract class TooltipLinkHandler {
    * @param editor    an editor in which tooltip with a link was shown.
    * @return detailed description to show.
    */
-  @Nullable
-  public @InspectionMessage String getDescription(@NotNull String refSuffix, @NotNull Editor editor) {
+  public @Nullable @InspectionMessage String getDescription(@NotNull String refSuffix, @NotNull Editor editor) {
     return null;
   }
 
@@ -41,9 +40,7 @@ public abstract class TooltipLinkHandler {
    * @param editor    an editor in which tooltip with a link was shown.
    * @return title above detailed description in the expanded tooltip
    */
-  @NotNull
-  @InspectionMessage
-  public String getDescriptionTitle(@NotNull String refSuffix, @NotNull Editor editor) {
+  public @NotNull @InspectionMessage String getDescriptionTitle(@NotNull String refSuffix, @NotNull Editor editor) {
     return IdeBundle.message("inspection.message.inspection.info");
   }
 }

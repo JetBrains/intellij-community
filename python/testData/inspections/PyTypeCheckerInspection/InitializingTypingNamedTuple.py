@@ -27,9 +27,9 @@ MyTup7 = typing.NamedTuple("MyTup7", names=List[str], ages=List[int])
 
 
 # fail
-MyTup2(<warning descr="Expected type 'int', got 'LiteralString' instead">''</warning>, '')
-MyTup2(<warning descr="Expected type 'int', got 'LiteralString' instead">bar=''</warning>, baz='')
-MyTup2(baz='', <warning descr="Expected type 'int', got 'LiteralString' instead">bar=''</warning>)
+MyTup2(<warning descr="Expected type 'int', got 'str' instead">''</warning>, '')
+MyTup2(<warning descr="Expected type 'int', got 'str' instead">bar=''</warning>, baz='')
+MyTup2(baz='', <warning descr="Expected type 'int', got 'str' instead">bar=''</warning>)
 
 
 # ok
@@ -39,9 +39,9 @@ MyTup2(baz='', bar=5)
 
 
 # fail
-MyTup3(<warning descr="Expected type 'int', got 'LiteralString' instead">''</warning>, '')
-MyTup3(<warning descr="Expected type 'int', got 'LiteralString' instead">bar=''</warning>, baz='')
-MyTup3(baz='', <warning descr="Expected type 'int', got 'LiteralString' instead">bar=''</warning>)
+MyTup3(<warning descr="Expected type 'int', got 'str' instead">''</warning>, '')
+MyTup3(<warning descr="Expected type 'int', got 'str' instead">bar=''</warning>, baz='')
+MyTup3(baz='', <warning descr="Expected type 'int', got 'str' instead">bar=''</warning>)
 
 
 # ok
@@ -51,9 +51,9 @@ MyTup3(baz='', bar=5)
 
 
 # fail
-MyTup4(<warning descr="Expected type 'int', got 'LiteralString' instead">''</warning>, '')
-MyTup4(<warning descr="Expected type 'int', got 'LiteralString' instead">bar=''</warning>, baz='')
-MyTup4(baz='', <warning descr="Expected type 'int', got 'LiteralString' instead">bar=''</warning>)
+MyTup4(<warning descr="Expected type 'int', got 'str' instead">''</warning>, '')
+MyTup4(<warning descr="Expected type 'int', got 'str' instead">bar=''</warning>, baz='')
+MyTup4(baz='', <warning descr="Expected type 'int', got 'str' instead">bar=''</warning>)
 
 
 # ok
@@ -63,9 +63,9 @@ MyTup4(baz='', bar=5)
 
 
 # fail
-MyTup5(<warning descr="Expected type 'int', got 'LiteralString' instead">''</warning>, '')
-MyTup5(<warning descr="Expected type 'int', got 'LiteralString' instead">bar=''</warning>, baz='')
-MyTup5(baz='', <warning descr="Expected type 'int', got 'LiteralString' instead">bar=''</warning>)
+MyTup5(<warning descr="Expected type 'int', got 'str' instead">''</warning>, '')
+MyTup5(<warning descr="Expected type 'int', got 'str' instead">bar=''</warning>, baz='')
+MyTup5(baz='', <warning descr="Expected type 'int', got 'str' instead">bar=''</warning>)
 
 
 # ok
@@ -75,8 +75,8 @@ MyTup5(baz='', bar=5)
 
 
 # fail
-MyTup6(<warning descr="Expected type 'int', got 'LiteralString' instead">bar=''</warning>, baz='', <warning descr="Expected type 'int', got 'LiteralString' instead">foo=''</warning>)
-MyTup6(<warning descr="Expected type 'int', got 'LiteralString' instead">''</warning>, '', <warning descr="Expected type 'int', got 'LiteralString' instead">''</warning>)
+MyTup6(<warning descr="Expected type 'int', got 'str' instead">bar=''</warning>, baz='', <warning descr="Expected type 'int', got 'str' instead">foo=''</warning>)
+MyTup6(<warning descr="Expected type 'int', got 'str' instead">''</warning>, '', <warning descr="Expected type 'int', got 'str' instead">''</warning>)
 
 
 # ok
@@ -85,8 +85,8 @@ MyTup6(5, '', 5)
 
 
 # fail
-MyTup7(<warning descr="Expected type 'list[str]', got 'LiteralString' instead">names="A"</warning>, <warning descr="Expected type 'list[int]', got 'int' instead">ages=5</warning>)
-MyTup7(<warning descr="Expected type 'list[str]', got 'LiteralString' instead">"A"</warning>, <warning descr="Expected type 'list[int]', got 'int' instead">5</warning>)
+MyTup7(<warning descr="Expected type 'list[str]', got 'str' instead">names="A"</warning>, <warning descr="Expected type 'list[int]', got 'int' instead">ages=5</warning>)
+MyTup7(<warning descr="Expected type 'list[str]', got 'str' instead">"A"</warning>, <warning descr="Expected type 'list[int]', got 'int' instead">5</warning>)
 
 
 # ok
