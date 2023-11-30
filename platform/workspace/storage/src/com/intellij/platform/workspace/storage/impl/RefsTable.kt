@@ -224,21 +224,6 @@ internal class MutableRefsTable(
     return modifications
   }
 
-  fun removeOneToOneRefByParent(connectionId: ConnectionId, parentId: EntityId): List<Modification> {
-    val removedValue = getOneToOneMutableMap(connectionId).removeValue(parentId.arrayId)
-    return if (removedValue != null) {
-      listOf(Modification.Remove(parentId, createEntityId(removedValue, connectionId.childClass)))
-    }
-    else emptyList()
-  }
-
-  fun removeOneToAbstractOneRefByParent(connectionId: ConnectionId, parentId: ParentEntityId): Modification? {
-    val previousChild = getAbstractOneToOneMutableMap(connectionId).inverse().remove(parentId)
-    return if (previousChild != null) {
-      Modification.Remove(parentId.id, previousChild.id)
-    } else null
-  }
-
   fun removeOneToAbstractOneRefByChild(connectionId: ConnectionId, childId: ChildEntityId): Modification? {
     val removedParent = getAbstractOneToOneMutableMap(connectionId).remove(childId) ?: return null
     return Modification.Remove(removedParent.id, childId.id)

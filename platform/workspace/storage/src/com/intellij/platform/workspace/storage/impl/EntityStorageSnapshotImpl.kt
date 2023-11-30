@@ -596,7 +596,7 @@ internal class MutableEntityStorageImpl(
           this.createReplaceEventsForUpdates(modifications, connectionId)
         }
         else {
-          val modifications = refs.removeOneToOneRefByParent(connectionId, parentId)
+          val modifications = refs.removeRefsByParent(connectionId, parentId.asParent())
           this.createReplaceEventsForUpdates(modifications, connectionId)
         }
       }
@@ -635,8 +635,8 @@ internal class MutableEntityStorageImpl(
           this.createReplaceEventsForUpdates(modifications, connectionId)
         }
         else {
-          val operation = refs.removeOneToAbstractOneRefByParent(connectionId, parentId)
-          if (operation != null) this.createReplaceEventsForUpdates(listOf(operation), connectionId)
+          val operation = refs.removeRefsByParent(connectionId, parentId)
+          this.createReplaceEventsForUpdates(operation, connectionId)
         }
       }
     }
