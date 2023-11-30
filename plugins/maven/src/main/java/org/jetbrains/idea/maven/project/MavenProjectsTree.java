@@ -55,7 +55,7 @@ import java.util.zip.CRC32;
 public final class MavenProjectsTree {
   private static final Logger LOG = Logger.getInstance(MavenProjectsTree.class);
 
-  private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".7";
+  private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".8";
 
   private final Object myStateLock = new Object();
   private final ReentrantReadWriteLock myStructureLock = new ReentrantReadWriteLock();
