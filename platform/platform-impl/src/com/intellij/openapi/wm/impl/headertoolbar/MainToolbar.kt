@@ -430,8 +430,8 @@ private suspend fun computeMainActionGroups(customActionSchema: CustomActionsSch
 }
 
 @RequiresBlockingContext
-internal fun computeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
-  return getMainToolbarGroups
+internal fun blockingComputeMainActionGroups(customActionSchema: CustomActionsSchema): List<Pair<ActionGroup, HorizontalLayout.Group>> {
+  return getMainToolbarGroups()
     .mapNotNull { info ->
       customActionSchema.getCorrectedAction(info.id, info.name)?.let {
         it to info.align
