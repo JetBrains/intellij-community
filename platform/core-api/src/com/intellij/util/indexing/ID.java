@@ -5,7 +5,7 @@ import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.containers.UnmodifiableHashMap;
+import com.intellij.util.Java11Shim;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -19,6 +19,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.intellij.util.containers.UtilKt.with;
+import static com.intellij.util.containers.UtilKt.without;
+
 /**
  * @author Eugene Zhuravlev
  */
@@ -30,8 +33,8 @@ public class ID<K, V> extends IndexId<K,V> {
   private static final Map<String, ID<?, ?>> idObjects = new ConcurrentHashMap<>();
 
   private static final Object lock = new Object();
-  private static volatile UnmodifiableHashMap<ID<?, ?>, PluginId> idToPluginId = UnmodifiableHashMap.empty();
-  private static volatile UnmodifiableHashMap<ID<?, ?>, Throwable> idToRegistrationStackTrace = UnmodifiableHashMap.empty();
+  private static volatile Map<ID<?, ?>, PluginId> idToPluginId = Java11Shim.INSTANCE.mapOf();
+  private static volatile Map<ID<?, ?>, Throwable> idToRegistrationStackTrace = Java11Shim.INSTANCE.mapOf();
   static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private volatile int uniqueId;
@@ -101,9 +104,9 @@ public class ID<K, V> extends IndexId<K,V> {
                                    pluginId;
 
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      idToPluginId = idToPluginId.with(this, pluginId);
+      idToPluginId = with(idToPluginId, this, pluginId);
       //noinspection AssignmentToStaticFieldFromInstanceMethod
-      idToRegistrationStackTrace = idToRegistrationStackTrace.with(this, new Throwable());
+      idToRegistrationStackTrace = with(idToRegistrationStackTrace, this, new Throwable());
     }
   }
 
@@ -205,8 +208,8 @@ public class ID<K, V> extends IndexId<K,V> {
     synchronized (lock) {
       ID<?, ?> oldID = idObjects.remove(name);
       LOG.assertTrue(id.equals(oldID), "Failed to unload: " + name);
-      idToPluginId = idToPluginId.without(id);
-      idToRegistrationStackTrace = idToRegistrationStackTrace.without(id);
+      idToPluginId = without(idToPluginId, id);
+      idToRegistrationStackTrace = without(idToRegistrationStackTrace, id);
     }
   }
 }
