@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -39,29 +38,6 @@ public final class VcsFileUtil {
    * The limit is less than OS limit to leave space to quoting, spaces, charset conversion, and commands arguments.
    */
   public static final int FILE_PATH_LIMIT = 7600;
-
-  /**
-   * Execute function for each chunk of arguments and collect the result. Check for being cancelled in process.
-   *
-   * @param arguments the arguments to chunk
-   * @param groupSize size of argument groups that should be put in the same chunk (like a name and a value)
-   * @param processor function to execute on each chunk
-   * @param <T>       type of result value
-   * @return list of result values
-   */
-  @NotNull
-  public static <T> List<T> foreachChunk(@NotNull List<String> arguments,
-                                         int groupSize,
-                                         @NotNull ThrowableNotNullFunction<? super List<String>, ? extends List<? extends T>, ? extends VcsException> processor)
-    throws VcsException {
-    List<T> result = new ArrayList<>();
-
-    foreachChunk(arguments, groupSize, chunk -> {
-      result.addAll(processor.fun(chunk));
-    });
-
-    return result;
-  }
 
   /**
    * Execute function for each chunk of arguments. Check for being cancelled in process.
