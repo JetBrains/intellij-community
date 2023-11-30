@@ -19,7 +19,7 @@ import java.util.Map;
 
 public class SwingUpdaterUI implements UpdaterUI {
   private static final EmptyBorder FRAME_BORDER = new EmptyBorder(8, 8, 8, 8);
-  private static final EmptyBorder LABEL_BORDER = new EmptyBorder(0, 0, 5, 0);
+  private static final EmptyBorder LABEL_BORDER = new EmptyBorder(0, 0, 8, 0);
   private static final EmptyBorder BUTTONS_BORDER = new EmptyBorder(5, 0, 0, 0);
 
   private static final Color VALIDATION_ERROR_COLOR = new Color(255, 175, 175);
@@ -182,14 +182,16 @@ public class SwingUpdaterUI implements UpdaterUI {
         columnModel.getColumn(i).setPreferredWidth(MyTableModel.getColumnWidth(i, 1000));
       }
 
-      var message =
-        UpdaterUI.message("conflicts.header") +
-        "\n\n" +
-        (canProceed ? UpdaterUI.message("conflicts.text.1") : UpdaterUI.message("conflicts.text.2"));
-      var label = new JLabel(convertToHtml(message));
-      label.setBorder(LABEL_BORDER);
+      var msgPanel = new JPanel();
+      msgPanel.setLayout(new BoxLayout(msgPanel, BoxLayout.Y_AXIS));
+      msgPanel.setBorder(LABEL_BORDER);
+      var header = new JLabel(UpdaterUI.message("conflicts.header"));
+      header.setBorder(LABEL_BORDER);
+      msgPanel.add(header);
+      var message = canProceed ? UpdaterUI.message("conflicts.text.1") : UpdaterUI.message("conflicts.text.2");
+      msgPanel.add(new JLabel(convertToHtml(message)));
 
-      dialog.add(label, BorderLayout.NORTH);
+      dialog.add(msgPanel, BorderLayout.NORTH);
       dialog.add(new JScrollPane(table), BorderLayout.CENTER);
       dialog.add(buttonsPanel, BorderLayout.SOUTH);
       dialog.getRootPane().setBorder(FRAME_BORDER);
