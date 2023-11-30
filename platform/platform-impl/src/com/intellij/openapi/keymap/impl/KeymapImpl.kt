@@ -34,10 +34,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.SmartList
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.nullize
 import org.jdom.Element
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -86,7 +84,9 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
 
     dataHolder?.let {
       dataHolder = null
-      readExternal(keymapElement = it.read(), actionManager = actionManager, actionIdToShortcuts = actionIdToShortcuts)
+      readExternal(keymapElement = it.read(),
+                   actionBinding = { id -> actionManager.getActionBinding(id) },
+                   actionIdToShortcuts = actionIdToShortcuts)
     }
 
     // only after pendingInit we can use the name (it is set by readExternal)
@@ -124,7 +124,7 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
         fun addActionToShortcutMap(actionId: String, map: MutableMap<T, MutableList<String>>) {
           for (shortcut in getOwnOrBoundShortcuts(actionId, actionManager)) {
             mapper(shortcut)?.let {
-              val ids = map.computeIfAbsent(it) { SmartList() }
+              val ids = map.computeIfAbsent(it) { ArrayList() }
               if (!ids.contains(actionId)) {
                 ids.add(actionId)
               }
@@ -207,6 +207,11 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
                 actionBinding = { ActionManagerEx.getInstanceEx().getActionBinding(it) })
   }
 
+  private fun getParentShortcuts(actionId: String, actionBinding: (String) -> String?): List<Shortcut> {
+    val parent = parent ?: return java.util.List.of()
+    return parent.getShortcutList(actionId, parent.actionIdToShortcuts.value, actionBinding).map { convertShortcut(it) }
+  }
+
   internal fun addShortcut(actionId: String,
                            shortcut: Shortcut,
                            fromSettings: Boolean,
@@ -214,12 +219,7 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
                            actionBinding: (String) -> String?) {
     val boundShortcuts = actionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
     actionIdToShortcuts.compute(actionId) { id, list ->
-      var result: List<Shortcut>? = list
-      if (result == null) {
-        result = boundShortcuts
-                 ?: parent?.getShortcutList(id, actionIdToShortcuts, actionBinding)?.map { convertShortcut(it) }
-                 ?: java.util.List.of()!!
-      }
+      var result = list ?: boundShortcuts ?: getParentShortcuts(id, actionBinding)
       if (!result.contains(shortcut)) {
         result = result + shortcut
       }
@@ -308,14 +308,8 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
     actionIdToShortcuts.compute(actionId) { id, list ->
       when {
         list == null -> {
-          val inherited = fromBinding
-                          ?: parent?.getShortcutList(id, actionIdToShortcuts, actionBinding)?.map { convertShortcut(it) }.nullize()
-          if (inherited == null || !inherited.contains(toDelete)) {
-            null
-          }
-          else {
-            inherited - toDelete
-          }
+          val inherited = fromBinding ?: getParentShortcuts(id,  actionBinding)
+          if (inherited.contains(toDelete)) inherited - toDelete else null
         }
         !list.contains(toDelete) -> list
         parent == null -> if (list.size == 1) null else java.util.List.copyOf(list - toDelete)
@@ -331,11 +325,11 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
   }
 
   private fun List<Shortcut>.areShortcutsEqualToParent(actionId: String, actionBinding: (String) -> String?): Boolean {
-    val parent = parent ?: return false
-    val shortcuts2 = parent.getShortcutList(actionId = actionId,
-                                            actionIdToShortcuts = parent.actionIdToShortcuts.value,
-                                            actionBinding = actionBinding)
-      .map { convertShortcut(it) }
+    if (parent == null) {
+      return false
+    }
+
+    val shortcuts2 = getParentShortcuts(actionId, actionBinding)
     return areShortcutsEqual(shortcuts1 = this, shortcuts2 = shortcuts2)
   }
 
@@ -349,7 +343,7 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
 
   private fun getActionIds(shortcut: KeyboardModifierGestureShortcut): List<String> {
     // first, get keystrokes from our own map
-    val list = SmartList<String>()
+    val list = ArrayList<String>()
     for ((key, value) in gestureToActionIds) {
       if (shortcut.startsWith(key)) {
         list.addAll(value)
@@ -385,14 +379,14 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
     val actionBinding = ActionManagerEx.getInstanceEx()::getActionBinding
     val actionIdToShortcuts = actionIdToShortcuts.value
     for (id in ids) {
-      for (shortcut in getShortcutList(id, actionIdToShortcuts, actionBinding)) {
+      for (shortcut in getShortcutList(actionId = id, actionIdToShortcuts = actionIdToShortcuts, actionBinding = actionBinding)) {
         if (shortcut !is KeyboardShortcut) {
           continue
         }
 
         if (firstKeyStroke == shortcut.firstKeyStroke && secondKeyStroke == shortcut.secondKeyStroke) {
           if (actualBindings == null) {
-            actualBindings = SmartList()
+            actualBindings = ArrayList()
           }
           actualBindings.add(id)
           break
@@ -470,10 +464,10 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
       }
 
       if (list == null) {
-        list = SmartList()
+        list = ArrayList()
       }
       else if (isOriginalListInstance) {
-        list = SmartList(list)
+        list = ArrayList(list)
         isOriginalListInstance = false
       }
 
@@ -503,10 +497,7 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
     // todo why not convert on add? why we don't need to convert our own shortcuts?
     return actionIdToShortcuts.get(actionId)
            ?: actionBinding(actionId)?.let { actionIdToShortcuts.get(it) }
-           ?: parent?.let {
-             it.getShortcutList(actionId = actionId, actionIdToShortcuts = it.actionIdToShortcuts.value, actionBinding = actionBinding)
-           }?.map { convertShortcut(it) }
-           ?: java.util.List.of()
+           ?: getParentShortcuts(actionId, actionBinding)
   }
 
   fun hasShortcutDefined(actionId: String): Boolean {
@@ -516,7 +507,7 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
   // you must clear `actionIdToShortcuts` before calling
   protected open fun readExternal(keymapElement: Element,
                                   actionIdToShortcuts: MutableMap<String, List<Shortcut>>,
-                                  actionManager: ActionManagerEx) {
+                                  actionBinding: (String) -> String?) {
     if (KEY_MAP != keymapElement.name) {
       throw InvalidDataException("unknown element: $keymapElement")
     }
@@ -729,7 +720,7 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
           continue
         }
 
-        result.computeIfAbsent(id) { SmartList() }.add(shortcut1)
+        result.computeIfAbsent(id) { ArrayList() }.add(shortcut1)
       }
     }
 
