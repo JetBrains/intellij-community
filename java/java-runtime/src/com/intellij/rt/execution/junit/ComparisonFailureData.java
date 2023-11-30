@@ -268,7 +268,7 @@ public class ComparisonFailureData {
     if (OPENTEST4J_VALUE_WRAPPER.equals(valueWrapper.getClass().getName())) {
       Method valueMethod = valueWrapper.getClass().getDeclaredMethod("getValue");
       Object value = valueMethod.invoke(valueWrapper);
-      if (OPENTEST4J_FILE_INFO.equals(value.getClass().getName())) {
+      if (value != null && OPENTEST4J_FILE_INFO.equals(value.getClass().getName())) {
         Method contentAsStringMethod = value.getClass().getDeclaredMethod("getContentsAsString", Charset.class);
         String valueString = (String)contentAsStringMethod.invoke(value, OPENTEST4J_FILE_CONTENT_CHARSET);
         Method pathMethod = value.getClass().getDeclaredMethod("getPath");
