@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchRootType;
+import com.intellij.ide.scratch.ScratchesSearchScope;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.java.index.StringIndex;
 import com.intellij.lang.LanguageParserDefinitions;
@@ -24,8 +25,10 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -34,10 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,6 +59,7 @@ import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.search.*;
+import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -1444,6 +1445,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     final VirtualFile file =
       ScratchRootType.getInstance().createScratchFile(getProject(), "Foo.java", JavaLanguage.INSTANCE, "class Foo {}");
     int fileId = ((VirtualFileWithId)file).getId();
+    deleteOnTearDown(file);
 
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     ID<Integer, Void> trigramId = TrigramIndex.INDEX_ID;
@@ -1461,6 +1463,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   public void test_requestReindex() {
     VirtualFile file = ScratchRootType.getInstance().createScratchFile(getProject(), "Foo.java", JavaLanguage.INSTANCE, "class Foo {}");
+    deleteOnTearDown(file);
 
     CountingFileBasedIndexExtension.registerCountingFileBasedIndex(getTestRootDisposable());
 
@@ -1524,5 +1527,55 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   private static <T> ThrowableComputable<T, RuntimeException> asComputable(final CachedValue<T> cachedValue) {
     return () -> cachedValue.getValue();
+  }
+
+  private void deleteOnTearDown(VirtualFile fileOrDir) {
+    Disposer.register(myFixture.getTestRootDisposable(), () -> VfsTestUtil.deleteFile(fileOrDir));
+  }
+
+  public void test_essential_GlobalSearchScopes_implement_VirtualFileEnumeration() {
+    VirtualFile src = myFixture.addFileToProject("src1/A.java", "class A { int xxxyyy;}").getVirtualFile();
+    assertNotNull(findClass("A"));
+    VirtualFile scratch = ScratchRootType.getInstance().createScratchFile(getProject(), "Foo.java", JavaLanguage.INSTANCE, "class Foo { }");
+    deleteOnTearDown(scratch);
+
+    assertNotNull(VirtualFileEnumeration.extract(new ModuleWithDependentsScope(getProject(), Collections.singletonList(getModule()))));
+    assertNotNull(VirtualFileEnumeration.extract(getModule().getModuleWithDependenciesScope()));
+    assertNotNull(VirtualFileEnumeration.extract(getModule().getModuleWithDependentsScope()));
+    assertNotNull(VirtualFileEnumeration.extract(ScratchesSearchScope.getScratchesScope(getProject())));
+    assertNotNull(VirtualFileEnumeration.extract(getModule().getModuleScope()));
+
+    VirtualFileEnumeration scratchEnum = VirtualFileEnumeration.extract(ScratchesSearchScope.getScratchesScope(getProject()));
+    assertTrue(scratchEnum.contains(((VirtualFileWithId)scratch).getId()));
+    assertFalse(scratchEnum.contains(((VirtualFileWithId)src).getId()));
+    VirtualFileEnumeration moduleEnum = VirtualFileEnumeration.extract(getModule().getModuleScope());
+    assertFalse(moduleEnum.contains(((VirtualFileWithId)scratch).getId()));
+    assertTrue(moduleEnum.contains(((VirtualFileWithId)src).getId()));
+
+    // assert that union merges enumerations correctly
+    GlobalSearchScope scratchPlusSrc = getModule().getModuleScope().uniteWith(ScratchesSearchScope.getScratchesScope(getProject()));
+    VirtualFileEnumeration scratchPlusSrcEnum = VirtualFileEnumeration.extract(scratchPlusSrc);
+    assertNotNull(scratchPlusSrcEnum);
+    assertTrue(scratchPlusSrcEnum.contains(((VirtualFileWithId)scratch).getId()));
+    assertTrue(scratchPlusSrcEnum.contains(((VirtualFileWithId)src).getId()));
+
+    VirtualFile src2 = myFixture.addFileToProject("src1/B.java", "class B { }").getVirtualFile();
+    GlobalSearchScope files = GlobalSearchScope.filesScope(getProject(), Arrays.asList(src, src2));
+    GlobalSearchScope filesAndSrc = getModule().getModuleScope().intersectWith(files);
+    VirtualFileEnumeration filesAndSrcEnum = VirtualFileEnumeration.extract(filesAndSrc);
+    assertNotNull(filesAndSrcEnum);
+    assertFalse(filesAndSrcEnum.contains(((VirtualFileWithId)scratch).getId()));
+    assertTrue(filesAndSrcEnum.contains(((VirtualFileWithId)src).getId()));
+    assertTrue(filesAndSrcEnum.contains(((VirtualFileWithId)src2).getId()));
+
+    VirtualFile scratchTxt = ScratchRootType.getInstance().createScratchFile(getProject(), "Foo.txt", PlainTextLanguage.INSTANCE, "xxx");
+    assertTrue(ScratchesSearchScope.getScratchesScope(getProject()).contains(scratchTxt));
+    GlobalSearchScope scratchJava = GlobalSearchScope.getScopeRestrictedByFileTypes(ScratchesSearchScope.getScratchesScope(getProject()), JavaFileType.INSTANCE);
+    assertFalse(scratchJava.contains(scratchTxt));
+    VirtualFileEnumeration scratchJavaEnum = VirtualFileEnumeration.extract(scratchJava);
+    assertNotNull(scratchJavaEnum);
+    assertTrue(scratchJavaEnum.contains(((VirtualFileWithId)scratch).getId()));
+    assertFalse(scratchJavaEnum.contains(((VirtualFileWithId)src).getId()));
+    assertFalse(scratchJavaEnum.contains(((VirtualFileWithId)src2).getId()));
   }
 }
