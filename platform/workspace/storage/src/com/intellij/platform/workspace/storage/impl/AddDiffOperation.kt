@@ -59,13 +59,16 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           // Restore links to soft references
           if (targetEntityData is SoftLinkable) target.indexes.updateSoftLinksIndex(targetEntityData)
 
+          // Keep adding "add" event before updating children and parents. Otherwise, we'll get a weird behaviour when we try to add
+          //   "add" event on top of "modify" event that was generated while adding references.
+          target.changeLog.addAddEvent(targetEntityId.id, targetEntityData)
+
           addRestoreChildren(sourceEntityId, targetEntityId)
 
           // Restore parent references
           addRestoreParents(sourceEntityId, targetEntityId)
 
           target.indexes.updateIndices(change.entityData.createEntityId(), targetEntityData, diff)
-          target.changeLog.addAddEvent(targetEntityId.id, targetEntityData)
         }
         is ChangeEntry.RemoveEntity -> {
           LOG.trace { "addDiff: remove entity. ${change.id}" }
