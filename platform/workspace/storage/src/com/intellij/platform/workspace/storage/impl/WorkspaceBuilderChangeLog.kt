@@ -382,7 +382,7 @@ internal class WorkspaceBuilderChangeLog {
       when (existingChange) {
         is ChangeEntry.AddEntity -> changeLog.remove(removedEntityId)
         is ChangeEntry.ReplaceEntity -> changeLog[removedEntityId] = removeEvent
-        is ChangeEntry.RemoveEntity -> error("Entity was already removed")
+        is ChangeEntry.RemoveEntity ->  error("Already removed ${removedEntityId.asString()}")
       }
     }
   }
