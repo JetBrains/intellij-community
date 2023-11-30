@@ -8,6 +8,7 @@ import com.intellij.find.impl.livePreview.LivePreviewController
 import com.intellij.find.impl.livePreview.SearchResults
 import com.intellij.find.impl.livePreview.SearchResults.SearchResultsListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.Editor
@@ -70,7 +71,7 @@ internal class CombinedEditorSearchSession(private val project: Project,
 
   init {
     searchComponent = SearchReplaceComponent.buildFor(project, parentComponent)
-      .addPrimarySearchActions(*EditorSearchSession.createPrimarySearchActions())
+      .addPrimarySearchActions(*createPrimarySearchActions())
       .addExtraSearchActions(
         ToggleMatchCase(),
         ToggleWholeWordsOnlyAction(),
@@ -95,6 +96,13 @@ internal class CombinedEditorSearchSession(private val project: Project,
         holders.forEach { it.disableLivePreview() }
       }
     })
+  }
+
+  private fun createPrimarySearchActions(): Array<AnAction> {
+    return EditorSearchSession.createPrimarySearchActions()
+      .asSequence()
+      .map { action -> if (action is StatusTextAction) WiderStatusTextAction() else action }
+      .toList().toTypedArray()
   }
 
   fun addListener(listener: CombinedEditorSearchSessionListener) {
@@ -367,10 +375,15 @@ internal class CombinedEditorSearchSession(private val project: Project,
 
   private inner class MyDataProvider : DataProvider {
     override fun getData(dataId: String): Any? {
-      if (SearchSession.KEY.`is`(dataId)) {
-        return this@CombinedEditorSearchSession
+      return when {
+        SearchSession.KEY.`is`(dataId) -> this@CombinedEditorSearchSession
+        SelectAllAction.DISABLED.`is`(dataId) -> true
+        else -> currentSession.getData(dataId)
       }
-      return currentSession.getData(dataId)
     }
+  }
+
+  private class WiderStatusTextAction : StatusTextAction() {
+    override fun getTextToCountPreferredSize(): String = "9888 results in 100500 files"
   }
 }
