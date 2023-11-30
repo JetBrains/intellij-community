@@ -394,7 +394,8 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private boolean shouldHandleAsSimpleMethod(@NotNull PsiMethod method) {
     if (!mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE) return false;
     PsiCodeBlock body = method.getBody();
-    return body != null && !body.textContains('\n');
+    return body != null && !body.textContains('\n') &&
+           (!myJavaSettings.NEW_LINE_WHEN_BODY_NON_EMPTY || body.isEmpty());
   }
 
   private static int getMethodHeaderStartOffset(@NotNull PsiMethod method) {

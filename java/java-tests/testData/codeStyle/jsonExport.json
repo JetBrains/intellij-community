@@ -149,6 +149,7 @@
       "new_line_after_lparen_in_annotation": false,
       "new_line_after_lparen_in_deconstruction_pattern": true,
       "new_line_after_lparen_in_record_header": false,
+      "new_line_when_body_non_empty": false,
       "packages_to_use_import_on_demand": [
         "java.awt.*",
         "javax.swing.*"
