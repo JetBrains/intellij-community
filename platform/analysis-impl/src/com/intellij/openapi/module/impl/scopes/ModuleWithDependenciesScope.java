@@ -32,8 +32,8 @@ public final class ModuleWithDependenciesScope extends GlobalSearchScope impleme
   public static final int LIBRARIES = 0x02;
   public static final int MODULES = 0x04;
   public static final int TESTS = 0x08;
-  private VirtualFileEnumeration myVirtualFileEnumeration;
-  private long myVFSModificationCount;
+  private volatile VirtualFileEnumeration myVirtualFileEnumeration;
+  private volatile long myVFSModificationCount;
 
   @MagicConstant(flags = {COMPILE_ONLY, LIBRARIES, MODULES, TESTS})
   @interface ScopeConstant {}
