@@ -123,7 +123,7 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   public static @NotNull <K, V> ID<K, V> create(@NonNls @NotNull String name) {
-    PluginId pluginId = getCallerPluginId();
+    PluginId pluginId = PluginUtil.getInstance().getCallerPlugin(3);
     synchronized (lock) {
       ID<K, V> found = findByName(name, true, pluginId);
       return found == null ? new ID<>(name, pluginId) : found;
@@ -195,11 +195,6 @@ public class ID<K, V> extends IndexId<K,V> {
   public static ID<?, ?> findById(int id) {
     String key = nameToIdRegistry.valueOf(id);
     return key == null ? null : idObjects.get(key);
-  }
-
-  @ApiStatus.Internal
-  protected static @Nullable PluginId getCallerPluginId() {
-    return PluginUtil.getInstance().getCallerPlugin(4);
   }
 
   @ApiStatus.Internal

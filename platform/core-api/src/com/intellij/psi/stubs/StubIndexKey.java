@@ -5,6 +5,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.indexing.ID;
@@ -18,7 +19,7 @@ public final class StubIndexKey<K, Psi extends PsiElement> extends ID<K, Psi> {
   }
 
   public static synchronized @NotNull <K, Psi extends PsiElement> StubIndexKey<K, Psi> createIndexKey(@NonNls @NotNull String name) {
-    PluginId pluginId = getCallerPluginId();
+    PluginId pluginId = PluginUtil.getInstance().getCallerPlugin(3);
     ID<?, ?> existing = findByName(name, true, pluginId);
     if (existing != null) {
       if (existing instanceof StubIndexKey) {
