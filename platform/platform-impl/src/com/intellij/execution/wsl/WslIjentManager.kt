@@ -96,7 +96,7 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
       val ijentApi = getIjentApi(wslDistribution, project, isSudo)
       when (val processResult = ijentApi.executeProcess(
         exe = FileUtil.toSystemIndependentName(command.first()),
-        args = *command.toList().drop(1).toTypedArray(),
+        args = command.toList().drop(1).toTypedArray(),
         env = processBuilder.environment(),
         pty = pty,
         workingDirectory = processBuilder.directory()?.let { wslDistribution.getWslPath(it.toPath()) }
