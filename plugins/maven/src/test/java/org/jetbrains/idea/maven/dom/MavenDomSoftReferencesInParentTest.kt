@@ -17,18 +17,23 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
 class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
-  override fun setUp() {
+  override fun setUp() = runBlocking {
     super.setUp()
-    VirtualFileManager.getInstance().syncRefresh()
+    withContext(Dispatchers.EDT) {
+      VirtualFileManager.getInstance().syncRefresh()
+    }
+    Unit
   }
 
   @Test
@@ -45,7 +50,7 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                     </build>
                     """.trimIndent())
 
-    checkHighlighting()
+    checkHighlightingEdt()
   }
 
   @Test
@@ -85,6 +90,12 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                        </build>
                        """.trimIndent()), false)
 
-    checkHighlighting()
+    checkHighlightingEdt()
+  }
+
+  private fun checkHighlightingEdt() = runBlocking {
+    withContext(Dispatchers.EDT) {
+      checkHighlighting()
+    }
   }
 }
