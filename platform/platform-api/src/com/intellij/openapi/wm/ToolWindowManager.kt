@@ -201,7 +201,6 @@ class RegisterToolWindowTaskBuilder @PublishedApi internal constructor(private v
                                         component = null,
                                         sideTool = sideTool,
                                         canCloseContent = canCloseContent,
-                                        canWorkInDumbMode = true,
                                         shouldBeAvailable = shouldBeAvailable,
                                         contentFactory = contentFactory,
                                         icon = icon,

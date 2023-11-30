@@ -3,15 +3,12 @@ package com.intellij.openapi.wm
 
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.Icon
 
 /**
  * Performs lazy initialization of a tool window registered in `plugin.xml`.
- * Please implement [com.intellij.openapi.project.DumbAware] marker interface to indicate that the tool window content should be
- * available during the indexing process.
  *
  * To localizing tool window stripe title, add key `toolwindow.stripe.yourToolWindowId.replace(" ", "_")` to plugin's resource bundle.
  *
@@ -57,11 +54,11 @@ interface ToolWindowFactory {
   /**
    * Return custom anchor or null to use anchor defined in Tool Window Registration or customized by user.
    */
-  @get:ApiStatus.Internal
+  @get:Internal
   val anchor: ToolWindowAnchor?
     get() = null
 
-  @get:ApiStatus.Internal
+  @get:Internal
   val icon: Icon?
     get() = null
 }

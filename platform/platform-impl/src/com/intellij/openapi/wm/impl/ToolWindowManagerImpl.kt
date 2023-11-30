@@ -42,7 +42,6 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectEx
@@ -564,7 +563,6 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         anchor = getToolWindowAnchor(factory, bean),
         sideTool = bean.secondary || bean.side,
         canCloseContent = bean.canCloseContents,
-        canWorkInDumbMode = DumbService.isDumbAware(factory),
         shouldBeAvailable = factory.shouldBeAvailable(project),
         contentFactory = factory,
         stripeTitle = getStripeTitleSupplier(id = bean.id, project = project, pluginDescriptor = plugin)
