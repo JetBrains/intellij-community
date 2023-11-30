@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ae.database.counters.community.events
 
-import com.intellij.platform.ae.database.baseEvents.FusBasedCounterUserActivity
+import com.intellij.ae.database.baseEvents.FusBasedCounterUserActivity
 
 object PluginsInstalledUserActivity : FusBasedCounterUserActivity() {
   internal class Factory: FusBasedCounterUserActivity.Factory {

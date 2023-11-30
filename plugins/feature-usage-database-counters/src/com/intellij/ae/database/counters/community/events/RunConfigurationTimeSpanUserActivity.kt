@@ -1,6 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ae.database.counters.community.events
 
+import com.intellij.ae.database.activities.WritableDatabaseBackedTimeSpanUserActivity
+import com.intellij.ae.database.dbs.timespan.TimeSpanUserActivityDatabaseManualKind
+import com.intellij.ae.database.runUpdateEvent
+import com.intellij.ae.database.utils.InstantUtils
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.BuildViewManager
 import com.intellij.build.events.BuildEvent
@@ -14,10 +18,6 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.platform.ae.database.activities.WritableDatabaseBackedTimeSpanUserActivity
-import com.intellij.platform.ae.database.dbs.timespan.TimeSpanUserActivityDatabaseManualKind
-import com.intellij.platform.ae.database.runUpdateEvent
-import com.intellij.platform.ae.database.utils.InstantUtils
 import org.jetbrains.sqlite.ObjectBinderFactory
 import java.time.Instant
 

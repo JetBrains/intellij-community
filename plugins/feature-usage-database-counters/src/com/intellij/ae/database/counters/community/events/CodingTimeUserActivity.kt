@@ -1,6 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ae.database.counters.community.events
 
+import com.intellij.ae.database.activities.WritableDatabaseBackedTimeSpanUserActivity
+import com.intellij.ae.database.createMap
+import com.intellij.ae.database.runUpdateEvent
+import com.intellij.ae.database.utils.InstantUtils
 import com.intellij.lang.Language
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -12,10 +16,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.validOrNull
-import com.intellij.platform.ae.database.activities.WritableDatabaseBackedTimeSpanUserActivity
-import com.intellij.platform.ae.database.createMap
-import com.intellij.platform.ae.database.runUpdateEvent
-import com.intellij.platform.ae.database.utils.InstantUtils
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.util.validOrNull
 import com.intellij.util.io.DigestUtil

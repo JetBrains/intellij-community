@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ae.database.counters.community.events
 
+import com.intellij.ae.database.activities.WritableDatabaseBackedCounterUserActivity
+import com.intellij.ae.database.runUpdateEvent
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
-import com.intellij.platform.ae.database.activities.WritableDatabaseBackedCounterUserActivity
-import com.intellij.platform.ae.database.runUpdateEvent
 import java.time.Instant
 
 object VcsFileCommittedUserActivity : WritableDatabaseBackedCounterUserActivity() {

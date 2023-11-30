@@ -11,8 +11,8 @@
   <depends>com.intellij.modules.platform</depends>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.platform.ae.database.fusBasedCounterUserActivity"
-                    interface="com.intellij.platform.ae.database.baseEvents.FusBasedCounterUserActivity$Factory"
+    <extensionPoint qualifiedName="com.intellij.ae.database.fusBasedCounterUserActivity"
+                    interface="com.intellij.ae.database.baseEvents.FusBasedCounterUserActivity$Factory"
                     dynamic="false"
     />
   </extensionPoints>
@@ -20,7 +20,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <!-- TODO: current usage is allowed, but will be removed after proper API from FUS team -->
     <applicationService
-      serviceImplementation="com.intellij.platform.ae.database.baseEvents.AddStatisticsEventLogListenerTemporary"
+      serviceImplementation="com.intellij.ae.database.baseEvents.AddStatisticsEventLogListenerTemporary"
       preload="true"
     />
   </extensions>
