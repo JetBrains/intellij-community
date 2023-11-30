@@ -144,6 +144,12 @@ public final class EditableSchemesCombo<T extends Scheme> {
       }
 
       @Override
+      protected boolean isDefaultScheme(@NotNull T scheme) {
+        SchemesModel<T> model = mySchemesPanel.getModel();
+        return model.isDefaultScheme(scheme);
+      }
+
+      @Override
       protected int getIndent(@NotNull T scheme) {
         return mySchemesPanel.getIndent(scheme);
       }

@@ -86,6 +86,10 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     throw new UnsupportedOperationException();
   }
 
+  protected boolean isDefaultScheme(@NotNull T scheme) {
+    return false;
+  }
+
   protected int getIndent(@NotNull T scheme) {
     return 0;
   }
@@ -126,6 +130,9 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     final var scheme = value.getScheme();
     if (scheme != null) {
       item.append(value.getPresentableText(), getSchemeAttributes(scheme));
+      if (isDefaultScheme(scheme)) {
+        item.append(" *", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      }
       if (supportsProjectSchemes()) {
         if (index == -1) {
           item.append("  " + (isProjectScheme(scheme) ? PROJECT_LEVEL.get() : IDE_LEVEL.get()),
