@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -712,7 +711,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     // Remove the mapping previously imported from 2023.2.
     lafToPreviousScheme.remove(theme.name)
     // Classic Light color scheme has id `EditorColorsScheme.DEFAULT_SCHEME_NAME` - save it as is
-    if (Scheme.getBaseName(scheme.name) == theme.editorSchemeId) {
+    if (scheme.isDefaultForTheme(theme)) {
       lafToPreviousScheme.remove(theme.id)
     }
     else {
