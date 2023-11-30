@@ -17,12 +17,6 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 internal class SimplifiableServiceRetrievingInspection : ServiceRetrievingInspectionBase() {
 
-  override val additionalComponentManagerMethodNames
-    get() = emptyArray<String>()
-
-  override val additionalServiceKtFileMethodNames
-    get() = emptyArray<String>()
-
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return UastHintedVisitorAdapter.create(holder.file.language, object : AbstractUastNonRecursiveVisitor() {
 

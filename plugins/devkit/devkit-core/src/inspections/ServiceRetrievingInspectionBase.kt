@@ -13,12 +13,13 @@ import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.toUElement
 
-internal abstract class ServiceRetrievingInspectionBase : DevKitUastInspectionBase() {
+internal abstract class ServiceRetrievingInspectionBase(
+  additionalComponentManagerMethodNames: Array<String> = emptyArray(),
+  additionalServiceKtFileMethodNames: Array<String> = emptyArray()
+) : DevKitUastInspectionBase() {
+
   protected data class ServiceRetrievingInfo(val howServiceRetrieved: Service.Level,
                                              val serviceClass: UClass)
-
-  protected abstract val additionalComponentManagerMethodNames: Array<String>
-  protected abstract val additionalServiceKtFileMethodNames: Array<String>
 
   protected val serviceKtFileMethods = CallMatcher.staticCall(
     "com.intellij.openapi.components.ServiceKt", "service", *additionalServiceKtFileMethodNames
