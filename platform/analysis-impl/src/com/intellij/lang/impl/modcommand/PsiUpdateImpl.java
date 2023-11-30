@@ -224,6 +224,7 @@ final class PsiUpdateImpl {
     private final @NotNull Map<VirtualFile, ModPsiUpdaterImpl.ChangedDirectoryInfo> myChangedDirectories = new LinkedHashMap<>();
     private @NotNull VirtualFile myNavigationFile;
     private int myCaretOffset;
+    private int myCaretVirtualEnd;
     private @NotNull TextRange mySelection;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private final List<ModStartTemplate.TemplateField> myTemplateFields = new ArrayList<>();
@@ -258,7 +259,7 @@ final class PsiUpdateImpl {
     }
 
     private ModPsiUpdaterImpl(@NotNull ActionContext actionContext) {
-      myCaretOffset = actionContext.offset();
+      myCaretOffset = myCaretVirtualEnd = actionContext.offset();
       mySelection = actionContext.selection();
       // TODO: lazily get the tracker for the current file
       myTracker = tracker(actionContext.file());
@@ -347,6 +348,7 @@ final class PsiUpdateImpl {
       range = mapRange(range);
       mySelection = range;
       myCaretOffset = range.getStartOffset();
+      myCaretVirtualEnd = range.getEndOffset();
     }
 
     @Override
@@ -410,14 +412,17 @@ final class PsiUpdateImpl {
         offset = instance.mapUnescapedOffsetToInjected(file, offset);
         offset = instance.injectedToHost(file, offset);
       }
-      myCaretOffset = offset;
+      myCaretOffset = myCaretVirtualEnd = offset;
     }
 
     @Override
     public void moveTo(@NotNull PsiElement element) {
       TextRange range = getRange(element);
       if (range != null) {
-        moveTo(range.getStartOffset());
+        range = mapRange(range);
+        myPositionUpdated = true;
+        myCaretOffset = range.getStartOffset();
+        myCaretVirtualEnd = range.getEndOffset();
       }
     }
 
@@ -428,7 +433,7 @@ final class PsiUpdateImpl {
       String text = myTracker.myPositionDocument.getText();
       int idx = text.lastIndexOf(ch, myCaretOffset);
       if (idx == -1) return;
-      myCaretOffset = idx;
+      myCaretOffset = myCaretVirtualEnd = idx;
     }
 
     @Override
@@ -510,7 +515,12 @@ final class PsiUpdateImpl {
 
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
-      myCaretOffset = updateOffset(event, myCaretOffset, myCaretOffset == mySelection.getStartOffset() && mySelection.getLength() > 0);
+      if (myCaretVirtualEnd > myCaretOffset) {
+        myCaretOffset = updateOffset(event, myCaretOffset, true);
+        myCaretVirtualEnd = updateOffset(event, myCaretVirtualEnd, false);
+      } else {
+        myCaretOffset = myCaretVirtualEnd = updateOffset(event, myCaretOffset, false);
+      }
       mySelection = updateRange(event, mySelection);
       myHighlightInfos.replaceAll(info -> info.withRange(updateRange(event, info.range())));
       myTemplateFields.replaceAll(info -> info.withRange(updateRange(event, info.range())));
