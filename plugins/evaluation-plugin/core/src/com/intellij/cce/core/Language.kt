@@ -11,6 +11,7 @@ enum class Language(val displayName: String, private val extension: String, val 
   CPP("C++", "cpp", "ObjectiveC"),
   PHP("PHP", "php", "PHP"),
   JS("JavaScript", "js", "JavaScript"),
+  VUE("Vue", "vue", "Vue"),
   TYPESCRIPT("TypeScript", "ts", "TypeScript"),
   GO("Go", "go", "go"),
   DART("Dart", "dart", "Dart", needSdk = true),
