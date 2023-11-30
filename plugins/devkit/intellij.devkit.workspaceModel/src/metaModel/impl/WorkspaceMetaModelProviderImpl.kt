@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import java.util.concurrent.ConcurrentHashMap
 
 internal class WorkspaceMetaModelProviderImpl(
-  private val explicitApiEnabled: Boolean,
   private val processAbstractTypes: Boolean,
   project: Project
 ): WorkspaceMetaModelProvider {
@@ -78,7 +77,7 @@ internal class WorkspaceMetaModelProviderImpl(
         .filter { it.isEntityInterface }
     }
 
-    val module = CompiledObjModuleImpl(packageName, explicitApiEnabled)
+    val module = CompiledObjModuleImpl(packageName)
     val types = entityInterfaces.sortedBy { it.name }.withIndex().map {
       it.value to createObjTypeStub(it.value, module)
     }

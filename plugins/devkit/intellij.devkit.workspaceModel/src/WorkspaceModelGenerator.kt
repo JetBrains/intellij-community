@@ -24,6 +24,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.additionalArgumentsAsList
+import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 
 private val LOG = logger<WorkspaceModelGenerator>()
@@ -43,7 +44,8 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
           CodeWriter.generate(
             project, module, sourceRoot.file!!,
             processAbstractTypes = module.withAbstractTypes,
-            explicitApiEnabled = module.explicitApiEnabled
+            explicitApiEnabled = module.explicitApiEnabled,
+            isTestModule = module.isTestModule // TODO(It doesn't work for all modules)
           ) {
             createGeneratedSourceFolder(module, sourceRoot)
           }
