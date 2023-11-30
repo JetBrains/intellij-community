@@ -437,6 +437,45 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("LocalClass", resolved.name)
     }
 
+    fun checkResolveJavaDefaultConstructor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """public class JavaClass { }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                fun test() {
+                  val instance = Java<caret>Class()
+                }
+            """.trimIndent()
+        )
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        // KTIJ-21555
+        val notResolved = uCallExpression.resolve()
+        TestCase.assertNull(notResolved)
+        val resolved = uCallExpression.classReference?.resolve() as? PsiClass
+        TestCase.assertNotNull(resolved)
+        TestCase.assertEquals("JavaClass", resolved!!.name)
+    }
+
+    fun checkResolveKotlinDefaultConstructor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class KotlinClass { }
+                fun test() {
+                  val instance = Kotlin<caret>Class()
+                }
+            """.trimIndent()
+        )
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+        TestCase.assertTrue("Not resolved to Kotlin class default constructor", resolved.isConstructor)
+        TestCase.assertEquals("KotlinClass", resolved.name)
+    }
+
     fun checkResolveJavaClassAsAnonymousObjectSuperType(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """public class JavaClass { }
