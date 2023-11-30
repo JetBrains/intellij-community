@@ -40,7 +40,7 @@ class TrustedPathsSettings : TrustedProjectsStateStorage<TrustedPathsSettings.St
   }
 
   fun isPathTrusted(path: Path): Boolean {
-    return getProjectTrustedState(path) == ThreeState.YES
+    return getProjectPathTrustedState(path) == ThreeState.YES
   }
 
   fun getTrustedPaths(): List<String> {

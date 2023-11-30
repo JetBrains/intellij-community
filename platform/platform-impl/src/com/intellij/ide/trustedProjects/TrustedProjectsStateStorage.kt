@@ -16,7 +16,7 @@ abstract class TrustedProjectsStateStorage<S: State>(state: S) : SerializablePer
     val trustedState: PrefixTreeMap<Path, Boolean>
   }
 
-  open fun getProjectTrustedState(path: Path): ThreeState {
+  open fun getProjectPathTrustedState(path: Path): ThreeState {
     val closestAncestorState = state.trustedState.getAncestorEntries(path)
       .maxByOrNull { it.key.nameCount }
     if (closestAncestorState != null) {
@@ -27,7 +27,7 @@ abstract class TrustedProjectsStateStorage<S: State>(state: S) : SerializablePer
 
   open fun getProjectTrustedState(locatedProject: TrustedProjectsLocator.LocatedProject): ThreeState {
     return locatedProject.projectRoots.asSequence()
-      .map { getProjectTrustedState(it) }
+      .map { getProjectPathTrustedState(it) }
       .fold(ThreeState.YES) { acc, it ->
         when {
           acc == ThreeState.UNSURE -> ThreeState.UNSURE

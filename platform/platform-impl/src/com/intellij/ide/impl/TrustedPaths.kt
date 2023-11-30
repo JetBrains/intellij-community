@@ -5,7 +5,6 @@ import com.intellij.ide.trustedProjects.TrustedProjectsLocator.LocatedProject
 import com.intellij.ide.trustedProjects.TrustedProjectsStateStorage
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
-import com.intellij.util.ThreeState
 import com.intellij.util.containers.prefix.map.PrefixTreeMap
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
@@ -33,10 +32,6 @@ class TrustedPaths : TrustedProjectsStateStorage<TrustedPaths.State>(State()) {
         trustedPaths.entries.map { Path.of(it.key) to it.value }
       )
     }
-  }
-
-  fun getProjectPathTrustedState(path: Path): ThreeState {
-    return getProjectTrustedState(path)
   }
 
   fun setProjectPathTrusted(path: Path, value: Boolean) {
