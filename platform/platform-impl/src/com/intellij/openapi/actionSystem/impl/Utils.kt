@@ -1171,4 +1171,5 @@ interface SuspendingUpdateSession: UpdateSession {
   suspend fun <T : Any?> sharedDataSuspend(key: Key<T>, supplier: suspend () -> T): T
 
   fun visitCaches(visitor: (AnAction, String, Any) -> Unit)
+  fun dropCaches(predicate: (AnAction) -> Boolean)
 }

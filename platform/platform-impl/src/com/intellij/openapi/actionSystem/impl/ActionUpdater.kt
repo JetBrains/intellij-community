@@ -255,13 +255,6 @@ internal class ActionUpdater @JvmOverloads constructor(
    */
   @RequiresBackgroundThread
   suspend fun expandActionGroup(group: ActionGroup, hideDisabled: Boolean): List<AnAction> {
-    // if reused, clear temporary deferred caches from previous `expandActionGroup` calls
-    // some are in completed-with-exception state (SkipOperation), so re-calling will fail
-    // 1. valid presentation and children are already cached in other maps
-    // 2. expanded children must not be cached in remote scenarios anyway
-    sessionData.keys.removeIf { (op, _) ->
-      op == OP_actionPresentation || op == OP_groupChildren || op == OP_expandActionGroup
-    }
     edtCallsCount = 0
     edtWaitNanos = 0
     val job = currentCoroutineContext().job
@@ -683,6 +676,19 @@ internal class ActionUpdater @JvmOverloads constructor(
       updater.groupChildren.forEach { action, children -> visitor(action, OP_groupChildren, children) }
       updater.sessionData.forEach { pair, deferred ->
         if (pair.first == OP_expandActionGroup) visitor(pair.second as ActionGroup, pair.first, deferred.getCompleted()!!) }
+    }
+
+    override fun dropCaches(predicate: (AnAction) -> Boolean) {
+      // if reused, clear temporary deferred caches from previous `expandActionGroup` calls
+      // some are in completed-with-exception state (SkipOperation), so re-calling will fail
+      // 1. valid presentation and children are already cached in other maps
+      // 2. expanded children must not be cached in remote scenarios anyway
+      updater.sessionData.keys.removeIf { (op, _) ->
+        op == OP_actionPresentation || op == OP_groupChildren || op == OP_expandActionGroup
+      }
+      // clear caches for selected actions
+      updater.updatedPresentations.keys.removeIf(predicate)
+      updater.groupChildren.keys.removeIf(predicate)
     }
   }
 }
