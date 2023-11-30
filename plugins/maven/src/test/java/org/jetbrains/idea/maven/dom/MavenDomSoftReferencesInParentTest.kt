@@ -18,6 +18,10 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -91,11 +95,19 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                        """.trimIndent()), false)
 
     checkHighlightingEdt()
+
+    val documentSaved = !FileDocumentManager.getInstance().isDocumentUnsaved(getDocument(myProjectPom))
+    assertTrue(documentSaved)
   }
 
-  private fun checkHighlightingEdt() = runBlocking {
+  private suspend fun getDocument(f: VirtualFile): Document {
+    return readAction { myFixture.getDocument(findPsiFile(f)!!) }
+  }
+
+  private suspend fun checkHighlightingEdt() {
     withContext(Dispatchers.EDT) {
       checkHighlighting()
+      FileDocumentManager.getInstance().saveAllDocuments()
     }
   }
 }
