@@ -603,12 +603,12 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   @RequiresBackgroundThread
-  protected suspend fun waitForImportWithinTimeout(action: suspend () -> Any?) {
+  protected suspend fun waitForImportWithinTimeout(action: suspend () -> Unit) {
     waitForImportWithinTimeout(myProject, action)
   }
 
   @RequiresBackgroundThread
-  protected suspend fun waitForImportWithinTimeout(project: Project, action: suspend () -> Any?) {
+  protected suspend fun waitForImportWithinTimeout(project: Project, action: suspend () -> Unit) {
     MavenLog.LOG.warn("waitForImportWithinTimeout started")
     val importStarted = AtomicBoolean(false)
     val importFinished = AtomicBoolean(false)
