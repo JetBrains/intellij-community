@@ -1,9 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 /**
@@ -19,7 +25,7 @@ import org.jetbrains.kotlin.psi.*
  * // After:
  *  n is Int ..
  */
-private fun KtWhenCondition.generateNewConditionWithSubject(subject: KtExpression?, isNullableSubject: Boolean): KtExpression {
+fun KtWhenCondition.generateNewConditionWithSubject(subject: KtExpression?, isNullableSubject: Boolean): KtExpression {
     val psiFactory = KtPsiFactory(project)
 
     return when (this) {
@@ -60,7 +66,7 @@ private fun KtWhenCondition.generateNewConditionWithSubject(subject: KtExpressio
  * // After:
  *  n == 0 || n == 3 ..
  */
-internal fun KtPsiFactory.combineWhenConditions(conditions: Array<KtWhenCondition>, subject: KtExpression?, isNullableSubject: Boolean) =
+fun KtPsiFactory.combineWhenConditions(conditions: Array<KtWhenCondition>, subject: KtExpression?, isNullableSubject: Boolean) =
     when (conditions.size) {
         0 -> null
         1 -> conditions[0].generateNewConditionWithSubject(subject, isNullableSubject)
@@ -68,3 +74,166 @@ internal fun KtPsiFactory.combineWhenConditions(conditions: Array<KtWhenConditio
             appendExpressions(conditions.map { it.generateNewConditionWithSubject(subject, isNullableSubject) }, separator = "||")
         }
     }
+
+/**
+ * Returns a new [KtWhenExpression] with introduced subject in brackets.
+ * Returns old when expression if it was not possible to introduce a subject.
+ * For example,
+ *
+ * ```
+ * // Before:
+ *  when {
+ *    x is String -> continue
+ *    x is Int -> break
+ *    else -> println(x)
+ *  }
+ *
+ * // After:
+ *  when (x) {
+ *    is String -> continue
+ *    is Int -> break
+ *    else -> println(x)
+ *  }
+ * ```
+ */
+fun KtWhenExpression.introduceSubjectIfPossible(subject: KtExpression?): KtWhenExpression {
+    subject ?: return this
+
+    val psiFactory = KtPsiFactory.contextual(context = this)
+
+    val whenExpression = psiFactory.buildExpression {
+        appendFixedText("when(").appendExpression(subject).appendFixedText("){\n")
+
+        for (entry in entries) {
+            val branchExpression = entry.expression
+
+            if (entry.isElse) {
+                appendFixedText("else")
+            } else {
+                for ((i, condition) in entry.conditions.withIndex()) {
+                    if (i > 0) appendFixedText(",")
+
+                    val conditionExpression = (condition as KtWhenConditionWithExpression).expression
+                    appendConditionWithSubjectRemoved(conditionExpression, subject)
+                }
+            }
+            appendFixedText("->")
+
+            appendExpression(branchExpression)
+            appendFixedText("\n")
+        }
+
+        appendFixedText("}")
+    }
+
+    return replaced(whenExpression) as KtWhenExpression
+}
+
+/**
+ * Returns [KtExpression] as potential subject for [KtWhenExpression].
+ */
+context(KtAnalysisSession)
+fun KtWhenExpression.getSubjectToIntroduce(checkConstants: Boolean = true): KtExpression? {
+    if (subjectExpression != null) return null
+
+    var lastCandidate: KtExpression? = null
+    for (entry in entries) {
+        val conditions = entry.conditions
+        if (!entry.isElse && conditions.isEmpty()) return null
+
+        for (condition in conditions) {
+            if (condition !is KtWhenConditionWithExpression) return null
+            val candidate = condition.expression?.getWhenConditionSubjectCandidate(checkConstants) ?: return null
+            if (lastCandidate == null) {
+                lastCandidate = candidate
+            } else if (!lastCandidate.matches(candidate)) {
+                return null
+            }
+        }
+    }
+
+    return lastCandidate
+}
+
+private fun BuilderByPattern<KtExpression>.appendConditionWithSubjectRemoved(conditionExpression: KtExpression?, subject: KtExpression) {
+    when (conditionExpression) {
+        is KtIsExpression -> {
+            if (conditionExpression.isNegated) {
+                appendFixedText("!")
+            }
+            appendFixedText("is ")
+            appendNonFormattedText(conditionExpression.typeReference?.text ?: "")
+        }
+
+        is KtBinaryExpression -> {
+            val lhs = conditionExpression.left
+            val rhs = conditionExpression.right
+            when (conditionExpression.operationToken) {
+                KtTokens.IN_KEYWORD -> appendFixedText("in ").appendExpression(rhs)
+                KtTokens.NOT_IN -> appendFixedText("!in ").appendExpression(rhs)
+                KtTokens.EQEQ -> appendExpression(rhs)
+                KtTokens.OROR -> {
+                    appendConditionWithSubjectRemoved(lhs, subject)
+                    appendFixedText(", ")
+                    appendConditionWithSubjectRemoved(rhs, subject)
+                }
+
+                else -> error("Unexpected operation token=${conditionExpression.operationToken}")
+            }
+        }
+
+        else -> error("${conditionExpression?.let { it::class }} - is unsupported type of conditional expression")
+    }
+}
+
+
+context(KtAnalysisSession)
+fun KtExpression?.getWhenConditionSubjectCandidate(checkConstants: Boolean): KtExpression? {
+    fun KtExpression?.getCandidate(): KtExpression? = when (this) {
+        is KtIsExpression -> leftHandSide
+        is KtBinaryExpression -> {
+            val lhs = left
+            val rhs = right
+            when (operationToken) {
+                KtTokens.IN_KEYWORD, KtTokens.NOT_IN -> lhs
+                KtTokens.EQEQ ->
+                    lhs?.takeIf { it.hasCandidateNameReferenceExpression(checkConstants) }
+                        ?: rhs?.takeIf { it.hasCandidateNameReferenceExpression(checkConstants) }
+                KtTokens.OROR -> {
+                    val leftCandidate = lhs?.safeDeparenthesize().getCandidate()
+                    val rightCandidate = rhs?.safeDeparenthesize().getCandidate()
+                    if (leftCandidate.matches(rightCandidate)) leftCandidate else null
+                }
+
+                else -> null
+            }
+        }
+
+        else -> null
+    }
+    return getCandidate()?.takeIf {
+        it is KtNameReferenceExpression || (it as? KtQualifiedExpression)?.selectorExpression is KtNameReferenceExpression || it is KtThisExpression
+    }
+}
+
+fun KtExpression.hasCandidateNameReferenceExpression(checkConstants: Boolean): Boolean {
+    val nameReferenceExpression =
+        this as? KtNameReferenceExpression ?: (this as? KtQualifiedExpression)?.selectorExpression as? KtNameReferenceExpression
+        ?: return false
+    if (!checkConstants) {
+        return true
+    }
+    val resolved = nameReferenceExpression.mainReference.resolve()
+    return !(resolved is KtObjectDeclaration || (resolved as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true)
+}
+
+context(KtAnalysisSession)
+private fun KtExpression?.matches(right: KtExpression?): Boolean {
+    if (this == null && right == null) return true
+
+    if (this != null && right != null) {
+        return this.isSemanticMatch(right)
+    }
+
+    return false
+}

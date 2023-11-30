@@ -13,8 +13,10 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
+import org.jetbrains.kotlin.idea.base.psi.unwrapBlockOrParenthesis
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -47,30 +49,6 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.constant
-
-fun KtBinaryExpression.expressionComparedToNull(): KtExpression? {
-    val operationToken = this.operationToken
-    if (operationToken != KtTokens.EQEQ && operationToken != KtTokens.EXCLEQ) return null
-
-    val right = this.right ?: return null
-    val left = this.left ?: return null
-
-    val rightIsNull = right.isNullExpression()
-    val leftIsNull = left.isNullExpression()
-    if (leftIsNull == rightIsNull) return null
-    return if (leftIsNull) right else left
-}
-
-fun KtExpression.unwrapBlockOrParenthesis(): KtExpression {
-    val innerExpression = KtPsiUtil.safeDeparenthesize(this, true)
-    if (innerExpression is KtBlockExpression) {
-        val statement = innerExpression.statements.singleOrNull() ?: return this
-        val deparenthesized = KtPsiUtil.safeDeparenthesize(statement, true)
-        if (deparenthesized is KtLambdaExpression) return this
-        return deparenthesized
-    }
-    return innerExpression
-}
 
 fun KtExpression?.isTrivialStatementBody(): Boolean = when (this?.unwrapBlockOrParenthesis()) {
     is KtIfExpression, is KtBlockExpression -> false
@@ -176,10 +154,6 @@ fun KtBinaryExpression.inlineLeftSideIfApplicable(editor: Editor?, withPrompt: B
     (this.left as? KtNameReferenceExpression)?.inlineIfDeclaredLocallyAndOnlyUsedOnce(editor, withPrompt)
 }
 
-fun KtPostfixExpression.inlineBaseExpressionIfApplicable(editor: Editor?, withPrompt: Boolean) {
-    (this.baseExpression as? KtNameReferenceExpression)?.inlineIfDeclaredLocallyAndOnlyUsedOnce(editor, withPrompt)
-}
-
 // I.e. stable val/var/receiver
 // We exclude stable complex expressions here, because we don't do smartcasts on them (even though they are stable)
 fun KtExpression.isStableSimpleExpression(context: BindingContext = this.safeAnalyzeNonSourceRootCode()): Boolean {
@@ -187,10 +161,6 @@ fun KtExpression.isStableSimpleExpression(context: BindingContext = this.safeAna
     return dataFlowValue?.isStable == true &&
             dataFlowValue.kind != DataFlowValue.Kind.STABLE_COMPLEX_EXPRESSION
 
-}
-
-fun KtExpression.isStableVal(context: BindingContext = this.safeAnalyzeNonSourceRootCode()): Boolean {
-    return this.toDataFlowValue(context)?.kind == DataFlowValue.Kind.STABLE_VALUE
 }
 
 fun elvisPattern(newLine: Boolean): String = if (newLine) "$0\n?: $1" else "$0 ?: $1"

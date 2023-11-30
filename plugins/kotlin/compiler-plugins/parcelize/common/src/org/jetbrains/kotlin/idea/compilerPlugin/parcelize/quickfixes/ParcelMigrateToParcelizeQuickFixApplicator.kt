@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.unwrapBlockOrParenthesis
+import org.jetbrains.kotlin.idea.base.psi.unwrapBlockOrParenthesis
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName

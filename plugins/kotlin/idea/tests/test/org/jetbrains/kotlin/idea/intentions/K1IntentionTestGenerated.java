@@ -2706,11 +2706,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     runTest("testData/intentions/branched/ifWhen/ifToWhen/ifWithRangeTestsAndMultiConditions.kt");
                 }
 
-                @TestMetadata("ifWithRangeTestsAndUnparenthesizedMultiConditions.kt")
-                public void testIfWithRangeTestsAndUnparenthesizedMultiConditions() throws Exception {
-                    runTest("testData/intentions/branched/ifWhen/ifToWhen/ifWithRangeTestsAndUnparenthesizedMultiConditions.kt");
-                }
-
                 @TestMetadata("ifWithReturnsAndEmptyLines.kt")
                 public void testIfWithReturnsAndEmptyLines() throws Exception {
                     runTest("testData/intentions/branched/ifWhen/ifToWhen/ifWithReturnsAndEmptyLines.kt");
@@ -2766,9 +2761,24 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     runTest("testData/intentions/branched/ifWhen/ifToWhen/onElseIf3.kt");
                 }
 
+                @TestMetadata("samePropertyDifferentObjects.kt")
+                public void testSamePropertyDifferentObjects() throws Exception {
+                    runTest("testData/intentions/branched/ifWhen/ifToWhen/samePropertyDifferentObjects.kt");
+                }
+
                 @TestMetadata("secondIfNoThen.kt")
                 public void testSecondIfNoThen() throws Exception {
                     runTest("testData/intentions/branched/ifWhen/ifToWhen/secondIfNoThen.kt");
+                }
+
+                @TestMetadata("shouldUniteCalls.kt")
+                public void testShouldUniteCalls() throws Exception {
+                    runTest("testData/intentions/branched/ifWhen/ifToWhen/shouldUniteCalls.kt");
+                }
+
+                @TestMetadata("shouldUniteStringTemplates.kt")
+                public void testShouldUniteStringTemplates() throws Exception {
+                    runTest("testData/intentions/branched/ifWhen/ifToWhen/shouldUniteStringTemplates.kt");
                 }
 
                 @TestMetadata("whenWithMultipleConditionTypes.kt")
@@ -2834,6 +2844,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 @TestMetadata("withLoopThen.kt")
                 public void testWithLoopThen() throws Exception {
                     runTest("testData/intentions/branched/ifWhen/ifToWhen/withLoopThen.kt");
+                }
+
+                @TestMetadata("withMatchingOnThisProperty.kt")
+                public void testWithMatchingOnThisProperty() throws Exception {
+                    runTest("testData/intentions/branched/ifWhen/ifToWhen/withMatchingOnThisProperty.kt");
                 }
             }
 
