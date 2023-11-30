@@ -89,11 +89,13 @@ public final class Runner {
       }
     };
 
-    FileHandler cumulativeLog = new FileHandler(logPath, 0, 1, true);
+    var cumulativeLog = new FileHandler(logPath, 0L, 1, true);
+    cumulativeLog.setEncoding("UTF-8");
     cumulativeLog.setLevel(Level.ALL);
     cumulativeLog.setFormatter(formatter);
 
-    FileHandler errorLog = new FileHandler(errorLogPath, 0, 1, false);
+    var errorLog = new FileHandler(errorLogPath, 0L, 1, false);
+    cumulativeLog.setEncoding("UTF-8");
     errorLog.setLevel(Level.SEVERE);
     errorLog.setFormatter(formatter);
 
