@@ -31,6 +31,10 @@ class TrustedPathsSettings : TrustedProjectsStateStorage<TrustedPathsSettings.St
     val trustedPaths: List<String> = emptyList()
   ) : TrustedProjectsStateStorage.State {
 
+
+    /**
+     * @see TrustedPaths.State.trustedState
+     */
     @delegate:Transient
     override val trustedState: PrefixTreeMap<Path, Boolean> by lazy {
       NioPathPrefixTreeFactory.createMap(
