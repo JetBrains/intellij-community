@@ -208,7 +208,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     return myFilterUi;
   }
 
-  private @NotNull JComponent createActionsToolbar() {
+  protected @NotNull JComponent createActionsToolbar() {
     ActionManager actionManager = ActionManager.getInstance();
 
     DefaultActionGroup toolbarGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.TOOLBAR_ACTION_GROUP);
@@ -225,12 +225,10 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     String vcsDisplayName = VcsLogUtil.getVcsDisplayName(myLogData.getProject(), myLogData.getLogProviders().values());
     textFilter.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.text.filter.accessible.name", vcsDisplayName));
 
-    DefaultActionGroup presentationSettingsGroup =
-      (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.PRESENTATION_SETTINGS_ACTION_GROUP);
+    DefaultActionGroup presentationSettingsGroup = (DefaultActionGroup)actionManager.getAction(VcsLogActionIds.PRESENTATION_SETTINGS_ACTION_GROUP);
     configureIntelliSortAction(presentationSettingsGroup);
 
-    ActionGroup rightCornerGroup = (ActionGroup)Objects.requireNonNull(
-      CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
+    ActionGroup rightCornerGroup = (ActionGroup)Objects.requireNonNull(CustomActionsSchema.getInstance().getCorrectedAction(VcsLogActionIds.TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
     ActionToolbar rightCornerToolbar = actionManager.createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, rightCornerGroup, true);
     rightCornerToolbar.setTargetComponent(this);
     rightCornerToolbar.setReservePlaceAutoPopupIcon(false);
