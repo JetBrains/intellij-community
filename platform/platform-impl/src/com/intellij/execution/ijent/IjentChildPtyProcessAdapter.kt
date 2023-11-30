@@ -2,6 +2,7 @@
 package com.intellij.execution.ijent
 
 import com.intellij.platform.ijent.IjentChildProcess
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.pty4j.PtyProcess
 import com.pty4j.WinSize
 import kotlinx.coroutines.CoroutineScope
@@ -30,12 +31,16 @@ class IjentChildPtyProcessAdapter(coroutineScope: CoroutineScope, private val ij
 
   override fun getErrorStream(): InputStream = delegate.errorStream
 
+  @RequiresBackgroundThread
+  @Throws(InterruptedException::class)
   override fun waitFor(): Int = delegate.waitFor()
 
   override fun exitValue(): Int = delegate.exitValue()
 
   override fun destroy(): Unit = delegate.destroy()
 
+  @RequiresBackgroundThread
+  @Throws(InterruptedException::class)
   override fun setWinSize(winSize: WinSize): Unit = delegate.runBlockingInContext {
     // Notice that setWinSize doesn't throw InterruptedException in contrast with many other methods of Process.
     try {
@@ -53,6 +58,8 @@ class IjentChildPtyProcessAdapter(coroutineScope: CoroutineScope, private val ij
     TODO("Not yet implemented")
   }
 
+  @RequiresBackgroundThread
+  @Throws(InterruptedException::class)
   override fun waitFor(timeout: Long, unit: TimeUnit): Boolean = delegate.waitFor(timeout, unit)
 
   override fun destroyForcibly(): Process = apply { delegate.destroyForcibly() }

@@ -2,6 +2,7 @@
 package com.intellij.execution.ijent
 
 import com.intellij.platform.ijent.IjentChildProcess
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
@@ -29,9 +30,12 @@ class IjentChildProcessAdapter(coroutineScope: CoroutineScope, private val ijent
 
   override fun getErrorStream(): InputStream = delegate.errorStream
 
+  @RequiresBackgroundThread
   @Throws(InterruptedException::class)
   override fun waitFor(): Int = delegate.waitFor()
 
+  @RequiresBackgroundThread
+  @Throws(InterruptedException::class)
   override fun waitFor(timeout: Long, unit: TimeUnit): Boolean = delegate.waitFor(timeout, unit)
 
   override fun destroyForcibly(): Process = apply { delegate.destroyForcibly() }

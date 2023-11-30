@@ -3,6 +3,7 @@ package com.intellij.execution.ijent
 
 import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.platform.util.coroutines.channel.ChannelInputStream
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import java.io.InputStream
@@ -21,12 +22,15 @@ internal class IjentChildProcessAdapterDelegate(
 
   val errorStream: InputStream = ChannelInputStream(coroutineScope, ijentChildProcess.stderr)
 
+  @RequiresBackgroundThread
   @Throws(InterruptedException::class)
   fun waitFor(): Int =
     runBlockingInContext {
       ijentChildProcess.exitCode.await()
     }
 
+  @RequiresBackgroundThread
+  @Throws(InterruptedException::class)
   fun waitFor(timeout: Long, unit: TimeUnit): Boolean =
     runBlockingInContext {
       withTimeoutOrNull(unit.toMillis(timeout).milliseconds) {
