@@ -98,9 +98,6 @@ private fun ObjClass<*>.collectJvmClasses(jvmClasses: MutableMap<String, ValueTy
 
 private fun ValueType<*>.collectJvmClasses(jvmClasses: MutableMap<String, ValueType.JvmClass<*>>) {
   if (this is ValueType.JvmClass<*> && this !is ValueType.Blob<*>) {
-    if (jvmClasses.containsKey(name)) {
-      return
-    }
     jvmClasses[name] = this
   }
   when (this) {
