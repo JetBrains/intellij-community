@@ -68,7 +68,13 @@ class ChannelInputStream(
 
   private fun getAvailableBuffer(): ByteArrayInputStream? {
     while (true) {
-      val current = kotlin.runCatching { myBuffer.takeFirst() }.getOrNull() ?: return null
+      val current =
+        try {
+          myBuffer.takeFirst()
+        }
+        catch (ignored: InterruptedException) {
+          return null
+        }
 
       when (current) {
         is Content.End -> {
