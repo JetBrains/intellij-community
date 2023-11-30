@@ -208,6 +208,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveEnumEntrySuperType(myFixture)
     }
 
+    fun testResolveFunInterfaceSamWithValueClassInSignature() {
+        checkResolveFunInterfaceSamWithValueClassInSignature(myFixture, isK2 = true)
+    }
+
     fun testResolveLambdaInvoke() {
         checkLambdaInvoke(myFixture)
     }

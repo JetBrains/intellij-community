@@ -6,6 +6,7 @@ import com.intellij.platform.uast.testFramework.env.findElementByText
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.KotlinUFile
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
+import org.jetbrains.uast.kotlin.psi.UastFakeLightMethodBase
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 interface UastResolveApiFixtureTestBase : UastPluginSelection {
@@ -1407,7 +1409,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             object : AbstractUastVisitor() {
                 override fun visitClass(node: UClass): Boolean {
                     node.uastSuperTypes.forEach(::visitTypeReferenceExpression)
-                    return false
+                    return super.visitClass(node)
                 }
 
                 override fun visitTypeReferenceExpression(node: UTypeReferenceExpression): Boolean {
@@ -1417,7 +1419,65 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
                     TestCase.assertNotNull(psiClass)
                     // Enum entry ENUM_ENTRY_1 is the only one that has an explicit super type: its containing enum class
                     TestCase.assertEquals("MyEnum", psiClass?.name)
-                    return false
+                    return super.visitTypeReferenceExpression(node)
+                }
+            }
+        )
+    }
+
+    fun checkResolveFunInterfaceSamWithValueClassInSignature(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
+        // Test inspired from https://issuetracker.google.com/314048176
+        myFixture.configureByText(
+            "main.kt", """
+                @JvmInline
+                value class MyValue(val p: Int)
+
+                fun interface FunInterface {
+                  fun sam(): MyValue
+                }
+
+                fun itfConsumer(itf: FunInterface) {
+                  itf.sam().p
+                }
+
+                fun test() {
+                  itfConsumer {
+                    MyValue(42)
+                  }
+                }
+            """.trimIndent()
+        )
+
+        myFixture.file.toUElement()!!.accept(
+            object : AbstractUastVisitor() {
+                private fun PsiModifierListOwner.isAbstract(): Boolean =
+                    modifierList?.hasModifierProperty(PsiModifier.ABSTRACT) == true ||
+                            hasModifierProperty(PsiModifier.ABSTRACT)
+
+                override fun visitLambdaExpression(node: ULambdaExpression): Boolean {
+                    val superClass = (node.functionalInterfaceType as? PsiClassReferenceType)?.resolve()
+                    TestCase.assertNotNull(superClass)
+                    val superMethod = superClass!!.methods.singleOrNull { it.isAbstract() }
+                    if (isK2) {
+                        // SLC does not model a member with `value` class in its signature
+                        TestCase.assertNull(superMethod)
+                    } else {
+                        TestCase.assertNotNull(superMethod)
+                    }
+
+                    val superUClass = superClass.toUElementOfType<UClass>()
+                    TestCase.assertNotNull(superUClass)
+                    val superUMethod = superUClass!!.methods.singleOrNull { it.isAbstract() }
+                    TestCase.assertNotNull(superUMethod)
+                    if (isK2) {
+                        // In K2 UAST, we'll see a fake [UMethod].
+                        TestCase.assertTrue(superUMethod!!.javaPsi is UastFakeLightMethodBase)
+                    } else {
+                        // In K1 UAST, we'll see a [UMethod] that uses the ULC element.
+                        TestCase.assertEquals(superMethod, superUMethod!!.javaPsi)
+                    }
+
+                    return super.visitLambdaExpression(node)
                 }
             }
         )
