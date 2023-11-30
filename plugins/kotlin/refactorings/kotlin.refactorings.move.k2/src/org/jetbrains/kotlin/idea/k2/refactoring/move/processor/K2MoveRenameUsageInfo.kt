@@ -335,11 +335,12 @@ sealed class K2MoveRenameUsageInfo(
         ) = allowAnalysisFromWriteAction {
             allowAnalysisOnEdt {
                 usageInfosByFile.forEach { (file, usageInfos) ->
+                    // TODO instead of manually handling of qualifiable/non-qualifiable references we should invoke `bindToElement` in bulk
                     val qualifiedElements = usageInfos.mapNotNull { usageInfo ->
                         val newElement = oldToNewMap[usageInfo.referencedElement] as? KtNamedDeclaration ?: usageInfo.referencedElement
                         val result = usageInfo.retarget(newElement)
-                        if (usageInfo is Qualifiable && result != null) result else null
-                    }
+                        if (usageInfo is Qualifiable && result != null) (result to newElement) else null
+                    }.filter { it.first.isValid }.toMap() // because `bindToElement` invalidates imports after qualifying every reference
                     if (file !is KtFile) return@forEach
 
                     // TODO handle bulk usage shortening in a better way, there should be API for this
