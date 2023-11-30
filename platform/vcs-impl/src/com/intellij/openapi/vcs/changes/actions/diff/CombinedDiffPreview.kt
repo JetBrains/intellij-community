@@ -17,35 +17,29 @@ import com.intellij.openapi.vcs.changes.DiffRequestProcessorWithProducers
 import com.intellij.openapi.vcs.changes.EditorTabPreviewBase
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel.Companion.prepareCombinedDiffModelRequests
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
-import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.ExpandableItemsHandler
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.Delegates
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
-import javax.swing.JTree.TREE_MODEL_PROPERTY
 
 @JvmField
 internal val COMBINED_DIFF_PREVIEW_TAB_NAME = Key.create<() -> @NlsContexts.TabTitle String>("combined_diff_preview_tab_name")
 
 class CombinedDiffPreviewVirtualFile(sourceId: String) : CombinedDiffVirtualFile(sourceId, "")
 
-abstract class CombinedDiffPreview(protected val tree: ChangesTree,
+abstract class CombinedDiffPreview(project: Project,
                                    targetComponent: JComponent,
-                                   isOpenEditorDiffPreviewWithSingleClick: Boolean,
                                    needSetupOpenPreviewListeners: Boolean,
                                    parentDisposable: Disposable) :
-  EditorTabPreviewBase(tree.project, parentDisposable) {
+  EditorTabPreviewBase(project, parentDisposable) {
 
-  constructor(tree: ChangesTree, parentDisposable: Disposable) : this(tree, tree, false, true, parentDisposable)
+  protected abstract val sourceId: String
 
-  override val previewFile: VirtualFile by lazy { CombinedDiffPreviewVirtualFile(tree.id) }
+  override val previewFile: VirtualFile by lazy { CombinedDiffPreviewVirtualFile(sourceId) }
 
   override val updatePreviewProcessor get() = model
 
-  protected open val model by lazy { createModel().also { model -> customizeModel(tree.id, model) } }
+  protected open val model by lazy { createModel().also { model -> customizeModel(sourceId, model) } }
 
   protected fun customizeModel(sourceId: String, model: CombinedDiffPreviewModel) {
     model.context.putUserData(COMBINED_DIFF_PREVIEW_TAB_NAME, ::getCombinedDiffTabTitle)
@@ -63,29 +57,24 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
   init {
     escapeHandler = Runnable {
       closePreview()
-      returnFocusToTree()
+      returnFocusToSourceComponent()
     }
     if (needSetupOpenPreviewListeners) {
-      installListeners(tree, isOpenEditorDiffPreviewWithSingleClick)
       installNextDiffActionOn(targetComponent)
     }
-    UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
-    installCombinedDiffModelListener()
   }
 
-  private fun installCombinedDiffModelListener() {
-    tree.addPropertyChangeListener(TREE_MODEL_PROPERTY) {
-      if (model.ourDisposable.isDisposed) return@addPropertyChangeListener
-      model.context.putUserData(COMBINED_DIFF_VIEWER_KEY, null)
-      val changes = model.iterateAllChanges().toList()
-      if (changes.isNotEmpty()) {
-        model.refresh(true)
-        model.setBlocks(prepareCombinedDiffModelRequests(project, changes))
-      }
+  protected open fun updatePreview() {
+    if (model.ourDisposable.isDisposed) return
+    model.context.putUserData(COMBINED_DIFF_VIEWER_KEY, null)
+    val changes = model.iterateAllChanges().toList()
+    if (changes.isNotEmpty()) {
+      model.refresh(true)
+      model.setBlocks(prepareCombinedDiffModelRequests(project, changes))
     }
   }
 
-  open fun returnFocusToTree() = Unit
+  open fun returnFocusToSourceComponent() = Unit
 
   override fun isPreviewOnDoubleClickAllowed(): Boolean = CombinedDiffRegistry.isEnabled() && super.isPreviewOnDoubleClickAllowed()
   override fun isPreviewOnEnterAllowed(): Boolean = CombinedDiffRegistry.isEnabled() && super.isPreviewOnEnterAllowed()
@@ -103,16 +92,15 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
 
   internal fun getFileSize(): Int = model.requests.size
 
-  protected val ChangesTree.id: @NonNls String get() = javaClass.name + "@" + Integer.toHexString(hashCode())
+  protected val JComponent.id: @NonNls String get() = javaClass.name + "@" + Integer.toHexString(hashCode())
 }
 
-abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
-                                        parentDisposable: Disposable) :
-  CombinedDiffModelImpl(tree.project, parentDisposable), DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
+abstract class CombinedDiffPreviewModel(project: Project, parentDisposable: Disposable) :
+  CombinedDiffModelImpl(project, parentDisposable), DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
 
   var selected by Delegates.equalVetoingObservable<Wrapper?>(null) { change ->
     if (change != null) {
-      selectChangeInTree(change)
+      selectChangeInSourceComponent(change)
       scrollToChange(change)
     }
   }
@@ -167,7 +155,7 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
         context.isFocusedInWindow) {
       // Do not automatically switch focused viewer
       if (selectedChanges.size == 1 && iterateAllChanges().any { it: Wrapper -> selected == it }) {
-        selected?.run(::selectChangeInTree) // Restore selection if necessary
+        selected?.run(::selectChangeInSourceComponent) // Restore selection if necessary
       }
       return
     }
@@ -193,9 +181,7 @@ abstract class CombinedDiffPreviewModel(protected val tree: ChangesTree,
                             CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK)
   }
 
-  open fun selectChangeInTree(change: Wrapper) {
-    ChangesBrowserBase.selectObjectWithTag(tree, change.userObject, change.tag)
-  }
+  abstract fun selectChangeInSourceComponent(change: Wrapper)
 
   override fun getComponent(): JComponent = throw UnsupportedOperationException() //only for splitter preview
 }

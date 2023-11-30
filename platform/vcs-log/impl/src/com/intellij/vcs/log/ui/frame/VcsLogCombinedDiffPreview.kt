@@ -5,12 +5,13 @@ import com.intellij.diff.tools.combined.DISABLE_LOADING_BLOCKS
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreviewModel
+import com.intellij.openapi.vcs.changes.actions.diff.CombinedTreeDiffPreview
+import com.intellij.openapi.vcs.changes.actions.diff.CombinedTreeDiffPreviewModel
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.vcs.log.VcsLogBundle
 
-class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : CombinedDiffPreview(browser.viewer, browser) {
+class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : CombinedTreeDiffPreview(browser.viewer, browser) {
 
   override fun createModel(): CombinedDiffPreviewModel = VcsLogCombinedDiffPreviewModel(browser).apply {
     val blocks = CombinedDiffPreviewModel.prepareCombinedDiffModelRequests(browser.viewer.project, iterateAllChanges().toList())
@@ -25,8 +26,7 @@ class VcsLogCombinedDiffPreview(private val browser: VcsLogChangesBrowser) : Com
 
 }
 
-class VcsLogCombinedDiffPreviewModel(private val browser: VcsLogChangesBrowser) :
-  CombinedDiffPreviewModel(browser.viewer, browser) {
+class VcsLogCombinedDiffPreviewModel(private val browser: VcsLogChangesBrowser) : CombinedTreeDiffPreviewModel(browser.viewer, browser) {
 
   init {
     context.putUserData(DISABLE_LOADING_BLOCKS, true)
