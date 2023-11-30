@@ -26,6 +26,16 @@ class TrustedPaths : TrustedProjectsStateStorage<TrustedPaths.State>(State()) {
     val trustedPaths: Map<String, Boolean> = emptyMap()
   ) : TrustedProjectsStateStorage.State {
 
+    /**
+     * The index overall trusted locations.
+     *
+     * Implementation details:
+     *  * This property is transient, because it is only a view of [trustedPaths] and it cannot be serialized and deserialized.
+     *  * This property isn't [TrustedPathsSettings]'s property, because the state of the class should be updated atomically.
+     *    We cannot guarantee it for two independent properties [state] and [trustedState]. Therefore, [trustedState] is a part of [state].
+     *  * This property doesn't need to be recalculated, because [state] is immutable during its lifecycle.
+     *  * This property is lazy, because [trustedPaths] isn't fully immutable. It is changed by the Java reflection during deserialization.
+     */
     @delegate:Transient
     override val trustedState: PrefixTreeMap<Path, Boolean> by lazy {
       NioPathPrefixTreeFactory.createMap(
