@@ -107,7 +107,7 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
     fun runForTests(context: Component): List<PsiElement> {
       val showTypeDefinitionAction = ShowTypeDefinitionActionForTest()
       showTypeDefinitionAction.performForContext(DataManager.getInstance().getDataContext(context))
-      return showTypeDefinitionAction.definitions.get().map { element -> (element as PsiImplementationViewElement).psiElement }
+      return showTypeDefinitionAction.definitions.get().map { element -> (element as PsiImplementationViewElement).getPsiElement()!! }
     }
 
     private class ShowTypeDefinitionActionForTest(val definitions: Ref<List<ImplementationViewElement>> = Ref()) : ShowTypeDefinitionAction() {

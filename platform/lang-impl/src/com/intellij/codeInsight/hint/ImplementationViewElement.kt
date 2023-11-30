@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.hint
 
 import com.intellij.navigation.NavigationItem
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
@@ -14,9 +13,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.Usage
 import com.intellij.usages.UsageInfo2UsageAdapter
+import com.intellij.util.concurrency.ThreadingAssertions
+import org.jetbrains.annotations.TestOnly
 import javax.swing.Icon
 
 /**
@@ -50,43 +52,37 @@ abstract class ImplementationViewElement {
     }
 }
 
-class PsiImplementationViewElement(val psiElement: PsiElement) : ImplementationViewElement() {
-  override val project: Project
-    get() = psiElement.project
+class PsiImplementationViewElement(psiElement: PsiElement) : ImplementationViewElement() {
+  private val pointer = psiElement.createSmartPointer()
 
-  override val isNamed: Boolean
-    get() = psiElement is PsiNamedElement
-
-  override val name: String?
-    get() = (psiElement as? PsiNamedElement)?.name
-
-  override val containingFile: VirtualFile?
-    get() = psiElement.containingFile?.originalFile?.virtualFile
-
-  override val text: String?
-    get() = ImplementationViewComponent.getNewText(psiElement)
-
-  override val presentableText: String = runReadAction {
-    val presentation = (psiElement as? NavigationItem)?.presentation
-    val vFile = containingFile ?: return@runReadAction ""
-    val presentableName = vFile.presentableName
-    if (presentation == null) {
-      return@runReadAction presentableName
-    }
-    val elementPresentation = presentation.presentableText
-    if (elementPresentation == null) {
-      return@runReadAction presentableName
-    }
-    return@runReadAction elementPresentation
+  init {
+    ThreadingAssertions.assertBackgroundThread()
   }
 
-  override val containerPresentation: String? = runReadAction { (psiElement as? NavigationItem)?.presentation?.locationString }
+  @TestOnly
+  fun getPsiElement(): PsiElement? = pointer.element
+
+  override val project: Project = psiElement.project
+
+  override val isNamed: Boolean = psiElement is PsiNamedElement
+
+  override val name: String? = (psiElement as? PsiNamedElement)?.name
+
+  override val containingFile: VirtualFile? = psiElement.containingFile?.originalFile?.virtualFile
+
+  override val text: String? = ImplementationViewComponent.getNewText(psiElement)
+
+  override val presentableText: String =
+    (psiElement as? NavigationItem)?.presentation?.presentableText ?: containingFile?.presentableName ?: ""
+
+
+  override val containerPresentation: String? = (psiElement as? NavigationItem)?.presentation?.locationString
 
   private val locationIconRef = Ref<Icon>()
-  override val locationText: String? = runReadAction { ElementLocationUtil.renderElementLocation(psiElement, locationIconRef) }
+  override val locationText: String? = ElementLocationUtil.renderElementLocation(psiElement, locationIconRef)
   override val locationIcon: Icon? = locationIconRef.get()
 
-  override val containingMemberOrSelf: ImplementationViewElement = runReadAction {
+  override val containingMemberOrSelf: ImplementationViewElement = run {
     val parent = PsiTreeUtil.getStubOrPsiParent(psiElement)
     if (parent == null || (parent is PsiFile && parent.virtualFile == containingFile)) {
       this
@@ -95,6 +91,7 @@ class PsiImplementationViewElement(val psiElement: PsiElement) : ImplementationV
   }
 
   override fun navigate(focusEditor: Boolean) {
+    val psiElement = pointer.element ?: return
     val navigationElement = psiElement.navigationElement
     val file = navigationElement.containingFile?.originalFile ?: return
     val virtualFile = file.virtualFile ?: return
@@ -105,5 +102,8 @@ class PsiImplementationViewElement(val psiElement: PsiElement) : ImplementationV
   }
 
   override val elementForShowUsages: PsiElement?
-    get() = if (psiElement !is PsiBinaryFile) psiElement else null
+    get() {
+      val psiElement = pointer.element
+      return if (psiElement !is PsiBinaryFile) psiElement else null
+    }
 }

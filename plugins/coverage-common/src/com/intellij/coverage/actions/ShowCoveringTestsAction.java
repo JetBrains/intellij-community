@@ -9,14 +9,15 @@ import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithText;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
@@ -74,13 +75,19 @@ public class ShowCoveringTestsAction extends AnAction {
         HintManager.getInstance().showErrorHint(editor, CoverageBundle.message("hint.text.failed.to.load.covered.tests"));
         return;
       }
-      final List<PsiElement> elements = coverageEngine.findTestsByNames(testNames, project);
+      ThrowableComputable<List<PsiImplementationViewElement>, RuntimeException> computeTestElements =
+        () -> ContainerUtil.map(coverageEngine.findTestsByNames(testNames, project),
+                                el -> ReadAction.compute(() -> new PsiImplementationViewElement(el)));
+      final List<PsiImplementationViewElement> elements =
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(computeTestElements,
+                                                                          CoverageBundle.message("dialog.title.find.tests.by.names"), true,
+                                                                          project);
       final ImplementationViewComponent component;
       final String title = CoverageBundle.message("popup.title.tests.covering.line", myClassFQName, myLineData.getLineNumber());
       final ComponentPopupBuilder popupBuilder;
       if (!elements.isEmpty()) {
         Consumer<ImplementationViewComponent> processor = viewComponent -> viewComponent.showInUsageView();
-        component = new ImplementationViewComponent(ContainerUtil.map(elements, PsiImplementationViewElement::new), 0);
+        component = new ImplementationViewComponent(elements, 0);
         component.setShowInFindWindowProcessor(processor);
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
           .setDimensionServiceKey(project, "ShowTestsPopup", false)

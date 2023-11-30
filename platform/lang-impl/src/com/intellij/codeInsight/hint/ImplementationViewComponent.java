@@ -289,13 +289,13 @@ public final class ImplementationViewComponent extends JPanel {
   }
 
   public void update(@NotNull final Collection<? extends ImplementationViewElement> elements, final int index) {
-    update(elements, (psiElements, fileDescriptors) -> {
+    update(elements, (viewElements, fileDescriptors) -> {
       if (myEditor.isDisposed()) return false;
-      if (psiElements.length == 0) return false;
+      if (viewElements.length == 0) return false;
 
-      final Project project = psiElements[0].getProject();
-      mySwitcher.setElements(psiElements);
-      mySwitcher.setIndex(index < psiElements.length ? index : 0);
+      final Project project = viewElements[0].getProject();
+      mySwitcher.setElements(viewElements);
+      mySwitcher.setIndex(index < viewElements.length ? index : 0);
       VirtualFile virtualFile = mySwitcher.getCurrentElement().getContainingFile();
 
       EditorHighlighter highlighter;
@@ -304,7 +304,7 @@ public final class ImplementationViewComponent extends JPanel {
         myEditor.setHighlighter(highlighter);
       }
 
-      if (psiElements.length > 1) {
+      if (viewElements.length > 1) {
         myFileChooser.setVisible(true);
         mySingleEntryPanel.setVisible(false);
 
@@ -328,21 +328,21 @@ public final class ImplementationViewComponent extends JPanel {
     });
   }
 
-  private static void update(@NotNull Collection<? extends ImplementationViewElement> elements,
+  private static void update(@NotNull Collection<? extends ImplementationViewElement> viewElements,
                              @NotNull PairFunction<? super ImplementationViewElement[], ? super List<FileDescriptor>, Boolean> fun) {
-    List<ImplementationViewElement> candidates = new ArrayList<>(elements.size());
-    List<FileDescriptor> files = new ArrayList<>(elements.size());
+    List<ImplementationViewElement> candidates = new ArrayList<>(viewElements.size());
+    List<FileDescriptor> files = new ArrayList<>(viewElements.size());
     final Set<String> names = new HashSet<>();
-    for (ImplementationViewElement element : elements) {
-      if (element.isNamed()) {
-        names.add(element.getName());
+    for (ImplementationViewElement viewElement : viewElements) {
+      if (viewElement.isNamed()) {
+        names.add(viewElement.getName());
       }
       if (names.size() > 1) {
         break;
       }
     }
 
-    for (ImplementationViewElement element : elements) {
+    for (ImplementationViewElement element : viewElements) {
       VirtualFile file = element.getContainingFile();
       if (file == null) continue;
       if (names.size() > 1) {
@@ -480,6 +480,7 @@ public final class ImplementationViewComponent extends JPanel {
   public static String getNewText(PsiElement elt) {
     Project project = elt.getProject();
     PsiFile psiFile = getContainingFile(elt);
+    if (psiFile == null) return null;
 
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (doc == null) return null;
