@@ -6,11 +6,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: MutableEntityStorageImpl) {
 
-  private val replaceMap = HashBiMap.create<NotThisEntityId, ThisEntityId>()
+  internal val replaceMap = HashBiMap.create<NotThisEntityId, ThisEntityId>()
   private val diffLog = diff.changeLog.changeLog
 
   var shaker = -1L

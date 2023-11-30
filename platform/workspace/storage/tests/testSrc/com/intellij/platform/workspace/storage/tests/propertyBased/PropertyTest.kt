@@ -1,19 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.workspace.storage.tests.propertyBased
 
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
-import com.intellij.platform.workspace.storage.impl.RefsTable
+import com.google.common.collect.HashBiMap
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.StorageIndexes
-import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
 import com.intellij.platform.workspace.storage.impl.exceptions.ReplaceBySourceException
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.tests.createBuilderFrom
+import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
@@ -56,6 +53,32 @@ class PropertyTest {
       }
     }
   }
+
+  /**
+   * The targer builder is created every iteration
+   */
+  @Test
+  fun `add diff generates same changelog simple test`() {
+    PropertyChecker.checkScenarios {
+      ImperativeCommand { env ->
+        env.executeCommands(AddDiffCheckChangelog.create(null))
+      }
+    }
+  }
+
+  /**
+   * This test uses a single target builder that changes every iteration and reused in all iterations
+   */
+  @Test
+  fun `add diff generates same changelog`() {
+    PropertyChecker.checkScenarios {
+      ImperativeCommand { env ->
+        val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
+        env.executeCommands(AddDiffCheckChangelog.create(workspace))
+        workspace.assertConsistency()
+      }
+    }
+  }
 }
 
 private class AddDiff(private val storage: MutableEntityStorage) : ImperativeCommand {
@@ -85,6 +108,97 @@ private class AddDiff(private val storage: MutableEntityStorage) : ImperativeCom
 
   companion object {
     fun create(workspace: MutableEntityStorage): Generator<AddDiff> = Generator.constant(AddDiff(workspace))
+  }
+}
+
+private class AddDiffCheckChangelog(val preBuilder: MutableEntityStorageImpl?) : ImperativeCommand {
+  override fun performCommand(env: ImperativeCommand.Environment) {
+    env.logMessage("Trying to perform addDiff")
+    val storage = preBuilder ?: run {
+      val storage = createEmptyBuilder()
+      env.logMessage("Prepare empty builder:")
+      env.executeCommands(getEntityManipulation(storage))
+      val updatedBuilder = storage.toSnapshot().toBuilder() as MutableEntityStorageImpl
+      updatedBuilder
+    }
+    val another = storage.toSnapshot().toBuilder() as MutableEntityStorageImpl
+    env.logMessage("Modify diff:")
+    env.executeCommands(getEntityManipulation(another))
+
+    try {
+      var addDiffEngineStolen: AddDiffOperation? = null
+      storage.changeLog.clear()
+      storage.upgradeAddDiffEngine = { addDiffEngineStolen = it }
+      storage.addDiff(another)
+
+      val actualChangelog = storage.changeLog.changeLog.let { HashMap(it) }
+
+      // Since the target builder may have different ids, we take the changelog from diff and change all events to have the same IDs as in
+      //   storage. We change ids in place, so this is a destructive operation for [another] builder.
+      val updatedChangelog = updateWithReplaceMap(addDiffEngineStolen!!.replaceMap, another.changeLog.changeLog.let { HashMap(it) })
+
+      assertEquals(updatedChangelog, actualChangelog)
+
+      env.logMessage("addDiff finished")
+      env.logMessage("---------------------------")
+    }
+    catch (e: AddDiffException) {
+      env.logMessage("Cannot perform addDiff: ${e.message}.")
+    }
+  }
+
+  private fun updateWithReplaceMap(replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>,
+                                   expectedChangelog: HashMap<EntityId, ChangeEntry>): Map<EntityId, ChangeEntry> {
+    return buildMap {
+      expectedChangelog.forEach { (id, entry) ->
+        when (entry) {
+          is ChangeEntry.AddEntity -> {
+            val replacement = replaceMap[id.notThis()]?.id
+            if (replacement != null) {
+              put(replacement, entry.copy(entityData = entry.entityData.also { it.id = replacement.arrayId }))
+            }
+            else {
+              put(id, entry)
+            }
+          }
+          is ChangeEntry.RemoveEntity -> {
+            val replacement = replaceMap[id.notThis()]?.id
+            if (replacement != null) {
+              put(replacement, entry.copy(id = replacement))
+            }
+            else {
+              put(id, entry)
+            }
+          }
+          is ChangeEntry.ReplaceEntity -> {
+            val replacement = replaceMap[id.notThis()]?.id
+            var newId: EntityId = id
+            var newEntry: ChangeEntry.ReplaceEntity = entry
+            if (replacement != null) {
+              newId = replacement
+              newEntry = entry.copy(data = entry.data?.copy(newData = entry.data.newData.also { it.id = replacement.arrayId }))
+            }
+            newEntry = newEntry.copy(
+              references = entry.references?.copy(
+                newChildren = entry.references.newChildren.mapTo(HashSet()) {
+                  it.copy(second = replaceMap[it.second.id.notThis()]?.id?.asChild() ?: it.second)
+                },
+                removedChildren = entry.references.removedChildren.mapTo(HashSet()) {
+                  it.copy(second = replaceMap[it.second.id.notThis()]?.id?.asChild() ?: it.second)
+                },
+                newParents = entry.references.newParents.mapValues { (_, v) -> replaceMap[v.id.notThis()]?.id?.asParent() ?: v },
+                removedParents = entry.references.removedParents.mapValues { (_, v) -> replaceMap[v.id.notThis()]?.id?.asParent() ?: v },
+              )
+            )
+            put(newId, newEntry)
+          }
+        }
+      }
+    }
+  }
+
+  companion object {
+    fun create(preBuilder: MutableEntityStorageImpl?): Generator<AddDiffCheckChangelog> = Generator.constant(AddDiffCheckChangelog(preBuilder))
   }
 }
 
