@@ -1,52 +1,54 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang
 
 import com.intellij.testFramework.LightPlatformTestCase
+import groovy.transform.CompileStatic
 
-class LanguageMatcherTest : LightPlatformTestCase() {
+@CompileStatic
+class LanguageMatcherTest extends LightPlatformTestCase {
 
-  fun `test base matcher without dialects`() {
-    val matcher = LanguageMatcher.match(MyBaseLanguage.INSTANCE)
+  void 'test base matcher without dialects'() {
+    def matcher = LanguageMatcher.match(MyBaseLanguage.INSTANCE)
     assertTrue(matcher.matchesLanguage(MyBaseLanguage.INSTANCE))
     assertFalse(matcher.matchesLanguage(MyTestLanguage.INSTANCE))
     assertFalse(matcher.matchesLanguage(MyTestLanguage2.INSTANCE))
     assertFalse(matcher.matchesLanguage(MyMetaLanguage.INSTANCE))
   }
 
-  fun `test base matcher with dialects`() {
-    val matcher = LanguageMatcher.matchWithDialects(MyBaseLanguage.INSTANCE)
+  void 'test base matcher with dialects'() {
+    def matcher = LanguageMatcher.matchWithDialects(MyBaseLanguage.INSTANCE)
     assertTrue(matcher.matchesLanguage(MyBaseLanguage.INSTANCE))
     assertTrue(matcher.matchesLanguage(MyTestLanguage.INSTANCE))
     assertTrue(matcher.matchesLanguage(MyTestLanguage2.INSTANCE))
     assertFalse(matcher.matchesLanguage(MyMetaLanguage.INSTANCE))
   }
 
-  fun `test middle matcher without dialects`() {
-    val matcher = LanguageMatcher.match(MyTestLanguage.INSTANCE)
+  void 'test middle matcher without dialects'() {
+    def matcher = LanguageMatcher.match(MyTestLanguage.INSTANCE)
     assertFalse(matcher.matchesLanguage(MyBaseLanguage.INSTANCE))
     assertTrue(matcher.matchesLanguage(MyTestLanguage.INSTANCE))
     assertFalse(matcher.matchesLanguage(MyTestLanguage2.INSTANCE))
     assertFalse(matcher.matchesLanguage(MyMetaLanguage.INSTANCE))
   }
 
-  fun `test middle matcher with dialects`() {
-    val matcher = LanguageMatcher.matchWithDialects(MyTestLanguage.INSTANCE)
+  void 'test middle matcher with dialects'() {
+    def matcher = LanguageMatcher.matchWithDialects(MyTestLanguage.INSTANCE)
     assertFalse(matcher.matchesLanguage(MyBaseLanguage.INSTANCE))
     assertTrue(matcher.matchesLanguage(MyTestLanguage.INSTANCE))
     assertTrue(matcher.matchesLanguage(MyTestLanguage2.INSTANCE))
     assertFalse(matcher.matchesLanguage(MyMetaLanguage.INSTANCE))
   }
 
-  fun `test meta language without dialects`() {
-    val matcher = LanguageMatcher.match(MyMetaLanguage.INSTANCE)
+  void 'test meta language without dialects'() {
+    def matcher = LanguageMatcher.match(MyMetaLanguage.INSTANCE)
     assertFalse(matcher.matchesLanguage(MyBaseLanguage.INSTANCE))
     assertTrue(matcher.matchesLanguage(MyTestLanguage.INSTANCE))
     assertFalse(matcher.matchesLanguage(MyTestLanguage2.INSTANCE))
     assertFalse(matcher.matchesLanguage(MyMetaLanguage.INSTANCE))
   }
 
-  fun `test meta language with dialects`() {
-    val matcher = LanguageMatcher.matchWithDialects(MyMetaLanguage.INSTANCE)
+  void 'test meta language with dialects'() {
+    def matcher = LanguageMatcher.matchWithDialects(MyMetaLanguage.INSTANCE)
     assertFalse(matcher.matchesLanguage(MyBaseLanguage.INSTANCE))
     assertTrue(matcher.matchesLanguage(MyTestLanguage.INSTANCE))
     assertTrue(matcher.matchesLanguage(MyTestLanguage2.INSTANCE))
