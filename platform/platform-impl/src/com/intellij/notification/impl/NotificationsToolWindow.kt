@@ -1627,7 +1627,7 @@ internal class ApplicationNotificationModel {
       notifications.addAll(myNotifications)
       myNotifications.clear()
 
-      val model = myProjectToModel.getOrPut(content.project) { ProjectNotificationModel() }
+      val model = myProjectToModel.getOrPut(content.project) { newProjectModel(content.project) }
       model.registerAndGetInitNotifications(content, notifications)
     }
   }
@@ -1653,14 +1653,7 @@ internal class ApplicationNotificationModel {
         }
       }
       else {
-        val model = myProjectToModel.getOrPut(project) {
-          Disposer.register(project) {
-            synchronized(myLock) {
-              myProjectToModel.remove(project)
-            }
-          }
-          ProjectNotificationModel()
-        }
+        val model = myProjectToModel.getOrPut(project) { newProjectModel(project) }
         model.addNotification(project, notification, myNotifications, runnables)
       }
     }
@@ -1668,6 +1661,15 @@ internal class ApplicationNotificationModel {
     for (runnable in runnables) {
       runnable.run()
     }
+  }
+
+  private fun newProjectModel(project: Project): ProjectNotificationModel {
+    Disposer.register(project) {
+      synchronized(myLock) {
+        myProjectToModel.remove(project)
+      }
+    }
+    return ProjectNotificationModel()
   }
 
   fun getStateNotifications(project: Project): List<Notification> {
