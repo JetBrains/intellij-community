@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.matches
@@ -14,8 +14,10 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
-class FlattenWhenIntention : AbstractKotlinApplicableModCommandIntention<KtWhenExpression>(KtWhenExpression::class) {
-    override fun apply(element: KtWhenExpression, context: ActionContext, updater: ModPsiUpdater) {
+class FlattenWhenIntention : KotlinPsiUpdateModCommandIntention<KtWhenExpression>(KtWhenExpression::class) {
+    override fun getFamilyName(): String = KotlinBundle.message("flatten.when.expression")
+
+    override fun invoke(context: ActionContext, element: KtWhenExpression, updater: ModPsiUpdater) {
         val commentSaver = CommentSaver(element)
         val nestedWhen = element.elseExpression as KtWhenExpression
 
@@ -28,10 +30,6 @@ class FlattenWhenIntention : AbstractKotlinApplicableModCommandIntention<KtWhenE
 
         updater.moveCaretTo(element)
     }
-
-    override fun getActionName(element: KtWhenExpression): String = familyName
-
-    override fun getFamilyName(): String = KotlinBundle.message("flatten.when.expression")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = ApplicabilityRanges.SELF
 
