@@ -128,7 +128,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
   @Override
   public void showError(String message) {
-    String html = "<html>" + message.replace("\n", "<br>") + "</html>";
+    var html = convertToHtml(message);
     invokeAndWait(() -> JOptionPane.showMessageDialog(myFrame, html, UpdaterUI.message("error.title"), JOptionPane.ERROR_MESSAGE));
   }
 
@@ -182,15 +182,11 @@ public class SwingUpdaterUI implements UpdaterUI {
         columnModel.getColumn(i).setPreferredWidth(MyTableModel.getColumnWidth(i, 1000));
       }
 
-      String message = "<html>" + UpdaterUI.message("conflicts.header") + "<br><br>";
-      if (canProceed) {
-        message += UpdaterUI.message("conflicts.text.1");
-      }
-      else {
-        message += UpdaterUI.message("conflicts.text.2");
-      }
-      message += "</html>";
-      JLabel label = new JLabel(message);
+      var message =
+        UpdaterUI.message("conflicts.header") +
+        "\n\n" +
+        (canProceed ? UpdaterUI.message("conflicts.text.1") : UpdaterUI.message("conflicts.text.2"));
+      var label = new JLabel(convertToHtml(message));
       label.setBorder(LABEL_BORDER);
 
       dialog.add(label, BorderLayout.NORTH);
@@ -212,6 +208,10 @@ public class SwingUpdaterUI implements UpdaterUI {
   @Override
   public String bold(String text) {
     return "<b>" + text + "</b>";
+  }
+
+  private static String convertToHtml(String message) {
+    return "<html>" + message.replace("\n", "<br>") + "</html>";
   }
 
   private static void invokeLater(Runnable runnable) {
