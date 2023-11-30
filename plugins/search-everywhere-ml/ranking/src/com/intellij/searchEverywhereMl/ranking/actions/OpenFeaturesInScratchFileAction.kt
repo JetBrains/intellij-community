@@ -74,7 +74,7 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     val searchSession = mlSessionService.getCurrentSession()!!
     val state = searchSession.getCurrentSearchState()!!
 
-    val foundElementsInfo = searchEverywhereUI.foundElementsInfo.sortedByDescending { it.priority }
+    val foundElementsInfo = searchEverywhereUI.foundElementsInfo
 
     val features = foundElementsInfo
       .map { SearchEverywhereFoundElementInfoWithMl.from(it) }
